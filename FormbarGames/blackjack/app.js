@@ -102,5 +102,6 @@ if (gameReplay == "y") {
   gameLoop = true
 } else if (gameReplay == "n") {
   gameLoop = false
+  break;
 };
 }
