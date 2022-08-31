@@ -88,14 +88,16 @@ while (promptLoop == true) {
 
 
 //This calculates the dealers number
-dealerNum = Math.floor(Math.random() * 5) + 17
-  if (cardtotal > dealerNum && cardtotal <= 21) {
-    console.log(`You won! The dealer had ${dealerNum}`);
+dealerNum = Math.floor(Math.random() * 9) + 17
+  if (dealerNum > 21) {
+    console.log(`The dealer went bust! He had ${dealerNum} `);
   } else if (cardtotal < dealerNum && cardtotal <= 21) {
     console.log(`You lost! The dealer had ${dealerNum}`);
   } else if (cardtotal == dealerNum) {
     console.log(`It's a push! The dealer had ${dealerNum} `);
-  };
+  } else if (cardtotal > dealerNum && cardtotal <= 21 ) {
+    console.log(`You won! The dealer had ${dealerNum}`);
+  }
 
 var gameReplay = prompt('Would you like to play again? y/n? ' )
 if (gameReplay == "y") {
