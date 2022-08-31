@@ -43,9 +43,9 @@ while (promptLoop == true) {
 
   var suits = ["Diamonds", "Clubs", "Hearts", "Spades"];
   var suitIndex = Math.floor(Math.random() * suits.length);
-  
+
 // Checks to see if the Card has a face then prints Face and Suit to console. If it doesn't have a Face it prints Number and Suit instead
-  if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
+  if (card.face == "King" || card.face == "Queen" || card.face == "Jack" || card.face == "Ace") {
     console.log(card.face + " of " + suits[suitIndex])
   } else {
     console.log(card.number + " of " + suits[suitIndex])
@@ -94,3 +94,10 @@ dealerNum = Math.floor(Math.random() * 5) + 17
   } else if (cardtotal == dealerNum) {
     console.log(`It's a push! The dealer had ${dealerNum} `);
   };
+
+var gameReplay = prompt('Would you like to play again? y/n' )
+if (gameReplay == "y") {
+  promptLoop = true
+} else if (gameReplay == "n") {
+  promptLoop = false
+};
