@@ -52,7 +52,7 @@ while (promptLoop == true) {
 
   cards.push(card)
 
-  let cardtotal = 0;
+  var cardtotal = 0;
 
   for (var currentCard of cards) {
     cardtotal += currentCard.number;
@@ -60,6 +60,11 @@ while (promptLoop == true) {
 
   console.log(`You have a total of ${cardtotal}`);
 
+  if (cardtotal > 21) {
+    console.log("You went bust");
+    promptLoop = false
+    break;
+  };
   let hitStand  = prompt('Would you like to hit or stand?')
 //if they select hit or stand
   if (hitStand == "stand" || hitStand == "Stand") {
@@ -70,4 +75,13 @@ while (promptLoop == true) {
     console.log("invalid input");
     promptLoop = false
   };
-}
+};
+
+dealerNum = Math.floor(Math.random() * 5) + 17
+  if (cardtotal > dealerNum && cardtotal <= 21) {
+    console.log(`You won! The dealer had ${dealerNum}`);
+  } else if (cardtotal < dealerNum && cardtotal <= 21) {
+    console.log(`You lost! The dealer had ${dealerNum}`);
+  } else if (cardtotal == dealerNum) {
+    console.log(`It's a push! The dealer had ${dealerNum} `);
+  };
