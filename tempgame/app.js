@@ -1,7 +1,5 @@
 const prompt = require('prompt-sync')();
 let promptLoop = false;
-let gameLoop = true
-while (gameLoop == true) {
 //asks if you want to play
 var blackJackChoice = prompt('Would you like to play Blackjack? y/n? ')
 //if they select yes or no
@@ -45,8 +43,13 @@ while (promptLoop == true) {
 
   var suits = ["Diamonds", "Clubs", "Hearts", "Spades"];
   var suitIndex = Math.floor(Math.random() * suits.length);
-
-  console.log(card.number + " of " + suits[suitIndex]);
+  
+// Checks to see if the Card has a face then prints Face and Suit to console. If it doesn't have a Face it prints Number and Suit instead
+  if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
+    console.log(card.face + " of " + suits[suitIndex])
+  } else {
+    console.log(card.number + " of " + suits[suitIndex])
+  };
 
   if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
     card.number = 10
@@ -60,8 +63,10 @@ while (promptLoop == true) {
     cardtotal += currentCard.number;
   }
 
+//Prints amount of cards the user has
   console.log(`You have a total of ${cardtotal}`);
 
+// If the User goes over 21 this causes them to bust
   if (cardtotal > 21) {
     console.log("You went bust");
     promptLoop = false
@@ -79,6 +84,8 @@ while (promptLoop == true) {
   };
 };
 
+
+//This calculates the dealers number
 dealerNum = Math.floor(Math.random() * 5) + 17
   if (cardtotal > dealerNum && cardtotal <= 21) {
     console.log(`You won! The dealer had ${dealerNum}`);
@@ -87,12 +94,3 @@ dealerNum = Math.floor(Math.random() * 5) + 17
   } else if (cardtotal == dealerNum) {
     console.log(`It's a push! The dealer had ${dealerNum} `);
   };
-
-let replayPrompt = prompt('Would you like to play again? y/n')
-if (replayPrompt == "y") {
-  gameLoop = true
-} else (replayPrompt == "n") {
-  gameLoop = false
-  break;
-  }
-};
