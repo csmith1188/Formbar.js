@@ -37,19 +37,23 @@ while (promptLoop == true) {
   if (card.number == 13) {
     card.face = "King"
   };
-  if (card.number == 14) {
+  if (card.number == 1) {
     card.face = "Ace"
   };
 
   var suits = ["Diamonds", "Clubs", "Hearts", "Spades"];
   var suitIndex = Math.floor(Math.random() * suits.length);
-
-  console.log(card.number + " of " + suits[suitIndex]);
-
-  if (card.number == "King" || card.number == "Queen" || card.number == "Jack") {
-    card.number = 10
+  
+  if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
+    console.log(card.face + " of " + suits[suitIndex])
+  } else {
+    console.log(card.number + " of " + suits[suitIndex])
   };
 
+  if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
+    card.number = 10
+  }
+  
   cards.push(card)
 
   var cardtotal = 0;
