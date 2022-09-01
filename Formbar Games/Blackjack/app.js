@@ -150,5 +150,9 @@ if (gameReplay == "y") {
 } else if (gameReplay == "n") {
   gameLoop = false
   break;
-};
+} else {
+  console.log("Invalid Input");
+  gameLoop = false
+  break;
+}
 }
