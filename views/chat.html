@@ -1,0 +1,625 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Chat{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+<style>
+  #outputBox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(100% - 300px);
+    height: calc(100% - 100px); /*Subtract height of controlChat*/
+    box-sizing: border-box;
+    padding: 0 10px;
+    overflow: auto;
+    overflow-wrap: break-word;
+  }
+
+  .msg {
+    padding: 5px;
+    margin: 10px 0;
+  }
+
+  .them .username {
+    color: var(--theme-color);
+    cursor: pointer;
+  }
+
+  .msg.whisper {
+    background-color: var(--bg-dark-purple);
+  }
+
+  .light .msg.whisper {
+    background-color: var(--light-purple);
+  }
+
+  .me {
+    background-color: var(--highlight-color);
+  }
+
+  .info {
+    color: var(--gray-color);
+  }
+
+  .alert .content {
+    font-style: italic;
+    color: var(--theme-color);
+  }
+
+  .deleted .content {
+    font-style: italic;
+    color: var(--light-red);
+  }
+
+  .light .deleted .content {
+    color: var(--color-red);
+  }
+
+  .msgButton {
+    display: none;
+    width: 14px;
+    opacity: 50%;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .msg:not(.deleted):hover .msgButton {
+    display: inline;
+  }
+
+  .msgButton:hover {
+    opacity: 100%;
+  }
+
+  #userlist {
+    width: 300px;
+    box-sizing: border-box;
+    height: calc(100% - 100px);
+    background-color: var(--bg-darker);
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    overflow: auto;
+  }
+
+  #ulHeading {
+    display: inline-block;
+    margin-bottom: 5px;
+  }
+
+  .ulName {
+    position: relative;
+    margin: 8px 0;
+    padding: 6px 3px;
+  }
+
+  .ulName.them {
+    cursor: pointer;
+  }
+
+  .ulHover {
+    background-color: var(--theme-color);
+    color: var(--bg-color);
+  }
+
+  button.profileButton {
+    position: absolute;
+    vertical-align: top;
+    right: 3px;
+    top: 3px;
+    font-size: 14px;
+  }
+
+  :not(.ulHover) > button.profileButton:not(:hover) {
+    display: none;
+  }
+
+  #controlChat {
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--theme-color);
+    position: fixed;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100px;
+    bottom: 0;
+    left: 0;
+    padding: 20px;
+  }
+
+  #removeRec {
+    display: none;
+    margin-left: 8px;
+    color: var(--gray-color);
+    cursor: pointer;
+  }
+
+  #removeRec:hover {
+    color: white;
+  }
+
+  #input {
+    width: 75%;
+    height: 32px;
+    box-sizing: border-box;
+    border-color: var(--theme-color);
+  }
+
+  #input:focus {
+    outline-color: var(--theme-color);
+  }
+
+  #sendButton {
+    width: 64px;
+    height: 32px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    margin: 0 0 0 5px;
+    font-size: 20px;
+    vertical-align: top;
+    transition-duration: 0.2s;
+  }
+
+  #sendButton:active {
+    background-color: var(--theme-color);
+    border-color: var(--theme-color);
+    color: var(--bg-color);
+  }
+
+  #sendButton:active {
+    transform: translateX(4px);
+  }
+
+  #sendButton.rec {
+    color: var(--light-purple);
+    border-color: var(--light-purple);
+  }
+
+  #sendButton.rec:hover, #sendButton.rec:focus {
+    background-color: var(--light-purple);
+    color: var(--bg-color);
+  }
+
+  #sendButton.rec:active {
+    background-color: white;
+    border-color: white;
+    color: var(--bg-color);
+  }
+
+  #notifications {
+    position: fixed;
+    right: 16px;
+    bottom: 71px;
+  }
+
+  #controlChat.disabled {
+    text-align: center;
+  }
+
+  body:not(.small) #controlChat.disabled {
+    line-height: 60px;
+    font-size: 32px;
+  }
+
+  a {
+    color: var(--theme-color);
+  }
+
+  a:visited {
+    color: var(--theme-color);
+  }
+
+  a:active {
+    color: white;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--theme-color);
+    font-size: 24px;
+  }
+
+  h2 {
+    margin: 0;
+  }
+
+  .game #outputBox {
+    width: 100%;
+    height: calc(100% - 116px);
+  }
+
+  .small #outputBox {
+    width: 100%;
+    height: calc(100% - 140px);
+  }
+
+  .game .msg.whisper {
+    background-color: initial;
+  }
+
+  .game #userlist,
+  .game #recContainer,
+  .game .info,
+  .small #userlist {
+    display: none;
+  }
+
+  .game #controlChat {
+    height: 115px;
+  }
+
+  .small #controlChat {
+    height: 140px;
+  }
+
+  .small #controlChat.disabled {
+    padding: 17px 0;
+  }
+
+  .light #controlChat {
+    background: #dfefff;
+  }
+
+  .game #input,
+  .game #sendButton,
+  .small #input,
+  .small #sendButton {
+    width: 100%;
+  }
+
+  .game #sendButton,
+  .small #sendButton {
+    display: block;
+    margin: 10px 0 0 0;
+  }
+
+  .game #sendButton:active,
+  .small #sendButton:active {
+    transform: none;
+  }
+
+  .game #notifications,
+  .small #notifications {
+    display: none;
+  }
+</style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}blue{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+<div id="container-full-width">
+    <div id="outputBox"></div>
+    <div id="userlist">
+      <h2 id="ulHeading">Online</h2>
+    </div>
+</div>
+<div id="controlChat">
+    <div id="recContainer" style="font-size: 14px; margin-bottom: 5px;">To <span id="recipient">all</span><span id="removeRec" onclick="removeRec()" title="Reset recipients to all">✕</span></div>
+    <form onsubmit="event.preventDefault(); onSubmit(); return false;" style="margin: 0;">
+        <input id="input" class="box" placeholder="Enter a message" autocomplete="off">
+        <input type="submit" value="Send" id="sendButton" class="button">
+    </form>
+</div>
+<div id="notifications">
+  <input type="checkbox" id="notificationsCheckbox"><label for="notificationsCheckbox">Desktop notifications</label>
+</div>
+{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+<script type="text/javascript">
+    var username = "{{ username }}";
+    var receiver = 'all';
+
+    //Get old messages from the database
+    let messages = "{{ messages }}".replaceAll("&#34;", "\"");
+    messages = JSON.parse(messages);
+
+    var boxes = {
+        outputBox: document.getElementById('outputBox'),
+        inputBox: document.getElementById("input"),
+        userlist: document.getElementById("userlist"),
+        sendButton: document.getElementById("sendButton"),
+        recBox: document.getElementById("recipient"),
+        ncb: document.getElementById("notificationsCheckbox")
+    }
+
+    let gamePlayer = urlParams.get("game");
+    if (gamePlayer) {
+      document.body.classList.add("game");
+      changeRec(gamePlayer);
+      boxes.sendButton.value += " to " + gamePlayer;
+    }
+
+    let sidebar = urlParams.get("sidebar");
+    if (sidebar) {
+      document.body.classList.add("small", "light");
+      document.body.classList.remove("blue");
+    }
+
+    let mobile = urlParams.get("mobile");
+    if (mobile) document.body.classList.add("small");
+
+    //Get user's permissions from server
+    request.open("GET", '/api/me', false);
+    request.send(null);
+    let meRes = JSON.parse(request.responseText);
+    let myPerms = meRes.perms;
+
+    //Get chat permissions from the server
+    request.open("GET", '/api/permissions', false);
+    request.send(null);
+    let permsRes = JSON.parse(request.responseText);
+    let sayPerms = permsRes.say;
+    let modPerms = permsRes.mod;
+
+    //If user doesn't have chat permissions, remove input section
+    if (myPerms > sayPerms) {
+      let cc = document.getElementById("controlChat");
+      cc.innerText = "You don't have high enough permissions to send chat messages.";
+      cc.classList.add("disabled");
+    }
+
+    messages.forEach(message => {
+      if (message[2] == "all" || message[2] == username || message[1] == username) {
+        output({
+          from: message[1],
+          to: message[2],
+          time: message[3],
+          content: message[4],
+          edited: message[5],
+          deleted: message[6]
+        });
+      }
+    });
+
+    //When the connection opens.
+    chatSocket.on("connect", function() {});
+
+    chatSocket.on("message", message => {
+        message = JSON.parse(message);
+        console.log(message);
+        output(message);
+    });
+
+    chatSocket.on("edit", data => {
+        document.getElementById("content" + data[0]).innerText = data[1];
+        document.getElementById("edited" + data[0]).innerText = " · Edited";
+    });
+
+    chatSocket.on("delete", time => {
+        document.getElementById("msg" + time).classList.add("deleted");
+        document.getElementById("content" + time).innerText = "Message deleted";
+        document.getElementById("edited" + time).innerText = "";
+    });
+
+    chatSocket.on("alert", message => {
+        message = JSON.parse(message);
+        console.log(message);
+        output(message);
+    });
+
+    chatSocket.on("userlist", message => {
+        message = JSON.parse(message);
+        console.log("userlist");
+        console.log(message);
+        boxes.userlist.innerHTML = '<h2 id="ulHeading">Online</h2>'
+        for (user in message.content) {
+            let newUser = document.createElement('div');
+            boxes.userlist.appendChild(newUser);
+            newUser.classList.add('msg', 'ulName');
+            let name = message.content[user].name;
+            newUser.appendChild(document.createTextNode(name));
+            if (message.content[user].name == username) newUser.classList.add('me');
+            else {
+              newUser.classList.add('them')
+              newUser.setAttribute("onclick", "changeRec('" + name + "', this)");
+              newUser.title = "Send a private message";
+              let profileButton = document.createElement("button");
+              profileButton.innerText = "View profile";
+              profileButton.classList.add("profileButton");
+              profileButton.onmouseover = event => event.stopPropagation();
+              profileButton.onclick = event => {
+                let advancedParam = urlParams.get("advanced") ? "&advanced=true" : "";
+                window.location = `/profile?user=${name}${advancedParam}`;
+                event.stopPropagation();
+              };
+              newUser.appendChild(profileButton);
+              newUser.onmouseover = function() {this.classList.add("ulHover");};
+              newUser.onmouseout = function() {this.classList.remove("ulHover");};
+            }
+        }
+    });
+
+    //When the connection closes
+    chatSocket.on("disconnect", () => {
+        output({
+            from: 'server',
+            content: 'Disconnected...',
+            time: Date.now()
+        });
+    });
+
+    //When there is an error
+    chatSocket.on("error", e => {
+        output({
+            from: 'server',
+            content: 'Critical Error. See console...',
+            time: Date.now()
+        });
+        console.log(e)
+    });
+
+    function packMSG(rx, tx, content) {
+        let msgOUT = {
+            to: rx,
+            from: tx,
+            content: content
+        }
+        return JSON.stringify(msgOUT);
+    }
+
+    function changeRec(name, el) {
+          receiver = name;
+          boxes.recBox.innerHTML = receiver;
+          boxes.recBox.style.color = "var(--light-purple)";
+          boxes.sendButton.classList.add("rec");
+          //sendButton.value = "Send to " + receiver;
+          //el.classList.add('whisper');
+          document.getElementById("removeRec").style.display = "initial";
+    }
+
+    function removeRec() {
+        receiver = 'all';
+        boxes.recBox.innerHTML = "all";
+        boxes.recBox.style.color = "white";
+        boxes.sendButton.classList.remove("rec");
+        //sendButton.value = "Send";
+        //el.classList.remove('whisper');
+        document.getElementById("removeRec").style.display = "none";
+    }
+
+    function atBottom(ele) {
+        var sh = ele.scrollHeight;
+        var st = ele.scrollTop;
+        var ht = ele.offsetHeight;
+        if (ht == 0) {
+            return true;
+        }
+        if (st == sh - ht) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function onSubmit() {
+        let text = boxes.inputBox.value;
+        if (text.replaceAll(" ", "") != "") {
+            if (text.startsWith("!#help")) {
+                // text.splice(0, 2);
+                // args = text.split(" ");
+                // args.shift();
+                chatSocket.emit("help", packMSG(receiver, username, text));
+            } else {
+                chatSocket.emit("message", packMSG(receiver, username, text));
+            }
+            boxes.inputBox.value = "";
+            boxes.inputBox.focus();
+        }
+    }
+
+    function onCloseClick() {
+        chatSocket.emit("disconnect_request");
+    }
+
+    function dateString(time) {
+      let date = new Date(time);
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+      let year = date.getFullYear().toString().slice(2);
+      let hour = date.getHours();
+      let minute = date.getMinutes().toString().padStart(2, "0");
+      if (hour > 12) {
+        hour -= 12;
+        ampm = "PM";
+      } else {
+        if (hour == 0) hour = 12;
+        ampm = "AM";
+      }
+      return `${month}/${day}/${year} ${hour}:${minute} ${ampm}`;
+    }
+
+    function output(message) {
+        let lockBottom = false;
+        if (atBottom(boxes.outputBox)) lockBottom = true;
+        let newMSG = document.createElement('div')
+        newMSG.id = "msg" + message.time;
+        newMSG.classList.add('msg')
+        if (message.to == username) newMSG.classList.add('whisper')
+        if (message.deleted) newMSG.classList.add('deleted');
+        if (message.from == username) newMSG.classList.add('me')
+        else if (message.from == 'server' || !message.from) {
+          newMSG.classList.add('alert');
+          message.from = "";
+        }
+        else {
+          newMSG.classList.add('them')
+          var usernameOnclick = `changeRec('${message.from}', this)`;
+          var usernameTitle = "Send a private message";
+        }
+
+        //Decode HTML entities
+        let textarea = document.createElement("textarea");
+        textarea.innerHTML = message.content;
+        message.content = textarea.value;
+
+        let edited = (message.edited && !message.deleted) ? " · Edited" : "";
+
+        let note = "";
+        if (message.to != "all") note += (message.from == username) ? " · To " + message.to : " · Private message";
+        if (!message.from) note += " · From server";
+
+        let msgButtons = "";
+        if (message.from == username || myPerms <= modPerms && message.from) {
+          if (message.from == username) msgButtons += `<img src="{{ url_for('static', filename='img/chat/edit.png') }}" class="msgButton" title="Edit message" onclick="edit(${message.time}, '${message.content}');"> `;
+          msgButtons += `<img src="{{ url_for('static', filename='img/chat/delete.png') }}" class="msgButton" title="Delete message" onclick="del(${message.time});">`;
+        }
+
+        newMSG.innerHTML = `
+          <b class="username" onclick="${usernameOnclick}" title="${usernameTitle}">${message.from}</b>
+          <span class="info">${dateString(message.time)}<span id="edited${message.time}">${edited}</span>${note} ${msgButtons}</span>
+        `;
+        let content = document.createElement("div");
+        content.id = "content" + message.time;
+        content.classList.add("content");
+        //The server can send HTML; students can't
+        if (!message.from) content.innerHTML = message.content;
+        else content.innerText = message.content;
+
+        newMSG.append(content);
+
+        boxes.outputBox.appendChild(newMSG);
+        if (lockBottom) boxes.outputBox.scrollTo(0, boxes.outputBox.scrollHeight);
+
+        let notification;
+        if (localStorage.getItem("chatNotifications")) notification = new Notification(message.from, {body: message.content, icon: "{{ url_for('static', filename='img/favicon.ico') }}"});
+    }
+
+    function edit(time, original) {
+      let newContent = prompt("Edit your message", original);
+      if (newContent && newContent != original) chatSocket.emit("edit", time, newContent);
+    }
+
+    function del(time) {
+      if (confirm("Delete this message?")) chatSocket.emit("delete", time);
+    }
+
+    function enterCommand(command) {
+      boxes.inputBox.value = command;
+      boxes.inputBox.focus();
+    }
+
+    boxes.ncb.checked = localStorage.getItem("chatNotifications") && Notification.permission == "granted";
+
+    boxes.ncb.onchange = async function() {
+      await Notification.requestPermission();
+      if (this.checked && Notification.permission == "granted") {
+        this.checked = true;
+        localStorage.setItem("chatNotifications", "true");
+      } else {
+        this.checked = false;
+        localStorage.setItem("chatNotifications", "");
+        if (Notification.permission == "denied") alert("You need to reset this sites's permissions to allow notifications.");
+      }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Submit BGM{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+  <style>
+    body {
+      width: fit-content;
+      margin: auto;
+    }
+
+    form {
+      margin-top: 32px;
+    }
+
+    input, label {
+      display: block;
+      margin: auto;
+      font-size: 20px !important;
+      height: 36px !important;
+      box-sizing: border-box;
+    }
+
+    label {
+      width: fit-content;
+      text-align: center;
+    }
+
+    .button {
+      padding: 3px 18px !important;
+    }
+  </style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}purple{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+  <form method="post">
+    <input class="box" type="text" name="title" placeholder="Title" autocomplete="off" required><br>
+    <label class="button">
+      <span id="fileName">Audio file</span>
+      <input class="hidden" type="file" name="file" accept="audio/*" required onchange="changeFileName(this.value);">
+    </label><br>
+    <input type="hidden" id="list" name="list"">
+    <input class="button" type="submit">
+  </form>
+{% endblock %}
+
+<!-- Extra JavaScript here -->
+{% block script %}
+  <script>
+    function changeFileName(name) {
+      document.getElementById("fileName").innerText = name.substring((name.lastIndexOf("\\")) + 1) || "Audio file"; //Get the filename from the last backslash
+    }
+
+    ["sfx", "bgm"].includes(urlParams.get("list")) ? document.getElementById("list").value = urlParams.get("list") : document.getElementById("list").value = "sfx";
+  </script>
+{% endblock %}

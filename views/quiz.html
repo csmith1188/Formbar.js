@@ -1,0 +1,41 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}brown{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+<h1 id="quizName">Quiz</h1>
+<form id="quizList" method="POST" action="/quiz">
+
+</form>
+<script type="text/javascript">
+    var quiz = JSON.parse('{{ quiz | tojson }}')
+    console.log(quiz);
+    let listString = document.createElement('ol')
+    for (let i = 0; i < quiz.questions.length; i++) {
+        let nextRow = document.createElement('li')
+        nextRow.innerHTML = `<h3>${quiz.questions[i]}</h3>`
+        quiz.answers[i].forEach((answer, j) => {
+            nextRow.innerHTML += `<input type="radio" id="question_${i}_${j}" name="answer_${i}" value="${j+1}" required><label for="question_${i}_${j}">${answer}</label><br>`
+        });
+        listString.appendChild(nextRow)
+    }
+    listString.innerHTML += '<input type="submit" value="Submit">'
+    document.getElementById('quizList').appendChild(listString)
+    document.getElementById('quizName').innerHTML = "Quiz: " + quiz.name
+    document.title = "Quiz: " + quiz.name
+</script>
+{% endblock %}

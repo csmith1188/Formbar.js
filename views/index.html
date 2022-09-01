@@ -1,0 +1,238 @@
+{% extends 'header_content.html' %}
+<!-- ^^ This means add this file to the end of the contents of header.html -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Formbar Home{% endblock %}
+{% block color %}classic{% endblock %}
+{% block style %}
+<style>
+  #content {
+      width: 400px;
+  }
+
+  .container1-flex {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+  }
+
+  .container2-flex {
+      display: flex;
+      justify-content: space-around;
+      flex-grow: 1;
+  }
+
+  .bigbutton, .smallbutton {
+      margin: auto;
+      padding: 10px;
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      border: 2px solid var(--bg-dark-blue);
+      background-color: var(--dark-gray);
+      font-size: 1.2em;
+      font-weight: bolder;
+      text-align: center;
+      box-shadow: 8px 8px var(--dark-gray);
+      cursor: pointer;
+  }
+
+  .smallbutton {
+    width: 25px;
+    height: 25px;
+    border-radius: 10px;
+    font-size: 0.6em;
+  }
+
+  .bigbutton a {
+    margin: auto;
+    vertical-align: middle;
+  }
+
+  .bb-green {
+      background-color: #bfb;
+  }
+
+  .bb-yellow {
+      background-color: #ffb;
+  }
+
+  .bb-blue {
+      background-color: #bdf;
+  }
+
+  .bb-red {
+      background-color: #fbb;
+  }
+
+  .bigbutton:hover, .smallbutton:hover {
+      background-color: #ffffff;
+  }
+
+  .user {
+     background-color: #cccccc;
+     border: 1px solid #000000;
+     border-radius: 5px;
+     overflow-x:auto;
+  }
+
+  #tabcontainer {
+    background-color: gray;
+    border-radius: 5px;
+    border: solid var(--bg-dark-blue) 2px;
+    padding: 5px;
+  }
+
+  .tab {
+    background-color: var(--bg-dark-blue);
+    color: white;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  .entry {
+  }
+
+  .entrylink {
+    color: var(--bg-dark-blue);
+    border-radius: 5px;
+    border: solid var(--bg-dark-blue) 2px;
+    margin: 5px;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  .entrylink:hover {
+    background-color: white;
+  }
+
+  .-green {
+      background-color: #bfb;
+  }
+
+  .-yellow {
+      background-color: #ffb;
+  }
+
+  .-blue {
+      background-color: #bff;
+  }
+
+  .-red {
+      background-color: #fbb;
+  }
+
+</style>
+{% endblock %}
+{% block script %}
+<script src="../static/jquery/external/jquery/jquery.js" charset="utf-8"></script>
+<script src="../static/jquery/jquery-ui.min.js" charset="utf-8"></script>
+<script>
+    $(function() {
+        $("#tabcontainer").accordion({
+          heightStyle: "content"
+        });
+    });
+</script>
+{% endblock %}
+{% block main %}
+<h1>Formbar</h1>
+<div id="tabcontainer" class="dark blue">
+  <h3 class="tab">Students</h3>
+  <div class="entry">
+      <div class="entrylink -green light" onclick="window.location = '/tutd';">
+          Thumbspanel (/tutd)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/chat';">
+          Chat (/chat)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/help';">
+          Help! (/help)
+      </div>
+      <div class="entrylink -yellow light" onclick="window.location = '/break';">
+          Request bathroom break (/break)
+      </div>
+      <div class="entrylink -green light" onclick="window.location = '/wawd';">
+          What Are We Doing? (/wawd)
+      </div>
+  </div>
+  <h3 class="tab">Formbar</h3>
+  <div class="entry">
+      <div class="entrylink -green light" onclick="window.location = '/bgm';">
+          Background Music (/bgm)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/sfx';">
+          Sound Effects (/sfx)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/advanced';">
+          Advanced homepage (/advanced)
+      </div>
+      <div class="entrylink -yellow light" onclick="window.location = '/quickpanel';">
+          Quick panel (/quickpanel)
+      </div>
+      <div class="entrylink -green light" onclick="window.location = '/setdefault';">
+          Set default homepage (/setdefault)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/virtualbar';">
+          VirtualBar (/virtualbar)
+      </div>
+  </div>
+  <h3 class="tab">Games</h3>
+  <div class="entry">
+      <div class="entrylink -green light" onclick="window.location = '/games/2048';">
+          2048 (/games/2048)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/games/bitshifter';">
+          Bitshifter (/games/bitshifter)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/games/hangman';">
+          Hang Man (/games/hangman)
+      </div>
+      <div class="entrylink -yellow light" onclick="window.location = '/games/minesweeper';">
+          Minesweeper (/games/minesweeper)
+      </div>
+      <div class="entrylink -green light" onclick="window.location = '/games/speedtype';">
+          Speed Typer (/games/speedtype)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/games/ttt';">
+          Tic-tac-toe (/games/ttt)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/games/towerdefense';">
+          Tower Defense (/games/towerdefense)
+      </div>
+      <div class="entrylink -yellow light" onclick="window.location = '/games/fighter';">
+          Turn-Based Fighter (/games/fighter)
+      </div>
+      <div class="entrylink -green light" onclick="window.location = '/games/wordle';">
+          Wordle (/games/wordle)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/games/flashcards';">
+        Flashcards (/games/flashcards)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/leaderboards';">
+          Leaderboards (/leaderboards)
+      </div>
+  </div>
+  <h3 class="tab">Teacher</h3>
+  <div class="entry">
+      <div class="entrylink -green light" onclick="window.location = '/controlpanel';">
+          Teacher controls (/controlpanel)
+      </div>
+      <div class="entrylink -blue light" onclick="window.location = '/users';">
+          User accounts (/users)
+      </div>
+      <div class="entrylink -red light" onclick="window.location = '/lesson';">
+          Lesson (/lesson)
+      </div>
+      <div class="entrylink -yellow light" onclick="window.location = '/needshelp';">
+          Help Tickets (/needshelp)
+      </div>
+      <div class="entrylink -green light" onclick="window.location = '/debug';">
+          API Debug (/debug)
+      </div>
+  </div>
+</div>
+{% endblock %}
