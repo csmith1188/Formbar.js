@@ -1,0 +1,123 @@
+{% extends 'header_content.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}User Accounts{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+<style>
+  body {
+    overflow-x: hidden;
+  }
+
+  .controls {
+    padding: 8px;
+    background: var(--bg-dark-highlight);
+    margin-bottom: 16px;
+  }
+
+  .controls button {
+    margin: 0 4px;
+    font-size: 14px;
+  }
+
+  .controls button.pressed {
+    cursor: pointer;
+  }
+
+  .user {
+    position: relative;
+    left: 21px;
+  }
+
+  .user > * {
+    max-width: calc(100% - 21px);
+    overflow-wrap: break-word;
+  }
+
+  h3 {
+    margin: 0 0 8px 0;
+    padding: 4px;
+  }
+
+  button.inline {
+    margin-bottom: 8px;
+  }
+
+  #users {
+    margin-bottom: 8px;
+  }
+</style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}orange{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+<h1>User accounts</h1>
+<div id="users"></div>
+<button id="addUser" class="inline popOut">Create new account</button>
+{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+<script>
+    let users = "{{ users }}".replaceAll("&#39;", "'").replaceAll("(", "[").replaceAll(")", "]").replaceAll("b'", "'").replaceAll("None", null);
+    users = eval(users);
+    let permNames = ['Teacher', 'Mod', 'Student', 'Guest'];
+    let usersBox = document.getElementById("users");
+
+    usersBox.innerHTML = "";
+    //Loop through each user in the list
+    for (let user of users) {
+        let newStudent = document.createElement('h3');
+
+        newStudent.innerHTML = user[1];
+        let newDetails = document.createElement('span');
+        newDetails.classList.add('user');
+        let userPerms = user[3];
+        newDetails.innerHTML += `
+            <select onchange="updatePerm(this)" id="userpermsDrop" name="userpermsDrop">
+            <option value="/updateuser?name=${user[1]}&field=permissions&value=0" ${userPerms === 0 ? "selected" : ""}>${permNames[0]}</option>
+            <option value="/updateuser?name=${user[1]}&field=permissions&value=1" ${userPerms === 1 ? "selected" : ""}>${permNames[1]}</option>
+            <option value="/updateuser?name=${user[1]}&field=permissions&value=2" ${userPerms === 2 ? "selected" : ""}>${permNames[2]}</option>
+            <option value="/updateuser?name=${user[1]}&field=permissions&value=3" ${userPerms === 3 ? "selected" : ""}>${permNames[3]}</option>
+            </select>
+        `;
+        usersBox.appendChild(newStudent)
+        usersBox.appendChild(newDetails)
+        let name = user[1];
+        newDetails.innerHTML += "	&nbsp; ";
+        newDetails.innerHTML += `<a onclick="changePw('${name}')">Change password</a>`;
+        newDetails.innerHTML += "	&nbsp; ";
+        newDetails.innerHTML += `<a onclick="deleteAcc('${name}')">Delete account</a>`;
+        newDetails.innerHTML += "<br><br>";
+    }
+
+    function changePw(name) {
+      let password;
+      do {password = prompt("New password:")} while (password === "");
+      window.location = `/users?name=${name}&action=changePw&password=${password}`;
+    }
+
+    function deleteAcc(name) {
+      if (confirm(`Permanently delete ${name}'s account?`)) window.location = `/users?name=${name}&action=delete`;
+    }
+
+    function updatePerm(el) {
+      request.open("POST", el.value);
+      request.send();
+    }
+
+    document.getElementById("addUser").addEventListener("click", () => {
+      let username = prompt("New user's name:");
+      if (username) {
+        let password = prompt("New user's password:");
+        if (password) window.location = `/createaccount?name=${username}&password=${password}`;
+      }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,712 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Formbar{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+<style>
+  h1 {
+    margin: 0 0 12px;
+    font-size: 26px;
+    color: var(--theme-color);
+  }
+
+  h2 {
+    margin: 48px 0 4px;
+    font-size: 23px;
+    color: var(--theme-color);
+  }
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    color: var(--theme-color);
+  }
+
+  button, .button {
+    margin-top: 8px;
+  }
+
+  a:active {
+    filter: brightness(50%);
+  }
+
+  .thumbButton,
+  .letterButton {
+    height: 80px;
+    margin: 8px;
+    border-radius: 40px !important;
+  }
+
+  .highlight:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  #sidebar {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0 8px 8px;
+    overflow: auto;
+  }
+
+  #sidebarButtons {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 16px;
+  }
+
+  #tutdDiv, #abcdDiv {
+    width: 100%;
+  }
+
+  #randomMusic {
+    margin: 0 4px 0 0;
+  }
+
+  #playPauseMusic, #restartMusic, #stopMusic {
+    margin: 0;
+  }
+
+  #text {
+    text-transform: uppercase;
+    font-family: monospace;
+  }
+
+  #color2Div:not(.hidden) {
+    display: inline-block;
+  }
+
+  #excluded {
+    color: var(--color-red);
+  }
+
+  #chatSidebar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: calc(100% - 64px);
+    border: 1px solid var(--dark-gray);
+    border-style: solid none none;
+  }
+
+  #rightSide {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: calc(100% - 250px);
+    height: 100%;
+  }
+
+  #tabs {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    display: flex;
+    background: var(--bg-darker);
+    border: 1px solid var(--dark-gray);
+    border-style: solid none;
+  }
+
+  .tab {
+    padding: 5.5px 16px;
+    background: var(--bg-darker);
+    color: white;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .icon {
+    position: relative;
+    top: 2px;
+    vertical-align: top;
+    height: 18px;
+  }
+
+  .dropdown::after {
+    content: "";
+    vertical-align: bottom;
+    display: inline-block;
+    margin-left: 8px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+  }
+
+  .menu {
+    position: fixed;
+    top: 32px;
+    box-sizing: border-box;
+    border: 1px var(--dark-gray);
+    border-style: none solid solid;
+    background: var(--bg-darker);
+    z-index: 2;
+    outline: none;
+  }
+
+  #urlTab {
+    padding: 4.5px 16px;
+  }
+
+  .tab:not(.open):not(.unselectable):hover, .tab.menuOpen {
+    background: var(--bg-dark-highlight);
+  }
+
+  .tab.open {
+    color: white;
+  }
+
+  #chatTab.open {
+    background: var(--color-cyan);
+  }
+
+  #studentsTab.open, #studentsMenu > .open {
+    background: var(--color-gold);
+  }
+
+  #gamesTab.open, #gamesMenu > .open {
+    background: var(--color-green);
+  }
+
+  #teacherTab.open, #teacherMenu > .open {
+    background: var(--color-orange);
+  }
+
+  #debugTab.open {
+    background: var(--color-red);
+  }
+
+  #urlLabel {
+    color: var(--light-gray);
+    cursor: pointer;
+  }
+
+  #urlInput {
+    padding: 0;
+    color: white;
+    border-color: white;
+  }
+
+  #innerPage {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: calc(100% - 32px);
+    border: none;
+  }
+
+  #virtualBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    background: var(--bg-dark-blue);
+  }
+
+  #vbText {
+    width: 10ch;
+    padding: 0 4px;
+    box-sizing:
+    border-box; border: 1px white;
+    border-style: solid solid none;
+    font: 20px monospace;
+    text-transform: uppercase;
+    background: black;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #pixBox {
+    width: 100%;
+    height: 16px;
+    box-sizing: border-box;
+    border: 1px solid white;
+    display: flex;
+    justify-content: space-around;
+    user-select: none;
+  }
+</style>
+{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+<div id="virtualBar" class="hidden">
+  <div id="vbText"></div>
+  <span id="pixBox"></span>
+</div>
+
+<div id="sidebar" class="light">
+  <div id="sidebarButtons">
+    <button id="formbarButton" class="pressed" onclick="changeSidebar('formbar')">Formbar</button>
+    <button id="chatButton" onclick="changeSidebar('chat')">Chat</button>
+    <button id="otherButton" onclick="changeSidebar('other')">Other</button>
+  </div>
+
+  <div id="formbarSidebar">
+    <div>Features will appear when the teacher makes them available.</div>
+
+    <div id="tutdDiv" class="hidden">
+      <h2>Thumbs</h2>
+      <img src="{{ url_for('static', filename='img/advanced/thumbButton0.png') }}" id="thumbButton0" class="thumbButton button inline popOut moreDepth greenColor" title="Up" onclick="thumbsVote(0);" tabindex="0">
+      <br>
+      <img src="{{ url_for('static', filename='img/advanced/thumbButton1.png') }}" id="thumbButton1" class="thumbButton button inline popOut moreDepth cyanColor" title="Wiggle" onclick="thumbsVote(1);" tabindex="0">
+      <br>
+      <img src="{{ url_for('static', filename='img/advanced/thumbButton2.png') }}" id="thumbButton2" class="thumbButton button inline popOut moreDepth redColor" title="Down" onclick="thumbsVote(2);" tabindex="0">
+    </div>
+
+    <div id="abcdDiv" class="hidden">
+      <h2>Letters</h2>
+      <img src="{{ url_for('static', filename='img/advanced/letterButton0.png') }}" id="letterButton0" class="letterButton button inline popOut moreDepth redColor" title="Vote A" onclick="letterVote(0);" tabindex="0">
+      <br>
+      <img src="{{ url_for('static', filename='img/advanced/letterButton1.png') }}" id="letterButton1" class="letterButton button inline popOut moreDepth blueColor" title="Vote B" onclick="letterVote(1);" tabindex="0">
+      <br>
+      <img src="{{ url_for('static', filename='img/advanced/letterButton2.png') }}" id="letterButton2" class="letterButton button inline popOut moreDepth yellowColor" title="Vote C" onclick="letterVote(2);" tabindex="0">
+      <br>
+      <img src="{{ url_for('static', filename='img/advanced/letterButton3.png') }}" id="letterButton3" class="letterButton button inline popOut moreDepth greenColor" title="Vote D" onclick="letterVote(3);" tabindex="0">
+    </div>
+
+    <div id="essayDiv" class="hidden">
+      <h2>Essay</h2>
+      <textarea id="essay" rows="6" cols="25" placeholder="Type your essay here" oninput="checkEssay();"></textarea><br>
+      <button id="submitEssay" class="inline popOut unselectable">Submit</button>
+    </div>
+
+    <div id="soundDiv" class="hidden">
+      <h2>Sound effects</h2>
+      <input type="text" id="sound" class="line" placeholder="Filename" list="sfxFiles">
+      <datalist id="sfxFiles"></datalist>
+      <img src="{{ url_for('static', filename='img/advanced/checkMark.png') }}" class="smallImg" title="Submit" onclick="sendSound();">
+    </div>
+
+    <div id="musicDiv" class="hidden">
+      <h2>Play music</h2>
+      <img src="{{ url_for('static', filename='img/advanced/random.png') }}" id="randomMusic" class="smallImg" title="Random" onclick="randomBGM()"><input type="text" id="music" class="line" placeholder="Filename" list="bgmFiles">
+      <datalist id="bgmFiles"></datalist>
+      <img src="{{ url_for('static', filename='img/advanced/checkMark.png') }}" class="smallImg" title="Submit" onclick="sendMusic();"><br>
+      <label for="volume">Volume: </label><input type="range" id="volume" min="0.1" max="1" step="0.1">
+      <span id="volNumber"></span>
+      <div id="nowPlaying" class="hidden">Now playing: <b id="nowPlayingTitle" title="Song"></b></div>
+      <div id="musicControls" class="hidden">
+        <img src="{{ url_for('static', filename='img/advanced/pause.png') }}" class="smallImg" id="playPauseMusic" title="Pause" onclick="playPauseMusic();">
+        <img src="{{ url_for('static', filename='img/advanced/restart.png') }}" class="smallImg" id="restartMusic" title="Restart" onclick="restartMusic();">
+        <img src="{{ url_for('static', filename='img/advanced/stop.png') }}" class="smallImg" id="stopMusic" title="Stop" onclick="stopMusic();">
+      </div>
+    </div>
+
+    <div id="textDiv" class="hidden">
+      <h2>Change text</h2>
+      Text color: <input type="color" id="fgColor" class="button inline popOut" value="#404040"><br>
+      Background: <input type="color" id="bgColor" class="button inline popOut"><br>
+      <input type="text" id="text" class="line" placeholder="Phrase">
+      <img src="{{ url_for('static', filename='img/advanced/checkMark.png') }}" class="smallImg" title="Submit" onclick="sendText();">
+    </div>
+
+    <div id="colorDiv" class="hidden">
+      <h2>Change color</h2>
+      <input type="radio" id="hideSegment" name="segment" checked onclick="hideSegment();" style="margin-left: 0;"><label for="hideSegment">Entire bar</label>
+      <input type="radio" id="showSegment" name="segment" style="margin-left: 8px;" onclick="showSegment();"><label for="showSegment">Segment</label>
+      <br>
+      <div id="segment" class="hidden" style="margin-bottom: 8px;">
+        <input type="number" id="segmentStart" class="line" min="0" value="0" onchange="validNumber(this);"> –
+        <input type="number" id="segmentEnd" class="line" min="0" onchange="validNumber(this);">
+      </div>
+      <input type="radio" id="hideColor2" name="gradient" checked onclick="hideColor2();" style="margin-left: 0;"><label for="hideColor2">Single color</label>
+      <input type="radio" id="showColor2" name="gradient" style="margin-left: 8px;" onclick="showColor2();"><label for="showColor2">Gradient</label>
+      <br>
+      <div style="display: inline-block;">
+        <h3 id="color1Heading" class="hidden" style="margin-bottom: 0;">Color 1</h3>
+        <input type="color" id="color1" class="button inline popOut">
+      </div>
+      <div id="color2Div" class="hidden" style="margin-left: 8px;">
+        <h3 style="margin-bottom: 0;">Color 2</h3>
+        <input type="color" id="color2" class="button inline popOut">
+      </div>
+      <img src="{{ url_for('static', filename='img/advanced/checkMark.png') }}" class="smallImg" title="Submit" onclick="sendColor();">
+    </div>
+  </div>
+
+  <iframe id="chatSidebar" class="hidden"></iframe>
+
+  <div id="otherSidebar" class="hidden">
+    Name: <a id="name"></a><span id="excluded"></span><br>
+
+    <h2>Settings</h2>
+    <b>Default page:</b> /<input type="text" id="defaultPage" class="line" style="width: 100px;" placeholder="URL path"><br>
+    <input type="checkbox" id="pinVB"><label for="pinVB">Pin virtual bar to top</label><br>
+
+    <h2>More</h2>
+    <a href="javascript:logOut();">Log out</a><br>
+    <a href="javascript:openPage('changepassword');">Change your password</a><br>
+    <a href="/quickpanel">Go to the quick panel</a><br>
+    <a href="/home">Go to the standard homepage</a><br>
+    <a href="/setdefault">Set default homepage</a><br>
+    <a href="https://github.com/csmith1188/formbar/issues/new" target="_blank">Send feedback 🡆</a>
+  </div>
+</div>
+
+<div id="rightSide">
+  <div id="tabs">
+    <div id="chatTab" class="tab" onclick="openPage('chat');"><img src="{{ url_for('static', filename='img/advanced/chat.png') }}" class="icon"> <b id="newMessages" style="color: var(--light-red);"></b> <span class="tabText">Chat</span></div>
+    <div id="studentsTab" class="tab dropdown"><img src="{{ url_for('static', filename='img/advanced/students.png') }}" class="icon"> <span class="tabText">Students</span></div>
+    <div id="studentsMenu" class="menu hidden" tabindex="-1">
+      <div id="helpTab" class="tab" onclick="openPage('help');">Help!</div>
+      <div id="breakTab" class="tab" onclick="openPage('break');">Bathroom break</div>
+      <div id="wawdTab" class="tab" onclick="openPage('wawd');">What are we doing?</div>
+    </div>
+    <div id="gamesTab" class="tab dropdown"><img src="{{ url_for('static', filename='img/advanced/games.png') }}" class="icon"> <span class="tabText">Games</span></div>
+    <div id="gamesMenu" class="menu hidden" tabindex="-1">
+      <div id="2048Tab" class="tab" onclick="openPage('games/2048');">2048</div>
+      <div id="bitshifterTab" class="tab" onclick="openPage('games/bitshifter');">Bitshifter</div>
+      <div id="flashcardsTab" class="tab" onclick="openPage('games/flashcards');">Flashcards</div>
+      <div id="hangmanTab" class="tab" onclick="openPage('games/hangman');">Hangman</div>
+      <div id="minesweeperTab" class="tab" onclick="openPage('games/minesweeper');">Minesweeper</div>
+      <div id="speedtypeTab" class="tab" onclick="openPage('games/speedtype');">Speed Typer</div>
+      <div id="tttTab" class="tab" onclick="openPage('games/ttt');">Tic-tac-toe</div>
+      <div id="towerdefenseTab" class="tab" onclick="openPage('games/towerdefense');">Tower Defense</div>
+      <div id="fighterTab" class="tab" onclick="openPage('games/fighter');">Turn-Based Fighter</div>
+      <div id="wordleTab" class="tab" onclick="openPage('games/wordle');">Wordle</div>
+      <div id="leaderboardsTab" class="tab" onclick="openPage('leaderboards');">Leaderboards</div>
+    </div>
+    <div id="teacherTab" class="tab dropdown"><img src="{{ url_for('static', filename='img/advanced/teacher.png') }}" class="icon"> <span class="tabText">Teacher</span></div>
+    <div id="teacherMenu" class="menu hidden" tabindex="-1">
+      <div id="controlpanelTab" class="tab" onclick="openPage('controlpanel');">Teacher controls</div>
+      <div id="usersTab" class="tab" onclick="openPage('users');">User accounts</div>
+      <div id="lessonTab" class="tab" onclick="openPage('lesson');">Lesson</div>
+      <div id="virtualbarTab" class="tab" onclick="openPage('virtualbar');">Virtual bar</div>
+    </div>
+    <div id="debugTab" class="tab" onclick="openPage('debug');"><img src="{{ url_for('static', filename='img/advanced/debug.png') }}" class="icon"> <span class="tabText">Debug data</span></div>
+    <div class="tab" style="margin-left: auto;" onclick="document.getElementById('innerPage').contentWindow.location.reload();"><img src="{{ url_for('static', filename='img/advanced/reload.png') }}" class="icon"> <span class="tabText">Reload inner page</span></div>
+    <div class="tab" onclick="document.getElementById('innerPage').requestFullscreen();"><img src="{{ url_for('static', filename='img/advanced/fullscreen.png') }}" class="icon"> <span class="tabText">Fullscreen</span></div>
+  </div>
+
+  <div>
+    <iframe id="innerPage" onload="if (this.contentWindow.location.pathname.startsWith('/')) pageOpened(this.contentWindow.location.pathname);"></iframe>
+  </div>
+</div>
+{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+<script>
+  let other = document.getElementById("otherSidebar");
+  let sbSections = ["formbar", "chat", "other"];
+  let tabs = Array.from(document.querySelectorAll(".tab"));
+  let tabLabels = Array.from(document.querySelectorAll(".tabText"));
+  let menus = ["students", "games", "teacher"];
+  let innerPage = document.getElementById("innerPage");
+  let sidebar = "formbar";
+  let innerPageTitle;
+  let urlOpen;
+  let username = "{{ username }}";
+  let defaultPage = localStorage.getItem("defaultPage") || "chat";
+  let oldPix;
+
+  function init() {
+    menuPositions();
+    minimizeTabs();
+    nowPlaying();
+    updateVolume();
+    getUsername();
+    showEnabled();
+    grayOutTabs();
+    updateVotes();
+    listSounds("{{ sfx }}");
+    listMusic("{{ bgm }}");
+    segmentNumbers();
+    updateVirtualBar();
+  }
+  getApiData(true);
+
+  function update() {
+    checkIfRemoved();
+    updateVotes();
+    showEnabled();
+    grayOutTabs();
+    nowPlaying();
+    updateVolume();
+    checkIfExcluded();
+    updateVirtualBar();
+  };
+  setInterval(getApiData, 1000);
+
+  window.addEventListener("resize", minimizeTabs);
+
+  try {
+    openPage("{{ page }}" || defaultPage); //If there is no "page" param, go to the main page
+  } catch {
+    alert("Page does not exist");
+    openPage("chat");
+  }
+
+  function changeSidebar(id) {
+    sidebar = id;
+    sbSections.forEach(section => {
+      if (section == id) {
+        document.getElementById(section + "Sidebar").classList.remove("hidden");
+        document.getElementById(section + "Button").classList.add("pressed");
+      } else {
+        document.getElementById(section + "Sidebar").classList.add("hidden");
+        document.getElementById(section + "Button").classList.remove("pressed");
+      }
+    });
+    if (id == "chat") {
+      document.getElementById("chatSidebar").src = "/chat?sidebar=true";
+      document.title = `${innerPageTitle} - Formbar`;
+      document.getElementById("newMessages").innerText = null;
+      newMessages = 0;
+    }
+  }
+
+  function showEnabled() {
+    let tutdDiv = document.getElementById("tutdDiv");
+    let abcdDiv = document.getElementById("abcdDiv");
+    let soundDiv = document.getElementById("soundDiv");
+    let musicDiv = document.getElementById("musicDiv");
+    let textDiv = document.getElementById("textDiv");
+    let colorDiv = document.getElementById("colorDiv");
+
+    let mode = modeRes.mode;
+    let myPerms = meRes.perms;
+    let studentPerms = permsRes.student;
+
+    if (mode == "tutd" && myPerms == permsRes.student) tutdDiv.classList.remove("hidden");
+    else tutdDiv.classList.add("hidden");
+
+    if (mode == "abcd" && myPerms == permsRes.student) abcdDiv.classList.remove("hidden");
+    else abcdDiv.classList.add("hidden");
+
+    if (mode == "text" && myPerms == permsRes.student) essayDiv.classList.remove("hidden");
+    else essayDiv.classList.add("hidden");
+
+    let sfxPerm = permsRes.sfx;
+    let bgmPerm = permsRes.bgm;
+    let ledPerm = permsRes.bar;
+
+    if (myPerms <= sfxPerm) soundDiv.classList.remove("hidden");
+    else soundDiv.classList.add("hidden");
+    if (myPerms <= bgmPerm) musicDiv.classList.remove("hidden");
+    else musicDiv.classList.add("hidden");
+    if (myPerms <= ledPerm) {
+      textDiv.classList.remove("hidden");
+      colorDiv.classList.remove("hidden");
+    } else {
+      textDiv.classList.add("hidden");
+      colorDiv.classList.add("hidden");
+    }
+  }
+
+  function logOut() {
+    //If the user is the only teacher logged in, confirm before logging out
+    if (
+      meRes.perms != permsRes.teacher ||
+      Object.values(studentsRes).filter(user => user.perms == permsRes.teacher).length > 1 ||
+      confirm("If you log out, the next person to log in will become the teacher. Log out anyway?")
+    ) {
+      window.location = "/login";
+    }
+  }
+
+  function grayOutTabs() {
+    ["help", "break"].forEach(tab => {
+      let cl = document.getElementById(tab + "Tab").classList;
+      meRes.perms === permsRes.teacher ? cl.add("unselectable") : cl.remove("unselectable");
+    });
+    ["2048", "bitshifter", "hangman", "minesweeper", "speedtype", "ttt", "towerdefense", "fighter", "wordle"].forEach(tab => {
+      let cl = document.getElementById(tab + "Tab").classList;
+      meRes.perms > permsRes.games ? cl.add("unselectable") : cl.remove("unselectable");
+    });
+    ["controlpanel", "users", "lesson"].forEach(tab => {
+      let cl = document.getElementById(tab + "Tab").classList;
+      meRes.perms > permsRes.teacher ? cl.add("unselectable") : cl.remove("unselectable");
+    });
+  }
+
+  function minimizeTabs() {
+    let container = document.getElementById("tabs");
+    tabLabels.forEach(label => label.classList.remove("hidden"));
+    //If container has overflow, show only icons
+    if (container.scrollHeight > container.clientHeight) tabLabels.forEach(label => label.classList.add("hidden"));
+    menuPositions();
+  }
+
+  function menuPositions() {
+    menus.forEach(menu => {
+      let menuEl = document.getElementById(menu + "Menu");
+      let tabEl = document.getElementById(menu + "Tab");
+      menuEl.style.left = tabEl.getBoundingClientRect().left + "px"; //Give menu same X position as tab
+      if (menuEl.offsetWidth < tabEl.offsetWidth) menuEl.style.width = tabEl.offsetWidth;
+    });
+  }
+
+  function getUsername() {
+    let nameBox = document.getElementById("name");
+    let oldHeight = other.clientHeight;
+    nameBox.innerText = username;
+    nameBox.onclick = () => openPage("profile");
+    let myPerms = meRes.perms;
+    if (other.clientHeight > oldHeight) {
+      shorten(other, oldHeight, nameBox);
+    } else {
+      nameBox.removeAttribute("title");
+      nameBox.style.cursor = null;
+    }
+  }
+
+  function checkIfExcluded() {
+    let exclBox = document.getElementById("excluded");
+    let nameBox = document.getElementById("name");
+    let oldHeight = other.clientHeight;
+    if (meRes.excluded) exclBox.innerText = " (excluded)";
+    if (other.clientHeight > oldHeight) {
+      shorten(other, oldHeight, nameBox);
+    } else {
+      nameBox.removeAttribute("title");
+      nameBox.style.cursor = null;
+    }
+  }
+
+  document.getElementById("defaultPage").value = defaultPage;
+
+  document.getElementById("defaultPage").onchange = function() {
+    localStorage.setItem("defaultPage", this.value);
+  }
+
+  document.getElementById("pinVB").onchange = function() {
+    localStorage.setItem("advancedVB", this.checked ? "on" : "");
+  }
+
+  function openPage(page) {
+    innerPage.contentWindow.location = `/${page}?advanced=true`;
+    menus.forEach(menu => {
+      document.getElementById(menu + "Menu").classList.add("hidden");
+      document.getElementById(menu + "Tab").classList.remove("menuOpen");
+    });
+  }
+
+  function pageOpened(path) {
+    innerPageTitle = innerPage.contentWindow.document.title;
+    document.title = `${innerPageTitle} - Formbar`;
+    window.history.pushState({}, '', "?page=" + path.slice(1)); //Update the URL to include the title
+    let tabEl = document.getElementById(path.substring(1) + "Tab") || document.getElementById(path.substring(7) + "Tab");
+    tabs.forEach(tab => tab.classList.remove("open"));
+    if (["/help", "/break", "/wawd"].includes(path)) document.getElementById("studentsTab").classList.add("open");
+    if (path.startsWith("/games") || path == "/leaderboards") document.getElementById("gamesTab").classList.add("open");
+    if (["/controlpanel", "/users", "/lesson", "/virtualbar"].includes(path)) document.getElementById("teacherTab").classList.add("open");
+    if (tabEl) tabEl.classList.add("open");
+    if (["/abcd", "/advanced", "/home", "/mobile", "/quickpanel", "/essay", "/tutd"].includes(path)) openPage(defaultPage);
+    if (path == "/chat") {
+      newMessages = 0;
+      document.getElementById("newMessages").innerText = null;
+      newMessages = 0;
+      menuPositions();
+    }
+  }
+
+  function showMenu(name) {
+    menus.forEach(menu => {
+      if (menu == name) {
+        document.getElementById(name + "Menu").classList.remove("hidden");
+        document.getElementById(name + "Menu").focus();
+        document.getElementById(name + "Tab").classList.add("menuOpen");
+      }
+    });
+  }
+
+  document.getElementById("studentsTab").onclick = () => showMenu("students");
+  document.getElementById("gamesTab").onclick = () => showMenu("games");
+  document.getElementById("teacherTab").onclick = () => showMenu("teacher");
+  document.getElementById("studentsTab").onmousedown = function() {
+    if (document.getElementById("studentsMenu") == document.activeElement) this.onclick = null;
+  };
+  document.getElementById("gamesTab").onmousedown = function() {
+    if (document.getElementById("gamesMenu") == document.activeElement) this.onclick = null;
+  };
+  document.getElementById("teacherTab").onmousedown = function() {
+    if (document.getElementById("teacherMenu") == document.activeElement) this.onclick = null;
+  };
+  document.onclick = () => {
+    document.getElementById("studentsTab").onclick = () => showMenu("students");
+    document.getElementById("gamesTab").onclick = () => showMenu("games");
+    document.getElementById("teacherTab").onclick = () => showMenu("teacher");
+  }
+  menus.forEach(menu => {
+    document.getElementById(menu + "Menu").addEventListener("blur", function() {
+      this.classList.add("hidden"); //Hide menu when user clicks elsewhere
+      document.getElementById(menu + "Tab").classList.remove("menuOpen"); //Remove highlight from the tab
+    });
+    document.getElementById(menu + "Menu").addEventListener("keydown", function() {
+      if (event.code == "Escape") this.blur(); //Hide menu when Esc key pressed
+    });
+  });
+
+  function updateVirtualBar() {
+    if (localStorage.getItem("advancedVB")) {
+      //Update the bar
+      let pix = eval(pixRes.pixels.replaceAll("(", "[").replaceAll(")", "]"));
+      if (JSON.stringify(pix) != oldPix) {
+        oldPix = JSON.stringify(pix);
+        let pixBox = document.getElementById("pixBox");
+        pixBox.innerHTML = '';
+        for (let i = pix.length - 1; i >= 0; i--) {
+            for (let color = 0; color < pix[i].length; color++) {
+                pix[i][color] = pix[i][color].toString(16);
+                if (pix[i][color].length < 2)
+                    pix[i][color] = "0" + pix[i][color];
+            }
+            pixBox.innerHTML += "<div style='display: inline; flex-grow: 1; overflow: hidden; background-color: #" + pix[i][0] + "" + pix[i][1] + "" + pix[i][2] + ";'>&nbsp;</div>";
+        }
+      }
+
+      //Update the text
+      let phrase = phraseRes.phrase;
+      let text = document.getElementById("vbText");
+      text.innerText = phrase;
+      ////To do: update color
+
+      document.getElementById("sidebar").style.height = "calc(100% - 56px)";
+      document.getElementById("rightSide").style.height = "calc(100% - 56px)";
+      menus.forEach(menu => document.getElementById(menu + "Menu").style.top = "88px");
+      document.getElementById("virtualBar").classList.remove("hidden");
+      document.getElementById("pinVB").checked = true;
+    } else {
+      document.getElementById("sidebar").style.height = "100%";
+      document.getElementById("rightSide").style.height = "100%";
+      menus.forEach(menu => document.getElementById(menu + "Menu").style.top = null);
+      document.getElementById("virtualBar").classList.add("hidden");
+      document.getElementById("pinVB").checked = false;
+    }
+  }
+
+  chatSocket.on("message", message => {
+    if (document.hidden || (innerPage.contentWindow.location.pathname != "/chat" && sidebar != "chat")) {
+      let data = JSON.parse(message);
+      newMessages++;
+      document.title = `(${newMessages}) ${innerPageTitle} - Formbar`;
+      if (innerPage.contentWindow.location.pathname != "chat") {
+        document.getElementById("newMessages").innerText = "(" + newMessages + ")";
+        menuPositions();
+      }
+    }
+  });
+
+  //When user goes to this page, if chat is open, remove number of new messages from title
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && (innerPage.contentWindow.location.pathname == "/chat" || sidebar == "chat")) {
+      document.title = `${innerPageTitle} - Formbar`;
+      document.getElementById("newMessages").innerText = null;
+      newMessages = 0;
+    }
+  });
+</script>
+{% endblock %}

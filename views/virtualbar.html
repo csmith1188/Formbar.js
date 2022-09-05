@@ -1,0 +1,93 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Virtual bar{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+  <style>
+    body {
+      user-select: none;
+      background: var(--bg-dark-blue);
+    }
+
+    #virtualBar {
+      width: calc(100% - 32px);
+    }
+
+    #text {
+      width: 10ch;
+      padding: 0 4px;
+      border: 1px white;
+      border-style: solid solid none;
+      background: black;
+      font: 32px monospace;
+      text-transform: uppercase;
+      overflow: hidden;
+    }
+
+    #pixBox {
+      width: 100%;
+      height: 64px;
+      box-sizing: border-box;
+      border: 1px solid white;
+      display: flex;
+      justify-content: space-around;
+      user-select: none;
+    }
+  </style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}purple{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+  <div id="virtualBar" class="vCentered">
+    <div id="text"><!--Text goes here--></div>
+    <span id="pixBox"></span>
+  </div>
+{% endblock %}
+
+<!-- Extra JavaScript here -->
+{% block script %}
+  <script>
+    function update() {
+      //Update the virtual bar
+      let pixRequest = new XMLHttpRequest();
+      pixRequest.open("GET", '/api/pix');
+      pixRequest.onload = () => {
+        let pixRes = JSON.parse(pixRequest.responseText);
+        let pix = eval(pixRes.pixels.replaceAll("(", "[").replaceAll(")", "]"));
+        let pixBox = document.getElementById("pixBox");
+        pixBox.innerHTML = '';
+        for (let i = pix.length - 1; i >= 0; i--) {
+            for (let color = 0; color < pix[i].length; color++) {
+                pix[i][color] = pix[i][color].toString(16);
+                if (pix[i][color].length < 2)
+                    pix[i][color] = "0" + pix[i][color];
+            }
+            pixBox.innerHTML += "<div style='display: inline; flex-grow: 1; overflow: hidden; background-color: #" + pix[i][0] + "" + pix[i][1] + "" + pix[i][2] + ";'>&nbsp;</div>";
+        }
+      }
+      pixRequest.send(null);
+
+      //Update the virtual bar's text
+      let textRequest = new XMLHttpRequest();
+      textRequest.open("GET", '/api/phrase');
+      textRequest.onload = () => {
+        let phraseRes = JSON.parse(textRequest.responseText);
+        let phrase = phraseRes.phrase;
+        let text = document.getElementById("text");
+        text.innerText = phrase;
+        ////To do: update color
+      }
+      textRequest.send(null);
+    }
+
+    update();
+    setInterval(update, 1000);
+  </script>
+{% endblock %}
