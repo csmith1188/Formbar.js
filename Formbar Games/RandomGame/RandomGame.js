@@ -83,6 +83,16 @@ function init(){
         console.log("Mouse Released");
         player.moving = false;
     });
+    document.addEventListener('keydown', function(event) {
+    if(event.keyCode == 37) {
+      console.log("Mouse Pressed");
+      player.moving = true;
+    }
+    else if(event.keyCode == 39) {
+      console.log("Mouse Released");
+      player.moving = false;
+    }
+});
 }
 function isOverlap(rect1,rect2){
     if (rect1.x < rect2.x + rect2.w &&
