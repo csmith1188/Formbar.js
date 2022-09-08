@@ -1,11 +1,4 @@
-{% extends 'header_content.html' %}
-<!-- ^^ This means add this file to the end of the contents of header.html -->
-<!-- This is where the title, top buttons, and stylesheet is located -->
-
-<!-- Change title here -->
-{% block title %}Formbar Home{% endblock %}
-{% block color %}classic{% endblock %}
-{% block style %}
+<%- include('../partials/header_content') %>
 <style>
   #content {
       width: 400px;
@@ -94,6 +87,7 @@
   }
 
   .entry {
+
   }
 
   .entrylink {
@@ -126,19 +120,15 @@
   }
 
 </style>
-{% endblock %}
-{% block script %}
-<script src="../static/jquery/external/jquery/jquery.js" charset="utf-8"></script>
-<script src="../static/jquery/jquery-ui.min.js" charset="utf-8"></script>
-<script>
-    $(function() {
-        $("#tabcontainer").accordion({
-          heightStyle: "content"
-        });
-    });
-</script>
-{% endblock %}
-{% block main %}
+
+
+<body class="classic">
+    <div id="quickmenu" class="hidden">
+        <a href="/home" class="quickButton">Home</a>
+        <a href="/chat" class="quickButton">Chat</a>
+        <a href="/tutd" class="quickButton">Polls</a>
+      </div>
+<div id="content">
 <h1>Formbar</h1>
 <div id="tabcontainer" class="dark blue">
   <h3 class="tab">Students</h3>
@@ -197,22 +187,19 @@
       <div class="entrylink -green light" onclick="window.location = '/games/speedtype';">
           Speed Typer (/games/speedtype)
       </div>
-      <div class="entrylink -blue light" onclick="window.location = '/games/ttt';">
-          Tic-tac-toe (/games/ttt)
-      </div>
-      <div class="entrylink -red light" onclick="window.location = '/games/towerdefense';">
+      <div class="entrylink -blue light" onclick="window.location = '/games/towerdefense';">
           Tower Defense (/games/towerdefense)
       </div>
-      <div class="entrylink -yellow light" onclick="window.location = '/games/fighter';">
+      <div class="entrylink -red light" onclick="window.location = '/games/fighter';">
           Turn-Based Fighter (/games/fighter)
       </div>
-      <div class="entrylink -green light" onclick="window.location = '/games/wordle';">
+      <div class="entrylink -yellow light" onclick="window.location = '/games/wordle';">
           Wordle (/games/wordle)
       </div>
-      <div class="entrylink -blue light" onclick="window.location = '/games/flashcards';">
+      <div class="entrylink -green light" onclick="window.location = '/games/flashcards';">
         Flashcards (/games/flashcards)
       </div>
-      <div class="entrylink -red light" onclick="window.location = '/leaderboards';">
+      <div class="entrylink -blue light" onclick="window.location = '/leaderboards';">
           Leaderboards (/leaderboards)
       </div>
   </div>
@@ -235,4 +222,15 @@
       </div>
   </div>
 </div>
-{% endblock %}
+</div>
+</body>
+<script src="jquery/external/jquery/jquery.js" charset="utf-8"></script>
+<script src="jquery/jquery-ui.min.js" charset="utf-8"></script>
+<script>
+    $(function() {
+        $("#tabcontainer").accordion({
+          heightStyle: "content"
+        });
+    });
+</script>
+<%- include('../partials/footer_content') %>
