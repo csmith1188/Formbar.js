@@ -45,15 +45,16 @@ app.post('/login', (req, res) => {
     var user = { 
         username: req.body.username,
         password: req.body.password,
+        perms: req.body.userType
     }
-    console.log(user.username + ' ' + user.userType);
+    console.log(user.username + ' ' + user.perms);
     var passwordCrypt = encrypt(user.password);
-    if (user.userType == "login") {
+    if (user.perms == "login") {
 
-    } else if (user.userType == "new") {
-        let db = new sqlite3.Database('database/database_template.db');
+    } else if (user.perms == "new") {
+        let db = new sqlite3.Database('database/database.db');
             db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), user.userType], (err) => {
+            [user.username, JSON.stringify(passwordCrypt), user.perms], (err) => {
                 if (err) {
                     console.log(err);
                 }
@@ -73,8 +74,8 @@ app.post('/login', (req, res) => {
         // })
         // })
         // db.close();
-        res.send('Ty')
-    } else if (user.userType == "guest") {
+        res.redirect('/selectclass')
+    } else if (user.perms == "guest") {
 
     }
 })
@@ -85,5 +86,16 @@ app.get('/home', (req, res) => {
         color: '"dark blue"'
     })
 })
+
+
+
+
+
+
+
+
+
+
+
 // Open server to listen on port 4000
 app.listen(4000);
