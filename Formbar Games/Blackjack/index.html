@@ -9,7 +9,7 @@
     <script>
         var cards = [];
 
-        //draw card function 
+        //draw card function
         function drawCard(card) {
             let cardBox = document.createElement('div')
             cardBox.classList.add('cardBox');
@@ -20,6 +20,19 @@
             }
             cardBox.innerHTML += ` of ${card.suit}`;
             document.body.appendChild(cardBox)
+        }
+        function drawTotal() {
+          let totalBox = document.createElement('div')
+          totalBox.classList.add('totalBox');
+          var cardtotal = 0;
+
+          for (var currentCard of cards) {
+            cardtotal += currentCard.number;
+          }
+          totalBox.innerHTML = `You have a total of ${cardtotal}`;
+          document.body.appendChild(totalBox)
+          // //Prints amount of cards the user has
+          // console.log(`You have a total of ${cardtotal}`);
         }
         // deal card function
         function dealCard() {
@@ -72,8 +85,8 @@
         function init() {
             dealCard();
             dealCard();
+            drawTotal();
         }
-
         // while (true) {
         //     //random card
         //     //find face
