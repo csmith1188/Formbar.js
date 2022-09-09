@@ -1,0 +1,349 @@
+:root {
+
+    --color-red: #bf0000;
+    --color-brown: #802000;
+    --color-orange: #ff4000;
+    --color-gold: #fa0;
+    --color-yellow: #ffbf00;
+    --color-green: #00bf00;
+    --color-cyan: #009fbf;
+    --color-blue: #0040bf;
+    --color-purple: #bf00ff;
+    --color-pink: #ff4080;
+    --dark-gray: #555;
+  
+    --light-red: #ff6860;
+    --light-brown: #bf6040;
+    --light-orange: #ff8f40;
+    --light-yellow: #ffdf40;
+    --light-green: #80ff80;
+    --light-cyan: #80ffff;
+    --light-blue: #bfcfff;
+    --light-purple: #df80ff;
+    --light-pink: #ff80bfff;
+    --light-gray: #ccc;
+  
+    --bg-dark: #333;
+    --bg-darker: #222;
+    --bg-dark-highlight: #444;
+    --bg-dark-red: #400;
+    --bg-dark-yellow: #430;
+    --bg-dark-green: #243;
+    --bg-dark-blue: #000922;
+    --bg-dark-purple: #423;
+  }
+  
+
+  
+  .light {
+    --bg-color: white;
+    --theme-color: var(--color-blue);
+    --main-color: black;
+    --gray-color: var(--dark-gray);
+    --emphasis-color: white;
+    --highlight-color: var(--light-gray);
+  }
+  
+  .classic {
+    background: var(--bg-dark-blue);
+    --bg-color: var(--light-blue);
+    --theme-color: var(--bg-dark-blue);
+    --main-color: black;
+    --gray-color: var(--dark-gray);
+    --emphasis-color: white;
+    --highlight-color: var(--light-gray);
+  }
+  
+  /*Dark mode is default*/
+  .dark, body:where(:not(.light):not(.classic)) {
+    --bg-color: var(--bg-dark);
+    --main-color: white;
+    --gray-color: var(--light-gray);
+    --emphasis-color: var(--bg-darker);
+    --highlight-color: var(--bg-dark-highlight);
+  }
+  
+  .red {
+    --theme-color: var(--light-red);
+  }
+  
+  .brown {
+    --theme-color: var(--light-brown);
+  }
+  
+  .orange {
+    --theme-color: var(--light-orange);
+  }
+  
+  .yellow {
+    --theme-color: var(--light-yellow);
+  }
+  
+  .green {
+    --theme-color: var(--light-green);
+  }
+  
+  .blue {
+    --theme-color: var(--light-blue);
+  }
+  
+  .purple {
+    --theme-color: var(--light-purple);
+  }
+  
+  body {
+    font: 16px "Segoe UI", sans-serif;
+    padding: 8px;
+  }
+  
+  body, .light, .dark {
+    background: var(--bg-color);
+    color: var(--main-color);
+  }
+  
+  .hidden {
+    display: none !important;
+  }
+  
+  .fullScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+  }
+  
+  .centered, .hCentered.vCentered {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  
+  .hCentered {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+  
+  .vCentered {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  ::selection {
+    background: var(--theme-color);
+    color: var(--bg-color);
+  }
+  
+  ::-webkit-scrollbar {
+    width: 15px;
+    height: 15px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    box-shadow: inset 0 0 5px 5px var(--light-gray);
+    border: solid 5px transparent;
+  }
+  
+  .light::-webkit-scrollbar-thumb {
+    box-shadow: inset 0 0 5px 5px var(--dark-gray);
+    border: solid 5px transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    box-shadow: inset 0 0 5px 5px var(--main-color);
+  }
+  
+  .light::-webkit-scrollbar-thumb:hover {
+    box-shadow: inset 0 0 5px 5px var(--bg-darker);
+  }
+  
+  ::-webkit-scrollbar-thumb:active {
+    box-shadow: inset 0 0 13px 13px var(--main-color);
+    border: solid 2px transparent;
+  }
+  
+  .light::-webkit-scrollbar-thumb:active {
+    box-shadow: inset 0 0 13px 13px var(--bg-darker);
+    border: solid 2px transparent;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    box-shadow: inset 0 0 5px 5px;
+    border: solid 5px transparent;
+  }
+  
+  * {
+    font-family: inherit;
+    color: inherit;
+    accent-color: var(--theme-color);
+  }
+  
+  input, button, textarea, select {
+    font-size: inherit;
+  }
+  
+  /*Text inputs should be given class "line" or "box"*/
+  
+  .line {
+    width: 144px;
+    background: transparent;
+    border-color: var(--main-color);
+    border-style: none none solid;
+    outline: none;
+  }
+  
+  .line[readonly] {
+    opacity: 50%;
+    cursor: not-allowed;
+    background: var(--highlight-color);
+  }
+  
+  textarea, .box {
+    background: var(--emphasis-color);
+    color: var(--main-color);
+    border: 1px solid;
+  }
+  
+  textarea:focus, .box:focus {
+    border: 1px solid;
+    outline: 1px solid;
+  }
+  
+  button, .button {
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  /*Use class "button" for button-like inputs, such as submit and file*/
+  
+  button:not(.inline), .button:not(.inline) {
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: var(--emphasis-color);
+    color: var(--theme-color);
+    border: 1px solid;
+    font-size: 18px;
+  }
+  
+  button:where(:not(.popOut):where(:not(.unselectable):not(.pressed))):hover,
+  .button:where(:not(.popOut):where(:not(.unselectable):not(.pressed))):hover {
+    background: var(--highlight-color);
+  }
+  
+  /*Use class "inline" for buttons that are within the flow of text. "inline" should always be used with "popOut" (but not vice versa)*/
+  
+  button.inline, .button.inline {
+    background: var(--emphasis-color);
+    border: 1px solid;
+    border-radius: 6px;
+    color: var(--theme-color);
+    font-weight: bold;
+  }
+  
+  img.button.inline {
+    border: none;
+  }
+  
+  .popOut {
+    transition-duration: 0.2s;
+  }
+  
+  .popOut:hover:where(:not(.unselectable):not(.pressed)) {
+    transform: translate(2px, -2px);
+    box-shadow: -1px 1px, -2px 2px;
+  }
+  
+  .popOut.moreDepth:where(:not(.unselectable):not(.pressed)):hover:not(:active) {
+    transform: translate(4px, -4px);
+    box-shadow: -1px 1px, -2px 2px, -3px 3px, -4px 4px;
+  }
+  
+  .popOut:where(:not(.unselectable):not(.pressed)):active {
+    transform: initial;
+    box-shadow: initial;
+    background: var(--highlight-color);
+  }
+  
+  .unselectable {
+    opacity: 50%;
+    cursor: not-allowed;
+  }
+  
+  .pressed.pressed {
+    background: var(--theme-color);
+    border-color: var(--theme-color);
+    color: var(--bg-color);
+    cursor: default;
+  }
+  
+  input[type="number"] {
+    width: 48px;
+  }
+  
+  input[type="color"] {
+    width: 80px;
+    height: 20px;
+  }
+  
+  input[type="range"] {
+    width: 96px;
+    vertical-align: middle;
+  }
+  
+  textarea {
+    resize: none;
+  }
+  
+  select {
+    background: var(--emphasis-color);
+    border: 1px var(--theme-color) solid;
+  }
+  
+  select:focus {
+    outline: 1px var(--theme-color) solid;
+  }
+  
+  a {
+    color: var(--theme-color);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  table, th, td {
+    border: 1px solid;
+    border-collapse: collapse;
+  }
+  
+  .redColor {
+    color: var(--color-red) !important;
+  }
+  
+  .yellowColor {
+    color: var(--color-yellow) !important;
+  }
+  
+  .greenColor {
+    color: var(--color-green) !important;
+  }
+  
+  .cyanColor {
+    color: var(--color-cyan) !important;
+  }
+  
+  .blueColor {
+    color: var(--color-blue) !important;
+  }
+  
+  .smallImg {
+    width: 24px;
+    margin-left: 4px;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  

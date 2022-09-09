@@ -1,0 +1,52 @@
+{% extends 'header_content.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Pee pee poo poo{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+  <style>
+    body {
+      text-align: center;
+      margin: 0 30%;
+    }
+  </style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}yellow{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+  <h1>Take a bathroom break</h1>
+  <div id="info"></div>
+  <br>
+  <form method="get">
+    <input type="hidden" id="action" name="action" value="request">
+    <input type="submit" id="submitButton" class="button hidden" value="Request break">
+  </form>
+{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+  <script>
+    let ticket = JSON.parse("{{ ticket }}".replaceAll("&#34;", "\""));
+    if ("{{ excluded }}" == "True") {
+      document.getElementById("info").innerText = "End your break to participate again.";
+      document.getElementById("action").value = "end";
+      document.getElementById("submitButton").classList.remove("hidden");
+      document.getElementById("submitButton").value = "End break";
+    } else if (ticket.type == "break") {
+      document.getElementById("info").innerText = "Waiting for the teacher to accept your request…";
+    } else if  (ticket.type) {
+      document.getElementById("info").innerText = "You can't request a bathroom break while you have a help ticket in.";
+    } else {
+      document.getElementById("info").innerText = "You will be excluded until your break is ended by you or the teacher. While you're excluded, you won't be able to participate in surveys or use other features.";
+      document.getElementById("submitButton").classList.remove("hidden");
+    }
+
+    setInterval(() => window.location = "/break", 5000); //Go to /break without arguments every 5 seconds
+  </script>
+{% endblock %}

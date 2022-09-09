@@ -1,0 +1,959 @@
+{% extends 'header_content.html' %}
+<!-- ^^ This means add this file to the end of the contents of header.html -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Teacher Controls{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+<style media="screen">
+  h2, h3, form {
+    margin: 0;
+  }
+
+  h2 {
+    margin: 40px 0 8px;
+  }
+
+  button {
+    margin-right: 4px;
+  }
+  body {
+    overflow-x: hidden;
+  }
+
+  .controls {
+    padding: 8px;
+    background: var(--bg-dark-highlight);
+    margin-bottom: 16px;
+  }
+
+  .controls button {
+    margin: 0 4px;
+    font-size: 14px;
+  }
+
+  .controls button.pressed {
+    cursor: pointer;
+  }
+
+  .user {
+    position: relative;
+    left: 21px;
+  }
+
+  .user > * {
+    max-width: calc(100% - 21px);
+    overflow-wrap: break-word;
+  }
+
+  #students h3 {
+    margin: 0 0 8px 0;
+    padding: 4px;
+  }
+
+  button.inline {
+    margin-bottom: 8px;
+  }
+
+  #students {
+    margin-bottom: 8px;
+  }
+
+  .icon {
+    height: 1.2em;
+    display: inline-block;
+    vertical-align: text-bottom;
+    margin-right: 8px;
+  }
+
+  #history > span, #history > b {
+    display: inline-block;
+    width: 100px;
+    margin-top: 8px;
+    margin-right: 8px;
+  }
+
+  #tabBox {
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0;
+  }
+  #tabBox li {
+    display: inline;
+  }
+  #tabBox a {
+    text-decoration: none;
+  }
+  #permsContainer {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+  }
+  .permBox {
+    width: 50%;
+    margin: 0px;
+  }
+  #resetPerms {
+    display: block;
+    margin: 32px auto 0;
+    font-size: 18px;
+  }
+</style>
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}orange{% endblock %}
+
+
+<!-- Main content here -->
+{% block main %}
+<div id="tabs">
+  <ul id="tabBox">
+    <li><a class="button pressed" href="#tabs-1">Users</a></li>
+    <li><a class="button" href="#tabs-2">Interaction</a></li>
+    <li><a class="button" href="#tabs-3">Poll history</a></li>
+    <li><a class="button" href="#tabs-4">Permissions</a></li>
+    <li><a class="button" href="#tabs-5">Configuration</a></li>
+  </ul>
+  <div id="tabs-1">
+    <h2>Users</h2>
+    <div id="npRequests"></div>
+    <div class="controls yellow">
+      Filters:
+      <button id="help" class="filter">Help ticket in</button>
+      <button id="break" class="filter">Taking a break</button>
+      <button id="pollResponded" class="filter">Responded to poll</button>
+    </div>
+    <div class="controls yellow">
+      Sort:
+      <button id="logIn" class="sort">Time joined</button>
+      <button id="name" class="sort">Name</button>
+      <button id="helpTime" class="sort">Help ticket time</button>
+      <button id="pollRes" class="sort">Poll response</button>
+      <button id="perms" class="sort">Permissions</button>
+    </div>
+    <button id="collapseButton" class="inline popOut hidden">Collapse all</button>
+    <div id="students">
+    </div>
+
+    <h2>Restart session</h2>
+    <button class="inline popOut" onclick="restart();">Remove all students and restart</button><br>
+  </div>
+  <div id="tabs-2">
+    <h2>Number of students</h2>
+    <input type="number" id="studentNum" class="line" onchange="sendStudents();" name="studentNum" min="1" max="30">&nbsp;&nbsp;
+    <input type="checkbox" id="autoStudents" checked onchange="sendStudents();"><label for="autoStudents">Auto</label><br>
+
+    <div onchange="changeMode();">
+      <h2>Bar mode</h2>
+      <label>
+        <div>
+          <input type="radio" id="poll" name="mode">
+          <h3 style="display: inline;">Poll</h3><br>
+          <span style="margin-left: 25px;">Students' votes are displayed on the bar.</span><br>
+        </div>
+      </label>
+      <form id="pollType" class="hidden" style="margin: 8px 0 0 25px;" onchange="changePollType();">
+        Type:
+        <input type="radio" id="thumbs" name="type" checked style="margin-left: 8px;"><label for="thumbs">Thumbs</label>
+        <input type="radio" id="letters" name="type" style="margin-left: 8px;"><label for="letters">Letters</label>
+        <input type="radio" id="essay" name="type" style="margin-left: 8px;"><label for="essay">Essay</label><br>
+        <span id="pollDescription">Students can choose between thumbs up, thumbs down, and wiggle</span><br>
+        <input type="button" id="pollButton" class="button inline popOut" value="Start new poll" style="margin-top: 8px;">
+      </form>
+      <br>
+
+      <label>
+        <div>
+          <input type="radio" id="progress" name="mode">
+          <h3 style="display: inline;">Progess</h3><br>
+          <span style="margin-left: 25px;">Description</span><br>
+        </div>
+      </label>
+      <br>
+
+      <label>
+        <div>
+          <input type="radio" id="countdown" name="mode">
+          <h3 style="display: inline;">Countdown</h3><br>
+          <span style="margin-left: 25px;">Set a countdown timer.</span><br>
+        </div>
+      </label>
+      <form action="/countdown" method="post" id="countdownTime" class="hidden" style="margin: 8px 0 0 21px;">
+        Time:
+        <input type="number" class="line" value="5" min="0" max="59"> minutes
+        <input type="number" class="line" value="0" min="0" max="59"> seconds<br>
+        <input type="submit" class="button inline popOut" value="Start timer" style="margin-top: 8px;">
+      </form>
+      <br>
+
+      <label>
+        <div>
+          <input type="radio" id="playtime" name="mode">
+          <h3 style="display: inline;">Playtime</h3><br>
+          <span style="margin-left: 25px;">Students can change the colors of the bar.</span><br>
+        </div>
+      </label>
+    </div>
+
+  </div>
+  <div id="tabs-3">
+    <h2>Download poll results</h2>
+    <div id="history"></div>
+  </div>
+  <div id="tabs-4">
+    <h2>Permissions</h2>
+    <div id="permsContainer">
+      <div class="permBox">
+        <h3>Chat</h3>
+        <select onchange="updatePerm(this)" id="saypermsDrop" name="saypermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?say=0">Teacher</option>
+          <option value="/controlpanel?say=1">Mod</option>
+          <option value="/controlpanel?say=2" selected>Student</option>
+          <option value="/controlpanel?say=3">Anyone</option>
+        </select>
+        <p>
+          The ability to send chat messages. All users will still be able to read others' messages.
+        </p>
+      </div>
+      <div class="permBox">
+        <h3>Games</h3>
+        <select onchange="updatePerm(this)" id="gamespermsDrop" name="gamespermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?games=0">Teacher</option>
+          <option value="/controlpanel?games=1">Mod</option>
+          <option value="/controlpanel?games=2" selected>Student</option>
+          <option value="/controlpanel?games=3">Anyone</option>
+        </select>
+        <p>
+          The ability to play any games
+        </p>
+      </div>
+      <div class="permBox">
+        <h3>LED bar</h3>
+        <select onchange="updatePerm(this)" id="barpermsDrop" name="barpermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?bar=0" selected>Teacher</option>
+          <option value="/controlpanel?bar=1">Mod</option>
+          <option value="/controlpanel?bar=2">Student</option>
+          <option value="/controlpanel?bar=3">Anyone</option>
+        </select>
+        <p>
+          The ability to change the appearance of the Formbar. Does not affect polls.
+        </p>
+      </div>
+      <div class="permBox">
+        <h3>Sounds</h3>
+        <select onchange="updatePerm(this)" id="sfxpermsDrop" name="sfxpermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?sfx=0" selected>Teacher</option>
+          <option value="/controlpanel?sfx=1">Mod</option>
+          <option value="/controlpanel?sfx=2">Student</option>
+          <option value="/controlpanel?sfx=3">Anyone</option>
+        </select>
+        <p>
+          The ability to play short audio clips
+        </p>
+      </div>
+      <div class="permBox">
+        <h3>Music</h3>
+        <select onchange="updatePerm(this)" id="bgmpermsDrop" name="bgmpermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?bgm=0" selected>Teacher</option>
+          <option value="/controlpanel?bgm=1">Mod</option>
+          <option value="/controlpanel?bgm=2">Student</option>
+          <option value="/controlpanel?bgm=3">Anyone</option>
+        </select>
+        <p>
+          The ability to play background music
+        </p>
+      </div>
+      <div class="permBox">
+        <h3>API</h3>
+        <select onchange="updatePerm(this)" id="apipermsDrop" name="apipermsDrop" style="margin-top: 8px;">
+          <option value="/controlpanel?api=0">Teacher</option>
+          <option value="/controlpanel?api=1">Mod</option>
+          <option value="/controlpanel?api=2">Student</option>
+          <option value="/controlpanel?api=3" selected>Anyone</option>
+        </select>
+        <p>
+          <b>Warning: Changing API permissions may break some features.</b>
+        </p>
+        <p>
+          The ability to access data from the server
+        </p>
+      </div>
+    </div>
+    <button id="resetPerms" class="inline popOut" onclick="resetPerms();">Reset permissions</button>
+  </div>
+  <div id="tabs-5">
+    <h2>Lock Formbar</h2>
+    Only whitelisted users will be able to make changes.<br>
+    <input type="checkbox" id="lock" onchange="request.open('GET', '/controlpanel?locked=' + this.checked); request.send();"><label for="lock">Lock</label><br>
+
+    <h2>Blind results</h2>
+    Results won't be shown until the poll is complete.<br>
+    <input type="checkbox" id="blind" onchange="request.open('GET', '/controlpanel?blind=' + this.checked); request.send();"><label for="blind">Hide results</label><br>
+
+    <h2>Show missing votes</h2>
+    When votes are missing, there will be empty spaces on the bar.<br>
+    <input type="checkbox" id="showMissing" checked onchange="request.open('GET', '/controlpanel?showinc=' + this.checked); request.send();"><label for="showMissing">Show</label><br>
+
+    <h2>Clear data</h2>
+    <b>Warning: These buttons will permanently delete data.</b><br>
+    <button class="inline popOut" style="margin-top: 12px;" onclick="clearTable('messages');">Clear all chat messages</button><br>
+    <button class="inline popOut" style="margin-top: 12px;" onclick="clearTable('scores');">Clear all game scores</button><br>
+    <button class="inline popOut" style="margin-top: 12px;" onclick="clearTable('users');">Clear all user accounts</button>
+  </div>
+</div>
+{% endblock %}
+
+<!-- Extra javascript here -->
+{% block script %}
+<script type="text/javascript">
+  function getSettings() {
+
+  }
+
+  function sendStudents() {
+    let input = document.getElementById('studentNum');
+    if (document.getElementById("autoStudents").checked) {
+      studentNum = 0;
+      input.setAttribute("readonly", "true");
+      updateStudents();
+    } else {
+      studentNum = parseInt(input.value);
+      if (studentNum < input.min || isNaN(studentNum)) studentNum = input.min;
+      if (studentNum > input.max) studentNum = input.max;
+      input.value = studentNum;
+      input.removeAttribute("readonly");
+    }
+    request.open("GET", "/controlpanel?students=" + studentNum);
+    // request.onload = function() {
+    // console.log(request.response);
+    // };
+    request.send();
+  }
+
+  sendStudents();
+
+  function updatePerm(el) {
+    request.open("GET", el.value);
+    request.onload = function() {
+      // console.log(request.response);
+    };
+    request.send();
+  }
+
+  async function updateStudents() {
+    if (document.getElementById("autoStudents").checked) {
+      let res = await getResponse("/api/students");
+      document.getElementById("studentNum").value = Object.keys(res).length;
+    }
+  }
+
+  updateStudents();
+  setInterval(updateStudents, 1000);
+
+  function changeMode() {
+    if (document.getElementById("poll").checked) {
+      request.open('GET', '/controlpanel?barmode=poll');
+      request.send();
+      document.getElementById("pollType").classList.remove("hidden");
+    } else {
+      document.getElementById("pollType").classList.add("hidden");
+    }
+    if (document.getElementById("progress").checked) {
+      request.open('GET', '/controlpanel?barmode=progress');
+      request.send();
+    }
+    if (document.getElementById("countdown").checked) {
+      alert("This feature is not available yet.");
+      document.getElementById("playtime").checked = true;
+      ////document.getElementById("countdownTime").classList.remove("hidden");
+    } else {
+      document.getElementById("countdownTime").classList.add("hidden");
+    }
+    if (document.getElementById("playtime").checked) {
+      request.open('GET', '/controlpanel?barmode=playtime');
+      request.send();
+    }
+  }
+
+  function changePollType() {
+    if (document.getElementById("thumbs").checked) document.getElementById("pollDescription").innerText = "Students can choose between thumbs up, thumbs down, and wiggle.";
+    else if (document.getElementById("letters").checked) document.getElementById("pollDescription").innerText = "Students can choose between A, B, C, and D.";
+    else if (document.getElementById("essay").checked) document.getElementById("pollDescription").innerHTML = "Students will type out short answers. View essays in the \"Users\" section.";
+  }
+
+  function startPoll() {
+    if (document.getElementById("thumbs").checked) {
+      request.open('GET', '/startpoll?type=tutd');
+      request.send();
+    } else if (document.getElementById("letters").checked) {
+      request.open('GET', '/startpoll?type=abcd');
+      request.send();
+    } else if (document.getElementById("essay").checked) {
+      request.open('GET', '/startpoll?type=text');
+      request.send();
+    }
+
+    let pollButton = document.getElementById("pollButton");
+    pollButton.value = "End poll";
+    pollButton.onclick = endPoll;
+  }
+
+  function endPoll() {
+    request.open('GET', '/endpoll');
+    request.send();
+
+    let pollButton = document.getElementById("pollButton");
+    pollButton.value = "Start new poll";
+    pollButton.onclick = startPoll;
+  }
+
+  function resetPerms() {
+    document.getElementById("saypermsDrop").value = "/controlpanel?say=2";
+    document.getElementById("gamespermsDrop").value = "/controlpanel?games=2";
+    document.getElementById("barpermsDrop").value = "/controlpanel?bar=0";
+    document.getElementById("sfxpermsDrop").value = "/controlpanel?sfx=0";
+    document.getElementById("bgmpermsDrop").value = "/controlpanel?bgm=0";
+    document.getElementById("apipermsDrop").value = "/controlpanel?api=3";
+    let dropdowns = ["saypermsDrop", "barpermsDrop", "sfxpermsDrop", "bgmpermsDrop", "gamespermsDrop", "apipermsDrop"];
+    dropdowns.forEach(id => updatePerm(document.getElementById(id)));
+  }
+
+
+  (async () => {
+    let modeRes = await getResponse("/api/mode");
+    let mode = modeRes.mode;
+    document.getElementById("pollButton").onclick = startPoll;
+    switch (mode) {
+      case "poll":
+        document.getElementById("poll").checked = true;
+        document.getElementById("pollType").classList.remove("hidden");
+        document.getElementById("thumbs").checked = true;
+        document.getElementById("pollButton").onclick = startPoll;
+        break;
+      case "tutd":
+        document.getElementById("poll").checked = true;
+        document.getElementById("pollType").classList.remove("hidden");
+        document.getElementById("thumbs").checked = true;
+        document.getElementById("pollButton").value = "End poll";
+        document.getElementById("pollButton").onclick = endPoll;
+        changePollType();
+        break;
+      case "abcd":
+        document.getElementById("poll").checked = true;
+        document.getElementById("pollType").classList.remove("hidden");
+        document.getElementById("letters").checked = true;
+        document.getElementById("pollButton").value = "End poll";
+        document.getElementById("pollButton").onclick = endPoll;
+        changePollType();
+        break;
+      case "text":
+        document.getElementById("poll").checked = true;
+        document.getElementById("pollType").classList.remove("hidden");
+        document.getElementById("essay").checked = true;
+        document.getElementById("pollButton").value = "End poll";
+        document.getElementById("pollButton").onclick = endPoll;
+        changePollType();
+        break;
+      case "progress":
+        document.getElementById("progress").checked = true;
+        break;
+      case "countdown":
+        document.getElementById("countdownTime").classList.remove("hidden");
+        break;
+      case "playtime":
+        document.getElementById("playtime").checked = true;
+    }
+  })();
+
+  function restart() {
+    if (confirm("Are you sure you want to restart the Formbar?")) {
+      request.open("GET", "/flush");
+      request.send();
+    }
+  }
+
+  function clearTable(table) {
+    if (confirm(`Are you sure you want to remove all data in the table "${table}"?`)) {
+      request.open("GET", `/cleartable?table=${table}`);
+      request.send();
+    }
+  }
+  let studentData = null;
+  let oldStudentList;
+  let studentList;
+  let permNames = ['Teacher', 'Mod', 'Student', 'Guest'];
+  let collapsed = false;
+  let filters = [];
+  let sort;
+
+  let filterButtons = Array.from(document.querySelectorAll(".filter"));
+  filterButtons.forEach(button => button.onclick = () => toggleFilter(button));
+
+  let sortButtons = Array.from(document.querySelectorAll(".sort"));
+  sortButtons.forEach(button => button.onclick = () => changeSort(button));
+  changeSort(document.getElementById("logIn"));
+
+  collapseButton.onclick = function() {
+    collapsed = !collapsed;
+    let userDetails = Array.from(document.getElementsByClassName("user"));
+    if (collapsed) {
+      userDetails.forEach(user => user.classList.add("hidden"));
+      this.innerText = "Expand all";
+    } else {
+      userDetails.forEach(user => user.classList.remove("hidden"));
+      this.innerText = "Collapse all";
+    }
+  }
+
+  function checkUpdates(url) {
+    let newRequest = new XMLHttpRequest();
+    newRequest.open('GET', url);
+    newRequest.onload = function() {
+      studentData = newRequest.response;
+    };
+    newRequest.send();
+  }
+
+  function remove(name) {
+    if (confirm(`Remove ${name}? They will still be able to log in.`)) {
+      request.open("GET", "users?name=" + name + "&action=kick");
+      request.send();
+    }
+  }
+
+  function banip(name) {
+    if (confirm("Are you sure you want to ban this user's DEVICE?")) {
+      request.open("GET", "/users?name=" + name + "&action=ban");
+      request.send();
+    }
+  }
+
+  function toggleFilter(el) {
+    let pairs = {
+      help: ["Help ticket in", "No help ticket in"],
+      break: ["Taking a break", "Not taking a break"],
+      pollResponded: ["Responded to poll", "Did not respond to poll"]
+    };
+    if (filters.includes(el.id)) {
+      filters.splice(filters.indexOf(el.id), 1, "!" + el.id);
+      el.classList.add("pressed");
+      el.innerText = pairs[el.id][1];
+    } else if (filters.includes("!" + el.id)) {
+      filters.splice(filters.indexOf("!" + el.id), 1);
+      el.classList.remove("pressed");
+      el.innerText = pairs[el.id][0];
+    } else {
+      filters.push(el.id);
+      el.classList.add("pressed");
+      el.innerText = pairs[el.id][0];
+    }
+  }
+
+  function changeSort(el) {
+    let newSort = el.id;
+    sortButtons.forEach(button => {
+      if (button.innerText.endsWith("🡇") || button.innerText.endsWith("🡅")) button.innerText = button.innerText.slice(0, -2);
+      if (button == el) {
+        button.classList.add("pressed");
+      } else {
+        button.classList.remove("pressed");
+      }
+    });
+    el.classList.add("pressed");
+    if (newSort == sort) {
+      sort = newSort + "Rev";
+      el.innerText += " 🡅";
+    } else {
+      sort = newSort;
+      el.innerText += " 🡇";
+    }
+  }
+
+  setInterval(function() {
+    checkUpdates('/api/students');
+    let studentBox = document.getElementById('students');
+    if (studentData === undefined) {
+      studentBox.innerHTML = 'Cannot get students. Are you logged in and connected?';
+    } else if (studentData === null) {
+      studentBox.innerHTML = 'Getting students…';
+    } else {
+      parsed = JSON.parse(studentData);
+      studentList = Object.values(parsed);
+
+      if (filters.includes("help")) studentList = studentList.filter(student => student.help.type);
+      if (filters.includes("!help")) studentList = studentList.filter(student => !student.help.type);
+      if (filters.includes("break")) studentList = studentList.filter(student => student.excluded);
+      if (filters.includes("!break")) studentList = studentList.filter(student => !student.excluded);
+      if (filters.includes("pollResponded")) studentList = studentList.filter(student => student.thumb || student.letter || student.essay);
+      if (filters.includes("!pollResponded")) studentList = studentList.filter(student => !(student.thumb || student.letter || student.essay));
+
+      let thumbs, letters, helpTimes;
+      switch (sort) {
+        case "logIn":
+          studentList.reverse();
+          break;
+        case "logInRev":
+          //Do nothing to the array
+          break;
+        case "name":
+          studentList = studentList.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case "nameRev":
+          studentList = studentList.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case "helpTime":
+          studentList.forEach(student => student.help.time = student.help.time || 0);
+          studentList = studentList.sort((a, b) => b.help.time - a.help.time);
+          break;
+        case "helpTimeRev":
+          studentList.forEach(student => student.help.time = student.help.time || Infinity);
+          studentList = studentList.sort((a, b) => a.help.time - b.help.time);
+          break;
+        case "pollRes":
+          thumbs = ["up", "wiggle", "down", ""];
+          letters = ["a", "b", "c", "d", ""];
+          studentList = studentList.sort((a, b) => thumbs.indexOf(a.thumb) - thumbs.indexOf(b.thumb)); //Thumbs poll
+          studentList = studentList.sort((a, b) => letters.indexOf(a.letter) - letters.indexOf(b.letter)); //Letters poll
+          studentList = studentList.sort((a, b) => !!b.essay - !!a.essay); //Essay poll
+          break;
+        case "pollResRev":
+          thumbs = ["down", "wiggle", "up", ""];
+          letters = ["d", "c", "b", "a", ""];
+          studentList = studentList.sort((a, b) => thumbs.indexOf(a.thumb) - thumbs.indexOf(b.thumb)); //Thumbs poll
+          studentList = studentList.sort((a, b) => letters.indexOf(a.letter) - letters.indexOf(b.letter)); //Letters poll
+          studentList = studentList.reverse().sort((a, b) => !!b.essay - !!a.essay); //Essay poll
+          break;
+        case "perms":
+          studentList = studentList.sort((a, b) => a.perms - b.perms);
+          break;
+        case "permsRev":
+          studentList = studentList.sort((a, b) => b.perms - a.perms);
+      }
+
+      if (JSON.stringify(studentList) != JSON.stringify(oldStudentList)) {
+        oldStudentList = studentList;
+        if (!studentList.length) {
+          document.getElementById("collapseButton").classList.add("hidden");
+          studentBox.innerHTML = 'No students match these filters.';
+        } else {
+          document.getElementById("collapseButton").classList.remove("hidden");
+          studentBox.innerHTML = '';
+          //Loop through each student in the list
+          for (student of studentList) {
+            let newStudent = document.createElement('h3');
+            let icons = "";
+
+            //Change student color according to thumb response
+            let thumb = student['thumb'];
+            if (thumb) var thumbIcon = document.createElement("img");
+            if (thumb == "up") icons += `<img src="{{ url_for('static', filename='img/controlpanel/up.png') }}" class="icon" title="Up">`;
+            if (thumb == "wiggle") icons += `<img src="{{ url_for('static', filename='img/controlpanel/wiggle.png') }}" class="icon" title="Wiggle">`;
+            if (thumb == "down") icons += `<img src="{{ url_for('static', filename='img/controlpanel/down.png') }}" class="icon" title="Down">`;
+
+            //Change student letter according to letter response
+            let letter = student['letter']
+            if (letter == "a") icons += `<img src="{{ url_for('static', filename='img/controlpanel/a.png') }}" class="icon" title="A">`;
+            if (letter == "b") icons += `<img src="{{ url_for('static', filename='img/controlpanel/b.png') }}" class="icon" title="B">`;
+            if (letter == "c") icons += `<img src="{{ url_for('static', filename='img/controlpanel/c.png') }}" class="icon" title="C">`;
+            if (letter == "d") icons += `<img src="{{ url_for('static', filename='img/controlpanel/d.png') }}" class="icon" title="D">`;
+
+            //Show icon if student has submitted Essay
+            if (student.essay) icons += `<img src="{{ url_for('static', filename='img/controlpanel/text.png') }}" class="icon" title="Essay submitted">`;
+
+            if (student['help'].type) icons += `<img src="{{ url_for('static', filename='img/controlpanel/help.png') }}" class="icon" title="Help ticket">`;
+
+            if (student['complete']) icons += `<img src="{{ url_for('static', filename='img/controlpanel/complete.png') }}" class="icon" title="Complete">`;
+
+            newStudent.innerHTML = icons + student.name;
+            let newDetails = document.createElement('span');
+            newDetails.classList.add('user');
+            if (collapsed) newDetails.classList.add("hidden");
+            if (student.essay) newDetails.innerHTML += "<div style='margin-bottom: 8px;'><b>Essay: </b>" + student.essay + "</div>";
+            if (student.help.type) {
+              let helpTicket = document.createElement("div");
+              let ticketTime = new Date(student.help.time * 1000);
+              let timestamp = document.createElement("span");
+              timestamp.style.color = ("var(--light-gray)");
+              let hour = ticketTime.getHours();
+              let minute = ticketTime.getMinutes().toString().padStart(2, "0");
+              if (hour > 12) {
+                hour -= 12;
+                ampm = "PM";
+              } else {
+                if (hour == 0) hour = 12;
+                ampm = "AM";
+              }
+              timestamp.innerText = `${hour}:${minute} ${ampm} `;
+              helpTicket.appendChild(timestamp);
+              if (student.help.type == "break") {
+                helpTicket.innerHTML += "<i>Requested a bathroom break</i>";
+                let acceptButton = document.createElement("button");
+                let rejectButton = document.createElement("button");
+                acceptButton.classList.add("inline", "popOut");
+                rejectButton.classList.add("inline", "popOut");
+                acceptButton.style.marginLeft = "8px";
+                rejectButton.style.marginLeft = "8px";
+                acceptButton.setAttribute("onclick", `acceptBreak("${student.name}");`);
+                rejectButton.setAttribute("onclick", `removeTicket("${student.name}");`);
+                acceptButton.innerText = "Accept";
+                rejectButton.innerText = "Reject";
+                helpTicket.appendChild(acceptButton);
+                helpTicket.appendChild(rejectButton);
+              } else {
+                helpTicket.innerHTML += help.message || "<i>Sent a help ticket</i>";
+                let removeButton = document.createElement("button");
+                removeButton.id = "e"
+                removeButton.classList.add("inline", "popOut");
+                removeButton.style.marginLeft = "8px";
+                removeButton.setAttribute("onclick", `removeTicket("${student.name}");`);
+                removeButton.innerText = "Remove";
+                helpTicket.appendChild(removeButton);
+              }
+              newDetails.appendChild(helpTicket);
+            }
+            if (student.excluded) {
+              let excluded = document.createElement("div");
+              newStudent.style.color = "#aaa";
+              excluded.innerHTML += "Taking a bathroom break";
+              let endButton = document.createElement("button");
+              endButton.classList.add("inline", "popOut");
+              endButton.style.marginLeft = "8px";
+              endButton.onclick = () => {
+                request.open("GET", "/break?action=end&name=" + student.name);
+                request.send();
+              }
+              endButton.innerText = "End break";
+              excluded.appendChild(endButton);
+              excluded.innerHTML += "</div><br>";
+              newDetails.appendChild(excluded);
+            }
+            let studentPerms = student['perms'];
+            newDetails.innerHTML += `
+              <select onchange="userPerm(this, '${student}')" id="userpermsDrop" name="userpermsDrop">
+                <option value="/users?name=${student['name']}&action=perm&perm=0" ${studentPerms === 0 ? "selected" : ""}>${permNames[0]}</option>
+                <option value="/users?name=${student['name']}&action=perm&perm=1" ${studentPerms === 1 ? "selected" : ""}>${permNames[1]}</option>
+                <option value="/users?name=${student['name']}&action=perm&perm=2" ${studentPerms === 2 ? "selected" : ""}>${permNames[2]}</option>
+                <option value="/users?name=${student['name']}&action=perm&perm=3" ${studentPerms === 3 ? "selected" : ""}>${permNames[3]}</option>
+              </select>
+            `;
+            //Check the results of the student's current progress bar
+            if (student['progress'] && student['progress'].length) {
+              let dotbox = document.createElement('div');
+              dotbox.style.styleFloat = 'right';
+              dotbox.style.cssFloat = 'right';
+              let newProg = 0;
+              let newProgMax = 0;
+              for (let i = 0; i < student['progress'].length; i++) {
+                newProgMax++;
+                var img = document.createElement("img");
+                img.width = 16;
+                img.height = 16;
+                if (student['progress'][i]) {
+                  newProg++;
+                  img.src = "{{ url_for('static', filename='img/dot_green.png') }}";
+                } else {
+                  img.src = "{{ url_for('static', filename='img/dot_red.png') }}";
+                }
+                dotbox.appendChild(img)
+              }
+              newStudent.appendChild(dotbox)
+              newDetails.innerHTML += ` [Prog: ${newProg}/${newProgMax}]`
+            }
+            //Get the results of the student's current quiz
+            if (student['quizRes'] && student['quizRes'].length) {
+              let dotbox = document.createElement('div');
+              dotbox.style.styleFloat = 'right';
+              dotbox.style.cssFloat = 'right';
+              let newQuiz = 0;
+              let newQuizMax = 0;
+              for (let i = 0; i < student['quizRes'].length; i++) {
+                newQuizMax++;
+                if (student['quizRes'][i]) {
+                  var img = document.createElement("img");
+                  img.width = 16;
+                  img.height = 16;
+                  if (student['quizRes'][i]) {
+                    newQuiz++;
+                    img.src = "{{ url_for('static', filename='img/dot_green.png') }}"; ////These need to be updated
+                  } else {
+                    img.src = "{{ url_for('static', filename='img/dot_red.png') }}"; ////
+                  }
+                  dotbox.appendChild(img)
+                }
+              }
+              newDetails.innerHTML += ` [Quiz: ${newQuiz}/${newQuizMax}]`
+            }
+            studentBox.appendChild(newStudent)
+            studentBox.appendChild(newDetails)
+            let name = student['name'];
+            newDetails.innerHTML += "	&nbsp; ";
+            newDetails.innerHTML += `<a onclick="remove('${name}')">Remove</a>`;
+            newDetails.innerHTML += "	&nbsp; ";
+            newDetails.innerHTML += `<a onclick="banip('${name}')">Ban Device</a>`;
+            newDetails.innerHTML += "<br><br>";
+          }
+        }
+      }
+    }
+  }, 1000);
+
+  setInterval(async () => {
+    let npRequests = await getResponse("/api/newpasswords");
+    let el = document.getElementById("npRequests");
+    el.innerHTML = "";
+    for (let student in npRequests) {
+      let ticket = document.createElement("div");
+      ticket.innerHTML += `<i><b>${student}</b> requested a password change from the login page. Before you accept, confirm that this request is legitimate.</i>`;
+      let acceptButton = document.createElement("button");
+      let rejectButton = document.createElement("button");
+      acceptButton.classList.add("inline", "popOut");
+      rejectButton.classList.add("inline", "popOut");
+      acceptButton.style.marginLeft = "8px";
+      rejectButton.style.marginLeft = "8px";
+      acceptButton.setAttribute("onclick", `acceptNP("${student}", "${npRequests[student]}");`);
+      rejectButton.setAttribute("onclick", `removeNP("${student}");`);
+      acceptButton.innerText = "Accept";
+      rejectButton.innerText = "Reject";
+      ticket.appendChild(acceptButton);
+      ticket.appendChild(rejectButton);
+      el.appendChild(ticket);
+    }
+  }, 1000);
+
+  function removeTicket(name) {
+    request.open("GET", `/users?action=removeTicket&name=${name}`);
+    request.send();
+  }
+
+  function acceptBreak(name) {
+    request.open("GET", `/users?action=removeTicket&name=${name}&acceptBreak=true`);
+    request.send();
+  }
+
+  function removeNP(name) {
+    request.open("GET", `/users?action=removeNP&name=${name}`);
+    request.send();
+  }
+
+  function acceptNP(name, pw) {
+    request.open("GET", `/users?action=removeNP&name=${name}&password=${pw}&acceptNP=true`);
+    request.send();
+  }
+
+  async function userPerm(el, student) {
+    let meRes = await getResponse("/api/me");
+    let permsRes = await getResponse("/api/permissions");
+    if (
+      student.name != meRes.name ||
+      meRes.perms > el.value[el.value.length - 1] ||
+      confirm("If you lower your own permissions, you may not be able to change them back. If no users have teacher permissions, the next person to log in will become the teacher.")
+    ) {
+      request.open("GET", el.value);
+      request.onload = function() {
+        console.log(request.response);
+      };
+      request.send();
+    } else {
+      el.value = el.options[meRes.perms].value; //If perms are not updated, give el the correct value
+    }
+  }
+
+  let historyLength = 0;
+
+  async function updateHistory() {
+    let polls = await getResponse("/api/polls");
+    if (polls.length > historyLength) {
+      historyLength = polls.length;
+      document.getElementById("history").innerHTML = null;
+      polls.reverse(); //Sort newest to oldest
+      polls.forEach((poll) => {
+        let type;
+        switch (poll[1]) {
+          case "tutd":
+            type = "Thumbs"
+            break;
+          case "abcd":
+            type = "Letters"
+            break;
+          case "text":
+            type = "Essay"
+        }
+
+        let date = new Date(poll[2]);
+        let month = date.getMonth() + 1;
+        let day = date.getDate();
+        let year = date.getFullYear().toString().slice(2);
+        let hour = date.getHours();
+        let minute = date.getMinutes().toString().padStart(2, "0");
+        if (hour > 12) {
+          hour -= 12;
+          ampm = "PM";
+        } else {
+          if (hour == 0) hour = 12;
+          ampm = "AM";
+        }
+
+        document.getElementById("history").innerHTML += `
+         <b>${type}</b>
+         <span>${month}/${day}/${year}</span>
+         <span>${hour}:${minute} ${ampm}</span>
+         <button class="inline popOut" onclick="downloadResponses(${poll[0]})">Download</button>
+         <br>
+        `;
+      });
+    }
+  }
+  updateHistory();
+  setInterval(updateHistory, 1000);
+
+  async function downloadResponses(poll) {
+    let responses = await getResponse("/api/pollresponses");
+    responses = responses.filter(response => response[0] == poll);
+    responses = responses.map(response => [response[1], `"${response[2].replaceAll("\"", "\"\"")}"`]); //Escape quotes in values, then add quotes around each value
+    let csv = "data:text/csv;charset=utf-8,";
+    csv += responses.map(response => response.join(",")).join("\n");
+    let link = document.createElement("a");
+    link.href = encodeURI(csv);
+
+    let date = new Date();
+    let y = date.getFullYear();
+    let mo = (date.getMonth() + 1).toString().padStart(2, "0");
+    let d = date.getDate().toString().padStart(2, "0");
+    let h = date.getHours().toString().padStart(2, "0");
+    let mi = date.getMinutes().toString().padStart(2, "0");
+    let s = date.getSeconds().toString().padStart(2, "0");
+
+    link.download = `responses_${y}_${mo}_${d}_${h}_${mi}_${s}.csv`;
+    link.click();
+  }
+
+  let storedSettings = JSON.parse("{{ data }}".replaceAll("&#34;", "\""));
+  for (let perm in storedSettings.perms) {
+    let el = document.getElementById(perm + "permsDrop");
+    let value = storedSettings.perms[perm];
+    if (el) el.value = `/controlpanel?${perm}=${value}`;
+  }
+  document.getElementById("lock").checked = storedSettings.locked;
+  document.getElementById("blind").checked = storedSettings.blind;
+  document.getElementById("showMissing").checked = storedSettings.showinc;
+</script>
+<script src="../static/jquery/external/jquery/jquery.js" charset="utf-8"></script>
+<script src="../static/jquery/jquery-ui.min.js" charset="utf-8"></script>
+<script>
+  $(function() {
+    $("#tabs").tabs({
+      activate: function(event, ui) {
+        let activeTab = $("#tabs").tabs("option", "active");
+        $("#tabs .ui-tabs-nav a").each((i, el) => {
+          if (i == activeTab) el.classList.add("pressed");
+          else el.classList.remove("pressed");
+        });
+        contentHeight();
+      }
+    });
+  });
+</script>
+{% endblock %}
