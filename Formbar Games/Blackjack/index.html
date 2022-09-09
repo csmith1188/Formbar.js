@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var cards = [];
+
+        //draw card function 
+        function drawCard(card) {
+            let cardBox = document.createElement('div')
+            cardBox.classList.add('cardBox');
+            if (card.face) {
+                cardBox.innerHTML = card.face;
+            } else {
+                cardBox.innerHTML = card.number;
+            }
+            cardBox.innerHTML += ` of ${card.suit}`;
+            document.body.appendChild(cardBox)
+        }
+        // deal card function
+        function dealCard() {
+
+
+
+
+            let card = {
+                number: 0,
+                face: '',
+                suit: ''
+            }
+
+
+
+            card.number = Math.floor(Math.random() * 13) + 1;
+
+            if (card.number == 11) {
+                card.face = "Jack"
+            };
+            if (card.number == 12) {
+                card.face = "Queen"
+            };
+            if (card.number == 13) {
+                card.face = "King"
+            };
+            if (card.number == 1) {
+                card.face = "Ace"
+            };
+
+            var suits = ["Diamonds", "Clubs", "Hearts", "Spades"];
+            var suitIndex = Math.floor(Math.random() * suits.length);
+
+            // Checks to see if the Card has a face then prints Face and Suit to console. If it doesn't have a Face it prints Number and Suit instead
+            if (card.face == "King" || card.face == "Queen" || card.face == "Jack" || card.face == "Ace") {
+                console.log(card.face + " of " + suits[suitIndex])
+            } else {
+                console.log(card.number + " of " + suits[suitIndex])
+            };
+
+            if (card.face == "King" || card.face == "Queen" || card.face == "Jack") {
+                card.number = 10
+            }
+
+            card.suit = suits[suitIndex];
+            cards.push(card)
+            drawCard(card);
+        }
+
+        function init() {
+            dealCard();
+            dealCard();
+        }
+
+        // while (true) {
+        //     //random card
+        //     //find face
+        //     //find suit
+        //     //draw card
+        //     //add to card lsit
+        //     //loop to calculate total
+        //     //See if you won/lost.
+        //     //ask if you want to hit stand?
+        // }
+    </script>
+</head>
+
+<body onload="init()">
+
+</body>
+
+</html>
