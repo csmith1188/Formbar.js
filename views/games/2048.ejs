@@ -1,12 +1,12 @@
-{% extends 'header_fullscreen.html' %}
+<%- header %>
 <!-- ^^ This means add this file into the contents of the header page -->
 <!-- This is where the title, top buttons, and stylesheet is located -->
 
 <!-- Change title here -->
-{% block title %}2048{% endblock %}
+<%- title %>
 
 <!-- Extra style declarations here -->
-{% block style %}
+
   <style>
     html {
       height: 100%;
@@ -607,13 +607,12 @@
       background-color: transparent;
     }
   </style>
-{% endblock %}
 
-<!-- Change theme color here -->
-{% block color %}green{% endblock %}
+
+
 
 <!-- Main content here -->
-{% block main %}
+
   <div id="cover"></div>
   <div class="container">
     <div class="logo">
@@ -658,13 +657,15 @@
     <!--</div>-->
   </div>
   <button id="newGameButton" onclick="window.location.reload();">New game</button>
-{% endblock %}
 
-<!-- Extra javascript here -->
-{% block script %}
+<script src="/static/js/jquery.js"></script>
+<script src="/static/js/socket.io.min.js"></script>
+<script src="/static/js/header.js"></script>
+
+
 <script>
   {
-    document.getElementById("highScore").innerHTML = {{ highScore }};
+    document.getElementById("highScore").innerHTML = 0;
 
     let gameObj = {
       points: {
@@ -789,7 +790,7 @@
         scoreBar.textContent = this.points.score;
         let highScoreBar = document.getElementById('highScore');
         let newBest = document.getElementById('newBest');
-        if (this.points.score > {{ highScore }}) {
+        if (this.points.score > 0) {
           highScoreBar.innerText = this.points.score;
           highScoreBar.textContent = this.points.score;
           highScoreBar.style.color = "var(--light-red)";
@@ -995,4 +996,3 @@
     }
   }
 </script>
-{% endblock %}

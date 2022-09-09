@@ -10,7 +10,41 @@ app.set('view engine', 'ejs')
 app.use(express.urlencoded( {extended: true}));
 app.use(express.static(__dirname + '/static'));
 // Functions
+var fullheader = `
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title> <%- title %></title>
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+      <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+     
+      <style>
+        #homeLink {
+          position: absolute;
+          left: 8px;
+          top: 8px;
+          color: var(--light-red);
+          font-size: 20px;
+          font-weight: bold;
+          text-decoration: none;
+        }
 
+        .light #homeLink {
+          color: var(--color-red);
+        }
+
+        #homeLink:hover {
+          color: var(--main-color);
+        }
+      </style>
+  </head>
+
+
+  <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
+  <script src="{{url_for('static', filename='js/socket.io.min.js')}}"></script>
+  <script src="{{url_for('static', filename='js/header.js')}}"></script>
+  
+`
 // Endpoints
 app.get('/', (req, res) => {
     res.redirect('/login')
@@ -34,7 +68,32 @@ app.get('/login', (req, res) => {
             </form>`
     });
 });
-
+app.get('/game/2048', (req, res) => {
+    res.render('games/2048', {
+        header: `
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href='/css/style.css' type='text/css' }}">
+        <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+       
+        <style>
+          #homeLink {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            color: var(--light-red);
+            font-size: 20px;
+            font-weight: bold;
+            text-decoration: none;}
+          .light #homeLink { color: var(--color-red); }
+          #homeLink:hover {color: var(--main-color); }
+        </style>
+        </head>
+`, 
+title: ` <title> 2048 </title>`,
+    });
+});
 app.post('/login', (req, res) => {
     var user = { 
         username: req.body.username,
