@@ -6,9 +6,34 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style media="screen">
+      #content {
+        width: 1000px;
+        margin: auto;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+      }
+      .cardBox {
+        width: 100px;
+        height: 200px;
+        border: 1px solid black;
+        border-radius: 5px;
+        margin: 10px;
+      }
+    </style>
+    <style media="screen">
+      #totalContent {
+        width: 500px;
+        margin: auto;
+        border: 1px solid black;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+      }
+    </style>
     <script>
         var cards = [];
-
         //draw card function
         function drawCard(card) {
             let cardBox = document.createElement('div')
@@ -19,7 +44,7 @@
                 cardBox.innerHTML = card.number;
             }
             cardBox.innerHTML += ` of ${card.suit}`;
-            document.body.appendChild(cardBox)
+            content.appendChild(cardBox)
         }
         function drawTotal() {
           let totalBox = document.createElement('div')
@@ -30,7 +55,7 @@
             cardtotal += currentCard.number;
           }
           totalBox.innerHTML = `You have a total of ${cardtotal}`;
-          document.body.appendChild(totalBox)
+          totalContent.appendChild(totalBox)
           // //Prints amount of cards the user has
           // console.log(`You have a total of ${cardtotal}`);
         }
@@ -83,6 +108,7 @@
         }
 
         function init() {
+          var content = document.getElementById('content')
             dealCard();
             dealCard();
             drawTotal();
@@ -101,7 +127,11 @@
 </head>
 
 <body onload="init()">
-
+  <div id="content">
+  </div>
+  <div id='totalContent'>
+  </div>
+  <a href="#" onclick="dealCard()">Duh</a>
 </body>
 
 </html>
