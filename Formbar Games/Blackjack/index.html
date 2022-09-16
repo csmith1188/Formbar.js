@@ -15,16 +15,40 @@
         justify-content: center;
       }
       .cardBox {
-        width: 100px;
-        height: 200px;
+        width: 235px;
+        height: 329px;
+        display: flex;
         border: 1px solid black;
         border-radius: 5px;
         margin: 10px;
+        justify-content: center;
       }
-    </style>
-    <style media="screen">
       #totalContent {
         width: 500px;
+        margin: auto;
+        border: 1px solid black;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+      }
+      #hitstand {
+        width: 500px;
+        margin: auto;
+        border: 1px solid black;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+      }
+      #hit {
+        width: 150px;
+        margin: auto;
+        border: 1px solid black;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+      }
+      #stand {
+        width: 150px;
         margin: auto;
         border: 1px solid black;
         display: flex;
@@ -47,15 +71,27 @@
             content.appendChild(cardBox)
         }
         function drawTotal() {
-          let totalBox = document.createElement('div')
-          totalBox.classList.add('totalBox');
+          // let totalBox = document.createElement('div')
+          // totalBox.classList.add('totalBox');
+          let hitstand = document.getElementById('hitstand')
           var cardtotal = 0;
 
           for (var currentCard of cards) {
             cardtotal += currentCard.number;
           }
-          totalBox.innerHTML = `You have a total of ${cardtotal}`;
-          totalContent.appendChild(totalBox)
+
+          if (21 < cardtotal) {
+            totalContent.innerHTML = `You have went over by ${cardtotal - 21} (${cardtotal})`
+            hitstand.innerHTML = ''
+            let newButton = document.createElement('a')
+            newButton.innerHTML = "New Game"
+            hitstand.append(newButton)
+            newButton.onclick = () => {
+              window.location.reload();
+            }
+          } else {
+            totalContent.innerHTML = `You have a total of ${cardtotal}`;
+          }
           // //Prints amount of cards the user has
           // console.log(`You have a total of ${cardtotal}`);
         }
@@ -107,6 +143,54 @@
             drawCard(card);
         }
 
+        function stand() {
+          dealerNum = Math.floor(Math.random() * 7) + 17
+          var cardtotal = 0;
+
+          for (var currentCard of cards) {
+            cardtotal += currentCard.number;
+          }
+          if (dealerNum <= 21) {
+            if (cardtotal > dealerNum) {
+              totalContent.innerHTML = `You beat the dealer by ${cardtotal - dealerNum}. They had ${dealerNum}`
+              hitstand.innerHTML = ''
+              let newButton = document.createElement('a')
+              newButton.innerHTML = "New Game"
+              hitstand.append(newButton)
+              newButton.onclick = () => {
+                window.location.reload();
+              }
+            } else if (cardtotal == dealerNum) {
+              totalContent.innerHTML = `You and the dealer have pushed ! You both had ${cardtotal}`
+              hitstand.innerHTML = ''
+              let newButton = document.createElement('a')
+              newButton.innerHTML = "New Game"
+              hitstand.append(newButton)
+              newButton.onclick = () => {
+                window.location.reload();
+              }
+            } else if (cardtotal < dealerNum) {
+              totalContent.innerHTML = `The dealer had ${dealerNum - cardtotal} more than you ! (${dealerNum})`
+              hitstand.innerHTML = ''
+              let newButton = document.createElement('a')
+              newButton.innerHTML = "New Game"
+              hitstand.append(newButton)
+              newButton.onclick = () => {
+                window.location.reload();
+              }
+            }
+          } if (dealerNum > 21) {
+            totalContent.innerHTML = `The dealer bust with ${dealerNum}! You had ${cardtotal}`
+            hitstand.innerHTML = ''
+            let newButton = document.createElement('a')
+            newButton.innerHTML = "New Game"
+            hitstand.append(newButton)
+            newButton.onclick = () => {
+              window.location.reload();
+            }
+          }
+        }
+
         function init() {
           var content = document.getElementById('content')
             dealCard();
@@ -114,11 +198,6 @@
             drawTotal();
         }
         // while (true) {
-        //     //random card
-        //     //find face
-        //     //find suit
-        //     //draw card
-        //     //add to card lsit
         //     //loop to calculate total
         //     //See if you won/lost.
         //     //ask if you want to hit stand?
@@ -131,7 +210,13 @@
   </div>
   <div id='totalContent'>
   </div>
-  <a href="#" onclick="dealCard()">Duh</a>
+  <div id='hitstand'>
+    <a href="#" id='hit'onclick="dealCard(); drawTotal()">Hit</a>
+    <a href="#" id='stand'onclick="stand()">Stand</a>
+  </div>
+  <div id='dealerBox'>
+  </div>
+
 </body>
 
 </html>
