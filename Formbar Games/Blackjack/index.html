@@ -83,7 +83,7 @@
           if (21 < cardtotal) {
             totalContent.innerHTML = `You have went over by ${cardtotal - 21} (${cardtotal})`
             hitstand.innerHTML = ''
-            let newButton = document.createElement('a')
+            let newButton = document.createElement('button')
             newButton.innerHTML = "New Game"
             hitstand.append(newButton)
             newButton.onclick = () => {
@@ -154,7 +154,7 @@
             if (cardtotal > dealerNum) {
               totalContent.innerHTML = `You beat the dealer by ${cardtotal - dealerNum}. They had ${dealerNum}`
               hitstand.innerHTML = ''
-              let newButton = document.createElement('a')
+              let newButton = document.createElement('button')
               newButton.innerHTML = "New Game"
               hitstand.append(newButton)
               newButton.onclick = () => {
@@ -163,7 +163,7 @@
             } else if (cardtotal == dealerNum) {
               totalContent.innerHTML = `You and the dealer have pushed ! You both had ${cardtotal}`
               hitstand.innerHTML = ''
-              let newButton = document.createElement('a')
+              let newButton = document.createElement('button')
               newButton.innerHTML = "New Game"
               hitstand.append(newButton)
               newButton.onclick = () => {
@@ -172,7 +172,7 @@
             } else if (cardtotal < dealerNum) {
               totalContent.innerHTML = `The dealer had ${dealerNum - cardtotal} more than you ! (${dealerNum})`
               hitstand.innerHTML = ''
-              let newButton = document.createElement('a')
+              let newButton = document.createElement('button')
               newButton.innerHTML = "New Game"
               hitstand.append(newButton)
               newButton.onclick = () => {
@@ -182,7 +182,7 @@
           } if (dealerNum > 21) {
             totalContent.innerHTML = `The dealer bust with ${dealerNum}! You had ${cardtotal}`
             hitstand.innerHTML = ''
-            let newButton = document.createElement('a')
+            let newButton = document.createElement('button')
             newButton.innerHTML = "New Game"
             hitstand.append(newButton)
             newButton.onclick = () => {
@@ -211,8 +211,8 @@
   <div id='totalContent'>
   </div>
   <div id='hitstand'>
-    <a href="#" id='hit'onclick="dealCard(); drawTotal()">Hit</a>
-    <a href="#" id='stand'onclick="stand()">Stand</a>
+    <button href="#" id='hit'onclick="dealCard(); drawTotal()">Hit</button>
+    <button href="#" id='stand'onclick="stand()">Stand</button>
   </div>
   <div id='dealerBox'>
   </div>
