@@ -616,6 +616,7 @@
   <div id="cover"></div>
   <div class="container">
     <div class="logo">
+      <!-- the logo for the game-->
       <span id="logo2">2</span>
       <span id="logo0">0</span>
       <span id="logo4">4</span>
@@ -635,6 +636,7 @@
     </div>
     <div id="gameOver">GAME OVER!</div>
     <div id="stage">
+      <!-- Add in the nice grey cells in the 2048 layout-->
       <span class="row0 cell0 blank"></span>
       <span class="row0 cell1 blank"></span>
       <span class="row0 cell2 blank"></span>
@@ -674,6 +676,7 @@
         status: 1
       },
       stage: [],
+      // create the cells for 2048.
       intiStage: function() {
         for (let cell = 0; cell < 4; cell++) {
           this.stage[cell] = [];
@@ -687,6 +690,7 @@
 
       },
 
+      
       empty: function() {
         let emptyList = [];
         for (let row = 0; row < 4; row++) {
@@ -762,6 +766,7 @@
         }
         return false;
       },
+      //Started the game over
       gameOver: function() {
         document.getElementById("gameOver").style.display = "block";
         document.getElementById("cover").style.cursor = "not-allowed";
@@ -969,7 +974,7 @@
         let y = event.clientY;
         controller.end(x, y);
       }
-
+      // It grabs the keys from your keyboard and start the function that the key press
       function keyDown(e) {
         let currKey = 0;
         e = e || event;
