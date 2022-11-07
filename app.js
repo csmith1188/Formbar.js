@@ -54,6 +54,17 @@ function clearDatabase() {
     return console.log('Database Deleted');
 }
 
+// Check if user has logged in
+// Place at the start of any page that needs to verify if a user is logged in or not
+function isAuthenticated(req, res, next) {
+    if (req.session.user) {
+            res.redirect('/home')
+    }
+    else {
+        res.redirect('/login')
+    }
+}
+
 // Endpoints
 app.get('/', isAuthenticated, (req, res) => {
 
