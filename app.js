@@ -56,17 +56,9 @@ function clearDatabase() {
 
 // Check if user has logged in
 // Place at the start of any page that needs to verify if a user is logged in or not
-function isAuthenticated(req, res, next) {
-    if (req.session.user) {
-            res.redirect('/home')
-    }
-    else {
-        res.redirect('/login')
-    }
-}
 
 // Endpoints
-app.get('/', isAuthenticated, (req, res) => {
+app.get('/', (req, res) => {
 
 })
 
@@ -76,6 +68,20 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // C
 
+//chat
+app.get('/chat', (req, res) => {
+    res.render('pages/chat', {
+        title: 'Formbar Chat',
+        color: '"dark blue"'
+    })
+})
+//control panel
+app.get('/controlpanel', (req, res) => {
+    res.render('pages/controlpanel', {
+        title: 'Control Panel',
+        color: '"dark blue"'
+    })
+})
 // D
 app.get('/delete', (req, res) => {
     clearDatabase()
@@ -90,7 +96,7 @@ app.get('/delete', (req, res) => {
 
 // H
 
-app.get('/home', isAuthenticated, (req, res) => {
+app.get('/home', (req, res) => {
     res.render('pages/index', {
         title: 'Formbar Home',
         color: '"dark blue"'
@@ -136,7 +142,7 @@ app.post('/login', (req, res) => {
                 req.session.id = rows.id
                 req.session.user = rows.username;
                 req.session.perms = rows.permissions;
-                res.redirect('/');
+                res.redirect('/home');
             } else {
                 res.redirect('/login')
             }
@@ -180,7 +186,12 @@ app.post('/login', (req, res) => {
 // O
 
 // P
-
+app.get('/poll', (req, res) => {
+    res.render('pages/poll', {
+        title: 'Polls',
+        color: '"dark blue"'
+    })
+})
 // Q
 
 // R
