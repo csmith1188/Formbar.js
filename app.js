@@ -1,13 +1,13 @@
 // Imported modules
 const express = require('express');
+const app = express();
 const session = require('express-session');
 const ejs = require('ejs');
+const http = require('http').Server(app);
 const fs = require('fs');
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
-
-// Start an express app
-var app = express();
+const io = require('socket.io')(http);
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 // Create session for user information to be transferred from page to page
@@ -30,11 +30,12 @@ var sD = {
 
 }
 
+
 // This class is used to create a student to be stored in the sessions data
 class Student {
     constructor(username, className='No Class') {
         cD.classes.push({
-
+            
         })
     }
 }
@@ -59,7 +60,7 @@ function clearDatabase() {
 
 // Endpoints
 app.get('/', (req, res) => {
-
+    
 })
 
 // A
@@ -72,9 +73,19 @@ app.get('/', (req, res) => {
 app.get('/chat', (req, res) => {
     res.render('pages/chat', {
         title: 'Formbar Chat',
-        color: '"dark blue"'
+        color: '"dark blue"',
+        io: io
     })
+
 })
+io.sockets.on('connection', function(socket) {
+    socket.on('chat_message', function(message) {
+        io.emit('chat_message', message);
+    });
+
+});
+
+
 //control panel
 app.get('/controlpanel', (req, res) => {
     res.render('pages/controlpanel', {
@@ -243,4 +254,4 @@ app.get('/poll', (req, res) => {
 
 
 // Open server to listen on port 4000
-app.listen(4000);
+http.listen(4000);
