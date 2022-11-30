@@ -1,9 +1,23 @@
 <%- include('../partials/header_content') %>
 
-<body class="<%- color %>">
-    <form action="createclass" method="post">
-        <input type="text" id="usernameBox" name="name" class="box" placeholder="Class Name" value="" autocomplete="off" required>
-        <input type="integer" id="passwordBox" name="owners" class="box" placeholder="Owner Amount" value="" required>
-        <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
-    </form>
-</body>
+    <body class="<%- color %>">
+        <form action="createclass" method="post">
+            <input type="text" id="usernameBox" name="name" class="box" placeholder="Class Name"
+                value="" autocomplete="off" required>
+            <input type="text" name="submittionType" value="create" hidden>
+            <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
+        </form>
+        <form action="createclass" method="post">
+            <input type="text" id="usernameBox" list="classrooms" name="name" class="box"
+                placeholder="Select Previous Class" value="" autocomplete="off" required>
+            <datalist id="classrooms">
+                <% ownerClasses.forEach(rooms=> { %>
+                    <option>
+                        <%- rooms %>
+                    </option>
+                    <% }) %>
+            </datalist>
+            <input type="text" name="submittionType" value="select" hidden>
+            <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
+        </form>
+    </body>
