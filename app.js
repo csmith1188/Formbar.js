@@ -3,11 +3,13 @@ const express = require('express');
 const session = require('express-session');
 const ejs = require('ejs');
 const fs = require('fs');
+const http = require('http');
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
 const io = require('socket.io')(http);
 // Start an express app
 var app = express();
+const server = http.createServer(app);
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 // Create session for user information to be transferred from page to page
@@ -365,4 +367,4 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 
 // Open server to listen on port 4000
-app.listen(4000);
+server.listen(4000);
