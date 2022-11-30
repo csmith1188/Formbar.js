@@ -200,8 +200,8 @@ app.post('/login', (req, res) => {
         password: req.body.password,
         permissions: req.body.userType
     }
-
     var passwordCrypt = encrypt(user.password);
+    // Check whether user is logging in or signing up
     if (user.permissions == "login") {
         // Get the users login in data to verify password
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
@@ -226,14 +226,8 @@ app.post('/login', (req, res) => {
             }
         })
 
-
-
-
-
-
-
-
     } else if (user.permissions == "new") {
+        // Add the new user to the database 
         db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
             [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
                 if (err) {
@@ -241,12 +235,14 @@ app.post('/login', (req, res) => {
                 }
                 console.log('Success');
             })
+        // Find the user in which was just created to get the id of the user 
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
             if (err) {
                 console.log(err);
             }
             // Add user to session
             new Student(rows.username, rows.id)
+            // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username;
             res.redirect('/');
 
@@ -280,27 +276,37 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 app.post('/selectclass', isLoggedIn, (req, res) => {
     // Let user enter or join a teachers class
     let className = req.body.name;
+    // Find the id of the class from the database
     db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
-        if (id) {
-            if (err) {
-                console.log(err);
-            }
+        if (err) {
+            console.log(err);
+            res.send('Something went wrong')
+        }
+        // Check to make sure there was a class with that name
+        if (id && cD[className]) {
+            // Find the id of the user who is trying to join the class
             db.get(`SELECT id FROM users WHERE username=?`, [req.session.user], (err, uid) => {
                 if (err) {
                     console.log(err);
                 }
-                console.log(uid);
+                // Add the two id's to the junction table to link the user and class
                 db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
-                    [id, uid], (err) => {
+                    [id.id, uid.id], (err) => {
                         if (err) {
                             console.log(err);
                         }
+                        // Get the teachers session data ready to transport into new class
+                        var user = cD.noClass.students[req.session.user]
+                        // Remove teacher from old class
+                        delete cD.noClass.students[req.session.user]
+                        // Add the teacher to the newly created class
+                        cD[className].students[req.session.user] = user
                         console.log('User added to class');
                         res.redirect('/home')
                     })
             })
         } else {
-            res.send('No Class with that Name')
+            res.send('No Open Class with that Name')
         }
     })
 
@@ -351,4 +357,6 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 
 // Open server to listen on port 4000
-app.listen(4000);
+app.listen(4000, () => {
+    console.log('Running on port: 4000');
+});
