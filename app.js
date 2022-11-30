@@ -3,11 +3,13 @@ const express = require('express');
 const session = require('express-session');
 const ejs = require('ejs');
 const fs = require('fs');
+const http = require('http');
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
-
+const io = require('socket.io')(http);
 // Start an express app
 var app = express();
+const server = http.createServer(app);
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 // Create session for user information to be transferred from page to page
@@ -157,11 +159,25 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     res.redirect('/home')
 })
 
+//chat
+app.get('/chat', (req, res) => {
+    res.render('pages/chat', {
+        title: 'Formbar Chat',
+        color: '"dark blue"',
+        io: io
+    })
+
+})
+io.sockets.on('connection', function(socket) {
+    socket.on('chat_message', function(message) {
+        io.emit('chat_message', message);
+    });
+
+});
 // D
 app.get('/delete', (req, res) => {
     clearDatabase()
 })
-
 
 // E
 
@@ -199,6 +215,7 @@ app.post('/login', (req, res) => {
         username: req.body.username,
         password: req.body.password,
         permissions: req.body.userType
+
     }
     var passwordCrypt = encrypt(user.password);
     // Check whether user is logging in or signing up
@@ -326,37 +343,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 // Z
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Open server to listen on port 4000
 app.listen(4000, () => {
     console.log('Running on port: 4000');
 });
+
