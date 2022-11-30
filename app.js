@@ -5,7 +5,7 @@ const ejs = require('ejs');
 const fs = require('fs');
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
-const io = require('socket.io')(http);
+
 // Start an express app
 var app = express();
 // Set EJS as our view engine
@@ -157,21 +157,6 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     res.redirect('/home')
 })
 
-//chat
-app.get('/chat', (req, res) => {
-    res.render('pages/chat', {
-        title: 'Formbar Chat',
-        color: '"dark blue"',
-        io: io
-    })
-
-})
-io.sockets.on('connection', function(socket) {
-    socket.on('chat_message', function(message) {
-        io.emit('chat_message', message);
-    });
-
-});
 // D
 app.get('/delete', (req, res) => {
     clearDatabase()
@@ -213,6 +198,7 @@ app.post('/login', (req, res) => {
         username: req.body.username,
         password: req.body.password,
         permissions: req.body.userType
+
     }
 
     var passwordCrypt = encrypt(user.password);
