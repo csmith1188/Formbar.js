@@ -162,7 +162,6 @@ app.get('/delete', (req, res) => {
     clearDatabase()
 })
 
-
 // E
 
 // F
@@ -199,6 +198,7 @@ app.post('/login', (req, res) => {
         username: req.body.username,
         password: req.body.password,
         permissions: req.body.userType
+
     }
 
     var passwordCrypt = encrypt(user.password);
