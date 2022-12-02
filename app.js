@@ -36,11 +36,12 @@ var cD = {
 // This class is used to create a student to be stored in the sessions data
 class Student {
     // Needs username, id from the database, and if perms established already pass the uodated value
-    constructor(username, id, perms = 2) {
+    constructor(username, id, perms = 2, pollRes) {
         cD.noClass.students[username] = {
             id: id,
             permissions: perms
         }
+        this.pollRes = pollRes;
     }
 }
 
@@ -276,6 +277,32 @@ app.post('/login', (req, res) => {
 // O
 
 // P
+
+//Renders the poll HTMl template
+//allows for poll answers to be processed and stored
+app.get('/poll', (req, res) =>{
+    res.render('pages/polls', {
+        title: 'Poll',
+        color: '"dark blue"'
+    })
+let answer = req.query.letter;
+if (answer) {
+    console.log(answer);
+}
+
+})
+
+app.post('/poll', (req, res) =>{
+   let answer = req.body.poll
+   
+
+   if (answer) {
+    db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
+   }
+})
+
+
+
 
 // Q
 
