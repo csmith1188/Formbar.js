@@ -19,9 +19,6 @@ app.use(session({
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/static'));
-// Constants for the password encryption module to use
-const algorithm = 'aes-256-ctr';
-const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
 
 // Establishes the connection to the database. This allows for logins.
 // Logins consist of usernames and passwords
@@ -129,11 +126,37 @@ app.get('/', isAuthenticated, (req, res) => {
     res.redirect('/home')
 })
 
+
+// Intentional backdoor to become a teacher. MAKE SURE TO DELETE BEFORE "Commercial" USE
+app.get('/teacherprivs', isLoggedIn, (req, res) => {
+    cD.noClass.students[req.session.user].permissions = 0
+    res.redirect('/createclass')
+})
+
 // A
 
 // B
 
 // C
+
+
+// An endpoint for the teacher to control the formbar
+// Used to update students permissions, handle polls and their corresponsing responses
+app.get('/controlpanel', isAuthenticated, (req, res) => {
+    let students = cD[req.session.class].students
+    let keys = Object.keys(students);
+    let allStuds = []
+    for (var i = 0; i < keys.length; i++) {
+        var val = { name: keys[i], perms: students[keys[i]].permissions}
+        allStuds.push(val)
+    } 
+    res.render('pages/controlpanel', {
+        title: "Control Panel",
+        students: allStuds
+    })
+})
+
+
 // Loads which classes the teacher is an owner of
 // This allows the teacher to be in charge of all classes
 // The teacher can give aany perms to anyone they desire, which is useful at times
@@ -203,6 +226,7 @@ app.get('/chat', (req, res) => {
 // It is what the chat uses to emit messages to the server, this allows for the database to record whatever is put in
 // This could be useful to the teacher in case students say anything bad or do somehing that can get them banned
 io.sockets.on('connection', function(socket) {
+    console.log('a user connected');
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
     });
@@ -451,3 +475,4 @@ io.sockets.on('connection', function(socket) {
 http.listen(4000, () => {
     console.log('Running on port: 4000');
 });
+
