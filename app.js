@@ -21,10 +21,6 @@ app.use(session({
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/static'));
-// Constants for the password encryption module to use
-const algorithm = 'aes-256-ctr';
-const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
-
 // Establishing connection to database
 var db = new sqlite3.Database('database/database.db');
 
@@ -35,7 +31,7 @@ var cD = {
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
-    // Needs username, id from the database, and if perms established already pass the uodated value
+    // Needs username, id from the database, and if perms established already pass the updated value
     constructor(username, id, perms = 2) {
         cD.noClass.students[username] = {
             id: id,
@@ -111,11 +107,37 @@ app.get('/', isAuthenticated, (req, res) => {
     res.redirect('/home')
 })
 
+
+// Intentional backdoor to become a teacher. MAKE SURE TO DELETE BEFORE "Commercial" USE
+app.get('/teacherprivs', isLoggedIn, (req, res) => {
+    cD.noClass.students[req.session.user].permissions = 0
+    res.redirect('/createclass')
+})
+
 // A
 
 // B
 
 // C
+
+
+// An endpoint for the teacher to control the formbar
+// Used to update students permissions, handle polls and their corresponsing responses
+app.get('/controlpanel', isAuthenticated, (req, res) => {
+    let students = cD[req.session.class].students
+    let keys = Object.keys(students);
+    let allStuds = []
+    for (var i = 0; i < keys.length; i++) {
+        var val = { name: keys[i], perms: students[keys[i]].permissions}
+        allStuds.push(val)
+    } 
+    res.render('pages/controlpanel', {
+        title: "Control Panel",
+        students: allStuds
+    })
+})
+
+
 // Loads which classes the teacher is an owner of
 app.get('/createclass', isLoggedIn, (req, res) => {
     var ownerClasses = []
@@ -156,6 +178,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     new Classroom(className)
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
+    req.session.class = className;
     res.redirect('/home')
 })
 
@@ -169,6 +192,7 @@ app.get('/chat', (req, res) => {
 
 })
 io.sockets.on('connection', function(socket) {
+    console.log('a user connected');
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
     });
@@ -318,6 +342,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
                         // Add the teacher to the newly created class
                         cD[className].students[req.session.user] = user
                         console.log('User added to class');
+                        req.session.class = className;
                         res.redirect('/home')
                     })
             })
