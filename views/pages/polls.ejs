@@ -16,7 +16,30 @@
         <label for="c">C</label>
         <input type="radio" name="poll" id="d" value="d">
         <label for="d">D</label>
-        <input type="submit" value="Submit">
     </form>
+    <button onclick="submit()">submit</button>
 </body>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+               var socket = io();
+               var a = document.getElementById('a')
+               var b = document.getElementById('b')
+               var c = document.getElementById('c')
+               var d = document.getElementById('d')
+               function submit(){
+                if(a.checked){
+                    socket.emit('pollResp', '<%-user%>' , a.value);
+                }else if(b.checked){
+                    socket.emit('pollResp',  '<%-user%>' , b.value);
+                }else if(c.checked){
+                    socket.emit('pollResp',  '<%-user%>', c.value);
+                }else if(d.checked){
+                    socket.emit('pollResp',  '<%-user%>', d.value);
+                } else{
+                    return false;
+                }
+            };
+            
+</script>
 </html>
