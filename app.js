@@ -3,13 +3,11 @@ const express = require('express');
 const session = require('express-session');
 const ejs = require('ejs');
 const fs = require('fs');
-const http = require('http');
+var app = express();
+const http = require('http').createServer(app);
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
 const io = require('socket.io')(http);
-// Start an express app
-var app = express();
-const server = http.createServer(app);
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 // Create session for user information to be transferred from page to page
@@ -47,11 +45,11 @@ class Student {
     constructor(username, id, perms = 2) {
         cD.noClass.students[username] = {
             id: id,
-            permissions: perms
+            permissions: perms,
+            pollRes: ''
         }
     }
 }
-
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
@@ -182,6 +180,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     new Classroom(className)
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
+    req.session.class = className;
     res.redirect('/home')
 })
 
@@ -325,6 +324,40 @@ app.post('/login', (req, res) => {
 
 // P
 
+//Renders the poll HTMl template
+//allows for poll answers to be processed and stored
+app.get('/poll', (req, res) =>{
+    let user = {
+        name:  req.session.user,
+        class:  req.session.class
+    }
+    res.render('pages/polls', {
+        title: 'Poll',
+        color: '"dark blue"',
+        user: JSON.stringify(user)
+    })
+    console.log(user);
+let answer = req.query.letter;
+if (answer) {
+    console.log(answer);
+}
+
+
+})
+
+app.post('/poll', (req, res) =>{
+   let answer = req.body.poll
+   if (answer) {
+    db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
+    console.log(answer);
+   }
+
+   res.redirect('/poll')
+})
+
+
+
+
 // Q
 
 // R
@@ -373,6 +406,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
                         // Add the teacher to the newly created class
                         cD[className].students[req.session.user] = user
                         console.log('User added to class');
+                        req.session.class = className;
                         res.redirect('/home')
                     })
             })
@@ -397,7 +431,24 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 // Z
 
-app.listen(4000, () => {
+
+//Handles the webscoket communications
+io.sockets.on('connection', function(socket) {
+    console.log('Connected to socket');
+      // /poll websockets for updating the database
+      socket.on('pollResp', function(user, res) {
+        user = JSON.parse(user)
+        cD[user.class].students[user.name].pollRes = res;
+        console.log(cD[user.class].students[user.name]);
+        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user.name])
+    });
+    socket.on('chat_message', function(message) {
+        io.emit('chat_message', message);
+    });
+});
+
+
+http.listen(4000, () => {
     console.log('Running on port: 4000');
 });
 

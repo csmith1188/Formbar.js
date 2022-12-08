@@ -17,10 +17,11 @@
   </head>
   <body>
     <ul id="messages"></ul>
-    <form action="/" method="POST" id="chatForm">
-      <input id="txt" autocomplete="off" autofocus="on" placeholder="type your message here..." /><button>Send</button>
+    <form action="/chat"  id="chatForm">
+      <input id="txt"  placeholder="type your message here..." /><input type="submit" value="Send">
     </form>
     <script>
+
             var socket = io.connect('http://localhost:4000');
             // submit text message without reload/refresh the page
             $('form').submit(function(e){
