@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polls</title>
 </head>
-<body>
+<body onload="load(<%-pollStatus%>)">
+    <h1 id="noPoll">Teacher hasn't started a poll yet</h1>
+    <div id="poll">
     <form action="/poll" method="post">
         <input type="radio" name="poll" id="a" value="a">
         <label for="a">A</label>
@@ -18,6 +20,7 @@
         <label for="d">D</label>
     </form>
     <button onclick="submit()">submit</button>
+</div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 
@@ -40,6 +43,17 @@
                     return false;
                 }
             };
-            
+
+            var poll = document.getElementById('poll')
+            var noPoll = document.getElementById('noPoll')
+            function load(pollStatus) {
+                if (pollStatus) {
+                    noPoll.style.display = 'none'
+                    poll.style.display = 'block'
+                } else {
+                    noPoll.style.display = 'block'
+                    poll.style.display = 'none'
+                }
+            }
 </script>
 </html>

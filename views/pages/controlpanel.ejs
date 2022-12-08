@@ -10,7 +10,7 @@
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     </head>
 
-    <body onload="load()">
+    <body onload="load(<%-pollStatus%>)">
         <header>
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
@@ -29,8 +29,8 @@
                 <%})%>
         </div>
         <div id="pollChanges">
-            <button id="startPoll" onclick="startPoll()">Start Poll</button>
-            <button id="endPoll" onclick="endPoll()" hidden>End Poll</button>
+            <button id="startPoll" onclick="startPollFunc()">Start Poll</button>
+            <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
         </div>
     </body>
 
@@ -42,13 +42,19 @@
         var pollChanges = document.getElementById('pollChanges')
         var startPoll = document.getElementById('startPoll')
         var endPoll = document.getElementById('endPoll')
-        var permSwitch = document.getElementById('permSwitch')
-        var studName = document.getElementById('studName')
+
         
 
-        function load() {
+        function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
+            if (pollStatus) {
+                startPoll.style.display = 'none'
+                endPoll.style.display = 'block'
+            } else {
+                startPoll.style.display = 'block'
+                endPoll.style.display = 'none'
+            }
         }
 
         function toPolls() {
@@ -61,12 +67,16 @@
             permChanges.style.display = 'block'
         }
 
-        function startPoll() {
-
+        function startPollFunc() {
+            socket.emit('startPoll');
+            startPoll.style.display = 'none'
+            endPoll.style.display = 'block'
         }
 
-        function endPoll() {
-
+        function endPollFunc() {
+            socket.emit('endPoll');
+            startPoll.style.display = 'block'
+            endPoll.style.display = 'none'
         }
 
         function updatePerms(e) {

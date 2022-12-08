@@ -60,7 +60,8 @@ class Classroom {
     // The name of the class will be used later in tnhe database to allow lessons to operate
     constructor(className) {
         cD[className] = {
-            students: {}
+            students: {},
+            pollStatus: false
         }
     }
 }
@@ -150,7 +151,8 @@ app.get('/controlpanel', isAuthenticated, (req, res) => {
     } 
     res.render('pages/controlpanel', {
         title: "Control Panel",
-        students: allStuds
+        students: allStuds,
+        pollStatus: cD[req.session.class].pollStatus
     })
 })
 
@@ -355,7 +357,8 @@ app.get('/poll', isAuthenticated, (req, res) =>{
     res.render('pages/polls', {
         title: 'Poll',
         color: '"dark blue"',
-        user: JSON.stringify(user)
+        user: JSON.stringify(user),
+        pollStatus: cD[req.session.class].pollStatus
     })
     console.log(user);
 let answer = req.query.letter;
@@ -467,6 +470,12 @@ io.sockets.on('connection', function(socket) {
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
+    });
+    socket.on('startPoll', function() {
+        cD[socket.request.session.class].pollStatus = true
+    });
+    socket.on('endPoll', function() {
+        cD[socket.request.session.class].pollStatus = false
     });
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
