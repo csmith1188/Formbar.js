@@ -9,41 +9,48 @@
         <script src="../../socket.io/socket.io.js"></script>
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     </head>
+
     <body onload="load()">
         <header>
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
         </header>
         <div id="permChanges">
-        <% students.forEach( (studs)=> { %>
-            <p>
-                <%- studs.name %>
-            </p>
-            <select name="permSwitch" id="permSwitch" onchange="permChange()">
-                <option value="0" <% if (studs.perms == 0) {%>selected<%}%>>Teacher</option>
-                <option value="1" <% if (studs.perms == 1) {%>selected<%}%>>Bot</option>
-                <option value="2" <% if (studs.perms == 2) {%>selected<%}%>>Student</option>
-                <option value="3" <% if (studs.perms == 3) {%>selected<%}%>>Guest</option>
-            </select>
-            <%})%>
+            <% students.forEach( (studs)=> { %>
+                <p>
+                    <%- studs.name %>
+                </p>
+                <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
+                    <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
+                    <option value="1" <% if (studs.perms==1) {%>selected<%}%>>Bot</option>
+                    <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
+                    <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
+                </select>
+                <%})%>
         </div>
         <div id="pollChanges">
             <button id="startPoll" onclick="startPoll()">Start Poll</button>
             <button id="endPoll" onclick="endPoll()" hidden>End Poll</button>
         </div>
-        </body>
+    </body>
 
     </html>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        var socket = io();
         var permChanges = document.getElementById('permChanges')
         var pollChanges = document.getElementById('pollChanges')
         var startPoll = document.getElementById('startPoll')
         var endPoll = document.getElementById('endPoll')
+        var permSwitch = document.getElementById('permSwitch')
+        var studName = document.getElementById('studName')
+        
 
         function load() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
         }
+
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
@@ -59,7 +66,11 @@
         }
 
         function endPoll() {
-            
+
+        }
+
+        function updatePerms(e) {
+            socket.emit('permChange', e.dataset.userid, e.value);
         }
     </script>
     <%- include('../partials/footer_content') %>

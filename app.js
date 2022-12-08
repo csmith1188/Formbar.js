@@ -11,14 +11,20 @@ const io = require('socket.io')(http);
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 // Create session for user information to be transferred from page to page
-app.use(session({
+var sessionMiddleware = session({
     secret: 'secret',
-    resave: true,
-    saveUninitialized: true
-}));
+    resave: false,
+    saveUninitialized: false
+});
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/static'));
+
+io.use(function(socket, next) {
+    sessionMiddleware(socket.request, socket.request.res || {}, next);
+});
+
+app.use(sessionMiddleware);
 
 // Establishes the connection to the database. This allows for logins.
 // Logins consist of usernames and passwords
@@ -58,8 +64,6 @@ class Classroom {
         }
     }
 }
-
-
 
 
 
@@ -126,12 +130,6 @@ app.get('/', isAuthenticated, (req, res) => {
     res.redirect('/home')
 })
 
-
-// Intentional backdoor to become a teacher. MAKE SURE TO DELETE BEFORE "Commercial" USE
-app.get('/teacherprivs', isLoggedIn, (req, res) => {
-    cD.noClass.students[req.session.user].permissions = 0
-    res.redirect('/createclass')
-})
 
 // A
 
@@ -349,7 +347,7 @@ app.post('/login', (req, res) => {
 
 //Renders the poll HTMl template
 //allows for poll answers to be processed and stored
-app.get('/poll', (req, res) =>{
+app.get('/poll', isAuthenticated, (req, res) =>{
     let user = {
         name:  req.session.user,
         class:  req.session.class
@@ -465,6 +463,10 @@ io.sockets.on('connection', function(socket) {
         cD[user.class].students[user.name].pollRes = res;
         console.log(cD[user.class].students[user.name]);
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user.name])
+    });
+    socket.on('permChange', function(user, res) {
+        cD[socket.request.session.class].students[user].permissions = res
+        db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
