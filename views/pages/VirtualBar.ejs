@@ -1,0 +1,147 @@
+{% extends 'header_fullscreen.html' %}
+<!-- ^^ This means add this file into the contents of the header page -->
+<!-- This is where the title, top buttons, and stylesheet is located -->
+
+<!-- Change title here -->
+{% block title %}Virtual bar{% endblock %}
+
+<!-- Extra style declarations here -->
+{% block style %}
+
+{% endblock %}
+
+<!-- Change theme color here -->
+{% block color %}purple{% endblock %}
+
+<!-- Main content here -->
+{% block main %}
+
+<div class="container"></div>
+<canvas id='virtualbar' style="height:900px; width:969px"></canvas>
+
+{% endblock %}
+
+<!-- Extra JavaScript here -->
+{% block script %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+    integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+
+    var mychart = document.getElementById('virtualbar').getContext("2d");
+    var doughnutChart = new Chart(mychart, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                backgroundColor: [],
+                data: [0, 0, 0, 0]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            size: 50
+                        },
+                        color: 'white'
+                    }
+
+                }
+            }
+        }
+    });
+
+    let pixRes;
+
+    let type = "{{ type }}"
+
+    function update() {
+        // Update the virtual bar
+        let pixRequest = new XMLHttpRequest();
+        pixRequest.open("GET", '/api/students');
+        pixRequest.onload = () => {
+            pixRes = JSON.parse(pixRequest.responseText);
+
+            if (type == 'tutd') {
+                var up = 0
+                var wiggle = 0
+                var down = 0
+                var none = 0
+
+
+                for (const key of Object.keys(pixRes)) {
+                    console.log(pixRes[key].thumb);
+                    if (pixRes[key].thumb == "up") {
+                        up++
+                    }
+
+                    if (pixRes[key].thumb == "wiggle") {
+                        wiggle++
+                    }
+
+                    if (pixRes[key].thumb == "down") {
+                        down++
+                    }
+                    if (pixRes[key].thumb == "") {
+                        none++
+                    }
+                    if (up >= 1 && down == 0 && wiggle == 0 && none == 0) {
+                        doughnutChart.data.labels = ['MAX GAMER']
+                        doughnutChart.data.datasets[0].backgroundColor = ['#BF40BF']
+                        doughnutChart.data.datasets[0].data = [up];
+                    } else {
+                        doughnutChart.data.labels = ["Up", "Wiggle", "Down", "Not Submitted"]
+                        doughnutChart.data.datasets[0].backgroundColor = ["#00ff00", "#00ffff", "#ff0000", "#FFFFFF"]
+                        doughnutChart.data.datasets[0].data = [up, wiggle, down, none];
+                    }
+                }
+            } else if (type == 'abcd') {
+                var a = 0
+                var b = 0
+                var c = 0
+                var d = 0
+
+
+                for (const key of Object.keys(pixRes)) {
+                    console.log(pixRes[key].letter);
+                    if (pixRes[key].letter == "a") {
+                        a++
+                    }
+
+                    if (pixRes[key].letter == "b") {
+                        b++
+                    }
+
+                    if (pixRes[key].letter == "c") {
+
+                        c++
+                    }
+
+                    if (pixRes[key].letter == "d") {
+                        d++
+                    }
+                    doughnutChart.data.datasets[0].data = [a, b, c, d];
+                    doughnutChart.data.labels = ['A', 'B', 'C', 'D'];
+                    doughnutChart.data.datasets[0].backgroundColor = ["#00ff00", "#00ffff", "#ff0000", "#ffdf40"]
+                }
+            } else {
+                doughnutChart.data.labels = ['No Active Poll'];
+            }
+
+        }
+
+        doughnutChart.update();
+        pixRequest.send(null);
+    }
+
+    update();
+    setInterval(update, 1000);
+    
+</script>
+{% endblock %}
