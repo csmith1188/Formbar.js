@@ -262,7 +262,6 @@ app.post('/login', (req, res) => {
         username: req.body.username,
         password: req.body.password,
         permissions: req.body.userType
-
     }
     var passwordCrypt = encrypt(user.password);
     // Check whether user is logging in or signing up
@@ -432,6 +431,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 // Z
 
 
+
 //Handles the webscoket communications
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
@@ -451,4 +451,3 @@ io.sockets.on('connection', function(socket) {
 http.listen(4000, () => {
     console.log('Running on port: 4000');
 });
-
