@@ -25,17 +25,25 @@ app.use(express.static(__dirname + '/static'));
 const algorithm = 'aes-256-ctr';
 const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
 
-// Establishing connection to database
+// Establishes the connection to the database. This allows for logins.
+// Logins consist of usernames and passwords
+// The database allows for manipulation of the elements of the formbar js
+// These elements are the passwords,usernames, and the privledges of all users
 var db = new sqlite3.Database('database/database.db');
 
-
+// starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
+// the teacher privledge will be automatically assigned to the teacher when they log in to the formbar js
+// The cd will determine wether the student has a role when they start or not
+// This role could be guest, student, teacher, or admin depending ob the teacher
 var cD = {
     noClass: { students: {} }
 }
 
 // This class is used to create a student to be stored in the sessions data
+// Creating the student class to be stored in the database allows it to be mainpulated
 class Student {
     // Needs username, id from the database, and if perms established already pass the uodated value
+    // These will need to be put into the constructor in order to allow the creation of the class
     constructor(username, id, perms = 2) {
         cD.noClass.students[username] = {
             id: id,
@@ -45,8 +53,10 @@ class Student {
 }
 
 // This class is used to add a new classroom to the session data
+// The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
     // Needs the name of the class you want to create
+    // The name of the class will be used later in tnhe database to allow lessons to operate
     constructor(className) {
         cD[className] = {
             students: {}
@@ -68,6 +78,8 @@ class Classroom {
 
 // Delete everything in table
 // For testing purposes ONLY. DELETE WHEN COMMITTING TO RC
+// Test only because this clears the database of all users and perms
+// this takes away teacher perms, and they have to be manually added back in
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
         if (err) {
@@ -79,6 +91,8 @@ function clearDatabase() {
 
 // Check if user has logged in
 // Place at the start of any page that needs to verify if a user is logged in or not
+// This allows websites to check on thier own if the user is logged in
+// This also allows for the website to check for perms
 function isAuthenticated(req, res, next) {
     if (req.session.user) {
         if (cD.noClass.students[req.session.user]) {
@@ -98,6 +112,8 @@ function isAuthenticated(req, res, next) {
 
 // Check if user is logged in. Only used for create and select class pages
 // Use isAuthenticated function for any other pages
+// Created for the first page since there is no check before this
+// This allows for a first check in where the user gets checked by the webpage
 function isLoggedIn(req, res, next) {
     if (req.session.user) {
         next()
@@ -107,6 +123,10 @@ function isLoggedIn(req, res, next) {
 }
 
 // Endpoints
+// This is the root page, it is where the users first get checked by the home page
+// It is used to redirect to the home page
+// This allows it to check if the user is logged in along with the home page
+// It also allows for redirection to any other page if needed
 app.get('/', isAuthenticated, (req, res) => {
     res.redirect('/home')
 })
@@ -117,6 +137,9 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // C
 // Loads which classes the teacher is an owner of
+// This allows the teacher to be in charge of all classes
+// The teacher can give aany perms to anyone they desire, which is useful at times
+// This also allows the teacher to kick or ban if needed
 app.get('/createclass', isLoggedIn, (req, res) => {
     var ownerClasses = []
     // Finds all classes the teacher is the owner of
@@ -134,6 +157,9 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 })
 
 // Allow teacher to create class
+// Allowing the teacher to create classes is vital to wether the lesson actually works or not, because they have to be allowed to create a teacher class
+// This will allow the teacher to give students student perms, and guests student perms as well
+// Plus they can ban and kick as long as they can create classes
 app.post('/createclass', isLoggedIn, (req, res) => {
     let submittionType = req.body.submittionType
     let className = req.body.name;
@@ -160,6 +186,10 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 })
 
 //chat
+// This is the chat get endpoint, it gets the chat and allows it to be used
+// It also sets the color and font for the chat, which will be used by students to participate in the lesson
+// It also allows students to talk amongst one another, while the teacher can see messages
+// It also allows for the use of socket.io, and makes good use of them
 app.get('/chat', (req, res) => {
     res.render('pages/chat', {
         title: 'Formbar Chat',
@@ -168,6 +198,11 @@ app.get('/chat', (req, res) => {
     })
 
 })
+
+// This is the socket.io, it allows for the connection to the server
+// It allows for the chat messages to be actually sent to the chat
+// It is what the chat uses to emit messages to the server, this allows for the database to record whatever is put in
+// This could be useful to the teacher in case students say anything bad or do somehing that can get them banned
 io.sockets.on('connection', function(socket) {
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
@@ -175,6 +210,10 @@ io.sockets.on('connection', function(socket) {
 
 });
 // D
+// Clears the database, this deletes the database
+// This will allow for the server to be reset so new things can be tested
+// This is purely for testing purposes, and will be removed in the future
+// Clearing the database removes all permissions and makes you manually reset them
 app.get('/delete', (req, res) => {
     clearDatabase()
 })
@@ -186,7 +225,10 @@ app.get('/delete', (req, res) => {
 // G
 
 // H
-
+// This is the home page, where the teacher and students can access can access the formbar js
+// It also shows the color and title of the formbar js
+// It renders the home page so teachers and students can navigate to it
+// It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, (req, res) => {
     res.render('pages/index', {
         title: 'Formbar Home',
@@ -201,7 +243,10 @@ app.get('/home', isAuthenticated, (req, res) => {
 // K
 
 // L
-
+// This renders the login page
+// It displays the title and the color of the login page of the formbar js
+// It allows for the login to check if the user wants to login to the server
+// This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
@@ -209,7 +254,10 @@ app.get('/login', (req, res) => {
     });
 });
 
-
+// This lets the user log into the server, it uses each element from the database to allow the server to do so
+// This lets users actually log in instead of not being able to log in at all
+// It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
+// This also encryypts passwords to make sure people's accounts don't get hacked
 app.post('/login', (req, res) => {
     var user = {
         username: req.body.username,
@@ -282,14 +330,20 @@ app.post('/login', (req, res) => {
 // R
 
 // S
-
+// This allows people to select thier class
+// Selecting classes allows for teacher to select thier class
+// Allows class to run smoothly
+// Allows the lesson to actually work and run without problems
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
         color: '"dark blue"'
     })
 })
-
+// Further allowing for class selecting
+// It allows teacher to actually select classes
+// This is required for the formbar js
+// The formbar js extensively uses this to work and run correctly
 app.post('/selectclass', isLoggedIn, (req, res) => {
     // Let user enter or join a teachers class
     let className = req.body.name;
