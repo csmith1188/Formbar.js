@@ -61,7 +61,8 @@ class Classroom {
     constructor(className) {
         cD[className] = {
             students: {},
-            pollStatus: false
+            pollStatus: false,
+            posPollRes: 0
         }
     }
 }
@@ -358,7 +359,8 @@ app.get('/poll', isAuthenticated, (req, res) =>{
         title: 'Poll',
         color: '"dark blue"',
         user: JSON.stringify(user),
-        pollStatus: cD[req.session.class].pollStatus
+        pollStatus: cD[req.session.class].pollStatus,
+        posPollRes: cD[req.session.class].posPollRes
     })
     console.log(user);
 let answer = req.query.letter;
@@ -471,8 +473,9 @@ io.sockets.on('connection', function(socket) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
-    socket.on('startPoll', function() {
+    socket.on('startPoll', function(resNumber) {
         cD[socket.request.session.class].pollStatus = true
+        cD[socket.request.session.class].posPollRes = resNumber
     });
     socket.on('endPoll', function() {
         cD[socket.request.session.class].pollStatus = false
@@ -480,6 +483,9 @@ io.sockets.on('connection', function(socket) {
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
     });
+    socket.on('reload', function() {
+        io.emit('reload')
+    })
 });
 
 

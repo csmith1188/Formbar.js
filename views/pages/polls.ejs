@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polls</title>
 </head>
-<body onload="load(<%-pollStatus%>)">
-    <h1 id="noPoll">Teacher hasn't started a poll yet</h1>
+<body onload="load(<%-pollStatus%>, <%-posPollRes%>)">
+    <h1 id="noPoll">No Poll Is Active Currently</h1>
     <div id="poll">
-    <form action="/poll" method="post">
+    <form action="/poll" method="post" id="pollForm">
         <input type="radio" name="poll" id="a" value="a">
         <label for="a">A</label>
         <input type="radio" name="poll" id="b" value="b">
@@ -43,17 +43,29 @@
                     return false;
                 }
             };
+            var pollForm = document.getElementById('pollForm')
+
+
 
             var poll = document.getElementById('poll')
             var noPoll = document.getElementById('noPoll')
-            function load(pollStatus) {
+            function load(pollStatus, posPollRes) {
                 if (pollStatus) {
                     noPoll.style.display = 'none'
                     poll.style.display = 'block'
+
+                    for (let i = 0; i < posPollRes; i++) {
+                        pollForm.innerHTML +=
+                    }
                 } else {
                     noPoll.style.display = 'block'
                     poll.style.display = 'none'
                 }
+
             }
+
+            socket.on('reload', function() {
+                location.reload()
+            })
 </script>
 </html>

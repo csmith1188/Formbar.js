@@ -29,7 +29,11 @@
                 <%})%>
         </div>
         <div id="pollChanges">
-            <button id="startPoll" onclick="startPollFunc()">Start Poll</button>
+            <form>
+                <label for="resNumber">How many possible responses?</label>
+                <input type="number" id="resNumber">
+                <button id="startPoll" onclick="startPollFunc()">Start Poll</button>
+            </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
         </div>
     </body>
@@ -41,6 +45,7 @@
         var permChanges = document.getElementById('permChanges')
         var pollChanges = document.getElementById('pollChanges')
         var startPoll = document.getElementById('startPoll')
+        var resNumber = document.getElementById('resNumber')
         var endPoll = document.getElementById('endPoll')
 
         
@@ -68,13 +73,15 @@
         }
 
         function startPollFunc() {
-            socket.emit('startPoll');
+            socket.emit('startPoll', resNumber.value);
+            socket.emit('reload');
             startPoll.style.display = 'none'
             endPoll.style.display = 'block'
         }
 
         function endPollFunc() {
             socket.emit('endPoll');
+            socket.emit('reload');
             startPoll.style.display = 'block'
             endPoll.style.display = 'none'
         }
