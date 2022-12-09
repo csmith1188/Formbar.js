@@ -218,6 +218,17 @@ app.get('/chat', (req, res) => {
     })
 
 })
+//
+//
+//
+//
+app.get('/VirtualBar', (req, res) => {
+    res.render('pages/VirtualBar', {
+        title: 'VirtualBar',
+        color: '"dark blue"',
+        io: io
+    })
+})
 
 // This is the socket.io, it allows for the connection to the server
 // It allows for the chat messages to be actually sent to the chat
