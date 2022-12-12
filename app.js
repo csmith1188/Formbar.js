@@ -26,6 +26,13 @@ io.use(function(socket, next) {
 
 app.use(sessionMiddleware);
 
+//
+//
+//
+//
+const rooms = io.of("/my-namespace").adapter.rooms;
+const sids = io.of("/my-namespace").adapter.sids;
+
 // Establishes the connection to the database. This allows for logins.
 // Logins consist of usernames and passwords
 // The database allows for manipulation of the elements of the formbar js
@@ -473,6 +480,13 @@ io.sockets.on('connection', function(socket) {
     });
 });
 
+io.of("/polls").adapter.on("create-room", (room) => {
+    console.log(`room ${room} was created`);
+  });
+  
+  io.of("/polls").adapter.on("join-room", (room, id) => {
+    console.log(`socket ${id} has joined room ${room}`);
+  });
 
 http.listen(4000, () => {
     console.log('Running on port: 4000');
