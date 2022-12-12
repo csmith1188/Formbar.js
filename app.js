@@ -463,11 +463,10 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
       // /poll websockets for updating the database
-      socket.on('pollResp', function(user, res) {
-        user = JSON.parse(user)
-        cD[user.class].students[user.name].pollRes = res;
-        console.log(cD[user.class].students[user.name]);
-        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user.name])
+      socket.on('pollResp', function(res) {
+        user = socket.request.session.user
+        cD[socket.request.session.class].students[user].pollRes = res;
+        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user])
     });
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res

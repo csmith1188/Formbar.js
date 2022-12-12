@@ -29,10 +29,10 @@
                 <%})%>
         </div>
         <div id="pollChanges">
-            <form>
+            <form id="startPollForm">
                 <label for="resNumber">How many possible responses?</label>
                 <input type="number" id="resNumber">
-                <button id="startPoll" onclick="startPollFunc()">Start Poll</button>
+                <button onclick="startPollFunc()">Start Poll</button>
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
         </div>
@@ -47,6 +47,7 @@
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
         var endPoll = document.getElementById('endPoll')
+        var startPollForm = document.getElementById('startPollForm')
 
         
 
@@ -54,10 +55,10 @@
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             if (pollStatus) {
-                startPoll.style.display = 'none'
+                startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
             } else {
-                startPoll.style.display = 'block'
+                startPollForm.style.display = 'block'
                 endPoll.style.display = 'none'
             }
         }
@@ -75,14 +76,14 @@
         function startPollFunc() {
             socket.emit('startPoll', resNumber.value);
             socket.emit('reload');
-            startPoll.style.display = 'none'
+            startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
         }
 
         function endPollFunc() {
             socket.emit('endPoll');
             socket.emit('reload');
-            startPoll.style.display = 'block'
+            startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
         }
 
