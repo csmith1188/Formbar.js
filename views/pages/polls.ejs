@@ -6,47 +6,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polls</title>
 </head>
-<body onload="load(<%-pollStatus%>, <%-posPollRes%>)">
+<body onload="load(<%-pollStatus%>, <%-posPollRes%>, <%-posTextRes%>)">
     <h1 id="noPoll">No Poll Is Active Currently</h1>
     <div id="poll">
-    <form action="/poll" method="post" id="pollForm">
+    <form id="pollForm">
         
     </form>
-    
+    <button onclick="submitPoll(<%-posPollRes%>)">Submit</button>
 </div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-               var socket = io();
-               var a = document.getElementById('a')
-               var b = document.getElementById('b')
-               var c = document.getElementById('c')
-               var d = document.getElementById('d')
-               function submit(){
-                if(a.checked){
-                    socket.emit('pollResp', '<%-user%>' , a.value);
-                }else if(b.checked){
-                    socket.emit('pollResp',  '<%-user%>' , b.value);
-                }else if(c.checked){
-                    socket.emit('pollResp',  '<%-user%>', c.value);
-                }else if(d.checked){
-                    socket.emit('pollResp',  '<%-user%>', d.value);
-                } else{
-                    return false;
-                }
-            };
-
-            function submitPoll(e) {
-                socket.emit('pollResp', e);
-            }
+            var socket = io();
+            var resTextBox = document.getElementById('resTextBox')
             var pollForm = document.getElementById('pollForm')
+            function submitPoll(posPollRes) {
+                var radios = document.getElementsByTagName('input')
+                var lettRes = ''
+                var textRes = ''
+                for (var i = 0; i < radios.length; i++) {
 
+                    if (radios[i].type === 'radio' && radios[i].checked) {
+                        // get value, set checked flag or do whatever you need to
+                        lettRes = radios[i].value; 
+                              
+                    }
+                    if (radios[i].type === 'text') {
+                        textRes = radios[i].value
+                    }
+                    
+                }
+                console.log(textRes);
+                socket.emit('pollResp', lettRes, textRes);
+            }
 
-
+            
             var poll = document.getElementById('poll')
             var noPoll = document.getElementById('noPoll')
-            function load(pollStatus, posPollRes) {
+            function load(pollStatus, posPollRes, posTextRes) {
                 if (pollStatus) {
                     noPoll.style.display = 'none'
                     poll.style.display = 'block'
@@ -54,7 +52,9 @@
                     for (let i = 0; i < posPollRes; i++) {
                         pollForm.innerHTML += `<input type="radio" name="poll" id="${letters[i]}" value="${letters[i]}"> <label for="${letters[i]}">${letters[i].toUpperCase()}</label>`
                     }
-                    pollForm.innerHTML += `<br><button onclick="submitPoll()">Submit</button>`
+                    if (posTextRes) {
+                        pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`
+                    }
                 } else {
                     noPoll.style.display = 'block'
                     poll.style.display = 'none'

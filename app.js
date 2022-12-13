@@ -49,7 +49,8 @@ class Student {
         cD.noClass.students[username] = {
             id: id,
             permissions: perms,
-            pollRes: ''
+            pollRes: '',
+            pollTextRes: ''
         }
     }
 }
@@ -62,7 +63,8 @@ class Classroom {
         cD[className] = {
             students: {},
             pollStatus: false,
-            posPollRes: 0
+            posPollRes: 0,
+            posTextRes: false
         }
     }
 }
@@ -147,7 +149,7 @@ app.get('/controlpanel', isAuthenticated, (req, res) => {
     let keys = Object.keys(students);
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
-        var val = { name: keys[i], perms: students[keys[i]].permissions}
+        var val = {name: keys[i], perms: students[keys[i]].permissions, pollRes: {lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes}}
         allStuds.push(val)
     } 
     res.render('pages/controlpanel', {
@@ -160,7 +162,7 @@ app.get('/controlpanel', isAuthenticated, (req, res) => {
 
 // Loads which classes the teacher is an owner of
 // This allows the teacher to be in charge of all classes
-// The teacher can give aany perms to anyone they desire, which is useful at times
+// The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
 app.get('/createclass', isLoggedIn, (req, res) => {
     var ownerClasses = []
@@ -360,7 +362,8 @@ app.get('/poll', isAuthenticated, (req, res) =>{
         color: '"dark blue"',
         user: JSON.stringify(user),
         pollStatus: cD[req.session.class].pollStatus,
-        posPollRes: cD[req.session.class].posPollRes
+        posPollRes: cD[req.session.class].posPollRes,
+        posTextRes: cD[req.session.class].posTextRes
     })
     console.log(user);
 let answer = req.query.letter;
@@ -463,18 +466,20 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
       // /poll websockets for updating the database
-      socket.on('pollResp', function(res) {
-        user = socket.request.session.user
-        cD[socket.request.session.class].students[user].pollRes = res;
-        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user])
+      socket.on('pollResp', function(res, textRes) {
+        
+        cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
+        cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
+        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
     });
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
-    socket.on('startPoll', function(resNumber) {
+    socket.on('startPoll', function(resNumber, resTextBox) {
         cD[socket.request.session.class].pollStatus = true
         cD[socket.request.session.class].posPollRes = resNumber
+        cD[socket.request.session.class].posTextRes = resTextBox
     });
     socket.on('endPoll', function() {
         cD[socket.request.session.class].pollStatus = false

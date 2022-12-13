@@ -6,8 +6,6 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../../socket.io/socket.io.js"></script>
-        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     </head>
 
     <body onload="load(<%-pollStatus%>)">
@@ -16,9 +14,10 @@
             <button id="polls" onclick="toPolls()">Polls</button>
         </header>
         <div id="permChanges">
-            <% students.forEach( (studs)=> { %>
+            <% students.forEach( (studs)=> { console.log(studs) %>
                 <p>
                     <%- studs.name %>
+                    Text Response: <%- studs.pollRes.textRes %>
                 </p>
                 <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
                     <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
@@ -32,6 +31,8 @@
             <form id="startPollForm">
                 <label for="resNumber">How many possible responses?</label>
                 <input type="number" id="resNumber">
+                <label for="resTextBox">Would like to accept text responses?</label>
+                <input type="checkbox" id="resTextBox">
                 <button onclick="startPollFunc()">Start Poll</button>
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
@@ -46,6 +47,7 @@
         var pollChanges = document.getElementById('pollChanges')
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
+        var resTextBox = document.getElementById('resTextBox')
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
 
@@ -74,7 +76,7 @@
         }
 
         function startPollFunc() {
-            socket.emit('startPoll', resNumber.value);
+            socket.emit('startPoll', resNumber.value, resTextBox.checked);
             socket.emit('reload');
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
