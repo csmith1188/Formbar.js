@@ -12,6 +12,7 @@
         <header>
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
+            <button id="pollResponse" onclick="toResponses()">Responses</button>
         </header>
         <div id="permChanges">
             <% students.forEach( (studs)=> { console.log(studs) %>
@@ -37,6 +38,15 @@
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
         </div>
+        <div id="responses">
+            <% students.forEach( (studs)=> { %>
+                <p>
+                    <%- studs.name %>
+                    Letter Response: <%- studs.pollRes.lettRes %>
+                    Text Response: <%- studs.pollRes.textRes %>
+                </p>
+                <%})%>
+        </div>
     </body>
 
     </html>
@@ -45,6 +55,7 @@
         var socket = io();
         var permChanges = document.getElementById('permChanges')
         var pollChanges = document.getElementById('pollChanges')
+        var responses = document.getElementById('responses')
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
         var resTextBox = document.getElementById('resTextBox')
@@ -57,6 +68,7 @@
         function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
+            responses.style.display = 'none'
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
@@ -69,11 +81,19 @@
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
+            responses.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
+            responses.style.display = 'none'
+        }
+        // Changes to the responses section of the page
+        function toResponses() {
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'block'
         }
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
@@ -82,6 +102,9 @@
             socket.emit('reload'); // Reloads the users page
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'block'
         }
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
