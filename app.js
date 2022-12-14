@@ -360,7 +360,8 @@ app.get('/poll', isAuthenticated, (req, res) =>{
     console.log(user);
 let answer = req.query.letter;
 if (answer) {
-    console.log(answer);
+    cD[req.session.class].students[req.session.user].permissions = answer
+    db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
 }
 
 
@@ -369,8 +370,8 @@ if (answer) {
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
    if (answer) {
+    cD[req.session.class].students[req.session.user].permissions = answer
     db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
-    console.log(answer);
    }
 
    res.redirect('/poll')
