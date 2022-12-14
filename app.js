@@ -225,6 +225,17 @@ app.get('/chat', (req, res) => {
     })
 
 })
+//
+//
+//
+//
+app.get('/VirtualBar', (req, res) => {
+    res.render('pages/VirtualBar', {
+        title: 'VirtualBar',
+        color: '"dark blue"',
+        io: io
+    })
+})
 
 // This is the socket.io, it allows for the connection to the server
 // It allows for the chat messages to be actually sent to the chat
@@ -480,13 +491,7 @@ io.sockets.on('connection', function(socket) {
     });
 });
 
-io.of("/polls").adapter.on("create-room", (room) => {
-    console.log(`room ${room} was created`);
-  });
-  
-  io.of("/polls").adapter.on("join-room", (room, id) => {
-    console.log(`socket ${id} has joined room ${room}`);
-  });
+
 
 http.listen(4000, () => {
     console.log('Running on port: 4000');
