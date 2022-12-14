@@ -144,6 +144,7 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
+// On render it will send all students in that class to the page
 app.get('/controlpanel', isAuthenticated, (req, res) => {
     let students = cD[req.session.class].students
     let keys = Object.keys(students);
@@ -351,7 +352,7 @@ app.post('/login', (req, res) => {
 // P
 
 //Renders the poll HTMl template
-//allows for poll answers to be processed and stored
+//Allows for poll answers to be processed and stored
 app.get('/poll', isAuthenticated, (req, res) =>{
     let user = {
         name:  req.session.user,
@@ -472,21 +473,26 @@ io.sockets.on('connection', function(socket) {
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
     });
+    // Changes Permission of user. Takes which user and the new permission level
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
+    // Starts a new poll. Takes the number of responses and whether or not their are text responses
     socket.on('startPoll', function(resNumber, resTextBox) {
         cD[socket.request.session.class].pollStatus = true
         cD[socket.request.session.class].posPollRes = resNumber
         cD[socket.request.session.class].posTextRes = resTextBox
     });
+    // End the current poll. Does not take any arguments
     socket.on('endPoll', function() {
         cD[socket.request.session.class].pollStatus = false
     });
+    
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
     });
+    // Reloads any page with the reload function on. No arguments
     socket.on('reload', function() {
         io.emit('reload')
     })

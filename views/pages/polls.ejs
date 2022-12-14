@@ -21,6 +21,9 @@
             var socket = io();
             var resTextBox = document.getElementById('resTextBox')
             var pollForm = document.getElementById('pollForm')
+
+            // Submits the users answer to the poll
+            // Takes the posPollRes value which defines the number of possible answers
             function submitPoll(posPollRes) {
                 var radios = document.getElementsByTagName('input')
                 var lettRes = ''
@@ -28,22 +31,27 @@
                 for (var i = 0; i < radios.length; i++) {
 
                     if (radios[i].type === 'radio' && radios[i].checked) {
-                        // get value, set checked flag or do whatever you need to
+                        // Defines the letter response of the user
                         lettRes = radios[i].value; 
                               
                     }
                     if (radios[i].type === 'text') {
+                        // Defines the text input of the user
                         textRes = radios[i].value
                     }
                     
                 }
-                console.log(textRes);
+                // Sends user input to the server
                 socket.emit('pollResp', lettRes, textRes);
             }
 
             
             var poll = document.getElementById('poll')
             var noPoll = document.getElementById('noPoll')
+            // Function will run on page load
+            // Checks if poll is active
+            // Creates any number of responses that were defined by the teacher
+            // Checks if teacher wanted text responses or not
             function load(pollStatus, posPollRes, posTextRes) {
                 if (pollStatus) {
                     noPoll.style.display = 'none'
@@ -62,6 +70,7 @@
 
             }
 
+            // When new poll is created or ended, this refreshes the page
             socket.on('reload', function() {
                 location.reload()
             })

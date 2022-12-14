@@ -52,7 +52,8 @@
         var startPollForm = document.getElementById('startPollForm')
 
         
-
+        // Function runs on page load
+        // Checks if poll is active or not and displays correct output
         function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
@@ -64,31 +65,33 @@
                 endPoll.style.display = 'none'
             }
         }
-
+        // Changes to the create a poll section of the page
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
         }
-
+        // Changes to the permission change section of the page
         function toPermissions() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
         }
-
+        // Starts a new poll that allows students to submit answers
+        // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
             socket.emit('startPoll', resNumber.value, resTextBox.checked);
-            socket.emit('reload');
+            socket.emit('reload'); // Reloads the users page
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
         }
-
+        // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
             socket.emit('endPoll');
             socket.emit('reload');
             startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
         }
-
+        // Used to change permission of user in there class
+        // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value);
         }
