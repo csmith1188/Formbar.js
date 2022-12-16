@@ -68,40 +68,16 @@
         pixRequest.onload = () => {
             pixRes = JSON.parse(pixRequest.responseText);
 
-            if (type == 'tutd') {
-                var up = 0
-                var wiggle = 0
-                var down = 0
-                var none = 0
+            if (type == 'radio') {
+                var a = 0
+                var b = 0
+                var c = 0
+                var d = 0
 
 
                 for (const key of Object.keys(pixRes)) {
                     console.log(pixRes[key].thumb);
-                    if (pixRes[key].thumb == "up") {
-                        up++
-                    }
-
-                    if (pixRes[key].thumb == "wiggle") {
-                        wiggle++
-                    }
-
-                    if (pixRes[key].thumb == "down") {
-                        down++
-                    }
-                    if (pixRes[key].thumb == "") {
-                        none++
-                    }
-                    if (up >= 1 && down == 0 && wiggle == 0 && none == 0) {
-                        doughnutChart.data.labels = ['MAX GAMER']
-                        doughnutChart.data.datasets[0].backgroundColor = ['#BF40BF']
-                        doughnutChart.data.datasets[0].data = [up];
-                    } else {
-                        doughnutChart.data.labels = ["Up", "Wiggle", "Down", "Not Submitted"]
-                        doughnutChart.data.datasets[0].backgroundColor = ["#00ff00", "#00ffff", "#ff0000", "#FFFFFF"]
-                        doughnutChart.data.datasets[0].data = [up, wiggle, down, none];
-                    }
-                }
-            } else if (type == 'abcd') {
+                     if (type == 'abcd') {
                 var a = 0
                 var b = 0
                 var c = 0
@@ -142,6 +118,4 @@
 
     update();
     setInterval(update, 1000);
-    
-</script>
-{% endblock %}
+}}
