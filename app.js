@@ -26,6 +26,13 @@ io.use(function(socket, next) {
 
 app.use(sessionMiddleware);
 
+//
+//
+//
+//
+const rooms = io.of("/my-namespace").adapter.rooms;
+const sids = io.of("/my-namespace").adapter.sids;
+
 // Establishes the connection to the database. This allows for logins.
 // Logins consist of usernames and passwords
 // The database allows for manipulation of the elements of the formbar js
@@ -223,6 +230,17 @@ app.get('/chat', (req, res) => {
         io: io
     })
 
+})
+//
+//
+//
+//
+app.get('/VirtualBar', (req, res) => {
+    res.render('pages/VirtualBar', {
+        title: 'VirtualBar',
+        color: '"dark blue"',
+        io: io
+    })
 })
 
 // This is the socket.io, it allows for the connection to the server
@@ -497,6 +515,7 @@ io.sockets.on('connection', function(socket) {
         io.emit('reload')
     })
 });
+
 
 
 http.listen(4000, () => {
