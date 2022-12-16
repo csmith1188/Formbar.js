@@ -18,8 +18,15 @@
         <label for="c">C</label>
         <input type="radio" name="poll" id="d" value="d">
         <label for="d">D</label>
+=======
+<body onload="load(<%-pollStatus%>, <%-posPollRes%>, <%-posTextRes%>)">
+    <h1 id="noPoll">No Poll Is Active Currently</h1>
+    <div id="poll">
+    <form id="pollForm">
+        
     </form>
-    <button onclick="submit()">submit</button>
+    <button onclick="submitPoll(<%-posPollRes%>)">Submit</button>
+</div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 
@@ -50,6 +57,64 @@
         console.log(`socket ${id} has joined room ${room}`);
     });
 
+=======
+            var socket = io();
+            var resTextBox = document.getElementById('resTextBox')
+            var pollForm = document.getElementById('pollForm')
+
+            // Submits the users answer to the poll
+            // Takes the posPollRes value which defines the number of possible answers
+            function submitPoll(posPollRes) {
+                var radios = document.getElementsByTagName('input')
+                var lettRes = ''
+                var textRes = ''
+                for (var i = 0; i < radios.length; i++) {
+
+                    if (radios[i].type === 'radio' && radios[i].checked) {
+                        // Defines the letter response of the user
+                        lettRes = radios[i].value; 
+                              
+                    }
+                    if (radios[i].type === 'text') {
+                        // Defines the text input of the user
+                        textRes = radios[i].value
+                    }
+                    
+                }
+                alert('Poll Submitted')
+                // Sends user input to the server
+                socket.emit('pollResp', lettRes, textRes);
+            }
+
+            
+            var poll = document.getElementById('poll')
+            var noPoll = document.getElementById('noPoll')
+            // Function will run on page load
+            // Checks if poll is active
+            // Creates any number of responses that were defined by the teacher
+            // Checks if teacher wanted text responses or not
+            function load(pollStatus, posPollRes, posTextRes) {
+                if (pollStatus) {
+                    noPoll.style.display = 'none'
+                    poll.style.display = 'block'
+                    var letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+                    for (let i = 0; i < posPollRes; i++) {
+                        pollForm.innerHTML += `<input type="radio" name="poll" id="${letters[i]}" value="${letters[i]}"> <label for="${letters[i]}">${letters[i].toUpperCase()}</label>`
+                    }
+                    if (posTextRes) {
+                        pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`
+                    }
+                } else {
+                    noPoll.style.display = 'block'
+                    poll.style.display = 'none'
+                }
+
+            }
+
+            // When new poll is created or ended, this refreshes the page
+            socket.on('reload', function() {
+                location.reload()
+            })
 </script>
 
 </html>

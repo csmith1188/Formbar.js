@@ -56,7 +56,8 @@ class Student {
         cD.noClass.students[username] = {
             id: id,
             permissions: perms,
-            pollRes: ''
+            pollRes: '',
+            pollTextRes: ''
         }
     }
 }
@@ -67,7 +68,10 @@ class Classroom {
     // The name of the class will be used later in tnhe database to allow lessons to operate
     constructor(className) {
         cD[className] = {
-            students: {}
+            students: {},
+            pollStatus: false,
+            posPollRes: 0,
+            posTextRes: false
         }
     }
 }
@@ -147,24 +151,26 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
+// On render it will send all students in that class to the page
 app.get('/controlpanel', isAuthenticated, (req, res) => {
     let students = cD[req.session.class].students
     let keys = Object.keys(students);
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
-        var val = { name: keys[i], perms: students[keys[i]].permissions}
+        var val = {name: keys[i], perms: students[keys[i]].permissions, pollRes: {lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes}}
         allStuds.push(val)
     } 
     res.render('pages/controlpanel', {
         title: "Control Panel",
-        students: allStuds
+        students: allStuds,
+        pollStatus: cD[req.session.class].pollStatus
     })
 })
 
 
 // Loads which classes the teacher is an owner of
 // This allows the teacher to be in charge of all classes
-// The teacher can give aany perms to anyone they desire, which is useful at times
+// The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
 app.get('/createclass', isLoggedIn, (req, res) => {
     var ownerClasses = []
@@ -364,7 +370,7 @@ app.post('/login', (req, res) => {
 // P
 
 //Renders the poll HTMl template
-//allows for poll answers to be processed and stored
+//Allows for poll answers to be processed and stored
 app.get('/poll', isAuthenticated, (req, res) =>{
     let user = {
         name:  req.session.user,
@@ -373,7 +379,10 @@ app.get('/poll', isAuthenticated, (req, res) =>{
     res.render('pages/polls', {
         title: 'Poll',
         color: '"dark blue"',
-        user: JSON.stringify(user)
+        user: JSON.stringify(user),
+        pollStatus: cD[req.session.class].pollStatus,
+        posPollRes: cD[req.session.class].posPollRes,
+        posTextRes: cD[req.session.class].posTextRes
     })
     console.log(user);
 let answer = req.query.letter;
@@ -476,19 +485,35 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
       // /poll websockets for updating the database
-      socket.on('pollResp', function(user, res) {
-        user = JSON.parse(user)
-        cD[user.class].students[user.name].pollRes = res;
-        console.log(cD[user.class].students[user.name]);
-        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, user.name])
+      socket.on('pollResp', function(res, textRes) {
+        
+        cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
+        cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
+        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
     });
+    // Changes Permission of user. Takes which user and the new permission level
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
+    // Starts a new poll. Takes the number of responses and whether or not their are text responses
+    socket.on('startPoll', function(resNumber, resTextBox) {
+        cD[socket.request.session.class].pollStatus = true
+        cD[socket.request.session.class].posPollRes = resNumber
+        cD[socket.request.session.class].posTextRes = resTextBox
+    });
+    // End the current poll. Does not take any arguments
+    socket.on('endPoll', function() {
+        cD[socket.request.session.class].pollStatus = false
+    });
+    
     socket.on('chat_message', function(message) {
         io.emit('chat_message', message);
     });
+    // Reloads any page with the reload function on. No arguments
+    socket.on('reload', function() {
+        io.emit('reload')
+    })
 });
 
 
