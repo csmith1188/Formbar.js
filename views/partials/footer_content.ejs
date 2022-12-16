@@ -1,6 +1,6 @@
 
 <script>
-  if (!urlParams.get("advanced") && window.location.pathname != "/login") document.getElementById("quickmenu").classList.remove("hidden");
+  if (window.location.pathname != "/login") document.getElementById("quickmenu").classList.remove("hidden");
 
   function contentHeight() {
     let content = document.getElementById("content");
