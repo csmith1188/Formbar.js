@@ -194,7 +194,7 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 // Plus they can ban and kick as long as they can create classes
 app.post('/createclass', isLoggedIn, (req, res) => {
     let submittionType = req.body.submittionType
-    let className = req.body.name;
+    let className = req.body.name.toLowerCase();
     // Checks if teacher is creating a new class or joining an old class
     if (submittionType == 'create') {
         // Add classroom to the database
@@ -428,7 +428,7 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 // The formbar js extensively uses this to work and run correctly
 app.post('/selectclass', isLoggedIn, (req, res) => {
     // Let user enter or join a teachers class
-    let className = req.body.name;
+    let className = req.body.name.toLowerCase();
     // Find the id of the class from the database
     db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
         if (err) {
