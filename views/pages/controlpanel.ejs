@@ -34,6 +34,8 @@
                 <input type="number" id="resNumber">
                 <label for="resTextBox">Would like to accept text responses?</label>
                 <input type="checkbox" id="resTextBox">
+                <label for="pollBox">Prompt for the poll?</label>
+                <input type="text" id="pollBox">
                 <button onclick="startPollFunc()">Start Poll</button>
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
@@ -61,6 +63,7 @@
         var resTextBox = document.getElementById('resTextBox')
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
+        var pollPrompt = document.getElementById('pollBox')
 
         
         // Function runs on page load
@@ -98,7 +101,7 @@
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
-            socket.emit('startPoll', resNumber.value, resTextBox.checked);
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value);
             socket.emit('reload'); // Reloads the users page
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'

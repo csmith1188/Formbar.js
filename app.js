@@ -71,7 +71,8 @@ class Classroom {
             students: {},
             pollStatus: false,
             posPollRes: 0,
-            posTextRes: false
+            posTextRes: false,
+            pollPrompt: ''
         }
     }
 }
@@ -382,7 +383,8 @@ app.get('/poll', isAuthenticated, (req, res) =>{
         user: JSON.stringify(user),
         pollStatus: cD[req.session.class].pollStatus,
         posPollRes: cD[req.session.class].posPollRes,
-        posTextRes: cD[req.session.class].posTextRes
+        posTextRes: cD[req.session.class].posTextRes,
+        pollPrompt: cD[req.session.class].pollPrompt
     })
     console.log(user);
 let answer = req.query.letter;
@@ -498,10 +500,11 @@ io.sockets.on('connection', function(socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function(resNumber, resTextBox) {
+    socket.on('startPoll', function(resNumber, resTextBox, pollPrompt) {
         cD[socket.request.session.class].pollStatus = true
         cD[socket.request.session.class].posPollRes = resNumber
         cD[socket.request.session.class].posTextRes = resTextBox
+        cD[socket.request.session.class].pollPrompt = pollPrompt
     });
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function() {
