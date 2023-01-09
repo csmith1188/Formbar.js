@@ -23,9 +23,10 @@
     <script>
 
             var socket = io.connect('http://localhost:4000');
-            // submit text message without reload/refresh the page
             $('form').submit(function(e){
-                e.preventDefault(); // prevents page reloading
+              // submit text message without reloading/refreshing the page
+                e.preventDefault();
+                //send socket data to the host server
                 socket.emit('chat_message', $('#txt').val());
                 $('#txt').val('');
                 return false;
@@ -33,6 +34,7 @@
             // append the chat text message
             socket.on('chat_message', function(msg){
                 $('#messages').append($('<li>').html(msg));
+                  //log the message to the console
                   console.log(msg);
             });
 
