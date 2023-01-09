@@ -1,14 +1,14 @@
 <%- include('../partials/header_content') %>
-
-    <body class="<%- color %>">
-        <form action="createclass" method="post">
-            <input type="text" id="usernameBox" name="name" class="box" placeholder="Class Name"
-                value="" autocomplete="off" required>
-            <input type="text" name="submittionType" value="create" hidden>
-            <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
-        </form>
-        <form action="createclass" method="post">
-            <select id="classrooms" name="name">
+<body class="<%- color %>">
+    <form action="createclass" method="post">
+        <input type="text" id="usernameBox" name="name" class="box" placeholder="Class Name"
+        value="" autocomplete="off" required>
+        <input type="text" name="submittionType" value="create" hidden>
+        <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
+    </form>
+    <form action="createclass" method="post">
+        <!-- Front end that uses the javascript variables for class selection -->
+        <select id="classrooms" name="name">
                 <% ownerClasses.forEach(rooms=> { %>
                     <option value="<%- rooms %>">
                         <%- rooms %>

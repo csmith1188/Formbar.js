@@ -4,6 +4,7 @@ const session = require('express-session');
 const ejs = require('ejs');
 const fs = require('fs');
 var app = express();
+//Http is required for websockets
 const http = require('http').createServer(app);
 const { encrypt, decrypt } = require('./static/js/crypto.js');
 const sqlite3 = require('sqlite3').verbose();
@@ -26,10 +27,8 @@ io.use(function(socket, next) {
 
 app.use(sessionMiddleware);
 
-//
-//
-//
-//
+//sets up socke.io rooms
+//will be redone in later update
 const rooms = io.of("/my-namespace").adapter.rooms;
 const sids = io.of("/my-namespace").adapter.sids;
 
@@ -232,10 +231,10 @@ app.get('/chat', (req, res) => {
     })
 
 })
-//
-//
-//
-//
+//Sets up the virtual bar
+//It will use webscokets
+//It will be able to update the current users
+//Comments will be updated when it works
 app.get('/VirtualBar', (req, res) => {
     res.render('pages/VirtualBar', {
         title: 'VirtualBar',
@@ -303,7 +302,7 @@ app.get('/login', (req, res) => {
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
 // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
-// This also encryypts passwords to make sure people's accounts don't get hacked
+// This also encryypts passwords to ensure a database breach is unlikely 
 app.post('/login', (req, res) => {
     var user = {
         username: req.body.username,
@@ -372,6 +371,7 @@ app.post('/login', (req, res) => {
 
 //Renders the poll HTMl template
 //Allows for poll answers to be processed and stored
+//Sets up an ejs template with a wbescoket connection
 app.get('/poll', isAuthenticated, (req, res) =>{
     let user = {
         name:  req.session.user,
@@ -395,7 +395,8 @@ if (answer) {
 
 
 })
-
+//post method for submitting poll responses
+//updates the student object and the database
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
    if (answer) {
@@ -484,17 +485,21 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 
 
-//Handles the webscoket communications
+//Handles the webscoket communications on the Host side
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
-      // /poll websockets for updating the database
+    // /poll websockets for updating the database
+    //uses both the user's name and their text/letter response as data
       socket.on('pollResp', function(res, textRes) {
-        
+        //updates the student object with the letter response
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
+        //updates the student object with the text response
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
+        //updates the database with the letter response
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
     });
     // Changes Permission of user. Takes which user and the new permission level
+    //Updates both the student object and the database
     socket.on('permChange', function(user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
