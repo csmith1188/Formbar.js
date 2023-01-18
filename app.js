@@ -70,7 +70,7 @@ class Classroom {
         cD[className] = {
             students: {},
             pollStatus: false,
-            posPollRes: 0,
+            posPollResObj: {},
             posTextRes: false,
             pollPrompt: ''
         }
@@ -236,13 +236,7 @@ app.get('/chat', (req, res) => {
 //
 //
 //
-app.get('/VirtualBar', (req, res) => {
-    res.render('pages/VirtualBar', {
-        title: 'VirtualBar',
-        color: '"dark blue"',
-        io: io
-    })
-})
+
 
 // This is the socket.io, it allows for the connection to the server
 // It allows for the chat messages to be actually sent to the chat
@@ -377,16 +371,17 @@ app.get('/poll', isAuthenticated, (req, res) =>{
         name:  req.session.user,
         class:  req.session.class
     }
+    let posPollRes = cD[req.session.class].posPollResObj
+    console.log(posPollRes);
     res.render('pages/polls', {
         title: 'Poll',
         color: '"dark blue"',
         user: JSON.stringify(user),
         pollStatus: cD[req.session.class].pollStatus,
-        posPollRes: cD[req.session.class].posPollRes,
+        posPollRes: JSON.stringify(posPollRes),
         posTextRes: cD[req.session.class].posTextRes,
         pollPrompt: cD[req.session.class].pollPrompt
     })
-    console.log(user);
 let answer = req.query.letter;
 if (answer) {
     cD[req.session.class].students[req.session.user].permissions = answer
@@ -473,7 +468,13 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 // U
 
 // V
-
+app.get('/VirtualBar', (req, res) => {
+    res.render('pages/virtualbar', {
+        title: 'Virtual Bar',
+        color: '"dark blue"',
+        io: io
+    })
+})
 // W
 
 // X
@@ -502,7 +503,17 @@ io.sockets.on('connection', function(socket) {
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
     socket.on('startPoll', function(resNumber, resTextBox, pollPrompt) {
         cD[socket.request.session.class].pollStatus = true
-        cD[socket.request.session.class].posPollRes = resNumber
+        for (let i = 0; i < resNumber; i++) {
+            letterString = "abcdefghijklmnopqrstuvwxyz"
+            cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
+            
+        }
+
+        console.log(cD[socket.request.session.class].posPollResObj);
+
+
+
+
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
     });
@@ -517,6 +528,10 @@ io.sockets.on('connection', function(socket) {
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function() {
         io.emit('reload')
+    })
+
+    socket.on('vbData', function() {
+        io.emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
 });
 
