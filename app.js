@@ -35,9 +35,7 @@ io.use(function(socket, next) {
 // PROMPT: What does this do?
 app.use(sessionMiddleware);
 
-// PROMPT: What does this do?
-const rooms = io.of("/my-namespace").adapter.rooms;
-const sids = io.of("/my-namespace").adapter.sids;
+
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db');
@@ -73,7 +71,7 @@ class Classroom {
         this.className = className;
         this.students = {};
         this.pollStatus = false;
-        this.posPollRes = 0;
+        this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
     }
@@ -214,7 +212,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     // Remove teacher from old class
     delete cD.noClass.students[req.session.user]
     // Add class into the session data
-    cD.push(new Classroom(className));
+    cD[className] = new Classroom(className);
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
     req.session.class = className;
@@ -501,17 +499,12 @@ io.sockets.on('connection', function(socket) {
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
     socket.on('startPoll', function(resNumber, resTextBox, pollPrompt) {
         cD[socket.request.session.class].pollStatus = true
+        // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
             letterString = "abcdefghijklmnopqrstuvwxyz"
             cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
             
         }
-
-        console.log(cD[socket.request.session.class].posPollResObj);
-
-
-
-
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
     });
@@ -527,7 +520,7 @@ io.sockets.on('connection', function(socket) {
     socket.on('reload', function() {
         io.emit('reload')
     })
-
+    // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function() {
         io.emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
