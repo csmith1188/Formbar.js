@@ -71,21 +71,24 @@
 
         let pixRes;
 
-
+        // Update the virtual bar
+        // Creates new labels and colors, plus imports all new data to the table
         function update(data) {
-            // Update the virtual bar
-            console.log(data.students);
+
 
             var labelsArray = [];
             var pollArray = [];
 
             let studResponses = {};
-
+            // Loops through object to get each label of the possible answers
+            // Also, create a new variable for each possible answer
             for (const answer of Object.keys(data.posPollResObj)) {
                 labelsArray.push(data.posPollResObj[answer])
                 studResponses[answer] = 0;
             }
 
+            // Loops through all possible answers and generates a new color variant for each answer
+            // All possible answers should have a different color
             for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
                 let color = ''
                 switch (i%4) {
@@ -104,22 +107,24 @@
                 }
                 doughnutChart.data.datasets[0].backgroundColor.push(color)
             }
+            // Loops through all student answers and adds them to a total tally
+            // Student response corresponds with a property name in studResponses 
             for (const student of Object.keys(data.students)) {
                 studResponses[data.students[student].pollRes]++;
             }
-
+            //
             for (const responses of Object.keys(studResponses)) {
                 pollArray.push(studResponses[responses]);
             }
 
-            console.log(studResponses);
-            console.log(labelsArray);
             doughnutChart.data.labels = labelsArray;
             doughnutChart.data.datasets[0].data = pollArray;
             doughnutChart.update();
         }
 
+        // Calls for data
         socket.emit('vbData')
+        // Gets data from server and send it the function
         socket.on('vbData', function (data) {
             data = JSON.parse(data)
             update(data);
