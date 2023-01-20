@@ -28,6 +28,7 @@ app.use(express.static(__dirname + '/static'));
 
 // PROMPT: Does this allow use to associate client logins with their websocket connection?
 // PROMPT: Where did you find information on this. Please put the link here.
+// For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 io.use(function(socket, next) {
     sessionMiddleware(socket.request, socket.request.res || {}, next);
 });
@@ -52,7 +53,7 @@ var cD = {
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
-    // Needs username, id from the database, and if perms established already pass the uodated value
+    // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
     constructor(username, id, perms = 2) {
             this.id =  id;
@@ -77,7 +78,14 @@ class Classroom {
     }
 }
 
+// Page Permission levels
 
+pagePermissions = {
+    controlpanel: 0,
+    chat: 2,
+    poll: 2,
+    virtualbar: 2
+}
 
 
 
@@ -133,6 +141,29 @@ function isLoggedIn(req, res, next) {
     }
 }
 
+// Check if user has the permission levels to enter that page
+function permCheck(req, res, next) {
+    if (req.url) {
+        // Defines users desired endpoint
+        let urlPath = req.url
+        // Checks if url has a / in it and removes it from the string
+        if (urlPath.indexOf('/') != -1) {
+            urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+        }
+        // Check for ?(urlParams) and removes it from the string
+        if (urlPath.indexOf('?') != -1) {
+            console.log(urlPath.indexOf('?'));
+            urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+        }
+        // Checks if users permnissions are high enough
+        if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
+            next()
+        } else {
+            res.send('Not High Enough Permissions')
+        }
+    }
+}
+
 // Endpoints
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -153,7 +184,7 @@ app.get('/', isAuthenticated, (req, res) => {
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
-app.get('/controlpanel', isAuthenticated, (req, res) => {
+app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     let students = cD[req.session.class].students
     let keys = Object.keys(students);
     let allStuds = []
@@ -224,7 +255,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 // It also sets the color and font for the chat, which will be used by students to participate in the lesson
 // It also allows students to talk amongst one another, while the teacher can see messages
 // It also allows for the use of socket.io, and makes good use of them
-app.get('/chat', (req, res) => {
+app.get('/chat', permCheck, (req, res) => {
     res.render('pages/chat', {
         title: 'Formbar Chat',
         color: '"dark blue"',
@@ -366,13 +397,12 @@ app.post('/login', (req, res) => {
 
 //Renders the poll HTMl template
 //Allows for poll answers to be processed and stored
-app.get('/poll', isAuthenticated, (req, res) =>{
+app.get('/poll', isAuthenticated, permCheck, (req, res) =>{
     let user = {
         name:  req.session.user,
         class:  req.session.class
     }
     let posPollRes = cD[req.session.class].posPollResObj
-    console.log(posPollRes);
     res.render('pages/polls', {
         title: 'Poll',
         color: '"dark blue"',
@@ -464,7 +494,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 // U
 
 // V
-app.get('/VirtualBar', (req, res) => {
+app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/virtualbar', {
         title: 'Virtual Bar',
         color: '"dark blue"',
