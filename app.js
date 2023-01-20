@@ -1,45 +1,50 @@
 // Imported modules
 const express = require('express');
-const session = require('express-session');
+const session = require('express-session'); //For storing client login data
 const ejs = require('ejs');
 const fs = require('fs');
+const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
+const sqlite3 = require('sqlite3').verbose();
+
 var app = express();
 const http = require('http').createServer(app);
-const { encrypt, decrypt } = require('./static/js/crypto.js');
-const sqlite3 = require('sqlite3').verbose();
 const io = require('socket.io')(http);
+
 // Set EJS as our view engine
-app.set('view engine', 'ejs')
+app.set('view engine', 'ejs');
+
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
     secret: 'secret',
     resave: false,
     saveUninitialized: false
 });
+
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }));
+
+// Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'));
 
+// PROMPT: Does this allow use to associate client logins with their websocket connection?
+// PROMPT: Where did you find information on this. Please put the link here.
 io.use(function(socket, next) {
     sessionMiddleware(socket.request, socket.request.res || {}, next);
 });
 
+// PROMPT: What does this do?
 app.use(sessionMiddleware);
 
-//
-//
-//
-//
+// PROMPT: What does this do?
 const rooms = io.of("/my-namespace").adapter.rooms;
 const sids = io.of("/my-namespace").adapter.sids;
 
-// Establishes the connection to the database. This allows for logins.
-// Logins consist of usernames and passwords
-// The database allows for manipulation of the elements of the formbar js
-// These elements are the passwords,usernames, and the privledges of all users
+// Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db');
 
-// starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
+// PROMPT: What is the cD, what does it stand for, and what does it do?
+// PROMPT: How much of the following comments is neccesary? Should it refer to a document instead?
+// Starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
 // the teacher privledge will be automatically assigned to the teacher when they log in to the formbar js
 // The cd will determine wether the student has a role when they start or not
 // This role could be guest, student, teacher, or admin depending ob the teacher
@@ -48,32 +53,29 @@ var cD = {
 }
 
 // This class is used to create a student to be stored in the sessions data
-// Creating the student class to be stored in the database allows it to be mainpulated
 class Student {
     // Needs username, id from the database, and if perms established already pass the uodated value
-    // These will need to be put into the constructor in order to allow the creation of the class
+    // These will need to be put into the constructor in order to allow the creation of the object
     constructor(username, id, perms = 2) {
-        cD.noClass.students[username] = {
-            id: id,
-            permissions: perms,
-            pollRes: '',
-            pollTextRes: ''
-        }
+            this.id =  id;
+            this.permissions =  perms;
+            this.pollRes =  '';
+            this.pollTextRes =  '';
     }
 }
+
+
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
     // Needs the name of the class you want to create
-    // The name of the class will be used later in tnhe database to allow lessons to operate
     constructor(className) {
-        cD[className] = {
-            students: {},
-            pollStatus: false,
-            posPollResObj: {},
-            posTextRes: false,
-            pollPrompt: ''
-        }
+        this.className = className;
+        this.students = {};
+        this.pollStatus = false;
+        this.posPollRes = 0;
+        this.posTextRes = false;
+        this.pollPrompt = '';
     }
 }
 
@@ -212,7 +214,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     // Remove teacher from old class
     delete cD.noClass.students[req.session.user]
     // Add class into the session data
-    new Classroom(className)
+    cD.push(new Classroom(className));
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
     req.session.class = className;
@@ -318,7 +320,7 @@ app.post('/login', (req, res) => {
                 let tempPassword = decrypt(JSON.parse(rows.password));
                 if (rows.username == user.username && tempPassword == user.password) {
                     // Add user to the session
-                    new Student(rows.username, rows.id, rows.permissions)
+                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
                     res.redirect('/');
@@ -345,7 +347,7 @@ app.post('/login', (req, res) => {
                 console.log(err);
             }
             // Add user to session
-            new Student(rows.username, rows.id)
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
             // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username;
             res.redirect('/');
@@ -409,22 +411,18 @@ app.post('/poll', (req, res) =>{
 // R
 
 // S
-// This allows people to select thier class
-// Selecting classes allows for teacher to select thier class
-// Allows class to run smoothly
-// Allows the lesson to actually work and run without problems
+
+// selectclass
+//Send user to the select class page
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
         color: '"dark blue"'
     })
 })
-// Further allowing for class selecting
-// It allows teacher to actually select classes
-// This is required for the formbar js
-// The formbar js extensively uses this to work and run correctly
+
+//Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, (req, res) => {
-    // Let user enter or join a teachers class
     let className = req.body.name.toLowerCase();
     // Find the id of the class from the database
     db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
@@ -537,7 +535,7 @@ io.sockets.on('connection', function(socket) {
 
 
 
-http.listen(4000, () => {
-    console.log('Running on port: 4000');
+http.listen(420, () => {
+    console.log('Running on port: 420');
 });
 
