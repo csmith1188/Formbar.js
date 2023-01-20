@@ -498,7 +498,8 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/virtualbar', {
         title: 'Virtual Bar',
         color: '"dark blue"',
-        io: io
+        io: io,
+        className: cD[req.session.class].className
     })
 })
 // W
@@ -514,6 +515,7 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 //Handles the webscoket communications
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
+    socket.join(cD[socket.request.session.class].className);
       // /poll websockets for updating the database
       socket.on('pollResp', function(res, textRes) {
         
@@ -552,7 +554,7 @@ io.sockets.on('connection', function(socket) {
     })
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function() {
-        io.emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+        io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
 });
 
