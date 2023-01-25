@@ -51,6 +51,8 @@ var cD = {
     noClass: { students: {} }
 }
 
+var classNames = []
+
 // This class is used to create a student to be stored in the sessions data
 class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
@@ -75,6 +77,7 @@ class Classroom {
         this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
+        this.key = '';
     }
 }
 
@@ -195,7 +198,8 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/controlpanel', {
         title: "Control Panel",
         students: allStuds,
-        pollStatus: cD[req.session.class].pollStatus
+        pollStatus: cD[req.session.class].pollStatus,
+        key: cD[req.session.class].key.toUpperCase()
     })
 })
 
@@ -247,6 +251,16 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
     req.session.class = className;
+    classNames.push(className)
+    //generates a 4 character key
+    //this is used for students who want to enter a class
+    let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+    for(let i = 0; i<4; i++){
+        let letter = keygen[Math.floor(Math.random()*keygen.length)]
+        cD[className].key += letter
+    }
+
+
     res.redirect('/home')
 })
 
@@ -445,13 +459,15 @@ app.post('/poll', (req, res) =>{
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
-        color: '"dark blue"'
+        color: '"dark blue"',
+        classNames: classNames
     })
 })
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, (req, res) => {
     let className = req.body.name.toLowerCase();
+    let code =  req.body.key.toLowerCase();
     // Find the id of the class from the database
     db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
         if (err) {
@@ -459,7 +475,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
             res.send('Something went wrong')
         }
         // Check to make sure there was a class with that name
-        if (id && cD[className]) {
+        if (id && cD[className] && cD[className].key == code) {
             // Find the id of the user who is trying to join the class
             db.get(`SELECT id FROM users WHERE username=?`, [req.session.user], (err, uid) => {
                 if (err) {
