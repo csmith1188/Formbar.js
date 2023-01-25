@@ -515,7 +515,9 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 //Handles the webscoket communications
 io.sockets.on('connection', function(socket) {
     console.log('Connected to socket');
-    socket.join(cD[socket.request.session.class].className);
+    if(socket.request.session.user){
+        socket.join(cD[socket.request.session.class].className);
+    }
       // /poll websockets for updating the database
       socket.on('pollResp', function(res, textRes) {
         
