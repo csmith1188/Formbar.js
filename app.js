@@ -41,12 +41,7 @@ app.use(sessionMiddleware);
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db');
 
-// PROMPT: What is the cD, what does it stand for, and what does it do?
-// PROMPT: How much of the following comments is neccesary? Should it refer to a document instead?
-// Starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
-// the teacher privledge will be automatically assigned to the teacher when they log in to the formbar js
-// The cd will determine wether the student has a role when they start or not
-// This role could be guest, student, teacher, or admin depending ob the teacher
+//cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
     noClass: { students: {} }
 }
@@ -81,8 +76,7 @@ class Classroom {
     }
 }
 
-// Page Permission levels
-
+//Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
     chat: 2,
@@ -94,14 +88,10 @@ pagePermissions = {
 
 
 // Functions
-
-
-
-
-// Delete everything in table
-// For testing purposes ONLY. DELETE WHEN COMMITTING TO RC
-// Test only because this clears the database of all users and perms
-// this takes away teacher perms, and they have to be manually added back in
+//-----------
+//Clears the database
+//Removes all users, teachers, and claseses
+//ONLY USE FOR TESTING PURPOSES 
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
         if (err) {
@@ -434,7 +424,7 @@ if (answer) {
 
 
 })
-
+//takes a post request to set a poll response
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
    if (answer) {
