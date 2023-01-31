@@ -400,7 +400,8 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.className) {
                         req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username)
+                        console.log(cD[req.body.className].key + ' ' + req.body.className);
+                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
