@@ -27,6 +27,7 @@
                     <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
                     <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
                 </select>
+                <button id="deleteUser" data-userid="<%- studs.name %>" onclick="deleteUser(this)">Delete User</button>
                 <%})%>
         </div>
         <div id="pollChanges">
@@ -43,11 +44,9 @@
         </div>
         <div id="responses">
             <% students.forEach( (studs)=> { %>
-                <p>
                     <%- studs.name %>
                     Letter Response: <%- studs.pollRes.lettRes %>
                     Text Response: <%- studs.pollRes.textRes %>
-                </p>
                 <%})%>
         </div>
     </body>
@@ -65,7 +64,10 @@
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
-
+        
+      function deleteUser(e){
+        socket.emit('deleteUser', e.dataset.userid );
+      }
         
         // Function runs on page load
         // Checks if poll is active or not and displays correct output

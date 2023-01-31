@@ -562,6 +562,12 @@ io.sockets.on('connection', function(socket) {
     socket.on('vbData', function() {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
+
+    socket.on('deleteUser', function(userName){
+        cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
+        delete cD[socket.request.session.class].students[userName]
+        console.log(userName + ' removed from class');
+    })
 });
 
 
