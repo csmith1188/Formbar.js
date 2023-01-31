@@ -297,6 +297,10 @@ input[type="range"] {
   vertical-align: middle;
 }
 
+input {
+  color: black;
+}
+
 textarea {
   resize: none;
 }

@@ -6,19 +6,20 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../../socket.io/socket.io.js"></script>
-        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     </head>
 
-    <body onload="load()">
+    <body onload="load(<%-pollStatus%>)">
         <header>
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
+            <button id="pollResponse" onclick="toResponses()">Responses</button>
         </header>
+        <h2 style="text-align:left;">Your class code is <%- key %></h2>
         <div id="permChanges">
-            <% students.forEach( (studs)=> { %>
+            <% students.forEach( (studs)=> { console.log(studs) %>
                 <p>
                     <%- studs.name %>
+                    Text Response: <%- studs.pollRes.textRes %>
                 </p>
                 <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
                     <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
@@ -26,11 +27,27 @@
                     <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
                     <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
                 </select>
+                <button id="deleteUser" data-userid="<%- studs.name %>" onclick="deleteUser(this)">Delete User</button>
                 <%})%>
         </div>
         <div id="pollChanges">
-            <button id="startPoll" onclick="startPoll()">Start Poll</button>
-            <button id="endPoll" onclick="endPoll()" hidden>End Poll</button>
+            <form id="startPollForm">
+                <label for="resNumber">How many possible responses?</label>
+                <input type="number" id="resNumber">
+                <label for="resTextBox">Would like to accept text responses?</label>
+                <input type="checkbox" id="resTextBox">
+                <label for="pollBox">Prompt for the poll?</label>
+                <input type="text" id="pollBox">
+                <button onclick="startPollFunc()">Start Poll</button>
+            </form>
+            <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
+        </div>
+        <div id="responses">
+            <% students.forEach( (studs)=> { %>
+                    <%- studs.name %>
+                    Letter Response: <%- studs.pollRes.lettRes %>
+                    Text Response: <%- studs.pollRes.textRes %>
+                <%})%>
         </div>
     </body>
 
@@ -40,35 +57,70 @@
         var socket = io();
         var permChanges = document.getElementById('permChanges')
         var pollChanges = document.getElementById('pollChanges')
+        var responses = document.getElementById('responses')
         var startPoll = document.getElementById('startPoll')
+        var resNumber = document.getElementById('resNumber')
+        var resTextBox = document.getElementById('resTextBox')
         var endPoll = document.getElementById('endPoll')
-        var permSwitch = document.getElementById('permSwitch')
-        var studName = document.getElementById('studName')
+        var startPollForm = document.getElementById('startPollForm')
+        var pollPrompt = document.getElementById('pollBox')
         
-
-        function load() {
+      function deleteUser(e){
+        socket.emit('deleteUser', e.dataset.userid );
+      }
+        
+        // Function runs on page load
+        // Checks if poll is active or not and displays correct output
+        function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
+            responses.style.display = 'none'
+            if (pollStatus) {
+                startPollForm.style.display = 'none'
+                endPoll.style.display = 'block'
+            } else {
+                startPollForm.style.display = 'block'
+                endPoll.style.display = 'none'
+            }
         }
-
+        // Changes to the create a poll section of the page
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
+            responses.style.display = 'none'
         }
-
+        // Changes to the permission change section of the page
         function toPermissions() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
+            responses.style.display = 'none'
         }
-
-        function startPoll() {
-
+        // Changes to the responses section of the page
+        function toResponses() {
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'block'
         }
-
-        function endPoll() {
-
+        // Starts a new poll that allows students to submit answers
+        // Check how many possible responses and if the teacher wants to accept text responses
+        function startPollFunc() {
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value);
+            socket.emit('reload'); // Reloads the users page
+            startPollForm.style.display = 'none'
+            endPoll.style.display = 'block'
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'block'
         }
-
+        // Ends the poll and reloads the users page to stop any more submission
+        function endPollFunc() {
+            socket.emit('endPoll');
+            socket.emit('reload');
+            startPollForm.style.display = 'block'
+            endPoll.style.display = 'none'
+        }
+        // Used to change permission of user in there class
+        // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value);
         }
