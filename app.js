@@ -195,7 +195,8 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/controlpanel', {
         title: "Control Panel",
         students: allStuds,
-        pollStatus: cD[req.session.class].pollStatus
+        pollStatus: cD[req.session.class].pollStatus,
+        student: cD[req.session.class].students[req.session.user]
     })
 })
 
@@ -555,6 +556,12 @@ io.sockets.on('connection', function(socket) {
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function() {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+    })
+
+    socket.on('deleteUser', function(userName){
+        cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
+        delete cD[socket.request.session.class].students[userName]
+        console.log(userName + ' removed from class');
     })
 });
 
