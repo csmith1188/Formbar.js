@@ -29,7 +29,7 @@ app.use(express.static(__dirname + '/static'));
 // PROMPT: Does this allow use to associate client logins with their websocket connection?
 // PROMPT: Where did you find information on this. Please put the link here.
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
-io.use(function(socket, next) {
+io.use(function (socket, next) {
     sessionMiddleware(socket.request, socket.request.res || {}, next);
 });
 
@@ -53,10 +53,10 @@ class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
     constructor(username, id, perms = 2) {
-            this.id =  id;
-            this.permissions =  perms;
-            this.pollRes =  '';
-            this.pollTextRes =  '';
+        this.id = id;
+        this.permissions = perms;
+        this.pollRes = '';
+        this.pollTextRes = '';
     }
 }
 
@@ -157,6 +157,46 @@ function permCheck(req, res, next) {
     }
 }
 
+
+function joinClass(className, userName) {
+    return new Promise((resolve, reject) => {
+        // Find the id of the class from the database
+        db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
+            if (err) {
+                console.log(err);
+                res.send('Something went wrong')
+            }
+            // Check to make sure there was a class with that name
+            console.log(cD[className]);
+            if (id && cD[className]) {
+                // Find the id of the user who is trying to join the class
+                db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    // Add the two id's to the junction table to link the user and class
+                    db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
+                        [id.id, uid.id], (err) => {
+                            if (err) {
+                                console.log(err);
+                            }
+                            // Get the teachers session data ready to transport into new class
+                            var user = cD.noClass.students[userName]
+                            // Remove teacher from old class
+                            delete cD.noClass.students[userName]
+                            // Add the student to the newly created class
+                            cD[className].students[userName] = user
+                            console.log('User added to class');
+                            resolve(true);
+                        })
+                })
+            } else {
+                resolve(false);
+            }
+        })
+    })
+}
+
 // Endpoints
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -182,9 +222,9 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     let keys = Object.keys(students);
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
-        var val = {name: keys[i], perms: students[keys[i]].permissions, pollRes: {lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes}}
+        var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes } }
         allStuds.push(val)
-    } 
+    }
     res.render('pages/controlpanel', {
         title: "Control Panel",
         students: allStuds,
@@ -277,9 +317,9 @@ app.get('/chat', permCheck, (req, res) => {
 // It allows for the chat messages to be actually sent to the chat
 // It is what the chat uses to emit messages to the server, this allows for the database to record whatever is put in
 // This could be useful to the teacher in case students say anything bad or do somehing that can get them banned
-io.sockets.on('connection', function(socket) {
+io.sockets.on('connection', function (socket) {
     console.log('a user connected');
-    socket.on('chat_message', function(message) {
+    socket.on('chat_message', function (message) {
         io.emit('chat_message', message);
     });
 
@@ -333,17 +373,19 @@ app.get('/login', (req, res) => {
 // This lets users actually log in instead of not being able to log in at all
 // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
 // This also encryypts passwords to make sure people's accounts don't get hacked
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     var user = {
         username: req.body.username,
         password: req.body.password,
-        permissions: req.body.userType
+        loginType: req.body.loginType,
+        userType: req.body.userType
     }
+    console.log(user);
     var passwordCrypt = encrypt(user.password);
     // Check whether user is logging in or signing up
-    if (user.permissions == "login") {
+    if (user.loginType == "login") {
         // Get the users login in data to verify password
-        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
             if (err) {
                 console.log(err);
             }
@@ -356,7 +398,17 @@ app.post('/login', (req, res) => {
                     cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
-                    res.redirect('/');
+                    if (req.body.className) {
+                        req.session.class = req.body.className;
+                        let checkJoin = await joinClass(req.body.className, user.username)
+                        if (checkJoin) {
+                            res.json({login: true})
+                        } else (
+                            res.json({login: false})
+                        )
+                    } else {
+                        res.redirect('/');
+                    }
                 } else {
                     res.redirect('/login')
                 }
@@ -365,7 +417,7 @@ app.post('/login', (req, res) => {
             }
         })
 
-    } else if (user.permissions == "new") {
+    } else if (user.loginType == "new") {
         // Add the new user to the database 
         db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
             [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
@@ -386,8 +438,26 @@ app.post('/login', (req, res) => {
             res.redirect('/');
 
         })
-    } else if (user.permissions == "guest") {
+    } else if (user.loginType == "guest") {
 
+    } else if (user.loginType == "newbot") {
+        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 1], (err) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('Success');
+            })
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+            if (err) {
+                console.log(err);
+            }
+            // Add user to session
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
+            // Add the user to the session in order to transfer data between each page
+            req.session.user = rows.username;
+            res.redirect('/');
+        })
     }
 })
 
@@ -401,10 +471,10 @@ app.post('/login', (req, res) => {
 
 //Renders the poll HTMl template
 //Allows for poll answers to be processed and stored
-app.get('/poll', isAuthenticated, permCheck, (req, res) =>{
+app.get('/poll', isAuthenticated, permCheck, (req, res) => {
     let user = {
-        name:  req.session.user,
-        class:  req.session.class
+        name: req.session.user,
+        class: req.session.class
     }
     let posPollRes = cD[req.session.class].posPollResObj
     res.render('pages/polls', {
@@ -416,14 +486,15 @@ app.get('/poll', isAuthenticated, permCheck, (req, res) =>{
         posTextRes: cD[req.session.class].posTextRes,
         pollPrompt: cD[req.session.class].pollPrompt
     })
-let answer = req.query.letter;
-if (answer) {
-    cD[req.session.class].students[req.session.user].permissions = answer
-    db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
-}
+    let answer = req.query.letter;
+    if (answer) {
+        cD[req.session.class].students[req.session.user].permissions = answer
+        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
+    }
 
 
 })
+
 //takes a post request to set a poll response
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
@@ -431,8 +502,7 @@ app.post('/poll', (req, res) =>{
     cD[req.session.class].students[req.session.user].permissions = answer
     db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
    }
-
-   res.redirect('/poll')
+    res.redirect('/poll')
 })
 
 
@@ -454,8 +524,9 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
     })
 })
 
+
 //Adds user to a selected class, typically from the select class page
-app.post('/selectclass', isLoggedIn, (req, res) => {
+app.post('/selectclass', isLoggedIn, async (req, res) => {
     let className = req.body.name.toLowerCase();
     let code =  req.body.key.toLowerCase();
     // Find the id of the class from the database
@@ -493,7 +564,14 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
         }
     })
 
-})
+    let checkComplete = await joinClass(className, req.session.user)
+    if (checkComplete) {
+        req.session.class = className;
+        res.redirect('/home')
+    } else {
+        res.send('No Open Class with that Name')
+    }
+});
 
 // T
 
@@ -501,12 +579,16 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
 
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/virtualbar', {
-        title: 'Virtual Bar',
-        color: '"dark blue"',
-        io: io,
-        className: cD[req.session.class].className
-    })
+    if (req.query.bot == "true") {
+        res.json(cD[req.session.class].className)
+    } else {
+        res.render('pages/virtualbar', {
+            title: 'Virtual Bar',
+            color: '"dark blue"',
+            io: io,
+            className: cD[req.session.class].className
+        })
+    }
 })
 // W
 
@@ -519,49 +601,48 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 //Handles the webscoket communications
-io.sockets.on('connection', function(socket) {
+io.sockets.on('connection', function (socket) {
     console.log('Connected to socket');
-    if(socket.request.session.user){
+    if (socket.request.session.user) {
         socket.join(cD[socket.request.session.class].className);
     }
-      // /poll websockets for updating the database
-      socket.on('pollResp', function(res, textRes) {
-        
+    // /poll websockets for updating the database
+    socket.on('pollResp', function (res, textRes) {
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
     });
     // Changes Permission of user. Takes which user and the new permission level
-    socket.on('permChange', function(user, res) {
+    socket.on('permChange', function (user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function(resNumber, resTextBox, pollPrompt) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt) {
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
             letterString = "abcdefghijklmnopqrstuvwxyz"
             cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
-            
+
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
     });
     // End the current poll. Does not take any arguments
-    socket.on('endPoll', function() {
+    socket.on('endPoll', function () {
         cD[socket.request.session.class].pollStatus = false
     });
-    
-    socket.on('chat_message', function(message) {
+
+    socket.on('chat_message', function (message) {
         io.emit('chat_message', message);
     });
     // Reloads any page with the reload function on. No arguments
-    socket.on('reload', function() {
+    socket.on('reload', function () {
         io.emit('reload')
     })
     // Sends poll and student response data to client side virtual bar
-    socket.on('vbData', function() {
+    socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
 
