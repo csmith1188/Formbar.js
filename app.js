@@ -41,15 +41,12 @@ app.use(sessionMiddleware);
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db');
 
-// PROMPT: What is the cD, what does it stand for, and what does it do?
-// PROMPT: How much of the following comments is neccesary? Should it refer to a document instead?
-// Starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
-// the teacher privledge will be automatically assigned to the teacher when they log in to the formbar js
-// The cd will determine wether the student has a role when they start or not
-// This role could be guest, student, teacher, or admin depending ob the teacher
+//cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
     noClass: { students: {} }
 }
+
+var classNames = []
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -75,11 +72,11 @@ class Classroom {
         this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
+        this.key = '';
     }
 }
 
-// Page Permission levels
-
+//Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
     chat: 2,
@@ -91,14 +88,10 @@ pagePermissions = {
 
 
 // Functions
-
-
-
-
-// Delete everything in table
-// For testing purposes ONLY. DELETE WHEN COMMITTING TO RC
-// Test only because this clears the database of all users and perms
-// this takes away teacher perms, and they have to be manually added back in
+//-----------
+//Clears the database
+//Removes all users, teachers, and claseses
+//ONLY USE FOR TESTING PURPOSES 
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
         if (err) {
@@ -196,7 +189,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         title: "Control Panel",
         students: allStuds,
         pollStatus: cD[req.session.class].pollStatus,
-        student: cD[req.session.class].students[req.session.user]
+        key: cD[req.session.class].key.toUpperCase()
     })
 })
 
@@ -248,6 +241,16 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
     req.session.class = className;
+    classNames.push(className)
+    //generates a 4 character key
+    //this is used for students who want to enter a class
+    let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+    for(let i = 0; i<4; i++){
+        let letter = keygen[Math.floor(Math.random()*keygen.length)]
+        cD[className].key += letter
+    }
+
+
     res.redirect('/home')
 })
 
@@ -421,7 +424,7 @@ if (answer) {
 
 
 })
-
+//takes a post request to set a poll response
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
    if (answer) {
@@ -446,13 +449,15 @@ app.post('/poll', (req, res) =>{
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
-        color: '"dark blue"'
+        color: '"dark blue"',
+        classNames: classNames
     })
 })
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, (req, res) => {
     let className = req.body.name.toLowerCase();
+    let code =  req.body.key.toLowerCase();
     // Find the id of the class from the database
     db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
         if (err) {
@@ -460,7 +465,7 @@ app.post('/selectclass', isLoggedIn, (req, res) => {
             res.send('Something went wrong')
         }
         // Check to make sure there was a class with that name
-        if (id && cD[className]) {
+        if (id && cD[className] && cD[className].key == code) {
             // Find the id of the user who is trying to join the class
             db.get(`SELECT id FROM users WHERE username=?`, [req.session.user], (err, uid) => {
                 if (err) {
