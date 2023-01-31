@@ -41,15 +41,12 @@ app.use(sessionMiddleware);
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db');
 
-// PROMPT: What is the cD, what does it stand for, and what does it do?
-// PROMPT: How much of the following comments is neccesary? Should it refer to a document instead?
-// Starts students off with no class, this allows the teacher to give thme one and make sure they aren't teachers
-// the teacher privledge will be automatically assigned to the teacher when they log in to the formbar js
-// The cd will determine wether the student has a role when they start or not
-// This role could be guest, student, teacher, or admin depending ob the teacher
+//cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
     noClass: { students: {} }
 }
+
+var classNames = []
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -75,11 +72,11 @@ class Classroom {
         this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
+        this.key = '';
     }
 }
 
-// Page Permission levels
-
+//Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
     chat: 2,
@@ -91,14 +88,10 @@ pagePermissions = {
 
 
 // Functions
-
-
-
-
-// Delete everything in table
-// For testing purposes ONLY. DELETE WHEN COMMITTING TO RC
-// Test only because this clears the database of all users and perms
-// this takes away teacher perms, and they have to be manually added back in
+//-----------
+//Clears the database
+//Removes all users, teachers, and claseses
+//ONLY USE FOR TESTING PURPOSES 
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
         if (err) {
@@ -235,7 +228,8 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/controlpanel', {
         title: "Control Panel",
         students: allStuds,
-        pollStatus: cD[req.session.class].pollStatus
+        pollStatus: cD[req.session.class].pollStatus,
+        key: cD[req.session.class].key.toUpperCase()
     })
 })
 
@@ -287,6 +281,16 @@ app.post('/createclass', isLoggedIn, (req, res) => {
     // Add the teacher to the newly created class
     cD[className].students[req.session.user] = user
     req.session.class = className;
+    classNames.push(className)
+    //generates a 4 character key
+    //this is used for students who want to enter a class
+    let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+    for(let i = 0; i<4; i++){
+        let letter = keygen[Math.floor(Math.random()*keygen.length)]
+        cD[className].key += letter
+    }
+
+
     res.redirect('/home')
 })
 
@@ -491,13 +495,13 @@ app.get('/poll', isAuthenticated, permCheck, (req, res) => {
 
 })
 
-app.post('/poll', (req, res) => {
-    let answer = req.body.poll
-    if (answer) {
-        cD[req.session.class].students[req.session.user].permissions = answer
-        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
-    }
-
+//takes a post request to set a poll response
+app.post('/poll', (req, res) =>{
+   let answer = req.body.poll
+   if (answer) {
+    cD[req.session.class].students[req.session.user].permissions = answer
+    db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
+   }
     res.redirect('/poll')
 })
 
@@ -515,7 +519,8 @@ app.post('/poll', (req, res) => {
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
-        color: '"dark blue"'
+        color: '"dark blue"',
+        classNames: classNames
     })
 })
 
@@ -523,6 +528,41 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 //Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, async (req, res) => {
     let className = req.body.name.toLowerCase();
+    let code =  req.body.key.toLowerCase();
+    // Find the id of the class from the database
+    db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
+        if (err) {
+            console.log(err);
+            res.send('Something went wrong')
+        }
+        // Check to make sure there was a class with that name
+        if (id && cD[className] && cD[className].key == code) {
+            // Find the id of the user who is trying to join the class
+            db.get(`SELECT id FROM users WHERE username=?`, [req.session.user], (err, uid) => {
+                if (err) {
+                    console.log(err);
+                }
+                // Add the two id's to the junction table to link the user and class
+                db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
+                    [id.id, uid.id], (err) => {
+                        if (err) {
+                            console.log(err);
+                        }
+                        // Get the teachers session data ready to transport into new class
+                        var user = cD.noClass.students[req.session.user]
+                        // Remove teacher from old class
+                        delete cD.noClass.students[req.session.user]
+                        // Add the teacher to the newly created class
+                        cD[className].students[req.session.user] = user
+                        console.log('User added to class');
+                        req.session.class = className;
+                        res.redirect('/home')
+                    })
+            })
+        } else {
+            res.send('No Open Class with that Name')
+        }
+    })
 
     let checkComplete = await joinClass(className, req.session.user)
     if (checkComplete) {
@@ -568,7 +608,6 @@ io.sockets.on('connection', function (socket) {
     }
     // /poll websockets for updating the database
     socket.on('pollResp', function (res, textRes) {
-
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
@@ -605,6 +644,12 @@ io.sockets.on('connection', function (socket) {
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+    })
+
+    socket.on('deleteUser', function(userName){
+        cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
+        delete cD[socket.request.session.class].students[userName]
+        console.log(userName + ' removed from class');
     })
 });
 
