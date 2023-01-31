@@ -167,7 +167,6 @@ function joinClass(className, userName) {
                 res.send('Something went wrong')
             }
             // Check to make sure there was a class with that name
-            console.log(cD[className]);
             if (id && cD[className]) {
                 // Find the id of the user who is trying to join the class
                 db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
@@ -380,7 +379,6 @@ app.post('/login', async (req, res) => {
         loginType: req.body.loginType,
         userType: req.body.userType
     }
-    console.log(user);
     var passwordCrypt = encrypt(user.password);
     // Check whether user is logging in or signing up
     if (user.loginType == "login") {
@@ -581,7 +579,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
     if (req.query.bot == "true") {
-        res.json(cD[req.session.class].className)
+        res.json(cD[req.session.class])
     } else {
         res.render('pages/virtualbar', {
             title: 'Virtual Bar',
@@ -646,11 +644,14 @@ io.sockets.on('connection', function (socket) {
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
-
     socket.on('deleteUser', function(userName){
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
         console.log(userName + ' removed from class');
+    })
+    socket.on('joinRoom', function (className) {
+        console.log("Working");
+        socket.join(className);
     })
 });
 
