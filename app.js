@@ -564,7 +564,9 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 
-//Handles the webscoket communications
+// Middleware for sockets
+// Authentication for users and bots to connect to formbar websockets
+// The user must be logged in order to connect to websockets
 io.use((socket, next) => {
     if (socket.request.session.user) {
         console.log("Checking")
@@ -574,6 +576,7 @@ io.use((socket, next) => {
         next(new Error("invalid"));
     }
   });
+//Handles the webscoket communications
 io.sockets.on('connection', function (socket) {
     console.log('Connected to socket');
     if (socket.request.session.user) {
