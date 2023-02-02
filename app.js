@@ -565,6 +565,15 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 //Handles the webscoket communications
+io.use((socket, next) => {
+    if (socket.request.session.user) {
+        console.log("Checking")
+        next();
+    } else {
+        console.log("Authentication Failed");
+        next(new Error("invalid"));
+    }
+  });
 io.sockets.on('connection', function (socket) {
     console.log('Connected to socket');
     if (socket.request.session.user) {
