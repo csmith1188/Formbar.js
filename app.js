@@ -398,7 +398,8 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.className) {
                         req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username)
+                        console.log(cD[req.body.className].key + ' ' + req.body.className);
+                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
@@ -543,7 +544,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
     if (req.query.bot == "true") {
-        res.json(cD[req.session.class].className)
+        res.json(cD[req.session.class])
     } else {
         res.render('pages/virtualbar', {
             title: 'Virtual Bar',
@@ -608,11 +609,14 @@ io.sockets.on('connection', function (socket) {
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
     })
-
     socket.on('deleteUser', function(userName){
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
         console.log(userName + ' removed from class');
+    })
+    socket.on('joinRoom', function (className) {
+        console.log("Working");
+        socket.join(className);
     })
 });
 
