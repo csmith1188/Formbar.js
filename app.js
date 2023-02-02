@@ -158,7 +158,7 @@ function permCheck(req, res, next) {
 }
 
 
-function joinClass(className, userName) {
+function joinClass(className, userName, code) {
     return new Promise((resolve, reject) => {
         // Find the id of the class from the database
         db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
@@ -167,7 +167,7 @@ function joinClass(className, userName) {
                 res.send('Something went wrong')
             }
             // Check to make sure there was a class with that name
-            if (id && cD[className]) {
+            if (id && cD[className].key == code) {
                 // Find the id of the user who is trying to join the class
                 db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
                     if (err) {
@@ -528,42 +528,7 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 app.post('/selectclass', isLoggedIn, async (req, res) => {
     let className = req.body.name.toLowerCase();
     let code =  req.body.key.toLowerCase();
-    // Find the id of the class from the database
-    db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
-        if (err) {
-            console.log(err);
-            res.send('Something went wrong')
-        }
-        // Check to make sure there was a class with that name
-        if (id && cD[className] && cD[className].key == code) {
-            // Find the id of the user who is trying to join the class
-            db.get(`SELECT id FROM users WHERE username=?`, [req.session.user], (err, uid) => {
-                if (err) {
-                    console.log(err);
-                }
-                // Add the two id's to the junction table to link the user and class
-                db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
-                    [id.id, uid.id], (err) => {
-                        if (err) {
-                            console.log(err);
-                        }
-                        // Get the teachers session data ready to transport into new class
-                        var user = cD.noClass.students[req.session.user]
-                        // Remove teacher from old class
-                        delete cD.noClass.students[req.session.user]
-                        // Add the teacher to the newly created class
-                        cD[className].students[req.session.user] = user
-                        console.log('User added to class');
-                        req.session.class = className;
-                        res.redirect('/home')
-                    })
-            })
-        } else {
-            res.send('No Open Class with that Name')
-        }
-    })
-
-    let checkComplete = await joinClass(className, req.session.user)
+    let checkComplete = await joinClass(className, req.session.user, code)
     if (checkComplete) {
         req.session.class = className;
         res.redirect('/home')
