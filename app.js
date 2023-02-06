@@ -57,6 +57,7 @@ class Student {
         this.permissions = perms;
         this.pollRes = '';
         this.pollTextRes = '';
+        this.help = '';
     }
 }
 
@@ -75,6 +76,15 @@ class Classroom {
         this.key = '';
     }
 }
+
+class HelpTicket {
+    constructor(reason, time, ){
+        this.reason = reason,
+        this.time = time
+    }
+
+}
+
 
 //Permssion level needed to access each page
 pagePermissions = {
@@ -221,7 +231,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     let keys = Object.keys(students);
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
-        var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes } }
+        var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes }, help: students[keys[i]].help }
         allStuds.push(val)
     }
     res.render('pages/controlpanel', {
@@ -348,6 +358,13 @@ app.get('/home', isAuthenticated, (req, res) => {
         title: 'Formbar Home',
         color: '"dark blue"'
     })
+})
+
+
+app.get('/help', isAuthenticated, (req, res) => {
+    res.render('pages/help'), {
+        color: '"dark blue"'
+}
 })
 
 // I
@@ -607,6 +624,11 @@ io.sockets.on('connection', function (socket) {
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+    })
+
+    socket.on('help', function(reason, time){
+        console.log(reason);
+        cD[socket.request.session.class].students[socket.request.session.user].help = `<b>${socket.request.session.user}</b> reason: <b>${reason}</b> time sent: ${time}`
     })
 
     socket.on('deleteUser', function(userName){
