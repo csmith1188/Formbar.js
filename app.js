@@ -77,15 +77,6 @@ class Classroom {
     }
 }
 
-class HelpTicket {
-    constructor(reason, time, ){
-        this.reason = reason,
-        this.time = time
-    }
-
-}
-
-
 //Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
