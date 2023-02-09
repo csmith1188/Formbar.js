@@ -90,6 +90,7 @@ def changeLights(pollData, totalStuds):
                         pixNum += 1
                     pixels[pixNum] = (0, 0, 0)
                     pixNum += 1
+                    colNum += 1
                     totalAnswers += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
