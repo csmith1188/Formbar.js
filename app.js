@@ -398,7 +398,6 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.className) {
                         req.session.class = req.body.className;
-                        console.log(cD[req.body.className].key + ' ' + req.body.className);
                         let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
                         if (checkJoin) {
                             res.json({login: true})
@@ -569,7 +568,6 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
     if (socket.request.session.user) {
-        console.log("Checking")
         next();
     } else {
         console.log("Authentication Failed");
@@ -607,6 +605,7 @@ io.sockets.on('connection', function (socket) {
     });
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
+        cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollStatus = false
     });
 
