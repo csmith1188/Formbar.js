@@ -15,12 +15,33 @@
             <button id="pollResponse" onclick="toResponses()">Responses</button>
             <button id="help" onclick="toHelp()">Help Tickets</button>
         </header>
-        <h2 style="text-align:left;">Your class code is <%- key %></h2>
-        <div id="permChanges">
+        <div id="filterBoxes">
+            <form>
+                <input type="checkbox" name="" id="pollFilter" onclick="toPermissions()">
+                <label for="pollFilter">Filter by poll</label>
+            </form>
+        </div>
+            <div id="permChanges">
+            <h2 style="text-align:left;">Your class code is <%- key %></h2>
             <% students.forEach( (studs)=> { console.log(studs) %>
                 <p>
-                    <%- studs.name %> <br>
-                    Text Response: <%- studs.pollRes.textRes %>
+                    <%- studs.name %>
+                </p>
+                <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
+                    <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
+                    <option value="1" <% if (studs.perms==1) {%>selected<%}%>>Bot</option>
+                    <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
+                    <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
+                </select>
+                <button id="deleteUser" data-userid="<%- studs.name %>" onclick="deleteUser(this)">Delete User</button>
+                <%})%>
+        </div>
+        <div id="permChangesPollFilter">
+            <h2 style="text-align:left;">Your class code is <%- key %></h2>
+            <% students.forEach( (studs)=> { %>
+                <%if(studs.pollRes.lettRes == '' && studs.pollRes.textRes == ''){return;}%>
+                <p>
+                    <%- studs.name %>
                 </p>
                 <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
                     <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
@@ -63,6 +84,7 @@
         var socket = io();
         var permChanges = document.getElementById('permChanges')
         var pollChanges = document.getElementById('pollChanges')
+        var pollChangesFilter = document.getElementById('permChangesPollFilter')
         var responses = document.getElementById('responses')
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
@@ -70,6 +92,7 @@
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
+        var filterBoxes = document.getElementById('filterBoxes')
         var helpTickets = document.getElementById('helpTickets')
 
       function deleteUser(e){
@@ -82,7 +105,9 @@
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             responses.style.display = 'none'
+            pollChangesFilter.style.display = 'none'
             helpTickets.style.display = 'none'
+
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
@@ -96,20 +121,34 @@
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
             responses.style.display = 'none'
+            pollChangesFilter.style.display = 'none'
+            filterBoxes.style.display = 'none'
             helpTickets.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
+            if(document.getElementById('pollFilter').checked){
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'none'
+            pollChangesFilter.style.display = 'block'
+            filterBoxes.style.display = 'block'
+            } else if(document.getElementById('pollFilter').checked == false){
+                filterBoxes.style.display = 'block'
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             responses.style.display = 'none'
+            pollChangesFilter.style.display = 'none'
             helpTickets.style.display = 'none'
+            }
         }
         // Changes to the responses section of the page
         function toResponses() {
+            filterBoxes.style.display = 'none'
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             responses.style.display = 'block'
+            pollChangesFilter.style.display = 'none'
             helpTickets.style.display = 'none'
         }
         function toHelp(){
@@ -128,6 +167,7 @@
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             responses.style.display = 'block'
+            pollChangesFilter.style.display = 'none'
         }
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
@@ -135,6 +175,7 @@
             socket.emit('reload');
             startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
+            pollChangesFilter.style.display = 'none'
         }
         // Used to change permission of user in there class
         // Sends user data and desired permission level of the user
