@@ -57,6 +57,7 @@ class Student {
         this.permissions = perms;
         this.pollRes = '';
         this.pollTextRes = '';
+        this.help = '';
     }
 }
 
@@ -221,7 +222,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
     let keys = Object.keys(students);
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
-        var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes } }
+        var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes }, help: students[keys[i]].help }
         allStuds.push(val)
     }
     res.render('pages/controlpanel', {
@@ -350,6 +351,13 @@ app.get('/home', isAuthenticated, (req, res) => {
     })
 })
 
+
+app.get('/help', isAuthenticated, (req, res) => {
+    res.render('pages/help'), {
+        color: '"dark blue"'
+}
+})
+
 // I
 
 // J
@@ -398,7 +406,6 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.className) {
                         req.session.class = req.body.className;
-                        console.log(cD[req.body.className].key + ' ' + req.body.className);
                         let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
                         if (checkJoin) {
                             res.json({login: true})
@@ -564,6 +571,17 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 
+// Middleware for sockets
+// Authentication for users and bots to connect to formbar websockets
+// The user must be logged in order to connect to websockets
+io.use((socket, next) => {
+    if (socket.request.session.user) {
+        next();
+    } else {
+        console.log("Authentication Failed");
+        next(new Error("invalid"));
+    }
+  });
 //Handles the webscoket communications
 io.sockets.on('connection', function (socket) {
     console.log('Connected to socket');
@@ -595,6 +613,7 @@ io.sockets.on('connection', function (socket) {
     });
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
+        cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollStatus = false
     });
 
@@ -608,6 +627,11 @@ io.sockets.on('connection', function (socket) {
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+    })
+
+    socket.on('help', function(reason, time){
+        console.log(reason);
+        cD[socket.request.session.class].students[socket.request.session.user].help = `<b>${socket.request.session.user}</b> reason: <b>${reason}</b> time sent: ${time}`
     })
     socket.on('deleteUser', function(userName){
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]

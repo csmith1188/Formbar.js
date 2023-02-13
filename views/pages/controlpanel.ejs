@@ -13,12 +13,13 @@
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
             <button id="pollResponse" onclick="toResponses()">Responses</button>
+            <button id="help" onclick="toHelp()">Help Tickets</button>
         </header>
         <h2 style="text-align:left;">Your class code is <%- key %></h2>
         <div id="permChanges">
             <% students.forEach( (studs)=> { console.log(studs) %>
                 <p>
-                    <%- studs.name %>
+                    <%- studs.name %> <br>
                     Text Response: <%- studs.pollRes.textRes %>
                 </p>
                 <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
@@ -49,6 +50,11 @@
                     Text Response: <%- studs.pollRes.textRes %>
                 <%})%>
         </div>
+        <div id="helpTickets">
+            <% students.forEach( (studs)=> { %> <br>
+             <%- studs.help %>
+            <%})%>
+        </div>
     </body>
 
     </html>
@@ -64,7 +70,8 @@
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
-        
+        var helpTickets = document.getElementById('helpTickets')
+
       function deleteUser(e){
         socket.emit('deleteUser', e.dataset.userid );
       }
@@ -75,6 +82,7 @@
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             responses.style.display = 'none'
+            helpTickets.style.display = 'none'
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
@@ -88,18 +96,27 @@
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
             responses.style.display = 'none'
+            helpTickets.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             responses.style.display = 'none'
+            helpTickets.style.display = 'none'
         }
         // Changes to the responses section of the page
         function toResponses() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             responses.style.display = 'block'
+            helpTickets.style.display = 'none'
+        }
+        function toHelp(){
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'none'
+            helpTickets.style.display = 'block'
         }
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses

@@ -55,10 +55,13 @@
                 // Sends user input to the server
                 socket.emit('pollResp', lettRes, textRes);
                 socket.emit('vbData');
-                alert('Poll Submitted ' + lettRes)
+                setTimeout(function() { alert('Poll Submitted ' + lettRes) },100);
+                
             }
 
-            
+
+
+
             var poll = document.getElementById('poll')
             var noPoll = document.getElementById('noPoll')
             // Function will run on page load

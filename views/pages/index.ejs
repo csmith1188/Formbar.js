@@ -16,7 +16,15 @@
     <a href="/controlpanel">Teacher Controls</a>
     <br>
     <a href="/virtualbar">Virtual Bar</a>
+    <br>
+    <a href="/help">Help Ticket Creation</a>
 </div>
 </body>
 </html>
+<script src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+    var socket = io();
+    socket.emit('vbData')
+</script>
 <%- include('../partials/footer_content') %>
