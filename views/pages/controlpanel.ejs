@@ -13,6 +13,7 @@
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
             <button id="pollResponse" onclick="toResponses()">Responses</button>
+            <button id="help" onclick="toHelp()">Help Tickets</button>
         </header>
         <div id="filterBoxes">
             <form>
@@ -70,6 +71,11 @@
                     Text Response: <%- studs.pollRes.textRes %>
                 <%})%>
         </div>
+        <div id="helpTickets">
+            <% students.forEach( (studs)=> { %> <br>
+             <%- studs.help %>
+            <%})%>
+        </div>
     </body>
 
     </html>
@@ -87,6 +93,7 @@
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
         var filterBoxes = document.getElementById('filterBoxes')
+        var helpTickets = document.getElementById('helpTickets')
 
       function deleteUser(e){
         socket.emit('deleteUser', e.dataset.userid );
@@ -99,6 +106,8 @@
             permChanges.style.display = 'block'
             responses.style.display = 'none'
             pollChangesFilter.style.display = 'none'
+            helpTickets.style.display = 'none'
+
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
@@ -114,6 +123,7 @@
             responses.style.display = 'none'
             pollChangesFilter.style.display = 'none'
             filterBoxes.style.display = 'none'
+            helpTickets.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
@@ -129,7 +139,7 @@
             permChanges.style.display = 'block'
             responses.style.display = 'none'
             pollChangesFilter.style.display = 'none'
-
+            helpTickets.style.display = 'none'
             }
         }
         // Changes to the responses section of the page
@@ -139,6 +149,13 @@
             permChanges.style.display = 'none'
             responses.style.display = 'block'
             pollChangesFilter.style.display = 'none'
+            helpTickets.style.display = 'none'
+        }
+        function toHelp(){
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            responses.style.display = 'none'
+            helpTickets.style.display = 'block'
         }
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
