@@ -51,10 +51,12 @@
                     }
                     
                 }
-                alert('Poll Submitted ' + lettRes)
+
                 // Sends user input to the server
                 socket.emit('pollResp', lettRes, textRes);
                 socket.emit('vbData');
+                setTimeout(function() { alert('Poll Submitted ' + lettRes) },100);
+                
             }
 
 

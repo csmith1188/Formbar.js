@@ -406,7 +406,7 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.className) {
                         req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username)
+                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
@@ -551,7 +551,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
     if (req.query.bot == "true") {
-        res.json(cD[req.session.class].className)
+        res.json(cD[req.session.class])
     } else {
         res.render('pages/virtualbar', {
             title: 'Virtual Bar',
@@ -571,6 +571,17 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 
+// Middleware for sockets
+// Authentication for users and bots to connect to formbar websockets
+// The user must be logged in order to connect to websockets
+io.use((socket, next) => {
+    if (socket.request.session.user) {
+        next();
+    } else {
+        console.log("Authentication Failed");
+        next(new Error("invalid"));
+    }
+  });
 //Handles the webscoket communications
 io.sockets.on('connection', function (socket) {
     console.log('Connected to socket');
@@ -602,6 +613,7 @@ io.sockets.on('connection', function (socket) {
     });
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
+        cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollStatus = false
     });
 
@@ -621,11 +633,14 @@ io.sockets.on('connection', function (socket) {
         console.log(reason);
         cD[socket.request.session.class].students[socket.request.session.user].help = `<b>${socket.request.session.user}</b> reason: <b>${reason}</b> time sent: ${time}`
     })
-
     socket.on('deleteUser', function(userName){
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
         console.log(userName + ' removed from class');
+    })
+    socket.on('joinRoom', function (className) {
+        console.log("Working");
+        socket.join(className);
     })
 });
 
