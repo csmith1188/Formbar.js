@@ -2,7 +2,14 @@
 
 <body class="<%- color %>">
     <form action="selectclass" method="post">
-        <input type="text" id="usernameBox" name="name" class="box" placeholder="Class Name" value="" autocomplete="off" required>
-        <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
+        <select id="classrooms" name="name">
+            <% classNames.forEach(rooms => { %>
+                <option value="<%- rooms %>">
+                    <%- rooms %>
+                </option>
+                <% }) %>
+            </select>
+            <input type="text" name="key" placeholder="class code">
+            <input type="submit" id="submitButton" class="button unselectable" value="Submit" onsubmit="return false;">
     </form>
 </body>
