@@ -5,6 +5,15 @@ const ejs = require('ejs');
 const fs = require('fs');
 const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+// get config vars
+dotenv.config();
+
+// access config var
+// console.log(process.env.TOKEN_SECRET)
+
 
 var app = express();
 const http = require('http').createServer(app);
@@ -197,6 +206,11 @@ function joinClass(className, userName, code) {
     })
 }
 
+// Oauth2 Access Token Generator
+function generateAccessToken(username) {
+    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+  }
+
 // Endpoints
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -372,7 +386,8 @@ app.get('/help', isAuthenticated, (req, res) => {
 app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
-        color: 'purple'
+        color: 'purple', 
+        redurl: ''
     });
 });
 
@@ -569,6 +584,73 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 // Z
 
+
+
+// OAuth2
+
+app.get('/oauth/login', (req, res) => {
+    let redurl = req.query.redurl
+    res.render('pages/login', {
+        title: 'Formbar',
+        color: 'purple',
+        redurl: redurl
+    })
+})
+
+app.post('/oauth/login', (req, res) => {
+    let redurl = req.body.redurl
+    var user = {
+        username: req.body.username,
+        password: req.body.password,
+        loginType: req.body.loginType,
+        userType: req.body.userType
+    }
+    var passwordCrypt = encrypt(user.password);
+    // Check whether user is logging in or signing up
+    if (user.loginType == "login") {
+        // Get the users login in data to verify password
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
+            if (err) {
+                console.log(err);
+            }
+            // Check if a user with that name was found in the database
+            if (rows) {
+                // Decrypt users password
+                let tempPassword = decrypt(JSON.parse(rows.password));
+                if (rows.username == user.username && tempPassword == user.password) {
+                    let token = generateAccessToken({ username: user.username })
+                    res.json(token)
+                } else {
+                    res.redirect('/oauth/login?redurl=' + redurl)
+                }
+            } else {
+                res.redirect('/oauth/login?redurl=' + redurl)
+            }
+        })
+
+    } else if (user.loginType == "new") {
+        // Add the new user to the database 
+        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('Success');
+            })
+        // Find the user in which was just created to get the id of the user 
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+            if (err) {
+                console.log(err);
+            }
+            // Add user to session
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
+            // Add the user to the session in order to transfer data between each page
+            req.session.user = rows.username;
+            res.redirect('/');
+
+        })
+    }
+})
 
 
 // Middleware for sockets
