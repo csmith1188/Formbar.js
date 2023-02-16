@@ -1,12 +1,5 @@
 
 <script>
-  if (window.location.pathname != "/login") document.getElementById("quickmenu").classList.remove("hidden");
 
-  function contentHeight() {
-    let content = document.getElementById("content");
-    content.style.height = null;
-    if (document.body.clientHeight > window.innerHeight) content.style.height = window.innerHeight - 125 + "px";
-  }
-  window.addEventListener("load", contentHeight);
-  window.addEventListener("resize", contentHeight);
+
 </script>
