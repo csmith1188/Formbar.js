@@ -76,13 +76,26 @@ class Classroom {
         this.key = '';
     }
 }
+//allows quizzes to be made
+class Quiz{
+    constructor(numOfQuestions, maxScore){
+        this.questions = []
+        this.totalScore = maxScore
+        this.numOfQuestions = numOfQuestions
+        this.pointsPerQuestion = this.totalScore/numOfQuestions
+    }
+}
+//object for the quizzes to be pushed to
+let quizObj = {}
+
 
 //Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
     chat: 2,
     poll: 2,
-    virtualbar: 2
+    virtualbar: 2,
+    makeQuiz: 0
 }
 
 
@@ -515,8 +528,38 @@ app.post('/poll', (req, res) =>{
 
 
 // Q
+//create a quiz for students to take
+app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/makequiz')
+})
+
+app.get('/quiz', (req, res) => {
+
+    res.render('pages/quiz', {
+        quiz: JSON.stringify(quizObj)
+    })
+})
+
 
 // R
+
+//quiz results page
+app.post('/results', (req, res) => {
+    let results = req.body.question
+    let totalScore = 0
+   for (let i = 0; i < quizObj.questions.length; i++) {
+        if (results[i] == quizObj.questions[i][1] ){
+            totalScore += quizObj.pointsPerQuestion
+        } else {
+            continue;
+        }
+   }
+    res.render('pages/results', {
+        totalScore: totalScore,
+        maxScore: quizObj.totalScore
+    })
+})
+
 
 // S
 
@@ -641,6 +684,16 @@ io.sockets.on('connection', function (socket) {
     socket.on('joinRoom', function (className) {
         console.log("Working");
         socket.join(className);
+    })
+    socket.on('startQuiz', function (quizData, points) {       
+        questions = []
+        let splitted = quizData.split('\n')
+        splitted.forEach(element => {
+            questions.push(element.split(', '))
+        });
+        quiz = new Quiz(questions.length, points)
+        quiz.questions = questions
+        quizObj = quiz
     })
 });
 
