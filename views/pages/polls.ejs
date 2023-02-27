@@ -21,13 +21,6 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script type="text/javascript">
-   // io.of("/polls").adapter.on("create-room", (room) => {
-   //     console.log(`room ${room} was created`);
-   // });
-//
-   // io.of("/polls").adapter.on("join-room", (room, id) => {
-   //     console.log(`socket ${id} has joined room ${room}`);
-   // });
             var socket = io();
             var resTextBox = document.getElementById('resTextBox')
             var pollForm = document.getElementById('pollForm')
@@ -55,6 +48,7 @@
                 // Sends user input to the server
                 socket.emit('pollResp', lettRes, textRes);
                 socket.emit('vbData');
+                socket.emit('cpupdate');
                 setTimeout(function() { alert('Poll Submitted ' + lettRes) },100);
                 
             }

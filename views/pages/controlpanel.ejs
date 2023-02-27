@@ -12,70 +12,55 @@
         <header>
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
-            <button id="pollResponse" onclick="toResponses()">Responses</button>
             <button id="help" onclick="toHelp()">Help Tickets</button>
         </header>
-        <div id="filterBoxes">
-            <form>
-                <input type="checkbox" name="" id="pollFilter" onclick="toPermissions()">
-                <label for="pollFilter">Filter by poll</label>
-            </form>
-        </div>
-            <div id="permChanges">
-            <h2 style="text-align:left;">Your class code is <%- key %></h2>
-            <% students.forEach( (studs)=> { console.log(studs) %>
-                <p>
-                    <%- studs.name %>
-                </p>
-                <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
-                    <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
-                    <option value="1" <% if (studs.perms==1) {%>selected<%}%>>Bot</option>
-                    <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
-                    <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
-                </select>
-                <button id="deleteUser" data-userid="<%- studs.name %>" onclick="deleteUser(this)">Delete User</button>
-                <%})%>
-        </div>
-        <div id="permChangesPollFilter">
-            <h2 style="text-align:left;">Your class code is <%- key %></h2>
-            <% students.forEach( (studs)=> { %>
-                <%if(studs.pollRes.lettRes == '' && studs.pollRes.textRes == ''){return;}%>
-                <p>
-                    <%- studs.name %>
-                </p>
-                <select name="permSwitch" id="permSwitch" data-userid="<%- studs.name %>" onchange="updatePerms(this);">
-                    <option value="0" <% if (studs.perms==0) {%>selected<%}%>>Teacher</option>
-                    <option value="1" <% if (studs.perms==1) {%>selected<%}%>>Bot</option>
-                    <option value="2" <% if (studs.perms==2) {%>selected<%}%>>Student</option>
-                    <option value="3" <% if (studs.perms==3) {%>selected<%}%>>Guest</option>
-                </select>
-                <button id="deleteUser" data-userid="<%- studs.name %>" onclick="deleteUser(this)">Delete User</button>
-                <%})%>
+
+        <div id="permChanges">
+            <div id="permChangeKey">
+
+            </div>
+            <div id="permFilterBoxes">
+                <form>
+                    <input type="checkbox" id="helpFilter" onclick="filterPerm()">
+                    <label for="helpFilter">Filter by Help</label>
+                    <input type="checkbox" id="permSort" onclick="sortPerm()">
+                    <label for="permSort" id="permSortLabel">Sort by Permissions 🡅</label>
+                </form>
+            </div>
+            <div id="permChangeList">
+
+            </div>
+
         </div>
         <div id="pollChanges">
-            <form id="startPollForm">
+            <h2>Start/End Poll</h2>
+            <form id="startPollForm" action="#">
                 <label for="resNumber">How many possible responses?</label>
                 <input type="number" id="resNumber">
                 <label for="resTextBox">Would like to accept text responses?</label>
                 <input type="checkbox" id="resTextBox">
                 <label for="pollBox">Prompt for the poll?</label>
                 <input type="text" id="pollBox">
-                <button onclick="startPollFunc()">Start Poll</button>
+                <input type="button" value="Start Poll" onclick="startPollFunc()">
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
-        </div>
-        <div id="responses">
-            <% students.forEach( (studs)=> { %>
-                    <%- studs.name %>
-                    Letter Response: <%- studs.pollRes.lettRes %>
-                    Text Response: <%- studs.pollRes.textRes %>
-                    <br>
-                <%})%>
+            <br>
+            <div id="filterBoxes">
+                <form>
+                    <input type="checkbox" id="pollFilter" onclick="filterResponses()">
+                    <label for="pollFilter">Filter by Poll</label>
+                    <input type="checkbox" id="lettFilter" onclick="filterResponses()">
+                    <label for="lettFilter">Filter by Letter Response</label>
+                    <input type="checkbox" id="textFilter" onclick="filterResponses()">
+                    <label for="textFilter">Filter by Text Response</label>
+                </form>
+            </div>
+            <div id="responses">
+
+            </div>
         </div>
         <div id="helpTickets">
-            <% students.forEach( (studs)=> { %> <br>
-             <%- studs.help %>
-            <%})%>
+
         </div>
     </body>
 
@@ -84,8 +69,9 @@
     <script>
         var socket = io();
         var permChanges = document.getElementById('permChanges')
+        var permChangeKey = document.getElementById('permChangeKey')
+        var permChangeList = document.getElementById('permChangeList')
         var pollChanges = document.getElementById('pollChanges')
-        var pollChangesFilter = document.getElementById('permChangesPollFilter')
         var responses = document.getElementById('responses')
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
@@ -94,81 +80,69 @@
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
         var filterBoxes = document.getElementById('filterBoxes')
+        var permFilterBoxes = document.getElementById('permFilterBoxes')
         var helpTickets = document.getElementById('helpTickets')
+        var pollFilter = document.getElementById('pollFilter')
+        var lettFilter = document.getElementById('lettFilter')
+        var textFilter = document.getElementById('textFilter')
+        var permSort = document.getElementById('permSort')
+        var permSortLabel = document.getElementById('permSortLabel')
+        var helpFilter = document.getElementById('helpFilter')
 
-      function deleteUser(e){
-        socket.emit('deleteUser', e.dataset.userid );
-      }
-        
+
+        function deleteUser(e) {
+            socket.emit('deleteUser', e.dataset.userid);
+            socket.emit('cpupdate')
+        }
+
         // Function runs on page load
         // Checks if poll is active or not and displays correct output
         function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
-            responses.style.display = 'none'
-            pollChangesFilter.style.display = 'none'
             helpTickets.style.display = 'none'
 
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
+                responses.style.display = 'block'
+                filterBoxes.style.display = 'block'
             } else {
                 startPollForm.style.display = 'block'
                 endPoll.style.display = 'none'
+                responses.style.display = 'none'
+                filterBoxes.style.display = 'none'
             }
         }
         // Changes to the create a poll section of the page
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
-            responses.style.display = 'none'
-            pollChangesFilter.style.display = 'none'
-            filterBoxes.style.display = 'none'
             helpTickets.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
-            if(document.getElementById('pollFilter').checked){
-            pollChanges.style.display = 'none'
-            permChanges.style.display = 'none'
-            responses.style.display = 'none'
-            pollChangesFilter.style.display = 'block'
-            filterBoxes.style.display = 'block'
-            } else if(document.getElementById('pollFilter').checked == false){
-                filterBoxes.style.display = 'block'
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
-            responses.style.display = 'none'
-            pollChangesFilter.style.display = 'none'
-            helpTickets.style.display = 'none'
-            }
-        }
-        // Changes to the responses section of the page
-        function toResponses() {
-            filterBoxes.style.display = 'none'
-            pollChanges.style.display = 'none'
-            permChanges.style.display = 'none'
-            responses.style.display = 'block'
-            pollChangesFilter.style.display = 'none'
             helpTickets.style.display = 'none'
         }
-        function toHelp(){
+
+        function toHelp() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
-            responses.style.display = 'none'
             helpTickets.style.display = 'block'
         }
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
-            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value);
-            socket.emit('reload'); // Reloads the users page
+            console.log('Test');
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
-            pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             responses.style.display = 'block'
-            pollChangesFilter.style.display = 'none'
+            filterBoxes.style.display = 'block'
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value);
+            socket.emit('reload'); // Reloads the users page
         }
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
@@ -176,12 +150,226 @@
             socket.emit('reload');
             startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
-            pollChangesFilter.style.display = 'none'
+            responses.style.display = 'none'
+            filterBoxes.style.display = 'none'
+        }
+
+        function buildStudent(room, student) {
+            var newStudent = '';
+            newStudent += `<p>${student}</p>`
+            newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
+            if (room.students[student].permissions == 0) {
+                newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3">Guest</option>
+                    `
+            } else if (room.students[student].permissions == 1) {
+                newStudent += `
+                        <option value="0">Teacher</option>
+                        <option value="1" selected>Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3">Guest</option>
+                    `
+            } else if (room.students[student].permissions == 2) {
+                newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2" selected>Student</option>
+                        <option value="3">Guest</option>
+                    `
+            } else if (room.students[student].permissions == 3) {
+                newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3" selected>Guest</option>
+                    `
+            }
+            newStudent += `</select>
+                <button id="deleteUser" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
+            return newStudent
+        }
+
+        function sortPerm() {
+            permChangeList.innerHTML = ''
+            var newStudent = '';
+            if (permSort.checked) {
+                permSortLabel.innerHTML = 'Sort by Permissions 🡇'
+                let newRoom = allRoom
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions));
+                for (const student of Object.keys(newRoom.students)) {
+                    newStudent += buildStudent(newRoom, student)
+                }
+            } else {
+                permSortLabel.innerHTML = 'Sort by Permissions 🡅'
+                let newRoom = allRoom
+                newRoom.students = Object.fromEntries(Object.entries(allRoom.students).sort((a, b) => a[1].permissions - b[1].permissions));
+                for (const student of Object.keys(newRoom.students)) {
+                    newStudent += buildStudent(newRoom, student)
+                }
+            }
+            permChangeList.innerHTML += newStudent
+        }
+
+        function filterPerm() {
+            if (helpFilter.checked) {
+                permChangeList.innerHTML = ''
+                var newStudent = '';
+                if (helpFilter.checked) {
+                    for (const student of Object.keys(allRoom.students)) {
+                        if (allRoom.students[student].help) {
+                            newStudent += buildStudent(allRoom, student)
+                        }
+                    }
+                }
+
+                permChangeList.innerHTML += newStudent
+            } else {
+                permChangeFunc(allRoom)
+            }
+        }
+
+        function filterResponses() {
+            if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
+                responses.innerHTML = ''
+                responses.innerHTML += '<h2>Responses</h2>'
+                var newResponse = '';
+                for (const student of Object.keys(allRoom.students)) {
+
+                    let lettRes;
+                    let textRes;
+                    if (allRoom.students[student].pollRes) {
+                        lettRes = allRoom.students[student].pollRes.toUpperCase()
+                    } else {
+                        lettRes = "No Response"
+                    }
+                    if (allRoom.students[student].pollTextRes) {
+                        textRes = allRoom.students[student].pollTextRes
+                    } else {
+                        textRes = "No Response"
+                    }
+                    if (pollFilter.checked) {
+                        if (lettRes != "No Response" || textRes != "No Response") {
+                            newResponse += `<h3>${student}</h3>
+                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
+                        }
+                    } else if (lettFilter.checked) {
+                        if (lettRes != "No Response") {
+                            newResponse += `<h3>${student}</h3>
+                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
+                        }
+                    } else if (textFilter.checked) {
+                        if (textRes != "No Response") {
+                            newResponse += `<h3>${student}</h3>
+                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
+                        }
+                    }
+                }
+                responses.innerHTML += newResponse
+            } else {
+                responsesFunc(allRoom)
+            }
         }
         // Used to change permission of user in there class
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value);
         }
+
+        function permChangeFunc(room) {
+            if (helpFilter.checked) {
+                filterPerm()
+            } else {
+                permChangeKey.innerHTML = ''
+                permChangeList.innerHTML = ''
+                permChangeKey.innerHTML += `<h2 style="text-align:left;">Your class code is ${room.key}</h2>`
+                var newStudent = '';
+                for (const student of Object.keys(room.students)) {
+                    newStudent += `<p>${student}</p>`
+                    newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
+                    if (room.students[student].permissions == 0) {
+                        newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3">Guest</option>
+                    `
+                    } else if (room.students[student].permissions == 1) {
+                        newStudent += `
+                        <option value="0">Teacher</option>
+                        <option value="1" selected>Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3">Guest</option>
+                    `
+                    } else if (room.students[student].permissions == 2) {
+                        newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2" selected>Student</option>
+                        <option value="3">Guest</option>
+                    `
+                    } else if (room.students[student].permissions == 3) {
+                        newStudent += `
+                        <option value="0" selected>Teacher</option>
+                        <option value="1">Bot</option>
+                        <option value="2">Student</option>
+                        <option value="3" selected>Guest</option>
+                    `
+                    }
+                    newStudent += `</select>
+                <button id="deleteUser" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
+                }
+                permChangeList.innerHTML += newStudent
+            }
+        }
+
+        function responsesFunc(room) {
+            if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
+                filterResponses()
+            } else {
+                responses.innerHTML = ''
+                responses.innerHTML += '<h2>Responses</h2>'
+                var newResponse = '';
+                for (const student of Object.keys(room.students)) {
+                    let lettRes;
+                    let textRes;
+                    if (room.students[student].pollRes) {
+                        lettRes = room.students[student].pollRes.toUpperCase()
+                    } else {
+                        lettRes = "No Response"
+                    }
+                    if (room.students[student].pollTextRes) {
+                        textRes = room.students[student].pollTextRes
+                    } else {
+                        textRes = "No Response"
+                    }
+                    newResponse += `<h3>${student}</h3>
+                <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
+                }
+                responses.innerHTML += newResponse
+            }
+        }
+
+        function helpTicketsFunc(room) {
+            helpTickets.innerHTML = ''
+            helpTickets.innerHTML += '<h2>Help Tickets</h2>'
+            var newHelpTicket = '';
+            for (const student of Object.keys(room.students)) {
+                newHelpTicket += room.students[student].help
+            }
+            helpTickets.innerHTML += newHelpTicket
+
+        }
+        var allRoom = ""
+        socket.emit('cpupdate')
+        socket.on('cpupdate', function (room) {
+            room = JSON.parse(room)
+            allRoom = room
+            permChangeFunc(room)
+            responsesFunc(room)
+            helpTicketsFunc(room)
+        })
     </script>
     <%- include('../partials/footer_content') %>
