@@ -659,6 +659,9 @@ io.sockets.on('connection', function (socket) {
         console.log("Working");
         socket.join(className);
     })
+    socket.on('cpupdate', function() {
+        io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]))
+       })
     socket.on('startQuiz', function (quizData, points) {       
         questions = []
         let splitted = quizData.split('\n')
