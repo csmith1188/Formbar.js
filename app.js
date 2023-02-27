@@ -46,7 +46,6 @@ var cD = {
     noClass: { students: {} }
 }
 
-var classNames = []
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -66,23 +65,36 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
     // Needs the name of the class you want to create
-    constructor(className) {
+    constructor(className, key) {
         this.className = className;
         this.students = {};
         this.pollStatus = false;
         this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
-        this.key = '';
+        this.key = key;
     }
 }
+//allows quizzes to be made
+class Quiz{
+    constructor(numOfQuestions, maxScore){
+        this.questions = []
+        this.totalScore = maxScore
+        this.numOfQuestions = numOfQuestions
+        this.pointsPerQuestion = this.totalScore/numOfQuestions
+    }
+}
+//object for the quizzes to be pushed to
+let quizObj = {}
+
 
 //Permssion level needed to access each page
 pagePermissions = {
     controlpanel: 0,
     chat: 2,
     poll: 2,
-    virtualbar: 2
+    virtualbar: 2,
+    makeQuiz: 0
 }
 
 
@@ -159,16 +171,16 @@ function permCheck(req, res, next) {
 }
 
 
-function joinClass(className, userName, code) {
+function joinClass(userName, code) {
     return new Promise((resolve, reject) => {
         // Find the id of the class from the database
-        db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
+        db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
             if (err) {
                 console.log(err);
                 res.send('Something went wrong')
             }
             // Check to make sure there was a class with that name
-            if (id && cD[className].key == code) {
+            if (id && cD[code].key == code) {
                 // Find the id of the user who is trying to join the class
                 db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
                     if (err) {
@@ -185,7 +197,7 @@ function joinClass(className, userName, code) {
                             // Remove teacher from old class
                             delete cD.noClass.students[userName]
                             // Add the student to the newly created class
-                            cD[className].students[userName] = user
+                            cD[code].students[userName] = user
                             console.log('User added to class');
                             resolve(true);
                         })
@@ -261,69 +273,50 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 app.post('/createclass', isLoggedIn, (req, res) => {
     let submittionType = req.body.submittionType
     let className = req.body.name.toLowerCase();
+    function makeClass(key){
+                // Get the teachers session data ready to transport into new class
+                var user = cD.noClass.students[req.session.user]
+                // Remove teacher from old class
+                delete cD.noClass.students[req.session.user]
+                // Add class into the session data
+                cD[key] = new Classroom(className, key);
+                // Add the teacher to the newly created class
+                cD[key].students[req.session.user] = user
+                req.session.class = key;
+                
+                res.redirect('/home')
+    }
     // Checks if teacher is creating a new class or joining an old class
+    //generates a 4 character key
+    //this is used for students who want to enter a class
     if (submittionType == 'create') {
+        let key = '' 
+        for(let i = 0; i<4; i++){
+            let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+            let letter = keygen[Math.floor(Math.random()*keygen.length)]
+            key += letter
+        }
         // Add classroom to the database
-        db.run(`INSERT INTO classroom(name, owner) VALUES(?, ?)`,
-            [className, req.session.user], (err) => {
+        db.run(`INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)`,
+            [className, req.session.user, key], (err) => {
                 if (err) {
                     console.log(err);
                 }
             })
-    }
-
-    // Get the teachers session data ready to transport into new class
-    var user = cD.noClass.students[req.session.user]
-    // Remove teacher from old class
-    delete cD.noClass.students[req.session.user]
-    // Add class into the session data
-    cD[className] = new Classroom(className);
-    // Add the teacher to the newly created class
-    cD[className].students[req.session.user] = user
-    req.session.class = className;
-    classNames.push(className)
-    //generates a 4 character key
-    //this is used for students who want to enter a class
-    let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-    for(let i = 0; i<4; i++){
-        let letter = keygen[Math.floor(Math.random()*keygen.length)]
-        cD[className].key += letter
+            makeClass(key)
+    } else {
+        db.get(`SELECT key FROM classroom WHERE name=?`, [className], (err, classCode) => {
+            if (err) {
+                console.log(err);
+            }
+           console.log(classCode.key);
+           makeClass(classCode.key)
+        })
     }
 
 
-    res.redirect('/home')
 })
 
-//chat
-// This is the chat get endpoint, it gets the chat and allows it to be used
-// It also sets the color and font for the chat, which will be used by students to participate in the lesson
-// It also allows students to talk amongst one another, while the teacher can see messages
-// It also allows for the use of socket.io, and makes good use of them
-app.get('/chat', permCheck, (req, res) => {
-    res.render('pages/chat', {
-        title: 'Formbar Chat',
-        color: '"dark blue"',
-        io: io
-    })
-
-})
-//
-//
-//
-//
-
-
-// This is the socket.io, it allows for the connection to the server
-// It allows for the chat messages to be actually sent to the chat
-// It is what the chat uses to emit messages to the server, this allows for the database to record whatever is put in
-// This could be useful to the teacher in case students say anything bad or do somehing that can get them banned
-io.sockets.on('connection', function (socket) {
-    console.log('a user connected');
-    socket.on('chat_message', function (message) {
-        io.emit('chat_message', message);
-    });
-
-});
 // D
 // Clears the database, this deletes the database
 // This will allow for the server to be reset so new things can be tested
@@ -515,8 +508,38 @@ app.post('/poll', (req, res) =>{
 
 
 // Q
+//create a quiz for students to take
+app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/makequiz')
+})
+
+app.get('/quiz', (req, res) => {
+
+    res.render('pages/quiz', {
+        quiz: JSON.stringify(quizObj)
+    })
+})
+
 
 // R
+
+//quiz results page
+app.post('/results', (req, res) => {
+    let results = req.body.question
+    let totalScore = 0
+   for (let i = 0; i < quizObj.questions.length; i++) {
+        if (results[i] == quizObj.questions[i][1] ){
+            totalScore += quizObj.pointsPerQuestion
+        } else {
+            continue;
+        }
+   }
+    res.render('pages/results', {
+        totalScore: totalScore,
+        maxScore: quizObj.totalScore
+    })
+})
+
 
 // S
 
@@ -525,19 +548,17 @@ app.post('/poll', (req, res) =>{
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
-        color: '"dark blue"',
-        classNames: classNames
+        color: '"dark blue"'
     })
 })
 
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, async (req, res) => {
-    let className = req.body.name.toLowerCase();
     let code =  req.body.key.toLowerCase();
-    let checkComplete = await joinClass(className, req.session.user, code)
+    let checkComplete = await joinClass(req.session.user, code)
     if (checkComplete) {
-        req.session.class = className;
+        req.session.class = code;
         res.redirect('/home')
     } else {
         res.send('No Open Class with that Name')
@@ -616,10 +637,6 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollStatus = false
     });
-
-    socket.on('chat_message', function (message) {
-        io.emit('chat_message', message);
-    });
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
         io.emit('reload')
@@ -644,6 +661,16 @@ io.sockets.on('connection', function (socket) {
     })
     socket.on('cpupdate', function() {
         io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]))
+       })
+    socket.on('startQuiz', function (quizData, points) {       
+        questions = []
+        let splitted = quizData.split('\n')
+        splitted.forEach(element => {
+            questions.push(element.split(', '))
+        });
+        quiz = new Quiz(questions.length, points)
+        quiz.questions = questions
+        quizObj = quiz
     })
 });
 
