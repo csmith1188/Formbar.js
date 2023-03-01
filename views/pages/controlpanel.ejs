@@ -276,6 +276,7 @@
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value);
+            socket.emit('cpupdate')
         }
 
         function permChangeFunc(room) {
