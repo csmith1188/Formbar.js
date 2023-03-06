@@ -41,7 +41,13 @@
                 <input type="checkbox" id="resTextBox">
                 <label for="pollBox">Prompt for the poll?</label>
                 <input type="text" id="pollBox">
+                <br>
+                <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()">
+                <label for="changeNames">Change The Names of The Answers?</label>
                 <input type="button" value="Start Poll" onclick="startPollFunc()">
+                <br>
+            </form>
+            <form id="pollAnsForm">
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
             <br>
@@ -88,8 +94,8 @@
         var permSort = document.getElementById('permSort')
         var permSortLabel = document.getElementById('permSortLabel')
         var helpFilter = document.getElementById('helpFilter')
-
-
+        var pollAnsForm = document.getElementById('pollAnsForm')
+    
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid);
             socket.emit('cpupdate')
@@ -135,14 +141,31 @@
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
-            console.log('Test');
+            var pollAnsNames = document.getElementsByName('pollAnsName')
+            var pollAnsValues = []
+            for (let i = 0; i < pollAnsNames.length; i++) {
+                pollAnsValues.push(pollAnsNames[i].value)  
+            }
+           pollAnsForm.style.display = 'none'
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
             permChanges.style.display = 'none'
             responses.style.display = 'block'
             filterBoxes.style.display = 'block'
-            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value);
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues);
             socket.emit('reload'); // Reloads the users page
+        }
+
+        function namePollFunc(){
+            pollAnsForm.style.display = 'block'
+            pollAnsForm.innerHTML = ''
+                for (let i = 0; i < resNumber.value; i++) {
+                    pollAnsForm.innerHTML += `<input type="text" name="pollAnsName" id="pollNames" placeholder="answer${i+1}">`
+                    
+                }
+
+
+
         }
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
