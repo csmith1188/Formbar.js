@@ -621,13 +621,17 @@ io.sockets.on('connection', function (socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
-            letterString = "abcdefghijklmnopqrstuvwxyz"
-            cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
-
+            console.log(answerNames);
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
