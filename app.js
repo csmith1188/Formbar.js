@@ -57,6 +57,7 @@ class Student {
         this.pollRes = '';
         this.pollTextRes = '';
         this.help = '';
+        this.quizScore = '';
     }
 }
 
@@ -515,9 +516,31 @@ app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/quiz', (req, res) => {
 
-    res.render('pages/quiz', {
-        quiz: JSON.stringify(quizObj)
-    })
+
+    if(req.query.question == 'random'){
+        let random = Math.floor(Math.random()*quizObj.questions.length)
+        res.render('pages/queryquiz', {
+            quiz: JSON.stringify(quizObj.questions[random])
+        })
+
+    } else if (isNaN(req.query.question) ==  false){
+        if(quizObj.questions[req.query.question] != undefined){
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(quizObj.questions[req.query.question])
+            })
+
+        } else {
+            res.send('error')
+        }
+
+    }else if (req.query.question == undefined){
+        res.render('pages/quiz', {
+            quiz: JSON.stringify(quizObj)
+        })
+
+    } else {
+
+    }
 })
 
 
@@ -534,8 +557,10 @@ app.post('/results', (req, res) => {
             continue;
         }
    }
+   cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + quizObj.totalScore
+
     res.render('pages/results', {
-        totalScore: totalScore,
+        totalScore: Math.floor(totalScore),
         maxScore: quizObj.totalScore
     })
 })
