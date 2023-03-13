@@ -95,7 +95,8 @@ pagePermissions = {
     chat: 2,
     poll: 2,
     virtualbar: 2,
-    makeQuiz: 0
+    makeQuiz: 0,
+    bgm: 2
 }
 
 
@@ -223,7 +224,11 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 
 // B
-
+app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/bgm', {
+        title: "Background Music",
+    })
+})
 // C
 
 
@@ -398,9 +403,9 @@ app.post('/login', async (req, res) => {
                     cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
-                    if (req.body.className) {
-                        req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
+                    if (req.body.classKey) {
+                        req.session.class = req.body.classKey;
+                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
@@ -700,6 +705,18 @@ io.sockets.on('connection', function (socket) {
         quiz = new Quiz(questions.length, points)
         quiz.questions = questions
         quizObj = quiz
+    })
+    socket.on('bgmLoad', function(bgmFiles) {
+        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
+    })
+    socket.on('bgmGet', function() {
+        io.to(cD[socket.request.session.class].className).emit('bgmGet')
+    })
+    socket.on('bgmPlay', function(music) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
+    })
+    socket.on('bgmPause', function(stop) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
     })
 });
 
