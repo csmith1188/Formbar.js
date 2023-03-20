@@ -57,6 +57,7 @@ class Student {
         this.pollRes = '';
         this.pollTextRes = '';
         this.help = '';
+        this.quizScore = '';
     }
 }
 
@@ -94,7 +95,8 @@ pagePermissions = {
     chat: 2,
     poll: 2,
     virtualbar: 2,
-    makeQuiz: 0
+    makeQuiz: 0,
+    bgm: 2
 }
 
 
@@ -222,7 +224,11 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 
 // B
-
+app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/bgm', {
+        title: "Background Music",
+    })
+})
 // C
 
 
@@ -397,9 +403,9 @@ app.post('/login', async (req, res) => {
                     cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
-                    if (req.body.className) {
-                        req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
+                    if (req.body.classKey) {
+                        req.session.class = req.body.classKey;
+                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
@@ -515,9 +521,31 @@ app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/quiz', (req, res) => {
 
-    res.render('pages/quiz', {
-        quiz: JSON.stringify(quizObj)
-    })
+
+    if(req.query.question == 'random'){
+        let random = Math.floor(Math.random()*quizObj.questions.length)
+        res.render('pages/queryquiz', {
+            quiz: JSON.stringify(quizObj.questions[random])
+        })
+
+    } else if (isNaN(req.query.question) ==  false){
+        if(quizObj.questions[req.query.question] != undefined){
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(quizObj.questions[req.query.question])
+            })
+
+        } else {
+            res.send('error')
+        }
+
+    }else if (req.query.question == undefined){
+        res.render('pages/quiz', {
+            quiz: JSON.stringify(quizObj)
+        })
+
+    } else {
+
+    }
 })
 
 
@@ -534,8 +562,10 @@ app.post('/results', (req, res) => {
             continue;
         }
    }
+   cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + quizObj.totalScore
+
     res.render('pages/results', {
-        totalScore: totalScore,
+        totalScore: Math.floor(totalScore),
         maxScore: quizObj.totalScore
     })
 })
@@ -621,13 +651,17 @@ io.sockets.on('connection', function (socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
-            letterString = "abcdefghijklmnopqrstuvwxyz"
-            cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
-
+            console.log(answerNames);
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
@@ -671,6 +705,18 @@ io.sockets.on('connection', function (socket) {
         quiz = new Quiz(questions.length, points)
         quiz.questions = questions
         quizObj = quiz
+    })
+    socket.on('bgmLoad', function(bgmFiles) {
+        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
+    })
+    socket.on('bgmGet', function() {
+        io.to(cD[socket.request.session.class].className).emit('bgmGet')
+    })
+    socket.on('bgmPlay', function(music) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
+    })
+    socket.on('bgmPause', function(stop) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
     })
 });
 
