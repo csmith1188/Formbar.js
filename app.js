@@ -74,6 +74,7 @@ class Classroom {
         this.posTextRes = false;
         this.pollPrompt = '';
         this.key = key;
+        this.lesson = {}
     }
 }
 //allows quizzes to be made
@@ -88,6 +89,13 @@ class Quiz{
 //object for the quizzes to be pushed to
 let quizObj = {}
 
+//allows lessons to be made
+class Lesson{
+    constructor(date, content){
+      this.date = date
+      this.content = content  
+    }
+}
 
 //Permssion level needed to access each page
 pagePermissions = {
@@ -365,6 +373,17 @@ app.get('/help', isAuthenticated, (req, res) => {
 // K
 
 // L
+
+app.get('/lesson', (req, res) => {
+    if(cD[req.session.class].lesson.content != undefined){
+        res.render('pages/lesson', {
+            lesson: cD[req.session.class].lesson
+        })
+    } else {
+        res.send('No Active Lesson')
+    }
+});
+
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
@@ -733,6 +752,19 @@ io.sockets.on('connection', function (socket) {
     })
     socket.on('sfxPlay', function(music) {
         io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    socket.on('lessonStart', function(lessonObj) {
+        let content = []
+        let splitted = lessonObj.split('\n')
+        splitted.forEach(element => {
+            content.push(element.split(', '))
+        });
+    
+        let dateConfig = new Date()
+        
+        let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+     let lesson = new Lesson(date, content)
+        cD[socket.request.session.class].lesson = lesson
+        console.log( cD[socket.request.session.class].lesson.content);
     })
 });
 
