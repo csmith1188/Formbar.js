@@ -57,6 +57,7 @@ class Student {
         this.pollRes = '';
         this.pollTextRes = '';
         this.help = '';
+        this.quizScore = '';
     }
 }
 
@@ -520,9 +521,31 @@ app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/quiz', (req, res) => {
 
-    res.render('pages/quiz', {
-        quiz: JSON.stringify(quizObj)
-    })
+
+    if(req.query.question == 'random'){
+        let random = Math.floor(Math.random()*quizObj.questions.length)
+        res.render('pages/queryquiz', {
+            quiz: JSON.stringify(quizObj.questions[random])
+        })
+
+    } else if (isNaN(req.query.question) ==  false){
+        if(quizObj.questions[req.query.question] != undefined){
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(quizObj.questions[req.query.question])
+            })
+
+        } else {
+            res.send('error')
+        }
+
+    }else if (req.query.question == undefined){
+        res.render('pages/quiz', {
+            quiz: JSON.stringify(quizObj)
+        })
+
+    } else {
+
+    }
 })
 
 
@@ -539,8 +562,10 @@ app.post('/results', (req, res) => {
             continue;
         }
    }
+   cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + quizObj.totalScore
+
     res.render('pages/results', {
-        totalScore: totalScore,
+        totalScore: Math.floor(totalScore),
         maxScore: quizObj.totalScore
     })
 })
@@ -626,13 +651,17 @@ io.sockets.on('connection', function (socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
-            letterString = "abcdefghijklmnopqrstuvwxyz"
-            cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
-
+            console.log(answerNames);
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
