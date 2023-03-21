@@ -7,6 +7,7 @@ import math
 import pygame
 import bgm
 import ir
+import sfx
 
 
 
@@ -15,6 +16,7 @@ MAXPIX = 12
 pixels = neopixel.NeoPixel(board.D21, MAXPIX)
 
 bgm.updateFiles()
+sfx.updateFiles()
 pygame.init()
 
 # Allows our requests to keep session data
@@ -205,6 +207,8 @@ def vbData(data):
     changeLights(pollData, totalStuds)
 
 stop = "Pause"
+volume = 1.0
+sfxPlaying = "Not Playing"
 
 @sio.on('bgmGet')
 def bgmGet():
@@ -220,7 +224,7 @@ def bgmPlay(file):
     nowPlaying = file
     global stop
     stop = "Play"
-    pygame.mixer.music.set_volume(1.0)
+    pygame.mixer.music.set_volume(volume)
     pygame.mixer.music.play(loops=-1)
 
 @sio.on('bgmPause')
@@ -231,6 +235,16 @@ def bgmPause(play):
         pygame.mixer.music.pause()
     elif play == 'Play':
         pygame.mixer.music.unpause()
+
+@sio.on('sfxGet')
+def bgmGet():
+    print("SFX Get")
+    sio.emit('sfxLoad', {'files': sfx.sound, "playing": sfxPlaying})
+
+@sio.on('sfxPlay')
+def sfxPlay(file):
+    pygame.mixer.Sound(sfx.sound[file]).play()
+
 # Allows program to stay open while waiting for websocket data to be sent
 task = sio.start_background_task(my_background_task)
 
