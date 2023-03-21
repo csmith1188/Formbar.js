@@ -13,6 +13,7 @@
             <button id="permissions" onclick="toPermissions()">Permissions</button>
             <button id="polls" onclick="toPolls()">Polls</button>
             <button id="help" onclick="toHelp()">Help Tickets</button>
+            <button id="lesson" onclick="toLesson()">Make A Lesson</button>
         </header>
 
         <div id="permChanges">
@@ -68,6 +69,13 @@
         <div id="helpTickets">
 
         </div>
+        <div id="lessonMaker">
+            <form>
+                <textarea id="learningObj" cols="60" rows="30" placeholder="Lesson Content"></textarea>
+                <button type="button" onclick="makeLesson()">Make Lesson</button>
+            </form>
+
+        </div>
     </body>
 
     </html>
@@ -95,6 +103,7 @@
         var permSortLabel = document.getElementById('permSortLabel')
         var helpFilter = document.getElementById('helpFilter')
         var pollAnsForm = document.getElementById('pollAnsForm')
+        var lessonMaker = document.getElementById('lessonMaker')
     
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid);
@@ -107,17 +116,20 @@
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             helpTickets.style.display = 'none'
+            lessonMaker.style.display = 'none'
 
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
                 responses.style.display = 'block'
                 filterBoxes.style.display = 'block'
+                lessonMaker.style.display = 'none'
             } else {
                 startPollForm.style.display = 'block'
                 endPoll.style.display = 'none'
                 responses.style.display = 'none'
                 filterBoxes.style.display = 'none'
+                lessonMaker.style.display = 'none'
             }
         }
         // Changes to the create a poll section of the page
@@ -125,18 +137,28 @@
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
             helpTickets.style.display = 'none'
+            lessonMaker.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
             helpTickets.style.display = 'none'
+            lessonMaker.style.display = 'none'
         }
 
         function toHelp() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             helpTickets.style.display = 'block'
+            lessonMaker.style.display = 'none'
+        }
+
+        function toLesson() {
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            helpTickets.style.display = 'none'
+            lessonMaker.style.display = 'block'
         }
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
@@ -386,6 +408,14 @@
             helpTickets.innerHTML += newHelpTicket
 
         }
+
+        function makeLesson(){
+            let learningObj = document.getElementById('learningObj')
+            let dueAssigns = document.getElementById('dueAssigns')
+            socket.emit('lessonStart', learningObj.value);
+            alert('Lesson Created')
+        }
+
         var allRoom = ""
         socket.emit('cpupdate')
         socket.on('cpupdate', function (room) {
