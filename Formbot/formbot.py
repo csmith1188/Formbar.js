@@ -26,6 +26,10 @@ sio = socketio.Client(http_session=session)
 
 global nowPlaying
 nowPlaying = "Not Playing"
+stop = "Pause"
+global volume
+volume = 1.0
+sfxPlaying = "Not Playing"
 
 # Connects us to websockets
 @sio.event
@@ -176,9 +180,15 @@ def my_background_task():
                 elif ir.ButtonsNames[button] == 'eq':
                     pass
                 elif ir.ButtonsNames[button] == 'vol_up':
-                    pass
+                    global volume
+                    volume = volume + 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
                 elif ir.ButtonsNames[button] == 'vol_down':
-                    pass
+                    
+                    volume = volume - 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
                 elif ir.ButtonsNames[button] == 'up':
                     pass
                 elif ir.ButtonsNames[button] == 'down':
@@ -206,9 +216,7 @@ def vbData(data):
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
-stop = "Pause"
-volume = 1.0
-sfxPlaying = "Not Playing"
+
 
 @sio.on('bgmGet')
 def bgmGet():
@@ -243,6 +251,7 @@ def bgmGet():
 
 @sio.on('sfxPlay')
 def sfxPlay(file):
+    sfxPlaying = file
     pygame.mixer.Sound(sfx.sound[file]).play()
 
 # Allows program to stay open while waiting for websocket data to be sent
