@@ -373,14 +373,14 @@ app.get('/help', isAuthenticated, (req, res) => {
 
 // L
 
-app.get('/lesson', (req, res) => {
+app.get('/lesson', isAuthenticated, (req, res) => {
         res.render('pages/lesson', {
             lesson: cD[req.session.class].lesson
         })
   
 });
 
-app.get('/previousLessons', (req, res) => {
+app.get('/previousLessons', isAuthenticated, (req, res) => {
     db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
 
 if(err){
@@ -557,7 +557,7 @@ app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/makequiz')
 })
 
-app.get('/quiz', (req, res) => {
+app.get('/quiz', isAuthenticated, (req, res) => {
 
 
     if(req.query.question == 'random'){
