@@ -374,15 +374,34 @@ app.get('/help', isAuthenticated, (req, res) => {
 // L
 
 app.get('/lesson', (req, res) => {
-    if(cD[req.session.class].lesson.content != undefined){
         res.render('pages/lesson', {
             lesson: cD[req.session.class].lesson
         })
-    } else {
-        res.send('No Active Lesson')
-    }
+  
 });
 
+app.get('/previousLessons', (req, res) => {
+    db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
+
+if(err){
+    console.log(err)
+} else if(rows){
+    res.render('pages/previousLesson', {
+        rows: rows
+    })
+
+}
+
+     })
+});
+
+app.post('/previousLessons', (req, res) => {
+    let lesson = JSON.parse(req.body.data)
+    console.log(lesson)
+    res.render('pages/lesson', {
+        lesson: lesson
+    })
+})
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
@@ -554,7 +573,7 @@ app.get('/quiz', (req, res) => {
             })
 
         } else {
-            res.send('error')
+            res.send('Please enter proper data')
         }
 
     }else if (req.query.question == undefined){
@@ -749,7 +768,16 @@ io.sockets.on('connection', function (socket) {
         let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
      let lesson = new Lesson(date, content)
         cD[socket.request.session.class].lesson = lesson
-        console.log( cD[socket.request.session.class].lesson.content);
+       
+
+        db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+        [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+            if (err) {
+                console.log(err);
+            }
+            console.log('Saved Lesson To Database');
+        })
+
     })
 });
 
