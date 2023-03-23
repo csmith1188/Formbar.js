@@ -104,7 +104,7 @@
         var helpFilter = document.getElementById('helpFilter')
         var pollAnsForm = document.getElementById('pollAnsForm')
         var lessonMaker = document.getElementById('lessonMaker')
-    
+
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid);
             socket.emit('cpupdate')
@@ -166,9 +166,9 @@
             var pollAnsNames = document.getElementsByName('pollAnsName')
             var pollAnsValues = []
             for (let i = 0; i < pollAnsNames.length; i++) {
-                pollAnsValues.push(pollAnsNames[i].value)  
+                pollAnsValues.push(pollAnsNames[i].value)
             }
-           pollAnsForm.style.display = 'none'
+            pollAnsForm.style.display = 'none'
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
             permChanges.style.display = 'none'
@@ -178,13 +178,15 @@
             socket.emit('reload'); // Reloads the users page
         }
 
-        function namePollFunc(){
+
+
+        function namePollFunc() {
             pollAnsForm.style.display = 'block'
             pollAnsForm.innerHTML = ''
-                for (let i = 0; i < resNumber.value; i++) {
-                    pollAnsForm.innerHTML += `<input type="text" name="pollAnsName" id="pollNames" placeholder="answer${i+1}">`
-                    
-                }
+            for (let i = 0; i < resNumber.value; i++) {
+                pollAnsForm.innerHTML += `<input type="text" name="pollAnsName" id="pollNames" placeholder="answer${i + 1}">`
+
+            }
 
 
 
@@ -375,6 +377,19 @@
             if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
                 filterResponses()
             } else {
+                if (room.pollStatus) {
+                    startPollForm.style.display = 'none'
+                    endPoll.style.display = 'block'
+                    responses.style.display = 'block'
+                    filterBoxes.style.display = 'block'
+                    lessonMaker.style.display = 'none'
+                } else {
+                    startPollForm.style.display = 'block'
+                    endPoll.style.display = 'none'
+                    responses.style.display = 'none'
+                    filterBoxes.style.display = 'none'
+                    lessonMaker.style.display = 'none'
+                }
                 responses.innerHTML = ''
                 responses.innerHTML += '<h2>Responses</h2>'
                 var newResponse = '';
@@ -409,7 +424,7 @@
 
         }
 
-        function makeLesson(){
+        function makeLesson() {
             let learningObj = document.getElementById('learningObj')
             let dueAssigns = document.getElementById('dueAssigns')
             socket.emit('lessonStart', learningObj.value);

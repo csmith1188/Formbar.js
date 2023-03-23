@@ -193,14 +193,45 @@ def my_background_task():
                     pass
                 elif ir.ButtonsNames[button] == 'down':
                     pass
+                elif ir.ButtonsNames[button] == '0':
+                    sio.emit('endPoll')
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '1':
                     pass
                 elif ir.ButtonsNames[button] == '2':
-                    pass
+                    print('2')
+                    sio.emit('botPollStart', 2)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '3':
-                    pass
+                    sio.emit('botPollStart', 3)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '4':
-                    pass
+                    sio.emit('botPollStart', 4)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '5':
+                    sio.emit('botPollStart', 5)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '6':
+                    sio.emit('botPollStart', 6)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '7':
+                    sio.emit('botPollStart', 7)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '8':
+                    sio.emit('botPollStart', 8)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '9':
+                    sio.emit('botPollStart', 9)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                     
 # Runs function from above
 sio.connect('http://192.168.10.12:420')
