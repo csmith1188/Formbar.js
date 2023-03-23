@@ -107,8 +107,8 @@ def changeLights(pollData, totalStuds):
                         pixNum += 1
                     pixels[pixNum] = (0, 0, 0)
                     pixNum += 1
-                    colNum += 1
                     totalAnswers += 1
+            colNum += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
         # Check if any students have not asnwered
@@ -126,6 +126,7 @@ def changeLights(pollData, totalStuds):
                 pixNum += 1
             # Moves to next color in list
             colNum += 1
+    pixels.show()
     return "Done"
 
 # Converts our created hex code to rgb colors to be used for the lights
