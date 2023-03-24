@@ -5,6 +5,10 @@ const ejs = require('ejs');
 const fs = require('fs');
 const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose();
+const excelToJson = require('convert-excel-to-json');
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
+const { log } = require('console');
 
 var app = express();
 const http = require('http').createServer(app);
@@ -75,6 +79,7 @@ class Classroom {
         this.pollPrompt = '';
         this.key = key;
         this.lesson = {}
+        this.activeLesson = false
     }
 }
 //allows quizzes to be made
@@ -257,7 +262,54 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         pollStatus: cD[req.session.class].pollStatus,
         key: cD[req.session.class].key.toUpperCase()
     })
+
 })
+
+
+app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+    const result = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: 'Steps',
+            columnToKey: {
+                A: 'index',
+                B: 'type',
+                C:'prompt',
+                D:'objective'
+            }
+        }]
+    });
+
+for (const key in result['Steps']) {
+   if(result['Steps'][key].type == 'Poll'){
+ console.log('Poll loaded');
+   } else if(result['Steps'][key].type == 'Quiz'){
+  let quizLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: result['Steps'][key].prompt,
+            columnToKey: {
+                A:'index',
+                B:'question',
+                C:'key',
+                D:'A',
+                E:'B' ,
+                F:'C' ,
+                G:'D'
+            }
+        }]
+    });
+
+    console.log(quizLoad);
+   }else if(result['Steps'][key].type == 'Lesson'){
+console.log('Lesson Loaded');
+   }
+}
+
+
+res.redirect('/controlpanel')
+
+});
 
 
 // Loads which classes the teacher is an owner of
