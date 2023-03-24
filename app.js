@@ -275,7 +275,8 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                 A: 'index',
                 B: 'type',
                 C:'prompt',
-                D:'objective'
+                D:'response',
+                E:'labels'
             }
         }]
     });
@@ -283,6 +284,9 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 for (const key in result['Steps']) {
    if(result['Steps'][key].type == 'Poll'){
  console.log('Poll loaded');
+ let splitLabel = result['Steps'][key].labels.split(' ,')
+ io.emit('startPoll', result['Steps'][key].response , false, result['Steps'][key].prompt, splitLabel);
+ console.log( cD[req.session.class].pollStatus);
    } else if(result['Steps'][key].type == 'Quiz'){
   let quizLoad = excelToJson({
         sourceFile: `${req.file.path}`,
