@@ -284,14 +284,29 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 for (const key in result['Steps']) {
    if(result['Steps'][key].type == 'Poll'){
  console.log('Poll loaded');
- let splitLabel = result['Steps'][key].labels.split(' ,')
- io.emit('startPoll', result['Steps'][key].response , false, result['Steps'][key].prompt, splitLabel);
- console.log( cD[req.session.class].pollStatus);
+ let answerNames = result['Steps'][key].labels.split(', ')
+
+ cD[req.session.class].pollStatus = true
+ // Creates an object for every answer possible the teacher is allowing
+ for (let i = 0; i < result['Steps'][key].response; i++) {
+     console.log(answerNames);
+     if(answerNames[i] == '' || answerNames[i] == null){
+         let letterString = "abcdefghijklmnopqrstuvwxyz"
+         cD[req.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+     } else{
+    cD[req.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+     }
+ }
+ cD[req.session.class].posTextRes = false
+ cD[req.session.class].pollPrompt = result['Steps'][key].prompt
+
+
    } else if(result['Steps'][key].type == 'Quiz'){
+    let nameQ = result['Steps'][key].prompt
   let quizLoad = excelToJson({
         sourceFile: `${req.file.path}`,
         sheets:[{
-            name: result['Steps'][key].prompt,
+            name: nameQ,
             columnToKey: {
                 A:'index',
                 B:'question',
@@ -303,10 +318,65 @@ for (const key in result['Steps']) {
             }
         }]
     });
+let questionList = []
+for (let i = 1; i < quizLoad[nameQ].length; i++) {
+    let questionMaker = []
 
-    console.log(quizLoad);
+        questionMaker.push(quizLoad[nameQ][i].question)
+        questionMaker.push(quizLoad[nameQ][i].key)
+        questionMaker.push(quizLoad[nameQ][i].A)
+        questionMaker.push(quizLoad[nameQ][i].B)
+        questionMaker.push(quizLoad[nameQ][i].C)
+        questionMaker.push(quizLoad[nameQ][i].D)
+        questionList.push(questionMaker)
+    
+}
+
+quiz = new Quiz(questionList.length, 100)
+quiz.questions = questionList
+quizObj = quiz
+
    }else if(result['Steps'][key].type == 'Lesson'){
-console.log('Lesson Loaded');
+nameL = result['Steps'][key].prompt
+    let lessonLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: nameL,
+            columnToKey: {
+                A:'header',
+                B:'data'
+            }
+        }]
+    });
+let lessonArr = []
+    for (let i = 1; i < lessonLoad[nameL].length; i++) {
+let lessonMaker = [lessonLoad[nameL][i].header]
+
+let lessonContent = lessonLoad[nameL][i].data.split(', ')
+console.log(lessonContent);
+for (let u = 0; u < lessonContent.length; u++) {
+   lessonMaker.push( lessonContent[u] )
+}
+            lessonArr.push(lessonMaker)
+    }
+
+    let dateConfig = new Date()
+    
+    let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+    let lesson = new Lesson(date, lessonArr)
+    cD[req.session.class].lesson = lesson
+   
+    console.log(lesson);
+
+    db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+    [cD[req.session.class].className, JSON.stringify(cD[req.session.class].lesson), cD[req.session.class].lesson.date], (err) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log('Saved Lesson To Database');
+    })
+
+
    }
 }
 

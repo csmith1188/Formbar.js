@@ -1,4 +1,4 @@
 node_modules/
 database/database.db
 .vscode/settings.json
-uploads/
+uploads\
