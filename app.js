@@ -109,7 +109,8 @@ pagePermissions = {
     poll: 2,
     virtualbar: 2,
     makeQuiz: 0,
-    bgm: 2
+    bgm: 2,
+    sfx: 2
 }
 
 
@@ -759,6 +760,12 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
     }
 });
 
+app.get('/sfx', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/sfx', {
+        title: "SFX",
+    })
+})
+
 // T
 
 // U
@@ -833,6 +840,7 @@ io.sockets.on('connection', function (socket) {
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
         cD[socket.request.session.class].posPollResObj = {}
+        cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
     });
     // Reloads any page with the reload function on. No arguments
@@ -881,6 +889,30 @@ io.sockets.on('connection', function (socket) {
     })
     socket.on('bgmPause', function(stop) {
         io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
+    })
+    socket.on('sfxGet', function() {
+        io.to(cD[socket.request.session.class].className).emit('sfxGet')
+    })
+    socket.on('sfxLoad', function(sfxFiles) {
+        io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
+    })
+    socket.on('sfxPlay', function(music) {
+        io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    })
+    socket.on('botPollStart', function(answerNumber) {
+        answerNames = []
+        cD[socket.request.session.class].pollStatus = true
+        // Creates an object for every answer possible the teacher is allowing
+        for (let i = 0; i < answerNumber; i++) {
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
+        }
+        cD[socket.request.session.class].posTextRes = false
+        cD[socket.request.session.class].pollPrompt = "Quick Poll"
     })
     socket.on('lessonStart', function(lessonObj) {
         let content = []
