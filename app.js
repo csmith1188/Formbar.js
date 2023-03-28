@@ -5,6 +5,10 @@ const ejs = require('ejs');
 const fs = require('fs');
 const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose();
+const excelToJson = require('convert-excel-to-json');
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
+const { log } = require('console');
 
 var app = express();
 const http = require('http').createServer(app);
@@ -75,6 +79,7 @@ class Classroom {
         this.pollPrompt = '';
         this.key = key;
         this.lesson = {}
+        this.activeLesson = false
     }
 }
 //allows quizzes to be made
@@ -258,7 +263,128 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         pollStatus: cD[req.session.class].pollStatus,
         key: cD[req.session.class].key.toUpperCase()
     })
+
 })
+
+
+app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+    const result = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: 'Steps',
+            columnToKey: {
+                A: 'index',
+                B: 'type',
+                C:'prompt',
+                D:'response',
+                E:'labels'
+            }
+        }]
+    });
+
+for (const key in result['Steps']) {
+   if(result['Steps'][key].type == 'Poll'){
+ console.log('Poll loaded');
+ let answerNames = result['Steps'][key].labels.split(', ')
+
+ cD[req.session.class].pollStatus = true
+ // Creates an object for every answer possible the teacher is allowing
+ for (let i = 0; i < result['Steps'][key].response; i++) {
+     console.log(answerNames);
+     if(answerNames[i] == '' || answerNames[i] == null){
+         let letterString = "abcdefghijklmnopqrstuvwxyz"
+         cD[req.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+     } else{
+    cD[req.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+     }
+ }
+ cD[req.session.class].posTextRes = false
+ cD[req.session.class].pollPrompt = result['Steps'][key].prompt
+
+
+   } else if(result['Steps'][key].type == 'Quiz'){
+    let nameQ = result['Steps'][key].prompt
+  let quizLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: nameQ,
+            columnToKey: {
+                A:'index',
+                B:'question',
+                C:'key',
+                D:'A',
+                E:'B' ,
+                F:'C' ,
+                G:'D'
+            }
+        }]
+    });
+let questionList = []
+for (let i = 1; i < quizLoad[nameQ].length; i++) {
+    let questionMaker = []
+
+        questionMaker.push(quizLoad[nameQ][i].question)
+        questionMaker.push(quizLoad[nameQ][i].key)
+        questionMaker.push(quizLoad[nameQ][i].A)
+        questionMaker.push(quizLoad[nameQ][i].B)
+        questionMaker.push(quizLoad[nameQ][i].C)
+        questionMaker.push(quizLoad[nameQ][i].D)
+        questionList.push(questionMaker)
+    
+}
+
+quiz = new Quiz(questionList.length, 100)
+quiz.questions = questionList
+quizObj = quiz
+
+   }else if(result['Steps'][key].type == 'Lesson'){
+nameL = result['Steps'][key].prompt
+    let lessonLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: nameL,
+            columnToKey: {
+                A:'header',
+                B:'data'
+            }
+        }]
+    });
+let lessonArr = []
+    for (let i = 1; i < lessonLoad[nameL].length; i++) {
+let lessonMaker = [lessonLoad[nameL][i].header]
+
+let lessonContent = lessonLoad[nameL][i].data.split(', ')
+console.log(lessonContent);
+for (let u = 0; u < lessonContent.length; u++) {
+   lessonMaker.push( lessonContent[u] )
+}
+            lessonArr.push(lessonMaker)
+    }
+
+    let dateConfig = new Date()
+    
+    let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+    let lesson = new Lesson(date, lessonArr)
+    cD[req.session.class].lesson = lesson
+   
+    console.log(lesson);
+
+    db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+    [cD[req.session.class].className, JSON.stringify(cD[req.session.class].lesson), cD[req.session.class].lesson.date], (err) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log('Saved Lesson To Database');
+    })
+
+
+   }
+}
+
+
+res.redirect('/controlpanel')
+
+});
 
 
 // Loads which classes the teacher is an owner of
@@ -374,16 +500,35 @@ app.get('/help', isAuthenticated, (req, res) => {
 
 // L
 
-app.get('/lesson', (req, res) => {
-    if(cD[req.session.class].lesson.content != undefined){
+app.get('/lesson', isAuthenticated, (req, res) => {
         res.render('pages/lesson', {
             lesson: cD[req.session.class].lesson
         })
-    } else {
-        res.send('No Active Lesson')
-    }
+  
 });
 
+app.get('/previousLessons', isAuthenticated, (req, res) => {
+    db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
+
+if(err){
+    console.log(err)
+} else if(rows){
+    res.render('pages/previousLesson', {
+        rows: rows
+    })
+
+}
+
+     })
+});
+
+app.post('/previousLessons', (req, res) => {
+    let lesson = JSON.parse(req.body.data)
+    console.log(lesson)
+    res.render('pages/lesson', {
+        lesson: lesson
+    })
+})
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
@@ -539,7 +684,7 @@ app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
     res.render('pages/makequiz')
 })
 
-app.get('/quiz', (req, res) => {
+app.get('/quiz', isAuthenticated, (req, res) => {
 
 
     if(req.query.question == 'random'){
@@ -555,7 +700,7 @@ app.get('/quiz', (req, res) => {
             })
 
         } else {
-            res.send('error')
+            res.send('Please enter proper data')
         }
 
     }else if (req.query.question == undefined){
@@ -781,7 +926,16 @@ io.sockets.on('connection', function (socket) {
         let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
      let lesson = new Lesson(date, content)
         cD[socket.request.session.class].lesson = lesson
-        console.log( cD[socket.request.session.class].lesson.content);
+       
+
+        db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+        [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+            if (err) {
+                console.log(err);
+            }
+            console.log('Saved Lesson To Database');
+        })
+
     })
 });
 

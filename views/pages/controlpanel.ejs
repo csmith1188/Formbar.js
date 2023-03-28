@@ -70,9 +70,9 @@
 
         </div>
         <div id="lessonMaker">
-            <form>
-                <textarea id="learningObj" cols="60" rows="30" placeholder="Lesson Content"></textarea>
-                <button type="button" onclick="makeLesson()">Make Lesson</button>
+            <form method="post" enctype="multipart/form-data">
+             <input name="spreadsheet" type="file">
+             <input type="submit">
             </form>
 
         </div>
@@ -423,6 +423,7 @@
             helpTickets.innerHTML += newHelpTicket
 
         }
+
 
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
