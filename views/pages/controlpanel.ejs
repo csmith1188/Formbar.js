@@ -181,21 +181,22 @@
 //makes the previous polls page
         function buildPreviousPolls(data){
             previousPolls.innerHTML = '' 
-            for (let i = 0; i < data.length; i++) {
+            for (let i = data.length - 1; i >= 0; i--) {
                 previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})">${data[i].date}</button>` + '</br>'
             }
 
         }
-        function displayPoll(index){
-            socket.emit('previousPollDisplay', index)
+        function displayPoll(data){
+            console.log(data);
+            socket.emit('previousPollDisplay', data)
         }
         socket.on('previousPollData', function(data){
-          previousPolls.innerHTML = data.prompt
+          previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
 
           for (let i = 0; i < data.names.length; i++) {
-             previousPolls.innerHTML += ' ' + data.names[i] + '</br>'
-              previousPolls.innerHTML += ' ' + data.letter[i] + '</br>'
-             previousPolls.innerHTML += ' ' + data.text[i] + '</br>'
+             previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
+              previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
+             previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
              
              
             }
@@ -478,7 +479,7 @@
         socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
             allRoom = room
-            buildPreviousPolls(pollHistory)
+            buildPreviousPolls(JSON.parse(pollHistory))
             permChangeFunc(room)
             responsesFunc(room)
             helpTicketsFunc(room)

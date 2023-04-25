@@ -9,8 +9,6 @@ const sqlite3 = require('sqlite3').verbose();
 const excelToJson = require('convert-excel-to-json');
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
-const { log } = require('console');
-const { json } = require('express');
 
 var app = express();
 const http = require('http').createServer(app);
@@ -898,8 +896,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('cpupdate', function() {
         db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => { 
             var pollHistory = rows
-            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), pollHistory)
-            console.log(pollHistory);
+            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
         })
         
        })
@@ -972,11 +969,19 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
-    socket.on('previousPollDisplay', function(index){
-        db.get(`SELECT data FROM poll_history WHERE id=?`, index, async (err, rows) => { 
-            io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(rows.data))
+    socket.on('previousPollDisplay', function(pollindex){
 
-    })
+        db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function(err, pollData) {
+            if (err) {
+             console.error(err);
+            } else {
+             io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
+            }
+           });
+
+
+            
+        
 })
 });
 
