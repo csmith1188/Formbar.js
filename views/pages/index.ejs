@@ -11,13 +11,19 @@
 <div style="text-align:center ;">
     <a href="/poll">Poll Submit</a>
     <br>
-    <a href="/chat">Chatroom</a>
-    <br>
     <a href="/controlpanel">Teacher Controls</a>
     <br>
     <a href="/virtualbar">Virtual Bar</a>
     <br>
     <a href="/help">Help Ticket Creation</a>
+    <br>
+    <a href="/quiz">Take a quiz</a>
+    <br>
+    <a href="/bgm">BGM</a>
+    <br>
+    <a href="/sfx">SFX</a>
+    <br>
+    <a href="/lesson">Lesson</a>
 </div>
 </body>
 </html>
@@ -26,5 +32,6 @@
 <script type="text/javascript">
     var socket = io();
     socket.emit('vbData')
+    socket.emit('cpupdate')
 </script>
 <%- include('../partials/footer_content') %>

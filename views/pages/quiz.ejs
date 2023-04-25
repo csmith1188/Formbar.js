@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body onload="load(<%= quiz %>)">
+    <form id="quizForm" method="post" action="/results">
+    </form>
+</body>
+<script>
+    function load(quiz) {
+        let correctAnswerIndex = []
+        let quizForm = document.getElementById('quizForm')
+        
+        for (let i = 0; i < quiz.questions.length; i++) {
+            quizForm.innerHTML += `</br><b>${quiz.questions[i][0]}</b>`
+            correctAnswerIndex.push(quiz.questions[i][1])
+            for (let u = 2; u < quiz.questions[i].length; u++) {
+                console.log(u - 1);
+                quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u-1}"> ${quiz.questions[i][u]}`
+            }
+        }
+        quizForm.innerHTML += `</br><button type="submit">Submit Answers</button>`
+        console.log(correctAnswerIndex);
+
+    }
+
+</script>
+
+</html>

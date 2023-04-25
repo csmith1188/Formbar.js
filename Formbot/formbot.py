@@ -4,15 +4,32 @@ import socketio
 import json
 import board, neopixel
 import math
+import pygame
+import bgm
+import ir
+import sfx
+
+
 
 MAXPIX = 12
 # Create a list of neopixels
 pixels = neopixel.NeoPixel(board.D21, MAXPIX)
 
+bgm.updateFiles()
+sfx.updateFiles()
+pygame.init()
+
 # Allows our requests to keep session data
 session = requests.Session()
 # Connects our wbesocket connections with our http requests
 sio = socketio.Client(http_session=session)
+
+global nowPlaying
+nowPlaying = "Not Playing"
+stop = "Pause"
+global volume
+volume = 1.0
+sfxPlaying = "Not Playing"
 
 # Connects us to websockets
 @sio.event
@@ -90,8 +107,8 @@ def changeLights(pollData, totalStuds):
                         pixNum += 1
                     pixels[pixNum] = (0, 0, 0)
                     pixNum += 1
-                    colNum += 1
                     totalAnswers += 1
+            colNum += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
         # Check if any students have not asnwered
@@ -109,6 +126,7 @@ def changeLights(pollData, totalStuds):
                 pixNum += 1
             # Moves to next color in list
             colNum += 1
+    pixels.show()
     return "Done"
 
 # Converts our created hex code to rgb colors to be used for the lights
@@ -123,7 +141,7 @@ def hex_to_rgb(hex):
 #Wait a minute before logging in.
 time.sleep(5)
 #Send a login POST request
-loginAttempt = session.post("http://192.168.10.12:420/login", {"username":"Formbot", "password":"bot", "loginType": "login", "userType":"bot", "className": "a1"})
+loginAttempt = session.post("http://192.168.10.12:420/login", {"username":"Formbot", "password":"bot", "loginType": "login", "userType":"bot", "classKey": "bwwu"})
 
 print(loginAttempt.json()['login'])
 #Check for successful login
@@ -138,6 +156,84 @@ if loginAttempt.json()['login']:
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
+
+def my_background_task():
+    # do some background work here!
+    while True:
+        ir.inData = ir.convertHex(ir.getBinary())
+        for button in range(len(ir.Buttons)):#Runs through every value in list
+            if hex(ir.Buttons[button]) == ir.inData: #Checks this against incomming
+                if ir.ButtonsNames[button] == 'power':
+                    print("power")
+                elif ir.ButtonsNames[button] == 'func':
+                    pass
+                elif ir.ButtonsNames[button] == 'repeat':
+                    pass
+                elif ir.ButtonsNames[button] == 'rewind':
+                    pygame.mixer.music.play(loops=-1)
+                elif ir.ButtonsNames[button] == 'play_pause':
+                    if (stop == "Pause"):
+                        sio.emit('bgmPause', "Play")
+                        sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": "Pause"})
+                    else:
+                        sio.emit('bgmPause', "Pause")
+                        sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": "Play"})
+                elif ir.ButtonsNames[button] == 'eq':
+                    pass
+                elif ir.ButtonsNames[button] == 'vol_up':
+                    global volume
+                    volume = volume + 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
+                elif ir.ButtonsNames[button] == 'vol_down':
+                    
+                    volume = volume - 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
+                elif ir.ButtonsNames[button] == 'up':
+                    pass
+                elif ir.ButtonsNames[button] == 'down':
+                    pass
+                elif ir.ButtonsNames[button] == '0':
+                    sio.emit('endPoll')
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '1':
+                    pass
+                elif ir.ButtonsNames[button] == '2':
+                    print('2')
+                    sio.emit('botPollStart', 2)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '3':
+                    sio.emit('botPollStart', 3)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '4':
+                    sio.emit('botPollStart', 4)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '5':
+                    sio.emit('botPollStart', 5)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '6':
+                    sio.emit('botPollStart', 6)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '7':
+                    sio.emit('botPollStart', 7)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '8':
+                    sio.emit('botPollStart', 8)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '9':
+                    sio.emit('botPollStart', 9)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                    
 # Runs function from above
 sio.connect('http://192.168.10.12:420')
 # Allows our bot to join the class room
@@ -151,7 +247,46 @@ def vbData(data):
     # Fills lightbar with white pixels
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
+
+
+
+@sio.on('bgmGet')
+def bgmGet():
+    print("Load")
+    print(nowPlaying)
+    print(stop)
+    sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
+    
+@sio.on('bgmPlay')
+def bgmPlay(file):
+    pygame.mixer.music.load(bgm.bgm[file])
+    global nowPlaying
+    nowPlaying = file
+    global stop
+    stop = "Play"
+    pygame.mixer.music.set_volume(volume)
+    pygame.mixer.music.play(loops=-1)
+
+@sio.on('bgmPause')
+def bgmPause(play):
+    global stop
+    stop = play
+    if play == 'Pause':
+        pygame.mixer.music.pause()
+    elif play == 'Play':
+        pygame.mixer.music.unpause()
+
+@sio.on('sfxGet')
+def bgmGet():
+    print("SFX Get")
+    sio.emit('sfxLoad', {'files': sfx.sound, "playing": sfxPlaying})
+
+@sio.on('sfxPlay')
+def sfxPlay(file):
+    sfxPlaying = file
+    pygame.mixer.Sound(sfx.sound[file]).play()
+
 # Allows program to stay open while waiting for websocket data to be sent
-sio.wait()
+task = sio.start_background_task(my_background_task)
 
 

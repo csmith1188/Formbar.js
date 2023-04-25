@@ -7,10 +7,12 @@ const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting 
 const sqlite3 = require('sqlite3').verbose();
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const excelToJson = require('convert-excel-to-json');
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
 
 // get config vars
 dotenv.config();
-
 // access config var
 // console.log(process.env.TOKEN_SECRET)
 
@@ -55,7 +57,6 @@ var cD = {
     noClass: { students: {} }
 }
 
-var classNames = []
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -67,6 +68,7 @@ class Student {
         this.pollRes = '';
         this.pollTextRes = '';
         this.help = '';
+        this.quizScore = '';
     }
 }
 
@@ -75,14 +77,35 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
     // Needs the name of the class you want to create
-    constructor(className) {
+    constructor(className, key) {
         this.className = className;
         this.students = {};
         this.pollStatus = false;
         this.posPollResObj = {};
         this.posTextRes = false;
         this.pollPrompt = '';
-        this.key = '';
+        this.key = key;
+        this.lesson = {}
+        this.activeLesson = false
+    }
+}
+//allows quizzes to be made
+class Quiz{
+    constructor(numOfQuestions, maxScore){
+        this.questions = []
+        this.totalScore = maxScore
+        this.numOfQuestions = numOfQuestions
+        this.pointsPerQuestion = this.totalScore/numOfQuestions
+    }
+}
+//object for the quizzes to be pushed to
+let quizObj = {}
+
+//allows lessons to be made
+class Lesson{
+    constructor(date, content){
+      this.date = date
+      this.content = content  
     }
 }
 
@@ -91,7 +114,10 @@ pagePermissions = {
     controlpanel: 0,
     chat: 2,
     poll: 2,
-    virtualbar: 2
+    virtualbar: 2,
+    makeQuiz: 0,
+    bgm: 2,
+    sfx: 2
 }
 
 
@@ -168,16 +194,16 @@ function permCheck(req, res, next) {
 }
 
 
-function joinClass(className, userName, code) {
+function joinClass(userName, code) {
     return new Promise((resolve, reject) => {
         // Find the id of the class from the database
-        db.get(`SELECT id FROM classroom WHERE name=?`, [className], (err, id) => {
+        db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
             if (err) {
                 console.log(err);
                 res.send('Something went wrong')
             }
             // Check to make sure there was a class with that name
-            if (id && cD[className].key == code) {
+            if (id && cD[code].key == code) {
                 // Find the id of the user who is trying to join the class
                 db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
                     if (err) {
@@ -194,7 +220,7 @@ function joinClass(className, userName, code) {
                             // Remove teacher from old class
                             delete cD.noClass.students[userName]
                             // Add the student to the newly created class
-                            cD[className].students[userName] = user
+                            cD[code].students[userName] = user
                             console.log('User added to class');
                             resolve(true);
                         })
@@ -224,7 +250,11 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 
 // B
-
+app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/bgm', {
+        title: "Background Music",
+    })
+})
 // C
 
 
@@ -245,7 +275,128 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         pollStatus: cD[req.session.class].pollStatus,
         key: cD[req.session.class].key.toUpperCase()
     })
+
 })
+
+
+app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+    const result = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: 'Steps',
+            columnToKey: {
+                A: 'index',
+                B: 'type',
+                C:'prompt',
+                D:'response',
+                E:'labels'
+            }
+        }]
+    });
+
+for (const key in result['Steps']) {
+   if(result['Steps'][key].type == 'Poll'){
+ console.log('Poll loaded');
+ let answerNames = result['Steps'][key].labels.split(', ')
+
+ cD[req.session.class].pollStatus = true
+ // Creates an object for every answer possible the teacher is allowing
+ for (let i = 0; i < result['Steps'][key].response; i++) {
+     console.log(answerNames);
+     if(answerNames[i] == '' || answerNames[i] == null){
+         let letterString = "abcdefghijklmnopqrstuvwxyz"
+         cD[req.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+     } else{
+    cD[req.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+     }
+ }
+ cD[req.session.class].posTextRes = false
+ cD[req.session.class].pollPrompt = result['Steps'][key].prompt
+
+
+   } else if(result['Steps'][key].type == 'Quiz'){
+    let nameQ = result['Steps'][key].prompt
+  let quizLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: nameQ,
+            columnToKey: {
+                A:'index',
+                B:'question',
+                C:'key',
+                D:'A',
+                E:'B' ,
+                F:'C' ,
+                G:'D'
+            }
+        }]
+    });
+let questionList = []
+for (let i = 1; i < quizLoad[nameQ].length; i++) {
+    let questionMaker = []
+
+        questionMaker.push(quizLoad[nameQ][i].question)
+        questionMaker.push(quizLoad[nameQ][i].key)
+        questionMaker.push(quizLoad[nameQ][i].A)
+        questionMaker.push(quizLoad[nameQ][i].B)
+        questionMaker.push(quizLoad[nameQ][i].C)
+        questionMaker.push(quizLoad[nameQ][i].D)
+        questionList.push(questionMaker)
+    
+}
+
+quiz = new Quiz(questionList.length, 100)
+quiz.questions = questionList
+quizObj = quiz
+
+   }else if(result['Steps'][key].type == 'Lesson'){
+nameL = result['Steps'][key].prompt
+    let lessonLoad = excelToJson({
+        sourceFile: `${req.file.path}`,
+        sheets:[{
+            name: nameL,
+            columnToKey: {
+                A:'header',
+                B:'data'
+            }
+        }]
+    });
+let lessonArr = []
+    for (let i = 1; i < lessonLoad[nameL].length; i++) {
+let lessonMaker = [lessonLoad[nameL][i].header]
+
+let lessonContent = lessonLoad[nameL][i].data.split(', ')
+console.log(lessonContent);
+for (let u = 0; u < lessonContent.length; u++) {
+   lessonMaker.push( lessonContent[u] )
+}
+            lessonArr.push(lessonMaker)
+    }
+
+    let dateConfig = new Date()
+    
+    let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+    let lesson = new Lesson(date, lessonArr)
+    cD[req.session.class].lesson = lesson
+   
+    console.log(lesson);
+
+    db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+    [cD[req.session.class].className, JSON.stringify(cD[req.session.class].lesson), cD[req.session.class].lesson.date], (err) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log('Saved Lesson To Database');
+    })
+
+
+   }
+}
+
+
+res.redirect('/controlpanel')
+
+});
 
 
 // Loads which classes the teacher is an owner of
@@ -275,69 +426,50 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 app.post('/createclass', isLoggedIn, (req, res) => {
     let submittionType = req.body.submittionType
     let className = req.body.name.toLowerCase();
+    function makeClass(key){
+                // Get the teachers session data ready to transport into new class
+                var user = cD.noClass.students[req.session.user]
+                // Remove teacher from old class
+                delete cD.noClass.students[req.session.user]
+                // Add class into the session data
+                cD[key] = new Classroom(className, key);
+                // Add the teacher to the newly created class
+                cD[key].students[req.session.user] = user
+                req.session.class = key;
+                
+                res.redirect('/home')
+    }
     // Checks if teacher is creating a new class or joining an old class
+    //generates a 4 character key
+    //this is used for students who want to enter a class
     if (submittionType == 'create') {
+        let key = '' 
+        for(let i = 0; i<4; i++){
+            let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+            let letter = keygen[Math.floor(Math.random()*keygen.length)]
+            key += letter
+        }
         // Add classroom to the database
-        db.run(`INSERT INTO classroom(name, owner) VALUES(?, ?)`,
-            [className, req.session.user], (err) => {
+        db.run(`INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)`,
+            [className, req.session.user, key], (err) => {
                 if (err) {
                     console.log(err);
                 }
             })
-    }
-
-    // Get the teachers session data ready to transport into new class
-    var user = cD.noClass.students[req.session.user]
-    // Remove teacher from old class
-    delete cD.noClass.students[req.session.user]
-    // Add class into the session data
-    cD[className] = new Classroom(className);
-    // Add the teacher to the newly created class
-    cD[className].students[req.session.user] = user
-    req.session.class = className;
-    classNames.push(className)
-    //generates a 4 character key
-    //this is used for students who want to enter a class
-    let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-    for(let i = 0; i<4; i++){
-        let letter = keygen[Math.floor(Math.random()*keygen.length)]
-        cD[className].key += letter
+            makeClass(key)
+    } else {
+        db.get(`SELECT key FROM classroom WHERE name=?`, [className], (err, classCode) => {
+            if (err) {
+                console.log(err);
+            }
+           console.log(classCode.key);
+           makeClass(classCode.key)
+        })
     }
 
 
-    res.redirect('/home')
 })
 
-//chat
-// This is the chat get endpoint, it gets the chat and allows it to be used
-// It also sets the color and font for the chat, which will be used by students to participate in the lesson
-// It also allows students to talk amongst one another, while the teacher can see messages
-// It also allows for the use of socket.io, and makes good use of them
-app.get('/chat', permCheck, (req, res) => {
-    res.render('pages/chat', {
-        title: 'Formbar Chat',
-        color: '"dark blue"',
-        io: io
-    })
-
-})
-//
-//
-//
-//
-
-
-// This is the socket.io, it allows for the connection to the server
-// It allows for the chat messages to be actually sent to the chat
-// It is what the chat uses to emit messages to the server, this allows for the database to record whatever is put in
-// This could be useful to the teacher in case students say anything bad or do somehing that can get them banned
-io.sockets.on('connection', function (socket) {
-    console.log('a user connected');
-    socket.on('chat_message', function (message) {
-        io.emit('chat_message', message);
-    });
-
-});
 // D
 // Clears the database, this deletes the database
 // This will allow for the server to be reset so new things can be tested
@@ -379,6 +511,36 @@ app.get('/help', isAuthenticated, (req, res) => {
 // K
 
 // L
+
+app.get('/lesson', isAuthenticated, (req, res) => {
+        res.render('pages/lesson', {
+            lesson: cD[req.session.class].lesson
+        })
+  
+});
+
+app.get('/previousLessons', isAuthenticated, (req, res) => {
+    db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
+
+if(err){
+    console.log(err)
+} else if(rows){
+    res.render('pages/previousLesson', {
+        rows: rows
+    })
+
+}
+
+     })
+});
+
+app.post('/previousLessons', (req, res) => {
+    let lesson = JSON.parse(req.body.data)
+    console.log(lesson)
+    res.render('pages/lesson', {
+        lesson: lesson
+    })
+})
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
@@ -419,9 +581,9 @@ app.post('/login', async (req, res) => {
                     cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
-                    if (req.body.className) {
-                        req.session.class = req.body.className;
-                        let checkJoin = await joinClass(req.body.className, user.username, cD[req.body.className].key)
+                    if (req.body.classKey) {
+                        req.session.class = req.body.classKey;
+                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
                         if (checkJoin) {
                             res.json({login: true})
                         } else (
@@ -530,8 +692,62 @@ app.post('/poll', (req, res) =>{
 
 
 // Q
+//create a quiz for students to take
+app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/makequiz')
+})
+
+app.get('/quiz', isAuthenticated, (req, res) => {
+
+
+    if(req.query.question == 'random'){
+        let random = Math.floor(Math.random()*quizObj.questions.length)
+        res.render('pages/queryquiz', {
+            quiz: JSON.stringify(quizObj.questions[random])
+        })
+
+    } else if (isNaN(req.query.question) ==  false){
+        if(quizObj.questions[req.query.question] != undefined){
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(quizObj.questions[req.query.question])
+            })
+
+        } else {
+            res.send('Please enter proper data')
+        }
+
+    }else if (req.query.question == undefined){
+        res.render('pages/quiz', {
+            quiz: JSON.stringify(quizObj)
+        })
+
+    } else {
+
+    }
+})
+
 
 // R
+
+//quiz results page
+app.post('/results', (req, res) => {
+    let results = req.body.question
+    let totalScore = 0
+   for (let i = 0; i < quizObj.questions.length; i++) {
+        if (results[i] == quizObj.questions[i][1] ){
+            totalScore += quizObj.pointsPerQuestion
+        } else {
+            continue;
+        }
+   }
+   cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + quizObj.totalScore
+
+    res.render('pages/results', {
+        totalScore: Math.floor(totalScore),
+        maxScore: quizObj.totalScore
+    })
+})
+
 
 // S
 
@@ -540,24 +756,28 @@ app.post('/poll', (req, res) =>{
 app.get('/selectclass', isLoggedIn, (req, res) => {
     res.render('pages/selectclass', {
         title: 'Select Class',
-        color: '"dark blue"',
-        classNames: classNames
+        color: '"dark blue"'
     })
 })
 
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectclass', isLoggedIn, async (req, res) => {
-    let className = req.body.name.toLowerCase();
     let code =  req.body.key.toLowerCase();
-    let checkComplete = await joinClass(className, req.session.user, code)
+    let checkComplete = await joinClass(req.session.user, code)
     if (checkComplete) {
-        req.session.class = className;
+        req.session.class = code;
         res.redirect('/home')
     } else {
         res.send('No Open Class with that Name')
     }
 });
+
+app.get('/sfx', isAuthenticated, permCheck, (req, res) => {
+    res.render('pages/sfx', {
+        title: "SFX",
+    })
+})
 
 // T
 
@@ -682,13 +902,17 @@ io.sockets.on('connection', function (socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     });
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
-            letterString = "abcdefghijklmnopqrstuvwxyz"
-            cD[socket.request.session.class].posPollResObj[letterString[i]] = "Answer " + letterString[i].toUpperCase();
-
+            console.log(answerNames);
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
@@ -696,11 +920,8 @@ io.sockets.on('connection', function (socket) {
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
         cD[socket.request.session.class].posPollResObj = {}
+        cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
-    });
-
-    socket.on('chat_message', function (message) {
-        io.emit('chat_message', message);
     });
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
@@ -723,6 +944,78 @@ io.sockets.on('connection', function (socket) {
     socket.on('joinRoom', function (className) {
         console.log("Working");
         socket.join(className);
+    })
+    socket.on('cpupdate', function() {
+        io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]))
+       })
+    socket.on('startQuiz', function (quizData, points) {       
+        questions = []
+        let splitted = quizData.split('\n')
+        splitted.forEach(element => {
+            questions.push(element.split(', '))
+        });
+        quiz = new Quiz(questions.length, points)
+        quiz.questions = questions
+        quizObj = quiz
+    })
+    socket.on('bgmLoad', function(bgmFiles) {
+        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
+    })
+    socket.on('bgmGet', function() {
+        io.to(cD[socket.request.session.class].className).emit('bgmGet')
+    })
+    socket.on('bgmPlay', function(music) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
+    })
+    socket.on('bgmPause', function(stop) {
+        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
+    })
+    socket.on('sfxGet', function() {
+        io.to(cD[socket.request.session.class].className).emit('sfxGet')
+    })
+    socket.on('sfxLoad', function(sfxFiles) {
+        io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
+    })
+    socket.on('sfxPlay', function(music) {
+        io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    })
+    socket.on('botPollStart', function(answerNumber) {
+        answerNames = []
+        cD[socket.request.session.class].pollStatus = true
+        // Creates an object for every answer possible the teacher is allowing
+        for (let i = 0; i < answerNumber; i++) {
+            if(answerNames[i] == '' || answerNames[i] == null){
+                let letterString = "abcdefghijklmnopqrstuvwxyz"
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+            } else{
+           cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+            }
+        }
+        cD[socket.request.session.class].posTextRes = false
+        cD[socket.request.session.class].pollPrompt = "Quick Poll"
+    })
+    socket.on('lessonStart', function(lessonObj) {
+        let content = []
+        let splitted = lessonObj.split('\n')
+        splitted.forEach(element => {
+            content.push(element.split(', '))
+        });
+    
+        let dateConfig = new Date()
+        
+        let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+     let lesson = new Lesson(date, content)
+        cD[socket.request.session.class].lesson = lesson
+       
+
+        db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+        [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+            if (err) {
+                console.log(err);
+            }
+            console.log('Saved Lesson To Database');
+        })
+
     })
 });
 

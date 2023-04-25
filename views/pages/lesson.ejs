@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today's Lesson</title>
+</head>
+<style>
+    body {
+        text-align: center;
+    }
+</style>
+
+<body>
+    <%if(lesson.content != undefined){%>
+    <h3><%- lesson.date %></h3>
+    <%  for (let i = 0; i < lesson.content.length; i++) { %>
+        <u><h2><%-lesson.content[i][0]%></h2></u>
+        <%  for (let u = 1; u < lesson.content[i].length; u++) { %>
+            <b><%- lesson.content[i][u]%></b><br>
+            <%  } %>
+            <%  } %>
+            <br>
+            <a href="/previousLessons">Go To A Previous Lesson</a>
+            <%  } else { %>
+                <p style="font-size: 40px ;">No active lesson</p> 
+                <a href="/previousLessons">Go To A Previous Lesson</a>
+                <%  } %>
+        </body>
+</html>

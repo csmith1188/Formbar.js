@@ -21,6 +21,7 @@
         var reason = document.getElementById('ticket').value
         var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
         socket.emit('help', reason, time)
+        socket.emit('cpupdate')
     }
 </script>
 </html>
