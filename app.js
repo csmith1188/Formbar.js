@@ -8,7 +8,6 @@ const sqlite3 = require('sqlite3').verbose();
 const excelToJson = require('convert-excel-to-json');
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
-const { log } = require('console');
 
 var app = express();
 const http = require('http').createServer(app);
@@ -570,12 +569,18 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.classKey) {
                         req.session.class = req.body.classKey;
-                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-                        if (checkJoin) {
-                            res.json({login: true})
-                        } else (
+                        let checkJoin;
+                        try {
+                            checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
+                            if (checkJoin) {
+                                res.json({login: true})
+                            } else (
+                                res.json({login: false})
+                            )
+                        } catch (err) {
                             res.json({login: false})
-                        )
+                        }
+                        
                     } else {
                         res.redirect('/');
                     }

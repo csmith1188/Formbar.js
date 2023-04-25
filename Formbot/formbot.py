@@ -9,8 +9,10 @@ import bgm
 import ir
 import sfx
 
-
-
+CLASSIP = "http://192.168.10.39:420"
+CLASSKEY = "m1f8"
+LOGINTYPE = "login"
+CLASSNAME = "a1"
 MAXPIX = 12
 # Create a list of neopixels
 pixels = neopixel.NeoPixel(board.D21, MAXPIX)
@@ -141,13 +143,22 @@ def hex_to_rgb(hex):
 #Wait a minute before logging in.
 time.sleep(5)
 #Send a login POST request
-loginAttempt = session.post("http://192.168.10.12:420/login", {"username":"Formbot", "password":"bot", "loginType": "login", "userType":"bot", "classKey": "bwwu"})
+global loginAttempt
+def attemptLogin():
+    try:
+        loginAttempt = session.post(CLASSIP + "/login", {"username":"Formbot", "password":"bot", "loginType": LOGINTYPE, "userType":"bot", "classKey": CLASSKEY})
+        print(loginAttempt.json()['login'])
+        return loginAttempt.json()['login']
+    except requests.exceptions.RequestException as e:
+        return False
+    
+loginAttempt = attemptLogin()
 
-print(loginAttempt.json()['login'])
+print(loginAttempt)
 #Check for successful login
-if loginAttempt.json()['login']:
+if loginAttempt:
     # Go to the virtualbar page
-    thumbData = session.get(url="http://192.168.10.12:420/virtualbar?bot=true")
+    thumbData = session.get(url=CLASSIP + "/virtualbar?bot=true")
         
     # Change server data to variables
     totalStuds = totalStudents(thumbData.json())
@@ -156,6 +167,16 @@ if loginAttempt.json()['login']:
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
+else:
+    while loginAttempt == False:
+        time.sleep(8)
+        loginAttempt = attemptLogin()
+        print(loginAttempt)
+        
+# Runs function from above
+sio.connect(CLASSIP)
+# Allows our bot to join the class room
+sio.emit('joinRoom', CLASSNAME)
 
 def my_background_task():
     # do some background work here!
@@ -201,7 +222,6 @@ def my_background_task():
                 elif ir.ButtonsNames[button] == '1':
                     pass
                 elif ir.ButtonsNames[button] == '2':
-                    print('2')
                     sio.emit('botPollStart', 2)
                     sio.emit('reload')
                     sio.emit('cpupdate')
@@ -234,10 +254,7 @@ def my_background_task():
                     sio.emit('reload')
                     sio.emit('cpupdate')
                     
-# Runs function from above
-sio.connect('http://192.168.10.12:420')
-# Allows our bot to join the class room
-sio.emit('joinRoom', 'a1')
+
 # Allows our bot to recieve data from server on poll change
 @sio.on('vbData')
 def vbData(data):
@@ -285,6 +302,15 @@ def bgmGet():
 def sfxPlay(file):
     sfxPlaying = file
     pygame.mixer.Sound(sfx.sound[file]).play()
+
+@sio.event
+def disconnect():
+    print("I'm Disconnected")
+    loginAttempt = False
+    while loginAttempt == False:
+        time.sleep(8)
+        loginAttempt = attemptLogin()
+        print(loginAttempt)
 
 # Allows program to stay open while waiting for websocket data to be sent
 task = sio.start_background_task(my_background_task)
