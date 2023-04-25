@@ -446,17 +446,11 @@
 
             if (allRoom == '') permissionsChanged = true
             else {
-                console.log(
-                    'oldRoom', allRoom.students,
-                    'newRoom', room.students
-                )
+                //loop through all users
                 for (const index of Object.keys(allRoom.students)) {
                     oldStudent = allRoom.students[index]
                     newStudent = room.students[index]
-                    console.log(
-                        'oldStudent', oldStudent,
-                        'newStudent', newStudent
-                    )
+                    //if the students permissions changed reload all permissions
                     if (oldStudent.permissions != newStudent.permissions)
                         permissionsChanged = true
                 }
