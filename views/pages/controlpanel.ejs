@@ -62,9 +62,13 @@
                     <label for="textFilter">Filter by Text Response</label>
                 </form>
             </div>
+            <button type="button" onclick="displayPreviousPolls()">View Previous Polls</button>  
             <div id="responses">
-
+                
             </div>
+        </div>
+        <div id="previousPolls">
+
         </div>
         <div id="helpTickets">
 
@@ -104,7 +108,7 @@
         var helpFilter = document.getElementById('helpFilter')
         var pollAnsForm = document.getElementById('pollAnsForm')
         var lessonMaker = document.getElementById('lessonMaker')
-
+        var previousPolls = document.getElementById('previousPolls')
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid)
             socket.emit('cpupdate')
@@ -117,18 +121,20 @@
             permChanges.style.display = 'block'
             helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
-
+            previousPolls.style.display = 'none'
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
                 responses.style.display = 'block'
                 filterBoxes.style.display = 'block'
                 lessonMaker.style.display = 'none'
+                previousPolls.style.display = 'none'
             } else {
                 startPollForm.style.display = 'block'
                 endPoll.style.display = 'none'
                 responses.style.display = 'none'
                 filterBoxes.style.display = 'none'
+                previousPolls.style.display = 'none'
                 lessonMaker.style.display = 'none'
             }
         }
@@ -138,6 +144,7 @@
             permChanges.style.display = 'none'
             helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
+            previousPolls.style.display = 'none'
         }
         // Changes to the permission change section of the page
         function toPermissions() {
@@ -145,6 +152,7 @@
             permChanges.style.display = 'block'
             helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
+            previousPolls.style.display = 'none'
         }
 
         function toHelp() {
@@ -152,6 +160,7 @@
             permChanges.style.display = 'none'
             helpTickets.style.display = 'block'
             lessonMaker.style.display = 'none'
+            previousPolls.style.display = 'none'
         }
 
         function toLesson() {
@@ -159,7 +168,40 @@
             permChanges.style.display = 'none'
             helpTickets.style.display = 'none'
             lessonMaker.style.display = 'block'
+            previousPolls.style.display = 'none'
         }
+//displays the previos polls page
+        function displayPreviousPolls(){
+            pollChanges.style.display = 'none'
+            permChanges.style.display = 'none'
+            helpTickets.style.display = 'none'
+            lessonMaker.style.display = 'none'
+            previousPolls.style.display = 'block'
+        }
+//makes the previous polls page
+        function buildPreviousPolls(data){
+            previousPolls.innerHTML = '' 
+            for (let i = data.length - 1; i >= 0; i--) {
+                previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})">${data[i].date}</button>` + '</br>'
+            }
+
+        }
+        function displayPoll(data){
+            console.log(data);
+            socket.emit('previousPollDisplay', data)
+        }
+        socket.on('previousPollData', function(data){
+          previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
+
+          for (let i = 0; i < data.names.length; i++) {
+             previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
+              previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
+             previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
+             
+             
+            }
+            previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>` 
+        })
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
@@ -440,10 +482,10 @@
 
         var allRoom = ""
         socket.emit('cpupdate')
-        socket.on('cpupdate', function (room) {
+        socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
             let permissionsChanged = false
-
+           buildPreviousPolls(JSON.parse(pollHistory))
             if (allRoom == '') permissionsChanged = true
             else {
                 //loop through all users
@@ -457,6 +499,7 @@
             }
 
             allRoom = room
+
             if (permissionsChanged) permChangeFunc(room)
             responsesFunc(room)
             helpTicketsFunc(room)
