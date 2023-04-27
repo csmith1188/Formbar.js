@@ -7,14 +7,22 @@ import math
 import pygame
 import bgm
 import ir
+import sfx
 
 
+# Adds all constants to change class and formbar address
+# Login type is either 'newbot' for first login and 'login' for anytime afterwards
+CLASSIP = "http://192.168.10.39:420"
+CLASSKEY = "m1f8"
+LOGINTYPE = "login"
+CLASSNAME = "a1"
 
 MAXPIX = 12
 # Create a list of neopixels
 pixels = neopixel.NeoPixel(board.D21, MAXPIX)
 
 bgm.updateFiles()
+sfx.updateFiles()
 pygame.init()
 
 # Allows our requests to keep session data
@@ -24,6 +32,10 @@ sio = socketio.Client(http_session=session)
 
 global nowPlaying
 nowPlaying = "Not Playing"
+stop = "Pause"
+global volume
+volume = 1.0
+sfxPlaying = "Not Playing"
 
 # Connects us to websockets
 @sio.event
@@ -101,8 +113,8 @@ def changeLights(pollData, totalStuds):
                         pixNum += 1
                     pixels[pixNum] = (0, 0, 0)
                     pixNum += 1
-                    colNum += 1
                     totalAnswers += 1
+            colNum += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
         # Check if any students have not asnwered
@@ -120,6 +132,7 @@ def changeLights(pollData, totalStuds):
                 pixNum += 1
             # Moves to next color in list
             colNum += 1
+    pixels.show()
     return "Done"
 
 # Converts our created hex code to rgb colors to be used for the lights
@@ -134,13 +147,22 @@ def hex_to_rgb(hex):
 #Wait a minute before logging in.
 time.sleep(5)
 #Send a login POST request
-loginAttempt = session.post("http://192.168.10.12:420/login", {"username":"Formbot", "password":"bot", "loginType": "login", "userType":"bot", "classKey": "bwwu"})
+global loginAttempt
+def attemptLogin():
+    try:
+        loginAttempt = session.post(CLASSIP + "/login", {"username":"Formbot", "password":"bot", "loginType": LOGINTYPE, "userType":"bot", "classKey": CLASSKEY})
+        print(loginAttempt.json()['login'])
+        return loginAttempt.json()['login']
+    except requests.exceptions.RequestException as e:
+        return False
+    
+loginAttempt = attemptLogin()
 
-print(loginAttempt.json()['login'])
+print(loginAttempt)
 #Check for successful login
-if loginAttempt.json()['login']:
+if loginAttempt:
     # Go to the virtualbar page
-    thumbData = session.get(url="http://192.168.10.12:420/virtualbar?bot=true")
+    thumbData = session.get(url=CLASSIP + "/virtualbar?bot=true")
         
     # Change server data to variables
     totalStuds = totalStudents(thumbData.json())
@@ -149,6 +171,16 @@ if loginAttempt.json()['login']:
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
+else:
+    while loginAttempt == False:
+        time.sleep(8)
+        loginAttempt = attemptLogin()
+        print(loginAttempt)
+        
+# Runs function from above
+sio.connect(CLASSIP)
+# Allows our bot to join the class room
+sio.emit('joinRoom', CLASSNAME)
 
 def my_background_task():
     # do some background work here!
@@ -174,26 +206,59 @@ def my_background_task():
                 elif ir.ButtonsNames[button] == 'eq':
                     pass
                 elif ir.ButtonsNames[button] == 'vol_up':
-                    pass
+                    global volume
+                    volume = volume + 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
                 elif ir.ButtonsNames[button] == 'vol_down':
-                    pass
+                    
+                    volume = volume - 0.1
+                    print(volume)
+                    pygame.mixer.music.set_volume(volume)
                 elif ir.ButtonsNames[button] == 'up':
                     pass
                 elif ir.ButtonsNames[button] == 'down':
                     pass
+                elif ir.ButtonsNames[button] == '0':
+                    sio.emit('endPoll')
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '1':
                     pass
                 elif ir.ButtonsNames[button] == '2':
-                    pass
+                    sio.emit('botPollStart', 2)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '3':
-                    pass
+                    sio.emit('botPollStart', 3)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                 elif ir.ButtonsNames[button] == '4':
-                    pass
+                    sio.emit('botPollStart', 4)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '5':
+                    sio.emit('botPollStart', 5)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '6':
+                    sio.emit('botPollStart', 6)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '7':
+                    sio.emit('botPollStart', 7)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '8':
+                    sio.emit('botPollStart', 8)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
+                elif ir.ButtonsNames[button] == '9':
+                    sio.emit('botPollStart', 9)
+                    sio.emit('reload')
+                    sio.emit('cpupdate')
                     
-# Runs function from above
-sio.connect('http://192.168.10.12:420')
-# Allows our bot to join the class room
-sio.emit('joinRoom', 'a1')
+
 # Allows our bot to recieve data from server on poll change
 @sio.on('vbData')
 def vbData(data):
@@ -204,7 +269,7 @@ def vbData(data):
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
-stop = "Pause"
+
 
 @sio.on('bgmGet')
 def bgmGet():
@@ -220,7 +285,7 @@ def bgmPlay(file):
     nowPlaying = file
     global stop
     stop = "Play"
-    pygame.mixer.music.set_volume(1.0)
+    pygame.mixer.music.set_volume(volume)
     pygame.mixer.music.play(loops=-1)
 
 @sio.on('bgmPause')
@@ -231,6 +296,26 @@ def bgmPause(play):
         pygame.mixer.music.pause()
     elif play == 'Play':
         pygame.mixer.music.unpause()
+
+@sio.on('sfxGet')
+def bgmGet():
+    print("SFX Get")
+    sio.emit('sfxLoad', {'files': sfx.sound, "playing": sfxPlaying})
+
+@sio.on('sfxPlay')
+def sfxPlay(file):
+    sfxPlaying = file
+    pygame.mixer.Sound(sfx.sound[file]).play()
+
+@sio.event
+def disconnect():
+    print("I'm Disconnected")
+    loginAttempt = False
+    while loginAttempt == False:
+        time.sleep(8)
+        loginAttempt = attemptLogin()
+        print(loginAttempt)
+
 # Allows program to stay open while waiting for websocket data to be sent
 task = sio.start_background_task(my_background_task)
 

@@ -22,6 +22,7 @@
         var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
         socket.emit('help', reason, time)
         socket.emit('cpupdate')
+        socket.emit('sfxPlay', "sfx_up04")
     }
 </script>
 </html>
