@@ -27,6 +27,7 @@
     body {
       background: var(--bg-darker);
       overflow: hidden;
+      text-align: center;
     }
     h1 {
       text-align: center;
@@ -35,6 +36,18 @@
 
     h2 {
       margin-top: 32px;
+    }
+    a:link {
+      text-decoration: none;
+    }
+    a:visited {
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: none;
+    }
+    a:active {
+      text-decoration: none;
     }
     #quickmenu {
         text-align: center;
@@ -57,10 +70,10 @@
       border-radius: 10px;
       overflow: auto;
       position: relative;
+      text-align: center;
     }
     .quickButton {
       display: inline-block;
-      width: 50px;
       margin: 0 4px;
       padding: 5px;
       border-radius: 8.75px;
@@ -68,6 +81,56 @@
     .classic #content,
     .classic .quickButton {
       border-color: var(--light-blue);
+    }
+    #playStop .quickButton {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+    }
+    #nowPlaying {
+      text-align: center;
+    }
+    #allMusic {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+    }
+    #permChanges {
+      text-align: center;
+    }
+    #forgotPassword {
+      display: block;
+      margin: auto;
+      margin-top: 8px;
+      width: 256px;
+      text-align: left;
+    }
+    #noPoll {
+      text-align: center;
+    }
+    #virtualBar {
+      width: calc(100% - 32px);
+    }
+
+    #text {
+      width: 10ch;
+      padding: 0 4px;
+      border: 1px white;
+      border-style: solid solid none;
+      background: black;
+      font: 32px monospace;
+      text-transform: uppercase;
+      overflow: hidden;
+    }
+
+    #pixBox {
+      width: 100%;
+      height: 64px;
+      box-sizing: border-box;
+      border: 1px solid white;
+      display: flex;
+      justify-content: space-around;
+      user-select: none;
     }
   </style>
 

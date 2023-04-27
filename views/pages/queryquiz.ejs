@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<%- include('../partials/header_content') %>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
-<body onload="load(<%= quiz %>)">
+<body onload="load(<%= quiz %>)" id="content">
     <form id="quizForm" method="post" action="/results">
     </form>
 </body>
@@ -21,7 +21,7 @@
             for (let u = 2; u < quiz.length; u++) {
                 quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u-1}"> ${quiz[u]}`
             }
-        quizForm.innerHTML += `</br><button type="submit">Submit Answers</button>`
+        quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
         console.log(correctAnswerIndex);
 
     }

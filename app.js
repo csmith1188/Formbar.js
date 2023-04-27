@@ -487,9 +487,10 @@ app.get('/home', isAuthenticated, (req, res) => {
 
 
 app.get('/help', isAuthenticated, (req, res) => {
-    res.render('pages/help'), {
-        color: '"dark blue"'
-}
+    res.render('pages/help', {
+        color: '"dark blue"',
+        title: "Help"
+})
 })
 
 // I
@@ -502,7 +503,8 @@ app.get('/help', isAuthenticated, (req, res) => {
 
 app.get('/lesson', isAuthenticated, (req, res) => {
         res.render('pages/lesson', {
-            lesson: cD[req.session.class].lesson
+            lesson: cD[req.session.class].lesson,
+            title: "Today's Lesson"
         })
   
 });
@@ -514,7 +516,8 @@ if(err){
     console.log(err)
 } else if(rows){
     res.render('pages/previousLesson', {
-        rows: rows
+        rows: rows,
+        title: "Previous Lesson"
     })
 
 }
@@ -526,7 +529,8 @@ app.post('/previousLessons', (req, res) => {
     let lesson = JSON.parse(req.body.data)
     console.log(lesson)
     res.render('pages/lesson', {
-        lesson: lesson
+        lesson: lesson,
+        title: "Today's Lesson"
     })
 })
 // This renders the login page
@@ -690,13 +694,15 @@ app.get('/quiz', isAuthenticated, (req, res) => {
     if(req.query.question == 'random'){
         let random = Math.floor(Math.random()*quizObj.questions.length)
         res.render('pages/queryquiz', {
-            quiz: JSON.stringify(quizObj.questions[random])
+            quiz: JSON.stringify(quizObj.questions[random]),
+            title: "Quiz"
         })
 
     } else if (isNaN(req.query.question) ==  false){
         if(quizObj.questions[req.query.question] != undefined){
             res.render('pages/queryquiz', {
-                quiz: JSON.stringify(quizObj.questions[req.query.question])
+                quiz: JSON.stringify(quizObj.questions[req.query.question]),
+                title: "Quiz"
             })
 
         } else {
@@ -705,7 +711,8 @@ app.get('/quiz', isAuthenticated, (req, res) => {
 
     }else if (req.query.question == undefined){
         res.render('pages/quiz', {
-            quiz: JSON.stringify(quizObj)
+            quiz: JSON.stringify(quizObj),
+            title: "Quiz"
         })
 
     } else {
@@ -731,7 +738,8 @@ app.post('/results', (req, res) => {
 
     res.render('pages/results', {
         totalScore: Math.floor(totalScore),
-        maxScore: quizObj.totalScore
+        maxScore: quizObj.totalScore,
+        title: "Results"
     })
 })
 

@@ -9,11 +9,11 @@
     </head>
 
     <body onload="load(<%-pollStatus%>)">
-        <header>
-            <button id="permissions" onclick="toPermissions()">Permissions</button>
-            <button id="polls" onclick="toPolls()">Polls</button>
-            <button id="help" onclick="toHelp()">Help Tickets</button>
-            <button id="lesson" onclick="toLesson()">Make A Lesson</button>
+        <header id="quickMenu">
+            <button id="permissions" class="quickButton" onclick="toPermissions()">Permissions</button>
+            <button id="polls" class="quickButton" onclick="toPolls()">Polls</button>
+            <button id="help" class="quickButton" onclick="toHelp()">Help Tickets</button>
+            <button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
         </header>
 
         <div id="permChanges">
@@ -332,11 +332,11 @@
             } else {
                 permChangeKey.innerHTML = ''
                 permChangeList.innerHTML = ''
-                permChangeKey.innerHTML += `<h2 style="text-align:left;">Your class code is ${room.key}</h2>`
+                permChangeKey.innerHTML += `<h2>Your class code is ${room.key}</h2>`
                 var newStudent = '';
                 for (const student of Object.keys(room.students)) {
                     newStudent += `<p>${student}</p>`
-                    newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
+                    newStudent += `<select name="permSwitch" id="permSwitch" class="quickButton" data-userid="${student}" onchange="updatePerms(this);"> `
                     if (room.students[student].permissions == 0) {
                         newStudent += `
                         <option value="0" selected>Teacher</option>
@@ -367,7 +367,7 @@
                     `
                     }
                     newStudent += `</select>
-                <button id="deleteUser" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
+                <button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
                 }
                 permChangeList.innerHTML += newStudent
             }
