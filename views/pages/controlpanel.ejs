@@ -75,8 +75,8 @@
         </div>
         <div id="lessonMaker">
             <form method="post" enctype="multipart/form-data">
-             <input name="spreadsheet" type="file">
-             <input type="submit">
+                <input name="spreadsheet" type="file">
+                <input type="submit">
             </form>
 
         </div>
@@ -85,7 +85,7 @@
     </html>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
+        var socket = io()
         var permChanges = document.getElementById('permChanges')
         var permChangeKey = document.getElementById('permChangeKey')
         var permChangeList = document.getElementById('permChangeList')
@@ -110,7 +110,7 @@
         var lessonMaker = document.getElementById('lessonMaker')
         var previousPolls = document.getElementById('previousPolls')
         function deleteUser(e) {
-            socket.emit('deleteUser', e.dataset.userid);
+            socket.emit('deleteUser', e.dataset.userid)
             socket.emit('cpupdate')
         }
 
@@ -216,8 +216,8 @@
             permChanges.style.display = 'none'
             responses.style.display = 'block'
             filterBoxes.style.display = 'block'
-            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues);
-            socket.emit('reload'); // Reloads the users page
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues)
+            socket.emit('reload') // Reloads the users page
         }
 
 
@@ -235,8 +235,8 @@
         }
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
-            socket.emit('endPoll');
-            socket.emit('reload');
+            socket.emit('endPoll')
+            socket.emit('reload')
             startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
             responses.style.display = 'none'
@@ -244,7 +244,7 @@
         }
 
         function buildStudent(room, student) {
-            var newStudent = '';
+            var newStudent = ''
             newStudent += `<p>${student}</p>`
             newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
             if (room.students[student].permissions == 0) {
@@ -283,20 +283,26 @@
 
         function sortPerm() {
             permChangeList.innerHTML = ''
-            var newStudent = '';
+            var newStudent = ''
             if (permSort.checked) {
                 permSortLabel.innerHTML = 'Sort by Permissions 🡇'
                 let newRoom = allRoom
-                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions));
-                for (const student of Object.keys(newRoom.students)) {
-                    newStudent += buildStudent(newRoom, student)
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
+                if (helpFilter.checked) filterPerm()
+                else {
+                    for (const student of Object.keys(newRoom.students)) {
+                        newStudent += buildStudent(newRoom, student)
+                    }
                 }
             } else {
                 permSortLabel.innerHTML = 'Sort by Permissions 🡅'
                 let newRoom = allRoom
-                newRoom.students = Object.fromEntries(Object.entries(allRoom.students).sort((a, b) => a[1].permissions - b[1].permissions));
-                for (const student of Object.keys(newRoom.students)) {
-                    newStudent += buildStudent(newRoom, student)
+                newRoom.students = Object.fromEntries(Object.entries(allRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
+                if (helpFilter.checked) filterPerm()
+                else {
+                    for (const student of Object.keys(newRoom.students)) {
+                        newStudent += buildStudent(newRoom, student)
+                    }
                 }
             }
             permChangeList.innerHTML += newStudent
@@ -305,7 +311,7 @@
         function filterPerm() {
             if (helpFilter.checked) {
                 permChangeList.innerHTML = ''
-                var newStudent = '';
+                var newStudent = ''
                 if (helpFilter.checked) {
                     for (const student of Object.keys(allRoom.students)) {
                         if (allRoom.students[student].help) {
@@ -324,11 +330,11 @@
             if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
                 responses.innerHTML = ''
                 responses.innerHTML += '<h2>Responses</h2>'
-                var newResponse = '';
+                var newResponse = ''
                 for (const student of Object.keys(allRoom.students)) {
 
-                    let lettRes;
-                    let textRes;
+                    let lettRes
+                    let textRes
                     if (allRoom.students[student].pollRes) {
                         lettRes = allRoom.students[student].pollRes.toUpperCase()
                     } else {
@@ -364,7 +370,7 @@
         // Used to change permission of user in there class
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
-            socket.emit('permChange', e.dataset.userid, e.value);
+            socket.emit('permChange', e.dataset.userid, e.value)
             socket.emit('cpupdate')
         }
 
@@ -375,7 +381,7 @@
                 permChangeKey.innerHTML = ''
                 permChangeList.innerHTML = ''
                 permChangeKey.innerHTML += `<h2 style="text-align:left;">Your class code is ${room.key}</h2>`
-                var newStudent = '';
+                var newStudent = ''
                 for (const student of Object.keys(room.students)) {
                     newStudent += `<p>${student}</p>`
                     newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
@@ -434,10 +440,10 @@
                 }
                 responses.innerHTML = ''
                 responses.innerHTML += '<h2>Responses</h2>'
-                var newResponse = '';
+                var newResponse = ''
                 for (const student of Object.keys(room.students)) {
-                    let lettRes;
-                    let textRes;
+                    let lettRes
+                    let textRes
                     if (room.students[student].pollRes) {
                         lettRes = room.students[student].pollRes.toUpperCase()
                     } else {
@@ -458,7 +464,7 @@
         function helpTicketsFunc(room) {
             helpTickets.innerHTML = ''
             helpTickets.innerHTML += '<h2>Help Tickets</h2>'
-            var newHelpTicket = '';
+            var newHelpTicket = ''
             for (const student of Object.keys(room.students)) {
                 newHelpTicket += room.students[student].help
             }
@@ -470,7 +476,7 @@
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
             let dueAssigns = document.getElementById('dueAssigns')
-            socket.emit('lessonStart', learningObj.value);
+            socket.emit('lessonStart', learningObj.value)
             alert('Lesson Created')
         }
 
@@ -478,9 +484,23 @@
         socket.emit('cpupdate')
         socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
+            let permissionsChanged = false
+           buildPreviousPolls(JSON.parse(pollHistory))
+            if (allRoom == '') permissionsChanged = true
+            else {
+                //loop through all users
+                for (const index of Object.keys(allRoom.students)) {
+                    oldStudent = allRoom.students[index]
+                    newStudent = room.students[index]
+                    //if the students permissions changed reload all permissions
+                    if (oldStudent.permissions != newStudent.permissions)
+                        permissionsChanged = true
+                }
+            }
+
             allRoom = room
-            buildPreviousPolls(JSON.parse(pollHistory))
-            permChangeFunc(room)
+
+            if (permissionsChanged) permChangeFunc(room)
             responsesFunc(room)
             helpTicketsFunc(room)
         })
