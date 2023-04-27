@@ -9,10 +9,14 @@ import bgm
 import ir
 import sfx
 
+
+# Adds all constants to change class and formbar address
+# Login type is either 'newbot' for first login and 'login' for anytime afterwards
 CLASSIP = "http://192.168.10.39:420"
 CLASSKEY = "m1f8"
 LOGINTYPE = "login"
 CLASSNAME = "a1"
+
 MAXPIX = 12
 # Create a list of neopixels
 pixels = neopixel.NeoPixel(board.D21, MAXPIX)
