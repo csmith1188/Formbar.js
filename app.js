@@ -14,8 +14,7 @@ const upload = multer({ dest: 'uploads/' })
 
 // get config vars
 dotenv.config();
-// access config var
-// console.log(process.env.TOKEN_SECRET)
+
 
 
 var app = express();
@@ -592,12 +591,18 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.classKey) {
                         req.session.class = req.body.classKey;
-                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-                        if (checkJoin) {
-                            res.json({login: true})
-                        } else (
+                        let checkJoin;
+                        try {
+                            checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
+                            if (checkJoin) {
+                                res.json({login: true})
+                            } else (
+                                res.json({login: false})
+                            )
+                        } catch (err) {
                             res.json({login: false})
-                        )
+                        }
+                        
                     } else {
                         res.redirect('/');
                     }
@@ -640,7 +645,7 @@ app.post('/login', async (req, res) => {
                 }
                 console.log('Success');
             })
-        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
             if (err) {
                 console.log(err);
             }
@@ -648,6 +653,21 @@ app.post('/login', async (req, res) => {
             cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
             // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username;
+            if (req.body.classKey) {
+                req.session.class = req.body.classKey;
+                let checkJoin;
+                try {
+                    checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
+                    if (checkJoin) {
+                        res.json({login: true})
+                    } else (
+                        res.json({login: false})
+                    )
+                } catch (err) {
+                    res.json({login: false})
+                }
+                
+            } 
             res.redirect('/');
         })
     }
