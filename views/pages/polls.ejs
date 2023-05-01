@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+<%- include('../partials/header_content') %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polls</title>
-</head>
-
-<body onload="load(<%-pollStatus%>, <%-posTextRes%>)">
+<body onload="load(<%-pollStatus%>, <%-posTextRes%>)" id="content">
     <%-pollPrompt%>
     <h1 id="noPoll">No Poll Is Active Currently</h1>
     <div id="poll">
     <form id="pollForm">
         
     </form>
-    <button onclick="submitPoll()">Submit</button>
+    <button onclick="submitPoll()" class="quickButton">Submit</button>
 </div>
 </body>
 <script src="/socket.io/socket.io.js"></script>

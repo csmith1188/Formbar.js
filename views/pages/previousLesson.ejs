@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previous Lesson</title>
-</head>
+<%- include('../partials/header_content') %>
 <style>
     button {
   background: none;
@@ -33,7 +28,7 @@
 
     <form action="/previousLessons" method="post">
     <% for (let i = rows.length-1; i >= 0; i--) {  console.log(rows.length)%>
-     <button type="submit" name="data" value="<%=rows[i].content%>"><%- rows[i].date %></button><br>
+     <button type="submit" name="data" value="<%=rows[i].content%>" class="quickButton"><%- rows[i].date %></button><br><br>
     <% } %>
     </form>
 
