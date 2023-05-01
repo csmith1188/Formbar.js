@@ -1,34 +1,6 @@
 <%- include('../partials/header_content') %>
 <!-- ^^ This means add this file into the contents of the header page -->
 <!-- This is where the title, top buttons, and stylesheet is located -->
-
-<style>
-  #content {
-    text-align: center;
-  }
-
-  button {
-    margin: 16px 2px;
-  }
-
-  input {
-    display: block;
-    margin: auto;
-    font-size: 20px !important;
-    width: 256px;
-    height: 36px !important;
-    box-sizing: border-box;
-    margin-top: 16px;
-  }
-
-  #forgotPassword {
-    display: block;
-    margin: auto;
-    margin-top: 8px;
-    width: 256px;
-    text-align: left;
-  }
-</style>
 <body class=<%- color %>>
   <div id="quickmenu" class="hidden">
     <a href="/home" class="quickButton">Home</a>
@@ -36,19 +8,22 @@
     <a href="/tutd" class="quickButton">Polls</a>
   </div>
   <div id="content">
-    <button id="logInButton" class="pressed" onclick="changeloginType(this);">Log in</button>
-    <button id="newAccountButton" onclick="changeloginType(this);">New account</button>
-    <button id="guestButton" onclick="changeloginType(this);">Use as guest</button>
+    <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log in</button>
+    <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New account</button>
+    <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
+    <br><br>
     <form action="login" method="post" style="margin-bottom: 16px;">
-    <input type="text" id="usernameBox" name="username" class="box" placeholder="Name" value="" autocomplete="off" required>
-    <input type="password" id="passwordBox" name="password" class="box" placeholder="Password" value="" required>
-    <a href="/changepassword" id="forgotPassword">Forgot password</a>
+    <input type="text" id="usernameBox" name="username" class="box quickButton" placeholder="Name" value="" autocomplete="off" required>
+    <br>
+    <input type="password" id="passwordBox" name="password" class="box quickButton" placeholder="Password" value="" required>
+    <a href="/changepassword" id="forgotPassword" class="quickButton">Forgot password</a>
     <input type="hidden" id="loginTypeBox" name="loginType" value="login">
     <input type="hidden" id="userTypeBox" name="userType" value="user">
     <input type="hidden" id="classNameloginTypeBox" name="className" value="">
     <input type="hidden" id="oauth2Check" name="redurl" value="<%-redurl%>">
     <input type="hidden" id="classNameloginTypeBox" name="classKey" value="">
-    <input type="submit" id="submitButton" class="button unselectable" value="Log in" onsubmit="return false;">
+    <br><br>
+    <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in" onsubmit="return false;">
     </form>
   </div>
 </body>
