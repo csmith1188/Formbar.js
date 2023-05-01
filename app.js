@@ -3,12 +3,19 @@ const express = require('express');
 const session = require('express-session'); //For storing client login data
 const ejs = require('ejs');
 const fs = require('fs');
+const path = require('path');
 const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 const excelToJson = require('convert-excel-to-json');
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
-const { log } = require('console');
+
+// get config vars
+dotenv.config();
+
+
 
 var app = express();
 const http = require('http').createServer(app);
@@ -56,6 +63,7 @@ class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
     constructor(username, id, perms = 2) {
+        this.username = username
         this.id = id;
         this.permissions = perms;
         this.pollRes = '';
@@ -225,6 +233,11 @@ function joinClass(userName, code) {
     })
 }
 
+// Oauth2 Access Token Generator
+function generateAccessToken(username) {
+    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+  }
+
 // Endpoints
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -250,6 +263,7 @@ app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
 app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
+
     let students = cD[req.session.class].students
     let keys = Object.keys(students);
     let allStuds = []
@@ -268,6 +282,10 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 
 
 app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+
+
+
+if(req.file) {
     const result = excelToJson({
         sourceFile: `${req.file.path}`,
         sheets:[{
@@ -281,15 +299,15 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
             }
         }]
     });
-
-for (const key in result['Steps']) {
-   if(result['Steps'][key].type == 'Poll'){
- console.log('Poll loaded');
- let answerNames = result['Steps'][key].labels.split(', ')
-
- cD[req.session.class].pollStatus = true
- // Creates an object for every answer possible the teacher is allowing
- for (let i = 0; i < result['Steps'][key].response; i++) {
+    
+    for (const key in result['Steps']) {
+    if(result['Steps'][key].type == 'Poll'){
+    console.log('Poll loaded');
+    let answerNames = result['Steps'][key].labels.split(', ')
+    
+    cD[req.session.class].pollStatus = true
+    // Creates an object for every answer possible the teacher is allowing
+    for (let i = 0; i < result['Steps'][key].response; i++) {
      console.log(answerNames);
      if(answerNames[i] == '' || answerNames[i] == null){
          let letterString = "abcdefghijklmnopqrstuvwxyz"
@@ -297,14 +315,14 @@ for (const key in result['Steps']) {
      } else{
     cD[req.session.class].posPollResObj[answerNames[i]] = answerNames[i];
      }
- }
- cD[req.session.class].posTextRes = false
- cD[req.session.class].pollPrompt = result['Steps'][key].prompt
-
-
-   } else if(result['Steps'][key].type == 'Quiz'){
+    }
+    cD[req.session.class].posTextRes = false
+    cD[req.session.class].pollPrompt = result['Steps'][key].prompt
+    
+    
+    } else if(result['Steps'][key].type == 'Quiz'){
     let nameQ = result['Steps'][key].prompt
-  let quizLoad = excelToJson({
+    let quizLoad = excelToJson({
         sourceFile: `${req.file.path}`,
         sheets:[{
             name: nameQ,
@@ -319,10 +337,10 @@ for (const key in result['Steps']) {
             }
         }]
     });
-let questionList = []
-for (let i = 1; i < quizLoad[nameQ].length; i++) {
+    let questionList = []
+    for (let i = 1; i < quizLoad[nameQ].length; i++) {
     let questionMaker = []
-
+    
         questionMaker.push(quizLoad[nameQ][i].question)
         questionMaker.push(quizLoad[nameQ][i].key)
         questionMaker.push(quizLoad[nameQ][i].A)
@@ -331,14 +349,14 @@ for (let i = 1; i < quizLoad[nameQ].length; i++) {
         questionMaker.push(quizLoad[nameQ][i].D)
         questionList.push(questionMaker)
     
-}
-
-quiz = new Quiz(questionList.length, 100)
-quiz.questions = questionList
-quizObj = quiz
-
-   }else if(result['Steps'][key].type == 'Lesson'){
-nameL = result['Steps'][key].prompt
+    }
+    
+    quiz = new Quiz(questionList.length, 100)
+    quiz.questions = questionList
+    quizObj = quiz
+    
+    }else if(result['Steps'][key].type == 'Lesson'){
+    nameL = result['Steps'][key].prompt
     let lessonLoad = excelToJson({
         sourceFile: `${req.file.path}`,
         sheets:[{
@@ -349,26 +367,26 @@ nameL = result['Steps'][key].prompt
             }
         }]
     });
-let lessonArr = []
+    let lessonArr = []
     for (let i = 1; i < lessonLoad[nameL].length; i++) {
-let lessonMaker = [lessonLoad[nameL][i].header]
-
-let lessonContent = lessonLoad[nameL][i].data.split(', ')
-console.log(lessonContent);
-for (let u = 0; u < lessonContent.length; u++) {
-   lessonMaker.push( lessonContent[u] )
-}
+    let lessonMaker = [lessonLoad[nameL][i].header]
+    
+    let lessonContent = lessonLoad[nameL][i].data.split(', ')
+    console.log(lessonContent);
+    for (let u = 0; u < lessonContent.length; u++) {
+    lessonMaker.push( lessonContent[u] )
+    }
             lessonArr.push(lessonMaker)
     }
-
+    
     let dateConfig = new Date()
     
     let date = `${dateConfig.getMonth()+1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     let lesson = new Lesson(date, lessonArr)
     cD[req.session.class].lesson = lesson
-   
+    
     console.log(lesson);
-
+    
     db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
     [cD[req.session.class].className, JSON.stringify(cD[req.session.class].lesson), cD[req.session.class].lesson.date], (err) => {
         if (err) {
@@ -376,13 +394,15 @@ for (let u = 0; u < lessonContent.length; u++) {
         }
         console.log('Saved Lesson To Database');
     })
-
-
-   }
+    
+    
+    }
+    }
+    
+    
+    res.redirect('/controlpanel')
 }
 
-
-res.redirect('/controlpanel')
 
 });
 
@@ -540,7 +560,8 @@ app.post('/previousLessons', (req, res) => {
 app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
-        color: 'purple'
+        color: 'purple', 
+        redurl: ''
     });
 });
 
@@ -574,12 +595,18 @@ app.post('/login', async (req, res) => {
                     req.session.user = rows.username;
                     if (req.body.classKey) {
                         req.session.class = req.body.classKey;
-                        let checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-                        if (checkJoin) {
-                            res.json({login: true})
-                        } else (
+                        let checkJoin;
+                        try {
+                            checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
+                            if (checkJoin) {
+                                res.json({login: true})
+                            } else (
+                                res.json({login: false})
+                            )
+                        } catch (err) {
                             res.json({login: false})
-                        )
+                        }
+                        
                     } else {
                         res.redirect('/');
                     }
@@ -622,7 +649,7 @@ app.post('/login', async (req, res) => {
                 }
                 console.log('Success');
             })
-        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
             if (err) {
                 console.log(err);
             }
@@ -630,6 +657,21 @@ app.post('/login', async (req, res) => {
             cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
             // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username;
+            if (req.body.classKey) {
+                req.session.class = req.body.classKey;
+                let checkJoin;
+                try {
+                    checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
+                    if (checkJoin) {
+                        res.json({login: true})
+                    } else (
+                        res.json({login: false})
+                    )
+                } catch (err) {
+                    res.json({login: false})
+                }
+                
+            } 
             res.redirect('/');
         })
     }
@@ -662,7 +704,7 @@ app.get('/poll', isAuthenticated, permCheck, (req, res) => {
     })
     let answer = req.query.letter;
     if (answer) {
-        cD[req.session.class].students[req.session.user].permissions = answer
+        cD[req.session.class].students[req.session.user].pollRes = answer
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
     }
 
@@ -673,7 +715,7 @@ app.get('/poll', isAuthenticated, permCheck, (req, res) => {
 app.post('/poll', (req, res) =>{
    let answer = req.body.poll
    if (answer) {
-    cD[req.session.class].students[req.session.user].permissions = answer
+    cD[req.session.class].students[req.session.user].pollRes = answer
     db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
    }
     res.redirect('/poll')
@@ -801,6 +843,74 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 
 
+// OAuth2
+
+app.get('/oauth/login', (req, res) => {
+    let redurl = req.query.redurl
+    res.render('pages/login', {
+        title: 'Formbar',
+        color: 'purple',
+        redurl: redurl
+    })
+})
+
+app.post('/oauth/login', (req, res) => {
+    let redurl = req.body.redurl
+    var user = {
+        username: req.body.username,
+        password: req.body.password,
+        loginType: req.body.loginType,
+        userType: req.body.userType
+    }
+    var passwordCrypt = encrypt(user.password);
+    // Check whether user is logging in or signing up
+    if (user.loginType == "login") {
+        // Get the users login in data to verify password
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
+            if (err) {
+                console.log(err);
+            }
+            // Check if a user with that name was found in the database
+            if (rows) {
+                // Decrypt users password
+                let tempPassword = decrypt(JSON.parse(rows.password));
+                if (rows.username == user.username && tempPassword == user.password) {
+                    let token = generateAccessToken({ username: user.username })
+                    console.log(redurl + "?token=" + token);
+                    res.redirect(redurl + "?token=" + token)
+                } else {
+                    res.redirect('/oauth/login?redurl=' + redurl)
+                }
+            } else {
+                res.redirect('/oauth/login?redurl=' + redurl)
+            }
+        })
+
+    } else if (user.loginType == "new") {
+        // Add the new user to the database 
+        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('Success');
+            })
+        // Find the user in which was just created to get the id of the user 
+        db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+            if (err) {
+                console.log(err);
+            }
+            // Add user to session
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
+            // Add the user to the session in order to transfer data between each page
+            req.session.user = rows.username;
+            res.redirect('/');
+
+        })
+    }
+})
+
+
 // Middleware for sockets
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
@@ -847,6 +957,26 @@ io.sockets.on('connection', function (socket) {
     });
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
+        let data = {prompt: '', names: [], letter: [], text:[]}
+
+        let dateConfig = new Date()
+        let date = `${dateConfig.getMonth()+1}.${dateConfig.getDate()}.${dateConfig.getFullYear()}`
+     
+        data.prompt = cD[socket.request.session.class].pollPrompt
+        for (const key in  cD[socket.request.session.class].students) {
+            data.names.push( cD[socket.request.session.class].students[key].username)
+            data.letter.push( cD[socket.request.session.class].students[key].pollRes) 
+            data.text.push(cD[socket.request.session.class].students[key].pollTextRes)
+        }
+
+        db.run(`INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)`,
+        [cD[socket.request.session.class].key, JSON.stringify(data), date], (err) => {
+            if (err) {
+                console.log(err);
+            }
+            console.log('Saved Poll To Database');
+        })
+       
         cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
@@ -874,7 +1004,11 @@ io.sockets.on('connection', function (socket) {
         socket.join(className);
     })
     socket.on('cpupdate', function() {
-        io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]))
+        db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => { 
+            var pollHistory = rows
+            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
+        })
+        
        })
     socket.on('startQuiz', function (quizData, points) {       
         questions = []
@@ -945,6 +1079,20 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
+    socket.on('previousPollDisplay', function(pollindex){
+
+        db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function(err, pollData) {
+            if (err) {
+             console.error(err);
+            } else {
+             io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
+            }
+           });
+
+
+            
+        
+})
 });
 
 

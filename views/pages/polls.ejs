@@ -43,6 +43,7 @@
                 socket.emit('pollResp', lettRes, textRes);
                 socket.emit('vbData');
                 socket.emit('cpupdate');
+                socket.emit('sfxPlay', 'sfx_up01')
                 setTimeout(function() { alert('Poll Submitted ' + lettRes) },100);
                 
             }
