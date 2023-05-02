@@ -20,14 +20,18 @@
             <div id="permChangeKey">
 
             </div>
-            <div id="permFilterBoxes">
-                <form>
-                    <input type="checkbox" id="helpFilter" onclick="filterPerm()">
+            <form onchange="filterSortChange(event)">
+                <div id="permFilterBoxes">
+                    <input type="radio" name="filter" id="helpFilter">
                     <label for="helpFilter">Filter by Help</label>
-                    <input type="checkbox" id="permSort" onclick="sortPerm()">
+                    <input type="radio" name="filter" id="pollFilter">
+                    <label for="helpFilter">Filter by Polls</label>
+                </div>
+                <div id="permSortBoxes">
+                    <input type="radio" name="sort" id="permSort">
                     <label for="permSort" id="permSortLabel">Sort by Permissions 🡅</label>
-                </form>
-            </div>
+                </div>
+            </form>
             <div id="permChangeList">
 
             </div>
@@ -62,9 +66,9 @@
                     <label for="textFilter">Filter by Text Response</label>
                 </form>
             </div>
-            <button type="button" onclick="displayPreviousPolls()">View Previous Polls</button>  
+            <button type="button" onclick="displayPreviousPolls()">View Previous Polls</button>
             <div id="responses">
-                
+
             </div>
         </div>
         <div id="previousPolls">
@@ -109,6 +113,7 @@
         var pollAnsForm = document.getElementById('pollAnsForm')
         var lessonMaker = document.getElementById('lessonMaker')
         var previousPolls = document.getElementById('previousPolls')
+
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid)
             socket.emit('cpupdate')
@@ -170,37 +175,38 @@
             lessonMaker.style.display = 'block'
             previousPolls.style.display = 'none'
         }
-//displays the previos polls page
-        function displayPreviousPolls(){
+
+        //displays the previos polls page
+        function displayPreviousPolls() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
             helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
             previousPolls.style.display = 'block'
         }
-//makes the previous polls page
-        function buildPreviousPolls(data){
-            previousPolls.innerHTML = '' 
+        //makes the previous polls page
+        function buildPreviousPolls(data) {
+            previousPolls.innerHTML = ''
             for (let i = data.length - 1; i >= 0; i--) {
                 previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})">${data[i].date}</button>` + '</br>'
             }
 
         }
-        function displayPoll(data){
-            console.log(data);
+        function displayPoll(data) {
+            console.log(data)
             socket.emit('previousPollDisplay', data)
         }
-        socket.on('previousPollData', function(data){
-          previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
+        socket.on('previousPollData', function (data) {
+            previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
 
-          for (let i = 0; i < data.names.length; i++) {
-             previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
-              previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
-             previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
-             
-             
+            for (let i = 0; i < data.names.length; i++) {
+                previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
+                previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
+                previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
+
+
             }
-            previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>` 
+            previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>`
         })
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
@@ -246,29 +252,34 @@
         function buildStudent(room, student) {
             var newStudent = ''
             newStudent += `<p>${student}</p>`
-            newStudent += `<select name="permSwitch" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
-            if (room.students[student].permissions == 0) {
+            let studentData = room.students[student]
+            if (studentData.pollTextRes)
+                newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
+            if (studentData.pollRes)
+                newStudent += `<p>Poll: ${studentData.pollRes}</p>`
+            newStudent += `<select name="permSwitch" class="quickButton" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
+            if (studentData.permissions == 0) {
                 newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
                         <option value="2">Student</option>
                         <option value="3">Guest</option>
                     `
-            } else if (room.students[student].permissions == 1) {
+            } else if (studentData.permissions == 1) {
                 newStudent += `
                         <option value="0">Teacher</option>
                         <option value="1" selected>Bot</option>
                         <option value="2">Student</option>
                         <option value="3">Guest</option>
                     `
-            } else if (room.students[student].permissions == 2) {
+            } else if (studentData.permissions == 2) {
                 newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
                         <option value="2" selected>Student</option>
                         <option value="3">Guest</option>
                     `
-            } else if (room.students[student].permissions == 3) {
+            } else if (studentData.permissions == 3) {
                 newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
@@ -276,9 +287,39 @@
                         <option value="3" selected>Guest</option>
                     `
             }
-            newStudent += `</select>
-                <button id="deleteUser" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
+            newStudent += '</select>'
+            newStudent += `<button id="deleteUser" class="quickButton" data-userid="${student}"  onclick="deleteUser(this)">Delete User</button>`
             return newStudent
+        }
+
+        function filterSortChange() {
+            permChangeList.innerHTML = ''
+            let newStudent = ''
+            let newRoom = JSON.parse(JSON.stringify(allRoom))
+            //filter by help
+            if (helpFilter.checked) {
+                for (let [username, student] of Object.entries(newRoom.students)) {
+                    if (student.help) {
+                        delete newRoom.students[username]
+                    }
+                }
+                //filter by poll
+            } else if (pollFilter.checked) {
+                for (let [username, student] of Object.entries(newRoom.students)) {
+                    if (!student.pollRes && !student.pollTextRes) {
+                        delete newRoom.students[username]
+                    }
+                }
+            }
+            //sort by permissions
+            if (permSort.checked) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
+            }
+            for (const student of Object.keys(newRoom.students)) {
+                newStudent += buildStudent(newRoom, student)
+            }
+            permChangeList.innerHTML += newStudent
+
         }
 
         function sortPerm() {
@@ -381,32 +422,37 @@
                 permChangeKey.innerHTML = ''
                 permChangeList.innerHTML = ''
                 permChangeKey.innerHTML += `<h2>Your class code is ${room.key}</h2>`
-                var newStudent = '';
+                var newStudent = ''
                 for (const student of Object.keys(room.students)) {
+                    let studentData = room.students[student]
                     newStudent += `<p>${student}</p>`
+                    if (studentData.pollTextRes)
+                        newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
+                    if (studentData.pollRes)
+                        newStudent += `<p>Poll: ${studentData.pollRes}</p>`
                     newStudent += `<select name="permSwitch" id="permSwitch" class="quickButton" data-userid="${student}" onchange="updatePerms(this);"> `
-                    if (room.students[student].permissions == 0) {
+                    if (studentData.permissions == 0) {
                         newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
                         <option value="2">Student</option>
                         <option value="3">Guest</option>
                     `
-                    } else if (room.students[student].permissions == 1) {
+                    } else if (studentData.permissions == 1) {
                         newStudent += `
                         <option value="0">Teacher</option>
                         <option value="1" selected>Bot</option>
                         <option value="2">Student</option>
                         <option value="3">Guest</option>
                     `
-                    } else if (room.students[student].permissions == 2) {
+                    } else if (studentData.permissions == 2) {
                         newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
                         <option value="2" selected>Student</option>
                         <option value="3">Guest</option>
                     `
-                    } else if (room.students[student].permissions == 3) {
+                    } else if (studentData.permissions == 3) {
                         newStudent += `
                         <option value="0" selected>Teacher</option>
                         <option value="1">Bot</option>
@@ -414,8 +460,8 @@
                         <option value="3" selected>Guest</option>
                     `
                     }
-                    newStudent += `</select>
-                <button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
+                    newStudent += '</select>'
+                    newStudent += `<button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
                 }
                 permChangeList.innerHTML += newStudent
             }
@@ -469,7 +515,6 @@
                 newHelpTicket += room.students[student].help
             }
             helpTickets.innerHTML += newHelpTicket
-
         }
 
 
@@ -485,7 +530,7 @@
         socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
             let permissionsChanged = false
-           buildPreviousPolls(JSON.parse(pollHistory))
+            buildPreviousPolls(JSON.parse(pollHistory))
             if (allRoom == '') permissionsChanged = true
             else {
                 //loop through all users
