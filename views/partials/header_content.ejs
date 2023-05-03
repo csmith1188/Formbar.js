@@ -56,7 +56,8 @@
         margin-bottom: 16px;
     }
     #content,
-    .quickButton {
+    .quickButton,
+    #indexContent {
       border-style: solid;
       border-width: 2px;
       margin: auto;
@@ -71,13 +72,22 @@
       overflow: auto;
       position: relative;
       text-align: center;
+      background-color: #eff3d8;
     }
     .quickButton {
       display: inline-block;
       margin: 0 4px;
       padding: 5px;
       border-radius: 8.75px;
+      background-color: #d6ead4;
+      color: #00738c;
     }
+
+    .quickButton:hover {
+      background-color: #00738c;
+      color: #d6ead4;
+    }
+
     .classic #content,
     .classic .quickButton {
       border-color: var(--light-blue);
@@ -86,14 +96,12 @@
       position: absolute;
       top: 50%;
       left: 50%;
+      background-color: #d6ead4;
+      color: #00738c;
     }
     #nowPlaying {
       text-align: center;
-    }
-    #allMusic {
-      position: absolute;
-      top: 50%;
-      left: 50%;
+      color: #00738c;
     }
     #permChanges {
       text-align: center;
@@ -131,6 +139,56 @@
       display: flex;
       justify-content: space-around;
       user-select: none;
+    }
+
+    #colorContent {
+      background-color: #eff3d8;
+    }
+
+    #permChanges {
+      color: #00738c;
+    }
+
+    #headerText {
+      color: #00738c;
+    }
+
+    #pollForm {
+      color: #00738c;
+    }
+
+    #endPoll {
+      position: absolute;
+      left: 48%;
+    }
+
+    #filterBoxes {
+      color: #00738c;
+    }
+
+    .textColorContent {
+      color: #00738c;
+    }
+
+    #indexContent {
+      /* width: fit-content; */
+      /* max-width: 600px; */
+      width: 600px;
+      padding: 10px;
+      border-radius: 10px;
+      overflow: auto;
+      position: relative;
+      text-align: center;
+      background-color: #eff3d8;
+    }
+
+    #indexContent .quickButton {
+      width: 95%;
+    }
+
+    #indexContent .quickButton:hover {
+      background-color: #00738c;
+      color: #d6ead4;
     }
   </style>
 

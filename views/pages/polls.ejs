@@ -3,12 +3,13 @@
 <%- include('../partials/header_content') %>
 
 <body onload="load(<%-pollStatus%>, <%-posTextRes%>)" id="content">
-    <%-pollPrompt%>
-    <h1 id="noPoll">No Poll Is Active Currently</h1>
+    <h1 id="headerText"><%-pollPrompt%></h1>
+    <h1 id="noPoll" class="textColorContent">No Poll Is Active Currently</h1>
     <div id="poll">
     <form id="pollForm">
         
     </form>
+    <br>
     <button onclick="submitPoll()" class="quickButton">Submit</button>
 </div>
 </body>

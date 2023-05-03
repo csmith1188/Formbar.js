@@ -12,7 +12,7 @@
         let quizForm = document.getElementById('quizForm')
         
         for (let i = 0; i < quiz.questions.length; i++) {
-            quizForm.innerHTML += `</br><br><b>${quiz.questions[i][0]}</b>`
+            quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
             correctAnswerIndex.push(quiz.questions[i][1])
             for (let u = 2; u < quiz.questions[i].length; u++) {
                 console.log(u - 1);
