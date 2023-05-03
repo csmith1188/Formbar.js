@@ -22,10 +22,12 @@
             </div>
             <form onchange="filterSortChange(event)">
                 <div id="permFilterBoxes">
-                    <input type="radio" name="filter" id="helpFilter">
+                    <input type="checkbox" name="helpFilter" id="helpFilter">
                     <label for="helpFilter">Filter by Help</label>
-                    <input type="radio" name="filter" id="pollFilter">
+                    <input type="radio" name="pollFilter" id="pollFilter">
                     <label for="helpFilter">Filter by Polls</label>
+                    <input type="radio" name="pollFilter" id="missingPollFilter">
+                    <label for="missingPollFilter">Filter by Missing Polls</label>
                 </div>
                 <div id="permSortBoxes">
                     <input type="radio" name="sort" id="permSort">
@@ -105,6 +107,7 @@
         var permFilterBoxes = document.getElementById('permFilterBoxes')
         var helpTickets = document.getElementById('helpTickets')
         var pollFilter = document.getElementById('pollFilter')
+        var missingPollFilter = document.getElementById('missingPollFilter')
         var lettFilter = document.getElementById('lettFilter')
         var textFilter = document.getElementById('textFilter')
         var permSort = document.getElementById('permSort')
@@ -226,8 +229,6 @@
             socket.emit('reload') // Reloads the users page
         }
 
-
-
         function namePollFunc() {
             pollAnsForm.style.display = 'block'
             pollAnsForm.innerHTML = ''
@@ -298,15 +299,23 @@
             let newRoom = JSON.parse(JSON.stringify(allRoom))
             //filter by help
             if (helpFilter.checked) {
+                console.log('hi')
                 for (let [username, student] of Object.entries(newRoom.students)) {
-                    if (student.help) {
+                    if (!student.help) {
                         delete newRoom.students[username]
                     }
                 }
-                //filter by poll
-            } else if (pollFilter.checked) {
+            }
+            //filter by poll
+            if (pollFilter.checked) {
                 for (let [username, student] of Object.entries(newRoom.students)) {
                     if (!student.pollRes && !student.pollTextRes) {
+                        delete newRoom.students[username]
+                    }
+                }
+            } else if (missingPollFilter.checked) {
+                for (let [username, student] of Object.entries(newRoom.students)) {
+                    if (student.pollRes && student.pollTextRes) {
                         delete newRoom.students[username]
                     }
                 }
