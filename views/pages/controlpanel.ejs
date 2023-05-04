@@ -555,6 +555,14 @@
 
         for (let sortElement of document.getElementsByClassName('sort')) {
             sortElement.onclick = () => {
+                for (let sortType of Object.keys(sort)) {
+                    if (sortType != sortElement.id) {
+                        sort[sortType] = 0
+                        let otherSortElements = document.querySelector('.sort#' + sortType)
+                        if (otherSortElements)
+                            otherSortElements.innerText = sortState[sortType][sort[sortType]]
+                    }
+                }
                 sort[sortElement.id] += 1
                 if (sort[sortElement.id] > 2) {
                     sort[sortElement.id] = 0
