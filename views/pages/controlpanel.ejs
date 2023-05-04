@@ -339,7 +339,7 @@
                 }
             } else if (filter.polls == 2) {
                 for (let [username, student] of Object.entries(newRoom.students)) {
-                    if (student.pollRes && student.pollTextRes) {
+                    if (student.pollRes || student.pollTextRes) {
                         delete newRoom.students[username]
                     }
                 }
