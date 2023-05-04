@@ -10,9 +10,8 @@
 
     <body onload="load(<%-pollStatus%>)">
         <header id="quickMenu">
-            <button id="permissions" class="quickButton" onclick="toPermissions()">Permissions</button>
-            <button id="polls" class="quickButton" onclick="toPolls()">Polls</button>
-            <button id="help" class="quickButton" onclick="toHelp()">Help Tickets</button>
+            <button id="users" class="quickButton" onclick="toUsers()">Users</button>
+            <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
             <button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
         </header>
 
@@ -31,7 +30,7 @@
                 <button type="button" id="name" class="sort">Name</button>
                 <button type="button" id="polls" class="sort">Polls</button>
                 <button type="button" id="helpTime" class="">Help Time</button>
-                <button type="button" id="permissions" class="sort">Permissions</button>
+                <button type="button" id="users" class="sort">Users</button>
             </div>
             <div id="permChangeList">
 
@@ -57,25 +56,9 @@
             </form>
             <button id="endPoll" onclick="endPollFunc()" hidden>End Poll</button>
             <br>
-            <div id="filterBoxes">
-                <form>
-                    <input type="checkbox" id="pollFilter" onclick="filterResponses()">
-                    <label for="pollFilter">Filter by Poll</label>
-                    <input type="checkbox" id="lettFilter" onclick="filterResponses()">
-                    <label for="lettFilter">Filter by Letter Response</label>
-                    <input type="checkbox" id="textFilter" onclick="filterResponses()">
-                    <label for="textFilter">Filter by Text Response</label>
-                </form>
-            </div>
             <button type="button" onclick="displayPreviousPolls()">View Previous Polls</button>
-            <div id="responses">
-
-            </div>
         </div>
         <div id="previousPolls">
-
-        </div>
-        <div id="helpTickets">
 
         </div>
         <div id="lessonMaker">
@@ -153,16 +136,13 @@
         var permChangeKey = document.getElementById('permChangeKey')
         var permChangeList = document.getElementById('permChangeList')
         var pollChanges = document.getElementById('pollChanges')
-        var responses = document.getElementById('responses')
         var startPoll = document.getElementById('startPoll')
         var resNumber = document.getElementById('resNumber')
         var resTextBox = document.getElementById('resTextBox')
         var endPoll = document.getElementById('endPoll')
         var startPollForm = document.getElementById('startPollForm')
         var pollPrompt = document.getElementById('pollBox')
-        var filterBoxes = document.getElementById('filterBoxes')
         var permFilterBoxes = document.getElementById('permFilterBoxes')
-        var helpTickets = document.getElementById('helpTickets')
         var pollFilter = document.getElementById('pollFilter')
         var missingPollFilter = document.getElementById('missingPollFilter')
         var lettFilter = document.getElementById('lettFilter')
@@ -184,21 +164,16 @@
         function load(pollStatus) {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
-            helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
             previousPolls.style.display = 'none'
             if (pollStatus) {
                 startPollForm.style.display = 'none'
                 endPoll.style.display = 'block'
-                responses.style.display = 'block'
-                filterBoxes.style.display = 'block'
                 lessonMaker.style.display = 'none'
                 previousPolls.style.display = 'none'
             } else {
                 startPollForm.style.display = 'block'
                 endPoll.style.display = 'none'
-                responses.style.display = 'none'
-                filterBoxes.style.display = 'none'
                 previousPolls.style.display = 'none'
                 lessonMaker.style.display = 'none'
             }
@@ -207,23 +182,13 @@
         function toPolls() {
             pollChanges.style.display = 'block'
             permChanges.style.display = 'none'
-            helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
             previousPolls.style.display = 'none'
         }
         // Changes to the permission change section of the page
-        function toPermissions() {
+        function toUsers() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'block'
-            helpTickets.style.display = 'none'
-            lessonMaker.style.display = 'none'
-            previousPolls.style.display = 'none'
-        }
-
-        function toHelp() {
-            pollChanges.style.display = 'none'
-            permChanges.style.display = 'none'
-            helpTickets.style.display = 'block'
             lessonMaker.style.display = 'none'
             previousPolls.style.display = 'none'
         }
@@ -231,7 +196,6 @@
         function toLesson() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
-            helpTickets.style.display = 'none'
             lessonMaker.style.display = 'block'
             previousPolls.style.display = 'none'
         }
@@ -240,7 +204,6 @@
         function displayPreviousPolls() {
             pollChanges.style.display = 'none'
             permChanges.style.display = 'none'
-            helpTickets.style.display = 'none'
             lessonMaker.style.display = 'none'
             previousPolls.style.display = 'block'
         }
@@ -281,8 +244,6 @@
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
             permChanges.style.display = 'none'
-            responses.style.display = 'block'
-            filterBoxes.style.display = 'block'
             socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues)
             socket.emit('reload') // Reloads the users page
         }
@@ -304,8 +265,6 @@
             socket.emit('reload')
             startPollForm.style.display = 'block'
             endPoll.style.display = 'none'
-            responses.style.display = 'none'
-            filterBoxes.style.display = 'none'
         }
 
         function buildStudent(room, student) {
@@ -393,8 +352,6 @@
             }
             //sort by help time
             //sort by poll
-            console.log(newRoom.students)
-            console.log('b' > 'a')
             if (sort.polls == 1) {
                 newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
                     objectA = entireA[1]
@@ -437,102 +394,11 @@
             permChangeList.innerHTML += newStudent
         }
 
-        function filterResponses() {
-            if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
-                responses.innerHTML = ''
-                responses.innerHTML += '<h2>Responses</h2>'
-                var newResponse = ''
-                for (const student of Object.keys(allRoom.students)) {
-
-                    let lettRes
-                    let textRes
-                    if (allRoom.students[student].pollRes) {
-                        lettRes = allRoom.students[student].pollRes.toUpperCase()
-                    } else {
-                        lettRes = "No Response"
-                    }
-                    if (allRoom.students[student].pollTextRes) {
-                        textRes = allRoom.students[student].pollTextRes
-                    } else {
-                        textRes = "No Response"
-                    }
-                    if (pollFilter.checked) {
-                        if (lettRes != "No Response" || textRes != "No Response") {
-                            newResponse += `<h3>${student}</h3>
-                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
-                        }
-                    } else if (lettFilter.checked) {
-                        if (lettRes != "No Response") {
-                            newResponse += `<h3>${student}</h3>
-                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
-                        }
-                    } else if (textFilter.checked) {
-                        if (textRes != "No Response") {
-                            newResponse += `<h3>${student}</h3>
-                        <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
-                        }
-                    }
-                }
-                responses.innerHTML += newResponse
-            } else {
-                responsesFunc(allRoom)
-            }
-        }
         // Used to change permission of user in there class
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value)
             socket.emit('cpupdate')
-        }
-
-        function responsesFunc(room) {
-            if (pollFilter.checked || lettFilter.checked || textFilter.checked) {
-                filterResponses()
-            } else {
-                if (room.pollStatus) {
-                    startPollForm.style.display = 'none'
-                    endPoll.style.display = 'block'
-                    responses.style.display = 'block'
-                    filterBoxes.style.display = 'block'
-                    lessonMaker.style.display = 'none'
-                } else {
-                    startPollForm.style.display = 'block'
-                    endPoll.style.display = 'none'
-                    responses.style.display = 'none'
-                    filterBoxes.style.display = 'none'
-                    lessonMaker.style.display = 'none'
-                }
-                responses.innerHTML = ''
-                responses.innerHTML += '<h2>Responses</h2>'
-                var newResponse = ''
-                for (const student of Object.keys(room.students)) {
-                    let lettRes
-                    let textRes
-                    if (room.students[student].pollRes) {
-                        lettRes = room.students[student].pollRes.toUpperCase()
-                    } else {
-                        lettRes = "No Response"
-                    }
-                    if (room.students[student].pollTextRes) {
-                        textRes = room.students[student].pollTextRes
-                    } else {
-                        textRes = "No Response"
-                    }
-                    newResponse += `<h3>${student}</h3>
-                <p><b>Letter Response:</b> ${lettRes} &emsp; <b>Text Response:</b> ${textRes}</p>`
-                }
-                responses.innerHTML += newResponse
-            }
-        }
-
-        function helpTicketsFunc(room) {
-            helpTickets.innerHTML = ''
-            helpTickets.innerHTML += '<h2>Help Tickets</h2>'
-            var newHelpTicket = ''
-            for (const student of Object.keys(room.students)) {
-                newHelpTicket += room.students[student].help
-            }
-            helpTickets.innerHTML += newHelpTicket
         }
 
         function makeLesson() {
@@ -593,8 +459,6 @@
             allRoom = room
 
             if (permissionsChanged) filterSortChange()
-            responsesFunc(room)
-            helpTicketsFunc(room)
         })
     </script>
     <%- include('../partials/footer_content') %>
