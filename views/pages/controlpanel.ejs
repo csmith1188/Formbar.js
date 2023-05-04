@@ -442,23 +442,9 @@
         socket.emit('cpupdate')
         socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
-            let permissionsChanged = false
             buildPreviousPolls(JSON.parse(pollHistory))
-            if (allRoom == '') permissionsChanged = true
-            else {
-                //loop through all users
-                for (const index of Object.keys(allRoom.students)) {
-                    oldStudent = allRoom.students[index]
-                    newStudent = room.students[index]
-                    //if the students permissions changed reload all permissions
-                    if (oldStudent.permissions != newStudent.permissions)
-                        permissionsChanged = true
-                }
-            }
-
             allRoom = room
-
-            if (permissionsChanged) filterSortChange()
+            filterSortChange()
         })
     </script>
     <%- include('../partials/footer_content') %>
