@@ -20,20 +20,19 @@
             <div id="permChangeKey">
 
             </div>
-            <form onchange="filterSortChange(event)">
-                <div id="permFilterBoxes">
-                    <input type="checkbox" name="helpFilter" id="helpFilter">
-                    <label for="helpFilter">Filter by Help</label>
-                    <input type="radio" name="pollFilter" id="pollFilter">
-                    <label for="helpFilter">Filter by Polls</label>
-                    <input type="radio" name="pollFilter" id="missingPollFilter">
-                    <label for="missingPollFilter">Filter by Missing Polls</label>
-                </div>
-                <div id="permSortBoxes">
-                    <input type="radio" name="sort" id="permSort">
-                    <label for="permSort" id="permSortLabel">Sort by Permissions 🡅</label>
-                </div>
-            </form>
+            <div id="permFilterBoxes">
+                Filter:
+                <button type="button" id="help" class="filter">Help</button>
+                <button type="button" id="break" class="">Break</button>
+                <button type="button" id="polls" class="filter">Polls</button>
+            </div>
+            <div id="permSortBoxes">
+                Sort:
+                <button type="button" id="name" class="sort">Name</button>
+                <button type="button" id="polls" class="sort">Polls</button>
+                <button type="button" id="helpTime" class="">Help Time</button>
+                <button type="button" id="permissions" class="sort">Permissions</button>
+            </div>
             <div id="permChangeList">
 
             </div>
@@ -92,6 +91,64 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io()
+
+        //0 = off
+        //1 = only
+        //2 = except
+        filter = {
+            help: 0,
+            polls: 0
+        }
+        //0 = off
+        //1 = descending
+        //2 = ascending
+        sort = {
+            name: 0,
+            polls: 0,
+            helpTime: 0,
+            permissions: 0
+        }
+
+        filterState = {
+            help: [
+                'Help tickets',
+                'Help tickets in',
+                'Not help tickets'
+            ],
+            break: [
+                'Break',
+                'Taking a break',
+                'Not taking a break'
+            ],
+            polls: [
+                'Polls',
+                'Responded to poll',
+                'Did not responded to poll',
+            ]
+        }
+        sortState = {
+            name: [
+                'Name',
+                'Name 🡇',
+                'Name 🡅'
+            ],
+            polls: [
+                'Poll',
+                'Poll 🡇',
+                'Poll 🡅'
+            ],
+            helpTime: [
+                'Help time',
+                'Help time 🡇',
+                'Help time 🡅'
+            ],
+            permissions: [
+                'Permissions',
+                'Permissions 🡇',
+                'Permissions 🡅'
+            ]
+        }
+
         var permChanges = document.getElementById('permChanges')
         var permChangeKey = document.getElementById('permChangeKey')
         var permChangeList = document.getElementById('permChangeList')
@@ -195,6 +252,7 @@
             }
 
         }
+
         function displayPoll(data) {
             console.log(data)
             socket.emit('previousPollDisplay', data)
@@ -254,6 +312,8 @@
             var newStudent = ''
             newStudent += `<p>${student}</p>`
             let studentData = room.students[student]
+            if (studentData.help)
+                newStudent += `<p>${studentData.help}</p>`
             if (studentData.pollTextRes)
                 newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
             if (studentData.pollRes)
@@ -298,82 +358,83 @@
             let newStudent = ''
             let newRoom = JSON.parse(JSON.stringify(allRoom))
             //filter by help
-            if (helpFilter.checked) {
-                console.log('hi')
+            if (filter.help == 1) {
                 for (let [username, student] of Object.entries(newRoom.students)) {
                     if (!student.help) {
                         delete newRoom.students[username]
                     }
                 }
+            } else if (filter.help == 2) {
+                for (let [username, student] of Object.entries(newRoom.students)) {
+                    if (student.help) {
+                        delete newRoom.students[username]
+                    }
+                }
             }
             //filter by poll
-            if (pollFilter.checked) {
+            if (filter.polls == 1) {
                 for (let [username, student] of Object.entries(newRoom.students)) {
                     if (!student.pollRes && !student.pollTextRes) {
                         delete newRoom.students[username]
                     }
                 }
-            } else if (missingPollFilter.checked) {
+            } else if (filter.polls == 2) {
                 for (let [username, student] of Object.entries(newRoom.students)) {
                     if (student.pollRes && student.pollTextRes) {
                         delete newRoom.students[username]
                     }
                 }
             }
+            //sort by name
+            if (sort.name == 1) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort())
+            } else if (sort.name == 2) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort().reverse())
+            }
+            //sort by help time
+            //sort by poll
+            console.log(newRoom.students)
+            console.log('b' > 'a')
+            if (sort.polls == 1) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
+                    objectA = entireA[1]
+                    objectB = entireB[1]
+                    if (objectA.pollTextRes && objectB.pollTextRes) {
+                        return objectA.pollTextRes.localeCompare(objectB.pollTextRes)
+                    } else if (objectA.pollTextRes) return -1
+                    else if (objectB.pollTextRes) return 1
+                    if (objectA.pollRes && objectB.pollRes) {
+                        return objectA.pollRes.localeCompare(objectB.pollRes)
+                    } else if (objectA.pollRes) return -1
+                    else if (objectB.pollRes) return 1
+                    else return objectA.username.localeCompare(objectB.username)
+                }))
+            } else if (sort.polls == 2) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
+                    objectA = entireA[1]
+                    objectB = entireB[1]
+                    if (objectA.pollTextRes && objectB.pollTextRes) {
+                        return objectB.pollTextRes.localeCompare(objectA.pollTextRes)
+                    } else if (objectA.pollTextRes) return 1
+                    else if (objectB.pollTextRes) return -1
+                    if (objectA.pollRes && objectB.pollRes) {
+                        return objectB.pollRes.localeCompare(objectA.pollRes)
+                    } else if (objectA.pollRes) return 1
+                    else if (objectB.pollRes) return -1
+                    else return objectB.username.localeCompare(objectA.username)
+                }))
+            }
             //sort by permissions
-            if (permSort.checked) {
+            if (sort.permissions == 1) {
+                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
+            } else if (sort.permissions == 2) {
                 newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
             }
+
             for (const student of Object.keys(newRoom.students)) {
                 newStudent += buildStudent(newRoom, student)
             }
             permChangeList.innerHTML += newStudent
-
-        }
-
-        function sortPerm() {
-            permChangeList.innerHTML = ''
-            var newStudent = ''
-            if (permSort.checked) {
-                permSortLabel.innerHTML = 'Sort by Permissions 🡇'
-                let newRoom = allRoom
-                newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
-                if (helpFilter.checked) filterPerm()
-                else {
-                    for (const student of Object.keys(newRoom.students)) {
-                        newStudent += buildStudent(newRoom, student)
-                    }
-                }
-            } else {
-                permSortLabel.innerHTML = 'Sort by Permissions 🡅'
-                let newRoom = allRoom
-                newRoom.students = Object.fromEntries(Object.entries(allRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
-                if (helpFilter.checked) filterPerm()
-                else {
-                    for (const student of Object.keys(newRoom.students)) {
-                        newStudent += buildStudent(newRoom, student)
-                    }
-                }
-            }
-            permChangeList.innerHTML += newStudent
-        }
-
-        function filterPerm() {
-            if (helpFilter.checked) {
-                permChangeList.innerHTML = ''
-                var newStudent = ''
-                if (helpFilter.checked) {
-                    for (const student of Object.keys(allRoom.students)) {
-                        if (allRoom.students[student].help) {
-                            newStudent += buildStudent(allRoom, student)
-                        }
-                    }
-                }
-
-                permChangeList.innerHTML += newStudent
-            } else {
-                permChangeFunc(allRoom)
-            }
         }
 
         function filterResponses() {
@@ -422,58 +483,6 @@
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value)
             socket.emit('cpupdate')
-        }
-
-        function permChangeFunc(room) {
-            if (helpFilter.checked) {
-                filterPerm()
-            } else {
-                permChangeKey.innerHTML = ''
-                permChangeList.innerHTML = ''
-                permChangeKey.innerHTML += `<h2>Your class code is ${room.key}</h2>`
-                var newStudent = ''
-                for (const student of Object.keys(room.students)) {
-                    let studentData = room.students[student]
-                    newStudent += `<p>${student}</p>`
-                    if (studentData.pollTextRes)
-                        newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
-                    if (studentData.pollRes)
-                        newStudent += `<p>Poll: ${studentData.pollRes}</p>`
-                    newStudent += `<select name="permSwitch" id="permSwitch" class="quickButton" data-userid="${student}" onchange="updatePerms(this);"> `
-                    if (studentData.permissions == 0) {
-                        newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3">Guest</option>
-                    `
-                    } else if (studentData.permissions == 1) {
-                        newStudent += `
-                        <option value="0">Teacher</option>
-                        <option value="1" selected>Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3">Guest</option>
-                    `
-                    } else if (studentData.permissions == 2) {
-                        newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2" selected>Student</option>
-                        <option value="3">Guest</option>
-                    `
-                    } else if (studentData.permissions == 3) {
-                        newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3" selected>Guest</option>
-                    `
-                    }
-                    newStudent += '</select>'
-                    newStudent += `<button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
-                }
-                permChangeList.innerHTML += newStudent
-            }
         }
 
         function responsesFunc(room) {
@@ -526,12 +535,33 @@
             helpTickets.innerHTML += newHelpTicket
         }
 
-
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
             let dueAssigns = document.getElementById('dueAssigns')
             socket.emit('lessonStart', learningObj.value)
             alert('Lesson Created')
+        }
+
+        for (let filterElement of document.getElementsByClassName('filter')) {
+            filterElement.onclick = () => {
+                filter[filterElement.id] += 1
+                if (filter[filterElement.id] > 2) {
+                    filter[filterElement.id] = 0
+                }
+                filterElement.innerText = filterState[filterElement.id][filter[filterElement.id]]
+                filterSortChange()
+            }
+        }
+
+        for (let sortElement of document.getElementsByClassName('sort')) {
+            sortElement.onclick = () => {
+                sort[sortElement.id] += 1
+                if (sort[sortElement.id] > 2) {
+                    sort[sortElement.id] = 0
+                }
+                sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
+                filterSortChange()
+            }
         }
 
         var allRoom = ""
@@ -554,7 +584,7 @@
 
             allRoom = room
 
-            if (permissionsChanged) permChangeFunc(room)
+            if (permissionsChanged) filterSortChange()
             responsesFunc(room)
             helpTicketsFunc(room)
         })
