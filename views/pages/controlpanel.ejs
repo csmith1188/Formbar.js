@@ -77,6 +77,7 @@
             <form method="post" enctype="multipart/form-data">
                 <input name="spreadsheet" type="file">
                 <input type="submit">
+                <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
             </form>
 
         </div>
@@ -371,7 +372,7 @@
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value)
-            socket.emit('cpupdate')
+            location.reload(); 
         }
 
         function permChangeFunc(room) {
@@ -471,7 +472,11 @@
             helpTickets.innerHTML += newHelpTicket
 
         }
-
+        function doStep(id){
+            alert('Step ' + id + ' activated')
+            socket.emit('doStep', id)
+            socket.emit('cpupdate')
+}
 
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
