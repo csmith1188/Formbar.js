@@ -1044,9 +1044,6 @@ io.sockets.on('connection', function (socket) {
             }
         });
 
-
-
-
     })
     socket.on('doStep', function (index) {
         cD[socket.request.session.class].currentStep++
@@ -1085,6 +1082,19 @@ io.sockets.on('connection', function (socket) {
 
             }
     })
+ socket.on('previousPollDisplay', function(pollindex){
+        db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function(err, pollData) {
+            if (err) {
+             console.error(err);
+            } else {
+             io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
+            }
+           }); 
+})
+socket.on('deleteTicket', function(student){
+    cD[socket.request.session.class].students[student].help = ''
+})
+
 });
 
 
