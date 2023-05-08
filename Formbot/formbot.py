@@ -5,15 +5,86 @@ import json
 import board, neopixel
 import math
 import pygame
+import jwt
 import bgm
 import ir
 import sfx
+import sqlite3
+from functools import wraps
+from flask import Flask, render_template, request, redirect
+
+#Setting up flask app
+app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'
+
+
+# For the formbar oauth2 service
+app.config['SECRET_KEY'] = '3866096ab1c04d3035e9017c17814ea1546fab570ef3062b338ef4e5a57e7806c7f947be2e57528fe05f6a5be61d56c27507a141aebec17e1013922a6453cdf4'
+
+students = {}
+
+#Decorator for JWT
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        print(request.args.get('token'))
+        # jwt is passed in the request header
+        if 'token' in request.args:
+            token = request.args.get('token')
+        # return 401 if token is not passed
+        if not token:
+            print("No token")
+            return "No token", 401
+  
+        try:
+            # decoding the payload to fetch the stored details
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+            user = {'username': data['username'], 'permissions': data['permissions']}
+        except:
+            print("No token")
+            return "Bad token", 401
+        # returns the current logged in users context to the routes
+        return  f(user, *args, **kwargs)
+  
+    return decorated
+
+
+def authenticate_user(f):
+    @wraps(f)
+    def decorated2(*args, **kwargs):
+        ip_addr = request.remote_addr
+        print(students)
+        if ip_addr in students:
+            print(students[ip_addr]['username'])
+            return f(students[ip_addr]['username'])
+        else:
+            return redirect('/')
+    return decorated2
+
+# Flask Endpoints
+@app.route('/')
+def login():
+    return render_template('index.html')
+
+@app.route('/oauth', methods = ["POST","GET"] )
+@token_required
+def get_all_users(user):
+    ip_addr = request.remote_addr
+    students[ip_addr] = {'username': user['username'], 'permissions': user['permissions']}
+    return redirect("/home", code=302)
+
+@app.route('/home')
+@authenticate_user
+def home(username):
+    return "Hello " + username
+
 
 
 # Adds all constants to change class and formbar address
 # Login type is either 'newbot' for first login and 'login' for anytime afterwards
 CLASSIP = "http://192.168.10.39:420"
-CLASSKEY = "m1f8"
+CLASSKEY = "bwwu"
 LOGINTYPE = "login"
 CLASSNAME = "a1"
 
@@ -318,5 +389,8 @@ def disconnect():
 
 # Allows program to stay open while waiting for websocket data to be sent
 task = sio.start_background_task(my_background_task)
+
+if __name__ == '__main__':
+   app.run(host="0.0.0.0")
 
 
