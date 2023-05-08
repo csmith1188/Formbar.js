@@ -863,7 +863,7 @@ app.post('/oauth/login', (req, res) => {
                 // Decrypt users password
                 let tempPassword = decrypt(JSON.parse(rows.password));
                 if (rows.username == user.username && tempPassword == user.password) {
-                    let token = generateAccessToken({ username: user.username })
+                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions })
                     console.log(redurl + "?token=" + token);
                     res.redirect(redurl + "?token=" + token)
                 } else {
