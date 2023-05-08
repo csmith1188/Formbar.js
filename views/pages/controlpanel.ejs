@@ -275,7 +275,7 @@
             let studentData = room.students[student]
             if (studentData.help)
                 newStudent += `<p>${studentData.help}</p>`
-                newStudent += `<button class="quickButton" data-studentName="${name}" onclick="deleteTicket(this)">Delete Ticket</button>`
+                newStudent += `<button class="quickButton" data-studentName="${student}" onclick="deleteTicket(this)">Delete Ticket</button>`
             if (studentData.pollTextRes)
                 newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
             if (studentData.pollRes)
@@ -448,7 +448,7 @@
         function doStep(id){
             alert('Step ' + id + ' activated')
             socket.emit('doStep', id)
-            socket.emit('cpupdate')
+           location.reload()
 }
 
         function makeLesson() {

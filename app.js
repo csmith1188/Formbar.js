@@ -912,7 +912,6 @@ io.use((socket, next) => {
 });
 //Handles the webscoket communications
 io.sockets.on('connection', function (socket) {
-    console.log('Connected to socket');
     if (socket.request.session.user) {
         socket.join(cD[socket.request.session.class].className);
     }
@@ -1047,12 +1046,14 @@ io.sockets.on('connection', function (socket) {
     })
     socket.on('doStep', function (index) {
         cD[socket.request.session.class].currentStep++
-        if(cD[socket.request.session.class].steps[index].type == 'poll'){
-            cD[socket.request.session.class].pollStatus = true
-            // Creates an object for every answer possible the teacher is allowing
-            for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
-                if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
-                    let letterString = "abcdefghijklmnopqrstuvwxyz"
+        if(cD[socket.request.session.class].steps[index] !== undefined){
+
+            if(cD[socket.request.session.class].steps[index].type == 'poll'){
+                cD[socket.request.session.class].pollStatus = true
+                // Creates an object for every answer possible the teacher is allowing
+                for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
+                    if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
+                        let letterString = "abcdefghijklmnopqrstuvwxyz"
                     cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
                 } else {
                     cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i];
@@ -1065,13 +1066,13 @@ io.sockets.on('connection', function (socket) {
             quiz = new Quiz(questions.length, 100)
             quiz.questions = questions
             cD[socket.request.session.class].quizObj = quiz
-
+            
         }else  if(cD[socket.request.session.class].steps[index].type == 'lesson'){
-
+            
             let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
             cD[socket.request.session.class].lesson = lesson
-    
-    
+            
+            
             db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
                 [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
                     if (err) {
@@ -1079,10 +1080,13 @@ io.sockets.on('connection', function (socket) {
                     }
                     console.log('Saved Lesson To Database');
                 })
-
+                
             }
-    })
- socket.on('previousPollDisplay', function(pollindex){
+        } else {
+            cD[socket.request.session.class].currentStep = 0
+        }
+        })
+        socket.on('previousPollDisplay', function(pollindex){
         db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function(err, pollData) {
             if (err) {
              console.error(err);
