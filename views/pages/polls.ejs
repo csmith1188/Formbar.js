@@ -68,7 +68,12 @@
 
                     // Creates all selectable answers and displays them to the user
                     for (let i = 0; i < keys.length; i++) {
-                        pollForm.innerHTML += `<input type="radio" name="poll" id="${keys[i]}" value="${keys[i]}"> <label for="${keys[i]}">${posPollRes[keys[i]]}</label>`
+                        pollForm.innerHTML += `
+                        <label class="form-control" id="pollControl">
+                            <input type="radio" name="poll" id="${keys[i]}" value="${keys[i]}">
+                            ${posPollRes[keys[i]]}
+                        </label>
+                        `
                     }
                     if (posTextRes) {
                         pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`

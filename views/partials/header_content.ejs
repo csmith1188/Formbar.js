@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%- title %></title>
+  <title>
+    <%- title %>
+  </title>
   <!-- <link rel="stylesheet" href="css/style.css"> -->
   <link rel="icon" href="">
   <style>
@@ -28,7 +30,9 @@
       background: var(--bg-darker);
       overflow: hidden;
       text-align: center;
+      margin: 0;
     }
+
     h1 {
       text-align: center;
       margin-top: 12px;
@@ -37,24 +41,36 @@
     h2 {
       margin-top: 32px;
     }
+
     a:link {
       text-decoration: none;
     }
+
     a:visited {
       text-decoration: none;
     }
+
     a:hover {
       text-decoration: none;
     }
+
     a:active {
       text-decoration: none;
     }
+
+
+
     #quickmenu {
-        text-align: center;
-        justify-content: center;
-        margin: auto;
-        margin-bottom: 16px;
+      text-align: center;
+      justify-content: center;
+      margin: auto;
+      margin-bottom: 16px;
     }
+
+    #quickmenu .quickButton {
+      width: 300px;
+    }
+
     #content,
     .quickButton,
     #indexContent {
@@ -63,6 +79,7 @@
       margin: auto;
       background-color: var(--bg-color);
     }
+
     #content {
       /* width: fit-content; */
       /* max-width: 600px; */
@@ -74,6 +91,7 @@
       text-align: center;
       background-color: #eff3d8;
     }
+
     .quickButton {
       display: inline-block;
       margin: 0 4px;
@@ -92,6 +110,7 @@
     .classic .quickButton {
       border-color: var(--light-blue);
     }
+
     #playStop .quickButton {
       position: absolute;
       top: 50%;
@@ -99,13 +118,16 @@
       background-color: #d6ead4;
       color: #00738c;
     }
+
     #nowPlaying {
       text-align: center;
       color: #00738c;
     }
+
     #permChanges {
       text-align: center;
     }
+
     #forgotPassword {
       display: block;
       margin: auto;
@@ -113,9 +135,11 @@
       width: 256px;
       text-align: left;
     }
+
     #noPoll {
       text-align: center;
     }
+
     #virtualBar {
       width: calc(100% - 32px);
     }
@@ -153,10 +177,6 @@
       color: #00738c;
     }
 
-    #pollForm {
-      color: #00738c;
-    }
-
     #endPoll {
       position: absolute;
       left: 48%;
@@ -189,6 +209,78 @@
     #indexContent .quickButton:hover {
       background-color: #00738c;
       color: #d6ead4;
+    }
+
+    :root {
+      --form-control-color: #00738c;
+    }
+
+    *,
+    *:before,
+    *:after {
+      box-sizing: border-box;
+    }
+
+/* Custom radio button code */
+
+    #pollControl {
+      display: grid;
+      place-content: center;
+      min-height: 20px;
+    }
+
+    .form-control {
+      font-family: system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      line-height: 1.1;
+      display: grid;
+      grid-template-columns: 1em auto;
+      gap: 0.5em;
+    }
+
+    .form-control+.form-control {
+      margin-top: 1em;
+    }
+
+    .form-control:focus-within {
+      color: var(--form-control-color);
+    }
+
+    input[type="radio"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background-color: var(--form-background);
+      margin: 0;
+      font: inherit;
+      color: currentColor;
+      width: 1.15em;
+      height: 1.15em;
+      border: 0.15em solid currentColor;
+      border-radius: 50%;
+      transform: translateY(-0.075em);
+      display: grid;
+      place-content: center;
+    }
+
+    input[type="radio"]::before {
+      content: "";
+      width: 0.65em;
+      height: 0.65em;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: 120ms transform ease-in-out;
+      box-shadow: inset 1em 1em var(--form-control-color);
+      background-color: CanvasText;
+    }
+
+    input[type="radio"]:checked::before {
+      transform: scale(1);
+    }
+
+    input[type="radio"]:focus {
+      outline: max(2px, 0.15em) solid currentColor;
+      outline-offset: max(2px, 0.15em);
     }
   </style>
 
