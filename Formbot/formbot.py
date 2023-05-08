@@ -26,11 +26,12 @@ students = {}
 #Decorator for JWT
 def token_required(f):
     @wraps(f)
-    def decorated(*args, **kwargsl):
+    def decorated(*args, **kwargs):
         token = None
+        print(request.args.get('token'))
         # jwt is passed in the request header
-        if 'authorization' in request.headers:
-            token = request.headers['authorization']
+        if 'token' in request.args:
+            token = request.args.get('token')
         # return 401 if token is not passed
         if not token:
             print("No token")
@@ -53,9 +54,10 @@ def authenticate_user(f):
     @wraps(f)
     def decorated2(*args, **kwargs):
         ip_addr = request.remote_addr
+        print(students)
         if ip_addr in students:
-            print(ip_addr.username)
-            pass
+            print(students[ip_addr]['username'])
+            return f(students[ip_addr]['username'])
         else:
             return redirect('/')
     return decorated2
@@ -74,8 +76,8 @@ def get_all_users(user):
 
 @app.route('/home')
 @authenticate_user
-def home():
-    return "Hello"
+def home(username):
+    return "Hello " + username
 
 
 

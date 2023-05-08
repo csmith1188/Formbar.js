@@ -235,7 +235,7 @@ function joinClass(userName, code) {
 
 // Oauth2 Access Token Generator
 function generateAccessToken(username) {
-    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '10s' });
+    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
   }
 
 // Endpoints
@@ -876,9 +876,8 @@ app.post('/oauth/login', (req, res) => {
                 let tempPassword = decrypt(JSON.parse(rows.password));
                 if (rows.username == user.username && tempPassword == user.password) {
                     let token = generateAccessToken({ username: user.username, permissions: rows.permissions })
-                    res.set('authorization', token)
-                    // res.redirect(redurl + "?token=" + token)
-                    res.redirect(redurl)
+                    console.log(redurl + "?token=" + token);
+                    res.redirect(redurl + "?token=" + token)
                 } else {
                     res.redirect('/oauth/login?redurl=' + redurl)
                 }
