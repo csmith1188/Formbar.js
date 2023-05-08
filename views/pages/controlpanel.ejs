@@ -63,8 +63,9 @@
         </div>
         <div id="lessonMaker">
             <form method="post" enctype="multipart/form-data">
-                <input name="spreadsheet" type="file" class="quickButton">
-                <input type="submit" class="quickButton">
+                <input name="spreadsheet" type="file">
+                <input type="submit">
+                <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
             </form>
 
         </div>
@@ -400,7 +401,7 @@
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value)
-            socket.emit('cpupdate')
+            location.reload(); 
         }
 
         function makeLesson() {
@@ -444,6 +445,17 @@
             socket.emit('deleteTicket', e.dataset.studentname)
             socket.emit('cpupdate')
         }
+        function doStep(id){
+            alert('Step ' + id + ' activated')
+            socket.emit('doStep', id)
+            socket.emit('cpupdate')
+}
+
+        function makeLesson() {
+            let learningObj = document.getElementById('learningObj')
+            let dueAssigns = document.getElementById('dueAssigns')
+            socket.emit('lessonStart', learningObj.value)
+            alert('Lesson Created')
 
         }
 
