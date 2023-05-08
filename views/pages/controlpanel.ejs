@@ -15,6 +15,8 @@
             <button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
         </header>
 
+        <p id="classCode">Class Code:</p>
+
         <div id="permChanges">
             <div id="permChangeKey">
 
@@ -154,6 +156,7 @@
         var pollAnsForm = document.getElementById('pollAnsForm')
         var lessonMaker = document.getElementById('lessonMaker')
         var previousPolls = document.getElementById('previousPolls')
+        var classCode = document.getElementById('classCode')
 
         function deleteUser(e) {
             socket.emit('deleteUser', e.dataset.userid)
@@ -275,7 +278,7 @@
             let studentData = room.students[student]
             if (studentData.help)
                 newStudent += `<p>${studentData.help}</p>`
-                newStudent += `<button class="quickButton" data-studentName="${name}" onclick="deleteTicket(this)">Delete Ticket</button>`
+            newStudent += `<button class="quickButton" data-studentName="${name}" onclick="deleteTicket(this)">Delete Ticket</button>`
             if (studentData.pollTextRes)
                 newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
             if (studentData.pollRes)
@@ -401,7 +404,7 @@
         // Sends user data and desired permission level of the user
         function updatePerms(e) {
             socket.emit('permChange', e.dataset.userid, e.value)
-            location.reload(); 
+            location.reload()
         }
 
         function makeLesson() {
@@ -441,15 +444,15 @@
             }
         }
 
-        function deleteTicket(e){
+        function deleteTicket(e) {
             socket.emit('deleteTicket', e.dataset.studentname)
             socket.emit('cpupdate')
         }
-        function doStep(id){
+        function doStep(id) {
             alert('Step ' + id + ' activated')
             socket.emit('doStep', id)
             socket.emit('cpupdate')
-}
+        }
 
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
@@ -463,6 +466,7 @@
         socket.emit('cpupdate')
         socket.on('cpupdate', function (room, pollHistory) {
             room = JSON.parse(room)
+            classCode.innerText = 'Class Code: ' + room.key
             buildPreviousPolls(JSON.parse(pollHistory))
             allRoom = room
             filterSortChange()
