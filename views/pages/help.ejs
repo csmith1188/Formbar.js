@@ -15,6 +15,7 @@
     function help(){
         var reason = document.getElementById('ticket').value
         var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        alert('Help Ticket Sent')
         socket.emit('help', reason, time)
         socket.emit('cpupdate')
         socket.emit('sfxPlay', "sfx_up04")

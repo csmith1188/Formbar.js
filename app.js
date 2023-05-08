@@ -1087,12 +1087,12 @@ io.sockets.on('connection', function (socket) {
             } else {
              io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
             }
-           });
-
-
-            
-        
+           }); 
 })
+socket.on('deleteTicket', function(student){
+    cD[socket.request.session.class].students[student].help = ''
+})
+
 });
 
 

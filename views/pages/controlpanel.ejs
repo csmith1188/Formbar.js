@@ -466,12 +466,20 @@
             helpTickets.innerHTML += '<h2>Help Tickets</h2>'
             var newHelpTicket = ''
             for (const student of Object.keys(room.students)) {
+                let name = String(room.students[student].username)
                 newHelpTicket += room.students[student].help
+                helpTickets.innerHTML += newHelpTicket + '<br>'
+                if(room.students[student].help != ''){
+                    helpTickets.innerHTML += `<button class="quickButton" data-studentName="${name}" onclick="deleteTicket(this)">Delete Ticket</button>`
+                }
             }
-            helpTickets.innerHTML += newHelpTicket
 
         }
 
+        function deleteTicket(e){
+            socket.emit('deleteTicket', e.dataset.studentname)
+            socket.emit('cpupdate')
+        }
 
         function makeLesson() {
             let learningObj = document.getElementById('learningObj')
