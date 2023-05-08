@@ -8,7 +8,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
 
-    <body onload="load(<%-pollStatus%>)">
+    <body onload="load(<%-pollStatus%>)" id="colorContent">
         <header id="quickMenu">
             <button id="users" class="quickButton" onclick="toUsers()">Users</button>
             <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
@@ -38,8 +38,8 @@
 
         </div>
         <div id="pollChanges">
-            <h2>Start/End Poll</h2>
-            <form id="startPollForm" action="#">
+            <h2 id="headerText">Start/End Poll</h2>
+            <form id="startPollForm" action="#" class="textColorContent">
                 <label for="resNumber">How many possible responses?</label>
                 <input type="number" id="resNumber">
                 <label for="resTextBox">Would like to accept text responses?</label>
@@ -47,9 +47,9 @@
                 <label for="pollBox">Prompt for the poll?</label>
                 <input type="text" id="pollBox">
                 <br>
-                <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()">
+                <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()" class="quickButton">
                 <label for="changeNames">Change The Names of The Answers?</label>
-                <input type="button" value="Start Poll" onclick="startPollFunc()">
+                <input type="button" value="Start Poll" onclick="startPollFunc()" class="quickButton">
                 <br>
             </form>
             <form id="pollAnsForm">
@@ -58,13 +58,13 @@
             <br>
             <button type="button" onclick="displayPreviousPolls()">View Previous Polls</button>
         </div>
-        <div id="previousPolls">
+        <div id="previousPolls" class="textColorContent">
 
         </div>
         <div id="lessonMaker">
             <form method="post" enctype="multipart/form-data">
-                <input name="spreadsheet" type="file">
-                <input type="submit">
+                <input name="spreadsheet" type="file" class="quickButton">
+                <input type="submit" class="quickButton">
             </form>
 
         </div>
@@ -211,7 +211,7 @@
         function buildPreviousPolls(data) {
             previousPolls.innerHTML = ''
             for (let i = data.length - 1; i >= 0; i--) {
-                previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})">${data[i].date}</button>` + '</br>'
+                previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})" class="quickButton">${data[i].date}</button>` + '</br>'
             }
 
         }
@@ -231,6 +231,7 @@
 
             }
             previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>`
+
         })
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
@@ -273,6 +274,7 @@
             let studentData = room.students[student]
             if (studentData.help)
                 newStudent += `<p>${studentData.help}</p>`
+                newStudent += `<button class="quickButton" data-studentName="${name}" onclick="deleteTicket(this)">Delete Ticket</button>`
             if (studentData.pollTextRes)
                 newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
             if (studentData.pollRes)
@@ -436,6 +438,13 @@
                 sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
                 filterSortChange()
             }
+
+
+        function deleteTicket(e){
+            socket.emit('deleteTicket', e.dataset.studentname)
+            socket.emit('cpupdate')
+        }
+
         }
 
         var allRoom = ""
