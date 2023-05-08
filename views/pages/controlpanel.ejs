@@ -439,7 +439,7 @@
                 sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
                 filterSortChange()
             }
-
+        }
 
         function deleteTicket(e){
             socket.emit('deleteTicket', e.dataset.studentname)
