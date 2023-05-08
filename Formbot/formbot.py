@@ -215,6 +215,8 @@ def hex_to_rgb(hex):
   
   return tuple(rgb)
 
+
+'''
 #Wait a minute before logging in.
 time.sleep(5)
 #Send a login POST request
@@ -247,6 +249,8 @@ else:
         time.sleep(8)
         loginAttempt = attemptLogin()
         print(loginAttempt)
+
+'''
         
 # Runs function from above
 sio.connect(CLASSIP)

@@ -62,7 +62,7 @@ var cD = {
 class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
-    constructor(username, id, perms = 2) {
+    constructor(username, id, perms = 2, API) {
         this.username = username
         this.id = id;
         this.permissions = perms;
@@ -70,6 +70,7 @@ class Student {
         this.pollTextRes = '';
         this.help = '';
         this.quizScore = '';
+        this.API = API
     }
 }
 
@@ -236,8 +237,8 @@ function joinClass(userName, code) {
 }
 
 // Oauth2 Access Token Generator
-function generateAccessToken(username) {
-    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+function generateAccessToken(username, api) {
+    return jwt.sign(username, api, { expiresIn: '1800s' });
 }
 
 // Endpoints
@@ -251,6 +252,13 @@ app.get('/', isAuthenticated, (req, res) => {
 
 
 // A
+
+app.get('/apikey', isAuthenticated, (req, res) => {
+    res.render('pages/APIKEY', {
+        title: "API KEY",
+        API: cD[req.session.class].students[req.session.user].API
+    })
+})
 
 // B
 app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
@@ -549,7 +557,8 @@ app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: ''
+        redurl: '',
+        api: ''
     });
 });
 
@@ -578,7 +587,7 @@ app.post('/login', async (req, res) => {
                 let tempPassword = decrypt(JSON.parse(rows.password));
                 if (rows.username == user.username && tempPassword == user.password) {
                     // Add user to the session
-                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
+                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username;
                     if (req.body.classKey) {
@@ -608,8 +617,8 @@ app.post('/login', async (req, res) => {
 
     } else if (user.loginType == "new") {
         // Add the new user to the database 
-        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
+        db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 2, require('crypto').randomBytes(64).toString('hex')], (err) => {
                 if (err) {
                     console.log(err);
                 }
@@ -621,7 +630,7 @@ app.post('/login', async (req, res) => {
                 console.log(err);
             }
             // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API);
             // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username;
             res.redirect('/');
@@ -835,15 +844,18 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/oauth/login', (req, res) => {
     let redurl = req.query.redurl
+    let api = req.query.api
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: redurl
+        redurl: redurl, 
+        api: api
     })
 })
 
 app.post('/oauth/login', (req, res) => {
     let redurl = req.body.redurl
+    let api = req.body.api
     var user = {
         username: req.body.username,
         password: req.body.password,
@@ -863,7 +875,7 @@ app.post('/oauth/login', (req, res) => {
                 // Decrypt users password
                 let tempPassword = decrypt(JSON.parse(rows.password));
                 if (rows.username == user.username && tempPassword == user.password) {
-                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions })
+                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions }, api)
                     console.log(redurl + "?token=" + token);
                     res.redirect(redurl + "?token=" + token)
                 } else {
