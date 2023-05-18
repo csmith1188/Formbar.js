@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')
+const { time } = require('console')
 const upload = multer({ dest: 'uploads/' })
 
 // get config vars
@@ -66,6 +67,8 @@ class Student {
         this.username = username
         this.id = id
         this.permissions = perms
+        this.request = []
+        this.timeout = 0
         this.pollRes = ''
         this.pollTextRes = ''
         this.help = ''
@@ -911,13 +914,54 @@ io.use((socket, next) => {
         next(new Error("invalid"))
     }
 })
-//Handles the webscoket communications
+
+const rateLimits = {}
+
+//Handles the websocket communications
 io.sockets.on('connection', function (socket) {
     if (socket.request.session.user) {
         socket.join(cD[socket.request.session.class].className)
     }
+
+    socket.use((packet, next) => {
+        const user = socket.request.session.user
+        const now = Date.now()
+        const limit = 5
+        const timeFrame = 3000
+        const blockTime = 3000
+        const allowedRequests = ['pollResp', 'help', 'break']
+
+        if (!rateLimits[user]) {
+            rateLimits[user] = {}
+        }
+
+        const userRequests = rateLimits[user]
+
+        const requestType = packet[0]
+        if (!allowedRequests.includes(requestType)) {
+            next()
+            return
+        }
+
+        userRequests[requestType] = userRequests[requestType] || []
+
+        userRequests[requestType] = userRequests[requestType].filter((timestamp) => now - timestamp < timeFrame)
+
+        if (userRequests[requestType].length >= limit) {
+            setTimeout(() => {
+                userRequests[requestType].shift()
+                console.log('hi')
+                // next()
+            }, blockTime)
+        } else {
+            userRequests[requestType].push(now)
+            next()
+        }
+    })
+
     // /poll websockets for updating the database
     socket.on('pollResp', function (res, textRes) {
+        console.log('pollResp', res, Date.now())
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
