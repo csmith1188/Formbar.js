@@ -923,6 +923,7 @@ io.sockets.on('connection', function (socket) {
         socket.join(cD[socket.request.session.class].className)
     }
 
+    //rete limiter
     socket.use((packet, next) => {
         const user = socket.request.session.user
         const now = Date.now()
@@ -950,8 +951,6 @@ io.sockets.on('connection', function (socket) {
         if (userRequests[requestType].length >= limit) {
             setTimeout(() => {
                 userRequests[requestType].shift()
-                console.log('hi')
-                // next()
             }, blockTime)
         } else {
             userRequests[requestType].push(now)
@@ -961,7 +960,6 @@ io.sockets.on('connection', function (socket) {
 
     // /poll websockets for updating the database
     socket.on('pollResp', function (res, textRes) {
-        console.log('pollResp', res, Date.now())
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
         cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
