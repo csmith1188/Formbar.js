@@ -63,7 +63,7 @@ var cD = {
 class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
-    constructor(username, id, perms = 2) {
+    constructor(username, id, perms = 2, API) {
         this.username = username
         this.id = id
         this.permissions = perms
@@ -74,6 +74,7 @@ class Student {
         this.help = ''
         this.break = false
         this.quizScore = ''
+        this.API = API
     }
 }
 
@@ -160,6 +161,8 @@ function isAuthenticated(req, res, next) {
             next()
         }
 
+    } else if (req.session.api) {
+        next()
     } else {
         res.redirect('/login')
     }
@@ -191,11 +194,16 @@ function permCheck(req, res, next) {
             console.log(urlPath.indexOf('?'))
             urlPath = urlPath.slice(0, urlPath.indexOf('?'))
         }
-        // Checks if users permnissions are high enough
-        if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
+
+        if (req.session.api) {
             next()
         } else {
-            res.send('Not High Enough Permissions')
+            // Checks if users permnissions are high enough
+            if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
+                next()
+            } else {
+                res.send('Not High Enough Permissions')
+            }
         }
     }
 }
@@ -240,8 +248,8 @@ function joinClass(userName, code) {
 }
 
 // Oauth2 Access Token Generator
-function generateAccessToken(username) {
-    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' })
+function generateAccessToken(username, api) {
+    return jwt.sign(username, api, { expiresIn: '1800s' });
 }
 
 // Endpoints
@@ -256,12 +264,15 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // A
 
-// B
-app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/bgm', {
-        title: "Background Music",
+app.get('/apikey', isAuthenticated, (req, res) => {
+    res.render('pages/APIKEY', {
+        title: "API KEY",
+        API: cD[req.session.class].students[req.session.user].API
     })
 })
+
+// B
+
 // C
 
 
@@ -391,7 +402,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
         }
 
         cD[req.session.class].steps = steps
-        console.log(cD[req.session.class].steps)
+        console.log(cD[req.session.class].steps);
         res.redirect('/controlpanel')
     }
 
@@ -553,9 +564,10 @@ app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: ''
-    })
-})
+        redurl: '',
+        api: ''
+    });
+});
 
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
@@ -582,7 +594,7 @@ app.post('/login', async (req, res) => {
                 let tempPassword = decrypt(JSON.parse(rows.password))
                 if (rows.username == user.username && tempPassword == user.password) {
                     // Add user to the session
-                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions)
+                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API);
                     // Add a cookie to transfer user credentials across site
                     req.session.user = rows.username
                     if (req.body.classKey) {
@@ -611,9 +623,9 @@ app.post('/login', async (req, res) => {
         })
 
     } else if (user.loginType == "new") {
-        // Add the new user to the database
-        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
+        // Add the new user to the database 
+        db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 2, require('crypto').randomBytes(64).toString('hex')], (err) => {
                 if (err) {
                     console.log(err)
                 }
@@ -625,7 +637,7 @@ app.post('/login', async (req, res) => {
                 console.log(err)
             }
             // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id)
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API);
             // Add the user to the session in order to transfer data between each page
             req.session.user = rows.username
             res.redirect('/')
@@ -633,39 +645,19 @@ app.post('/login', async (req, res) => {
         })
     } else if (user.loginType == "guest") {
 
-    } else if (user.loginType == "newbot") {
-        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), 1], (err) => {
-                if (err) {
-                    console.log(err)
-                }
-                console.log('Success')
-            })
-        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
-            if (err) {
-                console.log(err)
-            }
-            // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions)
-            // Add the user to the session in order to transfer data between each page
-            req.session.user = rows.username
-            if (req.body.classKey) {
+    } else if (user.loginType == "bot") {
+        let apikey = req.body.apikey
+        if (apikey) {
+            if (req.body.classKey in cD) {
+                req.session.api = apikey
                 req.session.class = req.body.classKey
-                let checkJoin
-                try {
-                    checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-                    if (checkJoin) {
-                        res.json({ login: true })
-                    } else (
-                        res.json({ login: false })
-                    )
-                } catch (err) {
-                    res.json({ login: false })
-                }
-
+                res.json({ login: true })
+            } else {
+                res.json({ login: false })
             }
-            res.redirect('/')
-        })
+        } else {
+            res.json({ login: false })
+        }
     }
 })
 
@@ -802,11 +794,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
     }
 })
 
-app.get('/sfx', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/sfx', {
-        title: "SFX",
-    })
-})
+
 
 // T
 
@@ -839,15 +827,18 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/oauth/login', (req, res) => {
     let redurl = req.query.redurl
+    let api = req.query.api
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: redurl
+        redurl: redurl,
+        api: api
     })
 })
 
 app.post('/oauth/login', (req, res) => {
     let redurl = req.body.redurl
+    let api = req.body.api
     var user = {
         username: req.body.username,
         password: req.body.password,
@@ -867,8 +858,8 @@ app.post('/oauth/login', (req, res) => {
                 // Decrypt users password
                 let tempPassword = decrypt(JSON.parse(rows.password))
                 if (rows.username == user.username && tempPassword == user.password) {
-                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions })
-                    console.log(redurl + "?token=" + token)
+                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions }, api)
+                    console.log(redurl + "?token=" + token);
                     res.redirect(redurl + "?token=" + token)
                 } else {
                     res.redirect('/oauth/login?redurl=' + redurl)
@@ -908,6 +899,8 @@ app.post('/oauth/login', (req, res) => {
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
     if (socket.request.session.user) {
+        next();
+    } else if (socket.request.session.api) {
         next()
     } else {
         console.log("Authentication Failed")
@@ -920,7 +913,9 @@ const rateLimits = {}
 //Handles the websocket communications
 io.sockets.on('connection', function (socket) {
     if (socket.request.session.user) {
-        socket.join(cD[socket.request.session.class].className)
+        socket.join(cD[socket.request.session.class].className);
+    } else if (socket.request.session.api) {
+        socket.join(cD[socket.request.session.class].className);
     }
 
     //rete limiter
@@ -1045,27 +1040,15 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
-    socket.on('bgmLoad', function (bgmFiles) {
-        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
-    })
-    socket.on('bgmGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('bgmGet')
-    })
-    socket.on('bgmPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
-    })
-    socket.on('bgmPause', function (stop) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
-    })
-    socket.on('sfxGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('sfxGet')
-    })
-    socket.on('sfxLoad', function (sfxFiles) {
-        io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
-    })
-    socket.on('sfxPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
-    })
+    // socket.on('sfxGet', function () {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxGet')
+    // })
+    // socket.on('sfxLoad', function (sfxFiles) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
+    // })
+    // socket.on('sfxPlay', function (music) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    // })
     socket.on('botPollStart', function (answerNumber) {
         answerNames = []
         cD[socket.request.session.class].pollStatus = true
@@ -1106,9 +1089,9 @@ io.sockets.on('connection', function (socket) {
                 for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
                     if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
                         let letterString = "abcdefghijklmnopqrstuvwxyz"
-                        cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+                        cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
                     } else {
-                        cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
+                        cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i];
                     }
                 }
                 cD[socket.request.session.class].posTextRes = false
@@ -1128,9 +1111,9 @@ io.sockets.on('connection', function (socket) {
                 db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
                     [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
                         if (err) {
-                            console.log(err)
+                            console.log(err);
                         }
-                        console.log('Saved Lesson To Database')
+                        console.log('Saved Lesson To Database');
                     })
 
             }
@@ -1141,11 +1124,11 @@ io.sockets.on('connection', function (socket) {
     socket.on('previousPollDisplay', function (pollindex) {
         db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
             if (err) {
-                console.error(err)
+                console.error(err);
             } else {
                 io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
             }
-        })
+        });
     })
     socket.on('deleteTicket', function (student) {
         cD[socket.request.session.class].students[student].help = ''
