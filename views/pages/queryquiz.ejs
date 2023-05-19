@@ -16,7 +16,7 @@
         let correctAnswerIndex = []
         let quizForm = document.getElementById('quizForm')
     
-            quizForm.innerHTML += `</br><b>${quiz[0]}</b>`
+            quizForm.innerHTML += `</br><b class="textColorContent">${quiz[0]}</b>`
             correctAnswerIndex.push(quiz[1])
             for (let u = 2; u < quiz.length; u++) {
                 quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u-1}"> ${quiz[u]}`

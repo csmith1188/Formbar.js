@@ -1,30 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <%- include('../partials/header_content') %>
-<style>
-    button {
-  background: none;
-  border: none;
-  padding: 0;
-  /*optional*/
-  font-family: arial, sans-serif;
-  /*input has OS specific font-family*/
-  color: #069;
-  text-decoration: underline;
-  cursor: pointer;
-  text-align: center;
-  padding-left: 0;
-        padding-right: 0;
-        margin-left: auto;
-        margin-right: auto;
-        display: block;
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: center;
-        font-size: 21px;
-}
-</style>
-<body id="body">
+<body id="colorContent">
 
     <form action="/previousLessons" method="post">
     <% for (let i = rows.length-1; i >= 0; i--) {  console.log(rows.length)%>

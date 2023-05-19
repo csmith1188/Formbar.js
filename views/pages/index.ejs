@@ -6,10 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-<h1>Formbar</h1>
-<div id="content">
-    <a href="/poll" class="quickButton">Poll Submit</a>
+<body id="colorContent">
+<h1 id="headerText">Formbar</h1>
+<div id="indexContent">
+    <a href="/student" class="quickButton">Student Panel</a>
     <br>
     <a href="/controlpanel" class="quickButton">Teacher Controls</a>
     <br>
@@ -17,21 +17,24 @@
     <br>
     <a href="/help" class="quickButton">Help Ticket Creation</a>
     <br>
-    <a href="/quiz" class="quickButton">Take a quiz</a>
-    <br>
     <a href="/bgm" class="quickButton">BGM</a>
     <br>
     <a href="/sfx" class="quickButton">SFX</a>
     <br>
-    <a href="/lesson" class="quickButton">Lesson</a>
 </div>
 </body>
 </html>
 <script src="/socket.io/socket.io.js"></script>
 
-<script type="text/javascript">
-    var socket = io();
-    socket.emit('vbData')
-    socket.emit('cpupdate')
-</script>
-<%- include('../partials/footer_content') %>
+
+    <script type="text/javascript">
+        var socket = io()
+        socket.emit('vbData')
+        socket.emit('cpupdate')
+        function takeBreak() {
+            socket.emit('break')
+            socket.emit('cpupdate')
+            socket.emit('vbData')
+        }
+    </script>
+    <%- include('../partials/footer_content') %>

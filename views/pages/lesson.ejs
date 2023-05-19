@@ -4,17 +4,17 @@
 
 <body id="content">
     <%if(lesson.content != undefined){%>
-    <h3><%- lesson.date %></h3>
+    <h3 id="headerText"><%- lesson.date %></h3>
     <%  for (let i = 0; i < lesson.content.length; i++) { %>
-        <u><h2><%-lesson.content[i][0]%></h2></u>
+        <u><h2 id="headerText"><%-lesson.content[i][0]%></h2></u>
         <%  for (let u = 1; u < lesson.content[i].length; u++) { %>
-            <b><%- lesson.content[i][u]%></b><br>
+            <b id="headerText"><%- lesson.content[i][u]%></b><br>
             <%  } %>
             <%  } %>
             <br>
             <a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
             <%  } else { %>
-                <h1>No active lesson</h1> 
+                <h1 id="headerText">No active lesson</h1> 
                 <a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
                 <%  } %>
         </body>

@@ -1,7 +1,7 @@
 <%- include('../partials/header_content') %>
 <!-- ^^ This means add this file into the contents of the header page -->
 <!-- This is where the title, top buttons, and stylesheet is located -->
-<body class=<%- color %>>
+<body id="colorContent">
   <div id="quickmenu" class="hidden">
     <a href="/home" class="quickButton">Home</a>
     <a href="/chat" class="quickButton">Chat</a>
@@ -21,6 +21,7 @@
     <input type="hidden" id="userTypeBox" name="userType" value="user">
     <input type="hidden" id="classNameloginTypeBox" name="className" value="">
     <input type="hidden" id="oauth2Check" name="redurl" value="<%-redurl%>">
+    <input type="hidden" id="oauth2Check" name="api" value="<%-api%>">
     <input type="hidden" id="classNameloginTypeBox" name="classKey" value="">
     <br><br>
     <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in" onsubmit="return false;">
