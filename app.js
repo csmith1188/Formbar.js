@@ -268,11 +268,7 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 })
 
 // B
-app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/bgm', {
-        title: "Background Music",
-    })
-})
+
 // C
 
 
@@ -794,11 +790,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
     }
 });
 
-app.get('/sfx', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/sfx', {
-        title: "SFX",
-    })
-})
+
 
 // T
 
@@ -1000,27 +992,15 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
-    socket.on('bgmLoad', function (bgmFiles) {
-        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
-    })
-    socket.on('bgmGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('bgmGet')
-    })
-    socket.on('bgmPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
-    })
-    socket.on('bgmPause', function (stop) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
-    })
-    socket.on('sfxGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('sfxGet')
-    })
-    socket.on('sfxLoad', function (sfxFiles) {
-        io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
-    })
-    socket.on('sfxPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
-    })
+    // socket.on('sfxGet', function () {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxGet')
+    // })
+    // socket.on('sfxLoad', function (sfxFiles) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
+    // })
+    // socket.on('sfxPlay', function (music) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    // })
     socket.on('botPollStart', function (answerNumber) {
         answerNames = []
         cD[socket.request.session.class].pollStatus = true
