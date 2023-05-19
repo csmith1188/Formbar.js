@@ -16,8 +16,8 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
-        var socket = io();
-        var mychart = document.getElementById('virtualbar').getContext("2d");
+        var socket = io()
+        var mychart = document.getElementById('virtualbar').getContext("2d")
         var doughnutChart = new Chart(mychart, {
             type: 'doughnut',
             data: {
@@ -42,24 +42,26 @@
                     }
                 }
             }
-        });
+        })
 
-        let pixRes;
+        let pixRes
 
         // Update the virtual bar
         // Creates new labels and colors, plus imports all new data to the table
         function update(data) {
+            for (let [username, student] of Object.entries(data.students)) {
+                if (student.break) delete data.students[username]
+            }
 
+            var labelsArray = []
+            var pollArray = []
 
-            var labelsArray = [];
-            var pollArray = [];
-
-            let studResponses = {};
+            let studResponses = {}
             // Loops through object to get each label of the possible answers
             // Also, create a new variable for each possible answer
             for (const answer of Object.keys(data.posPollResObj)) {
                 labelsArray.push(data.posPollResObj[answer])
-                studResponses[answer] = 0;
+                studResponses[answer] = 0
             }
 
             // Loops through all possible answers and generates a new color variant for each answer
@@ -67,9 +69,9 @@
             for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
                 let color = ''
                 let CC = '0123456789ABCDEF'
-                let colorI = CC[Math.floor(i/2)]
-                let colorJ = CC[15 - Math.floor(i/2)]
-                switch (i%4) {
+                let colorI = CC[Math.floor(i / 2)]
+                let colorJ = CC[15 - Math.floor(i / 2)]
+                switch (i % 4) {
                     case 0:
                         color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
                         break
@@ -86,18 +88,18 @@
                 doughnutChart.data.datasets[0].backgroundColor.push(color)
             }
             // Loops through all student answers and adds them to a total tally
-            // Student response corresponds with a property name in studResponses 
+            // Student response corresponds with a property name in studResponses
             for (const student of Object.keys(data.students)) {
-                studResponses[data.students[student].pollRes]++;
+                studResponses[data.students[student].pollRes]++
             }
             //
             for (const responses of Object.keys(studResponses)) {
-                pollArray.push(studResponses[responses]);
+                pollArray.push(studResponses[responses])
             }
 
-            doughnutChart.data.labels = labelsArray;
-            doughnutChart.data.datasets[0].data = pollArray;
-            doughnutChart.update();
+            doughnutChart.data.labels = labelsArray
+            doughnutChart.data.datasets[0].data = pollArray
+            doughnutChart.update()
         }
 
         // Calls for data
@@ -105,7 +107,7 @@
         // Gets data from server and send it the function
         socket.on('vbData', function (data) {
             data = JSON.parse(data)
-            update(data);
+            update(data)
         })
 
     </script>
