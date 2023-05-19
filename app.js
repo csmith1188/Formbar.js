@@ -1047,8 +1047,12 @@ io.sockets.on('connection', function (socket) {
     socket.on('doStep', function (index) {
         cD[socket.request.session.class].currentStep++
         if(cD[socket.request.session.class].steps[index] !== undefined){
-
             if(cD[socket.request.session.class].steps[index].type == 'poll'){
+                if (cD[socket.request.session.class].pollStatus == true) {
+                    cD[socket.request.session.class].posPollResObj = {};
+                    cD[socket.request.session.class].pollPrompt = "";
+                    cD[socket.request.session.class].pollStatus = false;
+                };
                 cD[socket.request.session.class].pollStatus = true
                 // Creates an object for every answer possible the teacher is allowing
                 for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
