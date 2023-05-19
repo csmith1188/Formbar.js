@@ -627,13 +627,14 @@ app.post('/login', async (req, res) => {
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
             if (err) {
                 console.log(err)
+            } else {
+                // Add user to session
+                cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API);
+                // Add the user to the session in order to transfer data between each page
+                req.session.user = rows.username
+                res.redirect('/')
             }
-            // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API);
-            // Add the user to the session in order to transfer data between each page
-            req.session.user = rows.username
-            res.redirect('/')
-
+                
         })
     } else if (user.loginType == "guest") {
 
@@ -1102,7 +1103,7 @@ io.sockets.on('connection', function (socket) {
                         console.log(err);
 
                     }
-                }
+                })
                 cD[socket.request.session.class].posTextRes = false
                 cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
             } else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
