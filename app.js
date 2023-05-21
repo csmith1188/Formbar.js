@@ -67,8 +67,6 @@ class Student {
         this.username = username
         this.id = id
         this.permissions = perms
-        this.request = []
-        this.timeout = 0
         this.pollRes = ''
         this.pollTextRes = ''
         this.help = ''
