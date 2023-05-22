@@ -58,8 +58,6 @@
       text-decoration: none;
     }
 
-
-
     #quickmenu {
       text-align: center;
       justify-content: center;
@@ -282,8 +280,124 @@
       outline: max(2px, 0.15em) solid currentColor;
       outline-offset: max(2px, 0.15em);
     }
+
+    /* Code for header/sidebar */
+    .sidebar {
+      height: 100%;
+      width: 200px;
+      background-color: #d6ead4;
+      position: fixed !important;
+      z-index: 1;
+      overflow: auto;
+    }
+
+    .sidebar_container {
+      padding: 0.01em 16px;
+    }
+
+    .sidebar_container::before,
+    .sidebar_container::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+
+    .sidebar_top {
+      position: fixed;
+      width: 100%;
+      z-index: 1;
+      top: 0;
+    }
+
+    .sidebar_color {
+      color: #00738c !important;
+      background-color: #d6ead4 !important;
+    }
+
+    .sidebar_internal_color {
+      color: #d6ead4 !important;
+      background-color: #00738c !important;
+    }
+
+    .sidebar_font {
+      font-size: 24px !important;
+    }
+
+    .sidebar_internal_font {
+      font-size: 18px !important;
+    }
+
+    .sidebar_padding {
+      padding-top: 16px !important;
+      padding-bottom: 16px !important;
+    }
+
+    .sidebar_internal_padding {
+      padding-top: 32px !important;
+      padding-bottom: 32px !important;
+    }
+
+    .sidebar_left {
+      float: left !important;
+    }
+
+    .sidebar_right {
+      float: right !important;
+    }
+
+    .sidebar_button {
+      display: inline-block;
+      margin: 0 4px;
+      padding: 5px;
+      border-radius: 8.75px;
+      background-color: #d6ead4;
+      color: #00738c;
+    }
+    
+    .sidebar_block .sidebar_item {
+      width: 100%;
+      display: block;
+      padding: 8px 16px;
+      text-align: left;
+      border: none;
+      white-space: normal;
+      float: none;
+      outline: 0;
+    }
+
+    .sidebar_block .sidebar_center .sidebar_item {
+      text-align: center;
+    }
+
+    /* Sidebar animations */
+    .sidebar_right_animation {
+      position: relative;
+      animation: animateright 0.4s;
+    }
+
+    @keyframes animateright {
+      from {
+        right: -300px;
+        opacity: 0;
+      }
+      to {
+        right: 0;
+        opacity: 1;
+      }
+    }
   </style>
 
+  <script>
+    function sidebar_open() {
+      document.getElementById("sidebar").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    };
+    
+    function sidebar_close() {
+      document.getElementById("sidebar").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    };
+  </script>
 </head>
 
 
