@@ -991,6 +991,8 @@ io.sockets.on('connection', function (socket) {
             cD[socket.request.session.class].students[key].pollRes = ""
             cD[socket.request.session.class].students[key].pollTextRes = ""
         }
+
+        socket.broadcast.emit('vbData')
     })
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
