@@ -11,24 +11,33 @@ import ir
 import sfx
 import sqlite3
 from functools import wraps
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, make_response
+from flask_socketio import SocketIO, emit
 
 #Setting up flask app
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+flaskio = SocketIO(app, logger = False)
 
 
 # For the formbar oauth2 service
-app.config['SECRET_KEY'] = '3866096ab1c04d3035e9017c17814ea1546fab570ef3062b338ef4e5a57e7806c7f947be2e57528fe05f6a5be61d56c27507a141aebec17e1013922a6453cdf4'
+app.config['SECRET_KEY'] = 'd6e4d20b5a8a17f31c21928ed57d2ddf6fb5c3b65410dec20763ba1510305610dceb7f53335911171888539a834a89124719f74e02d1cd41ecd1de425e32d3db'
 
 students = {}
+
+global nowPlaying
+nowPlaying = "Not Playing"
+stop = "Pause"
+global volume
+volume = 1.0
+sfxPlaying = "Not Playing"
+
 
 #Decorator for JWT
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        print(request.args.get('token'))
         # jwt is passed in the request header
         if 'token' in request.args:
             token = request.args.get('token')
@@ -36,11 +45,11 @@ def token_required(f):
         if not token:
             print("No token")
             return "No token", 401
-  
+        
         try:
             # decoding the payload to fetch the stored details
             data = jwt.decode(token, app.config['SECRET_KEY'])
-            user = {'username': data['username'], 'permissions': data['permissions']}
+            user = {'username': data['username'], 'permissions': str(data['permissions']), 'expire': data['exp'], 'token': token}
         except:
             print("No token")
             return "Bad token", 401
@@ -53,38 +62,113 @@ def token_required(f):
 def authenticate_user(f):
     @wraps(f)
     def decorated2(*args, **kwargs):
-        ip_addr = request.remote_addr
-        print(students)
-        if ip_addr in students:
-            print(students[ip_addr]['username'])
-            return f(students[ip_addr]['username'])
+        print(request.cookies.get('username'))
+        if 'username' in request.cookies:
+            return f(request.cookies.get('username'))
         else:
-            return redirect('/')
+            return redirect('/login')
     return decorated2
 
 # Flask Endpoints
-@app.route('/')
+@app.route('/login')
 def login():
-    return render_template('index.html')
+    return render_template('index.html', apikey=app.config['SECRET_KEY'])
+
+@app.route('/')
+@authenticate_user
+def index(username):
+    if username:
+        return redirect('/login')
 
 @app.route('/oauth', methods = ["POST","GET"] )
 @token_required
 def get_all_users(user):
-    ip_addr = request.remote_addr
-    students[ip_addr] = {'username': user['username'], 'permissions': user['permissions']}
-    return redirect("/home", code=302)
+    resp = make_response(redirect("/home", code=302))
+    resp.set_cookie('username', value=user['username'], expires=user['expire'])
+    resp.set_cookie('permissions', value=user['permissions'], expires=user['expire'])
+    resp.set_cookie('token', value=user['token'], expires=user['expire'])
+    return resp
 
 @app.route('/home')
 @authenticate_user
 def home(username):
-    return "Hello " + username
+    return "Hello " + username + ' ' + request.cookies.get('permissions')
+
+
+@app.route('/bgm')
+@authenticate_user
+def bgmusic(username):
+    return render_template('bgm.html')
+
+# Flask Socketio
+@flaskio.on('bgmGet')
+def bgmGet():
+    emit('bgmLoadUpdate', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
+
+@flaskio.on('bgmPlay')
+def bgmPlay(file):
+    pygame.mixer.music.load(bgm.bgm[file])
+    global nowPlaying
+    nowPlaying = file
+    global stop
+    stop = "Play"
+    pygame.mixer.music.set_volume(volume)
+    pygame.mixer.music.play(loops=-1)
+
+@flaskio.on('bgmPause')
+def bgmPause(play):
+    global stop
+    stop = play
+    if play == 'Pause':
+        pygame.mixer.music.pause()
+    elif play == 'Play':
+        pygame.mixer.music.unpause()
+    
+'''
+
+@sio.on('bgmGet')
+def bgmGet():
+    print("Load")
+    print(nowPlaying)
+    print(stop)
+    sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
+    
+@sio.on('bgmPlay')
+def bgmPlay(file):
+    pygame.mixer.music.load(bgm.bgm[file])
+    global nowPlaying
+    nowPlaying = file
+    global stop
+    stop = "Play"
+    pygame.mixer.music.set_volume(volume)
+    pygame.mixer.music.play(loops=-1)
+
+@sio.on('bgmPause')
+def bgmPause(play):
+    global stop
+    stop = play
+    if play == 'Pause':
+        pygame.mixer.music.pause()
+    elif play == 'Play':
+        pygame.mixer.music.unpause()
+
+@sio.on('sfxGet')
+def bgmGet():
+    print("SFX Get")
+    sio.emit('sfxLoad', {'files': sfx.sound, "playing": sfxPlaying})
+
+@sio.on('sfxPlay')
+def sfxPlay(file):
+    sfxPlaying = file
+    pygame.mixer.Sound(sfx.sound[file]).play()
+'''
 
 
 
 # Adds all constants to change class and formbar address
 # Login type is either 'newbot' for first login and 'login' for anytime afterwards
 CLASSIP = "http://192.168.10.39:420"
-CLASSKEY = "bwwu"
+CLASSKEY = "i4y8"
 LOGINTYPE = "login"
 CLASSNAME = "a1"
 
@@ -101,12 +185,6 @@ session = requests.Session()
 # Connects our wbesocket connections with our http requests
 sio = socketio.Client(http_session=session)
 
-global nowPlaying
-nowPlaying = "Not Playing"
-stop = "Pause"
-global volume
-volume = 1.0
-sfxPlaying = "Not Playing"
 
 # Connects us to websockets
 @sio.event
@@ -215,13 +293,15 @@ def hex_to_rgb(hex):
   
   return tuple(rgb)
 
+
+
 #Wait a minute before logging in.
 time.sleep(5)
 #Send a login POST request
 global loginAttempt
 def attemptLogin():
     try:
-        loginAttempt = session.post(CLASSIP + "/login", {"username":"Formbot", "password":"bot", "loginType": LOGINTYPE, "userType":"bot", "classKey": CLASSKEY})
+        loginAttempt = session.post(CLASSIP + "/login", {"username":"", "password":"", "loginType": "bot", "userType":"", "classKey": CLASSKEY, "apikey": app.config['SECRET_KEY']})
         print(loginAttempt.json()['login'])
         return loginAttempt.json()['login']
     except requests.exceptions.RequestException as e:
@@ -247,6 +327,8 @@ else:
         time.sleep(8)
         loginAttempt = attemptLogin()
         print(loginAttempt)
+        
+
         
 # Runs function from above
 sio.connect(CLASSIP)
@@ -340,44 +422,6 @@ def vbData(data):
     pixels.fill((30, 30, 30))
     changeLights(pollData, totalStuds)
 
-
-
-@sio.on('bgmGet')
-def bgmGet():
-    print("Load")
-    print(nowPlaying)
-    print(stop)
-    sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
-    
-@sio.on('bgmPlay')
-def bgmPlay(file):
-    pygame.mixer.music.load(bgm.bgm[file])
-    global nowPlaying
-    nowPlaying = file
-    global stop
-    stop = "Play"
-    pygame.mixer.music.set_volume(volume)
-    pygame.mixer.music.play(loops=-1)
-
-@sio.on('bgmPause')
-def bgmPause(play):
-    global stop
-    stop = play
-    if play == 'Pause':
-        pygame.mixer.music.pause()
-    elif play == 'Play':
-        pygame.mixer.music.unpause()
-
-@sio.on('sfxGet')
-def bgmGet():
-    print("SFX Get")
-    sio.emit('sfxLoad', {'files': sfx.sound, "playing": sfxPlaying})
-
-@sio.on('sfxPlay')
-def sfxPlay(file):
-    sfxPlaying = file
-    pygame.mixer.Sound(sfx.sound[file]).play()
-
 @sio.event
 def disconnect():
     print("I'm Disconnected")
@@ -391,6 +435,6 @@ def disconnect():
 task = sio.start_background_task(my_background_task)
 
 if __name__ == '__main__':
-   app.run(host="0.0.0.0")
+   flaskio.run(app, host="0.0.0.0")
 
 

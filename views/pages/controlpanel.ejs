@@ -70,7 +70,16 @@
                 <input type="submit">
                 <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
             </form>
-
+        <form>
+            <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+            <label class="form-control" for="modeP">Poll Mode</label>
+            <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+            <label class="form-control" for="modeL">Lesson Mode</label>
+            <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+            <label class="form-control" for="modeQ">Quiz Mode</label>
+            <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+            <label class="form-control" for="modePT">Playtime Mode</label>
+        </form>
         </div>
     </body>
 
@@ -264,6 +273,25 @@
 
 
         }
+
+        function modeChange(){
+            let modeP = document.getElementById('modeP');
+            let modeL = document.getElementById('modeL');
+            let modeQ = document.getElementById('modeQ');
+            let modePT = document.getElementById('modePT');
+
+
+            if(modeP.checked){
+                socket.emit('modechange', modeP.value)
+            }else if(modeL.checked){
+                socket.emit('modechange', modeL.value)
+            } else if(modeQ.checked){
+                socket.emit('modechange', modeQ.value)
+            } else if(modePT.checked){
+                socket.emit('modechange', modePT.value)
+            }
+        }
+
         // Ends the poll and reloads the users page to stop any more submission
         function endPollFunc() {
             socket.emit('endPoll')

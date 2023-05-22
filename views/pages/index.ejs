@@ -1,37 +1,31 @@
 <%- include('../partials/header_content') %>
-    <!DOCTYPE html>
-    <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body id="colorContent">
+<h1 id="headerText">Formbar</h1>
+<div id="indexContent">
+    <a href="/student" class="quickButton">Student Panel</a>
+    <br>
+    <a href="/controlpanel" class="quickButton">Teacher Controls</a>
+    <br>
+    <a href="/virtualbar" class="quickButton">Virtual Bar</a>
+    <br>
+    <a href="/help" class="quickButton">Help Ticket Creation</a>
+    <br>
+    <a href="/bgm" class="quickButton">BGM</a>
+    <br>
+    <a href="/sfx" class="quickButton">SFX</a>
+    <br>
+</div>
+</body>
+</html>
+<script src="/socket.io/socket.io.js"></script>
 
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-
-    <body id="colorContent">
-        <h1 id="headerText">Formbar</h1>
-        <div id="indexContent">
-            <a href="/poll" class="quickButton">Poll Submit</a>
-            <br>
-            <a href="/controlpanel" class="quickButton">Teacher Controls</a>
-            <br>
-            <a href="/virtualbar" class="quickButton">Virtual Bar</a>
-            <br>
-            <a href="/help" class="quickButton">Help Ticket Creation</a>
-            <br>
-            <a href="/quiz" class="quickButton">Take a quiz</a>
-            <br>
-            <a href="/bgm" class="quickButton">BGM</a>
-            <br>
-            <a href="/sfx" class="quickButton">SFX</a>
-            <br>
-            <a href="/lesson" class="quickButton">Lesson</a>
-            <button type="button" onclick="takeBreak()" class="quickButton">Break</button>
-        </div>
-    </body>
-
-    </html>
-    <script src="/socket.io/socket.io.js"></script>
 
     <script type="text/javascript">
         var socket = io()
