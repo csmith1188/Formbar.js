@@ -1,56 +1,57 @@
 // Imported modules
-const express = require('express');
-const session = require('express-session'); //For storing client login data
-const ejs = require('ejs');
-const fs = require('fs');
-const path = require('path');
-const { encrypt, decrypt } = require('./static/js/crypto.js'); //For encrypting passwords
-const sqlite3 = require('sqlite3').verbose();
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const excelToJson = require('convert-excel-to-json');
+const express = require('express')
+const session = require('express-session') //For storing client login data
+const ejs = require('ejs')
+const fs = require('fs')
+const path = require('path')
+const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
+const sqlite3 = require('sqlite3').verbose()
+const jwt = require('jsonwebtoken')
+const dotenv = require('dotenv')
+const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')
+const { time } = require('console')
 const upload = multer({ dest: 'uploads/' })
 
 // get config vars
-dotenv.config();
+dotenv.config()
 
 
 
-var app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+var app = express()
+const http = require('http').createServer(app)
+const io = require('socket.io')(http)
 
 // Set EJS as our view engine
-app.set('view engine', 'ejs');
+app.set('view engine', 'ejs')
 
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
     secret: 'secret',
     resave: false,
     saveUninitialized: false
-});
+})
 
 // Allows express to parse requests
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }))
 
 // Use a static folder for web page assets
-app.use(express.static(__dirname + '/static'));
+app.use(express.static(__dirname + '/static'))
 
 // PROMPT: Does this allow use to associate client logins with their websocket connection?
 // PROMPT: Where did you find information on this. Please put the link here.
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 io.use(function (socket, next) {
-    sessionMiddleware(socket.request, socket.request.res || {}, next);
-});
+    sessionMiddleware(socket.request, socket.request.res || {}, next)
+})
 
 // PROMPT: What does this do?
-app.use(sessionMiddleware);
+app.use(sessionMiddleware)
 
 
 
 // Establishes the connection to the database file
-var db = new sqlite3.Database('database/database.db');
+var db = new sqlite3.Database('database/database.db')
 
 //cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
@@ -62,14 +63,16 @@ var cD = {
 class Student {
     // Needs username, id from the database, and if perms established already pass the updated value
     // These will need to be put into the constructor in order to allow the creation of the object
-    constructor(username, id, perms = 2) {
+    constructor(username, id, perms = 2, API) {
         this.username = username
-        this.id = id;
-        this.permissions = perms;
-        this.pollRes = '';
-        this.pollTextRes = '';
-        this.help = '';
-        this.quizScore = '';
+        this.id = id
+        this.permissions = perms
+        this.pollRes = ''
+        this.pollTextRes = ''
+        this.help = ''
+        this.break = false
+        this.quizScore = ''
+        this.API = API
     }
 }
 
@@ -79,18 +82,19 @@ class Student {
 class Classroom {
     // Needs the name of the class you want to create
     constructor(className, key) {
-        this.className = className;
-        this.students = {};
-        this.pollStatus = false;
-        this.posPollResObj = {};
-        this.posTextRes = false;
-        this.pollPrompt = '';
-        this.key = key;
-        this.lesson = {};
-        this.activeLesson = false;
-        this.steps;
-        this.currentStep = 0;
+        this.className = className
+        this.students = {}
+        this.pollStatus = false
+        this.posPollResObj = {}
+        this.posTextRes = false
+        this.pollPrompt = ''
+        this.key = key
+        this.lesson = {}
+        this.activeLesson = false
+        this.steps
+        this.currentStep = 0
         this.quizObj
+        this.mode = 'poll'
     }
 }
 //allows quizzes to be made
@@ -130,14 +134,14 @@ pagePermissions = {
 //-----------
 //Clears the database
 //Removes all users, teachers, and claseses
-//ONLY USE FOR TESTING PURPOSES 
+//ONLY USE FOR TESTING PURPOSES
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
         if (err) {
-            console.log(err);
+            console.log(err)
         }
     })
-    return console.log('Database Deleted');
+    return console.log('Database Deleted')
 }
 
 // Check if user has logged in
@@ -156,6 +160,8 @@ function isAuthenticated(req, res, next) {
             next()
         }
 
+    } else if (req.session.api) {
+        next()
     } else {
         res.redirect('/login')
     }
@@ -184,14 +190,19 @@ function permCheck(req, res, next) {
         }
         // Check for ?(urlParams) and removes it from the string
         if (urlPath.indexOf('?') != -1) {
-            console.log(urlPath.indexOf('?'));
+            console.log(urlPath.indexOf('?'))
             urlPath = urlPath.slice(0, urlPath.indexOf('?'))
         }
-        // Checks if users permnissions are high enough
-        if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
+
+        if (req.session.api) {
             next()
         } else {
-            res.send('Not High Enough Permissions')
+            // Checks if users permnissions are high enough
+            if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
+                next()
+            } else {
+                res.send('Not High Enough Permissions')
+            }
         }
     }
 }
@@ -202,7 +213,7 @@ function joinClass(userName, code) {
         // Find the id of the class from the database
         db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
             if (err) {
-                console.log(err);
+                console.log(err)
                 res.send('Something went wrong')
             }
             // Check to make sure there was a class with that name
@@ -210,13 +221,13 @@ function joinClass(userName, code) {
                 // Find the id of the user who is trying to join the class
                 db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
                     if (err) {
-                        console.log(err);
+                        console.log(err)
                     }
                     // Add the two id's to the junction table to link the user and class
                     db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
                         [id.id, uid.id], (err) => {
                             if (err) {
-                                console.log(err);
+                                console.log(err)
                             }
                             // Get the teachers session data ready to transport into new class
                             var user = cD.noClass.students[userName]
@@ -224,20 +235,20 @@ function joinClass(userName, code) {
                             delete cD.noClass.students[userName]
                             // Add the student to the newly created class
                             cD[code].students[userName] = user
-                            console.log('User added to class');
-                            resolve(true);
+                            console.log('User added to class')
+                            resolve(true)
                         })
                 })
             } else {
-                resolve(false);
+                resolve(false)
             }
         })
     })
 }
 
 // Oauth2 Access Token Generator
-function generateAccessToken(username) {
-    return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+function generateAccessToken(username, api) {
+    return jwt.sign(username, api, { expiresIn: '1800s' })
 }
 
 // Endpoints
@@ -252,12 +263,15 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // A
 
-// B
-app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/bgm', {
-        title: "Background Music",
+app.get('/apikey', isAuthenticated, (req, res) => {
+    res.render('pages/APIKEY', {
+        title: "API KEY",
+        API: cD[req.session.class].students[req.session.user].API
     })
 })
+
+// B
+
 // C
 
 
@@ -267,7 +281,7 @@ app.get('/bgm', isAuthenticated, permCheck, (req, res) => {
 app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 
     let students = cD[req.session.class].students
-    let keys = Object.keys(students);
+    let keys = Object.keys(students)
     let allStuds = []
     for (var i = 0; i < keys.length; i++) {
         var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes }, help: students[keys[i]].help }
@@ -303,7 +317,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                     E: 'labels'
                 }
             }]
-        });
+        })
 
 
         for (const key in result['Steps']) {
@@ -324,7 +338,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                 }
                 let i = 0
                 for (const letterI in letters) {
-                    if(letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C'){
+                    if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
                         colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
                         i++
                     }
@@ -335,7 +349,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                         name: nameQ,
                         columnToKey: colToKeyObj
                     }]
-                });
+                })
                 let questionList = []
                 for (let i = 1; i < quizLoad[nameQ].length; i++) {
                     let questionMaker = []
@@ -343,7 +357,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                     questionMaker.push(quizLoad[nameQ][i].question)
                     questionMaker.push(quizLoad[nameQ][i].key)
                     for (const letterI in letters) {
-                        if(quizLoad[nameQ][i][letters.charAt(letterI)] != undefined){
+                        if (quizLoad[nameQ][i][letters.charAt(letterI)] != undefined) {
                             questionMaker.push(quizLoad[nameQ][i][letters.charAt(letterI)])
                         }
                     }
@@ -365,7 +379,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                             B: 'data'
                         }
                     }]
-                });
+                })
                 let lessonArr = []
                 for (let i = 1; i < lessonLoad[nameL].length; i++) {
                     let lessonMaker = [lessonLoad[nameL][i].header]
@@ -385,14 +399,14 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                 steps.push(step)
             }
         }
-        
+
         cD[req.session.class].steps = steps
-        console.log( cD[req.session.class].steps);
+        console.log(cD[req.session.class].steps)
         res.redirect('/controlpanel')
     }
 
 
-});
+})
 
 
 // Loads which classes the teacher is an owner of
@@ -421,17 +435,17 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 // Plus they can ban and kick as long as they can create classes
 app.post('/createclass', isLoggedIn, (req, res) => {
     let submittionType = req.body.submittionType
-    let className = req.body.name.toLowerCase();
+    let className = req.body.name.toLowerCase()
     function makeClass(key) {
         // Get the teachers session data ready to transport into new class
         var user = cD.noClass.students[req.session.user]
         // Remove teacher from old class
         delete cD.noClass.students[req.session.user]
         // Add class into the session data
-        cD[key] = new Classroom(className, key);
+        cD[key] = new Classroom(className, key)
         // Add the teacher to the newly created class
         cD[key].students[req.session.user] = user
-        req.session.class = key;
+        req.session.class = key
 
         res.redirect('/home')
     }
@@ -449,16 +463,16 @@ app.post('/createclass', isLoggedIn, (req, res) => {
         db.run(`INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)`,
             [className, req.session.user, key], (err) => {
                 if (err) {
-                    console.log(err);
+                    console.log(err)
                 }
             })
         makeClass(key)
     } else {
         db.get(`SELECT key FROM classroom WHERE name=?`, [className], (err, classCode) => {
             if (err) {
-                console.log(err);
+                console.log(err)
             }
-            console.log(classCode.key);
+            console.log(classCode.key)
             makeClass(classCode.key)
         })
     }
@@ -509,17 +523,8 @@ app.get('/help', isAuthenticated, (req, res) => {
 
 // L
 
-app.get('/lesson', isAuthenticated, (req, res) => {
-    res.render('pages/lesson', {
-        lesson: cD[req.session.class].lesson,
-        title: "Today's Lesson"
-    })
-
-});
-
 app.get('/previousLessons', isAuthenticated, (req, res) => {
     db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
-
         if (err) {
             console.log(err)
         } else if (rows) {
@@ -531,7 +536,7 @@ app.get('/previousLessons', isAuthenticated, (req, res) => {
         }
 
     })
-});
+})
 
 app.post('/previousLessons', (req, res) => {
     let lesson = JSON.parse(req.body.data)
@@ -549,9 +554,10 @@ app.get('/login', (req, res) => {
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: ''
-    });
-});
+        redurl: '',
+        api: ''
+    })
+})
 
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
@@ -564,26 +570,26 @@ app.post('/login', async (req, res) => {
         loginType: req.body.loginType,
         userType: req.body.userType
     }
-    var passwordCrypt = encrypt(user.password);
+    var passwordCrypt = encrypt(user.password)
     // Check whether user is logging in or signing up
     if (user.loginType == "login") {
         // Get the users login in data to verify password
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
             if (err) {
-                console.log(err);
+                console.log(err)
             }
             // Check if a user with that name was found in the database
             if (rows) {
                 // Decrypt users password
-                let tempPassword = decrypt(JSON.parse(rows.password));
+                let tempPassword = decrypt(JSON.parse(rows.password))
                 if (rows.username == user.username && tempPassword == user.password) {
                     // Add user to the session
-                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
+                    cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API)
                     // Add a cookie to transfer user credentials across site
-                    req.session.user = rows.username;
+                    req.session.user = rows.username
                     if (req.body.classKey) {
-                        req.session.class = req.body.classKey;
-                        let checkJoin;
+                        req.session.class = req.body.classKey
+                        let checkJoin
                         try {
                             checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
                             if (checkJoin) {
@@ -596,7 +602,7 @@ app.post('/login', async (req, res) => {
                         }
 
                     } else {
-                        res.redirect('/');
+                        res.redirect('/')
                     }
                 } else {
                     res.redirect('/login')
@@ -607,61 +613,42 @@ app.post('/login', async (req, res) => {
         })
 
     } else if (user.loginType == "new") {
-        // Add the new user to the database 
-        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
+        // Add the new user to the database
+        db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
+            [user.username, JSON.stringify(passwordCrypt), 2, require('crypto').randomBytes(64).toString('hex')], (err) => {
                 if (err) {
-                    console.log(err);
+                    console.log(err)
                 }
-                console.log('Success');
+                console.log('Success')
             })
-        // Find the user in which was just created to get the id of the user 
+        // Find the user in which was just created to get the id of the user
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
             if (err) {
-                console.log(err);
+                console.log(err)
+            } else {
+                // Add user to session
+                cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API)
+                // Add the user to the session in order to transfer data between each page
+                req.session.user = rows.username
+                res.redirect('/')
             }
-            // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
-            // Add the user to the session in order to transfer data between each page
-            req.session.user = rows.username;
-            res.redirect('/');
 
         })
     } else if (user.loginType == "guest") {
 
-    } else if (user.loginType == "newbot") {
-        db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-            [user.username, JSON.stringify(passwordCrypt), 1], (err) => {
-                if (err) {
-                    console.log(err);
-                }
-                console.log('Success');
-            })
-        db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
-            if (err) {
-                console.log(err);
+    } else if (user.loginType == "bot") {
+        let apikey = req.body.apikey
+        if (apikey) {
+            if (req.body.classKey in cD) {
+                req.session.api = apikey
+                req.session.class = req.body.classKey
+                res.json({ login: true })
+            } else {
+                res.json({ login: false })
             }
-            // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions);
-            // Add the user to the session in order to transfer data between each page
-            req.session.user = rows.username;
-            if (req.body.classKey) {
-                req.session.class = req.body.classKey;
-                let checkJoin;
-                try {
-                    checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-                    if (checkJoin) {
-                        res.json({ login: true })
-                    } else (
-                        res.json({ login: false })
-                    )
-                } catch (err) {
-                    res.json({ login: false })
-                }
-
-            }
-            res.redirect('/');
-        })
+        } else {
+            res.json({ login: false })
+        }
     }
 })
 
@@ -673,54 +660,54 @@ app.post('/login', async (req, res) => {
 
 // P
 
-//Renders the poll HTMl template
-//Allows for poll answers to be processed and stored
-app.get('/poll', isAuthenticated, permCheck, (req, res) => {
+
+// Q
+
+
+
+// R
+
+
+// S
+
+// selectclass
+//Send user to the select class page
+app.get('/selectclass', isLoggedIn, (req, res) => {
+    res.render('pages/selectclass', {
+        title: 'Select Class',
+        color: '"dark blue"'
+    })
+})
+
+
+//Adds user to a selected class, typically from the select class page
+app.post('/selectclass', isLoggedIn, async (req, res) => {
+    let code = req.body.key.toLowerCase()
+    let checkComplete = await joinClass(req.session.user, code)
+    if (checkComplete) {
+        req.session.class = code
+        res.redirect('/home')
+    } else {
+        res.send('No Open Class with that Name')
+    }
+})
+
+
+
+app.get('/student', isLoggedIn, (req, res) => {
+    console.log(cD[req.session.class].mode)
+    //Poll Setup
     let user = {
         name: req.session.user,
         class: req.session.class
     }
     let posPollRes = cD[req.session.class].posPollResObj
-    res.render('pages/polls', {
-        title: 'Poll',
-        color: '"dark blue"',
-        user: JSON.stringify(user),
-        pollStatus: cD[req.session.class].pollStatus,
-        posPollRes: JSON.stringify(posPollRes),
-        posTextRes: cD[req.session.class].posTextRes,
-        pollPrompt: cD[req.session.class].pollPrompt
-    })
-    let answer = req.query.letter;
+    let answer = req.query.letter
     if (answer) {
         cD[req.session.class].students[req.session.user].pollRes = answer
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
     }
-
-
-})
-
-//takes a post request to set a poll response
-app.post('/poll', (req, res) => {
-    let answer = req.body.poll
-    if (answer) {
-        cD[req.session.class].students[req.session.user].pollRes = answer
-        db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
-    }
-    res.redirect('/poll')
-})
-
-
-
-
-// Q
-//create a quiz for students to take
-app.get('/makeQuiz', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/makequiz')
-})
-
-app.get('/quiz', isAuthenticated, (req, res) => {
-
-
+    //Quiz Setup and Queries
     if (req.query.question == 'random') {
         let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
         res.render('pages/queryquiz', {
@@ -740,69 +727,52 @@ app.get('/quiz', isAuthenticated, (req, res) => {
         }
 
     } else if (req.query.question == undefined) {
-        res.render('pages/quiz', {
+        res.render('pages/student', {
+            title: 'Student',
+            color: '"dark blue"',
+            user: JSON.stringify(user),
+            pollStatus: cD[req.session.class].pollStatus,
+            posPollRes: JSON.stringify(posPollRes),
+            posTextRes: cD[req.session.class].posTextRes,
+            pollPrompt: cD[req.session.class].pollPrompt,
             quiz: JSON.stringify(cD[req.session.class].quizObj),
-            title: "Quiz"
+            lesson: cD[req.session.class].lesson,
+            mode: cD[req.session.class].mode
         })
 
-    } else {
-
     }
 })
-
-
-// R
-
-//quiz results page
-app.post('/results', (req, res) => {
-    let results = req.body.question
-    let totalScore = 0
-    for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
-        if (results[i] == cD[req.session.class].quizObj.questions[i][1]) {
-            totalScore += cD[req.session.class].quizObj.pointsPerQuestion
-        } else {
-            continue;
+app.post('/student', (req, res) => {
+    if (req.query.poll) {
+        let answer = req.body.poll
+        if (answer) {
+            cD[req.session.class].students[req.session.user].pollRes = answer
+            db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
         }
+        res.redirect('/poll')
     }
-    cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
-
-    res.render('pages/results', {
-        totalScore: Math.floor(totalScore),
-        maxScore: cD[req.session.class].quizObj.totalScore,
-        title: "Results"
-    })
-})
-
-
-// S
-
-// selectclass
-//Send user to the select class page
-app.get('/selectclass', isLoggedIn, (req, res) => {
-    res.render('pages/selectclass', {
-        title: 'Select Class',
-        color: '"dark blue"'
-    })
-})
-
-
-//Adds user to a selected class, typically from the select class page
-app.post('/selectclass', isLoggedIn, async (req, res) => {
-    let code = req.body.key.toLowerCase();
-    let checkComplete = await joinClass(req.session.user, code)
-    if (checkComplete) {
-        req.session.class = code;
-        res.redirect('/home')
-    } else {
-        res.send('No Open Class with that Name')
+    if(req.body.question){
+        let results = req.body.question
+        let totalScore = 0
+        for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
+            if (results[i] == cD[req.session.class].quizObj.questions[i][1]) {
+                totalScore += cD[req.session.class].quizObj.pointsPerQuestion
+            } else {
+                continue
+            }
+        }
+        cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
+        
+        res.render('pages/results', {
+            totalScore: Math.floor(totalScore),
+            maxScore: cD[req.session.class].quizObj.totalScore,
+            title: "Results"
+        })
     }
-});
-
-app.get('/sfx', isAuthenticated, permCheck, (req, res) => {
-    res.render('pages/sfx', {
-        title: "SFX",
-    })
 })
+
+
+
 
 // T
 
@@ -835,36 +805,39 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/oauth/login', (req, res) => {
     let redurl = req.query.redurl
+    let api = req.query.api
     res.render('pages/login', {
         title: 'Formbar',
         color: 'purple',
-        redurl: redurl
+        redurl: redurl,
+        api: api
     })
 })
 
 app.post('/oauth/login', (req, res) => {
     let redurl = req.body.redurl
+    let api = req.body.api
     var user = {
         username: req.body.username,
         password: req.body.password,
         loginType: req.body.loginType,
         userType: req.body.userType
     }
-    var passwordCrypt = encrypt(user.password);
+    var passwordCrypt = encrypt(user.password)
     // Check whether user is logging in or signing up
     if (user.loginType == "login") {
         // Get the users login in data to verify password
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
             if (err) {
-                console.log(err);
+                console.log(err)
             }
             // Check if a user with that name was found in the database
             if (rows) {
                 // Decrypt users password
-                let tempPassword = decrypt(JSON.parse(rows.password));
+                let tempPassword = decrypt(JSON.parse(rows.password))
                 if (rows.username == user.username && tempPassword == user.password) {
-                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions })
-                    console.log(redurl + "?token=" + token);
+                    let token = generateAccessToken({ username: user.username, permissions: rows.permissions }, api)
+                    console.log(redurl + "?token=" + token)
                     res.redirect(redurl + "?token=" + token)
                 } else {
                     res.redirect('/oauth/login?redurl=' + redurl)
@@ -875,24 +848,24 @@ app.post('/oauth/login', (req, res) => {
         })
 
     } else if (user.loginType == "new") {
-        // Add the new user to the database 
+        // Add the new user to the database
         db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
             [user.username, JSON.stringify(passwordCrypt), 2], (err) => {
                 if (err) {
-                    console.log(err);
+                    console.log(err)
                 }
-                console.log('Success');
+                console.log('Success')
             })
-        // Find the user in which was just created to get the id of the user 
+        // Find the user in which was just created to get the id of the user
         db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
             if (err) {
-                console.log(err);
+                console.log(err)
             }
             // Add user to session
-            cD.noClass.students[rows.username] = new Student(rows.username, rows.id);
+            cD.noClass.students[rows.username] = new Student(rows.username, rows.id)
             // Add the user to the session in order to transfer data between each page
-            req.session.user = rows.username;
-            res.redirect('/');
+            req.session.user = rows.username
+            res.redirect('/')
 
         })
     }
@@ -904,44 +877,88 @@ app.post('/oauth/login', (req, res) => {
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
     if (socket.request.session.user) {
-        next();
+        next()
+    } else if (socket.request.session.api) {
+        next()
     } else {
-        console.log("Authentication Failed");
-        next(new Error("invalid"));
+        console.log("Authentication Failed")
+        next(new Error("invalid"))
     }
-});
-//Handles the webscoket communications
+})
+
+const rateLimits = {}
+
+//Handles the websocket communications
 io.sockets.on('connection', function (socket) {
     if (socket.request.session.user) {
-        socket.join(cD[socket.request.session.class].className);
+        socket.join(cD[socket.request.session.class].className)
+    } else if (socket.request.session.api) {
+        socket.join(cD[socket.request.session.class].className)
     }
+
+    //rete limiter
+    socket.use((packet, next) => {
+        const user = socket.request.session.user
+        const now = Date.now()
+        const limit = 5
+        const timeFrame = 3000
+        const blockTime = 3000
+        const allowedRequests = ['pollResp', 'help', 'break']
+
+        if (!rateLimits[user]) {
+            rateLimits[user] = {}
+        }
+
+        const userRequests = rateLimits[user]
+
+        const requestType = packet[0]
+        if (!allowedRequests.includes(requestType)) {
+            next()
+            return
+        }
+
+        userRequests[requestType] = userRequests[requestType] || []
+
+        userRequests[requestType] = userRequests[requestType].filter((timestamp) => now - timestamp < timeFrame)
+
+        if (userRequests[requestType].length >= limit) {
+            setTimeout(() => {
+                userRequests[requestType].shift()
+            }, blockTime)
+        } else {
+            userRequests[requestType].push(now)
+            next()
+        }
+    })
+
     // /poll websockets for updating the database
     socket.on('pollResp', function (res, textRes) {
-        cD[socket.request.session.class].students[socket.request.session.user].pollRes = res;
-        cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes;
+        cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
+        cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
-    });
+    })
     // Changes Permission of user. Takes which user and the new permission level
     socket.on('permChange', function (user, res) {
         cD[socket.request.session.class].students[user].permissions = res
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
-    });
+    })
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
     socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
+        cD[socket.request.session.class].mode = 'poll'
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
-            console.log(answerNames);
+            console.log(answerNames)
             if (answerNames[i] == '' || answerNames[i] == null) {
                 let letterString = "abcdefghijklmnopqrstuvwxyz"
-                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
             } else {
-                cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+                cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
             }
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
-    });
+    })
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
         let data = { prompt: '', names: [], letter: [], text: [] }
@@ -959,15 +976,22 @@ io.sockets.on('connection', function (socket) {
         db.run(`INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)`,
             [cD[socket.request.session.class].key, JSON.stringify(data), date], (err) => {
                 if (err) {
-                    console.log(err);
+                    console.log(err)
                 }
-                console.log('Saved Poll To Database');
+                console.log('Saved Poll To Database')
             })
 
         cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
-    });
+
+        for (const key in cD[socket.request.session.class].students) {
+            cD[socket.request.session.class].students[key].pollRes = ""
+            cD[socket.request.session.class].students[key].pollTextRes = ""
+        }
+
+        socket.broadcast.emit('vbData')
+    })
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
         io.emit('reload')
@@ -978,17 +1002,22 @@ io.sockets.on('connection', function (socket) {
     })
 
     socket.on('help', function (reason, time) {
-        console.log(reason);
-        cD[socket.request.session.class].students[socket.request.session.user].help = `<b>${socket.request.session.user}</b> reason: <b>${reason}</b> time sent: ${time}`
+        cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
+    })
+    socket.on('break', () => {
+        studentBreak = cD[socket.request.session.class].students[socket.request.session.user]
+        if (studentBreak.break)
+            studentBreak.break = false
+        else studentBreak.break = true
     })
     socket.on('deleteUser', function (userName) {
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
-        console.log(userName + ' removed from class');
+        console.log(userName + ' removed from class')
     })
     socket.on('joinRoom', function (className) {
-        console.log("Working");
-        socket.join(className);
+        console.log("Working")
+        socket.join(className)
     })
     socket.on('cpupdate', function () {
         db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
@@ -997,27 +1026,15 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
-    socket.on('bgmLoad', function (bgmFiles) {
-        io.to(cD[socket.request.session.class].className).emit('bgmLoadUpdate', bgmFiles.files, bgmFiles.playing, bgmFiles.stop)
-    })
-    socket.on('bgmGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('bgmGet')
-    })
-    socket.on('bgmPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPlay', music)
-    })
-    socket.on('bgmPause', function (stop) {
-        io.to(cD[socket.request.session.class].className).emit('bgmPause', stop)
-    })
-    socket.on('sfxGet', function () {
-        io.to(cD[socket.request.session.class].className).emit('sfxGet')
-    })
-    socket.on('sfxLoad', function (sfxFiles) {
-        io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
-    })
-    socket.on('sfxPlay', function (music) {
-        io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
-    })
+    // socket.on('sfxGet', function () {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxGet')
+    // })
+    // socket.on('sfxLoad', function (sfxFiles) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
+    // })
+    // socket.on('sfxPlay', function (music) {
+    //     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
+    // })
     socket.on('botPollStart', function (answerNumber) {
         answerNames = []
         cD[socket.request.session.class].pollStatus = true
@@ -1025,9 +1042,9 @@ io.sockets.on('connection', function (socket) {
         for (let i = 0; i < answerNumber; i++) {
             if (answerNames[i] == '' || answerNames[i] == null) {
                 let letterString = "abcdefghijklmnopqrstuvwxyz"
-                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
+                cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
             } else {
-                cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i];
+                cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
             }
         }
         cD[socket.request.session.class].posTextRes = false
@@ -1037,73 +1054,109 @@ io.sockets.on('connection', function (socket) {
 
         db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
             if (err) {
-                console.error(err);
+                console.error(err)
             } else {
                 io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
             }
-        });
+        })
 
     })
     socket.on('doStep', function (index) {
+        io.to(cD[socket.request.session.class].className).emit('reload')
         cD[socket.request.session.class].currentStep++
-        if(cD[socket.request.session.class].steps[index] !== undefined){
+        if (cD[socket.request.session.class].steps[index] !== undefined) {
+            if (cD[socket.request.session.class].steps[index].type == 'poll') {
 
-            if(cD[socket.request.session.class].steps[index].type == 'poll'){
+                cD[socket.request.session.class].mode = 'poll'
+
+                if (cD[socket.request.session.class].pollStatus == true) {
+                    cD[socket.request.session.class].posPollResObj = {}
+                    cD[socket.request.session.class].pollPrompt = ""
+                    cD[socket.request.session.class].pollStatus = false
+                };
+
                 cD[socket.request.session.class].pollStatus = true
                 // Creates an object for every answer possible the teacher is allowing
                 for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
                     if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
                         let letterString = "abcdefghijklmnopqrstuvwxyz"
-                    cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i];
-                } else {
-                    cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i];
-                }
-            }
-            cD[socket.request.session.class].posTextRes = false
-            cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
-        } else  if(cD[socket.request.session.class].steps[index].type == 'quiz'){
-            questions = cD[socket.request.session.class].steps[index].questions
-            quiz = new Quiz(questions.length, 100)
-            quiz.questions = questions
-            cD[socket.request.session.class].quizObj = quiz
-            
-        }else  if(cD[socket.request.session.class].steps[index].type == 'lesson'){
-            
-            let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
-            cD[socket.request.session.class].lesson = lesson
-            
-            
-            db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
-                [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
-                    if (err) {
-                        console.log(err);
+                        cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+                    } else {
+                        cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
                     }
-                    console.log('Saved Lesson To Database');
-                })
-                
+                }
+                cD[socket.request.session.class].posTextRes = false
+                cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+            } else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
+                cD[socket.request.session.class].mode = 'quiz'
+                questions = cD[socket.request.session.class].steps[index].questions
+                quiz = new Quiz(questions.length, 100)
+                quiz.questions = questions
+                cD[socket.request.session.class].quizObj = quiz
+
+            } else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
+                cD[socket.request.session.class].mode = 'lesson'
+                let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
+                cD[socket.request.session.class].lesson = lesson
+
+
+                db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+                    [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+                        if (err) {
+                            console.log(err)
+
+                        }
+                    })
+                cD[socket.request.session.class].posTextRes = false
+                cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+            } else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
+                questions = cD[socket.request.session.class].steps[index].questions
+                quiz = new Quiz(questions.length, 100)
+                quiz.questions = questions
+                cD[socket.request.session.class].quizObj = quiz
+
+            } else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
+
+                let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
+                cD[socket.request.session.class].lesson = lesson
+
+
+                db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+                    [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+                        if (err) {
+                            console.log(err)
+                        }
+                        console.log('Saved Lesson To Database')
+                    })
+
             }
         } else {
             cD[socket.request.session.class].currentStep = 0
         }
-        })
-        socket.on('previousPollDisplay', function(pollindex){
-        db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function(err, pollData) {
+    })
+    socket.on('previousPollDisplay', function (pollindex) {
+        db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
             if (err) {
-             console.error(err);
+                console.error(err)
             } else {
-             io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
+                io.to(cD[socket.request.session.class].className).emit('previousPollData', JSON.parse(pollData.data))
             }
-           }); 
-})
-socket.on('deleteTicket', function(student){
-    cD[socket.request.session.class].students[student].help = ''
+        })
+    })
+    socket.on('deleteTicket', function (student) {
+        cD[socket.request.session.class].students[student].help = ''
+    })
+    socket.on('modechange', function (mode) {
+        cD[socket.request.session.class].mode = mode
+
+        io.to(cD[socket.request.session.class].className).emit('reload')
+    })
 })
 
-});
 
 
 
 http.listen(420, () => {
-    console.log('Running on port: 420');
-});
+    console.log('Running on port: 420')
+})
 
