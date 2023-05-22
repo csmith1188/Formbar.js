@@ -669,26 +669,6 @@ app.post('/login', async (req, res) => {
 
 // R
 
-//quiz results page
-app.post('/results', (req, res) => {
-    let results = req.body.question
-    let totalScore = 0
-    for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
-        if (results[i] == cD[req.session.class].quizObj.questions[i][1]) {
-            totalScore += cD[req.session.class].quizObj.pointsPerQuestion
-        } else {
-            continue
-        }
-    }
-    cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
-
-    res.render('pages/results', {
-        totalScore: Math.floor(totalScore),
-        maxScore: cD[req.session.class].quizObj.totalScore,
-        title: "Results"
-    })
-})
-
 
 // S
 
@@ -765,13 +745,31 @@ if (req.query.question == 'random') {
 }
 })
 app.post('/student', (req, res) => {
-    if(req.query.poll){
+    if(req.body.poll){
         let answer = req.body.poll
         if (answer) {
             cD[req.session.class].students[req.session.user].pollRes = answer
             db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
         }
         res.redirect('/poll')
+    }
+    if(req.body.question){
+        let results = req.body.question
+        let totalScore = 0
+        for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
+            if (results[i] == cD[req.session.class].quizObj.questions[i][1]) {
+                totalScore += cD[req.session.class].quizObj.pointsPerQuestion
+            } else {
+                continue
+            }
+        }
+        cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
+        
+        res.render('pages/results', {
+            totalScore: Math.floor(totalScore),
+            maxScore: cD[req.session.class].quizObj.totalScore,
+            title: "Results"
+        })
     }
 })
 
