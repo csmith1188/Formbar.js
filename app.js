@@ -898,7 +898,7 @@ io.sockets.on('connection', function (socket) {
         socket.join(cD[socket.request.session.class].className)
     }
 
-    //rete limiter
+    //rate limiter
     socket.use((packet, next) => {
         const user = socket.request.session.user
         const now = Date.now()

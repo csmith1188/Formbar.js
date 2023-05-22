@@ -10,6 +10,8 @@
     </body>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        const maxCharacters = 150
+
         var socket = io()
         var today = new Date()
 
@@ -20,10 +22,13 @@
                 minutes: today.getMinutes(),
                 seconds: today.getSeconds()
             }
-            alert('Help Ticket Sent')
-            socket.emit('help', reason, time)
-            socket.emit('cpupdate')
-            socket.emit('sfxPlay', "sfx_up04")
+            console.log(reason.length)
+            if (reason.length <= maxCharacters) {
+                alert('Help Ticket Sent')
+                socket.emit('help', reason, time)
+                socket.emit('cpupdate')
+                socket.emit('sfxPlay', "sfx_up04")
+            } else alert(`reason is longer then ${maxCharacters} characters`)
         }
     </script>
 
