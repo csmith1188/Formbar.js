@@ -49,67 +49,64 @@
         // Update the virtual bar
         // Creates new labels and colors, plus imports all new data to the table
         function update(data) {
+            for (let [username, student] of Object.entries(data.students)) {
+                if (student.break) delete data.students[username]
+            }
 
-            if (data) {
-                for (let [username, student] of Object.entries(data.students)) {
-                    if (student.break) delete data.students[username]
-                }
+            var labelsArray = []
+            var pollArray = []
 
-                var labelsArray = []
-                var pollArray = []
+            let studResponses = {}
+            // Loops through object to get each label of the possible answers
+            // Also, create a new variable for each possible answer
+            for (const answer of Object.keys(data.posPollResObj)) {
+                labelsArray.push(data.posPollResObj[answer])
+                studResponses[answer] = 0
+            }
 
-                let studResponses = {}
-                // Loops through object to get each label of the possible answers
-                // Also, create a new variable for each possible answer
-                for (const answer of Object.keys(data.posPollResObj)) {
-                    labelsArray.push(data.posPollResObj[answer])
-                    studResponses[answer] = 0
+            // Loops through all possible answers and generates a new color variant for each answer
+            // All possible answers should have a different color
+            for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
+                let color = ''
+                let CC = '0123456789ABCDEF'
+                let colorI = CC[Math.floor(i / 2)]
+                let colorJ = CC[15 - Math.floor(i / 2)]
+                switch (i % 4) {
+                    case 0:
+                        color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
+                        break
+                    case 1:
+                        color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
+                        break
+                    case 2:
+                        color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
+                        break
+                    case 3:
+                        color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
+                        break
                 }
+                doughnutChart.data.datasets[0].backgroundColor.push(color)
+            }
+            // Loops through all student answers and adds them to a total tally
+            // Student response corresponds with a property name in studResponses
+            for (const student of Object.keys(data.students)) {
+                studResponses[data.students[student].pollRes]++
+            }
+            //
+            for (const responses of Object.keys(studResponses)) {
+                pollArray.push(studResponses[responses])
+            }
 
-                // Loops through all possible answers and generates a new color variant for each answer
-                // All possible answers should have a different color
-                for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
-                    let color = ''
-                    let CC = '0123456789ABCDEF'
-                    let colorI = CC[Math.floor(i / 2)]
-                    let colorJ = CC[15 - Math.floor(i / 2)]
-                    switch (i % 4) {
-                        case 0:
-                            color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
-                            break
-                        case 1:
-                            color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
-                            break
-                        case 2:
-                            color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
-                            break
-                        case 3:
-                            color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
-                            break
-                    }
-                    doughnutChart.data.datasets[0].backgroundColor.push(color)
-                }
-                // Loops through all student answers and adds them to a total tally
-                // Student response corresponds with a property name in studResponses
-                for (const student of Object.keys(data.students)) {
-                    studResponses[data.students[student].pollRes]++
-                }
-                //
-                for (const responses of Object.keys(studResponses)) {
-                    pollArray.push(studResponses[responses])
-                }
-
-                doughnutChart.data.labels = labelsArray
-                doughnutChart.data.datasets[0].data = pollArray
-                doughnutChart.update()
-            } else document.getElementById('virtualbar').remove()
+            doughnutChart.data.labels = labelsArray
+            doughnutChart.data.datasets[0].data = pollArray
+            doughnutChart.update()
         }
 
         // Calls for data
         socket.emit('vbData')
         // Gets data from server and send it the function
         socket.on('vbData', function (data) {
-            if (data) data = JSON.parse(data)
+            data = JSON.parse(data)
             update(data)
         })
 

@@ -51,6 +51,8 @@
                 <br>
                 <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()" class="quickButton">
                 <label for="changeNames">Change The Names of The Answers?</label>
+                <input type="checkbox" id="blind">
+                <label for="blind">Do you want a blind poll?</label>
                 <input type="button" value="Start Poll" onclick="startPollFunc()" class="quickButton">
                 <br>
             </form>
@@ -70,16 +72,16 @@
                 <input type="submit">
                 <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
             </form>
-        <form>
-            <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-            <label class="form-control" for="modeP">Poll Mode</label>
-            <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-            <label class="form-control" for="modeL">Lesson Mode</label>
-            <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-            <label class="form-control" for="modeQ">Quiz Mode</label>
-            <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-            <label class="form-control" for="modePT">Playtime Mode</label>
-        </form>
+            <form>
+                <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+                <label class="form-control" for="modeP">Poll Mode</label>
+                <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+                <label class="form-control" for="modeL">Lesson Mode</label>
+                <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+                <label class="form-control" for="modeQ">Quiz Mode</label>
+                <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+                <label class="form-control" for="modePT">Playtime Mode</label>
+            </form>
         </div>
     </body>
 
@@ -250,6 +252,8 @@
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
             var pollAnsNames = document.getElementsByName('pollAnsName')
+            var blind = document.getElementById('blind').checked
+            console.log(blind)
             var pollAnsValues = []
             for (let i = 0; i < pollAnsNames.length; i++) {
                 pollAnsValues.push(pollAnsNames[i].value)
@@ -258,7 +262,7 @@
             startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
             permChanges.style.display = 'none'
-            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues)
+            socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues, blind)
             socket.emit('reload') // Reloads the users page
         }
 
@@ -274,20 +278,20 @@
 
         }
 
-        function modeChange(){
-            let modeP = document.getElementById('modeP');
-            let modeL = document.getElementById('modeL');
-            let modeQ = document.getElementById('modeQ');
-            let modePT = document.getElementById('modePT');
+        function modeChange() {
+            let modeP = document.getElementById('modeP')
+            let modeL = document.getElementById('modeL')
+            let modeQ = document.getElementById('modeQ')
+            let modePT = document.getElementById('modePT')
 
 
-            if(modeP.checked){
+            if (modeP.checked) {
                 socket.emit('modechange', modeP.value)
-            }else if(modeL.checked){
+            } else if (modeL.checked) {
                 socket.emit('modechange', modeL.value)
-            } else if(modeQ.checked){
+            } else if (modeQ.checked) {
                 socket.emit('modechange', modeQ.value)
-            } else if(modePT.checked){
+            } else if (modePT.checked) {
                 socket.emit('modechange', modePT.value)
             }
         }
@@ -539,7 +543,6 @@
             let dueAssigns = document.getElementById('dueAssigns')
             socket.emit('lessonStart', learningObj.value)
             alert('Lesson Created')
-
         }
 
         var allRoom = ""

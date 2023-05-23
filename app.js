@@ -95,6 +95,7 @@ class Classroom {
         this.currentStep = 0
         this.quizObj
         this.mode = 'poll'
+        this.blindPoll = false
     }
 }
 //allows quizzes to be made
@@ -751,7 +752,7 @@ app.post('/student', (req, res) => {
         }
         res.redirect('/poll')
     }
-    if(req.body.question){
+    if (req.body.question) {
         let results = req.body.question
         let totalScore = 0
         for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
@@ -762,7 +763,7 @@ app.post('/student', (req, res) => {
             }
         }
         cD[req.session.class].students[req.session.user].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
-        
+
         res.render('pages/results', {
             totalScore: Math.floor(totalScore),
             maxScore: cD[req.session.class].quizObj.totalScore,
@@ -943,8 +944,9 @@ io.sockets.on('connection', function (socket) {
         db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
     })
     // Starts a new poll. Takes the number of responses and whether or not their are text responses
-    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames) {
+    socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind) {
         cD[socket.request.session.class].mode = 'poll'
+        cD[socket.request.session.class].blindPoll = blind
         cD[socket.request.session.class].pollStatus = true
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
@@ -985,7 +987,7 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
 
-        for (const key in cD[socket.request.session.class].students) {
+        for (let key in cD[socket.request.session.class].students) {
             cD[socket.request.session.class].students[key].pollRes = ""
             cD[socket.request.session.class].students[key].pollTextRes = ""
         }
