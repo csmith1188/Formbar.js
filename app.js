@@ -958,6 +958,12 @@ io.sockets.on('connection', function (socket) {
         }
         cD[socket.request.session.class].posTextRes = resTextBox
         cD[socket.request.session.class].pollPrompt = pollPrompt
+        for (var key in cD[socket.request.session.class].students) {
+            cD[socket.request.session.class].students[key].pollRes = ""
+            cD[socket.request.session.class].students[key].pollTextRes = ""
+        }
+
+        io.emit('vbUpdate')
     })
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
@@ -985,12 +991,7 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
 
-        for (const key in cD[socket.request.session.class].students) {
-            cD[socket.request.session.class].students[key].pollRes = ""
-            cD[socket.request.session.class].students[key].pollTextRes = ""
-        }
 
-        socket.broadcast.emit('vbData')
     })
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
