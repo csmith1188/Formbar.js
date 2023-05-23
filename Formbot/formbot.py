@@ -21,10 +21,28 @@ flaskio = SocketIO(app, logger = False)
 
 
 # For the formbar oauth2 service
+# API key for Oauth2
+# Should be changed accordingly
 app.config['SECRET_KEY'] = 'd6e4d20b5a8a17f31c21928ed57d2ddf6fb5c3b65410dec20763ba1510305610dceb7f53335911171888539a834a89124719f74e02d1cd41ecd1de425e32d3db'
 
-students = {}
+# Adds all constants to change class and formbar address
+# Login type is always  'bot' and classname is your class
+CLASSIP = "http://192.168.10.21:420"
+CLASSKEY = "i4y8"
+LOGINTYPE = "bot"
+CLASSNAME = "a1"
 
+# Number of Pixels the bar has
+MAXPIX = 300
+# Create a list of neopixels
+pixels = neopixel.NeoPixel(board.D21, MAXPIX, auto_write=False)
+
+# Starts bgm and sfx players
+bgm.updateFiles()
+sfx.updateFiles()
+pygame.init()
+
+# Defaults for bgm and sfx
 global nowPlaying
 nowPlaying = "Not Playing"
 stop = "Pause"
@@ -33,12 +51,12 @@ volume = 1.0
 sfxPlaying = "Not Playing"
 
 
-#Decorator for JWT
+#Decorator for JWT(middleware)
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        # jwt is passed in the request header
+        # jwt token passed through url params
         if 'token' in request.args:
             token = request.args.get('token')
         # return 401 if token is not passed
@@ -47,13 +65,14 @@ def token_required(f):
             return "No token", 401
         
         try:
-            # decoding the payload to fetch the stored details
+            # decodes the token and stores user credentials
             data = jwt.decode(token, app.config['SECRET_KEY'])
+            # assigns data to a object to be used in the oauth2 endpoint
             user = {'username': data['username'], 'permissions': str(data['permissions']), 'expire': data['exp'], 'token': token}
         except:
             print("No token")
             return "Bad token", 401
-        # returns the current logged in users context to the routes
+        # returns the current logged in users context to the oauth2 endpoint
         return  f(user, *args, **kwargs)
   
     return decorated
@@ -62,6 +81,7 @@ def token_required(f):
 def authenticate_user(f):
     @wraps(f)
     def decorated2(*args, **kwargs):
+        # Acccesses cookies to verify user
         print(request.cookies.get('username'))
         if 'username' in request.cookies:
             return f(request.cookies.get('username'))
@@ -83,7 +103,9 @@ def index(username):
 @app.route('/oauth', methods = ["POST","GET"] )
 @token_required
 def get_all_users(user):
+    # Sets the route we are redirecting to after setting cookies
     resp = make_response(redirect("/home", code=302))
+    # Sets each individual cookie for the user credentials
     resp.set_cookie('username', value=user['username'], expires=user['expire'])
     resp.set_cookie('permissions', value=user['permissions'], expires=user['expire'])
     resp.set_cookie('token', value=user['token'], expires=user['expire'])
@@ -103,7 +125,10 @@ def bgmusic(username):
 # Flask Socketio
 @flaskio.on('bgmGet')
 def bgmGet():
-    emit('bgmLoadUpdate', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
+    # Emits bmg data
+    # Checks all files with imorted bgm module
+    # Checks if music is currentlt playing and if music is paused
+    emit('bgmLoadUpdate', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop}, broadcast= True)
 
 @flaskio.on('bgmPlay')
 def bgmPlay(file):
@@ -125,32 +150,8 @@ def bgmPause(play):
         pygame.mixer.music.unpause()
     
 '''
-
-@sio.on('bgmGet')
-def bgmGet():
-    print("Load")
-    print(nowPlaying)
-    print(stop)
-    sio.emit('bgmLoad', {'files': bgm.bgm, 'playing': nowPlaying, "stop": stop})
-    
-@sio.on('bgmPlay')
-def bgmPlay(file):
-    pygame.mixer.music.load(bgm.bgm[file])
-    global nowPlaying
-    nowPlaying = file
-    global stop
-    stop = "Play"
-    pygame.mixer.music.set_volume(volume)
-    pygame.mixer.music.play(loops=-1)
-
-@sio.on('bgmPause')
-def bgmPause(play):
-    global stop
-    stop = play
-    if play == 'Pause':
-        pygame.mixer.music.pause()
-    elif play == 'Play':
-        pygame.mixer.music.unpause()
+Old code before formbot flask
+Can be used to be converted into flask to build sfx page
 
 @sio.on('sfxGet')
 def bgmGet():
@@ -165,24 +166,10 @@ def sfxPlay(file):
 
 
 
-# Adds all constants to change class and formbar address
-# Login type is either 'newbot' for first login and 'login' for anytime afterwards
-CLASSIP = "http://192.168.10.39:420"
-CLASSKEY = "i4y8"
-LOGINTYPE = "login"
-CLASSNAME = "a1"
-
-MAXPIX = 12
-# Create a list of neopixels
-pixels = neopixel.NeoPixel(board.D21, MAXPIX)
-
-bgm.updateFiles()
-sfx.updateFiles()
-pygame.init()
 
 # Allows our requests to keep session data
 session = requests.Session()
-# Connects our wbesocket connections with our http requests
+# Connects our client websocket connections with our http requests
 sio = socketio.Client(http_session=session)
 
 
@@ -236,6 +223,7 @@ def totalStudents(data):
     return totalStuds
 
 # Uses the converted data to change the lightbar
+# pollData is all answers
 def changeLights(pollData, totalStuds):
     # Two more varibales that increment during loop
     # Changes which pixel in the lightbar we are using
@@ -244,8 +232,9 @@ def changeLights(pollData, totalStuds):
     colNum = 0
     # Get total answers in order to later subtract to totalStuds for creating empty light blocks
     totalAnswers = 0
-    # Finds the size of each chunk
+    
     if totalStuds:
+        # Finds the size of each chunk
         pixChunk = int(math.floor(MAXPIX/totalStuds))
         # Loops through all answers
         for x in pollData:
@@ -253,16 +242,19 @@ def changeLights(pollData, totalStuds):
             if pollData[x]:
                 # Adds a new light for the amount of responses of an answer
                 for y in range(0, pollData[x]):
-                    # Used to fill light bar depending on how many students are in the class
+                    # Changes a chunk(answer) of the light bar. Adds one response to bar
                     for number in range(0, pixChunk - 1):
                         # Changes the lights using an rgb color
                         # Uses rgb values so our generated hex must be converted
                         pixels[pixNum] = hex_to_rgb(colors[colNum])
                         # Moves to next pixel
                         pixNum += 1
+                    # Sets a blank pixel in between each answer
                     pixels[pixNum] = (0, 0, 0)
                     pixNum += 1
+                    # Increment total answers
                     totalAnswers += 1
+            # Move to next color
             colNum += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
@@ -281,6 +273,7 @@ def changeLights(pollData, totalStuds):
                 pixNum += 1
             # Moves to next color in list
             colNum += 1
+    # Displays pixels all at one time
     pixels.show()
     return "Done"
 
@@ -293,22 +286,26 @@ def hex_to_rgb(hex):
   
   return tuple(rgb)
 
+# Login the bot into formbar in order to receive websockets
 
-
-#Wait a minute before logging in.
+#Wait a few seconds before logging in.
 time.sleep(5)
 #Send a login POST request
 global loginAttempt
 def attemptLogin():
     try:
+        # Send a post request to formbar with apikey and classkey
         loginAttempt = session.post(CLASSIP + "/login", {"username":"", "password":"", "loginType": "bot", "userType":"", "classKey": CLASSKEY, "apikey": app.config['SECRET_KEY']})
         print(loginAttempt.json()['login'])
+        # Should return True or False
         return loginAttempt.json()['login']
     except requests.exceptions.RequestException as e:
+        # If request didnt work return false to retry again
         return False
-    
-loginAttempt = attemptLogin()
 
+# Calls for first login attempt
+loginAttempt = attemptLogin()
+# Displays login attempt
 print(loginAttempt)
 #Check for successful login
 if loginAttempt:
@@ -323,6 +320,7 @@ if loginAttempt:
     changeLights(pollData, totalStuds)
 
 else:
+    # If login failed retry in 8 seconds
     while loginAttempt == False:
         time.sleep(8)
         loginAttempt = attemptLogin()
@@ -330,13 +328,15 @@ else:
         
 
         
-# Runs function from above
+# Connects out client to formbar socket server 
 sio.connect(CLASSIP)
-# Allows our bot to join the class room
+# Allows our bot to join the class room using classname
 sio.emit('joinRoom', CLASSNAME)
 
 def my_background_task():
-    # do some background work here!
+    # Background task for remote control
+    # Check ir.py for how to use module
+    # Check old formbar for more information on remote control 
     while True:
         ir.inData = ir.convertHex(ir.getBinary())
         for button in range(len(ir.Buttons)):#Runs through every value in list
@@ -415,25 +415,39 @@ def my_background_task():
 # Allows our bot to recieve data from server on poll change
 @sio.on('vbData')
 def vbData(data):
+    # Receve data from formbar sockets
+    # Convets data to object
     data = json.loads(data)
+    # Gets total students
     totalStuds = totalStudents(data)
+    # Changes our data for lightbar changes
     pollData = changeData(data)
     # Fills lightbar with white pixels
     pixels.fill((30, 30, 30))
+    # Changes lights accordingly
     changeLights(pollData, totalStuds)
+
+# Updates formbar to remove all light on poll start
+@sio.on('vbUpdate')
+def vbUpdate():
+    sio.emit('vbData')
 
 @sio.event
 def disconnect():
     print("I'm Disconnected")
     loginAttempt = False
+    # If formbot gets disconnect continue to retry 
     while loginAttempt == False:
         time.sleep(8)
         loginAttempt = attemptLogin()
         print(loginAttempt)
 
 # Allows program to stay open while waiting for websocket data to be sent
+# Starts remote control in the background
 task = sio.start_background_task(my_background_task)
 
+
+# Starts flask server
 if __name__ == '__main__':
    flaskio.run(app, host="0.0.0.0")
 
