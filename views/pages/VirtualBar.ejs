@@ -104,6 +104,9 @@
 
         // Calls for data
         socket.emit('vbData')
+        socket.on('vbUpdate', function() {
+            socket.emit('vbData')
+        })
         // Gets data from server and send it the function
         socket.on('vbData', function (data) {
             data = JSON.parse(data)
