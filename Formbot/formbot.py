@@ -23,17 +23,17 @@ flaskio = SocketIO(app, logger = False)
 # For the formbar oauth2 service
 # API key for Oauth2
 # Should be changed accordingly
-app.config['SECRET_KEY'] = 'd6e4d20b5a8a17f31c21928ed57d2ddf6fb5c3b65410dec20763ba1510305610dceb7f53335911171888539a834a89124719f74e02d1cd41ecd1de425e32d3db'
+app.config['SECRET_KEY'] = '817c072f84778b8810ffed89e4246b380ff6808915ae645778e892278075dd313f4f192fb88ca8f7f4ddac89b9f3332c6ab3e9cb1e5f130e60b354a1905bdb53'
 
 # Adds all constants to change class and formbar address
 # Login type is always  'bot' and classname is your class
-CLASSIP = "http://192.168.10.21:420"
-CLASSKEY = "i4y8"
+CLASSIP = "http://192.168.10.20:420"
+CLASSKEY = "nz1v"
 LOGINTYPE = "bot"
-CLASSNAME = "a1"
+CLASSNAME = "a"
 
 # Number of Pixels the bar has
-MAXPIX = 300
+MAXPIX = 12
 # Create a list of neopixels
 pixels = neopixel.NeoPixel(board.D21, MAXPIX, auto_write=False)
 
@@ -49,6 +49,8 @@ stop = "Pause"
 global volume
 volume = 1.0
 sfxPlaying = "Not Playing"
+global blindMode
+blindMode = False
 
 
 #Decorator for JWT(middleware)
@@ -63,7 +65,7 @@ def token_required(f):
         if not token:
             print("No token")
             return "No token", 401
-        
+
         try:
             # decodes the token and stores user credentials
             data = jwt.decode(token, app.config['SECRET_KEY'])
@@ -74,7 +76,7 @@ def token_required(f):
             return "Bad token", 401
         # returns the current logged in users context to the oauth2 endpoint
         return  f(user, *args, **kwargs)
-  
+
     return decorated
 
 
@@ -148,7 +150,7 @@ def bgmPause(play):
         pygame.mixer.music.pause()
     elif play == 'Play':
         pygame.mixer.music.unpause()
-    
+
 '''
 Old code before formbot flask
 Can be used to be converted into flask to build sfx page
@@ -177,12 +179,12 @@ sio = socketio.Client(http_session=session)
 @sio.event
 def connect():
     print('connection established')
-    
- 
+
+
 
 # Changes data recieved from websockets to more usable objects
 def changeData(data):
-    
+
     studResponses = {}
     # Defines global color variable
     global colors
@@ -232,7 +234,7 @@ def changeLights(pollData, totalStuds):
     colNum = 0
     # Get total answers in order to later subtract to totalStuds for creating empty light blocks
     totalAnswers = 0
-    
+
     if totalStuds:
         # Finds the size of each chunk
         pixChunk = int(math.floor(MAXPIX/totalStuds))
@@ -245,8 +247,12 @@ def changeLights(pollData, totalStuds):
                     # Changes a chunk(answer) of the light bar. Adds one response to bar
                     for number in range(0, pixChunk - 1):
                         # Changes the lights using an rgb color
-                        # Uses rgb values so our generated hex must be converted
-                        pixels[pixNum] = hex_to_rgb(colors[colNum])
+                        global blindMode
+                        if blindMode:
+                            pixels[pixNum] = hex_to_rgb('FFAA00')
+                        else:
+                            # Uses rgb values so our generated hex must be converted
+                            pixels[pixNum] = hex_to_rgb(colors[colNum])
                         # Moves to next pixel
                         pixNum += 1
                     # Sets a blank pixel in between each answer
@@ -258,6 +264,9 @@ def changeLights(pollData, totalStuds):
             colNum += 1
             # Calculate how many students have not answered
             emptyStudents = int(totalStuds - totalAnswers)
+            if totalStuds == totalAnswers and blindMode is True:
+                blindMode = False
+                changeLights(pollData, totalStuds)
         # Check if any students have not asnwered
         if emptyStudents > 0:
             # Loops through for all students who have not answered and makes a blank chunk
@@ -283,7 +292,7 @@ def hex_to_rgb(hex):
   for i in (0, 2, 4):
     decimal = int(hex[i:i+2], 16)
     rgb.append(decimal)
-  
+
   return tuple(rgb)
 
 # Login the bot into formbar in order to receive websockets
@@ -295,7 +304,7 @@ global loginAttempt
 def attemptLogin():
     try:
         # Send a post request to formbar with apikey and classkey
-        loginAttempt = session.post(CLASSIP + "/login", {"username":"", "password":"", "loginType": "bot", "userType":"", "classKey": CLASSKEY, "apikey": app.config['SECRET_KEY']})
+        loginAttempt = session.post(CLASSIP + "/login", {"username":"", "password":"", "loginType": LOGINTYPE, "userType":"", "classKey": CLASSKEY, "apikey": app.config['SECRET_KEY']})
         print(loginAttempt.json()['login'])
         # Should return True or False
         return loginAttempt.json()['login']
@@ -311,7 +320,7 @@ print(loginAttempt)
 if loginAttempt:
     # Go to the virtualbar page
     thumbData = session.get(url=CLASSIP + "/virtualbar?bot=true")
-        
+
     # Change server data to variables
     totalStuds = totalStudents(thumbData.json())
     pollData = changeData(thumbData.json())
@@ -325,10 +334,10 @@ else:
         time.sleep(8)
         loginAttempt = attemptLogin()
         print(loginAttempt)
-        
 
-        
-# Connects out client to formbar socket server 
+
+
+# Connects out client to formbar socket server
 sio.connect(CLASSIP)
 # Allows our bot to join the class room using classname
 sio.emit('joinRoom', CLASSNAME)
@@ -336,7 +345,7 @@ sio.emit('joinRoom', CLASSNAME)
 def my_background_task():
     # Background task for remote control
     # Check ir.py for how to use module
-    # Check old formbar for more information on remote control 
+    # Check old formbar for more information on remote control
     while True:
         ir.inData = ir.convertHex(ir.getBinary())
         for button in range(len(ir.Buttons)):#Runs through every value in list
@@ -364,7 +373,7 @@ def my_background_task():
                     print(volume)
                     pygame.mixer.music.set_volume(volume)
                 elif ir.ButtonsNames[button] == 'vol_down':
-                    
+
                     volume = volume - 0.1
                     print(volume)
                     pygame.mixer.music.set_volume(volume)
@@ -410,7 +419,7 @@ def my_background_task():
                     sio.emit('botPollStart', 9)
                     sio.emit('reload')
                     sio.emit('cpupdate')
-                    
+
 
 # Allows our bot to recieve data from server on poll change
 @sio.on('vbData')
@@ -418,6 +427,8 @@ def vbData(data):
     # Receve data from formbar sockets
     # Convets data to object
     data = json.loads(data)
+    global blindMode
+    blindMode = data['blindPoll']
     # Gets total students
     totalStuds = totalStudents(data)
     # Changes our data for lightbar changes
@@ -436,7 +447,7 @@ def vbUpdate():
 def disconnect():
     print("I'm Disconnected")
     loginAttempt = False
-    # If formbot gets disconnect continue to retry 
+    # If formbot gets disconnect continue to retry
     while loginAttempt == False:
         time.sleep(8)
         loginAttempt = attemptLogin()
@@ -450,5 +461,3 @@ task = sio.start_background_task(my_background_task)
 # Starts flask server
 if __name__ == '__main__':
    flaskio.run(app, host="0.0.0.0")
-
-
