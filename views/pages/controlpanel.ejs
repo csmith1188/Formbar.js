@@ -9,6 +9,7 @@
     </head>
 
     <body onload="load(<%-pollStatus%>)" id="colorContent">
+    <%- include('../partials/body_sidebar_content') %>
         <header id="quickMenu">
             <button id="users" class="quickButton" onclick="toUsers()">Users</button>
             <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
