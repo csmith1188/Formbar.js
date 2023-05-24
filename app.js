@@ -753,14 +753,12 @@ if (req.query.question == 'random') {
         quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
         title: "Quiz"
     })
-
-} else if (isNaN(req.query.question) == false) {
     if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
         res.render('pages/queryquiz', {
             quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
             title: "Quiz"
         })
-
+    }
     } else if (isNaN(req.query.question) == false) {
         if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
             res.render('pages/queryquiz', {
@@ -785,7 +783,6 @@ if (req.query.question == 'random') {
             lesson: cD[req.session.class].lesson,
             mode: cD[req.session.class].mode
         })
-
     }
 })
 /* This is for when you send poll data via a post command or when you submit a quiz.
