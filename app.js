@@ -16,8 +16,6 @@ const upload = multer({ dest: 'uploads/' })
 // get config vars
 dotenv.config()
 
-
-
 var app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
@@ -992,8 +990,6 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].posPollResObj = {}
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
-
-
     })
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
@@ -1021,6 +1017,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('joinRoom', function (className) {
         console.log("Working")
         socket.join(className)
+        io.emit('vbUpdate')
     })
     socket.on('cpupdate', function () {
         db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
