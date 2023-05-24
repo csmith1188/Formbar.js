@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <%- include('../partials/header_content') %>
-<body id="content" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
-    
+<%- include('../partials/body_sidebar_content') %>
+<body id="colorContent" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
     <div id="lessonContent">
         <%if(lesson.content != undefined){%>
             <h3 id="headerText"><%- lesson.date %></h3>

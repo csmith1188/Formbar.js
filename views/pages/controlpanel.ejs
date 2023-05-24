@@ -9,6 +9,7 @@
     </head>
 
     <body onload="load(<%-pollStatus%>)" id="colorContent">
+    <%- include('../partials/body_sidebar_content') %>
         <header id="quickMenu">
             <button id="users" class="quickButton" onclick="toUsers()">Users</button>
             <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
@@ -72,16 +73,24 @@
                 <input type="submit">
                 <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
             </form>
-            <form>
+        <form>
+            <label class="form-control" id="pollControl" for="modeP">
                 <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-                <label class="form-control" for="modeP">Poll Mode</label>
+                Poll Mode
+            </label>
+            <label class="form-control" id="pollControl" for="modeL">
                 <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-                <label class="form-control" for="modeL">Lesson Mode</label>
+                Lesson Mode
+            </label>
+            <label class="form-control" id="pollControl" for="modeQ">
                 <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-                <label class="form-control" for="modeQ">Quiz Mode</label>
+                Quiz Mode
+            </label>
+            <label class="form-control" id="pollControl" for="modePT">
                 <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-                <label class="form-control" for="modePT">Playtime Mode</label>
-            </form>
+                Playtime Mode
+            </label>
+        </form>
         </div>
     </body>
 
