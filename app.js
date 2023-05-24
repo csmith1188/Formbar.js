@@ -146,10 +146,12 @@ function clearDatabase() {
     return console.log('Database Deleted')
 }
 
-// Check if user has logged in
-// Place at the start of any page that needs to verify if a user is logged in or not
-// This allows websites to check on thier own if the user is logged in
-// This also allows for the website to check for perms
+/*
+Check if user has logged in
+Place at the start of any page that needs to verify if a user is logged in or not
+This allows websites to check on thier own if the user is logged in
+This also allows for the website to check for perms
+*/
 function isAuthenticated(req, res, next) {
     if (req.session.user) {
         if (cD.noClass.students[req.session.user]) {
@@ -165,6 +167,7 @@ function isAuthenticated(req, res, next) {
     } else if (req.session.api) {
         next()
     } else {
+        
         res.redirect('/login')
     }
 }
@@ -195,7 +198,7 @@ function permCheck(req, res, next) {
             console.log(urlPath.indexOf('?'))
             urlPath = urlPath.slice(0, urlPath.indexOf('?'))
         }
-
+//Checks if the user has sent an API key
         if (req.session.api) {
             next()
         } else {
@@ -253,7 +256,8 @@ function generateAccessToken(username, api) {
     return jwt.sign(username, api, { expiresIn: '1800s' });
 }
 
-// Endpoints
+
+
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
 // This allows it to check if the user is logged in along with the home page
@@ -264,7 +268,7 @@ app.get('/', isAuthenticated, (req, res) => {
 
 
 // A
-
+//The page displaying the API key used when handling oauth2 requests from outside programs such as FORMBOT - Riley R., May 22, 2023
 app.get('/apikey', isAuthenticated, (req, res) => {
     res.render('pages/APIKEY', {
         title: "API KEY",
@@ -289,6 +293,10 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes }, help: students[keys[i]].help }
         allStuds.push(val)
     }
+
+    /* Uses EJS to render the template and display the information for the class. 
+    This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+    */
     res.render('pages/controlpanel', {
         title: "Control Panel",
         students: allStuds,
@@ -300,11 +308,20 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 
 })
 
-
+/*
+Manages the use of excell spreadsheets in order to create progressive lessons. 
+It uses Excel To JSON to create an object containing all the data needed for a progressive lesson.
+Could use a switch if need be, but for now it's all broken up by if statements. 
+Use the provided template when testing things. - Riley R., May 22, 2023
+*/
 app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-
+//Initialze a list to push each step to - Riley R., May 22, 2023
     let steps = []
-
+/*
+Uses Excel to JSON to read the sent excel spreadsheet. 
+Each main column has been assigned a label in order to differentiate them.
+It loops through the whole object - Riley R., May 22, 2023
+*/
     if (req.file) {
         cD[req.session.class].currentStep = 0
         const result = excelToJson({
@@ -321,9 +338,13 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
             }]
         })
 
-
+/* For In Loop that iterates through the created object.
+ Allows for the use of steps inside of a progressive lesson. 
+ Checks the object's type using a conditional - Riley R., May 22, 2023
+*/
         for (const key in result['Steps']) {
             let step = {}
+            // Creates an object with all the data required to start a poll - Riley R., May 22, 2023
             if (result['Steps'][key].type == 'Poll') {
                 step.type = 'poll'
                 step.labels = result['Steps'][key].labels.split(', ')
@@ -339,6 +360,10 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                     C: 'key'
                 }
                 let i = 0
+                /*
+                Names the cells of the sheet after C to A-Z for the use of them in Quizzes
+                Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
+                */
                 for (const letterI in letters) {
                     if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
                         colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
@@ -368,9 +393,12 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
                 step.type = 'quiz'
                 step.questions = questionList
                 steps.push(step)
-
-
             } else if (result['Steps'][key].type == 'Lesson') {
+                /*
+                Creates an object with all necessary data in order to make a lesson.
+                The data is stored on a page in an excel spreadsheet.
+                the name of this page is defined in the main page of the excel spreadsheet. - Riley R., May 22, 2023
+                */
                 nameL = result['Steps'][key].prompt
                 let lessonLoad = excelToJson({
                     sourceFile: `${req.file.path}`,
@@ -474,7 +502,6 @@ app.post('/createclass', isLoggedIn, (req, res) => {
             if (err) {
                 console.log(err)
             }
-            console.log(classCode.key)
             makeClass(classCode.key)
         })
     }
@@ -524,7 +551,7 @@ app.get('/help', isAuthenticated, (req, res) => {
 // K
 
 // L
-
+/* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */ 
 app.get('/previousLessons', isAuthenticated, (req, res) => {
     db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
         if (err) {
@@ -619,6 +646,7 @@ app.post('/login', async (req, res) => {
         db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
             [user.username, JSON.stringify(passwordCrypt), 2, require('crypto').randomBytes(64).toString('hex')], (err) => {
                 if (err) {
+
                     console.log(err)
                 }
                 console.log('Success')
@@ -695,7 +723,12 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 })
 
 
-
+/* Student page, the layout is controlled by different "modes" to display different information.
+There are currently 3 working modes
+Poll: For displaying a multiple choice or essay question 
+Quiz: Displaying a quiz with questions that can be answered by the student
+Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
+*/
 app.get('/student', isLoggedIn, (req, res) => {
     console.log(cD[req.session.class].mode);
 //Poll Setup
@@ -710,6 +743,12 @@ app.get('/student', isLoggedIn, (req, res) => {
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
     }
 //Quiz Setup and Queries
+/* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
+
+formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
+
+If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
+*/
 if (req.query.question == 'random') {
     let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
     res.render('pages/queryquiz', {
@@ -744,6 +783,10 @@ if (req.query.question == 'random') {
 
 }
 })
+/* This is for when you send poll data via a post command or when you submit a quiz.
+If it's a poll it'll save your response to the student object and the database.
+- Riley R., May 24, 2023
+*/
 app.post('/student', (req, res) => {
     if(req.body.poll){
         let answer = req.body.poll
