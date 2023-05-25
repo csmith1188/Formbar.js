@@ -6,13 +6,19 @@
 		<body id="colorContent" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
 			<div id="lessonContent">
 				<%if(lesson.content !=undefined){%>
-					<h3 id="headerText"><%- lesson.date %></h3>
+					<h3 id="headerText">
+						<%- lesson.date %>
+					</h3>
 					<% for (let i=0; i < lesson.content.length; i++) { %>
 						<u>
-							<h2 id="headerText"><%-lesson.content[i][0]%></h2>
+							<h2 id="headerText">
+								<%-lesson.content[i][0]%>
+							</h2>
 						</u>
 						<% for (let u=1; u < lesson.content[i].length; u++) { %>
-							<b id="headerText"><%- lesson.content[i][u]%></b><br>
+							<b id="headerText">
+								<%- lesson.content[i][u]%>
+							</b><br>
 							<% } %>
 								<% } %>
 									<br>
@@ -28,7 +34,9 @@
 
 				<div id="poll">
 					<u>
-						<h2 id="headerText"><%-pollPrompt%></h2>
+						<h2 id="headerText">
+							<%-pollPrompt%>
+						</h2>
 					</u>
 					<form id="pollForm">
 
@@ -65,7 +73,6 @@
 					var posPollRes = '<%- posPollRes %>'
 					posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 					posPollRes = JSON.parse(posPollRes)
-					console.log(posPollRes)
 					posPollRes[''] = 'remove'
 					var posTextRes = '<%- posTextRes %>'
 					posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
