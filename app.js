@@ -1,16 +1,12 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const ejs = require('ejs')
-const fs = require('fs')
-const path = require('path')
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')
-const { time } = require('console')
 const upload = multer({ dest: 'uploads/' })
 
 // get config vars
@@ -164,7 +160,7 @@ function isAuthenticated(req, res, next) {
     } else if (req.session.api) {
         next()
     } else {
-        
+
         res.redirect('/login')
     }
 }
@@ -291,7 +287,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
         allStuds.push(val)
     }
 
-    /* Uses EJS to render the template and display the information for the class. 
+    /* Uses EJS to render the template and display the information for the class.
     This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
     */
     res.render('pages/controlpanel', {
@@ -306,16 +302,16 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 })
 
 /*
-Manages the use of excell spreadsheets in order to create progressive lessons. 
+Manages the use of excell spreadsheets in order to create progressive lessons.
 It uses Excel To JSON to create an object containing all the data needed for a progressive lesson.
-Could use a switch if need be, but for now it's all broken up by if statements. 
+Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
 //Initialze a list to push each step to - Riley R., May 22, 2023
     let steps = []
 /*
-Uses Excel to JSON to read the sent excel spreadsheet. 
+Uses Excel to JSON to read the sent excel spreadsheet.
 Each main column has been assigned a label in order to differentiate them.
 It loops through the whole object - Riley R., May 22, 2023
 */
@@ -336,7 +332,7 @@ It loops through the whole object - Riley R., May 22, 2023
         })
 
 /* For In Loop that iterates through the created object.
- Allows for the use of steps inside of a progressive lesson. 
+ Allows for the use of steps inside of a progressive lesson.
  Checks the object's type using a conditional - Riley R., May 22, 2023
 */
         for (const key in result['Steps']) {
@@ -548,7 +544,7 @@ app.get('/help', isAuthenticated, (req, res) => {
 // K
 
 // L
-/* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */ 
+/* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
 app.get('/previousLessons', isAuthenticated, (req, res) => {
     db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
         if (err) {
@@ -722,7 +718,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 
 /* Student page, the layout is controlled by different "modes" to display different information.
 There are currently 3 working modes
-Poll: For displaying a multiple choice or essay question 
+Poll: For displaying a multiple choice or essay question
 Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
