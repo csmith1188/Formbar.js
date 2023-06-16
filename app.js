@@ -1,16 +1,12 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const ejs = require('ejs')
-const fs = require('fs')
-const path = require('path')
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')
-const { time } = require('console')
 const upload = multer({ dest: 'uploads/' })
 
 // get config vars

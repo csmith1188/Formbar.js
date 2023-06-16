@@ -153,8 +153,12 @@
 				socket.emit('vbData')
 				socket.emit('cpupdate')
 				socket.emit('sfxPlay', 'sfx_up01')
-				setTimeout(function () { alert('Poll Submitted ' + lettRes) }, 100)
-
+				setTimeout(function () {
+					if (lettRes > 0)
+						alert('Poll Submitted ' + lettRes)
+					else
+						alert('Removed Poll')
+				}, 100)
 			}
 
 
