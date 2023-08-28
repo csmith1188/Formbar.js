@@ -32,14 +32,13 @@ app.use(express.urlencoded({ extended: true }))
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
 
-// PROMPT: Does this allow use to associate client logins with their websocket connection?
-// PROMPT: Where did you find information on this. Please put the link here.
-// For further uses on this use this link: https://socket.io/how-to/use-with-express-session
+
+// adds session middle ware to socket.io
 io.use(function (socket, next) {
     sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
-// PROMPT: What does this do?
+// adds session middleware to express
 app.use(sessionMiddleware)
 
 
@@ -112,7 +111,7 @@ class Lesson {
 }
 
 //Permssion level needed to access each page
-pagePermissions = {
+const pagePermissions = {
     controlpanel: 0,
     chat: 2,
     poll: 2,
@@ -128,7 +127,7 @@ pagePermissions = {
 // Functions
 //-----------
 //Clears the database
-//Removes all users, teachers, and claseses
+//Removes all users, teachers, and classes
 //ONLY USE FOR TESTING PURPOSES
 function clearDatabase() {
     db.get(`DELETE FROM users`, (err) => {
@@ -191,7 +190,7 @@ function permCheck(req, res, next) {
             console.log(urlPath.indexOf('?'))
             urlPath = urlPath.slice(0, urlPath.indexOf('?'))
         }
-//Checks if the user has sent an API key
+        //Checks if the user has sent an API key
         if (req.session.api) {
             next()
         } else {
@@ -308,13 +307,13 @@ Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-//Initialze a list to push each step to - Riley R., May 22, 2023
+    //Initialze a list to push each step to - Riley R., May 22, 2023
     let steps = []
-/*
-Uses Excel to JSON to read the sent excel spreadsheet.
-Each main column has been assigned a label in order to differentiate them.
-It loops through the whole object - Riley R., May 22, 2023
-*/
+    /*
+    Uses Excel to JSON to read the sent excel spreadsheet.
+    Each main column has been assigned a label in order to differentiate them.
+    It loops through the whole object - Riley R., May 22, 2023
+    */
     if (req.file) {
         cD[req.session.class].currentStep = 0
         const result = excelToJson({
@@ -331,10 +330,10 @@ It loops through the whole object - Riley R., May 22, 2023
             }]
         })
 
-/* For In Loop that iterates through the created object.
- Allows for the use of steps inside of a progressive lesson.
- Checks the object's type using a conditional - Riley R., May 22, 2023
-*/
+        /* For In Loop that iterates through the created object.
+         Allows for the use of steps inside of a progressive lesson.
+         Checks the object's type using a conditional - Riley R., May 22, 2023
+        */
         for (const key in result['Steps']) {
             let step = {}
             // Creates an object with all the data required to start a poll - Riley R., May 22, 2023
@@ -427,8 +426,6 @@ It loops through the whole object - Riley R., May 22, 2023
         console.log(cD[req.session.class].steps)
         res.redirect('/controlpanel')
     }
-
-
 })
 
 
@@ -736,25 +733,25 @@ app.get('/student', isLoggedIn, (req, res) => {
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
     }
 
-//Quiz Setup and Queries
-/* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
+    //Quiz Setup and Queries
+    /* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
 
-formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
+    formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
 
-If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
-*/
-if (req.query.question == 'random') {
-    let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
-    res.render('pages/queryquiz', {
-        quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
-        title: "Quiz"
-    })
-    if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+    If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
+    */
+    if (req.query.question == 'random') {
+        let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
         res.render('pages/queryquiz', {
             quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
             title: "Quiz"
         })
-    }
+        if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
+                title: "Quiz"
+            })
+        }
     } else if (isNaN(req.query.question) == false) {
         if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
             res.render('pages/queryquiz', {
@@ -781,6 +778,7 @@ if (req.query.question == 'random') {
         })
     }
 })
+
 /* This is for when you send poll data via a post command or when you submit a quiz.
 If it's a poll it'll save your response to the student object and the database.
 - Riley R., May 24, 2023
@@ -1009,6 +1007,7 @@ io.sockets.on('connection', function (socket) {
 
         io.emit('vbUpdate')
     })
+
     // End the current poll. Does not take any arguments
     socket.on('endPoll', function () {
         let data = { prompt: '', names: [], letter: [], text: [] }
@@ -1035,10 +1034,12 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].pollPrompt = ''
         cD[socket.request.session.class].pollStatus = false
     })
+
     // Reloads any page with the reload function on. No arguments
     socket.on('reload', function () {
         io.emit('reload')
     })
+
     // Sends poll and student response data to client side virtual bar
     socket.on('vbData', function () {
         io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
@@ -1047,22 +1048,26 @@ io.sockets.on('connection', function (socket) {
     socket.on('help', function (reason, time) {
         cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
     })
+
     socket.on('break', () => {
         studentBreak = cD[socket.request.session.class].students[socket.request.session.user]
         if (studentBreak.break)
             studentBreak.break = false
         else studentBreak.break = true
     })
+
     socket.on('deleteUser', function (userName) {
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
         console.log(userName + ' removed from class')
     })
+
     socket.on('joinRoom', function (className) {
         console.log("Working")
         socket.join(className)
         io.emit('vbUpdate')
     })
+
     socket.on('cpupdate', function () {
         db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
             var pollHistory = rows
@@ -1070,15 +1075,19 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
+
     // socket.on('sfxGet', function () {
     //     io.to(cD[socket.request.session.class].className).emit('sfxGet')
     // })
+
     // socket.on('sfxLoad', function (sfxFiles) {
     //     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
     // })
+
     // socket.on('sfxPlay', function (music) {
     //     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
     // })
+
     socket.on('botPollStart', function (answerNumber) {
         answerNames = []
         cD[socket.request.session.class].pollStatus = true
@@ -1094,6 +1103,7 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].posTextRes = false
         cD[socket.request.session.class].pollPrompt = "Quick Poll"
     })
+
     socket.on('previousPollDisplay', function (pollindex) {
 
         db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
@@ -1105,6 +1115,7 @@ io.sockets.on('connection', function (socket) {
         })
 
     })
+
     socket.on('doStep', function (index) {
         io.to(cD[socket.request.session.class].className).emit('reload')
         cD[socket.request.session.class].currentStep++
@@ -1160,10 +1171,8 @@ io.sockets.on('connection', function (socket) {
                 cD[socket.request.session.class].quizObj = quiz
 
             } else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
-
                 let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
                 cD[socket.request.session.class].lesson = lesson
-
 
                 db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
                     [cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
@@ -1172,12 +1181,12 @@ io.sockets.on('connection', function (socket) {
                         }
                         console.log('Saved Lesson To Database')
                     })
-
             }
         } else {
             cD[socket.request.session.class].currentStep = 0
         }
     })
+
     socket.on('previousPollDisplay', function (pollindex) {
         db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
             if (err) {
@@ -1187,9 +1196,11 @@ io.sockets.on('connection', function (socket) {
             }
         })
     })
+
     socket.on('deleteTicket', function (student) {
         cD[socket.request.session.class].students[student].help = ''
     })
+
     socket.on('modechange', function (mode) {
         cD[socket.request.session.class].mode = mode
 
@@ -1198,9 +1209,6 @@ io.sockets.on('connection', function (socket) {
 })
 
 
-
-
 http.listen(420, () => {
     console.log('Running on port: 420')
 })
-
