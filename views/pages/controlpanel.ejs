@@ -9,89 +9,90 @@
     </head>
 
     <body onload="load(<%-pollStatus%>)" id="colorContent">
-    <%- include('../partials/body_sidebar_content') %>
-        <header id="quickMenu">
-            <button id="users" class="quickButton" onclick="toUsers()">Users</button>
-            <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
-            <button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
-        </header>
+        <%- include('../partials/body_sidebar_content') %>
+            <header id="quickMenu">
+                <button id="users" class="quickButton" onclick="toUsers()">Users</button>
+                <button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
+                <button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
+            </header>
 
-        <p id="classCode">Class Code:</p>
+            <p id="classCode">Class Code:</p>
 
-        <div id="permChanges">
-            <div id="permChangeKey">
+            <div id="permChanges">
+                <div id="permChangeKey">
+
+                </div>
+                <div id="permFilterBoxes">
+                    Filter:
+                    <button type="button" id="help" class="filter">Help</button>
+                    <button type="button" id="break" class="filter">Break</button>
+                    <button type="button" id="polls" class="filter">Polls</button>
+                </div>
+                <div id="permSortBoxes">
+                    Sort:
+                    <button type="button" id="name" class="sort">Name</button>
+                    <button type="button" id="polls" class="sort">Polls</button>
+                    <button type="button" id="helpTime" class="sort">Help Time</button>
+                    <button type="button" id="permissions" class="sort">Permissions 🡇</button>
+                </div>
+                <div id="permChangeList">
+
+                </div>
 
             </div>
-            <div id="permFilterBoxes">
-                Filter:
-                <button type="button" id="help" class="filter">Help</button>
-                <button type="button" id="break" class="filter">Break</button>
-                <button type="button" id="polls" class="filter">Polls</button>
-            </div>
-            <div id="permSortBoxes">
-                Sort:
-                <button type="button" id="name" class="sort">Name</button>
-                <button type="button" id="polls" class="sort">Polls</button>
-                <button type="button" id="helpTime" class="sort">Help Time</button>
-                <button type="button" id="permissions" class="sort">Permissions 🡇</button>
-            </div>
-            <div id="permChangeList">
-
-            </div>
-
-        </div>
-        <div id="pollChanges">
-            <h2 id="headerText">Start/End Poll</h2>
-            <form id="startPollForm" action="#" class="textColorContent">
-                <label for="resNumber">How many possible responses?</label>
-                <input type="number" id="resNumber">
-                <label for="resTextBox">Would like to accept text responses?</label>
-                <input type="checkbox" id="resTextBox">
-                <label for="pollBox">Prompt for the poll?</label>
-                <input type="text" id="pollBox">
+            <div id="pollChanges">
+                <h2 id="headerText">Start/End Poll</h2>
+                <form id="startPollForm" action="#" class="textColorContent">
+                    <label for="resNumber">How many possible responses?</label>
+                    <input type="number" id="resNumber">
+                    <label for="resTextBox">Would like to accept text responses?</label>
+                    <input type="checkbox" id="resTextBox">
+                    <label for="pollBox">Prompt for the poll?</label>
+                    <input type="text" id="pollBox">
+                    <br>
+                    <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()"
+                        class="quickButton">
+                    <label for="changeNames">Change The Names of The Answers?</label>
+                    <input type="checkbox" id="blind">
+                    <label for="blind">Do you want a blind poll?</label>
+                    <input type="button" value="Start Poll" onclick="startPollFunc()" class="quickButton">
+                    <br>
+                </form>
+                <form id="pollAnsForm">
+                </form>
+                <button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
                 <br>
-                <input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()" class="quickButton">
-                <label for="changeNames">Change The Names of The Answers?</label>
-                <input type="checkbox" id="blind">
-                <label for="blind">Do you want a blind poll?</label>
-                <input type="button" value="Start Poll" onclick="startPollFunc()" class="quickButton">
                 <br>
-            </form>
-            <form id="pollAnsForm">
-            </form>
-            <button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-            <br>
-            <br>
-            <button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
-        </div>
-        <div id="previousPolls" class="textColorContent">
+                <button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
+            </div>
+            <div id="previousPolls" class="textColorContent">
 
-        </div>
-        <div id="lessonMaker">
-            <form method="post" enctype="multipart/form-data">
-                <input name="spreadsheet" type="file">
-                <input type="submit">
-                <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
-            </form>
-        <form>
-            <label class="form-control" id="pollControl" for="modeP">
-                <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-                Poll Mode
-            </label>
-            <label class="form-control" id="pollControl" for="modeL">
-                <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-                Lesson Mode
-            </label>
-            <label class="form-control" id="pollControl" for="modeQ">
-                <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-                Quiz Mode
-            </label>
-            <label class="form-control" id="pollControl" for="modePT">
-                <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-                Playtime Mode
-            </label>
-        </form>
-        </div>
+            </div>
+            <div id="lessonMaker">
+                <form method="post" enctype="multipart/form-data">
+                    <input name="spreadsheet" type="file">
+                    <input type="submit">
+                    <button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button>
+                </form>
+                <form>
+                    <label class="form-control" id="pollControl" for="modeP">
+                        <input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+                        Poll Mode
+                    </label>
+                    <label class="form-control" id="pollControl" for="modeL">
+                        <input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+                        Lesson Mode
+                    </label>
+                    <label class="form-control" id="pollControl" for="modeQ">
+                        <input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+                        Quiz Mode
+                    </label>
+                    <label class="form-control" id="pollControl" for="modePT">
+                        <input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+                        Playtime Mode
+                    </label>
+                </form>
+            </div>
     </body>
 
     </html>
@@ -99,17 +100,17 @@
     <script>
         var socket = io()
 
-        //0 = off
-        //1 = only
-        //2 = except
+        // 0 = off
+        // 1 = only
+        // 2 = except
         filter = {
             help: 0,
             break: 0,
             polls: 0
         }
-        //0 = off
-        //1 = descending
-        //2 = ascending
+        // 0 = off
+        // 1 = descending
+        // 2 = ascending
         sort = {
             name: 0,
             polls: 0,
@@ -134,6 +135,7 @@
                 'Did not responded to poll',
             ]
         }
+
         sortState = {
             name: [
                 'Name',
@@ -251,12 +253,11 @@
                 previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
                 previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
                 previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
-
-
             }
-            previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>`
 
+            previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>`
         })
+
         // Starts a new poll that allows students to submit answers
         // Check how many possible responses and if the teacher wants to accept text responses
         function startPollFunc() {
@@ -280,11 +281,7 @@
             pollAnsForm.innerHTML = ''
             for (let i = 0; i < resNumber.value; i++) {
                 pollAnsForm.innerHTML += `<input type="text" name="pollAnsName" id="pollNames" placeholder="answer${i + 1}">`
-
             }
-
-
-
         }
 
         function modeChange() {
@@ -292,7 +289,6 @@
             let modeL = document.getElementById('modeL')
             let modeQ = document.getElementById('modeQ')
             let modePT = document.getElementById('modePT')
-
 
             if (modeP.checked) {
                 socket.emit('modechange', modeP.value)
@@ -313,6 +309,7 @@
             endPoll.style.display = 'none'
         }
 
+        // makes student elements
         function buildStudent(room, student) {
             var newStudent = ''
             newStudent += `<p>${student}</p>`
@@ -366,6 +363,7 @@
             return newStudent
         }
 
+        // filters and sorts students
         function filterSortChange() {
             permChangeList.innerHTML = ''
             let newStudent = ''
@@ -497,6 +495,7 @@
             alert('Lesson Created')
         }
 
+        // sets filters
         for (let filterElement of document.getElementsByClassName('filter')) {
             filterElement.onclick = () => {
                 filter[filterElement.id] += 1
@@ -510,6 +509,7 @@
             }
         }
 
+        // sets sorts
         for (let sortElement of document.getElementsByClassName('sort')) {
             sortElement.onclick = () => {
                 for (let sortType of Object.keys(sort)) {
@@ -540,6 +540,7 @@
             socket.emit('deleteTicket', e.dataset.studentname)
             socket.emit('cpupdate')
         }
+
         function doStep(id) {
             alert('Step ' + id + ' activated')
             socket.emit('doStep', id)

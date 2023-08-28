@@ -69,6 +69,7 @@
                 doughnutChart.data.datasets[0].backgroundColor = []
                 doughnutChart.data.datasets[0].data = []
 
+                // remove people on break and admins from virtualBar
                 for (let [username, student] of Object.entries(data.students)) {
                     if (student.break || student.permissions == 0) delete data.students[username]
                 }
@@ -76,6 +77,7 @@
                 let totalStudents = 0
                 let totalResponses = 0
 
+                // make the polls blind unless all students answered
                 for (const student of Object.keys(data.students)) {
                     if (data.students[student].pollRes) {
                         totalResponses++
