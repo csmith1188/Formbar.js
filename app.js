@@ -988,6 +988,7 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].mode = 'poll'
         cD[socket.request.session.class].blindPoll = blind
         cD[socket.request.session.class].pollStatus = true
+
         // Creates an object for every answer possible the teacher is allowing
         for (let i = 0; i < resNumber; i++) {
             console.log(answerNames)
@@ -1117,6 +1118,7 @@ io.sockets.on('connection', function (socket) {
     })
 
     socket.on('doStep', function (index) {
+        // send reload to whole class
         io.to(cD[socket.request.session.class].className).emit('reload')
         cD[socket.request.session.class].currentStep++
         if (cD[socket.request.session.class].steps[index] !== undefined) {
@@ -1145,7 +1147,7 @@ io.sockets.on('connection', function (socket) {
             } else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
                 cD[socket.request.session.class].mode = 'quiz'
                 questions = cD[socket.request.session.class].steps[index].questions
-                quiz = new Quiz(questions.length, 100)
+                let quiz = new Quiz(questions.length, 100)
                 quiz.questions = questions
                 cD[socket.request.session.class].quizObj = quiz
 
