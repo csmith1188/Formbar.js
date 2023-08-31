@@ -972,6 +972,13 @@ io.sockets.on('connection', function (socket) {
         }
     })
 
+    function cpupdate() {
+        db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
+            var pollHistory = rows
+            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
+        })
+    }
+
     // /poll websockets for updating the database
     socket.on('pollResp', function (res, textRes) {
         cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
@@ -1050,11 +1057,24 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
     })
 
-    socket.on('break', () => {
-        studentBreak = cD[socket.request.session.class].students[socket.request.session.user]
-        if (studentBreak.break)
-            studentBreak.break = false
-        else studentBreak.break = true
+    socket.on('takeBreak', (reason) => {
+        let student = cD[socket.request.session.class].students[socket.request.session.user]
+        student.break = reason
+        cpupdate()
+    })
+
+    socket.on('approveBreak', (breakApproval, username) => {
+        let student = cD[socket.request.session.class].students[username]
+        student.break = breakApproval
+        console.log(student.break)
+        cpupdate()
+    })
+
+    socket.on('endBreak', () => {
+        let student = cD[socket.request.session.class].students[socket.request.session.user]
+        student.break = false
+        console.log(student.break)
+        cpupdate()
     })
 
     socket.on('deleteUser', function (userName) {
@@ -1069,12 +1089,8 @@ io.sockets.on('connection', function (socket) {
         io.emit('vbUpdate')
     })
 
-    socket.on('cpupdate', function () {
-        db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
-            var pollHistory = rows
-            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
-        })
-
+    socket.on('cpupdate', () => {
+        cpupdate()
     })
 
     // socket.on('sfxGet', function () {

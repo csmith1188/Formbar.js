@@ -314,14 +314,25 @@
             var newStudent = ''
             newStudent += `<p>${student}</p>`
             let studentData = room.students[student]
-            if (studentData.break) newStudent += `<p>taking a break</p>`
+            console.log(studentData.break)
+            if (studentData.break == true) newStudent += `<p>taking a break</p>`
+            else if (studentData.break) {
+                let breakDiv = '<div>'
+                breakDiv += `<p>Needs a break</p>`
+                breakDiv += `<p>Reason: ${studentData.break}</p>`
+                breakDiv += `<button class="quickButton" onclick="{socket.io('approveBreak', true, ${studentData.username})}">Approve</button>`
+                breakDiv += `<button class="quickButton" onclick="{socket.io('approveBreak', false, ${studentData.username})}">Deny</button>`
+                breakDiv += `</div>`
+                newStudent += breakDiv
+                newStudent += `<br>`
+            }
             if (studentData.help) {
                 help = `sent help ticket `
                 if (studentData.help.reason) {
                     help += ` reason ${studentData.help.reason}`
                 }
                 help += ` at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`
-                help += `<button class="quickButton"data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button> <br>`
+                help += `<button class="quickButton" data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button> <br>`
                 newStudent += `<p>${help}</p>`
             }
             if (studentData.pollTextRes)
