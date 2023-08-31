@@ -191,7 +191,7 @@ function permCheck(req, res, next) {
             console.log(urlPath.indexOf('?'))
             urlPath = urlPath.slice(0, urlPath.indexOf('?'))
         }
-//Checks if the user has sent an API key
+        //Checks if the user has sent an API key
         if (req.session.api) {
             next()
         } else {
@@ -308,13 +308,13 @@ Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-//Initialze a list to push each step to - Riley R., May 22, 2023
+    //Initialze a list to push each step to - Riley R., May 22, 2023
     let steps = []
-/*
-Uses Excel to JSON to read the sent excel spreadsheet.
-Each main column has been assigned a label in order to differentiate them.
-It loops through the whole object - Riley R., May 22, 2023
-*/
+    /*
+    Uses Excel to JSON to read the sent excel spreadsheet.
+    Each main column has been assigned a label in order to differentiate them.
+    It loops through the whole object - Riley R., May 22, 2023
+    */
     if (req.file) {
         cD[req.session.class].currentStep = 0
         const result = excelToJson({
@@ -331,10 +331,10 @@ It loops through the whole object - Riley R., May 22, 2023
             }]
         })
 
-/* For In Loop that iterates through the created object.
- Allows for the use of steps inside of a progressive lesson.
- Checks the object's type using a conditional - Riley R., May 22, 2023
-*/
+        /* For In Loop that iterates through the created object.
+         Allows for the use of steps inside of a progressive lesson.
+         Checks the object's type using a conditional - Riley R., May 22, 2023
+        */
         for (const key in result['Steps']) {
             let step = {}
             // Creates an object with all the data required to start a poll - Riley R., May 22, 2023
@@ -736,25 +736,25 @@ app.get('/student', isLoggedIn, (req, res) => {
         db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
     }
 
-//Quiz Setup and Queries
-/* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
+    //Quiz Setup and Queries
+    /* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
 
-formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
+    formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
 
-If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
-*/
-if (req.query.question == 'random') {
-    let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
-    res.render('pages/queryquiz', {
-        quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
-        title: "Quiz"
-    })
-    if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+    If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
+    */
+    if (req.query.question == 'random') {
+        let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
         res.render('pages/queryquiz', {
             quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
             title: "Quiz"
         })
-    }
+        if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+            res.render('pages/queryquiz', {
+                quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
+                title: "Quiz"
+            })
+        }
     } else if (isNaN(req.query.question) == false) {
         if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
             res.render('pages/queryquiz', {
@@ -1047,29 +1047,54 @@ io.sockets.on('connection', function (socket) {
     socket.on('help', function (reason, time) {
         cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
     })
-    socket.on('break', () => {
-        studentBreak = cD[socket.request.session.class].students[socket.request.session.user]
-        if (studentBreak.break)
-            studentBreak.break = false
-        else studentBreak.break = true
+
+    socket.on('askBreak', () => {
+        let student = cD[socket.request.session.class].students[socket.request.session.user]
+        student.break = 'ask'
+
+        db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
+            var pollHistory = rows
+            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
+        })
     })
+
+    socket.on('authorizeBreak', (breakStatus, username) => {
+        let student = cD[socket.request.session.class].students[username]
+
+        if (breakStatus == 'allow') {
+            student.break = true
+        }
+        else if (breakStatus == 'deny') {
+            student.break = false
+        }
+
+        io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+
+        db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
+            var pollHistory = rows
+            io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
+        })
+    })
+
     socket.on('deleteUser', function (userName) {
         cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
         delete cD[socket.request.session.class].students[userName]
         console.log(userName + ' removed from class')
     })
+
     socket.on('joinRoom', function (className) {
         console.log("Working")
         socket.join(className)
         io.emit('vbUpdate')
     })
+
     socket.on('cpupdate', function () {
         db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
             var pollHistory = rows
             io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
         })
-
     })
+
     // socket.on('sfxGet', function () {
     //     io.to(cD[socket.request.session.class].className).emit('sfxGet')
     // })

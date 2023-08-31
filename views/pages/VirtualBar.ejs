@@ -71,7 +71,7 @@
 
                 // remove people on break and admins from virtualBar
                 for (let [username, student] of Object.entries(data.students)) {
-                    if (student.break || student.permissions == 0) delete data.students[username]
+                    if (student.break === true || student.permissions == 0) delete data.students[username]
                 }
 
                 let totalStudents = 0

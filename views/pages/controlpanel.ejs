@@ -263,7 +263,6 @@
         function startPollFunc() {
             var pollAnsNames = document.getElementsByName('pollAnsName')
             var blind = document.getElementById('blind').checked
-            console.log(blind)
             var pollAnsValues = []
             for (let i = 0; i < pollAnsNames.length; i++) {
                 pollAnsValues.push(pollAnsNames[i].value)
@@ -314,14 +313,21 @@
             var newStudent = ''
             newStudent += `<p>${student}</p>`
             let studentData = room.students[student]
-            if (studentData.break) newStudent += `<p>taking a break</p>`
+            if (studentData.break == 'ask') {
+                newStudent += `<div>`
+                newStudent += `<button class="quickButton" onclick="{socket.emit('authorizeBreak', 'allow', '${studentData.username}')}">Allow</button>`
+                newStudent += `<button class="quickButton" onclick="{socket.emit('authorizeBreak', 'deny', '${studentData.username}')}">Deny</button>`
+                newStudent += `</div>`
+                newStudent += `<br />`
+            } else if (studentData.break)
+                newStudent += `<p>taking a break</p>`
             if (studentData.help) {
                 help = `sent help ticket `
                 if (studentData.help.reason) {
                     help += ` reason ${studentData.help.reason}`
                 }
                 help += ` at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`
-                help += `<button class="quickButton"data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button> <br>`
+                help += `<button class="quickButton" data-studentName="${student}" onclick="deleteTicket(this)"> Delete Ticket</button> <br>`
                 newStudent += `<p>${help}</p>`
             }
             if (studentData.pollTextRes)
@@ -421,7 +427,6 @@
                 newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
                     objectA = entireA[1]
                     objectB = entireB[1]
-                    console.log(objectA)
                     if (objectA.help && objectB.help) {
                         const dateA = new Date()
                         dateA.setHours(objectA.help.time.hours)
