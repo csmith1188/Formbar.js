@@ -1,197 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <%- include('../partials/header_content') %>
-	<%- include('../partials/body_sidebar_content') %>
+	<%- include('../partials/sockets') %>
+		<%- include('../partials/body_sidebar_content') %>
 
-		<body id="colorContent" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
-			<div id="lessonContent">
-				<%if(lesson.content !=undefined){%>
-					<h3 id="headerText">
-						<%- lesson.date %>
-					</h3>
-					<% for (let i=0; i < lesson.content.length; i++) { %>
+			<body id="colorContent" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
+				<div id="lessonContent">
+					<%if(lesson.content !=undefined){%>
+						<h3 id="headerText">
+							<%- lesson.date %>
+						</h3>
+						<% for (let i=0; i < lesson.content.length; i++) { %>
+							<u>
+								<h2 id="headerText">
+									<%-lesson.content[i][0]%>
+								</h2>
+							</u>
+							<% for (let u=1; u < lesson.content[i].length; u++) { %>
+								<b id="headerText">
+									<%- lesson.content[i][u]%>
+								</b><br>
+								<% } %>
+									<% } %>
+										<br>
+										<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
+										<% } else { %>
+											<h1 id="headerText">No active lesson</h1>
+											<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
+											<% } %>
+
+				</div>
+				<div id="pollContent">
+					<h1 id="noPoll" class="textColorContent">No Poll Is Active Currently</h1>
+
+					<div id="poll">
 						<u>
 							<h2 id="headerText">
-								<%-lesson.content[i][0]%>
+								<%-pollPrompt%>
 							</h2>
 						</u>
-						<% for (let u=1; u < lesson.content[i].length; u++) { %>
-							<b id="headerText">
-								<%- lesson.content[i][u]%>
-							</b><br>
-							<% } %>
-								<% } %>
-									<br>
-									<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-									<% } else { %>
-										<h1 id="headerText">No active lesson</h1>
-										<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-										<% } %>
+						<form id="pollForm">
 
-			</div>
-			<div id="pollContent">
-				<h1 id="noPoll" class="textColorContent">No Poll Is Active Currently</h1>
+						</form>
+						<br>
+						<button onclick="submitPoll()" class="quickButton">Submit</button>
+					</div>
 
-				<div id="poll">
-					<u>
-						<h2 id="headerText">
-							<%-pollPrompt%>
-						</h2>
-					</u>
-					<form id="pollForm">
-
-					</form>
-					<br>
-					<button onclick="submitPoll()" class="quickButton">Submit</button>
 				</div>
+				<div id="quizContent">
+					<form id="quizForm" method="post" action="/student">
+					</form>
+				</div>
+				<%- include('../partials/body_content') %>
+			</body>
 
-			</div>
-			<div id="quizContent">
-				<form id="quizForm" method="post" action="/student">
-				</form>
-			</div>
+			<script type="text/javascript">
+				//variable creation
+				var resTextBox = document.getElementById('resTextBox')
+				var pollForm = document.getElementById('pollForm')
+				var pollContent = document.getElementById('pollContent')
+				var quizContent = document.getElementById('quizContent')
+				var lessonContent = document.getElementById('lessonContent')
+				var poll = document.getElementById('poll')
+				var noPoll = document.getElementById('noPoll')
+				var poll = document.getElementById('poll')
 
-		</body>
-		<script src="/socket.io/socket.io.js"></script>
+				function pageload(mode, pollStatus, pollTextRes, quiz) {
+					if (mode == 'poll') {
+						pollContent.style.display = 'block'
+						quizContent.style.display = 'none'
+						lessonContent.style.display = 'none'
+						var posPollRes = '<%- posPollRes %>'
+						posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
+						posPollRes = JSON.parse(posPollRes)
+						posPollRes[''] = 'remove'
+						var posTextRes = '<%- posTextRes %>'
+						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
+						posTextRes = JSON.parse(posTextRes)
+						if (pollStatus) {
+							noPoll.style.display = 'none'
+							poll.style.display = 'block'
 
-		<script type="text/javascript">
-			//variable creation
-			var socket = io()
-			var resTextBox = document.getElementById('resTextBox')
-			var pollForm = document.getElementById('pollForm')
-			var pollContent = document.getElementById('pollContent')
-			var quizContent = document.getElementById('quizContent')
-			var lessonContent = document.getElementById('lessonContent')
-			var poll = document.getElementById('poll')
-			var noPoll = document.getElementById('noPoll')
-			var poll = document.getElementById('poll')
+							let keys = Object.keys(posPollRes)
 
-			function pageload(mode, pollStatus, pollTextRes, quiz) {
-				if (mode == 'poll') {
-					pollContent.style.display = 'block'
-					quizContent.style.display = 'none'
-					lessonContent.style.display = 'none'
-					var posPollRes = '<%- posPollRes %>'
-					posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
-					posPollRes = JSON.parse(posPollRes)
-					posPollRes[''] = 'remove'
-					var posTextRes = '<%- posTextRes %>'
-					posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
-					posTextRes = JSON.parse(posTextRes)
-					if (pollStatus) {
-						noPoll.style.display = 'none'
-						poll.style.display = 'block'
-
-						let keys = Object.keys(posPollRes)
-
-						// Creates all selectable answers and displays them to the user
-						for (let i = 0; i < keys.length; i++) {
-							pollForm.innerHTML += `
+							// Creates all selectable answers and displays them to the user
+							for (let i = 0; i < keys.length; i++) {
+								pollForm.innerHTML += `
                   <label class="form-control" id="pollControl">
                       <input type="radio" name="poll" id="${keys[i]}" value="${keys[i]}">
                       ${posPollRes[keys[i]]}
                   </label>
                   `
+							}
+							if (posTextRes) {
+								pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`
+							}
+						} else {
+							noPoll.style.display = 'block'
+							poll.style.display = 'none'
 						}
-						if (posTextRes) {
-							pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`
+
+					} else if (mode == 'quiz') {
+						pollContent.style.display = 'none'
+						quizContent.style.display = 'block'
+						lessonContent.style.display = 'none'
+						let correctAnswerIndex = []
+						let quizForm = document.getElementById('quizForm')
+
+						for (let i = 0; i < quiz.questions.length; i++) {
+							quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
+							correctAnswerIndex.push(quiz.questions[i][1])
+							for (let u = 2; u < quiz.questions[i].length; u++) {
+								quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u - 1}"> ${quiz.questions[i][u]}`
+							}
 						}
-					} else {
-						noPoll.style.display = 'block'
-						poll.style.display = 'none'
-					}
-
-				} else if (mode == 'quiz') {
-					pollContent.style.display = 'none'
-					quizContent.style.display = 'block'
-					lessonContent.style.display = 'none'
-					let correctAnswerIndex = []
-					let quizForm = document.getElementById('quizForm')
-
-					for (let i = 0; i < quiz.questions.length; i++) {
-						quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
-						correctAnswerIndex.push(quiz.questions[i][1])
-						for (let u = 2; u < quiz.questions[i].length; u++) {
-							quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u - 1}"> ${quiz.questions[i][u]}`
-						}
-					}
-					quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
-				} else if (mode == 'lesson') {
-					pollContent.style.display = 'none'
-					quizContent.style.display = 'none'
-					lessonContent.style.display = 'block'
-				}
-
-			}
-			/* _____   _____   _       _       _____
-			|  _  \ /  _  \ | |     | |     /  ___/
-			| |_| | | | | | | |     | |     | |___
-			|  ___/ | | | | | |     | |     \___  \
-			| |     | |_| | | |___  | |___   ___| |
-			|_|     \_____/ |_____| |_____| /_____/ */
-			// Submits the users answer to the poll
-			// Takes the posPollRes value which defines the number of possible answers
-			function submitPoll() {
-				var radios = document.getElementsByTagName('input')
-				var lettRes = ''
-				var textRes = ''
-				for (var i = 0; i < radios.length; i++) {
-
-					if (radios[i].type === 'radio' && radios[i].checked) {
-						// Defines the letter response of the user
-						lettRes = radios[i].value
-
-					}
-					if (radios[i].type === 'text') {
-						// Defines the text input of the user
-						textRes = radios[i].value
+						quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
+					} else if (mode == 'lesson') {
+						pollContent.style.display = 'none'
+						quizContent.style.display = 'none'
+						lessonContent.style.display = 'block'
 					}
 
 				}
+				/* _____   _____   _       _       _____
+				|  _  \ /  _  \ | |     | |     /  ___/
+				| |_| | | | | | | |     | |     | |___
+				|  ___/ | | | | | |     | |     \___  \
+				| |     | |_| | | |___  | |___   ___| |
+				|_|     \_____/ |_____| |_____| /_____/ */
+				// Submits the users answer to the poll
+				// Takes the posPollRes value which defines the number of possible answers
+				function submitPoll() {
+					var radios = document.getElementsByTagName('input')
+					var lettRes = ''
+					var textRes = ''
+					for (var i = 0; i < radios.length; i++) {
 
-				// Sends user input to the server
-				socket.emit('pollResp', lettRes, textRes)
-				socket.emit('vbData')
-				socket.emit('cpupdate')
-				socket.emit('sfxPlay', 'sfx_up01')
-				setTimeout(function () {
-					if (lettRes > 0)
-						alert('Poll Submitted ' + lettRes)
-					else
-						alert('Removed Poll')
-				}, 100)
-			}
+						if (radios[i].type === 'radio' && radios[i].checked) {
+							// Defines the letter response of the user
+							lettRes = radios[i].value
 
+						}
+						if (radios[i].type === 'text') {
+							// Defines the text input of the user
+							textRes = radios[i].value
+						}
 
+					}
 
-
-			// Function will run on page load
-			// Checks if poll is active
-			// Creates any number of responses that were defined by the teacher
-			// Checks if teacher wanted text responses or not
-
-			// When a new poll is created or ended or new barmode is, this refreshes the page
-			socket.on('reload', function () {
-				location.reload()
-			})
-
-
-			/* _____     _   _   _   ______  ______  _____   _____
-			/  _  \   | | | | | | |___  / |___  / | ____| /  ___/
-			| | | |   | | | | | |    / /     / /  | |__   | |___
-			| | | |   | | | | | |   / /     / /   |  __|  \___  \
-			| |_| |_  | |_| | | |  / /__   / /__  | |___   ___| |
-			\_______| \_____/ |_| /_____| /_____| |_____| /_____/  */
-
-
-			/* _       _____   _____   _____   _____   __   _   _____
-			| |     | ____| /  ___/ /  ___/ /  _  \ |  \ | | /  ___/
-			| |     | |__   | |___  | |___  | | | | |   \| | | |___
-			| |     |  __|  \___  \ \___  \ | | | | | |\   | \___  \
-			| |___  | |___   ___| |  ___| | | |_| | | | \  |  ___| |
-			|_____| |_____| /_____/ /_____/ \_____/ |_|  \_| /_____/  */
+					// Sends user input to the server
+					socket.emit('pollResp', lettRes, textRes)
+					socket.emit('vbData')
+					socket.emit('cpupdate')
+					socket.emit('sfxPlay', 'sfx_up01')
+					setTimeout(function () {
+						if (lettRes > 0)
+							alert('Poll Submitted ' + lettRes)
+						else
+							alert('Removed Poll')
+					}, 100)
+				}
 
 
-		</script>
+
+
+				// Function will run on page load
+				// Checks if poll is active
+				// Creates any number of responses that were defined by the teacher
+				// Checks if teacher wanted text responses or not
+
+				// When a new poll is created or ended or new barmode is, this refreshes the page
+				socket.on('reload', function () {
+					location.reload()
+				})
+
+
+				/* _____     _   _   _   ______  ______  _____   _____
+				/  _  \   | | | | | | |___  / |___  / | ____| /  ___/
+				| | | |   | | | | | |    / /     / /  | |__   | |___
+				| | | |   | | | | | |   / /     / /   |  __|  \___  \
+				| |_| |_  | |_| | | |  / /__   / /__  | |___   ___| |
+				\_______| \_____/ |_| /_____| /_____| |_____| /_____/  */
+
+
+				/* _       _____   _____   _____   _____   __   _   _____
+				| |     | ____| /  ___/ /  ___/ /  _  \ |  \ | | /  ___/
+				| |     | |__   | |___  | |___  | | | | |   \| | | |___
+				| |     |  __|  \___  \ \___  \ | | | | | |\   | \___  \
+				| |___  | |___   ___| |  ___| | | |_| | | | \  |  ___| |
+				|_____| |_____| /_____/ /_____/ \_____/ |_|  \_| /_____/  */
+
+
+			</script>
 
 </html>

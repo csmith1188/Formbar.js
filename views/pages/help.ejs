@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <%- include('../partials/header_content') %>
-    <html lang="en">
+    <%- include('../partials/sockets') %>
+        <html lang="en">
 
-    <body id="colorContent">
-        <%- include('../partials/body_sidebar_content') %>
-        <form id="eventForm">
-            <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)">
-        </form>
-        <button onclick="help()" class="quickButton">Send Ticket</button>
-    </body>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const maxCharacters = 150
+        <body id="colorContent">
+            <%- include('../partials/body_sidebar_content') %>
+                <form id="eventForm">
+                    <textarea id="ticket" class="quickButton" cols="30" rows="5" maxlength="150"
+                        placeholder="Reason(optional)"></textarea>
+                    <!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
+                </form>
+                <button onclick="help()" class="quickButton">Send Ticket</button>
+                <%- include('../partials/body_content') %>
+        </body>
 
-        var socket = io()
-        var today = new Date()
+        <script>
+            var today = new Date()
 
-        function help() {
-            var reason = document.getElementById('ticket').value
-            var time = {
-                hours: today.getHours(),
-                minutes: today.getMinutes(),
-                seconds: today.getSeconds()
-            }
-            console.log(reason.length)
-            if (reason.length <= maxCharacters) {
+            function help() {
+                var reason = document.getElementById('ticket').value
+                var time = {
+                    hours: today.getHours(),
+                    minutes: today.getMinutes(),
+                    seconds: today.getSeconds()
+                }
+                console.log(reason.length)
                 alert('Help Ticket Sent')
                 socket.emit('help', reason, time)
                 socket.emit('cpupdate')
                 socket.emit('sfxPlay', "sfx_up04")
-            } else alert(`reason is longer then ${maxCharacters} characters`)
-        }
-    </script>
+            }
+        </script>
 
-    </html>
+        </html>
