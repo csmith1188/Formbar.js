@@ -933,6 +933,7 @@ const rateLimits = {}
 io.sockets.on('connection', function (socket) {
     if (socket.request.session.user) {
         socket.join(cD[socket.request.session.class].className)
+        socket.join(socket.request.session.user)
     } else if (socket.request.session.api) {
         socket.join(cD[socket.request.session.class].className)
     }
@@ -1057,24 +1058,29 @@ io.sockets.on('connection', function (socket) {
         cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
     })
 
-    socket.on('takeBreak', (reason) => {
+    socket.on('requestBreak', (reason) => {
         let student = cD[socket.request.session.class].students[socket.request.session.user]
         student.break = reason
+
         cpupdate()
     })
 
     socket.on('approveBreak', (breakApproval, username) => {
         let student = cD[socket.request.session.class].students[username]
         student.break = breakApproval
-        console.log(student.break)
+
+        if (breakApproval) io.to(username).emit('break')
+
         cpupdate()
+        io.emit('vbUpdate')
     })
 
     socket.on('endBreak', () => {
         let student = cD[socket.request.session.class].students[socket.request.session.user]
         student.break = false
-        console.log(student.break)
+
         cpupdate()
+        io.emit('vbUpdate')
     })
 
     socket.on('deleteUser', function (userName) {

@@ -1,70 +1,73 @@
 <!DOCTYPE html>
 <%- include('../partials/header_content') %>
 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body id="colorContent">
-    <div id="playStop">
-        <button id="playStopBtn" class="quickButton" onclick="playButton()">Play</button>
-    </div>
-    <div id="nowPlaying">
-        <h2>Now Playing: None</h2>
-    </div>
-    <table id="allMusic">
-    </table>
-</body>
-</html>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    var socket = io();
+    <html lang="en">
 
-    var musicBox = document.getElementById("allMusic")
-    var nowPlaying = document.getElementById("nowPlaying")
-    var playStop = document.getElementById("playStop")
-    var playStopBtn = document.getElementById("playStopBtn")
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+
+    <body id="colorContent">
+        <div id="playStop">
+            <button id="playStopBtn" class="quickButton" onclick="playButton()">Play</button>
+        </div>
+        <div id="nowPlaying">
+            <h2>Now Playing: None</h2>
+        </div>
+        <table id="allMusic">
+        </table>
+    </body>
+
+    </html>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io()
+
+        var musicBox = document.getElementById("allMusic")
+        var nowPlaying = document.getElementById("nowPlaying")
+        var playStop = document.getElementById("playStop")
+        var playStopBtn = document.getElementById("playStopBtn")
 
 
-    function playButton() {
-        if (playStopBtn.innerHTML == 'Play') {
-            playStopBtn.innerHTML = 'Pause'
-            socket.emit('bgmPause', 'Play')
-        } else if (playStopBtn.innerHTML == 'Pause') {
-            playStopBtn.innerHTML = 'Play'
-            socket.emit('bgmPause', 'Pause')
-        }
-    }
-
-    function playMusic(music) {
-        playStopBtn.innerHTML = 'Pause'
-        nowPlaying.innerHTML = `<h2>Now Playing: ${music}</h2>`
-        socket.emit('bgmPlay', music)
-    }
-
-    socket.emit('bgmGet')
-    var bgmFiles;
-    socket.on('bgmLoadUpdate', function(allbgmFiles, nowPlayingData, stopPlay) {
-        console.log(nowPlayingData + ' ' + stopPlay);
-        if (nowPlayingData != "Not Playing" && stopPlay == "Play") {
-            playStopBtn.innerHTML = 'Pause'
-        } else {
-            playStopBtn.innerHTML = 'Play'
-        }
-        nowPlaying.innerHTML = `<h2>Now Playing: ${nowPlayingData}</h2>`
-        bgmFiles = allbgmFiles
-        var musicBoxLines = '<tr>';
-        var i = 1;
-        for (const music of Object.keys(bgmFiles)) {
-            musicBoxLines += `<td><button style="margin-right: 10px; margin-bottom: 10px"onclick="playMusic('${music}')">${music}</button></td>`
-            if (i % 7 == 0) {
-                musicBoxLines += `</tr><tr>`
+        function playButton() {
+            if (playStopBtn.innerHTML == 'Play') {
+                playStopBtn.innerHTML = 'Pause'
+                socket.emit('bgmPause', 'Play')
+            } else if (playStopBtn.innerHTML == 'Pause') {
+                playStopBtn.innerHTML = 'Play'
+                socket.emit('bgmPause', 'Pause')
             }
-
-            i++
         }
-        musicBox.innerHTML = musicBoxLines
-    })
-</script>
+
+        function playMusic(music) {
+            playStopBtn.innerHTML = 'Pause'
+            nowPlaying.innerHTML = `<h2>Now Playing: ${music}</h2>`
+            socket.emit('bgmPlay', music)
+        }
+
+        socket.emit('bgmGet')
+        var bgmFiles
+        socket.on('bgmLoadUpdate', function (allbgmFiles, nowPlayingData, stopPlay) {
+            console.log(nowPlayingData + ' ' + stopPlay)
+            if (nowPlayingData != "Not Playing" && stopPlay == "Play") {
+                playStopBtn.innerHTML = 'Pause'
+            } else {
+                playStopBtn.innerHTML = 'Play'
+            }
+            nowPlaying.innerHTML = `<h2>Now Playing: ${nowPlayingData}</h2>`
+            bgmFiles = allbgmFiles
+            var musicBoxLines = '<tr>'
+            var i = 1
+            for (const music of Object.keys(bgmFiles)) {
+                musicBoxLines += `<td><button style="margin-right: 10px; margin-bottom: 10px"onclick="playMusic('${music}')">${music}</button></td>`
+                if (i % 7 == 0) {
+                    musicBoxLines += `</tr><tr>`
+                }
+
+                i++
+            }
+            musicBox.innerHTML = musicBoxLines
+        })
+    </script>
