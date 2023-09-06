@@ -60,6 +60,7 @@ class Student {
 		this.username = username
 		this.id = id
 		this.permissions = perms
+		console.log(this.permissions)
 		this.pollRes = ''
 		this.pollTextRes = ''
 		this.help = ''
@@ -221,20 +222,33 @@ function joinClass(userName, code) {
 						console.log(err)
 					}
 					// Add the two id's to the junction table to link the user and class
-					db.run(`INSERT INTO classusers(classuid, studentuid) VALUES(?, ?)`,
-						[id.id, uid.id], (err) => {
-							if (err) {
-								console.log(err)
+					db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+						[id.id, uid.id],
+						(error, classUser) => {
+							if (error) console.log(error)
+							if (
+								typeof classUser == 'undefined' ||
+								classUser.studentuid == uid.id
+							) {
+								db.run(`INSERT INTO classusers(classuid, studentuid, permissions) VALUES(?, ?, ?)`,
+									[id.id, uid.id, 2], (err) => {
+										if (err) {
+											console.log(err)
+										}
+									}
+								)
 							}
 							// Get the teachers session data ready to transport into new class
 							var user = cD.noClass.students[userName]
+							user.permissions = classUser.permissions
 							// Remove teacher from old class
 							delete cD.noClass.students[userName]
 							// Add the student to the newly created class
 							cD[code].students[userName] = user
 							console.log('User added to class')
 							resolve(true)
-						})
+						}
+					)
 				})
 			} else {
 				resolve(false)
@@ -989,7 +1003,11 @@ io.sockets.on('connection', function (socket) {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('permChange', function (user, res) {
 		cD[socket.request.session.class].students[user].permissions = res
-		db.get('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
+		db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
+		db.get('',
+			[cD[socket.request.session.class].className]
+		)
+		// db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? studentuid = ?', [res, , user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind) {
