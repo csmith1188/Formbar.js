@@ -1,40 +1,89 @@
 <%- include('../partials/header_content') %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body id="colorContent">
-<h1 id="headerText">Formbar</h1>
-<div id="indexContent">
-    <a href="/student" class="quickButton">Student Panel</a>
-    <br>
-    <a href="/controlpanel" class="quickButton">Teacher Controls</a>
-    <br>
-    <a href="/virtualbar" class="quickButton">Virtual Bar</a>
-    <br>
-    <a href="/help" class="quickButton">Help Ticket Creation</a>
-    <br>
-    <a href="/bgm" class="quickButton">BGM</a>
-    <br>
-    <a href="/sfx" class="quickButton">SFX</a>
-    <br>
-</div>
-</body>
-</html>
-<script src="/socket.io/socket.io.js"></script>
+    <%- include('../partials/sockets') %>
+        <!DOCTYPE html>
+        <html lang="en">
 
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                #otherText {
+                    margin-top: 1rem;
+                    margin-bottom: 1rem;
+                }
+            </style>
+        </head>
 
-    <script type="text/javascript">
-        var socket = io()
-        socket.emit('vbData')
-        socket.emit('cpupdate')
-        function takeBreak() {
-            socket.emit('break')
-            socket.emit('cpupdate')
+        <body id="colorContent">
+            <h1 id="headerText">Formbar</h1>
+            <div id="indexContent">
+                <a href="/student" class="quickButton">Student Panel</a>
+                <br>
+                <a href="/controlpanel" class="quickButton">Teacher Controls</a>
+                <br>
+                <a href="/virtualbar" class="quickButton">Virtual Bar</a>
+                <br>
+                <a href="/help" class="quickButton">Help Ticket Creation</a>
+                <br>
+                <a href="/bgm" class="quickButton">BGM</a>
+                <br>
+                <a href="/sfx" class="quickButton">SFX</a>
+                <br>
+                <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
+                    Take Break
+                </button>
+            </div>
+            <dialog id="requestBreakDialog">
+                <form onsubmit="submitBreak(event)">
+                    <label class="form-control" id="pollControl" for="bathroom">
+                        <input type="radio" name="option" id="bathroom" value="Bathroom" required>
+                        Bathroom
+                    </label>
+                    <label class="form-control" id="pollControl" for="other">
+                        <input type="radio" name="option" id="other" value="other">
+                        Other
+                    </label>
+                    <textarea id="otherText" cols="30" rows="5" maxlength="150" style="display: none"></textarea>
+                    <br>
+                    <button class="quickButton" type="submit">Take Break</button>
+                </form>
+            </dialog>
+            <%- include('../partials/body_content') %>
+        </body>
+
+        </html>
+
+        <script type="text/javascript">
             socket.emit('vbData')
-        }
-    </script>
-    <%- include('../partials/footer_content') %>
+            socket.emit('cpupdate')
+
+            let options = document.getElementsByName('option')
+            for (let option of options) {
+                option.onchange = () => {
+                    let otherRadio = document.getElementById('other')
+                    let otherText = document.getElementById('otherText')
+
+                    if (otherRadio.checked) {
+                        otherText.required = true
+                        otherText.style.display = ''
+                    }
+                    else {
+                        otherText.required = false
+                        otherText.style.display = 'none'
+                    }
+                }
+            }
+
+            function submitBreak() {
+                event.preventDefault()
+                document.getElementById('requestBreakDialog').close()
+
+                let reason = document.querySelector('input[name=option]:checked').value
+                if (reason == 'other')
+                    reason = document.getElementById('otherText').value
+
+                socket.emit('requestBreak', reason)
+            }
+        </script>
+        <%- include('../partials/footer_content') %>

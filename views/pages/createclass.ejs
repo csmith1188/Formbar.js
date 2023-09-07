@@ -2,8 +2,8 @@
 
     <body id="colorContent">
         <form action="createclass" id="content" method="post">
-            <input type="text" id="usernameBox" name="name" class="quickButton" placeholder="Class Name"
-                value="" autocomplete="off" required>
+            <input type="text" id="usernameBox" name="name" class="quickButton" placeholder="Class Name" value=""
+                autocomplete="off" required>
             <input type="text" name="submittionType" value="create" hidden>
             <input type="submit" id="submitButton" class="quickButton" value="Submit" onsubmit="return false;">
         </form>
@@ -14,7 +14,7 @@
                         <%- rooms %>
                     </option>
                     <% }) %>
-                </select>
+            </select>
             <input type="text" name="submittionType" value="select" hidden>
             <input type="submit" id="submitButton" class="quickButton" value="Submit" onsubmit="return false;">
         </form>

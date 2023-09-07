@@ -1,0 +1,15 @@
+<script src="/socket.io/socket.io.js"></script>
+
+<script defer>
+	let socket = io()
+
+	function endBreak() {
+		socket.emit('endBreak')
+		console.log('break')
+		document.getElementById('breakDialog').close()
+	}
+
+	socket.on('break', () => {
+		document.getElementById('breakDialog').showModal()
+	})
+</script>
