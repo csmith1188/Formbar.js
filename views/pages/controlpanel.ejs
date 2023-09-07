@@ -316,23 +316,22 @@
 				let studentData = room.students[student]
 				if (studentData.break == true) newStudent += `<p>taking a break</p>`
 				else if (studentData.break) {
-					let breakDiv = '<div>'
-					breakDiv += `<p>Needs a break</p>`
+					let breakDiv = `<p>Needs a break</p>`
 					breakDiv += `<p>Reason: ${studentData.break}</p>`
 					breakDiv += `<button class="quickButton" onclick="{approveBreak(true, '${studentData.username}')}">Approve</button>`
 					breakDiv += `<button class="quickButton" onclick="{approveBreak(false, '${studentData.username}')}">Deny</button>`
-					breakDiv += `</div>`
-					newStudent += breakDiv
+					newStudent += `<div id="break">${breakDiv}</div>`
 					newStudent += `<br>`
 				}
 				if (studentData.help) {
 					help = `sent help ticket `
 					if (studentData.help.reason) {
-						help += ` reason ${studentData.help.reason}`
+						help += `<p>reason ${studentData.help.reason}</p>`
 					}
-					help += ` at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`
-					help += `<button class="quickButton" data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button> <br>`
-					newStudent += `<p>${help}</p>`
+					help += `<p>at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}</p>`
+					help += `<button class="quickButton" data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button>`
+					newStudent += `<div id='help'>${help}</div>`
+					newStudent += `<br>`
 				}
 				if (studentData.pollTextRes)
 					newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
@@ -370,7 +369,7 @@
 				}
 				newStudent += '</select>'
 				newStudent += `<button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
-				return newStudent
+				return `<div class="student">${newStudent}<div/>`
 			}
 
 			// filters and sorts students
@@ -493,9 +492,8 @@
 				}
 
 				for (const student of Object.keys(newRoom.students)) {
-					newStudent += buildStudent(newRoom, student)
+					permChangeList.innerHTML += buildStudent(newRoom, student)
 				}
-				permChangeList.innerHTML += newStudent
 			}
 
 			// Used to change permission of user in there class
