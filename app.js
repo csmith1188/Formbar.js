@@ -1060,48 +1060,44 @@ io.sockets.on('connection', function (socket) {
 	socket.on('vbData', function () {
 		io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
 	})
-
+	// Sends a help ticket
 	socket.on('help', function (reason, time) {
 		cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
 	})
-
+	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
 		student.break = reason
-
 		cpupdate()
 	})
-
+	// Aproves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
 		let student = cD[socket.request.session.class].students[username]
 		student.break = breakApproval
-
 		if (breakApproval) io.to(username).emit('break')
-
 		cpupdate()
 		io.emit('vbUpdate')
 	})
-
+	// Ends the break
 	socket.on('endBreak', () => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
 		student.break = false
-
 		cpupdate()
 		io.emit('vbUpdate')
 	})
-
+	// Deletes a user from the class
 	socket.on('deleteUser', function (userName) {
 		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
 		delete cD[socket.request.session.class].students[userName]
 		console.log(userName + ' removed from class')
 	})
-
+	// Joins a classroom for websocket usage
 	socket.on('joinRoom', function (className) {
 		console.log("Working")
 		socket.join(className)
 		io.emit('vbUpdate')
 	})
-
+	// Updates and stores poll history
 	socket.on('cpupdate', () => {
 		cpupdate()
 	})
@@ -1118,6 +1114,7 @@ io.sockets.on('connection', function (socket) {
 	//     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
 	// })
 
+	// Starts a quick poll
 	socket.on('botPollStart', function (answerNumber) {
 		answerNames = []
 		cD[socket.request.session.class].pollStatus = true
@@ -1133,9 +1130,8 @@ io.sockets.on('connection', function (socket) {
 		cD[socket.request.session.class].posTextRes = false
 		cD[socket.request.session.class].pollPrompt = "Quick Poll"
 	})
-
+	// Displays previous polls
 	socket.on('previousPollDisplay', function (pollindex) {
-
 		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
 			if (err) {
 				console.error(err)
