@@ -63,6 +63,7 @@
                 option.onchange = () => {
                     let otherRadio = document.getElementById('other')
                     let otherText = document.getElementById('otherText')
+                    otherText.className = 'quickButton'
 
                     if (otherRadio.checked) {
                         otherText.required = true
