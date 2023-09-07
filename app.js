@@ -60,7 +60,6 @@ class Student {
 		this.username = username
 		this.id = id
 		this.permissions = perms
-		console.log(this.permissions)
 		this.pollRes = ''
 		this.pollTextRes = ''
 		this.help = ''
@@ -226,10 +225,7 @@ function joinClass(userName, code) {
 						[id.id, uid.id],
 						(error, classUser) => {
 							if (error) console.log(error)
-							if (
-								typeof classUser == 'undefined' ||
-								classUser.studentuid == uid.id
-							) {
+							if (typeof classUser == 'undefined') {
 								db.run(`INSERT INTO classusers(classuid, studentuid, permissions) VALUES(?, ?, ?)`,
 									[id.id, uid.id, 2], (err) => {
 										if (err) {
@@ -240,7 +236,8 @@ function joinClass(userName, code) {
 							}
 							// Get the teachers session data ready to transport into new class
 							var user = cD.noClass.students[userName]
-							user.permissions = classUser.permissions
+							if (classUser) user.permissions = classUser.permissions
+							else user.permissions = 2
 							// Remove teacher from old class
 							delete cD.noClass.students[userName]
 							// Add the student to the newly created class
@@ -998,16 +995,26 @@ io.sockets.on('connection', function (socket) {
 	socket.on('pollResp', function (res, textRes) {
 		cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
 		cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
-		db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
+		db.run('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
 	})
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('permChange', function (user, res) {
 		cD[socket.request.session.class].students[user].permissions = res
-		db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
-		db.get('',
-			[cD[socket.request.session.class].className]
-		)
-		// db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? studentuid = ?', [res, , user])
+		if (cD[socket.request.session.class]) {
+			db.get(
+				'SELECT id FROM classroom WHERE name = ?',
+				[cD[socket.request.session.class].className],
+				(error, classId) => {
+					if (error) console.log(error)
+					if (classId) {
+						classId = classId.id
+						db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [res, classId, cD[socket.request.session.class].students[user].id])
+					}
+				}
+			)
+		}
+		else
+			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind) {
