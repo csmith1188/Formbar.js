@@ -3,11 +3,11 @@ const express = require('express')
 const session = require('express-session') //For storing client login data
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
-const jwt = require('jsonwebtoken')
-const dotenv = require('dotenv')
+const jwt = require('jsonwebtoken') //For authentication system between Formbot/other bots and Formbar
+const dotenv = require('dotenv') //Used to keep API tokens seperate from the code
 const excelToJson = require('convert-excel-to-json')
-const multer = require('multer')
-const upload = multer({ dest: 'uploads/' })
+const multer = require('multer')//Used to upload files
+const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 
 // get config vars
 dotenv.config()
@@ -21,9 +21,9 @@ app.set('view engine', 'ejs')
 
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
-	secret: 'secret',
-	resave: false,
-	saveUninitialized: false
+    secret: 'secret', //Used to sign into the session via cookies
+    resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
+    saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
 })
 
 // Allows express to parse requests
@@ -32,12 +32,17 @@ app.use(express.urlencoded({ extended: true }))
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
 
-
+// PROMPT: Does this allow use to associate client logins with their websocket connection?
+// PROMPT: Where did you find information on this. Please put the link here.
+// For further uses on this use this link: https://socket.io/how-to/use-with-express-session
+// Uses a middleware function to successfully transmit data between the user and server
 // adds session middle ware to socket.io
 io.use(function (socket, next) {
 	sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
+// PROMPT: What does this do?
+// Sets up middleware for the server by calling sessionMiddleware
 // adds session middleware to express
 app.use(sessionMiddleware)
 
@@ -141,7 +146,7 @@ function clearDatabase() {
 /*
 Check if user has logged in
 Place at the start of any page that needs to verify if a user is logged in or not
-This allows websites to check on thier own if the user is logged in
+This allows websites to check on their own if the user is logged in
 This also allows for the website to check for perms
 */
 function isAuthenticated(req, res, next) {
@@ -204,7 +209,7 @@ function permCheck(req, res, next) {
 	}
 }
 
-
+// Allows the user to join a class
 function joinClass(userName, code) {
 	return new Promise((resolve, reject) => {
 		// Find the id of the class from the database
@@ -234,11 +239,11 @@ function joinClass(userName, code) {
 									}
 								)
 							}
-							// Get the teachers session data ready to transport into new class
+							// Get the student's session data ready to transport into new class
 							var user = cD.noClass.students[userName]
 							if (classUser) user.permissions = classUser.permissions
 							else user.permissions = 2
-							// Remove teacher from old class
+							// Remove student from old class
 							delete cD.noClass.students[userName]
 							// Add the student to the newly created class
 							cD[code].students[userName] = user
@@ -256,7 +261,8 @@ function joinClass(userName, code) {
 
 // Oauth2 Access Token Generator
 function generateAccessToken(username, api) {
-	return jwt.sign(username, api, { expiresIn: '1800s' })
+    // Returns a signed webtoken for Formbot and bots to connect to via API 
+    return jwt.sign(username, api, { expiresIn: '1800s' })
 }
 
 
@@ -341,48 +347,49 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			}]
 		})
 
-		/* For In Loop that iterates through the created object.
-		 Allows for the use of steps inside of a progressive lesson.
-		 Checks the object's type using a conditional - Riley R., May 22, 2023
-		*/
-		for (const key in result['Steps']) {
-			let step = {}
-			// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
-			if (result['Steps'][key].type == 'Poll') {
-				step.type = 'poll'
-				step.labels = result['Steps'][key].labels.split(', ')
-				step.responses = result['Steps'][key].response
-				step.prompt = result['Steps'][key].prompt
-				steps.push(step)
-			} else if (result['Steps'][key].type == 'Quiz') {
-				let nameQ = result['Steps'][key].prompt
-				let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-				let colToKeyObj = {
-					A: 'index',
-					B: 'question',
-					C: 'key'
-				}
-				let i = 0
-				/*
-				Names the cells of the sheet after C to A-Z for the use of them in Quizzes
-				Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
-				*/
-				for (const letterI in letters) {
-					if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
-						colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
-						i++
-					}
-				}
-				let quizLoad = excelToJson({
-					sourceFile: `${req.file.path}`,
-					sheets: [{
-						name: nameQ,
-						columnToKey: colToKeyObj
-					}]
-				})
-				let questionList = []
-				for (let i = 1; i < quizLoad[nameQ].length; i++) {
-					let questionMaker = []
+/* For In Loop that iterates through the created object.
+ Allows for the use of steps inside of a progressive lesson.
+ Checks the object's type using a conditional - Riley R., May 22, 2023
+*/
+        for (const key in result['Steps']) {
+            let step = {}
+            // Creates an object with all the data required to start a poll - Riley R., May 22, 2023
+            if (result['Steps'][key].type == 'Poll') {
+                step.type = 'poll'
+                step.labels = result['Steps'][key].labels.split(', ')
+                step.responses = result['Steps'][key].response
+                step.prompt = result['Steps'][key].prompt
+                steps.push(step)
+            // Creates an object with all the data required to start a quiz
+            } else if (result['Steps'][key].type == 'Quiz') {
+                let nameQ = result['Steps'][key].prompt
+                let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                let colToKeyObj = {
+                    A: 'index',
+                    B: 'question',
+                    C: 'key'
+                }
+                let i = 0
+                /*
+                Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
+                Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
+                */
+                for (const letterI in letters) {
+                    if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
+                        colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
+                        i++
+                    }
+                }
+                let quizLoad = excelToJson({
+                    sourceFile: `${req.file.path}`,
+                    sheets: [{
+                        name: nameQ,
+                        columnToKey: colToKeyObj
+                    }]
+                })
+                let questionList = []
+                for (let i = 1; i < quizLoad[nameQ].length; i++) {
+                    let questionMaker = []
 
 					questionMaker.push(quizLoad[nameQ][i].question)
 					questionMaker.push(quizLoad[nameQ][i].key)
@@ -461,7 +468,7 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 })
 
 // Allow teacher to create class
-// Allowing the teacher to create classes is vital to wether the lesson actually works or not, because they have to be allowed to create a teacher class
+// Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
 // Plus they can ban and kick as long as they can create classes
 app.post('/createclass', isLoggedIn, (req, res) => {
@@ -592,7 +599,7 @@ app.get('/login', (req, res) => {
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
 // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
-// This also encryypts passwords to make sure people's accounts don't get hacked
+// This also encrypts passwords to make sure people's accounts don't get hacked
 app.post('/login', async (req, res) => {
 	var user = {
 		username: req.body.username,
@@ -1078,48 +1085,44 @@ io.sockets.on('connection', function (socket) {
 	socket.on('vbData', function () {
 		io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
 	})
-
+	// Sends a help ticket
 	socket.on('help', function (reason, time) {
 		cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
 	})
-
+	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
 		student.break = reason
-
 		cpupdate()
 	})
-
+	// Aproves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
 		let student = cD[socket.request.session.class].students[username]
 		student.break = breakApproval
-
 		if (breakApproval) io.to(username).emit('break')
-
 		cpupdate()
 		io.emit('vbUpdate')
 	})
-
+	// Ends the break
 	socket.on('endBreak', () => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
 		student.break = false
-
 		cpupdate()
 		io.emit('vbUpdate')
 	})
-
+	// Deletes a user from the class
 	socket.on('deleteUser', function (userName) {
 		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
 		delete cD[socket.request.session.class].students[userName]
 		console.log(userName + ' removed from class')
 	})
-
+	// Joins a classroom for websocket usage
 	socket.on('joinRoom', function (className) {
 		console.log("Working")
 		socket.join(className)
 		io.emit('vbUpdate')
 	})
-
+	// Updates and stores poll history
 	socket.on('cpupdate', () => {
 		cpupdate()
 	})
@@ -1136,6 +1139,7 @@ io.sockets.on('connection', function (socket) {
 	//     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
 	// })
 
+	// Starts a quick poll
 	socket.on('botPollStart', function (answerNumber) {
 		answerNames = []
 		cD[socket.request.session.class].pollStatus = true
@@ -1151,9 +1155,8 @@ io.sockets.on('connection', function (socket) {
 		cD[socket.request.session.class].posTextRes = false
 		cD[socket.request.session.class].pollPrompt = "Quick Poll"
 	})
-
+	// Displays previous polls
 	socket.on('previousPollDisplay', function (pollindex) {
-
 		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
 			if (err) {
 				console.error(err)
@@ -1164,11 +1167,13 @@ io.sockets.on('connection', function (socket) {
 
 	})
 
+	// Moves to the next step
 	socket.on('doStep', function (index) {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
+			// Creates a poll based on the step data
 			if (cD[socket.request.session.class].steps[index].type == 'poll') {
 
 				cD[socket.request.session.class].mode = 'poll'
@@ -1191,19 +1196,18 @@ io.sockets.on('connection', function (socket) {
 				}
 				cD[socket.request.session.class].posTextRes = false
 				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+			// Creates a new quiz based on step data
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				cD[socket.request.session.class].mode = 'quiz'
 				questions = cD[socket.request.session.class].steps[index].questions
 				let quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
 				cD[socket.request.session.class].quizObj = quiz
-
+			// Creates lesson based on step data	
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				cD[socket.request.session.class].mode = 'lesson'
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
 				cD[socket.request.session.class].lesson = lesson
-
-
 				db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
 					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 						if (err) {
@@ -1213,16 +1217,16 @@ io.sockets.on('connection', function (socket) {
 					})
 				cD[socket.request.session.class].posTextRes = false
 				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+			// Check this later, there's already a quiz if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				questions = cD[socket.request.session.class].steps[index].questions
 				quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
 				cD[socket.request.session.class].quizObj = quiz
-
+			// Check this later, there's already a lesson if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
 				cD[socket.request.session.class].lesson = lesson
-
 				db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
 					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 						if (err) {
@@ -1235,7 +1239,7 @@ io.sockets.on('connection', function (socket) {
 			cD[socket.request.session.class].currentStep = 0
 		}
 	})
-
+	// Check later, there's already a socket.on for previousPollDisplay
 	socket.on('previousPollDisplay', function (pollindex) {
 		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
 			if (err) {
@@ -1245,14 +1249,13 @@ io.sockets.on('connection', function (socket) {
 			}
 		})
 	})
-
+	// Deletes help ticket
 	socket.on('deleteTicket', function (student) {
 		cD[socket.request.session.class].students[student].help = ''
 	})
-
+	// Changes the class mode
 	socket.on('modechange', function (mode) {
 		cD[socket.request.session.class].mode = mode
-
 		io.to(cD[socket.request.session.class].className).emit('reload')
 	})
 })
