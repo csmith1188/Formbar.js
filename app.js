@@ -9,6 +9,8 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')
 const upload = multer({ dest: 'uploads/' })
 
+
+
 // get config vars
 dotenv.config()
 
@@ -16,8 +18,10 @@ var app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
+
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
+
 
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
@@ -26,8 +30,10 @@ var sessionMiddleware = session({
 	saveUninitialized: false
 })
 
+
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
+
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
@@ -40,7 +46,6 @@ io.use(function (socket, next) {
 
 // adds session middleware to express
 app.use(sessionMiddleware)
-
 
 
 // Establishes the connection to the database file
@@ -119,6 +124,7 @@ const pagePermissions = {
 	makeQuiz: 0,
 	bgm: 2,
 	sfx: 2,
+	api: 2
 }
 
 
@@ -259,6 +265,12 @@ function generateAccessToken(username, api) {
 	return jwt.sign(username, api, { expiresIn: '1800s' })
 }
 
+
+//import routes
+const api = require('./routes/api.js')(cD)
+
+//add routes to express
+app.use('/api', isAuthenticated, api)
 
 
 // This is the root page, it is where the users first get checked by the home page
