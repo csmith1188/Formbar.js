@@ -225,22 +225,25 @@ const api = (cD) => {
 
 	router.get('/class/:key/all-students', (request, response) => {
 		let key = request.params.key
-		db.get('SELECT * FROM classroom WHERE key=?', [key], (error, classData) => {
-			if (error) console.log(error)
-			if (classData?.id) {
-				// 				SELECT DISTINCT users.id, users.username, users.pollRes,
-				// 					CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions
-				// FROM users
-				// INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner
-				// INNER JOIN classroom ON classusers.classuid = classroom.id
-				// WHERE classroom.key = 'd5f5';
-				db.all('SELECT * FROM classusers WHERE classuid=?', [classData.id], (error, classUsers) => {
-
+		db.all(
+			'SELECT DISTINCT users.id, users.username, users.pollRes, CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
+			[key],
+			(error, dbClassData) => {
+				if (error) console.log(error)
+				if (dbClassData) {
+					let classData = {}
+					for (let dbUser of dbClassData) {
+						classData[dbUser.username] = {
+							username: dbUser.username,
+							id: dbUser.id,
+							permissions: dbUser.permissions,
+							pollRes: dbUser.pollRes
+						}
+					}
+					response.json(classData)
 				}
-				)
-			}
-		})
-		response.json(cD[key].students)
+			})
+		// response.json(cD[key].students)
 	})
 
 	return router
