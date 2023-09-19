@@ -8,6 +8,7 @@ const dotenv = require('dotenv') //Used to keep API tokens seperate from the cod
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
+const crypto = require('crypto');
 
 // get config vars
 dotenv.config()
@@ -652,7 +653,7 @@ app.post('/login', async (req, res) => {
 	} else if (user.loginType == "new") {
 		// Add the new user to the database
 		db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
-			[user.username, JSON.stringify(passwordCrypt), 2, require('crypto').randomBytes(64).toString('hex')], (err) => {
+			[user.username, JSON.stringify(passwordCrypt), 2, crypto.randomBytes(64).toString('hex')], (err) => {
 				if (err) {
 
 					console.log(err)
@@ -695,6 +696,45 @@ app.post('/login', async (req, res) => {
 // N
 
 // O
+/* This is what happens when the server tries to authenticate a user. It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as 
+a variable. */
+app.get('/oauth', (req, res) => {
+	let redirectURL = req.query.redirectURL;
+	res.render('pages/oauth.ejs', {
+		redirectURL : redirectURL,
+		title : "Oauth"
+	});
+});
+
+// This is what happens after the user submits their authentication data.
+app.post('/oauth', (req, res) => {
+	// It saves the username, password, and the redirectURL that is submitted.
+	const {
+		username,
+		password,
+		redirectURL
+	} = req.body;
+	// If there is a username and password submitted, then it gets results from the database that match the username.
+	if (username && password) {
+		db.get(`SELECT * FROM users WHERE username = ?`, [username], (error, results) => {
+			if (error) console.log(error);
+			// If there are results returned, it saves the database password to a variable.
+			if (results) {
+				let databasePassword = decrypt(JSON.parse(results.password));
+				console.log(databasePassword);
+				// It then compares the submitted password to the database password.
+				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
+				if (databasePassword == password) {
+					var uniToken = jwt.sign({ username: username }, results.API, { expiresIn: '5d'});
+					res.redirect(`${redirectURL}?token=${uniToken}`);
+				// If it does not match, then it redirects you back to the oauth page.
+				} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
+			// If there are no results, then it redirects back to the oauth page.
+			} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
+		});
+	// If either a username, password, or both is not returned, then it redirects back to the oauth page.
+	} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
+});
 
 // P
 
