@@ -270,7 +270,7 @@ function generateAccessToken(username, api) {
 const api = require('./routes/api.js')(cD)
 
 //add routes to express
-app.use('/api', isAuthenticated, api)
+app.use('/api', api)
 
 
 // This is the root page, it is where the users first get checked by the home page
@@ -1180,6 +1180,11 @@ io.sockets.on('connection', function (socket) {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
+		console.log(
+			'\n\nsteps:',
+			cD[socket.request.session.class].steps,
+			'\n\n'
+		)
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			if (cD[socket.request.session.class].steps[index].type == 'poll') {
 
