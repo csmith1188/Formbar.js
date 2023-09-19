@@ -44,6 +44,17 @@ const api = (cD) => {
 					"break": false,
 					"quizScore": "",
 					"API": "c346f2f177386e0ff6ec1efa0007925bbc4dcc3c568a1131025d2033e47f524b7828b5de0f54605348b863771ddc7a8c62bb0b1a4924bbf0356241d849502dc1"
+				},
+				"d": {
+					"username": "d",
+					"id": 6,
+					"permissions": 2,
+					"pollRes": "a",
+					"pollTextRes": "hi",
+					"help": "",
+					"break": false,
+					"quizScore": "",
+					"API": "592e030ce3b695d414f688b9e3dac02fc49c8aea29577df3c0a29f6083762fe489f4491d63eb04a1fab69c5a971f6b5f182791ba03ae5a30da6416e65662ac88"
 				}
 			},
 			"pollStatus": true,
@@ -51,7 +62,7 @@ const api = (cD) => {
 				"a": "answer a",
 				"b": "answer b"
 			},
-			"posTextRes": false,
+			"posTextRes": true,
 			"pollPrompt": "",
 			"key": "d5f5",
 			"lesson": {},
@@ -199,9 +210,10 @@ const api = (cD) => {
 		}
 	}
 
-	for (let [classKey, classData] of Object.entries(cD)) {
-		for (let [studentName, studentData] of Object.entries(classData.students)) {
+	for (let classData of Object.values(cD)) {
+		for (let studentData of Object.values(classData.students)) {
 			delete studentData.API
+			delete studentData.pollTextRes
 		}
 	}
 
@@ -231,19 +243,61 @@ const api = (cD) => {
 			(error, dbClassData) => {
 				if (error) console.log(error)
 				if (dbClassData) {
-					let classData = {}
+					let students = {}
 					for (let dbUser of dbClassData) {
-						classData[dbUser.username] = {
+						if (dbUser.username == 'a')
+							console.log(dbUser)
+						let currentUser = cD[key].students[dbUser.username]
+						students[dbUser.username] = {
 							username: dbUser.username,
 							id: dbUser.id,
 							permissions: dbUser.permissions,
-							pollRes: dbUser.pollRes
+							pollRes: currentUser ? currentUser.pollRes : dbUser.pollRes,
+							help: currentUser ? currentUser.help : null,
+							break: currentUser ? currentUser.break : null,
+							quizScore: currentUser ? currentUser.quizScore : null
 						}
 					}
-					response.json(classData)
+					response.json(students)
 				}
 			})
-		// response.json(cD[key].students)
+	})
+
+	router.get('/class/:key/polls', (request, response) => {
+		let key = request.params.key
+		let classData = cD[key]
+		let polls = {}
+		// classData.pollStatus = false
+
+		if (!classData) {
+			response.status(404).json({ error: 'class not started' })
+			return
+		}
+		if (!classData.pollStatus) {
+			response.status(404).json({ error: 'no poll' })
+			return
+		}
+
+		if (classData.pollPrompt)
+			polls.pollPrompt = classData.pollPrompt
+
+		if (Object.keys(classData.posPollResObj).length > 0) {
+			for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
+				polls[resKey] = {
+					display: resValue,
+					responses: 0
+				}
+			}
+			for (let studentData of Object.values(classData.students)) {
+				if (
+					studentData &&
+					Object.keys(polls).includes(studentData.pollRes)
+				)
+					polls[studentData.pollRes].responses++
+			}
+		}
+
+		response.json(polls)
 	})
 
 	return router
