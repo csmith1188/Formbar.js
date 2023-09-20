@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3').verbose()
 var db = new sqlite3.Database('database/database.db')
 
 const api = (cD) => {
+	// for testing
 	cD = {
 		"noClass": {
 			"students": {}
@@ -217,26 +218,55 @@ const api = (cD) => {
 		}
 	}
 
+	// for testing
 	router.get('/cd', (request, response) => {
 		response.json(cD)
 	})
 
 	router.get('/me', (request, response) => {
+		response.json(cD['d5f5'].students['a'])
+		if (!cD[request.session.class]) {
+			response.json({ error: 'class not started' })
+			return
+		}
+		if (!cD[request.session.class].students[request.session.user]) {
+			response.json({ error: 'user not logged in' })
+			return
+		}
+
 		response.json(cD[request.session.class].students[request.session.user])
 	})
 
 	router.get('/class/:key', (request, response) => {
 		let key = request.params.key
+
+		if (!cD[key]) {
+			response.json({ error: 'class not started' })
+			return
+		}
+
 		response.json(cD[key])
 	})
 
 	router.get('/class/:key/students', (request, response) => {
 		let key = request.params.key
+
+		if (!cD[key]) {
+			response.json({ error: 'class not started' })
+			return
+		}
+
 		response.json(cD[key].students)
 	})
 
 	router.get('/class/:key/all-students', (request, response) => {
 		let key = request.params.key
+
+		if (!cD[key]) {
+			response.json({ error: 'class not started' })
+			return
+		}
+
 		db.all(
 			'SELECT DISTINCT users.id, users.username, users.pollRes, CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
 			[key],
@@ -267,7 +297,6 @@ const api = (cD) => {
 		let key = request.params.key
 		let classData = cD[key]
 		let polls = {}
-		// classData.pollStatus = false
 
 		if (!classData) {
 			response.status(404).json({ error: 'class not started' })

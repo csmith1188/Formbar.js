@@ -68,7 +68,7 @@ class Student {
 		this.pollRes = ''
 		this.pollTextRes = ''
 		this.help = ''
-		this.break = false
+		this.break = ''
 		this.quizScore = ''
 		this.API = API
 	}
@@ -1114,7 +1114,7 @@ io.sockets.on('connection', function (socket) {
 
 	socket.on('endBreak', () => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
-		student.break = false
+		student.break = ''
 
 		cpupdate()
 		io.emit('vbUpdate')
