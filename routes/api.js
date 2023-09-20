@@ -35,28 +35,28 @@ const api = (cD) => {
 					"quizScore": "",
 					"API": "58b11a05b0b545f1fdff7fd7907507ff8e6ea6f59705ed1e0dccc38c9a06590b1c6aa52fbde05f7839a08198050f735338f706c0c78eb38f85eaf9683376ecbe"
 				},
-				"c": {
-					"username": "c",
-					"id": 5,
-					"permissions": 2,
-					"pollRes": "b",
-					"pollTextRes": "",
-					"help": "",
-					"break": false,
-					"quizScore": "",
-					"API": "c346f2f177386e0ff6ec1efa0007925bbc4dcc3c568a1131025d2033e47f524b7828b5de0f54605348b863771ddc7a8c62bb0b1a4924bbf0356241d849502dc1"
-				},
-				"d": {
-					"username": "d",
-					"id": 6,
-					"permissions": 2,
-					"pollRes": "a",
-					"pollTextRes": "hi",
-					"help": "",
-					"break": false,
-					"quizScore": "",
-					"API": "592e030ce3b695d414f688b9e3dac02fc49c8aea29577df3c0a29f6083762fe489f4491d63eb04a1fab69c5a971f6b5f182791ba03ae5a30da6416e65662ac88"
-				}
+				// "c": {
+				// 	"username": "c",
+				// 	"id": 5,
+				// 	"permissions": 2,
+				// 	"pollRes": "b",
+				// 	"pollTextRes": "",
+				// 	"help": "",
+				// 	"break": false,
+				// 	"quizScore": "",
+				// 	"API": "c346f2f177386e0ff6ec1efa0007925bbc4dcc3c568a1131025d2033e47f524b7828b5de0f54605348b863771ddc7a8c62bb0b1a4924bbf0356241d849502dc1"
+				// },
+				// "d": {
+				// 	"username": "d",
+				// 	"id": 6,
+				// 	"permissions": 2,
+				// 	"pollRes": "a",
+				// 	"pollTextRes": "hi",
+				// 	"help": "",
+				// 	"break": false,
+				// 	"quizScore": "",
+				// 	"API": "592e030ce3b695d414f688b9e3dac02fc49c8aea29577df3c0a29f6083762fe489f4491d63eb04a1fab69c5a971f6b5f182791ba03ae5a30da6416e65662ac88"
+				// }
 			},
 			"pollStatus": true,
 			"posPollResObj": {
@@ -224,17 +224,13 @@ const api = (cD) => {
 	})
 
 	router.get('/me', (request, response) => {
-		response.json(cD['d5f5'].students['a'])
-		if (!cD[request.session.class]) {
+		console.log(request.session)
+		if (!cD[request.session.class])
 			response.json({ error: 'class not started' })
-			return
-		}
-		if (!cD[request.session.class].students[request.session.user]) {
+		else if (!cD[request.session.class].students[request.session.user])
 			response.json({ error: 'user not logged in' })
-			return
-		}
-
-		response.json(cD[request.session.class].students[request.session.user])
+		else
+			response.json(cD[request.session.class].students[request.session.user])
 	})
 
 	router.get('/class/:key', (request, response) => {
@@ -275,8 +271,6 @@ const api = (cD) => {
 				if (dbClassData) {
 					let students = {}
 					for (let dbUser of dbClassData) {
-						if (dbUser.username == 'a')
-							console.log(dbUser)
 						let currentUser = cD[key].students[dbUser.username]
 						students[dbUser.username] = {
 							username: dbUser.username,
