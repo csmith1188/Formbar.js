@@ -4,6 +4,52 @@ const sqlite3 = require('sqlite3').verbose()
 
 var db = new sqlite3.Database('database/database.db')
 
+async function getUser(request) {
+	let user
+
+	if (!request.session.user && !request.query.API) return false
+	if (request.session.user) {
+		user = new Promise((resolve, reject) => {
+			db.get(
+				'SELECT id, username, permissions FROM users WHERE username = ?',
+				[request.query.user],
+				(error, userData) => {
+					if (error) {
+						console.log(error)
+						reject(false)
+					}
+					else if (userData) {
+						userData.class = request.session.class
+						return resolve(userData)
+					} else return reject(false)
+				}
+			)
+		})
+	}
+	else if (request.query.API) {
+		user = new Promise((resolve, reject) => {
+			db.get(
+				'SELECT id, username, permissions FROM users WHERE API = ?',
+				[request.query.API],
+				(error, userData) => {
+					if (error) {
+						console.log(error)
+						reject(false)
+					}
+					else if (userData) {
+						userData.class = request.query.class
+						if (userData.class) {
+							cd[userData.class].students
+						}
+						return resolve(userData)
+					} else return reject(false)
+				}
+			)
+		})
+	}
+	return user
+}
+
 const api = (cD) => {
 	// for testing
 	cD = {
@@ -219,29 +265,39 @@ const api = (cD) => {
 	}
 
 	// for testing
-	router.get('/cd', (request, response) => {
+	router.get('/user', async (request, response) => {
+		let user = await getUser(request)
+		response.json(user)
+	})
+
+	// for testing
+	router.get('/cd', async (request, response) => {
 		response.json(cD)
 	})
 
-	router.get('/me', (request, response) => {
-		console.log(request.session)
-		if (!cD[request.session.class])
+	router.get('/me', async (request, response) => {
+		let user = await getUser(request)
+		if (!user)
+			response.json({ error: 'user not logged in or missing API key' })
+		else if (!user.class)
+			response.json({ error: 'no class selected' })
+		else if (!cD[user.class])
 			response.json({ error: 'class not started' })
-		else if (!cD[request.session.class].students[request.session.user])
+		else if (!cD[user.class].students[user.username])
 			response.json({ error: 'user not logged in' })
 		else
-			response.json(cD[request.session.class].students[request.session.user])
+			response.json(cD[user.class].students[user.username])
 	})
 
-	router.get('/class/:key', (request, response) => {
+	router.get('/class/:key', async (request, response) => {
+		let user = await getUser(request)
 		let key = request.params.key
 
-		if (!cD[key]) {
+		if (!cD[key])
 			response.json({ error: 'class not started' })
-			return
-		}
-
-		response.json(cD[key])
+		else if (!cD[key].students[user.username])
+			response.json({ error: 'user is not logged into the select class' })
+		else response.json(cD[key])
 	})
 
 	router.get('/class/:key/students', (request, response) => {
