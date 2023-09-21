@@ -7,10 +7,10 @@
         <form action="oauth" method="post" style="margin-bottom: 16px;">
             <!-- Carries over and submits the redirectURL specified by the user. -->
             <input type="hidden" name="redirectURL" value="<%-redirectURL%>">
-        <input type="text" id="usernameBox" name="username" class="box quickButton" placeholder="Name" value=""
+        <input type="text" id="usernameBox" name="username" class="box quickButton" placeholder="Name" value="" pattern="([a-z]|[A-Z]|[0-9])"
           autocomplete="off" required>
         <br>
-        <input type="password" id="passwordBox" name="password" class="box quickButton" placeholder="Password" value=""
+        <input type="password" id="passwordBox" name="password" class="box quickButton" placeholder="Password" value="" pattern="([a-z]|[A-Z]|[0-9])"
           required>
         <a href="/changepassword" id="forgotPassword" class="quickButton">Forgot password</a>
         <br><br>
