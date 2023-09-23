@@ -4,31 +4,31 @@ const session = require('express-session') //For storing client login data
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Formbot/other bots and Formbar
-const dotenv = require('dotenv') //Used to keep API tokens seperate from the code
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
-const crypto = require('crypto');
-
-// get config vars
-dotenv.config()
+const crypto = require('crypto')
 
 var app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
+
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
 
+
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
-    secret: 'secret', //Used to sign into the session via cookies
-    resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
-    saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
+	secret: 'secret', //Used to sign into the session via cookies
+	resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
+	saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
 })
+
 
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
+
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
@@ -46,7 +46,6 @@ io.use(function (socket, next) {
 // Sets up middleware for the server by calling sessionMiddleware
 // adds session middleware to express
 app.use(sessionMiddleware)
-
 
 
 // Establishes the connection to the database file
@@ -69,7 +68,7 @@ class Student {
 		this.pollRes = ''
 		this.pollTextRes = ''
 		this.help = ''
-		this.break = false
+		this.break = ''
 		this.quizScore = ''
 		this.API = API
 	}
@@ -118,13 +117,13 @@ class Lesson {
 
 //Permssion level needed to access each page
 const pagePermissions = {
-	controlpanel: 0,
+	controlPanel: 0,
 	chat: 2,
 	poll: 2,
 	virtualbar: 2,
 	makeQuiz: 0,
 	bgm: 2,
-	sfx: 2,
+	sfx: 2
 }
 
 
@@ -153,6 +152,7 @@ This also allows for the website to check for perms
 function isAuthenticated(req, res, next) {
 	if (req.session.user) {
 		if (cD.noClass.students[req.session.user]) {
+			console.log(cD.noClass.students[req.session.user])
 			if (cD.noClass.students[req.session.user].permissions == 0) {
 				res.redirect('/createclass')
 			} else {
@@ -162,10 +162,7 @@ function isAuthenticated(req, res, next) {
 			next()
 		}
 
-	} else if (req.session.api) {
-		next()
 	} else {
-
 		res.redirect('/login')
 	}
 }
@@ -196,16 +193,11 @@ function permCheck(req, res, next) {
 			console.log(urlPath.indexOf('?'))
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
-		//Checks if the user has sent an API key
-		if (req.session.api) {
+		// Checks if users permnissions are high enough
+		if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
 			next()
 		} else {
-			// Checks if users permnissions are high enough
-			if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
-				next()
-			} else {
-				res.send('Not High Enough Permissions')
-			}
+			res.send('Not High Enough Permissions')
 		}
 	}
 }
@@ -220,7 +212,8 @@ function joinClass(userName, code) {
 				res.send('Something went wrong')
 			}
 			// Check to make sure there was a class with that name
-			if (id && cD[code].key == code) {
+			console.log(cD[code])
+			if (id && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
 				db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
 					if (err) {
@@ -260,12 +253,11 @@ function joinClass(userName, code) {
 	})
 }
 
-// Oauth2 Access Token Generator
-function generateAccessToken(username, api) {
-    // Returns a signed webtoken for Formbot and bots to connect to via API 
-    return jwt.sign(username, api, { expiresIn: '1800s' })
-}
+//import routes
+const apiRoutes = require('./routes/api.js')(cD)
 
+//add routes to express
+app.use('/api', apiRoutes)
 
 
 // This is the root page, it is where the users first get checked by the home page
@@ -294,7 +286,7 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
-app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
+app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 
 	let students = cD[req.session.class].students
 	let keys = Object.keys(students)
@@ -307,7 +299,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 	/* Uses EJS to render the template and display the information for the class.
 	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
 	*/
-	res.render('pages/controlpanel', {
+	res.render('pages/controlPanel', {
 		title: "Control Panel",
 		students: allStuds,
 		pollStatus: cD[req.session.class].pollStatus,
@@ -318,13 +310,16 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 
 })
 
+// C
+
 /*
 Manages the use of excell spreadsheets in order to create progressive lessons.
 It uses Excel To JSON to create an object containing all the data needed for a progressive lesson.
 Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
-app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+	ï
 	//Initialze a list to push each step to - Riley R., May 22, 2023
 	let steps = []
 	/*
@@ -348,49 +343,49 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			}]
 		})
 
-/* For In Loop that iterates through the created object.
- Allows for the use of steps inside of a progressive lesson.
- Checks the object's type using a conditional - Riley R., May 22, 2023
-*/
-        for (const key in result['Steps']) {
-            let step = {}
-            // Creates an object with all the data required to start a poll - Riley R., May 22, 2023
-            if (result['Steps'][key].type == 'Poll') {
-                step.type = 'poll'
-                step.labels = result['Steps'][key].labels.split(', ')
-                step.responses = result['Steps'][key].response
-                step.prompt = result['Steps'][key].prompt
-                steps.push(step)
-            // Creates an object with all the data required to start a quiz
-            } else if (result['Steps'][key].type == 'Quiz') {
-                let nameQ = result['Steps'][key].prompt
-                let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                let colToKeyObj = {
-                    A: 'index',
-                    B: 'question',
-                    C: 'key'
-                }
-                let i = 0
-                /*
-                Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
-                Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
-                */
-                for (const letterI in letters) {
-                    if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
-                        colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
-                        i++
-                    }
-                }
-                let quizLoad = excelToJson({
-                    sourceFile: `${req.file.path}`,
-                    sheets: [{
-                        name: nameQ,
-                        columnToKey: colToKeyObj
-                    }]
-                })
-                let questionList = []
-                for (let i = 1; i < quizLoad[nameQ].length; i++) {
-                    let questionMaker = []
+		/* For In Loop that iterates through the created object.
+		 Allows for the use of steps inside of a progressive lesson.
+		 Checks the object's type using a conditional - Riley R., May 22, 2023
+		*/
+		for (const key in result['Steps']) {
+			let step = {}
+			// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
+			if (result['Steps'][key].type == 'Poll') {
+				step.type = 'poll'
+				step.labels = result['Steps'][key].labels.split(', ')
+				step.responses = result['Steps'][key].response
+				step.prompt = result['Steps'][key].prompt
+				steps.push(step)
+				// Creates an object with all the data required to start a quiz
+			} else if (result['Steps'][key].type == 'Quiz') {
+				let nameQ = result['Steps'][key].prompt
+				let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+				let colToKeyObj = {
+					A: 'index',
+					B: 'question',
+					C: 'key'
+				}
+				let i = 0
+				/*
+				Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
+				Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
+				*/
+				for (const letterI in letters) {
+					if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
+						colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
+						i++
+					}
+				}
+				let quizLoad = excelToJson({
+					sourceFile: `${req.file.path}`,
+					sheets: [{
+						name: nameQ,
+						columnToKey: colToKeyObj
+					}]
+				})
+				let questionList = []
+				for (let i = 1; i < quizLoad[nameQ].length; i++) {
+					let questionMaker = []
 
 					questionMaker.push(quizLoad[nameQ][i].question)
 					questionMaker.push(quizLoad[nameQ][i].key)
@@ -443,7 +438,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 
 		cD[req.session.class].steps = steps
 		console.log(cD[req.session.class].steps)
-		res.redirect('/controlpanel')
+		res.redirect('/controlPanel')
 	}
 })
 
@@ -591,9 +586,7 @@ app.post('/previousLessons', (req, res) => {
 app.get('/login', (req, res) => {
 	res.render('pages/login', {
 		title: 'Formbar',
-		color: 'purple',
-		redurl: '',
-		api: ''
+		color: 'purple'
 	})
 })
 
@@ -651,43 +644,61 @@ app.post('/login', async (req, res) => {
 		})
 
 	} else if (user.loginType == "new") {
-		// Add the new user to the database
-		db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
-			[user.username, JSON.stringify(passwordCrypt), 2, crypto.randomBytes(64).toString('hex')], (err) => {
-				if (err) {
+		let permissions = 2
 
-					console.log(err)
+		db.all('SELECT API, secret FROM users', (error, users) => {
+			if (error) console.log(error)
+			else {
+				let existingAPIs = []
+				let existingSecrets = []
+				let newAPI
+				let newSecret
+
+				console.log(users.length)
+				if (users.length == 0) permissions = 0
+
+				for (let user of users) {
+					existingAPIs.push(user.API)
+					existingSecrets.push(user.secret)
 				}
-				console.log('Success')
-			})
-		// Find the user in which was just created to get the id of the user
-		db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
-			if (err) {
-				console.log(err)
-			} else {
-				// Add user to session
-				cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API)
-				// Add the user to the session in order to transfer data between each page
-				req.session.user = rows.username
-				res.redirect('/')
-			}
 
+				do {
+					newAPI = crypto.randomBytes(64).toString('hex')
+				} while (existingAPIs.includes(newAPI))
+				do {
+					newSecret = crypto.randomBytes(256).toString('hex')
+				} while (existingSecrets.includes(newSecret))
+
+				// Add the new user to the database
+				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+					[
+						user.username,
+						JSON.stringify(passwordCrypt),
+						permissions,
+						newAPI,
+						newSecret
+					], (err) => {
+						if (err) {
+							console.log(err)
+						}
+						console.log('Success')
+					})
+				// Find the user in which was just created to get the id of the user
+				db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+					if (err) {
+						console.log(err)
+					} else {
+						// Add user to session
+						cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API)
+						// Add the user to the session in order to transfer data between each page
+						req.session.user = rows.username
+						res.redirect('/')
+					}
+				})
+			}
 		})
 	} else if (user.loginType == "guest") {
 
-	} else if (user.loginType == "bot") {
-		let apikey = req.body.apikey
-		if (apikey) {
-			if (req.body.classKey in cD) {
-				req.session.api = apikey
-				req.session.class = req.body.classKey
-				res.json({ login: true })
-			} else {
-				res.json({ login: false })
-			}
-		} else {
-			res.json({ login: false })
-		}
 	}
 })
 
@@ -696,15 +707,15 @@ app.post('/login', async (req, res) => {
 // N
 
 // O
-/* This is what happens when the server tries to authenticate a user. It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as 
+/* This is what happens when the server tries to authenticate a user. It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as
 a variable. */
 app.get('/oauth', (req, res) => {
-	let redirectURL = req.query.redirectURL;
+	let redirectURL = req.query.redirectURL
 	res.render('pages/oauth.ejs', {
-		redirectURL : redirectURL,
-		title : "Oauth"
-	});
-});
+		title: "Oauth",
+		redirectURL: redirectURL
+	})
+})
 
 // This is what happens after the user submits their authentication data.
 app.post('/oauth', (req, res) => {
@@ -713,28 +724,28 @@ app.post('/oauth', (req, res) => {
 		username,
 		password,
 		redirectURL
-	} = req.body;
+	} = req.body
 	// If there is a username and password submitted, then it gets results from the database that match the username.
 	if (username && password) {
-		db.get(`SELECT * FROM users WHERE username = ?`, [username], (error, results) => {
-			if (error) console.log(error);
-			// If there are results returned, it saves the database password to a variable.
-			if (results) {
-				let databasePassword = decrypt(JSON.parse(results.password));
-				console.log(databasePassword);
+		db.get(`SELECT * FROM users WHERE username = ?`, [username], (error, userData) => {
+			if (error) console.log(error)
+			// If there is userData returned, it saves the database password to a variable.
+			if (userData) {
+				let databasePassword = decrypt(JSON.parse(userData.password))
+				console.log(databasePassword)
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
 				if (databasePassword == password) {
-					var uniToken = jwt.sign({ username: username }, results.API, { expiresIn: '5d'});
-					res.redirect(`${redirectURL}?token=${uniToken}`);
-				// If it does not match, then it redirects you back to the oauth page.
-				} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
-			// If there are no results, then it redirects back to the oauth page.
-			} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
-		});
-	// If either a username, password, or both is not returned, then it redirects back to the oauth page.
-	} else res.redirect(`/oauth?redirectURL=${redirectURL}`);
-});
+					var token = jwt.sign({ username: username, }, userData.secret, { expiresIn: '30m' })
+					res.redirect(`${redirectURL}?token=${token}`)
+					// If it does not match, then it redirects you back to the oauth page.
+				} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+				// If there in no userData, then it redirects back to the oauth page.
+			} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+		})
+		// If either a username, password, or both is not returned, then it redirects back to the oauth page.
+	} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+})
 
 // P
 
@@ -899,85 +910,11 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Z
 
 
-
-// OAuth2
-
-app.get('/oauth/login', (req, res) => {
-	let redurl = req.query.redurl
-	let api = req.query.api
-	res.render('pages/login', {
-		title: 'Formbar',
-		color: 'purple',
-		redurl: redurl,
-		api: api
-	})
-})
-
-app.post('/oauth/login', (req, res) => {
-	let redurl = req.body.redurl
-	let api = req.body.api
-	var user = {
-		username: req.body.username,
-		password: req.body.password,
-		loginType: req.body.loginType,
-		userType: req.body.userType
-	}
-	var passwordCrypt = encrypt(user.password)
-	// Check whether user is logging in or signing up
-	if (user.loginType == "login") {
-		// Get the users login in data to verify password
-		db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, rows) => {
-			if (err) {
-				console.log(err)
-			}
-			// Check if a user with that name was found in the database
-			if (rows) {
-				// Decrypt users password
-				let tempPassword = decrypt(JSON.parse(rows.password))
-				if (rows.username == user.username && tempPassword == user.password) {
-					let token = generateAccessToken({ username: user.username, permissions: rows.permissions }, api)
-					console.log(redurl + "?token=" + token)
-					res.redirect(redurl + "?token=" + token)
-				} else {
-					res.redirect('/oauth/login?redurl=' + redurl)
-				}
-			} else {
-				res.redirect('/oauth/login?redurl=' + redurl)
-			}
-		})
-
-	} else if (user.loginType == "new") {
-		// Add the new user to the database
-		db.run(`INSERT INTO users(username, password, permissions) VALUES(?, ?, ?)`,
-			[user.username, JSON.stringify(passwordCrypt), 2], (err) => {
-				if (err) {
-					console.log(err)
-				}
-				console.log('Success')
-			})
-		// Find the user in which was just created to get the id of the user
-		db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
-			if (err) {
-				console.log(err)
-			}
-			// Add user to session
-			cD.noClass.students[rows.username] = new Student(rows.username, rows.id)
-			// Add the user to the session in order to transfer data between each page
-			req.session.user = rows.username
-			res.redirect('/')
-
-		})
-	}
-})
-
-
 // Middleware for sockets
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
 	if (socket.request.session.user) {
-		next()
-	} else if (socket.request.session.api) {
 		next()
 	} else {
 		console.log("Authentication Failed")
@@ -992,8 +929,6 @@ io.sockets.on('connection', function (socket) {
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
-	} else if (socket.request.session.api) {
-		socket.join(cD[socket.request.session.class].className)
 	}
 
 	//rate limiter
@@ -1147,6 +1082,7 @@ io.sockets.on('connection', function (socket) {
 	socket.on('endBreak', () => {
 		let student = cD[socket.request.session.class].students[socket.request.session.user]
 		student.break = false
+
 		cpupdate()
 		io.emit('vbUpdate')
 	})
@@ -1212,6 +1148,11 @@ io.sockets.on('connection', function (socket) {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
+		console.log(
+			'\n\nsteps:',
+			cD[socket.request.session.class].steps,
+			'\n\n'
+		)
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			// Creates a poll based on the step data
 			if (cD[socket.request.session.class].steps[index].type == 'poll') {
@@ -1236,14 +1177,14 @@ io.sockets.on('connection', function (socket) {
 				}
 				cD[socket.request.session.class].posTextRes = false
 				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
-			// Creates a new quiz based on step data
+				// Creates a new quiz based on step data
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				cD[socket.request.session.class].mode = 'quiz'
 				questions = cD[socket.request.session.class].steps[index].questions
 				let quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
 				cD[socket.request.session.class].quizObj = quiz
-			// Creates lesson based on step data	
+				// Creates lesson based on step data
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				cD[socket.request.session.class].mode = 'lesson'
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
@@ -1257,13 +1198,13 @@ io.sockets.on('connection', function (socket) {
 					})
 				cD[socket.request.session.class].posTextRes = false
 				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
-			// Check this later, there's already a quiz if statement
+				// Check this later, there's already a quiz if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				questions = cD[socket.request.session.class].steps[index].questions
 				quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
 				cD[socket.request.session.class].quizObj = quiz
-			// Check this later, there's already a lesson if statement
+				// Check this later, there's already a lesson if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
 				cD[socket.request.session.class].lesson = lesson
