@@ -4,14 +4,10 @@ const session = require('express-session') //For storing client login data
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Formbot/other bots and Formbar
-const dotenv = require('dotenv') //Used to keep API tokens seperate from the code
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-
-// get config vars
-dotenv.config()
 
 var app = express()
 const http = require('http').createServer(app)
@@ -121,14 +117,13 @@ class Lesson {
 
 //Permssion level needed to access each page
 const pagePermissions = {
-	controlpanel: 0,
+	controlPanel: 0,
 	chat: 2,
 	poll: 2,
 	virtualbar: 2,
 	makeQuiz: 0,
 	bgm: 2,
-	sfx: 2,
-	api: 2
+	sfx: 2
 }
 
 
@@ -157,6 +152,7 @@ This also allows for the website to check for perms
 function isAuthenticated(req, res, next) {
 	if (req.session.user) {
 		if (cD.noClass.students[req.session.user]) {
+			console.log(cD.noClass.students[req.session.user])
 			if (cD.noClass.students[req.session.user].permissions == 0) {
 				res.redirect('/createclass')
 			} else {
@@ -166,10 +162,7 @@ function isAuthenticated(req, res, next) {
 			next()
 		}
 
-	} else if (req.session.api) {
-		next()
 	} else {
-
 		res.redirect('/login')
 	}
 }
@@ -200,16 +193,11 @@ function permCheck(req, res, next) {
 			console.log(urlPath.indexOf('?'))
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
-		//Checks if the user has sent an API key
-		if (req.session.api) {
+		// Checks if users permnissions are high enough
+		if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
 			next()
 		} else {
-			// Checks if users permnissions are high enough
-			if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
-				next()
-			} else {
-				res.send('Not High Enough Permissions')
-			}
+			res.send('Not High Enough Permissions')
 		}
 	}
 }
@@ -265,18 +253,11 @@ function joinClass(userName, code) {
 	})
 }
 
-// Oauth2 Access Token Generator
-function generateAccessToken(username, api) {
-	// Returns a signed webtoken for Formbot and bots to connect to via API
-	return jwt.sign(username, api, { expiresIn: '1800s' })
-}
-
-
 //import routes
-const api = require('./routes/api.js')(cD)
+const apiRoutes = require('./routes/api.js')(cD)
 
 //add routes to express
-app.use('/api', api)
+app.use('/api', apiRoutes)
 
 
 // This is the root page, it is where the users first get checked by the home page
@@ -305,7 +286,7 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
-app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
+app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 
 	let students = cD[req.session.class].students
 	let keys = Object.keys(students)
@@ -318,7 +299,7 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 	/* Uses EJS to render the template and display the information for the class.
 	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
 	*/
-	res.render('pages/controlpanel', {
+	res.render('pages/controlPanel', {
 		title: "Control Panel",
 		students: allStuds,
 		pollStatus: cD[req.session.class].pollStatus,
@@ -329,13 +310,16 @@ app.get('/controlpanel', isAuthenticated, permCheck, (req, res) => {
 
 })
 
+// C
+
 /*
 Manages the use of excell spreadsheets in order to create progressive lessons.
 It uses Excel To JSON to create an object containing all the data needed for a progressive lesson.
 Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
-app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
+	ï
 	//Initialze a list to push each step to - Riley R., May 22, 2023
 	let steps = []
 	/*
@@ -454,7 +438,7 @@ app.post('/controlpanel', upload.single('spreadsheet'), isAuthenticated, permChe
 
 		cD[req.session.class].steps = steps
 		console.log(cD[req.session.class].steps)
-		res.redirect('/controlpanel')
+		res.redirect('/controlPanel')
 	}
 })
 
@@ -602,9 +586,7 @@ app.post('/previousLessons', (req, res) => {
 app.get('/login', (req, res) => {
 	res.render('pages/login', {
 		title: 'Formbar',
-		color: 'purple',
-		redurl: '',
-		api: ''
+		color: 'purple'
 	})
 })
 
@@ -662,7 +644,9 @@ app.post('/login', async (req, res) => {
 		})
 
 	} else if (user.loginType == "new") {
-		db.all('SELECT API, secret FROM users', (error, results) => {
+		let permissions = 2
+
+		db.all('SELECT API, secret FROM users', (error, users) => {
 			if (error) console.log(error)
 			else {
 				let existingAPIs = []
@@ -670,50 +654,51 @@ app.post('/login', async (req, res) => {
 				let newAPI
 				let newSecret
 
-				while (existingAPIs.includes(newAPI)) {
-					newAPI = crypto.randomBytes(64).toString('hex')
-				}
-				while (existingSecrets.includes(newSecret)) {
-					newSecret = crypto.randomBytes(256).toString('hex')
-				}
-			}
-		})
-		// Add the new user to the database
-		db.run(`INSERT INTO users(username, password, permissions, API) VALUES(?, ?, ?, ?)`,
-			[user.username, JSON.stringify(passwordCrypt), 2, crypto.randomBytes(64).toString('hex')], (err) => {
-				if (err) {
-					console.log(err)
-				}
-				console.log('Success')
-			})
-		// Find the user in which was just created to get the id of the user
-		db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
-			if (err) {
-				console.log(err)
-			} else {
-				// Add user to session
-				cD.noClass.students[rows.username] = new Student(rows.username, rows.id, 2, rows.API)
-				// Add the user to the session in order to transfer data between each page
-				req.session.user = rows.username
-				res.redirect('/')
-			}
+				console.log(users.length)
+				if (users.length == 0) permissions = 0
 
+				for (let user of users) {
+					existingAPIs.push(user.API)
+					existingSecrets.push(user.secret)
+				}
+
+				do {
+					newAPI = crypto.randomBytes(64).toString('hex')
+				} while (existingAPIs.includes(newAPI))
+				do {
+					newSecret = crypto.randomBytes(256).toString('hex')
+				} while (existingSecrets.includes(newSecret))
+
+				// Add the new user to the database
+				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+					[
+						user.username,
+						JSON.stringify(passwordCrypt),
+						permissions,
+						newAPI,
+						newSecret
+					], (err) => {
+						if (err) {
+							console.log(err)
+						}
+						console.log('Success')
+					})
+				// Find the user in which was just created to get the id of the user
+				db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
+					if (err) {
+						console.log(err)
+					} else {
+						// Add user to session
+						cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API)
+						// Add the user to the session in order to transfer data between each page
+						req.session.user = rows.username
+						res.redirect('/')
+					}
+				})
+			}
 		})
 	} else if (user.loginType == "guest") {
 
-	} else if (user.loginType == "bot") {
-		let apikey = req.body.apikey
-		if (apikey) {
-			if (req.body.classKey in cD) {
-				req.session.api = apikey
-				req.session.class = req.body.classKey
-				res.json({ login: true })
-			} else {
-				res.json({ login: false })
-			}
-		} else {
-			res.json({ login: false })
-		}
 	}
 })
 
@@ -751,8 +736,8 @@ app.post('/oauth', (req, res) => {
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
 				if (databasePassword == password) {
-					var uniToken = jwt.sign({ username: username, }, userData.API, { expiresIn: '1d' })
-					res.redirect(`${redirectURL}?token=${uniToken}`)
+					var token = jwt.sign({ username: username, }, userData.secret, { expiresIn: '30m' })
+					res.redirect(`${redirectURL}?token=${token}`)
 					// If it does not match, then it redirects you back to the oauth page.
 				} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
 				// If there in no userData, then it redirects back to the oauth page.
@@ -931,8 +916,6 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 io.use((socket, next) => {
 	if (socket.request.session.user) {
 		next()
-	} else if (socket.request.session.api) {
-		next()
 	} else {
 		console.log("Authentication Failed")
 		next(new Error("invalid"))
@@ -946,8 +929,6 @@ io.sockets.on('connection', function (socket) {
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
-	} else if (socket.request.session.api) {
-		socket.join(cD[socket.request.session.class].className)
 	}
 
 	//rate limiter

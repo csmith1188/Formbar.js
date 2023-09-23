@@ -7,47 +7,44 @@ var db = new sqlite3.Database('database/database.db')
 async function getUser(request) {
 	let user
 
-	if (!request.session.user && !request.query.API) return false
-	if (request.session.user) {
-		user = new Promise((resolve, reject) => {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE username = ?',
-				[request.query.user],
-				(error, userData) => {
-					if (error) {
-						console.log(error)
-						reject(false)
-					}
-					else if (userData) {
-						userData.class = request.session.class
-						return resolve(userData)
-					} else return reject(false)
+	if (!request.headers.api) return { error: 'no API Key' }
+
+	user = new Promise((resolve, reject) => {
+		db.get(
+			'SELECT id, username, permissions FROM users WHERE API = ?',
+			[request.headers.api],
+			(error, userData) => {
+				if (error) {
+					return reject(error)
 				}
-			)
-		})
-	}
-	else if (request.query.API) {
-		user = new Promise((resolve, reject) => {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE API = ?',
-				[request.query.API],
-				(error, userData) => {
-					if (error) {
-						console.log(error)
-						reject(false)
-					}
-					else if (userData) {
+				else if (userData) {
+					if (request.query.class) {
 						userData.class = request.query.class
-						if (userData.class) {
-							cd[userData.class].students
-						}
-						return resolve(userData)
-					} else return reject(false)
+					}
+					return resolve(userData)
+				} else {
+					console.log(userData)
+					return reject('not a valid API Key')
 				}
-			)
-		})
-	}
+			}
+		)
+	})
 	return user
+		.then(userData => {
+			return userData
+		})
+		.catch(error => {
+			return { error: error }
+		})
+}
+
+async function isAuthenticated(request, response, next) {
+	let user = await getUser(request)
+	if (user) request.session.user = user
+
+	if (user.error) {
+		response.json(user.error)
+	} else next()
 }
 
 const api = (cD) => {
@@ -74,35 +71,35 @@ const api = (cD) => {
 					"username": "b",
 					"id": 4,
 					"permissions": 2,
-					"pollRes": "a",
+					"pollRes": "",
 					"pollTextRes": "",
 					"help": "",
 					"break": false,
 					"quizScore": "",
 					"API": "58b11a05b0b545f1fdff7fd7907507ff8e6ea6f59705ed1e0dccc38c9a06590b1c6aa52fbde05f7839a08198050f735338f706c0c78eb38f85eaf9683376ecbe"
 				},
-				// "c": {
-				// 	"username": "c",
-				// 	"id": 5,
-				// 	"permissions": 2,
-				// 	"pollRes": "b",
-				// 	"pollTextRes": "",
-				// 	"help": "",
-				// 	"break": false,
-				// 	"quizScore": "",
-				// 	"API": "c346f2f177386e0ff6ec1efa0007925bbc4dcc3c568a1131025d2033e47f524b7828b5de0f54605348b863771ddc7a8c62bb0b1a4924bbf0356241d849502dc1"
-				// },
-				// "d": {
-				// 	"username": "d",
-				// 	"id": 6,
-				// 	"permissions": 2,
-				// 	"pollRes": "a",
-				// 	"pollTextRes": "hi",
-				// 	"help": "",
-				// 	"break": false,
-				// 	"quizScore": "",
-				// 	"API": "592e030ce3b695d414f688b9e3dac02fc49c8aea29577df3c0a29f6083762fe489f4491d63eb04a1fab69c5a971f6b5f182791ba03ae5a30da6416e65662ac88"
-				// }
+				"c": {
+					"username": "c",
+					"id": 5,
+					"permissions": 2,
+					"pollRes": "b",
+					"pollTextRes": "",
+					"help": "",
+					"break": false,
+					"quizScore": "",
+					"API": "c346f2f177386e0ff6ec1efa0007925bbc4dcc3c568a1131025d2033e47f524b7828b5de0f54605348b863771ddc7a8c62bb0b1a4924bbf0356241d849502dc1"
+				},
+				"d": {
+					"username": "d",
+					"id": 6,
+					"permissions": 2,
+					"pollRes": "a",
+					"pollTextRes": "hi",
+					"help": "",
+					"break": true,
+					"quizScore": "",
+					"API": "592e030ce3b695d414f688b9e3dac02fc49c8aea29577df3c0a29f6083762fe489f4491d63eb04a1fab69c5a971f6b5f182791ba03ae5a30da6416e65662ac88"
+				}
 			},
 			"pollStatus": true,
 			"posPollResObj": {
@@ -110,7 +107,7 @@ const api = (cD) => {
 				"b": "answer b"
 			},
 			"posTextRes": true,
-			"pollPrompt": "",
+			"pollPrompt": "hi",
 			"key": "d5f5",
 			"lesson": {},
 			"activeLesson": false,
@@ -264,29 +261,41 @@ const api = (cD) => {
 		}
 	}
 
-	// for testing
-	router.get('/user', async (request, response) => {
-		let user = await getUser(request)
-		response.json(user)
-	})
-
-	// for testing
-	router.get('/cd', async (request, response) => {
-		response.json(cD)
-	})
+	router.use(isAuthenticated)
 
 	router.get('/me', async (request, response) => {
 		let user = await getUser(request)
-		if (!user)
+		if (!user || !user.username)
 			response.json({ error: 'user not logged in or missing API key' })
-		else if (!user.class)
-			response.json({ error: 'no class selected' })
-		else if (!cD[user.class])
-			response.json({ error: 'class not started' })
-		else if (!cD[user.class].students[user.username])
-			response.json({ error: 'user not logged in' })
+		else if (
+			!user.class ||
+			!cD[user.class] ||
+			!cD[user.class].students[user.username]
+		) {
+			db.get('SELECT id, username, permissions FROM users where username=?',
+				[user.username],
+				(error, userData) => {
+					if (error) console.log(error)
+					else {
+						response.json({
+							loggedIn: false,
+							username: userData.username,
+							id: userData.id,
+							permissions: userData.permissions,
+							help: null,
+							break: null,
+							quizScore: null
+						})
+					}
+				}
+			)
+		}
 		else
-			response.json(cD[user.class].students[user.username])
+			response.json({
+				loggedIn: true,
+				...cD[user.class].students[user.username],
+				pollRes: undefined
+			})
 	})
 
 	router.get('/class/:key', async (request, response) => {
@@ -297,10 +306,16 @@ const api = (cD) => {
 			response.json({ error: 'class not started' })
 		else if (!cD[key].students[user.username])
 			response.json({ error: 'user is not logged into the select class' })
-		else response.json(cD[key])
+		else {
+			let classData = Object.assign({}, cD[key])
+			for (let username of Object.keys(classData.students)) {
+				delete classData.students[username].pollRes
+			}
+			response.json(classData)
+		}
 	})
 
-	router.get('/class/:key/students', (request, response) => {
+	router.get('/class/:key/current-students', (request, response) => {
 		let key = request.params.key
 
 		if (!cD[key]) {
@@ -308,7 +323,11 @@ const api = (cD) => {
 			return
 		}
 
-		response.json(cD[key].students)
+		let classData = Object.assign({}, cD[key])
+		for (let username of Object.keys(classData.students)) {
+			delete classData.students[username].pollRes
+		}
+		response.json(classData)
 	})
 
 	router.get('/class/:key/all-students', (request, response) => {
@@ -320,19 +339,22 @@ const api = (cD) => {
 		}
 
 		db.all(
-			'SELECT DISTINCT users.id, users.username, users.pollRes, CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
+			'SELECT DISTINCT users.id, users.username, CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
 			[key],
 			(error, dbClassData) => {
 				if (error) console.log(error)
 				if (dbClassData) {
+					console.log(dbClassData)
+					// response.json(dbClassData)
+					// return
 					let students = {}
 					for (let dbUser of dbClassData) {
 						let currentUser = cD[key].students[dbUser.username]
 						students[dbUser.username] = {
+							loggedIn: currentUser ? true : false,
 							username: dbUser.username,
 							id: dbUser.id,
 							permissions: dbUser.permissions,
-							pollRes: currentUser ? currentUser.pollRes : dbUser.pollRes,
 							help: currentUser ? currentUser.help : null,
 							break: currentUser ? currentUser.break : null,
 							quizScore: currentUser ? currentUser.quizScore : null
@@ -357,8 +379,9 @@ const api = (cD) => {
 			return
 		}
 
-		if (classData.pollPrompt)
-			polls.pollPrompt = classData.pollPrompt
+		for (let [username, student] of Object.entries(classData.students)) {
+			if (student.break == true || student.permissions == 0) delete classData.students[username]
+		}
 
 		if (Object.keys(classData.posPollResObj).length > 0) {
 			for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
@@ -376,7 +399,11 @@ const api = (cD) => {
 			}
 		}
 
-		response.json(polls)
+		response.json({
+			totalStudents: Object.keys(classData.students).length,
+			pollPrompt: classData.pollPrompt,
+			polls: polls
+		})
 	})
 
 	return router
