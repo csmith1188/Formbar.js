@@ -1271,30 +1271,12 @@ io.sockets.on('connection', function (socket) {
 			)
 		}
 		else if (url) {
-			db.all(
-				'SELECT * FROM plugins',
-				(error, plugins) => {
+			db.run(
+				'UPDATE plugins set url=? WHERE id=?',
+				[url, id],
+				(error) => {
 					if (error) console.log(error)
-
-					let urls = []
-
-					for (let plugin of plugins) {
-						urls.push(plugin.url)
-					}
-
-					if (urls.includes(url)) {
-						pluginUpdate()
-						return
-					}
-
-					db.run(
-						'UPDATE plugins set url=? WHERE id=?',
-						[url, id],
-						(error) => {
-							if (error) console.log(error)
-							pluginUpdate()
-						}
-					)
+					pluginUpdate()
 				}
 			)
 		}
@@ -1307,29 +1289,11 @@ io.sockets.on('connection', function (socket) {
 			(error, classData) => {
 				if (error) console.log(error)
 
-				db.all(
-					'SELECT * FROM plugins',
-					(error, plugins) => {
-						if (error) console.log(error)
-
-						let urls = []
-
-						for (let plugin of plugins) {
-							urls.push(plugin.url)
-						}
-
-						if (urls.includes(url)) {
-							pluginUpdate()
-							return
-						}
-
-						db.run(
-							'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
-							[name, url, classData.id]
-						)
-						pluginUpdate()
-					}
+				db.run(
+					'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+					[name, url, classData.id]
 				)
+				pluginUpdate()
 			}
 		)
 	})

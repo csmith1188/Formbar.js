@@ -618,16 +618,23 @@
 							null
 						)
 					}
-					let pluginURL = document.createElement('input')
-					pluginName.type = 'text'
 					pluginDiv.appendChild(pluginName)
+					let pluginURL = document.createElement('input')
+					pluginURL.type = 'url'
 					pluginURL.value = plugin.url
 					pluginURL.onchange = (event) => {
+						let pluginURL = event.target
+
+						if (!pluginURL.checkValidity()) {
+							pluginURL.reportValidity()
+							return
+						}
+
 						socket.emit(
 							'changePlugin',
-							event.target.parentElement.id,
+							pluginURL.parentElement.id,
 							null,
-							event.target.value
+							pluginURL.value
 						)
 					}
 					pluginDiv.appendChild(pluginURL)
@@ -652,13 +659,20 @@
 				addPluginForm.append(newPluginName)
 				let newPluginURL = document.createElement('input')
 				newPluginURL.id = 'newPluginURL'
-				newPluginURL.type = 'text'
+				newPluginURL.type = 'url'
 				addPluginForm.append(newPluginURL)
 				let submitPlugin = document.createElement('button')
+				submitPlugin.className = 'quickButton'
 				submitPlugin.innerText = 'Add Plug-in'
 				submitPlugin.onclick = () => {
 					let newPluginName = document.getElementById('newPluginName')
 					let newPluginURL = document.getElementById('newPluginURL')
+
+					if (!newPluginURL.checkValidity()) {
+						newPluginURL.reportValidity()
+						return
+					}
+
 					socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
 				}
 				addPluginForm.append(submitPlugin)
