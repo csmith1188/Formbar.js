@@ -152,7 +152,6 @@ This also allows for the website to check for perms
 function isAuthenticated(req, res, next) {
 	if (req.session.user) {
 		if (cD.noClass.students[req.session.user]) {
-			console.log(cD.noClass.students[req.session.user])
 			if (cD.noClass.students[req.session.user].permissions == 0) {
 				res.redirect('/createclass')
 			} else {
@@ -748,7 +747,12 @@ app.post('/oauth', (req, res) => {
 })
 
 // P
-
+app.get('/plugins', isAuthenticated, (req, res) => {
+	res.render('pages/plugins.ejs',
+		{
+			title: 'Plugins'
+		})
+})
 
 // Q
 
@@ -971,6 +975,17 @@ io.sockets.on('connection', function (socket) {
 			var pollHistory = rows
 			io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
 		})
+	}
+
+	function pluginUpdate() {
+		db.all(
+			'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
+			[socket.request.session.class],
+			(error, plugins) => {
+				if (error) console.log(error)
+				io.emit('pluginUpdate', plugins)
+			}
+		)
 	}
 
 	// /poll websockets for updating the database
@@ -1238,6 +1253,93 @@ io.sockets.on('connection', function (socket) {
 	socket.on('modechange', function (mode) {
 		cD[socket.request.session.class].mode = mode
 		io.to(cD[socket.request.session.class].className).emit('reload')
+	})
+
+	socket.on('pluginUpdate', () => {
+		pluginUpdate()
+	})
+
+	socket.on('changePlugin', (id, name, url) => {
+		if (name) {
+			db.run(
+				'UPDATE plugins set name=? WHERE id=?',
+				[name, id],
+				(error) => {
+					if (error) console.log(error)
+					pluginUpdate()
+				}
+			)
+		}
+		else if (url) {
+			db.all(
+				'SELECT * FROM plugins',
+				(error, plugins) => {
+					if (error) console.log(error)
+
+					let urls = []
+
+					for (let plugin of plugins) {
+						urls.push(plugin.url)
+					}
+
+					if (urls.includes(url)) {
+						pluginUpdate()
+						return
+					}
+
+					db.run(
+						'UPDATE plugins set url=? WHERE id=?',
+						[url, id],
+						(error) => {
+							if (error) console.log(error)
+							pluginUpdate()
+						}
+					)
+				}
+			)
+		}
+	})
+
+	socket.on('addPlugin', (name, url) => {
+		db.get(
+			'SELECT * FROM classroom WHERE key = ?',
+			[socket.request.session.class],
+			(error, classData) => {
+				if (error) console.log(error)
+
+				db.all(
+					'SELECT * FROM plugins',
+					(error, plugins) => {
+						if (error) console.log(error)
+
+						let urls = []
+
+						for (let plugin of plugins) {
+							urls.push(plugin.url)
+						}
+
+						if (urls.includes(url)) {
+							pluginUpdate()
+							return
+						}
+
+						db.run(
+							'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+							[name, url, classData.id]
+						)
+						pluginUpdate()
+					}
+				)
+			}
+		)
+	})
+
+	socket.on('removePlugin', (id) => {
+		db.run(
+			'DELETE FROM plugins WHERE id=?',
+			[id]
+		)
+		pluginUpdate()
 	})
 })
 
