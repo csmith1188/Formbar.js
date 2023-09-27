@@ -150,7 +150,7 @@
 
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
-					socket.emit('vbData')
+					socket.emit('vbUpdate')
 					socket.emit('cpupdate')
 					socket.emit('sfxPlay', 'sfx_up01')
 					setTimeout(function () {

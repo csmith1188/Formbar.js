@@ -1,15 +1,20 @@
 const ws281x = require('rpi-ws281x-native')
+const { io } = require('socket.io-client')
 
-let strip = ws281x(52, {
+let strip = ws281x(12, {
 	dma: 10,
 	freq: 800000,
-	gpio: 18,
+	gpio: 21,
 	invert: false,
-	brightness: 255,
-	stripType: ws281x.stripType.SK6812_GRBW
+	brightness: 25,
+	stripType: ws281x.stripType.WS2811_RGB
 })
-const pixels = strip.array
-strip.brightness = 100
+let pixels = strip.array
+
+const ip = '172.16.3.103:420'
+const classCode = 'd5f5'
+
+const socket = io(ip)
 
 // fill strip with color
 function fill(color, start = 0, length = pixels.length) {
@@ -21,68 +26,44 @@ function fill(color, start = 0, length = pixels.length) {
 }
 
 // clear strip
-fill(0x000000)
+fill(0x808080)
+ws281x.render()
 
-// testing
-let pollData = {
-	"totalStudents": 10,
-	"pollPrompt": "",
-	"polls": {
-		"a": {
-			"display": "answer a",
-			"responses": 1,
-			"color": "#FF0000"
-		},
-		"b": {
-			"display": "answer b",
-			"responses": 1,
-			"color": "#00FF00"
-		},
-		"c": {
-			"display": "answer c",
-			"responses": 3,
-			"color": "#1111EE"
-		},
-		"d": {
-			"display": "answer d",
-			"responses": 5,
-			"color": "#EEEE11"
+socket.emit('joinRoom', classCode)
+socket.on('pollChange', (pollsData) => {
+	console.log(pollsData)
+	// convert colors to integers
+	for (let pollData of Object.values(pollsData.polls)) {
+		pollData.color = parseInt(pollData.color.slice(1), 16)
+	}
+
+	// count non-empty polls
+	let nonEmptyPolls = -1
+	for (let poll of Object.values(pollsData.polls)) {
+		if (poll.responses > 0) {
+			nonEmptyPolls++
 		}
 	}
-}
 
-// convert colors to integers
-for (let poll of Object.keys(pollData.polls)) {
-	pollData.polls[poll].color = parseInt(pollData.polls[poll].color.slice(1), 16)
-}
+	let pixelsPerStudent = Math.floor((pixels.length - nonEmptyPolls) / pollsData.totalStudents)
 
-// count non-empty polls
-let nonEmptyPolls = -1
-for (let poll of Object.values(pollData.polls)) {
-	if (poll.responses > 0) {
-		console.log('add')
-		nonEmptyPolls++
+	fill(0x808080)
+
+	// add polls
+	let currentPixel = 0
+	for (let [name, poll] of Object.entries(pollsData.polls)) {
+		let length = pixelsPerStudent * poll.responses
+
+		if (length > 0)
+			fill(
+				poll.color,
+				currentPixel,
+				length
+			)
+
+		if (poll.responses > 0) currentPixel++
+		currentPixel += length
 	}
-}
 
-let pixelsPerStudent = Math.floor((pixels.length - nonEmptyPolls) / pollData.totalStudents)
-
-fill(0xFFFFFF)
-
-// add polls
-let currentPixel = 0
-for (let [name, poll] of Object.entries(pollData.polls)) {
-	let length = pixelsPerStudent * poll.responses
-
-	if (length > 0)
-		fill(
-			poll.color,
-			currentPixel,
-			length
-		)
-
-	if (poll.responses > 0) currentPixel++
-	currentPixel += length
-}
-
-ws281x.render()
+	ws281x.render()
+})

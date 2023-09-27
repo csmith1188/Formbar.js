@@ -930,6 +930,7 @@ const rateLimits = {}
 
 //Handles the websocket communications
 io.sockets.on('connection', function (socket) {
+	console.log(socket.handshake.headers.host)
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
@@ -974,6 +975,62 @@ io.sockets.on('connection', function (socket) {
 		db.all(`SELECT * FROM poll_history WHERE class=?`, cD[socket.request.session.class].key, async (err, rows) => {
 			var pollHistory = rows
 			io.to(cD[socket.request.session.class].className).emit('cpupdate', JSON.stringify(cD[socket.request.session.class]), JSON.stringify(pollHistory))
+		})
+	}
+
+	function vbUpdate() {
+		let classData = JSON.parse(JSON.stringify(cD[socket.request.session.class]))//Object.assign({}, cD[socket.request.session.class])
+
+		let polls = {}
+
+		for (let [username, student] of Object.entries(classData.students)) {
+			if (student.break == true || student.permissions == 0) delete classData.students[username]
+		}
+
+		if (Object.keys(classData.posPollResObj).length > 0) {
+			for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
+				polls[resKey] = {
+					display: resValue,
+					responses: 0
+				}
+			}
+			for (let studentData of Object.values(classData.students)) {
+				if (
+					studentData &&
+					Object.keys(polls).includes(studentData.pollRes)
+				)
+					polls[studentData.pollRes].responses++
+			}
+		}
+
+		for (let i = 0; i < Object.keys(polls).length; i++) {
+			let color = ''
+			let CC = '0123456789ABCDEF'
+			let colorI = CC[Math.floor(i / 2)]
+			let colorJ = CC[15 - Math.floor(i / 2)]
+			switch (i % 4) {
+				case 0:
+					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
+					break
+				case 1:
+					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
+					break
+				case 2:
+					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
+					break
+				case 3:
+					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
+					break
+			}
+			polls[Object.keys(polls)[i]].color = color
+		}
+
+		io.to(cD[socket.request.session.class].className).emit('vbUpdate', {
+			totalStudents: Object.keys(classData.students).length,
+			pollStatus: classData.pollStatus,
+			blindPoll: classData.blindPoll,
+			pollPrompt: classData.pollPrompt,
+			polls: polls
 		})
 	}
 
@@ -1036,7 +1093,7 @@ io.sockets.on('connection', function (socket) {
 			cD[socket.request.session.class].students[key].pollTextRes = ""
 		}
 
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 
 	// End the current poll. Does not take any arguments
@@ -1072,8 +1129,8 @@ io.sockets.on('connection', function (socket) {
 	})
 
 	// Sends poll and student response data to client side virtual bar
-	socket.on('vbData', function () {
-		io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+	socket.on('vbUpdate', function () {
+		vbUpdate()
 	})
 	// Sends a help ticket
 	socket.on('help', function (reason, time) {
@@ -1091,7 +1148,7 @@ io.sockets.on('connection', function (socket) {
 		student.break = breakApproval
 		if (breakApproval) io.to(username).emit('break')
 		cpupdate()
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Ends the break
 	socket.on('endBreak', () => {
@@ -1099,7 +1156,7 @@ io.sockets.on('connection', function (socket) {
 		student.break = false
 
 		cpupdate()
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Deletes a user from the class
 	socket.on('deleteUser', function (userName) {
@@ -1111,7 +1168,7 @@ io.sockets.on('connection', function (socket) {
 	socket.on('joinRoom', function (className) {
 		console.log("Working")
 		socket.join(className)
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Updates and stores poll history
 	socket.on('cpupdate', () => {
