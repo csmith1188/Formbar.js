@@ -4,18 +4,17 @@
 
   <body id="colorContent">
     <div id="content">
-      <form action="oauth" method="post" style="margin-bottom: 16px;">
-        <!-- Carries over and submits the redirectURL specified by the user. -->
-        <input type="hidden" name="redirectURL" value="<%-redirectURL%>">
+        <form action="oauth" method="post" style="margin-bottom: 16px;">
+            <!-- Carries over and submits the redirectURL specified by the user. -->
+            <input type="hidden" name="redirectURL" value="<%-redirectURL%>">
         <input type="text" id="usernameBox" name="username" class="box quickButton" placeholder="Name" value=""
-          pattern="([a-z]|[A-Z]|[0-9])" autocomplete="off" required>
+          autocomplete="off" pattern="[a-zA-Z0-9]+" required>
         <br>
-        <input type="password" id="passwordBox" name="password" class="box quickButton" placeholder="Password" value=""
-          pattern="([a-z]|[A-Z]|[0-9])" required>
+        <input type="password" id="passwordBox" name="password" class="box quickButton" placeholder="Password" value="" pattern="[a-zA-Z0-9]+"
+          required>
         <a href="/changepassword" id="forgotPassword" class="quickButton">Forgot password</a>
         <br><br>
-        <input type="submit" id="submitButton" class="button unselectable quickButton" value="Verify"
-          onsubmit="return false;">
+        <input type="submit" id="submitButton" class="button unselectable quickButton" value="Verify">
       </form>
     </div>
   </body>
