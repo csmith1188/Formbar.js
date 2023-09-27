@@ -140,7 +140,6 @@ function clearDatabase() {
 			console.log(err)
 		}
 	})
-	return console.log('Database Deleted')
 }
 
 /*
@@ -189,7 +188,6 @@ function permCheck(req, res, next) {
 		}
 		// Check for ?(urlParams) and removes it from the string
 		if (urlPath.indexOf('?') != -1) {
-			console.log(urlPath.indexOf('?'))
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 		// Checks if users permnissions are high enough
@@ -211,7 +209,6 @@ function joinClass(userName, code) {
 				res.send('Something went wrong')
 			}
 			// Check to make sure there was a class with that name
-			console.log(cD[code])
 			if (id && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
 				db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
@@ -240,7 +237,6 @@ function joinClass(userName, code) {
 							delete cD.noClass.students[userName]
 							// Add the student to the newly created class
 							cD[code].students[userName] = user
-							console.log('User added to class')
 							resolve(true)
 						}
 					)
@@ -436,7 +432,6 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 		}
 
 		cD[req.session.class].steps = steps
-		console.log(cD[req.session.class].steps)
 		res.redirect('/controlPanel')
 	}
 })
@@ -572,7 +567,6 @@ app.get('/previousLessons', isAuthenticated, (req, res) => {
 
 app.post('/previousLessons', (req, res) => {
 	let lesson = JSON.parse(req.body.data)
-	console.log(lesson)
 	res.render('pages/lesson', {
 		lesson: lesson,
 		title: "Today's Lesson"
@@ -653,7 +647,6 @@ app.post('/login', async (req, res) => {
 				let newAPI
 				let newSecret
 
-				console.log(users.length)
 				if (users.length == 0) permissions = 0
 
 				for (let user of users) {
@@ -680,7 +673,6 @@ app.post('/login', async (req, res) => {
 						if (err) {
 							console.log(err)
 						}
-						console.log('Success')
 					})
 				// Find the user in which was just created to get the id of the user
 				db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
@@ -731,7 +723,6 @@ app.post('/oauth', (req, res) => {
 			// If there is userData returned, it saves the database password to a variable.
 			if (userData) {
 				let databasePassword = decrypt(JSON.parse(userData.password))
-				console.log(databasePassword)
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
 				if (databasePassword == password) {
@@ -793,7 +784,6 @@ Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
 app.get('/student', isLoggedIn, (req, res) => {
-	console.log(cD[req.session.class].mode)
 	//Poll Setup
 	let user = {
 		name: req.session.user,
@@ -921,7 +911,6 @@ io.use((socket, next) => {
 	if (socket.request.session.user) {
 		next()
 	} else {
-		console.log("Authentication Failed")
 		next(new Error("invalid"))
 	}
 })
@@ -1078,7 +1067,6 @@ io.sockets.on('connection', function (socket) {
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
-			console.log(answerNames)
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
 				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
@@ -1115,7 +1103,6 @@ io.sockets.on('connection', function (socket) {
 				if (err) {
 					console.log(err)
 				}
-				console.log('Saved Poll To Database')
 			})
 
 		cD[socket.request.session.class].posPollResObj = {}
@@ -1162,11 +1149,9 @@ io.sockets.on('connection', function (socket) {
 	socket.on('deleteUser', function (userName) {
 		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
 		delete cD[socket.request.session.class].students[userName]
-		console.log(userName + ' removed from class')
 	})
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', function (className) {
-		console.log("Working")
 		socket.join(className)
 		vbUpdate()
 	})
@@ -1220,11 +1205,6 @@ io.sockets.on('connection', function (socket) {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
-		console.log(
-			'\n\nsteps:',
-			cD[socket.request.session.class].steps,
-			'\n\n'
-		)
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			// Creates a poll based on the step data
 			if (cD[socket.request.session.class].steps[index].type == 'poll') {
@@ -1285,7 +1265,6 @@ io.sockets.on('connection', function (socket) {
 						if (err) {
 							console.log(err)
 						}
-						console.log('Saved Lesson To Database')
 					})
 			}
 		} else {
