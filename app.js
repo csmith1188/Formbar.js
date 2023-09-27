@@ -225,8 +225,8 @@ function joinClass(userName, code) {
 						(error, classUser) => {
 							if (error) console.log(error)
 							if (typeof classUser == 'undefined') {
-								db.run(`INSERT INTO classusers(classuid, studentuid, permissions) VALUES(?, ?, ?)`,
-									[id.id, uid.id, 2], (err) => {
+								db.run(`INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)`,
+									[id.id, uid.id, 2, 0], (err) => {
 										if (err) {
 											console.log(err)
 										}
