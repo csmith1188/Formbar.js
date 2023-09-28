@@ -109,6 +109,7 @@ const api = (cD) => {
 			let classData = Object.assign({}, cD[key])
 			for (let username of Object.keys(classData.students)) {
 				delete classData.students[username].pollRes
+				classData.students[username] = Object.assign({ loggedIn: true }, classData.students[username])
 			}
 			response.json(classData)
 		}
@@ -226,6 +227,7 @@ const api = (cD) => {
 		response.json({
 			totalStudents: Object.keys(classData.students).length,
 			pollPrompt: classData.pollPrompt,
+			blindPoll: classData.blindPoll,
 			polls: polls
 		})
 	})

@@ -1122,6 +1122,7 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].posPollResObj = {}
 		cD[socket.request.session.class].pollPrompt = ''
 		cD[socket.request.session.class].pollStatus = false
+		vbUpdate()
 	})
 
 	// Reloads any page with the reload function on. No arguments

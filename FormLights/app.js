@@ -58,18 +58,45 @@ socket.on('connect_error', (err) => {
 
 socket.on('connect', () => {
 	console.log('connected')
+	socket.emit('vbUpdate')
 })
 
 socket.on('vbUpdate', (pollsData) => {
+	let pixelsPerStudent
+
 	if (!pollsData.pollStatus) {
 		fill(0x000000)
 		ws281x.render()
 		return
 	}
 
+	fill(0x808080)
+
 	// convert colors to integers
 	for (let pollData of Object.values(pollsData.polls)) {
 		pollData.color = parseInt(pollData.color.slice(1), 16)
+	}
+
+	let pollResponses = 0
+
+	for (let poll of Object.values(pollsData.polls)) {
+		pollResponses += poll.responses
+	}
+
+	if (pollsData.totalStudents == pollResponses) pollsData.blindPoll = false
+
+	if (pollsData.blindPoll) {
+		if (pollsData.totalStudents <= 0) pixelsPerStudent = 0
+		else pixelsPerStudent = Math.floor((pixels.length - 1) / pollsData.totalStudents)
+
+		fill(
+			0xFFAA00,
+			0,
+			pixelsPerStudent * pollResponses
+		)
+
+		ws281x.render()
+		return
 	}
 
 	// count non-empty polls
@@ -79,10 +106,8 @@ socket.on('vbUpdate', (pollsData) => {
 			nonEmptyPolls++
 		}
 	}
-
-	let pixelsPerStudent = Math.floor((pixels.length - nonEmptyPolls) / pollsData.totalStudents)
-
-	fill(0x808080)
+	if (pollsData.totalStudents <= 0) pixelsPerStudent = 0
+	else pixelsPerStudent = Math.floor((pixels.length - nonEmptyPolls) / pollsData.totalStudents)
 
 	// add polls
 	let currentPixel = 0
