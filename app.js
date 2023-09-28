@@ -26,27 +26,28 @@ var sessionMiddleware = session({
 })
 
 
-// Allows express to parse requests
-app.use(express.urlencoded({ extended: true }))
+// PROMPT: What does this do?
+// Sets up middleware for the server by calling sessionMiddleware
+// adds session middleware to express
+app.use(sessionMiddleware)
 
-
-// Use a static folder for web page assets
-app.use(express.static(__dirname + '/static'))
 
 // PROMPT: Does this allow use to associate client logins with their websocket connection?
 // PROMPT: Where did you find information on this. Please put the link here.
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server
 // adds session middle ware to socket.io
-io.use(function (socket, next) {
+io.use((socket, next) => {
 	sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
-// PROMPT: What does this do?
-// Sets up middleware for the server by calling sessionMiddleware
-// adds session middleware to express
-app.use(sessionMiddleware)
 
+// Allows express to parse requests
+app.use(express.urlencoded({ extended: true }))
+
+
+// Use a static folder for web page assets
+app.use(express.static(__dirname + '/static'))
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
@@ -503,8 +504,6 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 			makeClass(classCode.key)
 		})
 	}
-
-
 })
 
 // D
@@ -906,22 +905,32 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Middleware for sockets
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
-io.use((socket, next) => {
+io.use(async (socket, next) => {
 	let { api, classCode } = socket.request._query
 	if (socket.request.session.user) {
 		next()
 	} else if (api) {
 		socket.request.session.api = api
 		socket.request.session.class = classCode
+		if (!cD[socket.request.session.class]) return next(new Error("class not started"))
+		db.get(
+			'SELECT id, username, permissions FROM users WHERE API = ?',
+			[api],
+			(error, userData) => {
+				if (error) return next(error)
+				if (!userData) return next('not a valid API Key')
+				next()
+			}
+		)
 	} else {
-		next(new Error("invalid"))
+		next(new Error("missing user or api"))
 	}
 })
 
 const rateLimits = {}
 
 //Handles the websocket communications
-io.on('connection', function (socket) {
+io.on('connection', (socket) => {
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
@@ -929,7 +938,6 @@ io.on('connection', function (socket) {
 	if (socket.request.session.api) {
 		socket.join(cD[socket.request.session.class].className)
 	}
-	console.log(socket.handshake)
 
 	//rate limiter
 	socket.use((packet, next) => {
@@ -1041,13 +1049,13 @@ io.on('connection', function (socket) {
 	}
 
 	// /poll websockets for updating the database
-	socket.on('pollResp', function (res, textRes) {
+	socket.on('pollResp', (res, textRes) => {
 		cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
 		cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
 		db.run('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
 	})
 	// Changes Permission of user. Takes which user and the new permission level
-	socket.on('permChange', function (user, res) {
+	socket.on('permChange', (user, res) => {
 		cD[socket.request.session.class].students[user].permissions = res
 		if (cD[socket.request.session.class]) {
 			db.get(
@@ -1066,7 +1074,7 @@ io.on('connection', function (socket) {
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind) {
+	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, answerNames, blind) => {
 		cD[socket.request.session.class].mode = 'poll'
 		cD[socket.request.session.class].blindPoll = blind
 		cD[socket.request.session.class].pollStatus = true
@@ -1091,7 +1099,7 @@ io.on('connection', function (socket) {
 	})
 
 	// End the current poll. Does not take any arguments
-	socket.on('endPoll', function () {
+	socket.on('endPoll', () => {
 		let data = { prompt: '', names: [], letter: [], text: [] }
 
 		let dateConfig = new Date()
@@ -1117,16 +1125,16 @@ io.on('connection', function (socket) {
 	})
 
 	// Reloads any page with the reload function on. No arguments
-	socket.on('reload', function () {
+	socket.on('reload', () => {
 		io.emit('reload')
 	})
 
 	// Sends poll and student response data to client side virtual bar
-	socket.on('vbUpdate', function () {
+	socket.on('vbUpdate', () => {
 		vbUpdate()
 	})
 	// Sends a help ticket
-	socket.on('help', function (reason, time) {
+	socket.on('help', (reason, time) => {
 		cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
 	})
 	// Sends a break ticket
@@ -1152,12 +1160,12 @@ io.on('connection', function (socket) {
 		vbUpdate()
 	})
 	// Deletes a user from the class
-	socket.on('deleteUser', function (userName) {
+	socket.on('deleteUser', (userName) => {
 		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
 		delete cD[socket.request.session.class].students[userName]
 	})
 	// Joins a classroom for websocket usage
-	socket.on('joinRoom', function (className) {
+	socket.on('joinRoom', (className) => {
 		socket.join(className)
 		vbUpdate()
 	})
@@ -1179,7 +1187,7 @@ io.on('connection', function (socket) {
 	// })
 
 	// Starts a quick poll
-	socket.on('botPollStart', function (answerNumber) {
+	socket.on('botPollStart', (answerNumber) => {
 		answerNames = []
 		cD[socket.request.session.class].pollStatus = true
 		// Creates an object for every answer possible the teacher is allowing
@@ -1195,8 +1203,8 @@ io.on('connection', function (socket) {
 		cD[socket.request.session.class].pollPrompt = "Quick Poll"
 	})
 	// Displays previous polls
-	socket.on('previousPollDisplay', function (pollindex) {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
+	socket.on('previousPollDisplay', (pollindex) => {
+		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 			if (err) {
 				console.error(err)
 			} else {
@@ -1207,7 +1215,7 @@ io.on('connection', function (socket) {
 	})
 
 	// Moves to the next step
-	socket.on('doStep', function (index) {
+	socket.on('doStep', (index) => {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
@@ -1278,8 +1286,8 @@ io.on('connection', function (socket) {
 		}
 	})
 	// Check later, there's already a socket.on for previousPollDisplay
-	socket.on('previousPollDisplay', function (pollindex) {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
+	socket.on('previousPollDisplay', (pollindex) => {
+		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 			if (err) {
 				console.error(err)
 			} else {
@@ -1288,11 +1296,11 @@ io.on('connection', function (socket) {
 		})
 	})
 	// Deletes help ticket
-	socket.on('deleteTicket', function (student) {
+	socket.on('deleteTicket', (student) => {
 		cD[socket.request.session.class].students[student].help = ''
 	})
 	// Changes the class mode
-	socket.on('modechange', function (mode) {
+	socket.on('modechange', (mode) => {
 		cD[socket.request.session.class].mode = mode
 		io.to(cD[socket.request.session.class].className).emit('reload')
 	})
