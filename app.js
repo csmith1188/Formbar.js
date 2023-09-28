@@ -876,8 +876,6 @@ app.post('/student', (req, res) => {
 })
 
 
-
-
 // T
 
 // U
@@ -895,6 +893,7 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 		})
 	}
 })
+
 // W
 
 // X
@@ -908,8 +907,12 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
+	let { api, classCode } = socket.request._query
 	if (socket.request.session.user) {
 		next()
+	} else if (api) {
+		socket.request.session.api = api
+		socket.request.session.class = classCode
 	} else {
 		next(new Error("invalid"))
 	}
@@ -918,12 +921,15 @@ io.use((socket, next) => {
 const rateLimits = {}
 
 //Handles the websocket communications
-io.sockets.on('connection', function (socket) {
-	console.log(socket.handshake.headers.host)
+io.on('connection', function (socket) {
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
 	}
+	if (socket.request.session.api) {
+		socket.join(cD[socket.request.session.class].className)
+	}
+	console.log(socket.handshake)
 
 	//rate limiter
 	socket.use((packet, next) => {

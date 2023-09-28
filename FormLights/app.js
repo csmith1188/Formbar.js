@@ -3,6 +3,7 @@ const { io } = require('socket.io-client')
 
 const classCode = 'd5f5'
 const brightness = 100
+const api = '11cd295fb63d5933360d82e77679905a7de70bcd8e0f24c6cb99867269f5a7bed2463350a26aeb206d2866f7c17b2e144a1b6245b71dd58c12683c46e9b7800b'
 // school
 // const ip = '172.16.3.103:420'
 // const maxPixels=12;
@@ -23,9 +24,6 @@ let strip = ws281x(maxPixels, {
 	stripType: stripType
 })
 let pixels = strip.array
-
-const socket = io(ip, {
-})
 
 // fill strip with color
 function fill(color, start = 0, length = pixels.length) {
@@ -89,6 +87,28 @@ ws281x.render()
 // 	ws281x.render()
 // }, 3000)
 
+const socket = io(`${ip}?api=${api}&classCode=${classCode}`)
+
+let countDown
+let countDownTime = 5
+
+socket.on('connect_error', err => {
+	console.log(err.message)
+	console.log('connection failed')
+	countDown = setInterval(() => {
+		if (countDownTime <= 0) {
+			clearInterval(countDown)
+			countDownTime = 5
+			socket.connect()
+			return
+		}
+
+		console.log(`reconnecting in ${countDownTime} seconds`)
+
+		countDownTime--
+	}, 1000)
+})
+
 socket.emit('joinRoom', classCode)
 
 socket.on('vbUpdate', (pollsData) => {
@@ -128,3 +148,29 @@ socket.on('vbUpdate', (pollsData) => {
 
 	ws281x.render()
 })
+
+// const { io } = require('socket.io-client')
+
+// let ip = 'http://192.168.0.8:420'
+// let api = '11cd295fb63d5933360d82e77679905a7de70bcd8e0f24c6cb99867269f5a7bed2463350a26aeb206d2866f7c17b2e144a1b6245b71dd58c12683c46e9b7800b'
+// let classCode = 'd5f5'
+
+// const socket = io(`${ip}?api=${api}`)
+
+// socket.on('connect_error', err => {
+// 	console.log(err.message)
+// })
+// socket.on('connect_failed', err => {
+// 	console.log(err)
+// })
+// socket.on('disconnect', err => {
+// 	console.log(err)
+// })
+
+// socket.on('connect', () => {
+// 	console.log('connected to server')
+// })
+
+// socket.on('disconnect', () => {
+// 	console.log('disconnected from server')
+// })
