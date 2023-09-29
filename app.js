@@ -197,7 +197,10 @@ function permCheck(req, res, next) {
 		if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
 			next()
 		} else {
-			res.send('Not High Enough Permissions')
+			res.render('pages/message', {
+				message: "Error: you don't have high enough permissions to access this page",
+				title: 'Error'
+			})
 		}
 	}
 }
@@ -209,7 +212,10 @@ function joinClass(userName, code) {
 		db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
 			if (err) {
 				console.log(err)
-				res.send('Something went wrong')
+				res.render('pages/message', {
+					message: "Error: something went wrong",
+					title: 'Error'
+				})
 			}
 			// Check to make sure there was a class with that name
 			console.log(cD[code])
@@ -457,7 +463,6 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 			})
 			res.render('pages/createclass', {
 				title: 'Create Class',
-				color: '"dark blue"',
 				ownerClasses: ownerClasses
 			})
 		})
@@ -535,15 +540,13 @@ app.get('/delete', (req, res) => {
 // It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, (req, res) => {
 	res.render('pages/index', {
-		title: 'Formbar Home',
-		color: '"dark blue"'
+		title: 'Home'
 	})
 })
 
 
 app.get('/help', isAuthenticated, (req, res) => {
 	res.render('pages/help', {
-		color: '"dark blue"',
 		title: "Help"
 	})
 })
@@ -585,8 +588,7 @@ app.post('/previousLessons', (req, res) => {
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
 	res.render('pages/login', {
-		title: 'Formbar',
-		color: 'purple'
+		title: 'Login'
 	})
 })
 
@@ -763,8 +765,7 @@ app.post('/oauth', (req, res) => {
 //Send user to the select class page
 app.get('/selectclass', isLoggedIn, (req, res) => {
 	res.render('pages/selectclass', {
-		title: 'Select Class',
-		color: '"dark blue"'
+		title: 'Select Class'
 	})
 })
 
@@ -777,7 +778,10 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 		req.session.class = code
 		res.redirect('/home')
 	} else {
-		res.send('No Open Class with that Name')
+		res.render('pages/message', {
+			message: "Error: no open class with that name",
+			title: 'Error'
+		})
 	}
 })
 
@@ -829,17 +833,21 @@ app.get('/student', isLoggedIn, (req, res) => {
 			})
 
 		} else {
-			res.send('Please enter proper data')
+			res.render('pages/message', {
+				message: "Error: please enter proper data",
+				title: 'Error'
+			})
 		}
 
 	} else if (req.query.question == undefined) {
 		res.render('pages/student', {
 			title: 'Student',
-			color: '"dark blue"',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].pollStatus,
 			posPollRes: JSON.stringify(posPollRes),
 			posTextRes: cD[req.session.class].posTextRes,
+			myRes: cD[req.session.class].students[req.session.user].pollRes,
+			myTextRes: cD[req.session.class].students[req.session.user].pollTextRes,
 			pollPrompt: cD[req.session.class].pollPrompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
@@ -895,7 +903,6 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 	} else {
 		res.render('pages/virtualbar', {
 			title: 'Virtual Bar',
-			color: '"dark blue"',
 			io: io,
 			className: cD[req.session.class].className
 		})
@@ -908,6 +915,14 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Y
 
 // Z
+
+// 404
+app.use((req, res, next) => {
+	res.status(404).render('pages/message', {
+		message: "Error: page does not exist",
+		title: "Error"
+	})
+})
 
 
 // Middleware for sockets
@@ -1009,7 +1024,7 @@ io.sockets.on('connection', function (socket) {
 			console.log(answerNames)
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'Answer ' + letterString[i]
 			} else {
 				cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
 			}
@@ -1123,7 +1138,7 @@ io.sockets.on('connection', function (socket) {
 		for (let i = 0; i < answerNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'Answer ' + letterString[i]
 			} else {
 				cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
 			}
@@ -1170,7 +1185,7 @@ io.sockets.on('connection', function (socket) {
 				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
 						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+						cD[socket.request.session.class].posPollResObj[letterString[i]] = 'Answer ' + letterString[i]
 					} else {
 						cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
 					}

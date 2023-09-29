@@ -1,21 +1,25 @@
 <%- include('../partials/header_content') %>
 
     <body id="colorContent">
-        <form action="createclass" id="content" method="post">
-            <input type="text" id="usernameBox" name="name" class="quickButton" placeholder="Class Name" value=""
-                autocomplete="off" required>
-            <input type="text" name="submittionType" value="create" hidden>
-            <input type="submit" id="submitButton" class="quickButton" value="Submit" onsubmit="return false;">
-        </form>
-        <form action="createclass" id="content" method="post">
-            <select id="classrooms" class="quickButton" name="name">
-                <% ownerClasses.forEach(rooms=> { %>
-                    <option value="<%- rooms %>">
-                        <%- rooms %>
-                    </option>
-                    <% }) %>
-            </select>
-            <input type="text" name="submittionType" value="select" hidden>
-            <input type="submit" id="submitButton" class="quickButton" value="Submit" onsubmit="return false;">
-        </form>
+        <div id="content" class="contentBox">
+            <form action="createclass" method="post">
+                <h2 class="headerText">Select a class</h2>
+                <select id="classrooms" name="name">
+                    <% ownerClasses.forEach(rooms=> { %>
+                        <option value="<%- rooms %>">
+                            <%- rooms %>
+                        </option>
+                        <% }) %>
+                </select>
+                <input type="text" name="submittionType" value="select" hidden>
+                <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;">
+            </form>
+            <form action="createclass" method="post">
+                <h2 class="headerText">Create a class</h2>
+                <input type="text" id="usernameBox" name="name" placeholder="Class Name" value=""
+                    autocomplete="off" required>
+                <input type="text" name="submittionType" value="create" hidden>
+                <input type="submit" id="submitButton" class="quickButton" value="Create" onsubmit="return false;">
+            </form>
+        </div>
     </body>
