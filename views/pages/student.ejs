@@ -106,7 +106,7 @@
 										color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
 										break
 								}
-								if (i == keys.length - 1) color = 'black';
+								if (i == keys.length - 1) color = 'black'
 								pollForm.innerHTML += `
 									<label class="form-control" id="pollControl" style="--theme-color: ${color};">
 										<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
@@ -179,7 +179,7 @@
 					socket.emit('vbData')
 					socket.emit('cpupdate')
 					socket.emit('sfxPlay', 'sfx_up01')
-					let alertText = '';
+					let alertText = ''
 					setTimeout(function () {
 						if (lettRes)
 							alertText += 'Response submitted: ' + lettRes
@@ -196,8 +196,8 @@
 						}
 						if (alertText) alert(alertText)
 
-						oldLettRes = lettRes;
-						oldTextRes = textRes;
+						oldLettRes = lettRes
+						oldTextRes = textRes
 					}, 100)
 				}
 
