@@ -905,7 +905,7 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Middleware for sockets
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
-io.use(async (socket, next) => {
+io.use((socket, next) => {
 	let { api, classCode } = socket.request._query
 	if (socket.request.session.user) {
 		next()
@@ -917,8 +917,10 @@ io.use(async (socket, next) => {
 			'SELECT id, username, permissions FROM users WHERE API = ?',
 			[api],
 			(error, userData) => {
-				if (error) return next(error)
-				if (!userData) return next('not a valid API Key')
+				if (error) {
+					return next(error)
+				}
+				if (!userData) return next(new Error('not a valid API Key'))
 				next()
 			}
 		)
@@ -927,7 +929,7 @@ io.use(async (socket, next) => {
 	}
 })
 
-const rateLimits = {}
+let rateLimits = {}
 
 //Handles the websocket communications
 io.on('connection', (socket) => {
