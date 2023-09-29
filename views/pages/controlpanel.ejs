@@ -328,65 +328,167 @@
 
 			// makes student elements
 			function buildStudent(room, student) {
-				var newStudent = ''
-				newStudent += `<p>${student}</p>`
+				var newStudent = document.createElement("div");
+				newStudent.classList.add("student");
+				let studentElement = document.createElement("p");
+				studentElement.innerText += student;
+				newStudent.appendChild(studentElement);
 				let studentData = room.students[student]
-				if (studentData.break == true) newStudent += `<p>taking a break</p>`
+				if (studentData.break == true) {
+					let breakText = document.createElement("p");
+					breakText.innerText += "taking a break";
+					newStudent.appendChild(breakText);
+				} 
 				else if (studentData.break) {
-					let breakDiv = `<p>Needs a break</p>`
-					breakDiv += `<p>Reason: ${studentData.break}</p>`
-					breakDiv += `<button class="quickButton" onclick="{approveBreak(true, '${studentData.username}')}">Approve</button>`
-					breakDiv += `<button class="quickButton" onclick="{approveBreak(false, '${studentData.username}')}">Deny</button>`
-					newStudent += `<div id="break">${breakDiv}</div>`
-					newStudent += `<br>`
+					let breakDiv = document.createElement("div");
+					breakDiv.setAttribute("id", "break");
+					let breakNeeded = document.createElement("p");
+					breakNeeded.innerText = "Needs a break";
+					breakDiv.appendChild(breakNeeded);
+					let breakReason = document.createElement("p");
+					breakReason.innerText = `Reason: ${studentData.break}`;
+					breakDiv.appendChild(breakReason);
+					let breakApprove = document.createElement("button");
+					breakApprove.classList.add("quickButton");
+					breakApprove.onclick = approveBreak(true, studentData.username);
+					breakApprove.innerText = "Approve";
+					breakDiv.appendChild(breakApprove);
+					let breakDeny = document.createElement("button");
+					breakDeny.classList.add("quickButton");
+					breakApprove.onclick = approveBreak(false, studentData.username);
+					breakDeny.innerText = "Deny";
+					breakDiv.appendChild(breakDeny);
+					newStudent.appendChild(breakDiv);
+					let lineBreak = document.createElement("br");
+					newStudent.appendChild(lineBreak);
 				}
 				if (studentData.help) {
-					help = `sent help ticket `
+					let help = document.createElement("p");
+					help.setAttribute("id", "help");
+					help.innerText = "sent help ticket";
 					if (studentData.help.reason) {
-						help += `<p>reason ${studentData.help.reason}</p>`
-					}
-					help += `<p>at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}</p>`
-					help += `<button class="quickButton" data-studentName="${student}" onclick = "deleteTicket(this)"> Delete Ticket</button>`
-					newStudent += `<div id='help'>${help}</div>`
-					newStudent += `<br>`
+						let helpReason = document.createElement("p");
+						helpReason.innerText = `reason ${studentData.help.reason}`;
+						help.appendChild(helpReason);
+					};
+					let helpTimeDisplay = document.createElement("p");
+					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`;
+					help.appendChild(helpTimeDisplay); 
+					let deleteTicketButton = document.createElement("button");
+					deleteTicketButton.classList.add("quickButton");
+					deleteTicketButton.dataset.studentName = student;
+					deleteTicketButton.onclick = (event) => {
+						deleteTicket(event.target);
+					};
+					deleteTicketButton.innerText = "Delete Ticket";
+					help.appendChild(deleteTicketButton);
+					newStudent.appendChild(help);
+					let lineBreak = document.createElement("br");
+					newStudent.appendChild(lineBreak);
 				}
-				if (studentData.pollTextRes)
-					newStudent += `<p>Poll Text: ${studentData.pollTextRes}</p>`
-				if (studentData.pollRes)
-					newStudent += `<p>Poll: ${studentData.pollRes}</p>`
-				newStudent += `<select name="permSwitch" class="quickButton" id="permSwitch" data-userid="${student}" onchange="updatePerms(this);"> `
+				if (studentData.pollTextRes) {
+					let pollTextResponse = document.createElement("p");
+					pollTextResponse.innerText = `Poll Text: ${studentData.pollTextRes}`;
+					newStudent.appendChild(pollTextResponse);
+				};
+				if (studentData.pollRes) {
+					let pollResponse = document.createElement("p");
+					pollResponse.innerText = `Poll: ${studentData.pollRes}`;
+					newStudent.appendChild(pollResponse);
+				};
+				let permissionSwitch = document.createElement("select");
+				permissionSwitch.setAttribute("name", "permSwitch");
+				permissionSwitch.classList.add("quickButton");
+				permissionSwitch.setAttribute("id", "permSwitch");
+				permissionSwitch.setAttribute("data-userid", student);
+				console.log(student);
+				permissionSwitch.onchange = (event) => {
+					updatePerms(event.target)	
+				};
 				if (studentData.permissions == 0) {
-					newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3">Guest</option>
-                    `
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 0);
+					teacherOption.setAttribute("selected", true);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let botOption = document.createElement("option");
+					botOption.setAttribute("value", 1);
+					botOption.innerText = "Bot";
+					permissionSwitch.add(botOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 3);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
 				} else if (studentData.permissions == 1) {
-					newStudent += `
-                        <option value="0">Teacher</option>
-                        <option value="1" selected>Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3">Guest</option>
-                    `
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 0);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let botOption = document.createElement("option");
+					botOption.setAttribute("value", 1);
+					botOption.setAttribute("selected", true);
+					botOption.innerText = "Bot";
+					permissionSwitch.add(botOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 3);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
 				} else if (studentData.permissions == 2) {
-					newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2" selected>Student</option>
-                        <option value="3">Guest</option>
-                    `
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 0);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let botOption = document.createElement("option");
+					botOption.setAttribute("value", 1);
+					botOption.innerText = "Bot";
+					permissionSwitch.add(botOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.setAttribute("selected", true);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 3);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
 				} else if (studentData.permissions == 3) {
-					newStudent += `
-                        <option value="0" selected>Teacher</option>
-                        <option value="1">Bot</option>
-                        <option value="2">Student</option>
-                        <option value="3" selected>Guest</option>
-                    `
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 0);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let botOption = document.createElement("option");
+					botOption.setAttribute("value", 1);
+					botOption.innerText = "Bot";
+					permissionSwitch.add(botOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(botOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 3);
+					guestOption.setAttribute("selected", true);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
 				}
-				newStudent += '</select>'
-				newStudent += `<button id="deleteUser" class="quickButton" data-userid="${student}" onclick="deleteUser(this)">Delete User</button>`
-				return `<div class="student">${newStudent}<div/>`
+				newStudent.appendChild(permissionSwitch);
+				let deleteUserButton = document.createElement("button");
+				deleteUserButton.setAttribute("id", "deleteUser");
+				deleteUserButton.classList.add("quickButton");
+				deleteUserButton.setAttribute("data-userid", student);
+				deleteUserButton.onclick = (event) => {
+					deleteUser(event.target)
+				};
+				deleteUserButton.innerText = "Delete User";
+				newStudent.appendChild(deleteUserButton);
+				return newStudent;
 			}
 
 			// filters and sorts students
@@ -509,7 +611,7 @@
 				}
 
 				for (const student of Object.keys(newRoom.students)) {
-					permChangeList.innerHTML += buildStudent(newRoom, student)
+					permChangeList.appendChild(buildStudent(newRoom, student))
 				}
 			}
 
@@ -569,7 +671,7 @@
 			}
 
 			function deleteTicket(e) {
-				socket.emit('deleteTicket', e.dataset.studentname)
+				socket.emit('deleteTicket', e.dataset.studentName)
 				socket.emit('cpupdate')
 			}
 
