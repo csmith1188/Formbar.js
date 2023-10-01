@@ -45,7 +45,7 @@
 					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
 					<form id="startPollForm" action="#">
 						<label for="resNumber">How many possible responses?</label>
-						<input type="number" id="resNumber" min="1" max="26" value="2">
+						<input type="number" id="resNumber" min="1" max="26" value="1">
 						<br>
 						<label for="resTextBox">Would like to accept text responses?</label>
 						<input type="checkbox" id="resTextBox">
@@ -55,6 +55,7 @@
 						<br>
 						<label for="changeNames">Customize the answer options?</label>
 						<input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()" class="quickButton">
+						<br>
 						<div id="pollAnsForm"></div>
 						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
 						<input type="checkbox" id="blind">
@@ -299,6 +300,14 @@
 
 			function namePollFunc() {
 				pollAnsForm.style.display = 'block'
+				var changeNamesButton = document.getElementById('changeNames')
+				changeNamesButton.value = "Reset names"
+				changeNamesButton.onclick = clearPollNames
+				var pollAnsNames = document.getElementsByName('pollAnsName')
+				var pollAnsValues = []
+				for (let i = 0; i < pollAnsNames.length; i++) {
+					pollAnsValues.push(pollAnsNames[i].value)
+				}
 				pollAnsForm.innerHTML = ''
 				for (let i = 0; i < resNumber.value; i++) {
 					//Show the color associated with the answer
@@ -322,9 +331,18 @@
 					}
 					pollAnsForm.innerHTML += `
 						<div class="pollAnsColor" style="background-color: ${color};"></div>
-						<input type="text" name="pollAnsName" placeholder="Answer ${String.fromCharCode(i + 97)}">
-						<br>
+						<input type="text" name="pollAnsName"
+						placeholder="Answer ${String.fromCharCode(i + 97)}" value="${pollAnsValues[i] || ''}">
 					`
+					if (i % 2) pollAnsForm.innerHTML += '<br>'
+				}
+			}
+
+			function clearPollNames() {
+				var pollAnsNames = document.getElementsByName('pollAnsName')
+				var pollAnsValues = []
+				for (let i = 0; i < pollAnsNames.length; i++) {
+					pollAnsNames[i].value = ''
 				}
 			}
 
