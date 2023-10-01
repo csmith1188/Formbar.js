@@ -34,6 +34,9 @@
   --bg-dark-green: #243;
   --bg-dark-blue: #000922;
   --bg-dark-purple: #423;
+
+  --bg-light: #edf; 
+  --bg-light-blue: #def;
 }
 
 body {
@@ -99,7 +102,7 @@ button,
   border-radius: 8px;
   font-size: inherit;
   font-family: inherit;
-  background-color: #d6ead4;
+  background-color: var(--bg-light-blue);
   color: var(--theme-color);
   border: 2px solid var(--theme-color);
   margin: 2px 1px;
@@ -185,7 +188,7 @@ dialog {
 }
 
 #colorContent {
-  background-color: #eff3d8;
+  background-color: var(--bg-light);
 }
 
 #content {
@@ -219,7 +222,7 @@ dialog {
   left: -5%;
   display: flex;
   justify-content: center;
-  background: linear-gradient(to right, var(--theme-color), var(--color-purple));
+  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
   box-shadow: 0 3px 10px black;
   user-select: none;
 }
@@ -284,8 +287,8 @@ dialog {
 }
 
 #indexGrid .quickButton:hover,
-#indexGrid .quickButton:focus {
-  background: linear-gradient(to right, var(--theme-color), var(--color-purple));
+#indexGrid .quickButton:focus-visible {
+  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
   color: white;
   border-color: transparent;
   border-width: 2px 0;
@@ -305,7 +308,14 @@ dialog {
 
 #takeBreak {
   position: absolute;
+  width: 100%;
   bottom: 20px;
+}
+
+#takeBreak #cancel {
+  --theme-color: #333;
+  background-color: white;
+  margin-right: 10px;
 }
 
 /* --- CONTROL PANEL --- */
@@ -465,7 +475,7 @@ input[type="radio"]:focus {
   position: absolute;
   top: 50%;
   left: 50%;
-  background-color: #d6ead4;
+  background-color: var(--bg-light-blue);
   color: var(--theme-color);
 }
 
