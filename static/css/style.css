@@ -98,6 +98,7 @@ button,
   padding: 3px 6px;
   border-radius: 8px;
   font-size: inherit;
+  font-family: inherit;
   background-color: #d6ead4;
   color: var(--theme-color);
   border: 2px solid var(--theme-color);
@@ -116,6 +117,7 @@ button:not(.pressed):not(.unselectable):hover,
 .quickButton:not(.pressed):not(.unselectable):hover {
   transform: translate(2px, -2px);
   box-shadow: -1px 1px var(--theme-color), -2px 2px var(--theme-color);
+  outline: none;
 }
 
 button:not(.unselectable):active,
@@ -278,18 +280,15 @@ dialog {
   padding: 20px;
   font-size: 24px;
   margin: 0;
-  transition-duration: 0.2s;
-  transition-property: transform, box-shadow;
+  transition-duration: 0ms;
 }
 
-#indexGrid .quickButton:hover {
-  transform: translate(4px, -4px);
-  box-shadow: -1px 1px var(--theme-color), -2px 2px var(--theme-color), -3px 3px var(--theme-color), -4px 4px var(--theme-color);
-}
-
-#indexGrid .quickButton:active {
-  background: var(--theme-color);
+#indexGrid .quickButton:hover,
+#indexGrid .quickButton:focus {
+  background: linear-gradient(to right, var(--theme-color), var(--color-purple));
   color: white;
+  border-color: transparent;
+  border-width: 2px 0;
   transform: none;
   box-shadow: none;
 }
