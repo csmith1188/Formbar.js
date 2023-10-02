@@ -116,7 +116,7 @@
 								pollForm.innerHTML += `
 									<label class="form-control" id="pollControl" style="--theme-color: ${color};">
 										<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
-										<span>${posPollRes[keys[i]]}</span>
+										${posPollRes[keys[i]]}
 									</label>
 								`
 							}

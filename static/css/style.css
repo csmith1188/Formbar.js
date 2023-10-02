@@ -182,6 +182,10 @@ dialog {
   background-color: var(--bg-light);
 }
 
+.textColorContent {
+  color: var(--theme-color);
+}
+
 #content {
   /* width: fit-content; */
   /* max-width: 600px; */
@@ -244,8 +248,72 @@ dialog {
   color: var(--theme-color);
 }
 
-.textColorContent {
+/* Custom radio button code */
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+#pollControl {
+  display: grid;
+  place-content: center;
+  min-height: 20px;
+}
+
+.form-control {
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.1;
+  display: grid;
+  grid-template-columns: 1em auto;
+  gap: 0.5em;
+}
+
+.form-control+.form-control {
+  margin-top: 1em;
+}
+
+.form-control:focus-within {
   color: var(--theme-color);
+}
+
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--form-background);
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 0.15em solid currentColor;
+  border-radius: 50%;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+
+input[type="radio"]::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--theme-color);
+  background-color: CanvasText;
+}
+
+input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+input[type="radio"]:focus {
+  outline: max(2px, 0.15em) solid currentColor;
+  outline-offset: max(2px, 0.15em);
 }
 
 /* --- LOGIN --- */
@@ -309,6 +377,14 @@ dialog {
   margin-right: 10px;
 }
 
+/* --- STUDENT PANEL --- */
+
+#pollForm label {
+  width: fit-content;
+  margin: 1em auto 0;
+  filter: brightness(75%);
+}
+
 /* --- CONTROL PANEL --- */
 
 #quickmenu {
@@ -367,75 +443,6 @@ dialog {
 #endPoll {
   font-size: 18px;
   margin: auto;
-}
-
-/* Custom radio button code */
-
-*,
-*:before,
-*:after {
-  box-sizing: border-box;
-}
-
-#pollControl {
-  display: grid;
-  place-content: center;
-  min-height: 20px;
-  filter: brightness(75%);
-}
-
-.form-control {
-  font-family: system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: bold;
-  line-height: 1.1;
-  display: grid;
-  grid-template-columns: 1em auto;
-  gap: 0.5em;
-}
-
-.form-control+.form-control {
-  margin-top: 1em;
-}
-
-.form-control:focus-within {
-  color: var(--theme-color);
-}
-
-input[type="radio"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: var(--form-background);
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1.15em;
-  height: 1.15em;
-  border: 0.15em solid currentColor;
-  border-radius: 50%;
-  transform: translateY(-0.075em);
-  display: grid;
-  place-content: center;
-}
-
-input[type="radio"]::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  border-radius: 50%;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--theme-color);
-  background-color: CanvasText;
-}
-
-input[type="radio"]:checked::before {
-  transform: scale(1);
-}
-
-input[type="radio"]:focus {
-  outline: max(2px, 0.15em) solid currentColor;
-  outline-offset: max(2px, 0.15em);
 }
 
 /* --- VIRTUAL BAR --- */
