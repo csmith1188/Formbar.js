@@ -381,6 +381,7 @@ dialog {
   display: grid;
   place-content: center;
   min-height: 20px;
+  filter: brightness(75%);
 }
 
 .form-control {
