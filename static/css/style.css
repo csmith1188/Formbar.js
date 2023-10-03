@@ -377,6 +377,10 @@ input[type="radio"]:focus {
   margin-right: 10px;
 }
 
+#takeBreak #cancel:active {
+  background-color: var(--theme-color);
+}
+
 /* --- STUDENT PANEL --- */
 
 #pollForm label {
