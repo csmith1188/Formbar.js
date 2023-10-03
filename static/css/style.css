@@ -387,6 +387,7 @@ input[type="radio"]:focus {
   width: fit-content;
   margin: 1em auto 0;
   filter: brightness(75%);
+  user-select: none;
 }
 
 /* --- CONTROL PANEL --- */
