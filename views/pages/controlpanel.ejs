@@ -60,8 +60,10 @@
 						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
 						<input type="checkbox" id="blind">
 						<br>
-						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc()" class="quickButton">
+						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')" class="quickButton">
 						<br>
+						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
+						<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
 					</form>
 					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 					<br>
@@ -276,21 +278,29 @@
 
 			// Starts a new poll that allows students to submit answers
 			// Check how many possible responses and if the teacher wants to accept text responses
-			function startPollFunc() {
-				var pollAnsNames = document.getElementsByName('pollAnsName')
-				var blind = document.getElementById('blind').checked
-
-				var pollAnsValues = []
-				for (let i = 0; i < pollAnsNames.length; i++) {
-					pollAnsValues.push(pollAnsNames[i].value)
-				}
-				pollAnsForm.style.display = 'none'
-				startPollForm.style.display = 'none'
-				endPoll.style.display = 'block'
-				permChanges.style.display = 'none'
-				socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues, blind)
-				socket.emit('reload') // Reloads the users page
-			}
+			function startPollFunc(pollType) {
+				if (pollType == 'poll') {
+					var pollAnsNames = document.getElementsByName('pollAnsName')
+					var blind = document.getElementById('blind').checked
+	
+					var pollAnsValues = []
+					for (let i = 0; i < pollAnsNames.length; i++) {
+						pollAnsValues.push(pollAnsNames[i].value)
+					}
+					pollAnsForm.style.display = 'none'
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+					permChanges.style.display = 'none'
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues, blind)
+					socket.emit('reload') // Reloads the users page
+				} else if (pollType == 'TUTD') {
+					pollAnsForm.style.display = 'none';
+					startPollForm.style.display = 'none';
+					endPoll.style.display = 'block';
+					permChanges.style.display = 'none';
+					socket.emit('startPoll', 3, false, "Thumbs?", ["Up", "Down", "Wiggle"], false);
+				};
+			};
 
 			resNumber.onchange = function() {
 				if (this.value < 1) this.value = 1
@@ -439,12 +449,12 @@
 				}
 				if (studentData.pollTextRes) {
 					let pollTextResponse = document.createElement("p");
-					pollTextResponse.innerText = `Poll Text: ${studentData.pollTextRes}`;
+					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes}`;
 					newStudent.appendChild(pollTextResponse);
 				};
 				if (studentData.pollRes) {
 					let pollResponse = document.createElement("p");
-					pollResponse.innerText = `Poll: ${studentData.pollRes}`;
+					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes}`;
 					newStudent.appendChild(pollResponse);
 				};
 				let permissionSwitch = document.createElement("select");
@@ -585,13 +595,13 @@
 				//filter by poll
 				if (filter.polls == 1) {
 					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (!student.pollRes && !student.pollTextRes) {
+						if (!student.pollRes.buttonRes && !student.pollRes.textRes) {
 							delete newRoom.students[username]
 						}
 					}
 				} else if (filter.polls == 2) {
 					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (student.pollRes || student.pollTextRes) {
+						if (student.pollRes.buttonRes || student.pollRes.textRes) {
 							delete newRoom.students[username]
 						}
 					}
@@ -632,28 +642,28 @@
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
 						objectA = entireA[1]
 						objectB = entireB[1]
-						if (objectA.pollTextRes && objectB.pollTextRes) {
-							return objectA.pollTextRes.localeCompare(objectB.pollTextRes)
-						} else if (objectA.pollTextRes) return -1
-						else if (objectB.pollTextRes) return 1
-						if (objectA.pollRes && objectB.pollRes) {
-							return objectA.pollRes.localeCompare(objectB.pollRes)
-						} else if (objectA.pollRes) return -1
-						else if (objectB.pollRes) return 1
+						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
+							return objectA.pollRes.textRes.localeCompare(objectB.pollRes.textRes)
+						} else if (objectA.pollRes.textRes) return -1
+						else if (objectB.pollRes.textRes) return 1
+						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
+							return objectA.pollRes.buttonRes.localeCompare(objectB.pollRes.buttonRes)
+						} else if (objectA.pollRes.buttonRes) return -1
+						else if (objectB.pollRes.buttonRes) return 1
 						else return objectA.username.localeCompare(objectB.username)
 					}))
 				} else if (sort.polls == 2) {
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
 						objectA = entireA[1]
 						objectB = entireB[1]
-						if (objectA.pollTextRes && objectB.pollTextRes) {
-							return objectB.pollTextRes.localeCompare(objectA.pollTextRes)
-						} else if (objectA.pollTextRes) return 1
-						else if (objectB.pollTextRes) return -1
-						if (objectA.pollRes && objectB.pollRes) {
-							return objectB.pollRes.localeCompare(objectA.pollRes)
-						} else if (objectA.pollRes) return 1
-						else if (objectB.pollRes) return -1
+						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
+							return objectB.pollRes.textRes.localeCompare(objectA.pollRes.textRes)
+						} else if (objectA.pollRes.textRes) return 1
+						else if (objectB.pollRes.textRes) return -1
+						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
+							return objectB.pollRes.buttonRes.localeCompare(objectA.pollRes.buttonRes)
+						} else if (objectA.pollRes.buttonRes) return 1
+						else if (objectB.pollRes.buttonRes) return -1
 						else return objectB.username.localeCompare(objectA.username)
 					}))
 				}
