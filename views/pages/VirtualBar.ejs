@@ -10,9 +10,10 @@
 					display: grid;
 				}
 
-				#virtualbar {
-					margin-top: 0.5%;
-					height: 90%;
+				#vbContainer {
+					position: absolute;
+					top: 75px;
+					height: 85%;
 					justify-self: center;
 				}
 			</style>
@@ -20,9 +21,10 @@
 
 		<body>
             <%- include('../partials/formbar_header') %>
-			<p id="noPoll">No active poll</p>
-			<div class="container"></div>
-			<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
+			<h1 id="noPoll" class="textColorContent">No active poll</h1>
+			<div id="vbContainer">
+				<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
+			</div>
 			<%- include('../partials/body_content') %>
 		</body>
 
@@ -51,7 +53,7 @@
 						legend: {
 							labels: {
 								font: {
-									size: 15
+									size: 20
 								},
 								color: 'black'
 							}
@@ -68,7 +70,7 @@
 			// Update the virtual bar
 			// Creates new labels and colors, plus imports all new data to the table
 			function update(data) {
-				if (data.pollStatus) {
+				if (data.poll.status) {
 					noPoll.style.display = 'none'
 
 					//reset virtual bar
@@ -85,7 +87,7 @@
 
 					// make the polls blind unless all students answered
 					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes) {
+						if (data.students[student].pollRes.buttonRes) {
 							totalResponses++
 						}
 						totalStudents++
@@ -105,8 +107,8 @@
 						labelsArray.push('Responses')
 						studResponses.responses = 0
 					} else {
-						for (const answer of Object.keys(data.posPollResObj)) {
-							labelsArray.push(data.posPollResObj[answer])
+						for (const answer of Object.keys(data.poll.responses)) {
+							labelsArray.push(data.poll.responses[answer])
 							studResponses[answer] = 0
 						}
 					}
@@ -118,7 +120,7 @@
 					if (data.blindPoll) {
 						doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
 					} else {
-						for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
+						for (let i = 0; i < Object.keys(data.poll.responses).length; i++) {
 							let color = ''
 							let CC = '01234569ABCDEF'
 							let colorI = CC[Math.floor(i / 2)]
@@ -150,10 +152,10 @@
 					// Loops through all student answers and adds them to a total tally
 					// Student response corresponds with a property name in studResponses
 					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes)
+						if (data.students[student].pollRes.buttonRes)
 							if (data.blindPoll)
 								studResponses.responses++
-							else studResponses[data.students[student].pollRes]++
+							else studResponses[data.students[student].pollRes.buttonRes]++
 						else studResponses.noResponse++
 					}
 					//
