@@ -15,6 +15,7 @@
 					<button id="users" class="quickButton" onclick="toUsers()">Users</button>
 					<button id="polls" class="quickButton" onclick="toPolls()">Poll </button>
 					<button id="lesson" class="quickButton" onclick="toLesson()">Make A Lesson</button>
+					<button class="quickButton" onclick="toPlugins()">Plugins</button>
 				</header>
 
 				<p id="classCode">Class Code:</p>
@@ -99,6 +100,8 @@
 						</label>
 					</form>
 				</div>
+				<div id="plugins">
+				</div>
 				<%- include('../partials/body_content') %>
 		</body>
 
@@ -107,7 +110,7 @@
 			// 0 = off
 			// 1 = only
 			// 2 = except
-			filter = {
+			let filter = {
 				help: 0,
 				break: 0,
 				polls: 0
@@ -115,14 +118,14 @@
 			// 0 = off
 			// 1 = descending
 			// 2 = ascending
-			sort = {
+			let sort = {
 				name: 0,
 				polls: 0,
 				helpTime: 0,
 				permissions: 1
 			}
 
-			filterState = {
+			let filterState = {
 				help: [
 					'Help tickets',
 					'Help tickets in',
@@ -140,7 +143,7 @@
 				]
 			}
 
-			sortState = {
+			let sortState = {
 				name: [
 					'Name',
 					'Name 🡇',
@@ -182,6 +185,7 @@
 			var helpFilter = document.getElementById('helpFilter')
 			var pollAnsForm = document.getElementById('pollAnsForm')
 			var lessonMaker = document.getElementById('lessonMaker')
+			var pluginsDiv = document.getElementById('plugins')
 			var previousPolls = document.getElementById('previousPolls')
 			var classCode = document.getElementById('classCode')
 
@@ -197,6 +201,7 @@
 				permChanges.style.display = 'block'
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
 				if (pollStatus) {
 					startPollForm.style.display = 'none'
 					endPoll.style.display = 'block'
@@ -215,6 +220,7 @@
 				permChanges.style.display = 'none'
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
 			}
 			// Changes to the permission change section of the page
 			function toUsers() {
@@ -222,6 +228,7 @@
 				permChanges.style.display = 'block'
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
 			}
 
 			function toLesson() {
@@ -229,6 +236,15 @@
 				permChanges.style.display = 'none'
 				lessonMaker.style.display = 'block'
 				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
+			}
+
+			function toPlugins() {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'none'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'block'
 			}
 
 			//displays the previos polls page
@@ -237,6 +253,7 @@
 				permChanges.style.display = 'none'
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'block'
+				pluginsDiv.style.display = 'none'
 			}
 			//makes the previous polls page
 			function buildPreviousPolls(data) {
@@ -697,6 +714,84 @@
 				buildPreviousPolls(JSON.parse(pollHistory))
 				allRoom = room
 				filterSortChange()
+			})
+			socket.emit('pluginUpdate')
+			socket.on('pluginUpdate', (plugins) => {
+				pluginsDiv.innerHTML = ''
+				for (let plugin of plugins) {
+					let pluginDiv = document.createElement('div')
+					pluginDiv.id = plugin.id
+					pluginDiv.className = 'plugin'
+					let pluginName = document.createElement('input')
+					pluginName.type = 'text'
+					pluginName.value = plugin.name
+					pluginName.onchange = (event) => {
+						socket.emit(
+							'changePlugin',
+							event.target.parentElement.id,
+							event.target.value,
+							null
+						)
+					}
+					pluginDiv.appendChild(pluginName)
+					let pluginURL = document.createElement('input')
+					pluginURL.type = 'url'
+					pluginURL.value = plugin.url
+					pluginURL.onchange = (event) => {
+						let pluginURL = event.target
+
+						if (!pluginURL.checkValidity()) {
+							pluginURL.reportValidity()
+							return
+						}
+
+						socket.emit(
+							'changePlugin',
+							pluginURL.parentElement.id,
+							null,
+							pluginURL.value
+						)
+					}
+					pluginDiv.appendChild(pluginURL)
+					let removePlugin = document.createElement('button')
+					removePlugin.className = 'quickButton'
+					removePlugin.innerText = 'Remove Plugin'
+					removePlugin.onclick = (event) => {
+						socket.emit(
+							'removePlugin',
+							event.target.parentElement.id
+						)
+					}
+					pluginDiv.appendChild(removePlugin)
+					pluginsDiv.appendChild(pluginDiv)
+				}
+
+				let addPluginForm = document.createElement('div')
+				addPluginForm.id = 'addPluginForm'
+				let newPluginName = document.createElement('input')
+				newPluginName.id = 'newPluginName'
+				newPluginName.type = 'text'
+				addPluginForm.append(newPluginName)
+				let newPluginURL = document.createElement('input')
+				newPluginURL.id = 'newPluginURL'
+				newPluginURL.type = 'url'
+				addPluginForm.append(newPluginURL)
+				let submitPlugin = document.createElement('button')
+				submitPlugin.className = 'quickButton'
+				submitPlugin.innerText = 'Add Plug-in'
+				submitPlugin.onclick = () => {
+					let newPluginName = document.getElementById('newPluginName')
+					let newPluginURL = document.getElementById('newPluginURL')
+
+					if (!newPluginURL.checkValidity()) {
+						newPluginURL.reportValidity()
+						return
+					}
+
+					socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
+				}
+				addPluginForm.append(submitPlugin)
+				pluginsDiv.append(addPluginForm)
 			})
 		</script>
 		<%- include('../partials/footer_content') %>
