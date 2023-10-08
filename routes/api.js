@@ -204,21 +204,27 @@ const api = (cD) => {
 
 		for (let i = 0; i < Object.keys(polls).length; i++) {
 			let color = ''
-			let CC = '0123456789ABCDEF'
+			let CC = '01234569ABCDEF'
 			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[15 - Math.floor(i / 2)]
-			switch (i % 4) {
+			let colorJ = CC[13 - Math.floor(i / 2)]
+			switch (i % 6) {
 				case 0:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
+					color = `#${colorJ}${colorI}${colorI}`
 					break
 				case 1:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
+					color = `#${colorI}${colorI}${colorJ}`
 					break
 				case 2:
-					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
+					color = `#${colorI}${colorJ}${colorI}`
 					break
 				case 3:
-					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
+					color = `#${colorJ}${colorI}${colorJ}`
+					break
+				case 4:
+					color = `#${colorI}${colorJ}${colorJ}`
+					break
+				case 5:
+					color = `#${colorJ}${colorJ}${colorI}`
 					break
 			}
 			polls[Object.keys(polls)[i]].color = color
