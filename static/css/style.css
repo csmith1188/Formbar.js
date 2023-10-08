@@ -70,6 +70,7 @@ input {
 input[type="text"],
 input[type="number"],
 input[type="password"],
+input[type="url"],
 textarea,
 select {
   background: var(--emphasis-color);
@@ -448,6 +449,17 @@ input[type="radio"]:focus {
 #endPoll {
   font-size: 18px;
   margin: auto;
+}
+
+#plugins input,
+#plugins button {
+  margin: 4px;
+  vertical-align: middle;
+}
+
+#plugins button {
+  font-size: 14px;
+  width: 110px;
 }
 
 /* --- VIRTUAL BAR --- */

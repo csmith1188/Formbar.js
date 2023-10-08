@@ -806,6 +806,7 @@
 					let pluginName = document.createElement('input')
 					pluginName.type = 'text'
 					pluginName.value = plugin.name
+					pluginName.placeholder = 'Name'
 					pluginName.onchange = (event) => {
 						socket.emit(
 							'changePlugin',
@@ -818,6 +819,7 @@
 					let pluginURL = document.createElement('input')
 					pluginURL.type = 'url'
 					pluginURL.value = plugin.url
+					pluginURL.placeholder = 'URL'
 					pluginURL.onchange = (event) => {
 						let pluginURL = event.target
 
@@ -852,10 +854,12 @@
 				let newPluginName = document.createElement('input')
 				newPluginName.id = 'newPluginName'
 				newPluginName.type = 'text'
+				newPluginName.placeholder = 'Name'
 				addPluginForm.append(newPluginName)
 				let newPluginURL = document.createElement('input')
 				newPluginURL.id = 'newPluginURL'
 				newPluginURL.type = 'url'
+				newPluginURL.placeholder = 'URL'
 				addPluginForm.append(newPluginURL)
 				let submitPlugin = document.createElement('button')
 				submitPlugin.className = 'quickButton'
