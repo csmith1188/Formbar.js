@@ -66,8 +66,10 @@ class Student {
 		this.username = username
 		this.id = id
 		this.permissions = perms
-		this.pollRes = ''
-		this.pollTextRes = ''
+		this.pollRes = {
+			buttonRes : '',
+			textRes : ''
+		}
 		this.help = ''
 		this.break = ''
 		this.quizScore = ''
@@ -83,10 +85,14 @@ class Classroom {
 	constructor(className, key) {
 		this.className = className
 		this.students = {}
-		this.pollStatus = false
-		this.posPollResObj = {}
-		this.posTextRes = false
-		this.pollPrompt = ''
+		this.poll = {
+			status : false,
+			responses : {},
+			textRes : false,
+			prompt : '',
+			weight : 1,
+			blind : false
+		}
 		this.key = key
 		this.lesson = {}
 		this.activeLesson = false
@@ -94,7 +100,6 @@ class Classroom {
 		this.currentStep = 0
 		this.quizObj
 		this.mode = 'poll'
-		this.blindPoll = false
 	}
 }
 //allows quizzes to be made
@@ -222,8 +227,8 @@ function joinClass(userName, code) {
 						(error, classUser) => {
 							if (error) console.log(error)
 							if (typeof classUser == 'undefined') {
-								db.run(`INSERT INTO classusers(classuid, studentuid, permissions) VALUES(?, ?, ?)`,
-									[id.id, uid.id, 2], (err) => {
+								db.run(`INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)`,
+									[id.id, uid.id, 2, 0], (err) => {
 										if (err) {
 											console.log(err)
 										}
@@ -288,7 +293,7 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	let keys = Object.keys(students)
 	let allStuds = []
 	for (var i = 0; i < keys.length; i++) {
-		var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes, textRes: students[keys[i]].pollTextRes }, help: students[keys[i]].help }
+		var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
 		allStuds.push(val)
 	}
 
@@ -298,7 +303,7 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	res.render('pages/controlPanel', {
 		title: "Control Panel",
 		students: allStuds,
-		pollStatus: cD[req.session.class].pollStatus,
+		pollStatus: cD[req.session.class].poll.status,
 		key: cD[req.session.class].key.toUpperCase(),
 		steps: cD[req.session.class].steps,
 		currentStep: cD[req.session.class].currentStep
@@ -788,10 +793,10 @@ app.get('/student', isLoggedIn, (req, res) => {
 		name: req.session.user,
 		class: req.session.class
 	}
-	let posPollRes = cD[req.session.class].posPollResObj
+	let posPollRes = cD[req.session.class].poll.responses;
 	let answer = req.query.letter
 	if (answer) {
-		cD[req.session.class].students[req.session.user].pollRes = answer
+		cD[req.session.class].students[req.session.user].pollRes.buttonRes = answer
 		db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
 	}
 
@@ -830,10 +835,10 @@ app.get('/student', isLoggedIn, (req, res) => {
 			title: 'Student',
 			color: '"dark blue"',
 			user: JSON.stringify(user),
-			pollStatus: cD[req.session.class].pollStatus,
+			pollStatus: cD[req.session.class].poll.status,
 			posPollRes: JSON.stringify(posPollRes),
-			posTextRes: cD[req.session.class].posTextRes,
-			pollPrompt: cD[req.session.class].pollPrompt,
+			posTextRes: cD[req.session.class].poll.textRes,
+			pollPrompt: cD[req.session.class].poll.prompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
 			mode: cD[req.session.class].mode
@@ -849,7 +854,7 @@ app.post('/student', (req, res) => {
 	if (req.query.poll) {
 		let answer = req.body.poll
 		if (answer) {
-			cD[req.session.class].students[req.session.user].pollRes = answer
+			cD[req.session.class].students[req.session.user].pollRes.buttonRes = answer
 			db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.user])
 		}
 		res.redirect('/poll')
@@ -1051,9 +1056,9 @@ io.on('connection', (socket) => {
 	}
 
 	// /poll websockets for updating the database
-	socket.on('pollResp', (res, textRes) => {
-		cD[socket.request.session.class].students[socket.request.session.user].pollRes = res
-		cD[socket.request.session.class].students[socket.request.session.user].pollTextRes = textRes
+	socket.on('pollResp', function (res, textRes) {
+		cD[socket.request.session.class].students[socket.request.session.user].pollRes.buttonRes = res
+		cD[socket.request.session.class].students[socket.request.session.user].pollRes.textRes = textRes
 		db.run('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
 	})
 	// Changes Permission of user. Takes which user and the new permission level
@@ -1078,23 +1083,23 @@ io.on('connection', (socket) => {
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, answerNames, blind) => {
 		cD[socket.request.session.class].mode = 'poll'
-		cD[socket.request.session.class].blindPoll = blind
-		cD[socket.request.session.class].pollStatus = true
+		cD[socket.request.session.class].poll.blind = blind
+		cD[socket.request.session.class].poll.status = true
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
 			} else {
-				cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
+				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
 			}
 		}
-		cD[socket.request.session.class].posTextRes = resTextBox
-		cD[socket.request.session.class].pollPrompt = pollPrompt
+		cD[socket.request.session.class].poll.textRes = resTextBox
+		cD[socket.request.session.class].poll.prompt = pollPrompt
 		for (var key in cD[socket.request.session.class].students) {
-			cD[socket.request.session.class].students[key].pollRes = ""
-			cD[socket.request.session.class].students[key].pollTextRes = ""
+			cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
+			cD[socket.request.session.class].students[key].pollRes.textRes = ""
 		}
 
 		vbUpdate()
@@ -1107,11 +1112,11 @@ io.on('connection', (socket) => {
 		let dateConfig = new Date()
 		let date = `${dateConfig.getMonth() + 1}.${dateConfig.getDate()}.${dateConfig.getFullYear()}`
 
-		data.prompt = cD[socket.request.session.class].pollPrompt
+		data.prompt = cD[socket.request.session.class].poll.prompt
 		for (const key in cD[socket.request.session.class].students) {
 			data.names.push(cD[socket.request.session.class].students[key].username)
-			data.letter.push(cD[socket.request.session.class].students[key].pollRes)
-			data.text.push(cD[socket.request.session.class].students[key].pollTextRes)
+			data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
+			data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 		}
 
 		db.run(`INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)`,
@@ -1192,18 +1197,18 @@ io.on('connection', (socket) => {
 	// Starts a quick poll
 	socket.on('botPollStart', (answerNumber) => {
 		answerNames = []
-		cD[socket.request.session.class].pollStatus = true
+		cD[socket.request.session.class].poll.status = true
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < answerNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
 			} else {
-				cD[socket.request.session.class].posPollResObj[answerNames[i]] = answerNames[i]
+				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
 			}
 		}
-		cD[socket.request.session.class].posTextRes = false
-		cD[socket.request.session.class].pollPrompt = "Quick Poll"
+		cD[socket.request.session.class].poll.textRes = false
+		cD[socket.request.session.class].poll.prompt = "Quick Poll"
 	})
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollindex) => {
@@ -1228,24 +1233,24 @@ io.on('connection', (socket) => {
 
 				cD[socket.request.session.class].mode = 'poll'
 
-				if (cD[socket.request.session.class].pollStatus == true) {
-					cD[socket.request.session.class].posPollResObj = {}
-					cD[socket.request.session.class].pollPrompt = ""
-					cD[socket.request.session.class].pollStatus = false
+				if (cD[socket.request.session.class].poll.status == true) {
+					cD[socket.request.session.class].poll.responses = {}
+					cD[socket.request.session.class].poll.prompt = ""
+					cD[socket.request.session.class].poll.status = false
 				};
 
-				cD[socket.request.session.class].pollStatus = true
+				cD[socket.request.session.class].poll.status = true
 				// Creates an object for every answer possible the teacher is allowing
 				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
 						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].posPollResObj[letterString[i]] = 'answer ' + letterString[i]
+						cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
 					} else {
-						cD[socket.request.session.class].posPollResObj[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
+						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
 					}
 				}
-				cD[socket.request.session.class].posTextRes = false
-				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+				cD[socket.request.session.class].poll.textRes = false
+				cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
 				// Creates a new quiz based on step data
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				cD[socket.request.session.class].mode = 'quiz'
@@ -1265,8 +1270,8 @@ io.on('connection', (socket) => {
 
 						}
 					})
-				cD[socket.request.session.class].posTextRes = false
-				cD[socket.request.session.class].pollPrompt = cD[socket.request.session.class].steps[index].prompt
+				cD[socket.request.session.class].poll.textRes = false
+				cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
 				// Check this later, there's already a quiz if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
 				questions = cD[socket.request.session.class].steps[index].questions
