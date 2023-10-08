@@ -67,8 +67,8 @@ class Student {
 		this.id = id
 		this.permissions = perms
 		this.pollRes = {
-			buttonRes : '',
-			textRes : ''
+			buttonRes: '',
+			textRes: ''
 		}
 		this.help = ''
 		this.break = ''
@@ -86,12 +86,12 @@ class Classroom {
 		this.className = className
 		this.students = {}
 		this.poll = {
-			status : false,
-			responses : {},
-			textRes : false,
-			prompt : '',
-			weight : 1,
-			blind : false
+			status: false,
+			responses: {},
+			textRes: false,
+			prompt: '',
+			weight: 1,
+			blind: false
 		}
 		this.key = key
 		this.lesson = {}
@@ -997,20 +997,22 @@ io.on('connection', (socket) => {
 			if (student.break == true || student.permissions == 0) delete classData.students[username]
 		}
 
-		if (Object.keys(classData.posPollResObj).length > 0) {
-			for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
+		if (Object.keys(classData.poll.responses).length > 0) {
+			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
 				polls[resKey] = {
 					display: resValue,
 					responses: 0
 				}
 			}
+
 			for (let studentData of Object.values(classData.students)) {
 				if (
 					studentData &&
-					Object.keys(polls).includes(studentData.pollRes)
+					Object.keys(polls).includes(studentData.pollRes.buttonRes)
 				)
-					polls[studentData.pollRes].responses++
+					polls[studentData.pollRes.buttonRes].responses++
 			}
+			console.log(polls);
 		}
 
 		for (let i = 0; i < Object.keys(polls).length; i++) {
@@ -1037,9 +1039,9 @@ io.on('connection', (socket) => {
 
 		io.to(cD[socket.request.session.class].className).emit('vbUpdate', {
 			totalStudents: Object.keys(classData.students).length,
-			pollStatus: classData.pollStatus,
-			blindPoll: classData.blindPoll,
-			pollPrompt: classData.pollPrompt,
+			pollStatus: classData.poll.status,
+			blindPoll: classData.poll.blind,
+			pollPrompt: classData.poll.prompt,
 			polls: polls
 		})
 	}
@@ -1126,9 +1128,9 @@ io.on('connection', (socket) => {
 				}
 			})
 
-		cD[socket.request.session.class].posPollResObj = {}
-		cD[socket.request.session.class].pollPrompt = ''
-		cD[socket.request.session.class].pollStatus = false
+		cD[socket.request.session.class].poll.responses = {}
+		cD[socket.request.session.class].poll.prompt = ''
+		cD[socket.request.session.class].poll.status = false
 		vbUpdate()
 	})
 
