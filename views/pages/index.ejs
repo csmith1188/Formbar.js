@@ -17,8 +17,7 @@
                     <a href="/controlPanel" class="quickButton">Teacher Controls</a>
                     <a href="/virtualbar" class="quickButton">Virtual Bar</a>
                     <a href="/help" class="quickButton">Help Ticket Creation</a>
-                    <a href="/bgm" class="quickButton">BGM</a>
-                    <a href="/sfx" class="quickButton">SFX</a>
+                    <a href="/plugins" class="quickButton">Plugins</a>
                     <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
                         Take Break
                     </button>
@@ -50,7 +49,7 @@
         </html>
 
         <script type="text/javascript">
-            socket.emit('vbData')
+            socket.emit('vbUpdate')
             socket.emit('cpupdate')
 
             let options = document.getElementsByName('option')

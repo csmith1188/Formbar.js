@@ -1,0 +1,60 @@
+<%- include('../partials/header_content') %>
+    <%- include('../partials/sockets') %>
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                #otherText {
+                    margin-top: 1rem;
+                    margin-bottom: 1rem;
+                }
+            </style>
+        </head>
+
+        <body id="colorContent">
+            <%- include('../partials/body_sidebar_content') %>
+                <h1 id="headerText">Plugins</h1>
+                <div id="plugins">
+                    <!-- <a href="/student" class="quickButton">Student Panel</a>
+                <br>
+                <a href="/controlPanel" class="quickButton">Teacher Controls</a>
+                <br>
+                <a href="/virtualbar" class="quickButton">Virtual Bar</a>
+                <br>
+                <a href="/help" class="quickButton">Help Ticket Creation</a>
+                <br>
+                <a href="/bgm" class="quickButton">BGM</a>
+                <br>
+                <a href="/sfx" class="quickButton">SFX</a>
+                <br> -->
+
+                </div>
+
+                <%- include('../partials/body_content') %>
+        </body>
+
+        </html>
+
+        <script type="text/javascript">
+            let pluginsDiv = document.getElementById('plugins')
+
+            socket.emit('pluginUpdate')
+            socket.on('pluginUpdate', (plugins) => {
+                let br = document.createElement('br')
+                console.log(plugins)
+                for (let plugin of plugins) {
+                    let pluginLink = document.createElement('a')
+                    pluginLink.className = 'quickButton'
+                    pluginLink.href = plugin.url
+                    pluginLink.target = '_blank'
+                    pluginLink.innerText = plugin.name
+                    pluginsDiv.append(pluginLink)
+                    pluginsDiv.append(br.cloneNode(true))
+                }
+            })
+        </script>
+        <%- include('../partials/footer_content') %>

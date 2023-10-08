@@ -37,8 +37,10 @@
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
     "path": "^0.12.7",
+    "rpi-ws281x-native": "^1.0.4",
     "session-file-store": "^1.5.0",
     "socket.io": "^4.5.4",
+    "socket.io-client": "^4.7.2",
     "sqlite3": "^5.1.6",
     "stack": "^0.1.0"
   },
