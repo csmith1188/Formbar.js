@@ -200,7 +200,10 @@ function permCheck(req, res, next) {
 		if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
 			next()
 		} else {
-			res.send('Not High Enough Permissions')
+			res.render('pages/message', {
+				message: "Error: you don't have high enough permissions to access this page",
+				title: 'Error'
+			})
 		}
 	}
 }
@@ -212,7 +215,10 @@ function joinClass(userName, code) {
 		db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
 			if (err) {
 				console.log(err)
-				res.send('Something went wrong')
+				res.render('pages/message', {
+					message: "Error: something went wrong",
+					title: 'Error'
+				})
 			}
 			// Check to make sure there was a class with that name
 			if (id && cD[code] && cD[code].key == code) {
@@ -457,7 +463,6 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 			})
 			res.render('pages/createclass', {
 				title: 'Create Class',
-				color: '"dark blue"',
 				ownerClasses: ownerClasses
 			})
 		})
@@ -533,15 +538,13 @@ app.get('/delete', (req, res) => {
 // It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, (req, res) => {
 	res.render('pages/index', {
-		title: 'Formbar Home',
-		color: '"dark blue"'
+		title: 'Home'
 	})
 })
 
 
 app.get('/help', isAuthenticated, (req, res) => {
 	res.render('pages/help', {
-		color: '"dark blue"',
 		title: "Help"
 	})
 })
@@ -582,8 +585,7 @@ app.post('/previousLessons', (req, res) => {
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
 	res.render('pages/login', {
-		title: 'Formbar',
-		color: 'purple'
+		title: 'Login'
 	})
 })
 
@@ -762,8 +764,7 @@ app.get('/plugins', isAuthenticated, (req, res) => {
 //Send user to the select class page
 app.get('/selectclass', isLoggedIn, (req, res) => {
 	res.render('pages/selectclass', {
-		title: 'Select Class',
-		color: '"dark blue"'
+		title: 'Select Class'
 	})
 })
 
@@ -776,7 +777,10 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 		req.session.class = code
 		res.redirect('/home')
 	} else {
-		res.send('No Open Class with that Name')
+		res.render('pages/message', {
+			message: "Error: no open class with that name",
+			title: 'Error'
+		})
 	}
 })
 
@@ -827,17 +831,21 @@ app.get('/student', isLoggedIn, (req, res) => {
 			})
 
 		} else {
-			res.send('Please enter proper data')
+			res.render('pages/message', {
+				message: "Error: please enter proper data",
+				title: 'Error'
+			})
 		}
 
 	} else if (req.query.question == undefined) {
 		res.render('pages/student', {
 			title: 'Student',
-			color: '"dark blue"',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].poll.status,
 			posPollRes: JSON.stringify(posPollRes),
 			posTextRes: cD[req.session.class].poll.textRes,
+			myRes: cD[req.session.class].students[req.session.user].pollRes.buttonRes,
+			myTextRes: cD[req.session.class].students[req.session.user].pollRes.textRes,
 			pollPrompt: cD[req.session.class].poll.prompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
@@ -891,7 +899,6 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 	} else {
 		res.render('pages/virtualbar', {
 			title: 'Virtual Bar',
-			color: '"dark blue"',
 			io: io,
 			className: cD[req.session.class].className
 		})
@@ -905,6 +912,14 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 // Y
 
 // Z
+
+// 404
+app.use((req, res, next) => {
+	res.status(404).render('pages/message', {
+		message: "Error: page does not exist",
+		title: "Error"
+	})
+})
 
 
 // Middleware for sockets
@@ -1017,21 +1032,27 @@ io.on('connection', (socket) => {
 
 		for (let i = 0; i < Object.keys(polls).length; i++) {
 			let color = ''
-			let CC = '0123456789ABCDEF'
+			let CC = '01234569ABCDEF'
 			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[15 - Math.floor(i / 2)]
-			switch (i % 4) {
+			let colorJ = CC[13 - Math.floor(i / 2)]
+			switch (i % 6) {
 				case 0:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
+					color = `#${colorJ}${colorI}${colorI}`
 					break
 				case 1:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
+					color = `#${colorI}${colorI}${colorJ}`
 					break
 				case 2:
-					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
+					color = `#${colorI}${colorJ}${colorI}`
 					break
 				case 3:
-					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
+					color = `#${colorJ}${colorI}${colorJ}`
+					break
+				case 4:
+					color = `#${colorI}${colorJ}${colorJ}`
+					break
+				case 5:
+					color = `#${colorJ}${colorJ}${colorI}`
 					break
 			}
 			polls[Object.keys(polls)[i]].color = color
@@ -1092,7 +1113,7 @@ io.on('connection', (socket) => {
 		for (let i = 0; i < resNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[letterString[i]] = 'Answer ' + letterString[i]
 			} else {
 				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
 			}
@@ -1204,7 +1225,7 @@ io.on('connection', (socket) => {
 		for (let i = 0; i < answerNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[letterString[i]] = 'Answer ' + letterString[i]
 			} else {
 				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
 			}
@@ -1246,7 +1267,7 @@ io.on('connection', (socket) => {
 				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
 						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+						cD[socket.request.session.class].poll.responses[letterString[i]] = 'Answer ' + letterString[i]
 					} else {
 						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
 					}

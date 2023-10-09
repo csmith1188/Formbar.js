@@ -2,9 +2,9 @@
 <html lang="en">
 <%- include('../partials/header_content') %>
 	<%- include('../partials/sockets') %>
-		<%- include('../partials/body_sidebar_content') %>
+		<%- include('../partials/formbar_header') %>
 
-			<body id="colorContent" onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
+			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
 				<div id="lessonContent">
 					<%if(lesson.content !=undefined){%>
 						<h3 id="headerText">
@@ -25,13 +25,13 @@
 										<br>
 										<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
 										<% } else { %>
-											<h1 id="headerText">No active lesson</h1>
+											<h1 id="headerText" class="textColorContent">No active lesson</h1>
 											<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
 											<% } %>
 
 				</div>
 				<div id="pollContent">
-					<h1 id="noPoll" class="textColorContent">No Poll Is Active Currently</h1>
+					<h1 id="noPoll" class="textColorContent">No active poll</h1>
 
 					<div id="poll">
 						<u>
@@ -64,6 +64,8 @@
 				var poll = document.getElementById('poll')
 				var noPoll = document.getElementById('noPoll')
 				var poll = document.getElementById('poll')
+				var oldLettRes = '<%- myRes %>'
+				var oldTextRes = '<%- myTextRes %>'
 
 				function pageload(mode, pollStatus, pollTextRes, quiz) {
 					if (mode == 'poll') {
@@ -73,7 +75,7 @@
 						var posPollRes = '<%- posPollRes %>'
 						posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posPollRes = JSON.parse(posPollRes)
-						posPollRes[''] = 'remove'
+						posPollRes[''] = 'Remove'
 						var posTextRes = '<%- posTextRes %>'
 						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posTextRes = JSON.parse(posTextRes)
@@ -83,21 +85,31 @@
 
 							let keys = Object.keys(posPollRes)
 
-							// Creates all selectable answers and displays them to the user
-							for (let i = 0; i < keys.length; i++) {
-								pollForm.innerHTML += `
-                  <label class="form-control" id="pollControl">
-                      <input type="radio" name="poll" id="${keys[i]}" value="${keys[i]}">
-                      ${posPollRes[keys[i]]}
-                  </label>
-                  `
-							}
-							if (posTextRes) {
-								pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox">`
-							}
+							socket.emit('vbUpdate')
+							socket.on('vbUpdate', (pollsData) => {
+								if (pollForm.innerText) return
+								// Creates all selectable answers and displays them to the user
+								for (let i = 0; i < keys.length; i++) {
+									//Show the color associated with the answer
+									let color = pollsData.polls[keys[i]]?.color || 'black'
+									pollForm.innerHTML += `
+										<label class="form-control" id="pollControl" style="--theme-color: ${color};">
+											<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
+											${posPollRes[keys[i]]}
+										</label>
+									`
+								}
+								if (posTextRes) {
+									pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
+								}
+							})
 						} else {
 							noPoll.style.display = 'block'
 							poll.style.display = 'none'
+						}
+
+						if (oldLettRes) {
+							document.getElementById(oldLettRes).checked = true
 						}
 
 					} else if (mode == 'quiz') {
@@ -153,11 +165,25 @@
 					socket.emit('vbUpdate')
 					socket.emit('cpupdate')
 					socket.emit('sfxPlay', 'sfx_up01')
+					let alertText = ''
 					setTimeout(function () {
-						if (lettRes > 0)
-							alert('Poll Submitted ' + lettRes)
-						else
-							alert('Removed Poll')
+						if (lettRes)
+							alertText += 'Response submitted: ' + lettRes
+						else if (oldLettRes)
+							alertText += 'Response removed'
+						else if (document.getElementById('remove').checked)
+							alertText += 'No poll response to remove'
+						if (textRes) {
+							if (alertText) alertText += '\n'
+							alertText += 'Text response submitted: ' + textRes
+						} else if (oldTextRes) {
+							if (alertText) alertText += '\n'
+							alertText += 'Text response removed'
+						}
+						if (alertText) alert(alertText)
+
+						oldLettRes = lettRes
+						oldTextRes = textRes
 					}, 100)
 				}
 

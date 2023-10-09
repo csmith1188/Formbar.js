@@ -1,3 +1,5 @@
+/* --- GENERAL --- */
+
 :root {
   /*All pages can use this set of colors*/
 
@@ -32,80 +34,118 @@
   --bg-dark-green: #243;
   --bg-dark-blue: #000922;
   --bg-dark-purple: #423;
-}
 
-/*Every page should have a theme color*/
-
-.light {
-  --bg-color: white;
-  --theme-color: var(--color-blue);
-  --main-color: black;
-  --gray-color: var(--dark-gray);
-  --emphasis-color: white;
-  --highlight-color: var(--light-gray);
-}
-
-.classic {
-  background: var(--bg-dark-blue);
-  --bg-color: var(--light-blue);
-  --theme-color: var(--bg-dark-blue);
-  --main-color: black;
-  --gray-color: var(--dark-gray);
-  --emphasis-color: white;
-  --highlight-color: var(--light-gray);
-}
-
-/*Dark mode is default*/
-.dark, body:where(:not(.light):not(.classic)) {
-  --bg-color: var(--bg-dark);
-  --main-color: white;
-  --gray-color: var(--light-gray);
-  --emphasis-color: var(--bg-darker);
-  --highlight-color: var(--bg-dark-highlight);
-}
-
-.red {
-  --theme-color: var(--light-red);
-}
-
-.brown {
-  --theme-color: var(--light-brown);
-}
-
-.orange {
-  --theme-color: var(--light-orange);
-}
-
-.yellow {
-  --theme-color: var(--light-yellow);
-}
-
-.green {
-  --theme-color: var(--light-green);
-}
-
-.blue {
-  --theme-color: var(--light-blue);
-}
-
-.purple {
-  --theme-color: var(--light-purple);
+  --bg-light: #d0c8e0; 
+  --bg-light-blue: #def;
 }
 
 body {
   font: 16px "Segoe UI", sans-serif;
   padding: 8px;
+  text-align: center;
+  --theme-color: var(--color-blue);
 }
 
-body, .light, .dark {
-  background: var(--bg-color);
-  color: var(--main-color);
+h1 {
+  text-align: center;
+  margin-top: 12px;
 }
 
+h2 {
+  margin-top: 32px;
+}
+
+a {
+  text-decoration: none;
+}
+
+* {
+  accent-color: var(--theme-color);
+}
+
+input {
+  font-size: inherit;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="url"],
+textarea,
+select {
+  background: var(--emphasis-color);
+  font-size: inherit;
+  font-family: inherit;
+  border: 1px solid;
+  margin: 2px 1px;
+  resize: none;
+}
+
+input[type="number"] {
+  width: 48px;
+}
+
+input[type="checkbox"] {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
+button,
+.quickButton {
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: inherit;
+  font-family: inherit;
+  background-color: var(--bg-light-blue);
+  color: var(--theme-color);
+  border: 2px solid var(--theme-color);
+  margin: 2px 1px;
+  cursor: pointer;
+  transition-duration: 0.2s;
+  transition-property: transform, box-shadow;
+}
+
+.quickButton {
+  display: inline-block;
+}
+
+/*Pop-out effect*/
+:is(button, .quickButton):not(.pressed):not(.unselectable):where(:hover, :focus-visible) {
+  transform: translate(2px, -2px);
+  box-shadow: -1px 1px var(--theme-color), -2px 2px var(--theme-color);
+}
+
+:is(button, .quickButton):not(.unselectable):active {
+  background: var(--theme-color);
+  color: white;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/*Shows that the button is currently active*/
+button.pressed,
+.quickButton.pressed {
+  background-color: var(--theme-color);
+  color: white;
+}
+
+dialog {
+  box-shadow: 3px 3px 10px black;
+}
+
+/*Shows that the element can't be interacted with*/
+.unselectable {
+  opacity: 50%;
+  cursor: not-allowed;
+}
+
+/*Makes the element invisible*/
 .hidden {
   display: none !important;
 }
 
+/*Makes the element take up the entire screen*/
 .fullScreen {
   position: fixed;
   top: 0;
@@ -115,6 +155,22 @@ body, .light, .dark {
   padding: 8px;
 }
 
+/*Centers the element horizontally within its parent*/
+.hCentered {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+/*Centers the element vertically within its parent*/
+.vCentered {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/*Centers the element horizontally and vertically*/
 .centered, .hCentered.vCentered {
   position: absolute;
   left: 50%;
@@ -123,231 +179,327 @@ body, .light, .dark {
   text-align: center;
 }
 
-.hCentered {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+#colorContent {
+  background-color: var(--bg-light);
+}
+
+.textColorContent {
+  color: var(--theme-color);
+}
+
+#content {
+  /* width: fit-content; */
+  /* max-width: 600px; */
+  width: 600px;
+  margin: auto;
+  padding: 100px 10px 10px;
+  background: white;
+  overflow: auto;
+  position: relative;
   text-align: center;
 }
 
-.vCentered {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+.contentBox {
+  border: solid 2px black;
+  border-radius: 10px;
+  padding: 20px !important;
+  font-size: 20px;
 }
 
-::selection {
-  background: var(--theme-color);
-  color: var(--bg-color);
+.contentBox h1 {
+  font-size: 40px;
 }
 
-::-webkit-scrollbar {
-  width: 15px;
-  height: 15px;
-}
-
-::-webkit-scrollbar-thumb {
-  box-shadow: inset 0 0 5px 5px var(--light-gray);
-  border: solid 5px transparent;
-}
-
-.light::-webkit-scrollbar-thumb {
-  box-shadow: inset 0 0 5px 5px var(--dark-gray);
-  border: solid 5px transparent;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  box-shadow: inset 0 0 5px 5px var(--main-color);
-}
-
-.light::-webkit-scrollbar-thumb:hover {
-  box-shadow: inset 0 0 5px 5px var(--bg-darker);
-}
-
-::-webkit-scrollbar-thumb:active {
-  box-shadow: inset 0 0 13px 13px var(--main-color);
-  border: solid 2px transparent;
-}
-
-.light::-webkit-scrollbar-thumb:active {
-  box-shadow: inset 0 0 13px 13px var(--bg-darker);
-  border: solid 2px transparent;
-}
-
-::-webkit-scrollbar-corner {
-  box-shadow: inset 0 0 5px 5px;
-  border: solid 5px transparent;
-}
-
-* {
-  font-family: inherit;
-  color: inherit;
-  accent-color: var(--theme-color);
-}
-
-input, button, textarea, select {
-  font-size: inherit;
-}
-
-/*Text inputs should be given class "line" or "box"*/
-
-.line {
-  width: 144px;
-  background: transparent;
-  border-color: var(--main-color);
-  border-style: none none solid;
-  outline: none;
-}
-
-.line[readonly] {
-  opacity: 50%;
-  cursor: not-allowed;
-  background: var(--highlight-color);
-}
-
-textarea, .box {
-  background: var(--emphasis-color);
-  color: var(--main-color);
-  border: 1px solid;
-}
-
-textarea:focus, .box:focus {
-  border: 1px solid;
-  outline: 1px solid;
-}
-
-button, .button {
-  cursor: pointer;
+#formbarHeader {
+  position: fixed;
+  width: 110%;
+  z-index: 1;
+  top: 0;
+  left: -5%;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
+  box-shadow: 0 3px 10px black;
   user-select: none;
 }
 
-/*Use class "button" for button-like inputs, such as submit and file*/
+.headerTab {
+  padding: 12px 16px;
+  font-size: 21px;
+  color: var(--light-gray);
+  cursor: pointer;
+}
 
-button:not(.inline), .button:not(.inline) {
-  padding: 3px 9px;
-  border-radius: 9999px;
-  background: var(--emphasis-color);
+.headerTab:hover ,
+.headerTab:focus {
+  background-color: #00000055;
+  color: white;
+}
+
+#headerLogo {
+  padding: 8px 16px 10px;
+  font-size: 24px;
+  font-family: 'Arial Black';
+  color: white;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+.headerText {
   color: var(--theme-color);
-  border: 1px solid;
+}
+
+/* Custom radio button code */
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+#pollControl {
+  display: grid;
+  place-content: center;
+  min-height: 20px;
+}
+
+.form-control {
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.1;
+  display: grid;
+  grid-template-columns: 1em auto;
+  gap: 0.5em;
+}
+
+.form-control+.form-control {
+  margin-top: 1em;
+}
+
+.form-control:focus-within {
+  color: var(--theme-color);
+}
+
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--form-background);
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 0.15em solid currentColor;
+  border-radius: 50%;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+
+input[type="radio"]::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--theme-color);
+  background-color: CanvasText;
+}
+
+input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+input[type="radio"]:focus {
+  outline: max(2px, 0.15em) solid currentColor;
+  outline-offset: max(2px, 0.15em);
+}
+
+/* --- LOGIN --- */
+
+.loginBox {
+  width: 256px;
+  height: 30px;
+  display: block;
+  margin: auto !important;
+  margin-top: 8px !important;
+  text-align: left;
+  font-size: 16px;
+}
+
+/* --- HOMEPAGE --- */
+
+#indexGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 270px);
+  gap: 15px;
+  justify-content: center;
+}
+
+#indexGrid .quickButton {
+  width: 100%;
+  padding: 20px;
+  font-size: 24px;
+  margin: 0;
+  transition-duration: 0ms;
+}
+
+#indexGrid .quickButton:hover,
+#indexGrid .quickButton:focus-visible {
+  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
+  color: white;
+  border-color: transparent;
+  border-width: 2px 0;
+  transform: none;
+  box-shadow: none;
+}
+
+#requestBreakDialog {
+  width: 300px;
+  height: 300px;
+}
+
+#otherText {
+  font-size: 14px;
+  margin-top: 15px;
+}
+
+#takeBreak {
+  position: absolute;
+  width: 100%;
+  bottom: 20px;
+}
+
+#takeBreak #cancel {
+  --theme-color: #333;
+  background-color: white;
+  margin-right: 10px;
+}
+
+#takeBreak #cancel:active {
+  background-color: var(--theme-color);
+}
+
+/* --- STUDENT PANEL --- */
+
+#pollForm label {
+  width: fit-content;
+  margin: 1em auto 0;
+  filter: brightness(75%);
+  user-select: none;
+}
+
+/* --- CONTROL PANEL --- */
+
+#quickmenu {
+  text-align: center;
+  margin: auto;
+  margin-bottom: 16px;
+}
+
+#quickmenu .quickButton {
+  width: 200px;
+  margin: 0 5px;
+  border-radius: 9999px;
+  font-size: 20px;
+  border-width: 2px;
+  padding: 3px;
+}
+
+#permChanges {
   font-size: 18px;
 }
 
-button:where(:not(.popOut):where(:not(.unselectable):not(.pressed))):hover,
-.button:where(:not(.popOut):where(:not(.unselectable):not(.pressed))):hover {
-  background: var(--highlight-color);
+#permChanges button,
+#permChanges .quickButton {
+  font-size: 16px;
 }
 
-/*Use class "inline" for buttons that are within the flow of text. "inline" should always be used with "popOut" (but not vice versa)*/
-
-button.inline, .button.inline {
-  background: var(--emphasis-color);
-  border: 1px solid;
-  border-radius: 6px;
-  color: var(--theme-color);
-  font-weight: bold;
+.filter,
+.sort {
+  line-height: 1.25;
+  margin: 5px 2px;
 }
 
-img.button.inline {
-  border: none;
+#startPollForm {
+  line-height: 2;
 }
 
-.popOut {
-  transition-duration: 0.2s;
+#pollAnsForm input:nth-of-type(2n + 1) {
+  margin-top: 8px;
+  margin-right: 16px;
 }
 
-.popOut:hover:where(:not(.unselectable):not(.pressed)) {
-  transform: translate(2px, -2px);
-  box-shadow: -1px 1px, -2px 2px;
-}
-
-.popOut.moreDepth:where(:not(.unselectable):not(.pressed)):hover:not(:active) {
-  transform: translate(4px, -4px);
-  box-shadow: -1px 1px, -2px 2px, -3px 3px, -4px 4px;
-}
-
-.popOut:where(:not(.unselectable):not(.pressed)):active {
-  transform: initial;
-  box-shadow: initial;
-  background: var(--highlight-color);
-}
-
-.unselectable {
-  opacity: 50%;
-  cursor: not-allowed;
-}
-
-.pressed.pressed {
-  background: var(--theme-color);
-  border-color: var(--theme-color);
-  color: var(--bg-color);
-  cursor: default;
-}
-
-input[type="number"] {
-  width: 48px;
-}
-
-input[type="color"] {
-  width: 80px;
-  height: 20px;
-}
-
-input[type="range"] {
-  width: 96px;
+.pollAnsColor {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: 9999px;
+  margin: 0 2px 5px;
   vertical-align: middle;
 }
 
-input {
-  color: black;
+#startPoll {
+  font-size: 18px;
+  margin-top: 8px;
 }
 
-textarea {
-  resize: none;
+#endPoll {
+  font-size: 18px;
+  margin: auto;
 }
 
-select {
-  background: var(--emphasis-color);
-  border: 1px var(--theme-color) solid;
-}
-
-select:focus {
-  outline: 1px var(--theme-color) solid;
-}
-
-a {
-  color: var(--theme-color);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-table, th, td {
-  border: 1px solid;
-  border-collapse: collapse;
-}
-
-.redColor {
-  color: var(--color-red) !important;
-}
-
-.yellowColor {
-  color: var(--color-yellow) !important;
-}
-
-.greenColor {
-  color: var(--color-green) !important;
-}
-
-.cyanColor {
-  color: var(--color-cyan) !important;
-}
-
-.blueColor {
-  color: var(--color-blue) !important;
-}
-
-.smallImg {
-  width: 24px;
-  margin-left: 4px;
+#plugins input,
+#plugins button {
+  margin: 4px;
   vertical-align: middle;
-  cursor: pointer;
+}
+
+#plugins button {
+  font-size: 14px;
+  width: 110px;
+}
+
+/* --- VIRTUAL BAR --- */
+
+#virtualBar {
+  width: calc(100% - 32px);
+}
+
+#pixBox {
+  width: 100%;
+  height: 64px;
+  box-sizing: border-box;
+  border: 1px solid white;
+  display: flex;
+  justify-content: space-around;
+  user-select: none;
+}
+
+#text {
+  width: 10ch;
+  padding: 0 4px;
+  border: 1px white;
+  border-style: solid solid none;
+  background: black;
+  font: 32px monospace;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+/* --- BGM & SFX --- */
+
+#playStop .quickButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: var(--bg-light-blue);
+  color: var(--theme-color);
+}
+
+#nowPlaying {
+  text-align: center;
+  color: var(--theme-color);
 }

@@ -7,44 +7,40 @@
             <meta charset="UTF-8">
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                #otherText {
-                    margin-top: 1rem;
-                    margin-bottom: 1rem;
-                }
-            </style>
         </head>
 
         <body id="colorContent">
-            <h1 id="headerText">Formbar</h1>
-            <div id="indexContent">
-                <a href="/student" class="quickButton">Student Panel</a>
-                <br>
-                <a href="/controlPanel" class="quickButton">Teacher Controls</a>
-                <br>
-                <a href="/virtualbar" class="quickButton">Virtual Bar</a>
-                <br>
-                <a href="/help" class="quickButton">Help Ticket Creation</a>
-                <br>
-                <a href="/plugins" class="quickButton">Plugins</a>
-                <br>
-                <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
-                    Take Break
-                </button>
+            <div id="content" class="contentBox">
+                <h1 class="headerText">Formbar</h1>
+                <div id="indexGrid">
+                    <a href="/student" class="quickButton">Student Panel</a>
+                    <a href="/controlPanel" class="quickButton">Teacher Controls</a>
+                    <a href="/virtualbar" class="quickButton">Virtual Bar</a>
+                    <a href="/help" class="quickButton">Help Ticket Creation</a>
+                    <a href="/plugins" class="quickButton">Plugins</a>
+                    <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
+                        Take Break
+                    </button>
+                </div>
             </div>
-            <dialog id="requestBreakDialog">
+            <dialog id="requestBreakDialog" class="contentBox">
                 <form onsubmit="submitBreak(event)">
-                    <label class="form-control" id="pollControl" for="bathroom">
-                        <input type="radio" name="option" id="bathroom" value="Bathroom" required>
-                        Bathroom
-                    </label>
-                    <label class="form-control" id="pollControl" for="other">
-                        <input type="radio" name="option" id="other" value="other">
-                        Other
-                    </label>
-                    <textarea id="otherText" cols="30" rows="5" maxlength="150" style="display: none"></textarea>
-                    <br>
-                    <button class="quickButton" type="submit">Take Break</button>
+                    <h3 style="margin-top: 0;">Take a break</h3>
+                    <div id="breakInputs" class="centered">
+                        <label class="form-control" id="pollControl" for="bathroom">
+                            <input type="radio" name="option" id="bathroom" value="Bathroom" required checked>
+                            Bathroom
+                        </label>
+                        <label class="form-control" id="pollControl" for="other">
+                            <input type="radio" name="option" id="other" value="other">
+                            Other
+                        </label>
+                        <textarea class="hidden" id="otherText" cols="25" rows="3" maxlength="150"></textarea>
+                    </div>
+                    <div id="takeBreak" class="hCentered">
+                        <button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestBreakDialog').close();">Cancel</button>
+                        <button class="quickButton" type="submit">Take Break</button>
+                    </div>
                 </form>
             </dialog>
             <%- include('../partials/body_content') %>
@@ -61,15 +57,14 @@
                 option.onchange = () => {
                     let otherRadio = document.getElementById('other')
                     let otherText = document.getElementById('otherText')
-                    otherText.className = 'quickButton'
 
                     if (otherRadio.checked) {
                         otherText.required = true
-                        otherText.style.display = ''
+                        otherText.classList.remove('hidden')
                     }
                     else {
                         otherText.required = false
-                        otherText.style.display = 'none'
+                        otherText.classList.add('hidden')
                     }
                 }
             }

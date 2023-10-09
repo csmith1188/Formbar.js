@@ -1,8 +1,18 @@
 <%- include('../partials/header_content') %>
 
 <body id="colorContent">
-    <form action="selectclass" method="post">
-            <input type="text" required="true" name="key" placeholder="class code" class="quickButton">
-            <input type="submit" id="submitButton" class="button unselectable quickButton" value="Submit" onsubmit="return false;">
-    </form>
+    <div id="content" class="contentBox">
+        <form action="selectclass" method="post">
+                <h2 class="headerText">Join a class</h2>
+                <input type="text" required="true" name="key" id="key" placeholder="Class code">
+                <input type="submit" id="submitButton" class="button unselectable quickButton" value="Submit" onsubmit="return false;">
+        </form>
+    </div>
 </body>
+
+<script>
+    document.getElementById("key").oninput = function() {
+        if (this.value) document.getElementById("submitButton").classList.remove("unselectable");
+        else document.getElementById("submitButton").classList.add("unselectable");
+    };
+</script>

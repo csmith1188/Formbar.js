@@ -3,11 +3,11 @@
     <%- include('../partials/sockets') %>
         <html lang="en">
 
-        <body id="colorContent">
-            <%- include('../partials/body_sidebar_content') %>
+        <body style="font-size: 18px;">
+            <%- include('../partials/formbar_header') %>
                 <form id="eventForm">
-                    <textarea id="ticket" class="quickButton" cols="30" rows="5" maxlength="150"
-                        placeholder="Reason(optional)"></textarea>
+                    <textarea id="ticket" cols="30" rows="5" maxlength="150"
+                        placeholder="Reason (optional)"></textarea>
                     <!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
                 </form>
                 <button onclick="help()" class="quickButton">Send Ticket</button>
@@ -25,7 +25,7 @@
                     seconds: today.getSeconds()
                 }
                 console.log(reason.length)
-                alert('Help Ticket Sent')
+                alert('Help ticket sent')
                 socket.emit('help', reason, time)
                 socket.emit('cpupdate')
                 socket.emit('sfxPlay', "sfx_up04")

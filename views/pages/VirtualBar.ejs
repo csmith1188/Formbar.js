@@ -7,23 +7,24 @@
 			<style>
 				body {
 					user-select: none;
-					background: var(--bg-dark-blue);
 					display: grid;
 				}
 
-				#virtualbar {
-					margin-top: 0.5%;
-					max-height: 98%;
-					max-width: 98%;
+				#vbContainer {
+					position: absolute;
+					top: 75px;
+					height: 85%;
 					justify-self: center;
 				}
 			</style>
 		</head>
 
 		<body>
-			<p id="noPoll">No Poll Is Active Currently</p>
-			<div class="container"></div>
-			<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
+            <%- include('../partials/formbar_header') %>
+			<h1 id="noPoll" class="textColorContent">No active poll</h1>
+			<div id="vbContainer">
+				<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
+			</div>
 			<%- include('../partials/body_content') %>
 		</body>
 
@@ -47,12 +48,12 @@
 				},
 				options: {
 					responsive: true,
-					maintainAspectRatio: true,
+					maintainAspectRatio: false,
 					plugins: {
 						legend: {
 							labels: {
 								font: {
-									size: 15
+									size: 20
 								},
 								color: 'black'
 							}
@@ -67,7 +68,7 @@
 			// Update the virtual bar
 			// Creates new labels and colors, plus imports all new data to the table
 			function update(data) {
-				if (data.pollStatus) {
+				if (data.poll.status) {
 					noPoll.style.display = 'none'
 
 					//reset virtual bar
@@ -84,7 +85,7 @@
 
 					// make the polls blind unless all students answered
 					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes) {
+						if (data.students[student].pollRes.buttonRes) {
 							totalResponses++
 						}
 						totalStudents++
@@ -104,8 +105,8 @@
 						labelsArray.push('Responses')
 						studResponses.responses = 0
 					} else {
-						for (const answer of Object.keys(data.posPollResObj)) {
-							labelsArray.push(data.posPollResObj[answer])
+						for (const answer of Object.keys(data.poll.responses)) {
+							labelsArray.push(data.poll.responses[answer])
 							studResponses[answer] = 0
 						}
 					}
@@ -126,10 +127,10 @@
 					// Loops through all student answers and adds them to a total tally
 					// Student response corresponds with a property name in studResponses
 					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes)
+						if (data.students[student].pollRes.buttonRes)
 							if (data.blindPoll)
 								studResponses.responses++
-							else studResponses[data.students[student].pollRes]++
+							else studResponses[data.students[student].pollRes.buttonRes]++
 						else studResponses.noResponse++
 					}
 					//
