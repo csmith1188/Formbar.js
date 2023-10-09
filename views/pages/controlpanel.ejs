@@ -64,7 +64,7 @@
 						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')" class="quickButton">
 						<br>
 						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
-						<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
+							<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
 					</form>
 					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 					<br>
@@ -311,7 +311,7 @@
 				if (pollType == 'poll') {
 					var pollAnsNames = document.getElementsByName('pollAnsName')
 					var blind = document.getElementById('blind').checked
-	
+
 					var pollAnsValues = []
 					for (let i = 0; i < pollAnsNames.length; i++) {
 						pollAnsValues.push(pollAnsNames[i].value)
@@ -331,7 +331,7 @@
 				};
 			};
 
-			resNumber.onchange = function() {
+			resNumber.onchange = function () {
 				if (this.value < 1) this.value = 1
 				if (this.value > 26) this.value = 26
 				if (pollAnsForm.style.display == 'block') namePollFunc()
@@ -428,7 +428,7 @@
 					let breakText = document.createElement("p");
 					breakText.innerText += "taking a break";
 					newStudent.appendChild(breakText);
-				} 
+				}
 				else if (studentData.break) {
 					let breakDiv = document.createElement("div");
 					breakDiv.setAttribute("id", "break");
@@ -463,7 +463,7 @@
 					};
 					let helpTimeDisplay = document.createElement("p");
 					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`;
-					help.appendChild(helpTimeDisplay); 
+					help.appendChild(helpTimeDisplay);
 					let deleteTicketButton = document.createElement("button");
 					deleteTicketButton.classList.add("quickButton");
 					deleteTicketButton.dataset.studentName = student;
@@ -481,18 +481,22 @@
 					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes}`;
 					newStudent.appendChild(pollTextResponse);
 				};
-				if (studentData.pollRes) {
+				if (studentData.pollRes.buttonRes) {
 					let pollResponse = document.createElement("p");
 					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes}`;
 					newStudent.appendChild(pollResponse);
+				};
+				if (studentData.pollRes.textRes) {
+					let textResponse = document.createElement("p");
+					textResponse.innerText = `Text Response: ${studentData.pollRes.textRes}`;
+					newStudent.appendChild(textResponse);
 				};
 				let permissionSwitch = document.createElement("select");
 				permissionSwitch.setAttribute("name", "permSwitch");
 				permissionSwitch.setAttribute("class", "permSwitch");
 				permissionSwitch.setAttribute("data-userid", student);
-				console.log(student);
 				permissionSwitch.onchange = (event) => {
-					updatePerms(event.target)	
+					updatePerms(event.target)
 				};
 				if (studentData.permissions == 0) {
 					let teacherOption = document.createElement("option");
@@ -671,6 +675,7 @@
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
 						objectA = entireA[1]
 						objectB = entireB[1]
+						console.log(objectA, objectB);
 						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
 							return objectA.pollRes.textRes.localeCompare(objectB.pollRes.textRes)
 						} else if (objectA.pollRes.textRes) return -1
@@ -679,7 +684,6 @@
 							return objectA.pollRes.buttonRes.localeCompare(objectB.pollRes.buttonRes)
 						} else if (objectA.pollRes.buttonRes) return -1
 						else if (objectB.pollRes.buttonRes) return 1
-						else return objectA.username.localeCompare(objectB.username)
 					}))
 				} else if (sort.polls == 2) {
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
@@ -693,7 +697,6 @@
 							return objectB.pollRes.buttonRes.localeCompare(objectA.pollRes.buttonRes)
 						} else if (objectA.pollRes.buttonRes) return 1
 						else if (objectB.pollRes.buttonRes) return -1
-						else return objectB.username.localeCompare(objectA.username)
 					}))
 				}
 

@@ -773,10 +773,12 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 app.post('/selectclass', isLoggedIn, async (req, res) => {
 	let code = req.body.key.toLowerCase()
 	let checkComplete = await joinClass(req.session.user, code)
+	console.log(checkComplete);
 	if (checkComplete) {
 		req.session.class = code
 		res.redirect('/home')
 	} else {
+		// res.send('Error: no open class with that name')
 		res.render('pages/message', {
 			message: "Error: no open class with that name",
 			title: 'Error'
@@ -791,7 +793,7 @@ Poll: For displaying a multiple choice or essay question
 Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
-app.get('/student', isLoggedIn, (req, res) => {
+app.get('/student', isAuthenticated, (req, res) => {
 	//Poll Setup
 	let user = {
 		name: req.session.user,
@@ -1027,7 +1029,6 @@ io.on('connection', (socket) => {
 				)
 					polls[studentData.pollRes.buttonRes].responses++
 			}
-			console.log(polls);
 		}
 
 		for (let i = 0; i < Object.keys(polls).length; i++) {
