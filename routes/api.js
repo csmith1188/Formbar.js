@@ -189,7 +189,7 @@ const api = (cD) => {
 		if (Object.keys(classData.posPollResObj).length > 0) {
 			for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
 				polls[resKey] = {
-					display: resValue,
+					...resValue,
 					responses: 0
 				}
 			}
@@ -200,34 +200,6 @@ const api = (cD) => {
 				)
 					polls[studentData.pollRes].responses++
 			}
-		}
-
-		for (let i = 0; i < Object.keys(polls).length; i++) {
-			let color = ''
-			let CC = '01234569ABCDEF'
-			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[13 - Math.floor(i / 2)]
-			switch (i % 6) {
-				case 0:
-					color = `#${colorJ}${colorI}${colorI}`
-					break
-				case 1:
-					color = `#${colorI}${colorI}${colorJ}`
-					break
-				case 2:
-					color = `#${colorI}${colorJ}${colorI}`
-					break
-				case 3:
-					color = `#${colorJ}${colorI}${colorJ}`
-					break
-				case 4:
-					color = `#${colorI}${colorJ}${colorJ}`
-					break
-				case 5:
-					color = `#${colorJ}${colorJ}${colorI}`
-					break
-			}
-			polls[Object.keys(polls)[i]].color = color
 		}
 
 		response.json({

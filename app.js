@@ -773,7 +773,6 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 app.post('/selectclass', isLoggedIn, async (req, res) => {
 	let code = req.body.key.toLowerCase()
 	let checkComplete = await joinClass(req.session.user, code)
-	console.log(checkComplete);
 	if (checkComplete) {
 		req.session.class = code
 		res.redirect('/home')
@@ -799,7 +798,7 @@ app.get('/student', isAuthenticated, (req, res) => {
 		name: req.session.user,
 		class: req.session.class
 	}
-	let posPollRes = cD[req.session.class].poll.responses;
+	let posPollRes = cD[req.session.class].poll.responses
 	let answer = req.query.letter
 	if (answer) {
 		cD[req.session.class].students[req.session.user].pollRes.buttonRes = answer
@@ -1008,7 +1007,7 @@ io.on('connection', (socket) => {
 	function vbUpdate() {
 		let classData = JSON.parse(JSON.stringify(cD[socket.request.session.class]))//Object.assign({}, cD[socket.request.session.class])
 
-		let polls = {}
+		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
 			if (student.break == true || student.permissions == 0) delete classData.students[username]
@@ -1016,8 +1015,8 @@ io.on('connection', (socket) => {
 
 		if (Object.keys(classData.poll.responses).length > 0) {
 			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
-				polls[resKey] = {
-					display: resValue,
+				responses[resKey] = {
+					...resValue,
 					responses: 0
 				}
 			}
@@ -1025,46 +1024,20 @@ io.on('connection', (socket) => {
 			for (let studentData of Object.values(classData.students)) {
 				if (
 					studentData &&
-					Object.keys(polls).includes(studentData.pollRes.buttonRes)
+					Object.keys(responses).includes(studentData.pollRes.buttonRes)
 				)
-					polls[studentData.pollRes.buttonRes].responses++
+					responses[studentData.pollRes.buttonRes].responses++
 			}
-		}
-
-		for (let i = 0; i < Object.keys(polls).length; i++) {
-			let color = ''
-			let CC = '01234569ABCDEF'
-			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[13 - Math.floor(i / 2)]
-			switch (i % 6) {
-				case 0:
-					color = `#${colorJ}${colorI}${colorI}`
-					break
-				case 1:
-					color = `#${colorI}${colorI}${colorJ}`
-					break
-				case 2:
-					color = `#${colorI}${colorJ}${colorI}`
-					break
-				case 3:
-					color = `#${colorJ}${colorI}${colorJ}`
-					break
-				case 4:
-					color = `#${colorI}${colorJ}${colorJ}`
-					break
-				case 5:
-					color = `#${colorJ}${colorJ}${colorI}`
-					break
-			}
-			polls[Object.keys(polls)[i]].color = color
 		}
 
 		io.to(cD[socket.request.session.class].className).emit('vbUpdate', {
+			status: classData.poll.status,
 			totalStudents: Object.keys(classData.students).length,
-			pollStatus: classData.poll.status,
-			blindPoll: classData.poll.blind,
-			pollPrompt: classData.poll.prompt,
-			polls: polls
+			polls: responses,
+			textRes: classData.poll.textRes,
+			prompt: classData.poll.prompt,
+			weight: classData.poll.weight,
+			blind: classData.poll.blind
 		})
 	}
 
@@ -1112,15 +1085,51 @@ io.on('connection', (socket) => {
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
+			let key = ''
+			let display = ''
+
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = 'Answer ' + letterString[i]
+				key = letterString[i]
+				display = 'Answer ' + letterString[i]
+
 			} else {
-				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
+				key = answerNames[i]
+				display = answerNames[i]
 			}
+			cD[socket.request.session.class].poll.responses[key] = { display: display }
+
+			let color = ''
+			let CC = '01234569ABCDEF'
+			let colorI = CC[Math.floor(i / 2)]
+			let colorJ = CC[13 - Math.floor(i)]
+			switch (i % 6) {
+				case 0:
+					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
+					break
+				case 1:
+					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
+					break
+				case 2:
+					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
+					break
+				case 3:
+					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorJ}${colorJ}`
+					break
+				case 4:
+					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorJ}${colorJ}`
+					break
+				case 5:
+					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
+					break
+			}
+			cD[socket.request.session.class].poll.responses[key].color = color
 		}
+
 		cD[socket.request.session.class].poll.textRes = resTextBox
 		cD[socket.request.session.class].poll.prompt = pollPrompt
+		cD[socket.request.session.class].poll.response
+
 		for (var key in cD[socket.request.session.class].students) {
 			cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
 			cD[socket.request.session.class].students[key].pollRes.textRes = ""
@@ -1291,7 +1300,6 @@ io.on('connection', (socket) => {
 					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 						if (err) {
 							console.log(err)
-
 						}
 					})
 				cD[socket.request.session.class].poll.textRes = false

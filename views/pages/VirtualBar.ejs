@@ -20,12 +20,12 @@
 		</head>
 
 		<body>
-            <%- include('../partials/formbar_header') %>
-			<h1 id="noPoll" class="textColorContent">No active poll</h1>
-			<div id="vbContainer">
-				<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
-			</div>
-			<%- include('../partials/body_content') %>
+			<%- include('../partials/formbar_header') %>
+				<h1 id="noPoll" class="textColorContent">No active poll</h1>
+				<div id="vbContainer">
+					<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
+				</div>
+				<%- include('../partials/body_content') %>
 		</body>
 
 		</html>
@@ -65,92 +65,12 @@
 
 			let noPoll = document.getElementById('noPoll')
 
-			// Update the virtual bar
-			// Creates new labels and colors, plus imports all new data to the table
-			function update(data) {
-				if (data.poll.status) {
-					noPoll.style.display = 'none'
-
-					//reset virtual bar
-					doughnutChart.data.datasets[0].backgroundColor = []
-					doughnutChart.data.datasets[0].data = []
-
-					// remove people on break and admins from virtualBar
-					for (let [username, student] of Object.entries(data.students)) {
-						if (student.break == true || student.permissions == 0) delete data.students[username]
-					}
-
-					let totalStudents = 0
-					let totalResponses = 0
-
-					// make the polls blind unless all students answered
-					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes.buttonRes) {
-							totalResponses++
-						}
-						totalStudents++
-					}
-
-					if (totalStudents == totalResponses) {
-						data.blindPoll = false
-					}
-
-					var labelsArray = []
-					var pollArray = []
-
-					let studResponses = {}
-					// Loops through object to get each label of the possible answers
-					// Also, create a new variable for each possible answer
-					if (data.blindPoll) {
-						labelsArray.push('Responses')
-						studResponses.responses = 0
-					} else {
-						for (const answer of Object.keys(data.poll.responses)) {
-							labelsArray.push(data.poll.responses[answer])
-							studResponses[answer] = 0
-						}
-					}
-					labelsArray.push('No Response')
-					studResponses.noResponse = 0
-
-					// Loops through all possible answers and generates a new color variant for each answer
-					// All possible answers should have a different color
-					if (data.blindPoll) {
-						doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
-					} else {
-						for (let i = 0; i < Object.keys(data.posPollResObj).length; i++) {
-
-							doughnutChart.data.datasets[0].backgroundColor.push(color)
-						}
-					}
-					doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-					// Loops through all student answers and adds them to a total tally
-					// Student response corresponds with a property name in studResponses
-					for (const student of Object.keys(data.students)) {
-						if (data.students[student].pollRes.buttonRes)
-							if (data.blindPoll)
-								studResponses.responses++
-							else studResponses[data.students[student].pollRes.buttonRes]++
-						else studResponses.noResponse++
-					}
-					//
-					for (const responses of Object.keys(studResponses)) {
-						pollArray.push(studResponses[responses])
-					}
-
-					doughnutChart.data.labels = labelsArray
-					doughnutChart.data.datasets[0].data = pollArray
-					doughnutChart.update()
-				} else {
-					noPoll.style.display = ''
-				}
-			}
-
 			// Calls for data
 			socket.emit('vbUpdate')
 			// Gets data from server and send it the function
 			socket.on('vbUpdate', (pollsData) => {
-				if (!pollsData.pollStatus) {
+				console.log(pollsData)
+				if (!pollsData.status) {
 					noPoll.style.display = ''
 					return
 				}
@@ -198,6 +118,7 @@
 					doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
 				} else {
 					for (let poll of Object.values(pollsData.polls)) {
+						console.log(poll)
 						doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
 					}
 				}

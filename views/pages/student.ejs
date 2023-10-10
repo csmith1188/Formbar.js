@@ -73,9 +73,9 @@
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
 						var posPollRes = '<%- posPollRes %>'
-						posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posPollRes = JSON.parse(posPollRes)
 						posPollRes[''] = 'Remove'
+						console.log(posPollRes)
 						var posTextRes = '<%- posTextRes %>'
 						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posTextRes = JSON.parse(posTextRes)
@@ -83,26 +83,21 @@
 							noPoll.style.display = 'none'
 							poll.style.display = 'block'
 
-							let keys = Object.keys(posPollRes)
-
-							socket.emit('vbUpdate')
-							socket.on('vbUpdate', (pollsData) => {
-								if (pollForm.innerText) return
-								// Creates all selectable answers and displays them to the user
-								for (let i = 0; i < keys.length; i++) {
-									//Show the color associated with the answer
-									let color = pollsData.polls[keys[i]]?.color || 'black'
-									pollForm.innerHTML += `
-										<label class="form-control" id="pollControl" style="--theme-color: ${color};">
-											<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
-											${posPollRes[keys[i]]}
-										</label>
-									`
-								}
-								if (posTextRes) {
-									pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
-								}
-							})
+							for (let [pollKey, pollValue] of Object.entries(posPollRes)) {
+								let pollLabel = document.createElement('label')
+								pollLabel.className = 'form-control'
+								pollLabel.id = 'pollControl'
+								pollLabel.style = `--theme-color: ${pollValue.color};`
+								let pollInput = document.createElement('input')
+								pollInput.type = 'radio'
+								pollInput.name = 'poll'
+								pollInput.id = pollValue.display || 'remove'
+								pollInput.value = pollKey
+								pollLabel.appendChild(pollInput)
+								pollLabel.innerHTML += pollValue.display || 'remove'
+								pollForm.appendChild(pollLabel)
+							}
+							pollForm.appendChild(removeLabel)
 						} else {
 							noPoll.style.display = 'block'
 							poll.style.display = 'none'
@@ -132,7 +127,6 @@
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'block'
 					}
-
 				}
 				/* _____   _____   _       _       _____
 				|  _  \ /  _  \ | |     | |     /  ___/
