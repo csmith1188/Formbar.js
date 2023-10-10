@@ -1,48 +1,33 @@
 {
-  "name": "formbar",
-  "version": "1.0.0",
-  "description": "Javascript rewrite of Formbar, an open source classroom management tool",
-  "main": "app.js",
-  "scripts": {
-    "dev": "nodemon app",
-    "start": "node app"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/csmith1188/Formbar.js.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/csmith1188/Formbar.js/issues"
-  },
-  "homepage": "https://github.com/csmith1188/Formbar.js#readme",
-  "dependencies": {
-    "busboy": "^1.6.0",
-    "bytes": "^3.1.2",
-    "connect-busboy": "^1.0.0",
-    "connect-session-knex": "^3.0.0",
-    "connect-session-sequelize": "^7.1.5",
-    "convert-excel-to-json": "^1.7.0",
-    "cookie-parser": "^1.4.6",
-    "cookie-session": "^2.0.0",
-    "cors": "^2.8.5",
-    "crypto": "^1.0.1",
-    "dotenv": "^16.0.3",
-    "ejs": "^3.1.8",
-    "express": "^4.18.1",
-    "express-fileupload": "^1.4.0",
-    "express-session": "^1.17.3",
-    "fs": "^0.0.1-security",
-    "jsonwebtoken": "^9.0.0",
-    "multer": "^1.4.5-lts.1",
-    "path": "^0.12.7",
-    "session-file-store": "^1.5.0",
-    "socket.io": "^4.5.4",
-    "sqlite3": "^5.1.6",
-    "stack": "^0.1.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  }
+	"name": "formbar",
+	"version": "1.0.0",
+	"description": "Javascript rewrite of Formbar, an open source classroom management tool",
+	"main": "app.js",
+	"scripts": {
+		"dev": "nodemon app",
+		"start": "node app"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/csmith1188/Formbar.js.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/csmith1188/Formbar.js/issues"
+	},
+	"homepage": "https://github.com/csmith1188/Formbar.js#readme",
+	"dependencies": {
+		"convert-excel-to-json": "^1.7.0",
+		"ejs": "^3.1.8",
+		"express": "^4.18.1",
+		"express-session": "^1.17.3",
+		"jsonwebtoken": "^9.0.0",
+		"multer": "^1.4.5-lts.1",
+		"socket.io": "^4.5.4",
+		"sqlite3": "^5.1.6"
+	},
+	"devDependencies": {
+		"nodemon": "^3.0.1"
+	}
 }

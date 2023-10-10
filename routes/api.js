@@ -109,6 +109,7 @@ const api = (cD) => {
 			let classData = Object.assign({}, cD[key])
 			for (let username of Object.keys(classData.students)) {
 				delete classData.students[username].pollRes
+				classData.students[username] = Object.assign({ loggedIn: true }, classData.students[username])
 			}
 			response.json(classData)
 		}
@@ -201,9 +202,38 @@ const api = (cD) => {
 			}
 		}
 
+		for (let i = 0; i < Object.keys(polls).length; i++) {
+			let color = ''
+			let CC = '01234569ABCDEF'
+			let colorI = CC[Math.floor(i / 2)]
+			let colorJ = CC[13 - Math.floor(i / 2)]
+			switch (i % 6) {
+				case 0:
+					color = `#${colorJ}${colorI}${colorI}`
+					break
+				case 1:
+					color = `#${colorI}${colorI}${colorJ}`
+					break
+				case 2:
+					color = `#${colorI}${colorJ}${colorI}`
+					break
+				case 3:
+					color = `#${colorJ}${colorI}${colorJ}`
+					break
+				case 4:
+					color = `#${colorI}${colorJ}${colorJ}`
+					break
+				case 5:
+					color = `#${colorJ}${colorJ}${colorI}`
+					break
+			}
+			polls[Object.keys(polls)[i]].color = color
+		}
+
 		response.json({
 			totalStudents: Object.keys(classData.students).length,
 			pollPrompt: classData.pollPrompt,
+			blindPoll: classData.blindPoll,
 			polls: polls
 		})
 	})

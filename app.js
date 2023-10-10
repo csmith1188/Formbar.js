@@ -26,27 +26,28 @@ var sessionMiddleware = session({
 })
 
 
-// Allows express to parse requests
-app.use(express.urlencoded({ extended: true }))
+// PROMPT: What does this do?
+// Sets up middleware for the server by calling sessionMiddleware
+// adds session middleware to express
+app.use(sessionMiddleware)
 
-
-// Use a static folder for web page assets
-app.use(express.static(__dirname + '/static'))
 
 // PROMPT: Does this allow use to associate client logins with their websocket connection?
 // PROMPT: Where did you find information on this. Please put the link here.
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server
 // adds session middle ware to socket.io
-io.use(function (socket, next) {
+io.use((socket, next) => {
 	sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
-// PROMPT: What does this do?
-// Sets up middleware for the server by calling sessionMiddleware
-// adds session middleware to express
-app.use(sessionMiddleware)
 
+// Allows express to parse requests
+app.use(express.urlencoded({ extended: true }))
+
+
+// Use a static folder for web page assets
+app.use(express.static(__dirname + '/static'))
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
@@ -66,8 +67,8 @@ class Student {
 		this.id = id
 		this.permissions = perms
 		this.pollRes = {
-			buttonRes : '',
-			textRes : ''
+			buttonRes: '',
+			textRes: ''
 		}
 		this.help = ''
 		this.break = ''
@@ -146,7 +147,6 @@ function clearDatabase() {
 			console.log(err)
 		}
 	})
-	return console.log('Database Deleted')
 }
 
 /*
@@ -158,7 +158,6 @@ This also allows for the website to check for perms
 function isAuthenticated(req, res, next) {
 	if (req.session.user) {
 		if (cD.noClass.students[req.session.user]) {
-			console.log(cD.noClass.students[req.session.user])
 			if (cD.noClass.students[req.session.user].permissions == 0) {
 				res.redirect('/createclass')
 			} else {
@@ -196,14 +195,16 @@ function permCheck(req, res, next) {
 		}
 		// Check for ?(urlParams) and removes it from the string
 		if (urlPath.indexOf('?') != -1) {
-			console.log(urlPath.indexOf('?'))
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 		// Checks if users permnissions are high enough
 		if (cD[req.session.class].students[req.session.user].permissions <= pagePermissions[urlPath]) {
 			next()
 		} else {
-			res.send('Not High Enough Permissions')
+			res.render('pages/message', {
+				message: "Error: you don't have high enough permissions to access this page",
+				title: 'Error'
+			})
 		}
 	}
 }
@@ -215,10 +216,12 @@ function joinClass(userName, code) {
 		db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
 			if (err) {
 				console.log(err)
-				res.send('Something went wrong')
+				res.render('pages/message', {
+					message: "Error: something went wrong",
+					title: 'Error'
+				})
 			}
 			// Check to make sure there was a class with that name
-			console.log(cD[code])
 			if (id && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
 				db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
@@ -247,7 +250,6 @@ function joinClass(userName, code) {
 							delete cD.noClass.students[userName]
 							// Add the student to the newly created class
 							cD[code].students[userName] = user
-							console.log('User added to class')
 							resolve(true)
 						}
 					)
@@ -443,7 +445,6 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 		}
 
 		cD[req.session.class].steps = steps
-		console.log(cD[req.session.class].steps)
 		res.redirect('/controlPanel')
 	}
 })
@@ -463,7 +464,6 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 			})
 			res.render('pages/createclass', {
 				title: 'Create Class',
-				color: '"dark blue"',
 				ownerClasses: ownerClasses
 			})
 		})
@@ -515,8 +515,6 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 			makeClass(classCode.key)
 		})
 	}
-
-
 })
 
 // D
@@ -541,15 +539,13 @@ app.get('/delete', (req, res) => {
 // It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, (req, res) => {
 	res.render('pages/index', {
-		title: 'Formbar Home',
-		color: '"dark blue"'
+		title: 'Home'
 	})
 })
 
 
 app.get('/help', isAuthenticated, (req, res) => {
 	res.render('pages/help', {
-		color: '"dark blue"',
 		title: "Help"
 	})
 })
@@ -579,7 +575,6 @@ app.get('/previousLessons', isAuthenticated, (req, res) => {
 
 app.post('/previousLessons', (req, res) => {
 	let lesson = JSON.parse(req.body.data)
-	console.log(lesson)
 	res.render('pages/lesson', {
 		lesson: lesson,
 		title: "Today's Lesson"
@@ -591,8 +586,7 @@ app.post('/previousLessons', (req, res) => {
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
 	res.render('pages/login', {
-		title: 'Formbar',
-		color: 'purple'
+		title: 'Login'
 	})
 })
 
@@ -660,7 +654,6 @@ app.post('/login', async (req, res) => {
 				let newAPI
 				let newSecret
 
-				console.log(users.length)
 				if (users.length == 0) permissions = 0
 
 				for (let user of users) {
@@ -687,7 +680,6 @@ app.post('/login', async (req, res) => {
 						if (err) {
 							console.log(err)
 						}
-						console.log('Success')
 					})
 				// Find the user in which was just created to get the id of the user
 				db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, rows) => {
@@ -738,7 +730,6 @@ app.post('/oauth', (req, res) => {
 			// If there is userData returned, it saves the database password to a variable.
 			if (userData) {
 				let databasePassword = decrypt(JSON.parse(userData.password))
-				console.log(databasePassword)
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
 				if (databasePassword == password) {
@@ -754,7 +745,12 @@ app.post('/oauth', (req, res) => {
 })
 
 // P
-
+app.get('/plugins', isAuthenticated, (req, res) => {
+	res.render('pages/plugins.ejs',
+		{
+			title: 'Plugins'
+		})
+})
 
 // Q
 
@@ -769,8 +765,7 @@ app.post('/oauth', (req, res) => {
 //Send user to the select class page
 app.get('/selectclass', isLoggedIn, (req, res) => {
 	res.render('pages/selectclass', {
-		title: 'Select Class',
-		color: '"dark blue"'
+		title: 'Select Class'
 	})
 })
 
@@ -779,11 +774,16 @@ app.get('/selectclass', isLoggedIn, (req, res) => {
 app.post('/selectclass', isLoggedIn, async (req, res) => {
 	let code = req.body.key.toLowerCase()
 	let checkComplete = await joinClass(req.session.user, code)
+	console.log(checkComplete);
 	if (checkComplete) {
 		req.session.class = code
 		res.redirect('/home')
 	} else {
-		res.send('No Open Class with that Name')
+		// res.send('Error: no open class with that name')
+		res.render('pages/message', {
+			message: "Error: no open class with that name",
+			title: 'Error'
+		})
 	}
 })
 
@@ -794,8 +794,7 @@ Poll: For displaying a multiple choice or essay question
 Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
-app.get('/student', isLoggedIn, (req, res) => {
-	console.log(cD[req.session.class].mode)
+app.get('/student', isAuthenticated, (req, res) => {
 	//Poll Setup
 	let user = {
 		name: req.session.user,
@@ -835,18 +834,22 @@ app.get('/student', isLoggedIn, (req, res) => {
 			})
 
 		} else {
-			res.send('Please enter proper data')
+			res.render('pages/message', {
+				message: "Error: please enter proper data",
+				title: 'Error'
+			})
 		}
 
 	} else if (req.query.question == undefined) {
 		console.log(cD[req.session.class].poll.responses);
 		res.render('pages/student', {
 			title: 'Student',
-			color: '"dark blue"',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].poll.status,
 			posPollRes: JSON.stringify(cD[req.session.class].poll.responses),
 			posTextRes: JSON.stringify(cD[req.session.class].poll.textRes),
+			myRes: cD[req.session.class].students[req.session.user].pollRes.buttonRes,
+			myTextRes: cD[req.session.class].students[req.session.user].pollRes.textRes,
 			pollPrompt: cD[req.session.class].poll.prompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
@@ -889,8 +892,6 @@ app.post('/student', (req, res) => {
 })
 
 
-
-
 // T
 
 // U
@@ -902,12 +903,12 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 	} else {
 		res.render('pages/virtualbar', {
 			title: 'Virtual Bar',
-			color: '"dark blue"',
 			io: io,
 			className: cD[req.session.class].className
 		})
 	}
 })
+
 // W
 
 // X
@@ -916,26 +917,52 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 // Z
 
+// 404
+app.use((req, res, next) => {
+	res.status(404).render('pages/message', {
+		message: "Error: page does not exist",
+		title: "Error"
+	})
+})
+
 
 // Middleware for sockets
 // Authentication for users and bots to connect to formbar websockets
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
+	let { api, classCode } = socket.request._query
 	if (socket.request.session.user) {
 		next()
+	} else if (api) {
+		socket.request.session.api = api
+		socket.request.session.class = classCode
+		if (!cD[socket.request.session.class]) return next(new Error("class not started"))
+		db.get(
+			'SELECT id, username, permissions FROM users WHERE API = ?',
+			[api],
+			(error, userData) => {
+				if (error) {
+					return next(error)
+				}
+				if (!userData) return next(new Error('not a valid API Key'))
+				next()
+			}
+		)
 	} else {
-		console.log("Authentication Failed")
-		next(new Error("invalid"))
+		next(new Error("missing user or api"))
 	}
 })
 
-const rateLimits = {}
+let rateLimits = {}
 
 //Handles the websocket communications
-io.sockets.on('connection', function (socket) {
+io.on('connection', (socket) => {
 	if (socket.request.session.user) {
 		socket.join(cD[socket.request.session.class].className)
 		socket.join(socket.request.session.user)
+	}
+	if (socket.request.session.api) {
+		socket.join(cD[socket.request.session.class].className)
 	}
 
 	//rate limiter
@@ -980,6 +1007,80 @@ io.sockets.on('connection', function (socket) {
 		})
 	}
 
+	function vbUpdate() {
+		let classData = JSON.parse(JSON.stringify(cD[socket.request.session.class]))//Object.assign({}, cD[socket.request.session.class])
+
+		let polls = {}
+
+		for (let [username, student] of Object.entries(classData.students)) {
+			if (student.break == true || student.permissions == 0) delete classData.students[username]
+		}
+
+		if (Object.keys(classData.poll.responses).length > 0) {
+			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
+				polls[resKey] = {
+					display: resValue,
+					responses: 0
+				}
+			}
+
+			for (let studentData of Object.values(classData.students)) {
+				if (
+					studentData &&
+					Object.keys(polls).includes(studentData.pollRes.buttonRes)
+				)
+					polls[studentData.pollRes.buttonRes].responses++
+			}
+		}
+
+		for (let i = 0; i < Object.keys(polls).length; i++) {
+			let color = ''
+			let CC = '01234569ABCDEF'
+			let colorI = CC[Math.floor(i / 2)]
+			let colorJ = CC[13 - Math.floor(i / 2)]
+			switch (i % 6) {
+				case 0:
+					color = `#${colorJ}${colorI}${colorI}`
+					break
+				case 1:
+					color = `#${colorI}${colorI}${colorJ}`
+					break
+				case 2:
+					color = `#${colorI}${colorJ}${colorI}`
+					break
+				case 3:
+					color = `#${colorJ}${colorI}${colorJ}`
+					break
+				case 4:
+					color = `#${colorI}${colorJ}${colorJ}`
+					break
+				case 5:
+					color = `#${colorJ}${colorJ}${colorI}`
+					break
+			}
+			polls[Object.keys(polls)[i]].color = color
+		}
+
+		io.to(cD[socket.request.session.class].className).emit('vbUpdate', {
+			totalStudents: Object.keys(classData.students).length,
+			pollStatus: classData.poll.status,
+			blindPoll: classData.poll.blind,
+			pollPrompt: classData.poll.prompt,
+			polls: polls
+		})
+	}
+
+	function pluginUpdate() {
+		db.all(
+			'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
+			[socket.request.session.class],
+			(error, plugins) => {
+				if (error) console.log(error)
+				io.emit('pluginUpdate', plugins)
+			}
+		)
+	}
+
 	// /poll websockets for updating the database
 	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
 		cD[socket.request.session.class].students[socket.request.session.user].pollRes.buttonRes = res
@@ -1000,7 +1101,7 @@ io.sockets.on('connection', function (socket) {
 		}
 	})
 	// Changes Permission of user. Takes which user and the new permission level
-	socket.on('permChange', function (user, res) {
+	socket.on('permChange', (user, res) => {
 		cD[socket.request.session.class].students[user].permissions = res
 		if (cD[socket.request.session.class]) {
 			db.get(
@@ -1029,7 +1130,7 @@ io.sockets.on('connection', function (socket) {
 			console.log(answerNames)
 			if (answerNames[i].answer == '' || answerNames[i].answer == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[i] = {answer: 'answer ' + letterString[i], weight: 1}
+				cD[socket.request.session.class].poll.responses[i] = {answer: 'Answer ' + letterString[i], weight: 1}
 			} else {
 				cD[socket.request.session.class].poll.responses[i] = {answer : answerNames[i].answer, weight: answerNames[i].weight}
 			}
@@ -1043,11 +1144,11 @@ io.sockets.on('connection', function (socket) {
 			cD[socket.request.session.class].students[key].pollRes.textRes = ""
 		}
 
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 
 	// End the current poll. Does not take any arguments
-	socket.on('endPoll', function () {
+	socket.on('endPoll', () => {
 		let data = { prompt: '', names: [], letter: [], text: [] }
 
 		let dateConfig = new Date()
@@ -1065,25 +1166,25 @@ io.sockets.on('connection', function (socket) {
 				if (err) {
 					console.log(err)
 				}
-				console.log('Saved Poll To Database')
 			})
 
 		cD[socket.request.session.class].poll.responses = {}
 		cD[socket.request.session.class].poll.prompt = ''
 		cD[socket.request.session.class].poll.status = false
+		vbUpdate()
 	})
 
 	// Reloads any page with the reload function on. No arguments
-	socket.on('reload', function () {
+	socket.on('reload', () => {
 		io.emit('reload')
 	})
 
 	// Sends poll and student response data to client side virtual bar
-	socket.on('vbData', function () {
-		io.to(cD[socket.request.session.class].className).emit('vbData', JSON.stringify(cD[socket.request.session.class]))
+	socket.on('vbUpdate', () => {
+		vbUpdate()
 	})
 	// Sends a help ticket
-	socket.on('help', function (reason, time) {
+	socket.on('help', (reason, time) => {
 		cD[socket.request.session.class].students[socket.request.session.user].help = { reason: reason, time: time }
 	})
 	// Sends a break ticket
@@ -1098,7 +1199,7 @@ io.sockets.on('connection', function (socket) {
 		student.break = breakApproval
 		if (breakApproval) io.to(username).emit('break')
 		cpupdate()
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Ends the break
 	socket.on('endBreak', () => {
@@ -1106,19 +1207,17 @@ io.sockets.on('connection', function (socket) {
 		student.break = false
 
 		cpupdate()
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Deletes a user from the class
-	socket.on('deleteUser', function (userName) {
+	socket.on('deleteUser', (userName) => {
 		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
 		delete cD[socket.request.session.class].students[userName]
-		console.log(userName + ' removed from class')
 	})
 	// Joins a classroom for websocket usage
-	socket.on('joinRoom', function (className) {
-		console.log("Working")
+	socket.on('joinRoom', (className) => {
 		socket.join(className)
-		io.emit('vbUpdate')
+		vbUpdate()
 	})
 	// Updates and stores poll history
 	socket.on('cpupdate', () => {
@@ -1138,7 +1237,7 @@ io.sockets.on('connection', function (socket) {
 	// })
 
 	// Starts a quick poll
-	socket.on('botPollStart', function (answerNumber) {
+	socket.on('botPollStart', (answerNumber) => {
 		answerNames = []
 		weight = 1;
 		answerWeights = [];
@@ -1147,7 +1246,7 @@ io.sockets.on('connection', function (socket) {
 		for (let i = 0; i < answerNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'answer ' + letterString[i], weight : 1};
+				cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'Answer ' + letterString[i], weight : 1};
 			} else {
 				cD[socket.request.session.class].poll.responses[answerNames[i]] = {answer: answerNames[i], weight: answerWeights[i]};
 			}
@@ -1156,8 +1255,8 @@ io.sockets.on('connection', function (socket) {
 		cD[socket.request.session.class].poll.prompt = "Quick Poll"
 	})
 	// Displays previous polls
-	socket.on('previousPollDisplay', function (pollindex) {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
+	socket.on('previousPollDisplay', (pollindex) => {
+		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 			if (err) {
 				console.error(err)
 			} else {
@@ -1168,15 +1267,10 @@ io.sockets.on('connection', function (socket) {
 	})
 
 	// Moves to the next step
-	socket.on('doStep', function (index) {
+	socket.on('doStep', (index) => {
 		// send reload to whole class
 		io.to(cD[socket.request.session.class].className).emit('reload')
 		cD[socket.request.session.class].currentStep++
-		console.log(
-			'\n\nsteps:',
-			cD[socket.request.session.class].steps,
-			'\n\n'
-		)
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			// Creates a poll based on the step data
 			if (cD[socket.request.session.class].steps[index].type == 'poll') {
@@ -1194,7 +1288,7 @@ io.sockets.on('connection', function (socket) {
 				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
 						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'answer ' + letterString[i], weight: 1};
+						cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'Answer ' + letterString[i], weight: 1};
 					} else {
 						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = {answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i]};
 					}
@@ -1237,7 +1331,6 @@ io.sockets.on('connection', function (socket) {
 						if (err) {
 							console.log(err)
 						}
-						console.log('Saved Lesson To Database')
 					})
 			}
 		} else {
@@ -1245,8 +1338,8 @@ io.sockets.on('connection', function (socket) {
 		}
 	})
 	// Check later, there's already a socket.on for previousPollDisplay
-	socket.on('previousPollDisplay', function (pollindex) {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, function (err, pollData) {
+	socket.on('previousPollDisplay', (pollindex) => {
+		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 			if (err) {
 				console.error(err)
 			} else {
@@ -1255,13 +1348,64 @@ io.sockets.on('connection', function (socket) {
 		})
 	})
 	// Deletes help ticket
-	socket.on('deleteTicket', function (student) {
+	socket.on('deleteTicket', (student) => {
 		cD[socket.request.session.class].students[student].help = ''
 	})
 	// Changes the class mode
-	socket.on('modechange', function (mode) {
+	socket.on('modechange', (mode) => {
 		cD[socket.request.session.class].mode = mode
 		io.to(cD[socket.request.session.class].className).emit('reload')
+	})
+
+	socket.on('pluginUpdate', () => {
+		pluginUpdate()
+	})
+
+	socket.on('changePlugin', (id, name, url) => {
+		if (name) {
+			db.run(
+				'UPDATE plugins set name=? WHERE id=?',
+				[name, id],
+				(error) => {
+					if (error) console.log(error)
+					pluginUpdate()
+				}
+			)
+		}
+		else if (url) {
+			db.run(
+				'UPDATE plugins set url=? WHERE id=?',
+				[url, id],
+				(error) => {
+					if (error) console.log(error)
+					pluginUpdate()
+				}
+			)
+		}
+	})
+
+	socket.on('addPlugin', (name, url) => {
+		db.get(
+			'SELECT * FROM classroom WHERE key = ?',
+			[socket.request.session.class],
+			(error, classData) => {
+				if (error) console.log(error)
+
+				db.run(
+					'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+					[name, url, classData.id]
+				)
+				pluginUpdate()
+			}
+		)
+	})
+
+	socket.on('removePlugin', (id) => {
+		db.run(
+			'DELETE FROM plugins WHERE id=?',
+			[id]
+		)
+		pluginUpdate()
 	})
 })
 
