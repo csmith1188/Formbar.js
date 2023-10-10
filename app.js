@@ -73,6 +73,7 @@ class Student {
 		this.break = ''
 		this.quizScore = ''
 		this.API = API
+		this.pogMeter = 0
 	}
 }
 
@@ -86,7 +87,7 @@ class Classroom {
 		this.students = {}
 		this.poll = {
 			status : false,
-			responses : {},
+			responses : [],
 			textRes : false,
 			prompt : '',
 			weight : 1,
@@ -741,7 +742,7 @@ app.post('/oauth', (req, res) => {
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
 				if (databasePassword == password) {
-					var token = jwt.sign({ username: username, }, userData.secret, { expiresIn: '30m' })
+					var token = jwt.sign({ username: username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
 					res.redirect(`${redirectURL}?token=${token}`)
 					// If it does not match, then it redirects you back to the oauth page.
 				} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
@@ -800,7 +801,7 @@ app.get('/student', isLoggedIn, (req, res) => {
 		name: req.session.user,
 		class: req.session.class
 	}
-	let posPollRes = cD[req.session.class].poll.responses;
+	let posPollRes = cD[req.session.class].poll.responses.answer;
 	let answer = req.query.letter
 	if (answer) {
 		cD[req.session.class].students[req.session.user].pollRes.buttonRes = answer
@@ -838,17 +839,18 @@ app.get('/student', isLoggedIn, (req, res) => {
 		}
 
 	} else if (req.query.question == undefined) {
+		console.log(cD[req.session.class].poll.responses);
 		res.render('pages/student', {
 			title: 'Student',
 			color: '"dark blue"',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].poll.status,
-			posPollRes: JSON.stringify(posPollRes),
-			posTextRes: cD[req.session.class].poll.textRes,
+			posPollRes: JSON.stringify(cD[req.session.class].poll.responses),
+			posTextRes: JSON.stringify(cD[req.session.class].poll.textRes),
 			pollPrompt: cD[req.session.class].poll.prompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
-			mode: cD[req.session.class].mode
+			mode: JSON.stringify(cD[req.session.class].mode)
 		})
 	}
 })
@@ -979,10 +981,23 @@ io.sockets.on('connection', function (socket) {
 	}
 
 	// /poll websockets for updating the database
-	socket.on('pollResp', function (res, textRes) {
+	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
 		cD[socket.request.session.class].students[socket.request.session.user].pollRes.buttonRes = res
 		cD[socket.request.session.class].students[socket.request.session.user].pollRes.textRes = textRes
-		db.run('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
+		db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.user])
+		for (let i = 0; i < resLength; i++) {
+			if (res) {
+				let calcWeight = cD[socket.request.session.class].poll.weight * resWeight;
+				cD[socket.request.session.class].students[socket.request.session.user].pogMeter += calcWeight;
+				console.log(cD[socket.request.session.class].students[socket.request.session.user].pogMeter);
+				if (cD[socket.request.session.class].students[socket.request.session.user].pogMeter >= 25) {
+					db.get('GET digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.user].id], (error, data) => {
+						db.get('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.user].id]);
+					});
+					cD[socket.request.session.class].students[socket.request.session.user].pogMeter = 0;
+				};
+			}
+		}
 	})
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('permChange', function (user, res) {
@@ -1004,7 +1019,7 @@ io.sockets.on('connection', function (socket) {
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind) {
+	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind, weight) {
 		cD[socket.request.session.class].mode = 'poll'
 		cD[socket.request.session.class].poll.blind = blind
 		cD[socket.request.session.class].poll.status = true
@@ -1012,13 +1027,15 @@ io.sockets.on('connection', function (socket) {
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
 			console.log(answerNames)
-			if (answerNames[i] == '' || answerNames[i] == null) {
+			if (answerNames[i].answer == '' || answerNames[i].answer == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[i] = {answer: 'answer ' + letterString[i], weight: 1}
 			} else {
-				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
+				cD[socket.request.session.class].poll.responses[i] = {answer : answerNames[i].answer, weight: answerNames[i].weight}
 			}
 		}
+		console.log(cD[socket.request.session.class].poll.responses);
+		cD[socket.request.session.class].poll.weight = weight;
 		cD[socket.request.session.class].poll.textRes = resTextBox
 		cD[socket.request.session.class].poll.prompt = pollPrompt
 		for (var key in cD[socket.request.session.class].students) {
@@ -1123,14 +1140,16 @@ io.sockets.on('connection', function (socket) {
 	// Starts a quick poll
 	socket.on('botPollStart', function (answerNumber) {
 		answerNames = []
+		weight = 1;
+		answerWeights = [];
 		cD[socket.request.session.class].poll.status = true
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < answerNumber; i++) {
 			if (answerNames[i] == '' || answerNames[i] == null) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+				cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'answer ' + letterString[i], weight : 1};
 			} else {
-				cD[socket.request.session.class].poll.responses[answerNames[i]] = answerNames[i]
+				cD[socket.request.session.class].poll.responses[answerNames[i]] = {answer: answerNames[i], weight: answerWeights[i]};
 			}
 		}
 		cD[socket.request.session.class].poll.textRes = false
@@ -1175,9 +1194,9 @@ io.sockets.on('connection', function (socket) {
 				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
 						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].poll.responses[letterString[i]] = 'answer ' + letterString[i]
+						cD[socket.request.session.class].poll.responses[letterString[i]] = {answer: 'answer ' + letterString[i], weight: 1};
 					} else {
-						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = cD[socket.request.session.class].steps[index].labels[i]
+						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = {answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i]};
 					}
 				}
 				cD[socket.request.session.class].poll.textRes = false
