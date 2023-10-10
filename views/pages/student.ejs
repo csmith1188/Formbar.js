@@ -81,20 +81,50 @@
 							noPoll.style.display = 'none'
 							poll.style.display = 'block'
 
-							for (let [pollKey, pollValue] of Object.entries(posPollRes)) {
-								let pollLabel = document.createElement('label')
-								pollLabel.className = 'form-control'
-								pollLabel.id = 'pollControl'
-								pollLabel.style = `--theme-color: ${pollValue.color};`
-								let pollInput = document.createElement('input')
-								pollInput.type = 'radio'
-								pollInput.name = 'poll'
-								pollInput.id = pollValue.display || 'remove'
-								pollInput.value = pollKey
-								pollLabel.appendChild(pollInput)
-								pollLabel.innerHTML += pollValue.display || 'remove'
-								pollForm.appendChild(pollLabel)
-							}
+							let keys = Object.keys(posPollRes)
+
+							socket.emit('vbUpdate')
+							socket.on('vbUpdate', (pollsData) => {
+								if (pollForm.innerText) return
+								// Creates all selectable answers and displays them to the user
+								for (let i = 0; i < keys.length; i++) {
+									//Show the color associated with the answer
+									let color = ''
+									let CC = '01234569ABCDEF'
+									let colorI = CC[Math.floor(i / 2)]
+									let colorJ = CC[13 - Math.floor(i / 2)]
+									switch (i % 6) {
+										case 0:
+											color = `#${colorJ}${colorI}${colorI}`
+											break
+										case 1:
+											color = `#${colorI}${colorI}${colorJ}`
+											break
+										case 2:
+											color = `#${colorI}${colorJ}${colorI}`
+											break
+										case 3:
+											color = `#${colorJ}${colorI}${colorJ}`
+											break
+										case 4:
+											color = `#${colorI}${colorJ}${colorJ}`
+											break
+										case 5:
+											color = `#${colorJ}${colorJ}${colorI}`
+											break
+									}
+									if (i == keys.length - 1) color = 'black'
+									pollForm.innerHTML += `
+										<label class="form-control" id="pollControl" style="--theme-color: ${color};">
+											<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
+											${posPollRes[keys[i]]}
+										</label>
+									`
+								}
+								if (posTextRes) {
+									pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
+								}
+							})
 						} else {
 							noPoll.style.display = 'block'
 							poll.style.display = 'none'
