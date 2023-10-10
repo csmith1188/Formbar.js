@@ -72,9 +72,8 @@
 						pollContent.style.display = 'block'
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
-						var posPollRes = '<%- posPollRes %>'
-						posPollRes = JSON.parse(posPollRes)
-						posPollRes[''] = 'Remove'
+						var pollResponses = <%- posPollRes %>;
+						console.log(pollResponses);
 						var posTextRes = '<%- posTextRes %>'
 						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posTextRes = JSON.parse(posTextRes)
