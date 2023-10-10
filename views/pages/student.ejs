@@ -4,7 +4,7 @@
 	<%- include('../partials/sockets') %>
 		<%- include('../partials/formbar_header') %>
 
-			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%= quiz %>)">
+			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%- quiz %>)">
 				<div id="lessonContent">
 					<%if(lesson.content !=undefined){%>
 						<h3 id="headerText">
@@ -75,7 +75,6 @@
 						var posPollRes = '<%- posPollRes %>'
 						posPollRes = JSON.parse(posPollRes)
 						posPollRes[''] = 'Remove'
-						console.log(posPollRes)
 						var posTextRes = '<%- posTextRes %>'
 						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posTextRes = JSON.parse(posTextRes)
@@ -97,7 +96,6 @@
 								pollLabel.innerHTML += pollValue.display || 'remove'
 								pollForm.appendChild(pollLabel)
 							}
-							pollForm.appendChild(removeLabel)
 						} else {
 							noPoll.style.display = 'block'
 							poll.style.display = 'none'

@@ -327,7 +327,7 @@
 					startPollForm.style.display = 'none';
 					endPoll.style.display = 'block';
 					permChanges.style.display = 'none';
-					socket.emit('startPoll', 3, false, "Thumbs?", ["Up", "Down", "Wiggle"], false);
+					socket.emit('startPoll', 3, false, "Thumbs?", [{answer: "Up", weight: 0.9}, {answer: "Down", weight: 1.1}, {answer: "Wiggle", weight: 1}], false, 1);
 				};
 			};
 
