@@ -68,34 +68,34 @@
 				var oldTextRes = '<%- myTextRes %>'
 
 				function pageload(mode, pollStatus, pollTextRes, quiz) {
+					console.log(mode);
 					if (mode == 'poll') {
 						pollContent.style.display = 'block'
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
-						var posPollRes = '<%- posPollRes %>'
-						posPollRes = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
-						posPollRes = JSON.parse(posPollRes)
-						posPollRes[''] = 'Remove'
+						var pollResponses = <%- posPollRes %>;
+						console.log(pollResponses);
+						pollResponses = posPollRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
+						pollResponses = JSON.parse(posPollRes)
+						pollResponses[''] = 'Remove'
 						var posTextRes = '<%- posTextRes %>'
 						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						posTextRes = JSON.parse(posTextRes)
+						console.log(pollStatus);
 						if (pollStatus) {
 							noPoll.style.display = 'none'
 							poll.style.display = 'block'
-
-							let keys = Object.keys(posPollRes)
-
 							socket.emit('vbUpdate')
 							socket.on('vbUpdate', (pollsData) => {
 								if (pollForm.innerText) return
 								// Creates all selectable answers and displays them to the user
-								for (let i = 0; i < keys.length; i++) {
+								for (let i = 0; i < pollResponses.length; i++) {
 									//Show the color associated with the answer
-									let color = pollsData.polls[keys[i]]?.color || 'black'
+									let color = pollsData.polls[pollResponses[i].answer]?.color || 'black'
 									pollForm.innerHTML += `
 										<label class="form-control" id="pollControl" style="--theme-color: ${color};">
-											<input type="radio" name="poll" id="${keys[i] || 'remove'}" value="${keys[i]}">
-											${posPollRes[keys[i]]}
+											<input type="radio" name="poll" id="${pollResponses[i].answer || 'remove'}" value="${pollResponses[i].answer}">
+											${pollResponses[i].answer}
 										</label>
 									`
 								}
@@ -146,22 +146,26 @@
 					var radios = document.getElementsByTagName('input')
 					var lettRes = ''
 					var textRes = ''
+					var pollResponses = <%- posPollRes %>;
+					var resWeight = 0;
+					var resLength = radios.length;
 					for (var i = 0; i < radios.length; i++) {
 
 						if (radios[i].type === 'radio' && radios[i].checked) {
 							// Defines the letter response of the user
 							lettRes = radios[i].value
-
+							resWeight = pollResponses[i].weight;
 						}
 						if (radios[i].type === 'text') {
 							// Defines the text input of the user
 							textRes = radios[i].value
+							resWeight = 1;
 						}
 
 					}
 
 					// Sends user input to the server
-					socket.emit('pollResp', lettRes, textRes)
+					socket.emit('pollResp', lettRes, textRes, resWeight, resLength)
 					socket.emit('vbUpdate')
 					socket.emit('cpupdate')
 					socket.emit('sfxPlay', 'sfx_up01')
