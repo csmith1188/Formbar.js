@@ -853,7 +853,7 @@ app.get('/student', isAuthenticated, (req, res) => {
 			pollPrompt: cD[req.session.class].poll.prompt,
 			quiz: JSON.stringify(cD[req.session.class].quizObj),
 			lesson: cD[req.session.class].lesson,
-			mode: JSON.stringify(cD[req.session.class].mode)
+			mode: cD[req.session.class].mode
 		})
 	}
 })
