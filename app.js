@@ -8,7 +8,6 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-const { generateColors } = require('./static/js/functions/color');
 
 var app = express()
 const http = require('http').createServer(app)
@@ -262,6 +261,47 @@ function joinClass(userName, code) {
 	})
 }
 
+// Function to convert HSL to Hex
+function convertHSLToHex(hue, saturation, lightness) {
+	// Normalize lightness to range 0-1
+	lightness /= 100;
+
+	// Calculate chroma
+	const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
+
+	// Function to get color component
+	function getColorComponent(colorIndex) {
+		const colorPosition = (colorIndex + hue / 30) % 12;
+		const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
+
+		// Return color component in hexadecimal format
+		return Math.round(255 * colorValue).toString(16).padStart(2, '0');
+	};
+
+	// Return the hex color
+	return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+}
+
+// Function to generate colors
+function generateColors(amount) {
+	// Initialize colors array
+	let colors = [];
+
+	// Initialize hue
+	let hue = 0
+
+	// Generate colors
+	for (let i = 0; i < amount; i++) {
+		// Add color to the colors array
+		colors.push(convertHSLToHex(hue, 100, 50));
+
+		// Increment hue
+		hue += 360 / amount
+	}
+
+	// Return the colors array
+	return colors;
+}
 
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
@@ -297,7 +337,6 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
 app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
-
 	let students = cD[req.session.class].students
 	let keys = Object.keys(students)
 	let allStuds = []
