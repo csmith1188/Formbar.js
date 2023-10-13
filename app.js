@@ -1101,6 +1101,13 @@ io.on('connection', (socket) => {
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
+			let key = ''
+			let display = ''
+
+			if (polls[i].answer) {
+				console.log(polls[i].answer);
+			}
+
 			cD[socket.request.session.class].poll.responses[polls[i].answer] = {
 				display: polls[i].answer,
 				color: polls[i].color
