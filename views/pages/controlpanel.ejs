@@ -311,23 +311,40 @@
 				if (pollType == 'poll') {
 					var pollAnsNames = document.getElementsByName('pollAnsName')
 					var blind = document.getElementById('blind').checked
+					let generatedColors = generateColors(resNumber.value)
 
-					var pollAnsValues = []
-					for (let i = 0; i < pollAnsNames.length; i++) {
-						pollAnsValues.push(pollAnsNames[i].value)
+					var pollAnswers = []
+					for (let i = 0; i < resNumber.value; i++) {
+						let letterString = "abcdefghijklmnopqrstuvwxyz"
+						let pollAnswer = { answer: '', weight: 1, color: '' }
+
+						if (pollAnsNames[i])
+							if (pollAnsNames[i].value) pollAnswer.answer = pollAnsNames[i].value
+							else pollAnswer.answer = letterString[i]
+						if (!pollAnswer.answer)
+							pollAnswer.answer = letterString[i]
+
+						pollAnswer.color = generatedColors[i]
+						pollAnswers.push(pollAnswer)
 					}
 					pollAnsForm.style.display = 'none'
 					startPollForm.style.display = 'none'
 					endPoll.style.display = 'block'
 					permChanges.style.display = 'none'
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnsValues, blind)
+
+					console.log(pollAnswers);
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
 					socket.emit('reload') // Reloads the users page
 				} else if (pollType == 'TUTD') {
 					pollAnsForm.style.display = 'none';
 					startPollForm.style.display = 'none';
 					endPoll.style.display = 'block';
 					permChanges.style.display = 'none';
-					socket.emit('startPoll', 3, false, "Thumbs?", [{answer: "Up", weight: 0.9}, {answer: "Down", weight: 1.1}, {answer: "Wiggle", weight: 1}], false, 1);
+					socket.emit('startPoll', 3, false, "Thumbs?", [
+						{ answer: "Up", weight: 0.9, color: '#00FF00' },
+						{ answer: "Down", weight: 1.1, color: '#FF0000' },
+						{ answer: "Wiggle", weight: 1, color: '#FFFF00' }
+					], false, 1);
 				};
 			};
 
@@ -788,6 +805,48 @@
 
 			function approveBreak(breakApproval, username) {
 				socket.emit('approveBreak', breakApproval, username)
+			}
+
+			// Function to convert HSL to Hex
+			function convertHSLToHex(hue, saturation, lightness) {
+				// Normalize lightness to range 0-1
+				lightness /= 100;
+
+				// Calculate chroma
+				const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
+
+				// Function to get color component
+				function getColorComponent(colorIndex) {
+					const colorPosition = (colorIndex + hue / 30) % 12;
+					const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
+
+					// Return color component in hexadecimal format
+					return Math.round(255 * colorValue).toString(16).padStart(2, '0');
+				};
+
+				// Return the hex color
+				return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+			}
+
+			// Function to generate colors
+			function generateColors(amount) {
+				// Initialize colors array
+				let colors = [];
+
+				// Initialize hue
+				let hue = 0
+
+				// Generate colors
+				for (let i = 0; i < amount; i++) {
+					// Add color to the colors array
+					colors.push(convertHSLToHex(hue, 100, 50));
+
+					// Increment hue
+					hue += 360 / amount
+				}
+
+				// Return the colors array
+				return colors;
 			}
 
 			var allRoom = ""

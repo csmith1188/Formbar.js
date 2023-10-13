@@ -261,6 +261,7 @@ function joinClass(userName, code) {
 	})
 }
 
+
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
 
@@ -842,7 +843,6 @@ app.get('/student', isAuthenticated, (req, res) => {
 		}
 
 	} else if (req.query.question == undefined) {
-		console.log(JSON.stringify(cD[req.session.class].quizObj));
 		res.render('pages/student', {
 			title: 'Student',
 			user: JSON.stringify(user),
@@ -1065,7 +1065,6 @@ io.on('connection', (socket) => {
 			if (res) {
 				let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
 				cD[socket.request.session.class].students[socket.request.session.user].pogMeter += calcWeight
-				console.log(cD[socket.request.session.class].students[socket.request.session.user].pogMeter)
 				if (cD[socket.request.session.class].students[socket.request.session.user].pogMeter >= 25) {
 					db.get('GET digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.user].id], (error, data) => {
 						db.get('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.user].id])
@@ -1095,52 +1094,17 @@ io.on('connection', (socket) => {
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind, weight) {
+	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
 		cD[socket.request.session.class].mode = 'poll'
 		cD[socket.request.session.class].poll.blind = blind
 		cD[socket.request.session.class].poll.status = true
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
-			let key = ''
-			let display = ''
-
-			if (answerNames[i] == '' || answerNames[i] == null) {
-				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				key = letterString[i]
-				display = 'Answer ' + letterString[i]
-
-			} else {
-				key = answerNames[i]
-				display = answerNames[i]
+			cD[socket.request.session.class].poll.responses[polls[i].answer] = {
+				display: polls[i].answer,
+				color: polls[i].color
 			}
-			cD[socket.request.session.class].poll.responses[key] = { display: display }
-
-			let color = ''
-			let CC = '01234569ABCDEF'
-			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[13 - Math.floor(i)]
-			switch (i % 6) {
-				case 0:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
-					break
-				case 1:
-					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
-					break
-				case 2:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
-					break
-				case 3:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorJ}${colorJ}`
-					break
-				case 4:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorJ}${colorJ}`
-					break
-				case 5:
-					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
-					break
-			}
-			cD[socket.request.session.class].poll.responses[key].color = color
 		}
 
 		cD[socket.request.session.class].poll.weight = weight
