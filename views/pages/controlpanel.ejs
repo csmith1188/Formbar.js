@@ -311,20 +311,15 @@
 				if (pollType == 'poll') {
 					var pollAnsNames = document.getElementsByName('pollAnsName')
 					var blind = document.getElementById('blind').checked
-					let generatedColors = generateColors(resNumber.value)
 
 					var pollAnswers = []
 					for (let i = 0; i < resNumber.value; i++) {
-						let letterString = "abcdefghijklmnopqrstuvwxyz"
 						let pollAnswer = { answer: '', weight: 1, color: '' }
 
 						if (pollAnsNames[i]) {
 							if (pollAnsNames[i].value) pollAnswer.answer = pollAnsNames[i].value
-							else pollAnswer.answer = letterString[i]
 						}
-						else pollAnswer.answer = letterString[i]
 
-						pollAnswer.color = generatedColors[i]
 						pollAnswers.push(pollAnswer)
 					}
 					pollAnsForm.style.display = 'none'

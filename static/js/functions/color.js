@@ -39,3 +39,8 @@ function generateColors(amount) {
 	// Return the colors array
 	return colors;
 }
+
+module.exports = {
+	convertHSLToHex,
+	generateColors
+}

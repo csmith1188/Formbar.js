@@ -8,6 +8,7 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
+const { generateColors } = require('./static/js/functions/color');
 
 var app = express()
 const http = require('http').createServer(app)
@@ -1095,22 +1096,30 @@ io.on('connection', (socket) => {
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
+		let generatedColors = generateColors(resNumber)
+
 		cD[socket.request.session.class].mode = 'poll'
 		cD[socket.request.session.class].poll.blind = blind
 		cD[socket.request.session.class].poll.status = true
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
-			let key = ''
-			let display = ''
+			let letterString = "abcdefghijklmnopqrstuvwxyz"
+			let answer = letterString[i]
+			let weight = 1
+			let color = generatedColors[i]
 
-			if (polls[i].answer) {
-				console.log(polls[i].answer);
-			}
+			if (polls[i].answer)
+				answer = polls[i].answer
+			if (polls[i].weight)
+				weight = polls[i].weight
+			if (polls[i].color)
+				color = polls[i].color
 
-			cD[socket.request.session.class].poll.responses[polls[i].answer] = {
-				display: polls[i].answer,
-				color: polls[i].color
+			cD[socket.request.session.class].poll.responses[answer] = {
+				display: answer,
+				weight: weight,
+				color: color
 			}
 		}
 
