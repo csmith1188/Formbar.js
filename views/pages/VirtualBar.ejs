@@ -105,7 +105,7 @@
 					studResponses.responses = 0
 				} else {
 					for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-						labelsArray.push(pollData.display)
+						labelsArray.push(pollData.answer)
 						studResponses[poll] = 0
 					}
 				}
@@ -118,7 +118,6 @@
 					doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
 				} else {
 					for (let poll of Object.values(pollsData.polls)) {
-						console.log(poll)
 						doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
 					}
 				}

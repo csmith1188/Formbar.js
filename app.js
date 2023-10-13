@@ -1117,7 +1117,7 @@ io.on('connection', (socket) => {
 				color = polls[i].color
 
 			cD[socket.request.session.class].poll.responses[answer] = {
-				display: answer,
+				answer: answer,
 				weight: weight,
 				color: color
 			}
