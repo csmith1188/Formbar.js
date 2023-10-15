@@ -261,6 +261,48 @@ function joinClass(userName, code) {
 	})
 }
 
+// Function to convert HSL to Hex
+function convertHSLToHex(hue, saturation, lightness) {
+	// Normalize lightness to range 0-1
+	lightness /= 100;
+
+	// Calculate chroma
+	const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
+
+	// Function to get color component
+	function getColorComponent(colorIndex) {
+		const colorPosition = (colorIndex + hue / 30) % 12;
+		const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
+
+		// Return color component in hexadecimal format
+		return Math.round(255 * colorValue).toString(16).padStart(2, '0');
+	};
+
+	// Return the hex color
+	return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+}
+
+// Function to generate colors
+function generateColors(amount) {
+	// Initialize colors array
+	let colors = [];
+
+	// Initialize hue
+	let hue = 0
+
+	// Generate colors
+	for (let i = 0; i < amount; i++) {
+		// Add color to the colors array
+		colors.push(convertHSLToHex(hue, 100, 50));
+
+		// Increment hue
+		hue += 360 / amount
+	}
+
+	// Return the colors array
+	return colors;
+}
+
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
 
@@ -295,7 +337,6 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
 app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
-
 	let students = cD[req.session.class].students
 	let keys = Object.keys(students)
 	let allStuds = []
@@ -842,7 +883,6 @@ app.get('/student', isAuthenticated, (req, res) => {
 		}
 
 	} else if (req.query.question == undefined) {
-		console.log(JSON.stringify(cD[req.session.class].quizObj));
 		res.render('pages/student', {
 			title: 'Student',
 			user: JSON.stringify(user),
@@ -1065,7 +1105,6 @@ io.on('connection', (socket) => {
 			if (res) {
 				let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
 				cD[socket.request.session.class].students[socket.request.session.user].pogMeter += calcWeight
-				console.log(cD[socket.request.session.class].students[socket.request.session.user].pogMeter)
 				if (cD[socket.request.session.class].students[socket.request.session.user].pogMeter >= 25) {
 					db.get('GET digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.user].id], (error, data) => {
 						db.get('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.user].id])
@@ -1095,52 +1134,32 @@ io.on('connection', (socket) => {
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, answerNames, blind, weight) {
+	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
+		let generatedColors = generateColors(resNumber)
+
 		cD[socket.request.session.class].mode = 'poll'
 		cD[socket.request.session.class].poll.blind = blind
 		cD[socket.request.session.class].poll.status = true
 
 		// Creates an object for every answer possible the teacher is allowing
 		for (let i = 0; i < resNumber; i++) {
-			let key = ''
-			let display = ''
+			let letterString = "abcdefghijklmnopqrstuvwxyz"
+			let answer = letterString[i]
+			let weight = 1
+			let color = generatedColors[i]
 
-			if (answerNames[i] == '' || answerNames[i] == null) {
-				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				key = letterString[i]
-				display = 'Answer ' + letterString[i]
+			if (polls[i].answer)
+				answer = polls[i].answer
+			if (polls[i].weight)
+				weight = polls[i].weight
+			if (polls[i].color)
+				color = polls[i].color
 
-			} else {
-				key = answerNames[i]
-				display = answerNames[i]
+			cD[socket.request.session.class].poll.responses[answer] = {
+				answer: answer,
+				weight: weight,
+				color: color
 			}
-			cD[socket.request.session.class].poll.responses[key] = { display: display }
-
-			let color = ''
-			let CC = '01234569ABCDEF'
-			let colorI = CC[Math.floor(i / 2)]
-			let colorJ = CC[13 - Math.floor(i)]
-			switch (i % 6) {
-				case 0:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorI}${colorI}`
-					break
-				case 1:
-					color = `#${colorI}${colorI}${colorI}${colorI}${colorJ}${colorJ}`
-					break
-				case 2:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorI}${colorI}`
-					break
-				case 3:
-					color = `#${colorJ}${colorJ}${colorI}${colorI}${colorJ}${colorJ}`
-					break
-				case 4:
-					color = `#${colorI}${colorI}${colorJ}${colorJ}${colorJ}${colorJ}`
-					break
-				case 5:
-					color = `#${colorJ}${colorJ}${colorJ}${colorJ}${colorI}${colorI}`
-					break
-			}
-			cD[socket.request.session.class].poll.responses[key].color = color
 		}
 
 		cD[socket.request.session.class].poll.weight = weight
