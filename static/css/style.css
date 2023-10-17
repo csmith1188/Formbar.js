@@ -35,7 +35,7 @@
   --bg-dark-blue: #000922;
   --bg-dark-purple: #423;
 
-  --bg-light: #d0c8e0; 
+  --bg-light: #d0c8e0;
   --bg-light-blue: #def;
 }
 
@@ -427,18 +427,40 @@ input[type="radio"]:focus {
   line-height: 2;
 }
 
-#pollAnsForm input:nth-of-type(2n + 1) {
-  margin-top: 8px;
-  margin-right: 16px;
+#responses{
+  display: none;
+  width: 40%;
+  margin-left: 30%;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.pollAnsColor {
+.colorPickerButton {
   display: inline-block;
   width: 1.25em;
   height: 1.25em;
-  border-radius: 9999px;
+  border: 3px solid hsl(0, 0%, 60%);
+  border-radius: 100%;
   margin: 0 2px 5px;
   vertical-align: middle;
+}
+
+.colorPicker {
+  position: absolute;
+  background-color: hsl(0, 100%, 100%);
+  border: 3px solid hsl(0, 0%, 60%);
+  border-radius: 10%;
+  padding: 20px;
+  inset: unset;
+  display: none;
+  width: max-content;
+  top: 0;
+  left: 0;
+}
+
+.oldColor, .newColor {
+  height: 50px;
+  width: 50px;
 }
 
 #startPoll {

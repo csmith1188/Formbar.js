@@ -7,6 +7,9 @@
 			<meta charset="UTF-8">
 			<meta http-equiv="X-UA-Compatible" content="IE=edge">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<script src="/js/iro.js"></script>
+			<script src="/js/floating-ui-core.js"></script>
+			<script src="/js/floating-ui-dom.js"></script>
 		</head>
 
 		<body onload="load(<%-pollStatus%>)">
@@ -19,7 +22,6 @@
 				</header>
 
 				<p id="classCode">Class Code:</p>
-
 				<div id="permChanges">
 					<div id="permChangeKey">
 
@@ -44,9 +46,9 @@
 				</div>
 				<div id="pollChanges">
 					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
-					<form id="startPollForm" action="#">
+					<div id="startPollForm">
 						<label for="resNumber">How many possible responses?</label>
-						<input type="number" id="resNumber" min="1" max="26" value="1">
+						<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
 						<br>
 						<label for="resTextBox">Would like to accept text responses?</label>
 						<input type="checkbox" id="resTextBox">
@@ -55,9 +57,13 @@
 						<input type="text" id="pollBox" placeholder="Prompt (optional)">
 						<br>
 						<label for="changeNames">Customize the answer options?</label>
-						<input type="button" id="changeNames" value="Change Names" onclick="namePollFunc()" class="quickButton">
+						<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()" class="quickButton">
 						<br>
-						<div id="pollAnsForm"></div>
+						<button id="resetAnswers" class="quickButton">Reset Names</button>
+						<button id="resetColors" class="quickButton">Reset Colors</button>
+						<div id="responses">
+						</div>
+						<br>
 						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
 						<input type="checkbox" id="blind">
 						<br>
@@ -65,45 +71,45 @@
 						<br>
 						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
 							<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
-					</form>
-					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-					<br>
-					<br>
-					<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-						Polls</button>
-				</div>
-				<div id="previousPolls">
+							</form>
+							<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
+							<br>
+							<br>
+							<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+								Polls</button>
+					</div>
+					<div id="previousPolls">
 
-				</div>
-				<div id="lessonMaker">
-					<form method="post" enctype="multipart/form-data">
-						<input name="spreadsheet" type="file">
-						<input type="submit" class="quickButton">
-					</form>
-					<button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button><br>
-					<br>
-					<form>
-						<label class="form-control" id="pollControl" for="modeP">
-							<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-							Poll Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modeL">
-							<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-							Lesson Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modeQ">
-							<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-							Quiz Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modePT">
-							<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-							Playtime Mode
-						</label>
-					</form>
-				</div>
-				<div id="plugins">
-				</div>
-				<%- include('../partials/body_content') %>
+					</div>
+					<div id="lessonMaker">
+						<form method="post" enctype="multipart/form-data">
+							<input name="spreadsheet" type="file">
+							<input type="submit" class="quickButton">
+						</form>
+						<button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button><br>
+						<br>
+						<form>
+							<label class="form-control" id="pollControl" for="modeP">
+								<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+								Poll Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modeL">
+								<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+								Lesson Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modeQ">
+								<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+								Quiz Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modePT">
+								<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+								Playtime Mode
+							</label>
+						</form>
+					</div>
+					<div id="plugins">
+					</div>
+					<%- include('../partials/body_content') %>
 		</body>
 
 		</html>
@@ -166,6 +172,11 @@
 				]
 			}
 
+			let letterString = "abcdefghijklmnopqrstuvwxyz"
+			let generatedColors = []
+			let pollResponses = []
+			let colorPickers = []
+
 			var permChanges = document.getElementById('permChanges')
 			var permChangeKey = document.getElementById('permChangeKey')
 			var permChangeList = document.getElementById('permChangeList')
@@ -184,7 +195,9 @@
 			var permSort = document.getElementById('permSort')
 			var permSortLabel = document.getElementById('permSortLabel')
 			var helpFilter = document.getElementById('helpFilter')
-			var pollAnsForm = document.getElementById('pollAnsForm')
+			var responsesDiv = document.getElementById('responses')
+			let resetAnswersButton = document.getElementById('resetAnswers')
+			let resetColorsButton = document.getElementById('resetColors')
 			var lessonMaker = document.getElementById('lessonMaker')
 			var pluginsDiv = document.getElementById('plugins')
 			var previousPolls = document.getElementById('previousPolls')
@@ -194,8 +207,7 @@
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
 
-			// Function to convert HSL to Hex
-			function convertHSLToHex(hue, saturation, lightness) {
+			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
 				lightness /= 100;
 
@@ -215,7 +227,48 @@
 				return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
 			}
 
-			// Function to generate colors
+			function hexToRGB(hexColor) {
+				hexColor = hexColor.substring(1)
+				let red = parseInt(hexColor.substring(0, 2), 16);
+				let green = parseInt(hexColor.substring(2, 4), 16);
+				let blue = parseInt(hexColor.substring(4, 6), 16);
+				return { red, green, blue };
+			}
+
+			function rgbToHSV(red, green, blue) {
+				red = red / 255, green = green / 255, blue = blue / 255;
+				let maxColor = Math.max(red, green, blue)
+				let minColor = Math.min(red, green, blue)
+				let hue, saturation, value = maxColor
+				let colorDifference = maxColor - minColor
+				saturation = maxColor === 0 ? 0 : colorDifference / maxColor
+				if (maxColor === minColor) {
+					hue = 0
+				} else {
+					switch (maxColor) {
+						case red: {
+							hue = (green - blue) / colorDifference + (green < blue ? 6 : 0)
+							break
+						}
+						case green: {
+							hue = (blue - red) / colorDifference + 2
+							break
+						}
+						case blue: {
+							hue = (red - green) / colorDifference + 4
+							break
+						}
+					}
+					hue /= 6
+				}
+				return { hue: hue * 360, saturation: saturation * 100, value: value * 100 }
+			}
+
+			function hexToHSV(hexColor) {
+				let { red, green, blue } = hexToRGB(hexColor)
+				return rgbToHSV(red, green, blue)
+			}
+
 			function generateColors(amount) {
 				// Initialize colors array
 				let colors = [];
@@ -226,7 +279,7 @@
 				// Generate colors
 				for (let i = 0; i < amount; i++) {
 					// Add color to the colors array
-					colors.push(convertHSLToHex(hue, 100, 50));
+					colors.push(HSLToHex(hue, 100, 50));
 
 					// Increment hue
 					hue += 360 / amount
@@ -335,7 +388,7 @@
 				socket.emit('previousPollDisplay', data)
 			}
 
-			socket.on('previousPollData', function (data) {
+			socket.on('previousPollData', (data) => {
 				previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
 
 				for (let i = 0; i < data.names.length; i++) {
@@ -356,24 +409,24 @@
 
 					var pollAnswers = []
 					for (let i = 0; i < resNumber.value; i++) {
-						let pollAnswer = { answer: '', weight: 1, color: '' }
-
-						if (pollAnsNames[i]) {
-							if (pollAnsNames[i].value) pollAnswer.answer = pollAnsNames[i].value
+						let pollResponse = pollResponses[i]
+						let pollAnswer = {
+							answer: pollResponse.answer,
+							weight: pollResponse.weight,
+							color: pollResponse.color
 						}
 
 						pollAnswers.push(pollAnswer)
 					}
-					pollAnsForm.style.display = 'none'
+					responsesDiv.style.display = 'none'
 					startPollForm.style.display = 'none'
 					endPoll.style.display = 'block'
 					permChanges.style.display = 'none'
 
-					console.log(pollAnswers);
 					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
 					socket.emit('reload') // Reloads the users page
 				} else if (pollType == 'TUTD') {
-					pollAnsForm.style.display = 'none';
+					responsesDiv.style.display = 'none';
 					startPollForm.style.display = 'none';
 					endPoll.style.display = 'block';
 					permChanges.style.display = 'none';
@@ -385,44 +438,393 @@
 				};
 			};
 
-			resNumber.onchange = function () {
-				if (this.value < 1) this.value = 1
-				if (this.value > 26) this.value = 26
-				if (pollAnsForm.style.display == 'block') namePollFunc()
-			};
+			function responseAmountChange() {
+				if (resNumber.value < 1) resNumber.value = 1
+				if (resNumber.value > 26) resNumber.value = 26
 
-			function namePollFunc() {
-				pollAnsForm.style.display = 'block'
-				var changeNamesButton = document.getElementById('changeNames')
-				changeNamesButton.value = "Reset names"
-				changeNamesButton.onclick = clearPollNames
-				var pollAnsNames = document.getElementsByName('pollAnsName')
-				var pollAnsValues = []
-				for (let i = 0; i < pollAnsNames.length; i++) {
-					pollAnsValues.push(pollAnsNames[i].value)
+				generatedColors = generateColors(resNumber.value)
+				if (pollResponses.length > resNumber.value) {
+					let responseDivs = document.getElementsByClassName('response')
+					for (let i = resNumber.value; i < pollResponses.length; i++) {
+						responseDivs[i].remove()
+					}
+					pollResponses.splice(resNumber.value)
 				}
-				pollAnsForm.innerHTML = ''
 
-				let generatedColors = generateColors(resNumber.value)
+				for (let i = pollResponses.length; i < resNumber.value; i++) {
+					pollResponses.push({
+						answer: '',
+						defaultAnswer: letterString[i],
+						color: '',
+						defaultColor: generateColors[i],
+						weight: 1,
+						defaultWeight: 1
+					})
 
-				for (let i = 0; i < resNumber.value; i++) {
-					//Show the color associated with the answer
+					let responseDiv = document.createElement('div')
+					responseDiv.className = 'response'
+					let colorPickerButton = document.createElement('button')
+					colorPickerButton.className = 'colorPickerButton'
+					colorPickerButton.id = i
+					colorPickerButton.onclick = (event) => {
+						event.preventDefault()
+						let id = Number(event.target.id)
+						let colorPickers = document.getElementsByClassName('colorPicker')
 
-					pollAnsForm.innerHTML += `
-						<div class="pollAnsColor" style="background-color: ${generatedColors[i]};"></div>
-						<input type="text" name="pollAnsName"
-						placeholder="Answer ${String.fromCharCode(i + 97)}" value="${pollAnsValues[i] || ''}">
-					`
-					if (i % 2) pollAnsForm.innerHTML += '<br>'
+						for (let colorPickerIndex = 0; colorPickerIndex < colorPickers.length; colorPickerIndex++) {
+							if (colorPickerIndex == id) continue
+
+							colorPickers[colorPickerIndex].style.display = 'none'
+						}
+
+						let colorPicker = colorPickers[id]
+						if (colorPicker.style.display == 'grid') {
+							colorPicker.style.display = 'none'
+						}
+						else {
+							colorPicker.style.display = 'grid'
+						}
+					}
+					responseDiv.appendChild(colorPickerButton)
+					let colorPickerDiv = document.createElement('div')
+					colorPickerDiv.className = 'colorPicker'
+					let buttonsDiv = document.createElement('div')
+					buttonsDiv.className = 'buttonsDiv'
+					let saveColor = document.createElement('button')
+					saveColor.className = 'quickButton'
+					saveColor.innerText = 'Save Color'
+					saveColor.onclick = (event) => {
+						event.preventDefault()
+						pollResponses[i].color = colorPickers[i].color.hexString
+						colorPickerButton.style.backgroundColor = colorPickers[i].color.hexString;
+						oldColor.style.backgroundColor = colorPickers[i].color.hexString;
+					}
+					buttonsDiv.appendChild(saveColor)
+					let clearColor = document.createElement('button')
+					clearColor.className = 'quickButton'
+					clearColor.innerText = 'Clear Color'
+					clearColor.onclick = (event) => {
+						event.preventDefault()
+						let responseDiv = document.getElementsByClassName('response')[i]
+						let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+						colorPickers[i].color.set(oldColor.style.backgroundColor)
+					}
+					buttonsDiv.appendChild(clearColor)
+					let resetColor = document.createElement('button')
+					resetColor.className = 'quickButton'
+					resetColor.innerText = 'Reset Color'
+					resetColor.onclick = (event) => {
+						event.preventDefault()
+						let responseDiv = document.getElementsByClassName('response')[i]
+						let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+						let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+						pollResponses[i].color = ''
+						colorPickerButton.style.backgroundColor = generatedColors[i]
+						oldColor.style.backgroundColor = generatedColors[i]
+					}
+					buttonsDiv.appendChild(resetColor)
+					colorPickerDiv.appendChild(buttonsDiv)
+					let colorsDiv = document.createElement('div')
+					colorsDiv.className = 'colorsDiv'
+					let oldColor = document.createElement('div')
+					oldColor.className = 'oldColor'
+					colorsDiv.appendChild(oldColor)
+					let newColor = document.createElement('div')
+					newColor.className = 'newColor'
+					colorsDiv.appendChild(newColor)
+					colorPickerDiv.appendChild(colorsDiv)
+					let hexDiv = document.createElement('div')
+					hexDiv.className = 'hexDiv'
+					let hexLabel = document.createElement('label')
+					hexLabel.className = 'hexLabel'
+					hexLabel.innerText = 'Hex '
+					let hexInput = document.createElement('input')
+					hexInput.className = 'hexInput'
+					hexInput.type = 'text'
+					hexInput.pattern = '[0-9A-Fa-f]{3,6}'
+					hexInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set('#' + event.target.value)
+					}
+					hexLabel.appendChild(hexInput)
+					hexDiv.appendChild(hexLabel)
+					colorPickerDiv.appendChild(hexDiv)
+					let rgbDiv = document.createElement('div')
+					rgbDiv.className = 'rgbDiv'
+					let redLabel = document.createElement('label')
+					redLabel.className = 'redLabel'
+					redLabel.innerText = 'Red '
+					let redInput = document.createElement('input')
+					redInput.className = 'redInput'
+					redInput.type = 'number'
+					redInput.step = 1
+					redInput.min = 0
+					redInput.max = 255
+					redInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.rgb,
+							r: event.target.value
+						})
+					}
+					redLabel.appendChild(redInput)
+					rgbDiv.appendChild(redLabel)
+					let greenLabel = document.createElement('label')
+					greenLabel.className = 'greenLabel'
+					greenLabel.innerText = 'Green '
+					let greenInput = document.createElement('input')
+					greenInput.className = 'greenInput'
+					greenInput.type = 'number'
+					greenInput.step = 1
+					greenInput.min = 0
+					greenInput.max = 255
+					greenInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.rgb,
+							g: event.target.value
+						})
+					}
+					greenLabel.appendChild(greenInput)
+					rgbDiv.appendChild(greenLabel)
+					let blueLabel = document.createElement('label')
+					blueLabel.className = 'blueLabel'
+					blueLabel.innerText = 'Blue '
+					let blueInput = document.createElement('input')
+					blueInput.className = 'blueInput'
+					blueInput.type = 'number'
+					blueInput.step = 1
+					blueInput.min = 0
+					blueInput.max = 255
+					blueInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.rgb,
+							b: event.target.value
+						})
+					}
+					blueLabel.appendChild(blueInput)
+					rgbDiv.appendChild(blueLabel)
+					colorPickerDiv.appendChild(rgbDiv)
+					let hueLabel = document.createElement('label')
+					hueLabel.className = 'hueLabel'
+					hueLabel.innerText = 'Hue '
+					let hueInput = document.createElement('input')
+					hueInput.className = 'hueInput'
+					hueInput.type = 'number'
+					hueInput.step = 1
+					hueInput.min = 0
+					hueInput.max = 360
+					hueLabel.appendChild(hueInput)
+					let saturationLabel = document.createElement('label')
+					saturationLabel.className = 'saturationLabel'
+					saturationLabel.innerText = 'Saturation '
+					let saturationInput = document.createElement('input')
+					saturationInput.className = 'saturationInput'
+					saturationInput.type = 'number'
+					saturationInput.step = 1
+					saturationInput.min = 0
+					saturationInput.max = 100
+					saturationLabel.appendChild(saturationInput)
+					let hslDiv = document.createElement('div')
+					hslDiv.className = 'hslDiv'
+					hslDiv.appendChild(hueLabel.cloneNode(true))
+					hslDiv.getElementsByClassName('hueInput')[0].onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsl,
+							h: event.target.value
+						})
+					}
+					hslDiv.appendChild(saturationLabel.cloneNode(true))
+					hslDiv.getElementsByClassName('saturationInput')[0].onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsl,
+							s: event.target.value
+						})
+					}
+					let lightnessLabel = document.createElement('label')
+					lightnessLabel.className = 'lightnessLabel'
+					lightnessLabel.innerText = 'Lightness '
+					let lightnessInput = document.createElement('input')
+					lightnessInput.className = 'lightnessInput'
+					lightnessInput.type = 'number'
+					lightnessInput.step = 1
+					lightnessInput.min = 0
+					lightnessInput.max = 100
+					lightnessInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsl,
+							l: event.target.value
+						})
+					}
+					lightnessLabel.appendChild(lightnessInput)
+					hslDiv.appendChild(lightnessLabel)
+					colorPickerDiv.appendChild(hslDiv)
+					let hsvDiv = document.createElement('div')
+					hsvDiv.className = 'hsvDiv'
+					hsvDiv.appendChild(hueLabel.cloneNode(true))
+					hsvDiv.getElementsByClassName('hueInput')[0].onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsv,
+							h: event.target.value
+						})
+					}
+					hsvDiv.appendChild(saturationLabel.cloneNode(true))
+					hsvDiv.getElementsByClassName('saturationInput')[0].onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsv,
+							s: event.target.value
+						})
+					}
+					let valueLabel = document.createElement('label')
+					valueLabel.className = 'valueLabel'
+					valueLabel.innerText = 'Value '
+					let valueInput = document.createElement('input')
+					valueInput.className = 'valueInput'
+					valueInput.type = 'number'
+					valueInput.step = 1
+					valueInput.min = 0
+					valueInput.max = 100
+					valueInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set({
+							...colorPickers[i].color.hsv,
+							v: event.target.value
+						})
+					}
+					valueLabel.appendChild(valueInput)
+					hsvDiv.appendChild(valueLabel)
+					colorPickerDiv.appendChild(hsvDiv)
+					responseDiv.appendChild(colorPickerDiv)
+					let answerName = document.createElement('input')
+					answerName.type = 'text'
+					answerName.name = 'pollAnsName'
+					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)}`
+					answerName.value = ''
+					responseDiv.appendChild(answerName)
+					responsesDiv.appendChild(responseDiv)
+
+					function updatePosition() {
+						FloatingUIDOM.computePosition(colorPickerButton, colorPickerDiv, {
+							placement: 'bottom',
+							middleware: [FloatingUIDOM.offset(10), FloatingUIDOM.flip()]
+						})
+							.then(({ x, y }) => {
+								Object.assign(colorPickerDiv.style, {
+									left: `${x}px`,
+									top: `${y}px`
+								})
+							})
+					}
+
+					FloatingUIDOM.autoUpdate(colorPickerButton, colorPickerDiv, updatePosition)
+
+					colorPickers[i] = new iro.ColorPicker(colorPickerDiv, {
+						width: 100,
+						color: generatedColors[i],
+						id: i,
+						layout: [
+							{
+								component: iro.ui.Wheel,
+							},
+							{
+								component: iro.ui.Slider,
+								options: {
+									sliderType: 'value'
+								}
+							},
+							{
+								component: iro.ui.Box,
+							},
+							{
+								component: iro.ui.Slider,
+								options: {
+									sliderType: 'hue'
+								}
+							},
+						]
+					});
+					colorPickers[i].on(['color:init', 'color:change'], color => {
+						let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+						let newColor = responseDiv.getElementsByClassName('newColor')[0]
+						let hexInput = responseDiv.getElementsByClassName('hexInput')[0]
+						let redInput = responseDiv.getElementsByClassName('redInput')[0]
+						let greenInput = responseDiv.getElementsByClassName('greenInput')[0]
+						let blueInput = responseDiv.getElementsByClassName('blueInput')[0]
+						let hueInputs = responseDiv.getElementsByClassName('hueInput')
+						let saturationInputs = responseDiv.getElementsByClassName('saturationInput')
+						let lightnessInput = responseDiv.getElementsByClassName('lightnessInput')[0]
+						let valueInput = responseDiv.getElementsByClassName('valueInput')[0]
+
+						newColor.style.backgroundColor = color.hexString
+						hexInput.value = color.hexString.substring(1)
+						redInput.value = color.red
+						greenInput.value = color.green
+						blueInput.value = color.blue
+						for (let hueInput of hueInputs) {
+							hueInput.value = color.hue
+						}
+						for (let saturationInput of saturationInputs) {
+							saturationInput.value = color.saturation
+						}
+						lightnessInput.value = color.hsl.l
+						valueInput.value = color.value
+					})
+				}
+
+				let responseDivs = document.getElementsByClassName('response')
+				for (let i = 0; i < pollResponses.length; i++) {
+					let responseDiv = responseDivs[i]
+					let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+					let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+					pollResponses[i].defaultColor = generatedColors[i]
+					if (!pollResponses[i].color) {
+						colorPickerButton.style.backgroundColor = generatedColors[i]
+						oldColor.style.backgroundColor = generatedColors[i]
+					}
+					let hsv = hexToHSV(generatedColors[i])
+					colorPickers[i].color.initialValue = {
+						h: hsv.hue,
+						s: hsv.saturation,
+						v: hsv.value,
+						a: 1,
+					}
 				}
 			}
+			responseAmountChange()
 
-			function clearPollNames() {
-				var pollAnsNames = document.getElementsByName('pollAnsName')
-				var pollAnsValues = []
-				for (let i = 0; i < pollAnsNames.length; i++) {
-					pollAnsNames[i].value = ''
+			function resetAnswers() {
+				for (let i = 0; i < pollResponses.length; i++) {
+					pollResponses[i].answer = pollResponses[i].defaultAnswer
 				}
+			}
+			resetAnswersButton.onclick = resetAnswers
+
+			function resetColors() {
+				for (let i = 0; i < pollResponses.length; i++) {
+					let responseDiv = document.getElementsByClassName('response')[i]
+					let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+					let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+					pollResponses[i].color = ''
+					colorPickerButton.style.backgroundColor = generatedColors[i]
+					oldColor.style.backgroundColor = generatedColors[i]
+				}
+			}
+			resetColorsButton.onclick = resetColors
+
+			function showResponses() {
+				if (responsesDiv.style.display == 'grid')
+					responsesDiv.style.display = 'none'
+				else responsesDiv.style.display = 'grid'
 			}
 
 			function modeChange() {
@@ -709,7 +1111,6 @@
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
 						objectA = entireA[1]
 						objectB = entireB[1]
-						console.log(objectA, objectB);
 						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
 							return objectA.pollRes.textRes.localeCompare(objectB.pollRes.textRes)
 						} else if (objectA.pollRes.textRes) return -1
@@ -812,7 +1213,6 @@
 				location.reload()
 			}
 
-
 			function makeLesson() {
 				let learningObj = document.getElementById('learningObj')
 				let dueAssigns = document.getElementById('dueAssigns')
@@ -823,6 +1223,27 @@
 			function approveBreak(breakApproval, username) {
 				socket.emit('approveBreak', breakApproval, username)
 			}
+
+			// close all color pickers if you press escape
+			document.addEventListener('keydown', function (event) {
+				if (event.key == 'Escape') {
+					for (let colorPicker of document.getElementsByClassName('colorPicker')) {
+						colorPicker.style.display = 'none'
+					}
+				}
+			})
+
+			// close all color pickers if you click outside of them
+			document.addEventListener('click', (event) => {
+				if (
+					!event.target.closest('.colorPicker') &&
+					!event.target.classList.contains('colorPickerButton')
+				) {
+					for (let colorPicker of document.getElementsByClassName('colorPicker')) {
+						colorPicker.style.display = 'none'
+					}
+				}
+			})
 
 			var allRoom = ""
 			socket.emit('cpupdate')
