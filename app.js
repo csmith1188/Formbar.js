@@ -47,7 +47,11 @@ app.use(express.urlencoded({ extended: true }))
 
 
 // Use a static folder for web page assets
-app.use(express.static(__dirname + '/static'))
+app.use(express.static(__dirname + '/static'));
+app.use('/js/chart.js', express.static(__dirname + '/node_modules/chart.js/dist/chart.umd.js'));
+app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist/iro.min.js'));
+app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'));
+app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'));
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
