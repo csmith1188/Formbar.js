@@ -247,7 +247,7 @@ function joinClass(userName, code) {
 								)
 							}
 							// Get the student's session data ready to transport into new class
-							var user = cD.noClass.students[userName]
+							let user = cD.noClass.students[userName]
 							if (classUser) user.permissions = classUser.permissions
 							else user.permissions = 2
 							// Remove student from old class
@@ -659,27 +659,31 @@ app.post('/login', async (req, res) => {
 				// Decrypt users password
 				let tempPassword = decrypt(JSON.parse(rows.password))
 				if (rows.username == user.username && tempPassword == user.password) {
-					// Add user to the session
-					cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API)
+					let loggedIn = false
+					let classKey = ''
+					for (let classData of Object.values(cD)) {
+						if (classData.key) {
+							for (let username of Object.keys(classData.students)) {
+								if (username == rows.username) {
+									loggedIn = true
+									classKey = classData.key
+
+									break
+								}
+							}
+						}
+					}
+
+					if (loggedIn) {
+						req.session.class = classKey
+					} else {
+						// Add user to the session
+						cD.noClass.students[rows.username] = new Student(rows.username, rows.id, rows.permissions, rows.API)
+					}
 					// Add a cookie to transfer user credentials across site
 					req.session.user = rows.username
-					if (req.body.classKey) {
-						req.session.class = req.body.classKey
-						let checkJoin
-						try {
-							checkJoin = await joinClass(user.username, cD[req.body.classKey].key)
-							if (checkJoin) {
-								res.json({ login: true })
-							} else (
-								res.json({ login: false })
-							)
-						} catch (err) {
-							res.json({ login: false })
-						}
 
-					} else {
-						res.redirect('/')
-					}
+					res.redirect('/')
 				} else {
 					res.redirect('/login')
 				}
