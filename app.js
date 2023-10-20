@@ -8,8 +8,6 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-const { writeFileSync } = require('fs')
-const { dirname } = require('path')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -50,6 +48,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'));
+app.use('/js/chart.js', express.static(__dirname + '/node_modules/chart.js/dist/chart.umd.js'));
 app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist/iro.min.js'));
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'));
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'));

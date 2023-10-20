@@ -456,11 +456,39 @@ input[type="radio"]:focus {
   width: max-content;
   top: 0;
   left: 0;
+  gap: 10px;
+}
+
+.colorPicker .colorsDiv{
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.colorPicker .IroColorPicker{
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.colorPicker .hexLabel{
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.hexInput{
+  width: 60px;
+}
+
+.colorPicker .buttonsDiv{
+  grid-column: 1 / 3;
+  grid-row: 3;
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
 }
 
 .oldColor, .newColor {
-  height: 50px;
-  width: 50px;
+  height: 50%;
+  width: 70%;
 }
 
 #startPoll {
