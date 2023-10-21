@@ -39,6 +39,8 @@
 						<button type="button" id="helpTime" class="sort">Help Time</button>
 						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 					</div>
+					<button id="deleteStudents" onclick="((event) => {socket.emit('deleteStudents')})()">Delete All
+						Students</button>
 					<div id="permChangeList">
 
 					</div>
@@ -287,11 +289,6 @@
 
 				// Return the colors array
 				return colors;
-			}
-
-			function deleteUser(e) {
-				socket.emit('deleteUser', e.dataset.userid)
-				socket.emit('cpupdate')
 			}
 
 			// Function runs on page load
@@ -745,7 +742,7 @@
 				permissionSwitch.setAttribute("class", "permSwitch");
 				permissionSwitch.setAttribute("data-userid", student);
 				permissionSwitch.onchange = (event) => {
-					updatePerms(event.target)
+					socket.emit('permChange', event.target.dataset.userid, event.target.value)
 				};
 				if (studentData.permissions == 0) {
 					let teacherOption = document.createElement("option");
@@ -822,15 +819,14 @@
 				}
 				newStudent.appendChild(permissionSwitch);
 				newStudent.append(" ");
-				let deleteUserButton = document.createElement("button");
-				deleteUserButton.setAttribute("class", "deleteUser");
-				deleteUserButton.classList.add("quickButton");
-				deleteUserButton.setAttribute("data-userid", student);
-				deleteUserButton.onclick = (event) => {
-					deleteUser(event.target)
+				let deleteStudentButton = document.createElement("button");
+				deleteStudentButton.className = 'deleteStudent quickButton'
+				deleteStudentButton.setAttribute("data-userid", student);
+				deleteStudentButton.onclick = (event) => {
+					socket.emit('deleteStudent', event.target.dataset.userid)
 				};
-				deleteUserButton.innerText = "Delete User";
-				newStudent.appendChild(deleteUserButton);
+				deleteStudentButton.innerText = "Delete User";
+				newStudent.appendChild(deleteStudentButton);
 				return newStudent;
 			}
 
@@ -958,13 +954,6 @@
 				for (const student of Object.keys(newRoom.students)) {
 					permChangeList.appendChild(buildStudent(newRoom, student))
 				}
-			}
-
-			// Used to change permission of user in there class
-			// Sends user data and desired permission level of the user
-			function updatePerms(e) {
-				socket.emit('permChange', e.dataset.userid, e.value)
-				location.reload()
 			}
 
 			function makeLesson() {

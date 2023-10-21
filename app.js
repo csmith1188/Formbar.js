@@ -138,21 +138,7 @@ const pagePermissions = {
 }
 
 
-
-
 // Functions
-//-----------
-//Clears the database
-//Removes all users, teachers, and classes
-//ONLY USE FOR TESTING PURPOSES
-function clearDatabase() {
-	db.get(`DELETE FROM users`, (err) => {
-		if (err) {
-			console.log(err)
-		}
-	})
-}
-
 /*
 Check if user has logged in
 Place at the start of any page that needs to verify if a user is logged in or not
@@ -563,13 +549,7 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 })
 
 // D
-// Clears the database, this deletes the database
-// This will allow for the server to be reset so new things can be tested
-// This is purely for testing purposes, and will be removed in the future
-// Clearing the database removes all permissions and makes you manually reset them
-app.get('/delete', (req, res) => {
-	clearDatabase()
-})
+
 
 // E
 
@@ -748,6 +728,8 @@ app.post('/login', async (req, res) => {
 
 	}
 })
+
+
 
 // M
 
@@ -1140,6 +1122,7 @@ io.on('connection', (socket) => {
 		}
 		else
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [res, user])
+		cpupdate()
 	})
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
@@ -1245,11 +1228,39 @@ io.on('connection', (socket) => {
 		cpupdate()
 		vbUpdate()
 	})
+
+	function resetPermissions(username) {
+		db.get(
+			'SELECT * from users where username = ?',
+			[username],
+			(error, user) => {
+				if (error) console.log(error);
+				else if (user) {
+					cD.noClass.students[username].permissions = user.permissions
+				}
+			}
+		)
+	}
+
 	// Deletes a user from the class
-	socket.on('deleteUser', (userName) => {
-		cD.noClass.students[userName] = cD[socket.request.session.class].students[userName]
-		delete cD[socket.request.session.class].students[userName]
+	socket.on('deleteStudent', (username) => {
+		cD.noClass.students[username] = cD[socket.request.session.class].students[username]
+		resetPermissions(username)
+		delete cD[socket.request.session.class].students[username]
+		cpupdate()
 	})
+
+	// Deletes a user from the class
+	socket.on('deleteStudents', () => {
+		for (let username of Object.keys(cD[socket.request.session.class].students)) {
+			if (cD[socket.request.session.class].students[username].permissions != 0) {
+				cD.noClass.students[username] = cD[socket.request.session.class].students[username]
+				delete cD[socket.request.session.class].students[username]
+			}
+		}
+		cpupdate()
+	})
+
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
 		socket.join(className)
