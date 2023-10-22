@@ -75,7 +75,7 @@ const BANNED_PERMISSIONS = 0
 const MAX_CLASS_PERMISSIONS = TEACHER_PERMISSIONS
 
 // Permission level needed to access each page
-const pagePermissions = {
+const PAGE_PERMISSIONS = {
 	controlPanel: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	chat: { permissions: STUDENT_PERMISSIONS, classPage: true },
@@ -208,12 +208,12 @@ function permCheck(req, res, next) {
 
 		// Checks if users permissions are high enough
 		if (
-			pagePermissions[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].classPermissions >= pagePermissions[urlPath].permissions
+			PAGE_PERMISSIONS[urlPath].classPage &&
+			cD[req.session.class].students[req.session.username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else if (
-			!pagePermissions[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].permissions >= pagePermissions[urlPath].permissions
+			!PAGE_PERMISSIONS[urlPath].classPage &&
+			cD[req.session.class].students[req.session.username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else {
 			res.render('pages/message', {
