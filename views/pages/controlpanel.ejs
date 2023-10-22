@@ -92,7 +92,7 @@
 						<input name="spreadsheet" type="file">
 						<input type="submit" class="quickButton">
 					</form>
-					<button type="button" onclick="doStep(<%-currentStep%>)">Next Step</button><br>
+					<button type="button" id="nextStep">Next Step</button><br>
 					<br>
 					<form>
 						<label class="form-control" id="pollControl" for="modeP">
@@ -1014,7 +1014,6 @@
 			function doStep(id) {
 				alert('Step ' + id + ' activated')
 				socket.emit('doStep', id)
-				location.reload()
 			}
 
 			function makeLesson() {
@@ -1057,9 +1056,14 @@
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
 				room = JSON.parse(room)
+				console.log(room);
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(JSON.parse(pollHistory))
 				allRoom = room
+				document.getElementById('nextStep').onclick = () => {
+					doStep(allRoom.currentStep)
+					socket.emit('cpUpdate')
+				}
 				filterSortChange()
 			})
 			socket.emit('pluginUpdate')

@@ -3,11 +3,12 @@ const express = require('express')
 const session = require('express-session') //For storing client login data
 const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
-const jwt = require('jsonwebtoken') //For authentication system between Formbot/other bots and Formbar
+const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
+const { constants } = require('buffer')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -62,11 +63,40 @@ var cD = {
 }
 
 
+// Constants
+// permissions levels
+const MANAGER_PERMISSIONS = 5
+const TEACHER_PERMISSIONS = 4
+const MOD_PERMISSIONS = 3
+const STUDENT_PERMISSIONS = 2
+const GUEST_PERMISSIONS = 1
+const BANNED_PERMISSIONS = 0
+
+const MAX_CLASS_PERMISSIONS = TEACHER_PERMISSIONS
+
+// Permission level needed to access each page
+const pagePermissions = {
+	controlPanel: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	chat: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	poll: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
+	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	help: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	bgm: { permissions: MOD_PERMISSIONS, classPage: true },
+	sfx: { permissions: MOD_PERMISSIONS, classPage: true },
+	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
+	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
+	home: { permissions: GUEST_PERMISSIONS, classPage: false },
+}
+
+
 // This class is used to create a student to be stored in the sessions data
 class Student {
-	// Needs username, id from the database, and if perms established already pass the updated value
+	// Needs username, id from the database, and if permissions established already pass the updated value
 	// These will need to be put into the constructor in order to allow the creation of the object
-	constructor(username, id, permissions = 2, API) {
+	constructor(username, id, permissions = STUDENT_PERMISSIONS, API) {
 		this.username = username
 		this.id = id
 		this.permissions = permissions
@@ -127,37 +157,24 @@ class Lesson {
 	}
 }
 
-//Permssion level needed to access each page
-const pagePermissions = {
-	controlPanel: 0,
-	chat: 2,
-	poll: 2,
-	virtualbar: 2,
-	makeQuiz: 0,
-	bgm: 2,
-	sfx: 2
-}
-
-
 // Functions
 /*
 Check if user has logged in
 Place at the start of any page that needs to verify if a user is logged in or not
 This allows websites to check on their own if the user is logged in
-This also allows for the website to check for perms
+This also allows for the website to check for permissions
 */
 function isAuthenticated(req, res, next) {
 	if (req.session.username) {
 		if (cD.noClass.students[req.session.username]) {
-			if (cD.noClass.students[req.session.username].permissions == 0) {
-				res.redirect('/createclass')
+			if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+				res.redirect('/createClass')
 			} else {
-				res.redirect('/selectclass')
+				res.redirect('/selectClass')
 			}
 		} else {
 			next()
 		}
-
 	} else {
 		res.redirect('/login')
 	}
@@ -188,10 +205,17 @@ function permCheck(req, res, next) {
 		if (urlPath.indexOf('?') != -1) {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
-		// Checks if users permnissions are high enough
-		if (cD[req.session.class].students[req.session.username].classPermissions <= pagePermissions[urlPath]) {
-			next()
-		} else {
+
+		// Checks if users permissions are high enough
+		if (
+			pagePermissions[urlPath].classPage &&
+			cD[req.session.class].students[req.session.username].classPermissions >= pagePermissions[urlPath].permissions
+		) next()
+		else if (
+			!pagePermissions[urlPath].classPage &&
+			cD[req.session.class].students[req.session.username].permissions >= pagePermissions[urlPath].permissions
+		) next()
+		else {
 			res.render('pages/message', {
 				message: "Error: you don't have high enough permissions to access this page",
 				title: 'Error'
@@ -235,22 +259,24 @@ function joinClass(userName, code) {
 							}
 							// Get the student's session data ready to transport into new class
 							let user = cD.noClass.students[userName]
-							if (classUser) {
-								user.classPermissions = classUser.permissions
-							}
-							else {
-								user.classPermissions = 2
-							}
-							// Remove student from old class
-							delete cD.noClass.students[userName]
-							// Add the student to the newly created class
-							cD[code].students[userName] = user
-							resolve(true)
+							if (classUser.permissions > BANNED_PERMISSIONS) {
+								if (classUser) {
+									user.classPermissions = classUser.permissions
+								}
+								else {
+									user.classPermissions = STUDENT_PERMISSIONS
+								}
+								// Remove student from old class
+								delete cD.noClass.students[userName]
+								// Add the student to the newly created class
+								cD[code].students[userName] = user
+								resolve(true)
+							} resolve(new Error('you are banned from that class'))
 						}
 					)
 				})
 			} else {
-				resolve(false)
+				resolve(new Error('no open class with that code'))
 			}
 		})
 	})
@@ -315,7 +341,7 @@ app.get('/', isAuthenticated, (req, res) => {
 
 
 // A
-//The page displaying the API key used when handling oauth2 requests from outside programs such as FORMBOT - Riley R., May 22, 2023
+//The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
 	res.render('pages/APIKEY', {
 		title: "API KEY",
@@ -345,11 +371,7 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	*/
 	res.render('pages/controlPanel', {
 		title: "Control Panel",
-		students: allStuds,
-		pollStatus: cD[req.session.class].poll.status,
-		key: cD[req.session.class].key.toUpperCase(),
-		steps: cD[req.session.class].steps,
-		currentStep: cD[req.session.class].currentStep
+		pollStatus: cD[req.session.class].poll.status
 	})
 
 })
@@ -363,7 +385,6 @@ Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-	ï
 	//Initialze a list to push each step to - Riley R., May 22, 2023
 	let steps = []
 	/*
@@ -490,7 +511,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 // This allows the teacher to be in charge of all classes
 // The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
-app.get('/createclass', isLoggedIn, (req, res) => {
+app.get('/createClass', isLoggedIn, permCheck, (req, res) => {
 	var ownerClasses = []
 	// Finds all classes the teacher is the owner of
 	db.all(`SELECT name FROM classroom WHERE owner=?`,
@@ -498,7 +519,7 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 			rows.forEach(row => {
 				ownerClasses.push(row.name)
 			})
-			res.render('pages/createclass', {
+			res.render('pages/createClass', {
 				title: 'Create Class',
 				ownerClasses: ownerClasses
 			})
@@ -509,7 +530,7 @@ app.get('/createclass', isLoggedIn, (req, res) => {
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
 // Plus they can ban and kick as long as they can create classes
-app.post('/createclass', isLoggedIn, (req, res) => {
+app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 	let submittionType = req.body.submittionType
 	let className = req.body.name.toLowerCase()
 	function makeClass(key) {
@@ -521,6 +542,8 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 		cD[key] = new Classroom(className, key)
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
+		cD[key].students[req.session.username].classPermissions = req.session.classPermissions
+
 		req.session.class = key
 
 		res.redirect('/home')
@@ -551,7 +574,9 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 			makeClass(classCode.key)
 		})
 	}
+
 	req.session.classPermissions = req.session.permissions
+	if (req.session.classPermissions > MAX_CLASS_PERMISSIONS) req.session.classPermissions = MAX_CLASS_PERMISSIONS
 })
 
 // D
@@ -568,14 +593,14 @@ app.post('/createclass', isLoggedIn, (req, res) => {
 // It also shows the color and title of the formbar js
 // It renders the home page so teachers and students can navigate to it
 // It uses the authenitication to make sure the user is actually logged in
-app.get('/home', isAuthenticated, (req, res) => {
+app.get('/home', isAuthenticated, permCheck, (req, res) => {
 	res.render('pages/index', {
 		title: 'Home'
 	})
 })
 
 
-app.get('/help', isAuthenticated, (req, res) => {
+app.get('/help', isAuthenticated, permCheck, (req, res) => {
 	res.render('pages/help', {
 		title: "Help"
 	})
@@ -589,7 +614,7 @@ app.get('/help', isAuthenticated, (req, res) => {
 
 // L
 /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
-app.get('/previousLessons', isAuthenticated, (req, res) => {
+app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
 		if (err) {
 			console.error(err)
@@ -604,7 +629,7 @@ app.get('/previousLessons', isAuthenticated, (req, res) => {
 	})
 })
 
-app.post('/previousLessons', (req, res) => {
+app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	let lesson = JSON.parse(req.body.data)
 	res.render('pages/lesson', {
 		lesson: lesson,
@@ -664,13 +689,14 @@ app.post('/login', async (req, res) => {
 
 					if (loggedIn) {
 						req.session.class = classKey
-						req.session.permissions = userData.permissions
 						req.session.classPermissions = classPermissions
 					} else {
 						// Add user to the session
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-						req.session.permissions = userData.permissions
+						req.session.class = 'noClass'
+						req.session.classPermissions = null
 					}
+					req.session.permissions = userData.permissions
 					// Add a cookie to transfer user credentials across site
 					req.session.username = userData.username
 					res.redirect('/')
@@ -683,7 +709,7 @@ app.post('/login', async (req, res) => {
 		})
 
 	} else if (user.loginType == "new") {
-		let permissions = 2
+		let permissions = STUDENT_PERMISSIONS
 
 		db.all('SELECT API, secret FROM users', (error, users) => {
 			if (error) console.error(error)
@@ -693,7 +719,7 @@ app.post('/login', async (req, res) => {
 				let newAPI
 				let newSecret
 
-				if (users.length == 0) permissions = 0
+				if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
 				for (let user of users) {
 					existingAPIs.push(user.API)
@@ -785,7 +811,7 @@ app.post('/oauth', (req, res) => {
 })
 
 // P
-app.get('/plugins', isAuthenticated, (req, res) => {
+app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 	res.render('pages/plugins.ejs',
 		{
 			title: 'Plugins'
@@ -801,27 +827,30 @@ app.get('/plugins', isAuthenticated, (req, res) => {
 
 // S
 
-// selectclass
+// selectClass
 //Send user to the select class page
-app.get('/selectclass', isLoggedIn, (req, res) => {
-	res.render('pages/selectclass', {
+app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
+	res.render('pages/selectClass', {
 		title: 'Select Class'
 	})
 })
 
 
 //Adds user to a selected class, typically from the select class page
-app.post('/selectclass', isLoggedIn, async (req, res) => {
+app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	let code = req.body.key.toLowerCase()
 	let checkComplete = await joinClass(req.session.username, code)
-	if (checkComplete) {
+	if (checkComplete === true) {
 		req.session.class = code
 		db.get(
 			'SELECT classusers.permissions FROM classusers JOIN classroom ON classusers.classuid = classroom.id JOIN users ON classusers.studentuid = users.id WHERE users.username = ? AND classroom.key = ? ',
 			[req.session.username, code],
 			(err, user) => {
 				if (err) console.error(err);
-				if (user) req.session.classPermissions = user.permissions
+				if (user) {
+					req.session.classPermissions = user.permissions
+					if (req.session.classPermissions > MAX_CLASS_PERMISSIONS) req.session.classPermissions = MAX_CLASS_PERMISSIONS
+				}
 				req.session.save()
 			}
 		)
@@ -829,7 +858,7 @@ app.post('/selectclass', isLoggedIn, async (req, res) => {
 	} else {
 		// res.send('Error: no open class with that name')
 		res.render('pages/message', {
-			message: "Error: no open class with that name",
+			message: `Error: ${checkComplete.message}`,
 			title: 'Error'
 		})
 	}
@@ -842,7 +871,7 @@ Poll: For displaying a multiple choice or essay question
 Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
-app.get('/student', isAuthenticated, (req, res) => {
+app.get('/student', isAuthenticated, permCheck, (req, res) => {
 	//Poll Setup
 	let user = {
 		name: req.session.username,
@@ -911,7 +940,7 @@ app.get('/student', isAuthenticated, (req, res) => {
 If it's a poll it'll save your response to the student object and the database.
 - Riley R., May 24, 2023
 */
-app.post('/student', (req, res) => {
+app.post('/student', isAuthenticated, permCheck, (req, res) => {
 	if (req.query.poll) {
 		let answer = req.body.poll
 		if (answer) {
@@ -947,15 +976,11 @@ app.post('/student', (req, res) => {
 
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
-	if (req.query.bot == "true") {
-		res.json(cD[req.session.class])
-	} else {
-		res.render('pages/virtualbar', {
-			title: 'Virtual Bar',
-			io: io,
-			className: cD[req.session.class].className
-		})
-	}
+	res.render('pages/virtualbar', {
+		title: 'Virtual Bar',
+		io: io,
+		className: cD[req.session.class].className
+	})
 })
 
 // W
@@ -976,7 +1001,7 @@ app.use((req, res, next) => {
 
 
 // Middleware for sockets
-// Authentication for users and bots to connect to formbar websockets
+// Authentication for users and plugins to connect to formbar websockets
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
 	let { api, classCode } = socket.request._query
@@ -1027,7 +1052,7 @@ io.on('connection', (socket) => {
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
-			if (student.break == true || student.classPermissions == 0) delete classData.students[username]
+			if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
 		}
 
 		if (Object.keys(classData.poll.responses).length > 0) {
@@ -1074,14 +1099,14 @@ io.on('connection', (socket) => {
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
 		socket.request.session.classPermissions = null
-		socket.request.session.class = ''
+		socket.request.session.class = 'noClass'
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
 
 	function deleteStudents(classCode) {
 		for (let username of Object.keys(cD[classCode].students)) {
-			if (cD[classCode].students[username].classPermissions > 0) {
+			if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
 				deleteStudent(username, classCode)
 			}
 		}
@@ -1144,6 +1169,8 @@ io.on('connection', (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		cD[socket.request.session.class].students[user].classPermissions = newPerm
+		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
+			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
 		db.get(
 			'SELECT id FROM classroom WHERE name = ?',
 			[cD[socket.request.session.class].className],
@@ -1159,7 +1186,7 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('permChange', (user, newPerm) => {
-		cD[socket.request.session.class].students[user].classPermissions = newPerm
+		cD[socket.request.session.class].students[user].permissions = newPerm
 		db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
 	})
 
@@ -1367,25 +1394,6 @@ io.on('connection', (socket) => {
 	// socket.on('sfxPlay', function (music) {
 	//     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
 	// })
-
-	// Starts a quick poll
-	socket.on('botPollStart', (answerNumber) => {
-		answerNames = []
-		weight = 1
-		answerWeights = []
-		cD[socket.request.session.class].poll.status = true
-		// Creates an object for every answer possible the teacher is allowing
-		for (let i = 0; i < answerNumber; i++) {
-			if (answerNames[i] == '' || answerNames[i] == null) {
-				let letterString = "abcdefghijklmnopqrstuvwxyz"
-				cD[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
-			} else {
-				cD[socket.request.session.class].poll.responses[answerNames[i]] = { answer: answerNames[i], weight: answerWeights[i] }
-			}
-		}
-		cD[socket.request.session.class].poll.textRes = false
-		cD[socket.request.session.class].poll.prompt = "Quick Poll"
-	})
 
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollindex) => {
