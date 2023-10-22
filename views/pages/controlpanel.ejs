@@ -39,8 +39,12 @@
 						<button type="button" id="helpTime" class="sort">Help Time</button>
 						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 					</div>
-					<button id="deleteStudents" onclick="((event) => {socket.emit('deleteStudents')})()">Delete All
-						Students</button>
+					<button id="deleteStudents" onclick="((event) => {socket.emit('deleteStudents')})()">
+						Delete All Students
+					</button>
+					<button id="endClass" onclick="((event) => {socket.emit('endClass');location.reload()})()">
+						End Class
+					</button>
 					<div id="permChangeList">
 
 					</div>
@@ -394,7 +398,7 @@
 					previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
 				}
 
-				previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpupdate')">Return To Selection</button>`
+				previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpUpdate')">Return To Selection</button>`
 			})
 
 			// Starts a new poll that allows students to submit answers
@@ -420,7 +424,6 @@
 					permChanges.style.display = 'none'
 
 					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
-					socket.emit('reload') // Reloads the users page
 				} else if (pollType == 'TUTD') {
 					responsesDiv.style.display = 'none';
 					startPollForm.style.display = 'none';
@@ -657,7 +660,6 @@
 			// Ends the poll and reloads the users page to stop any more submission
 			function endPollFunc() {
 				socket.emit('endPoll')
-				socket.emit('reload')
 				startPollForm.style.display = 'block'
 				endPoll.style.display = 'none'
 			}
@@ -742,7 +744,7 @@
 				permissionSwitch.setAttribute("class", "permSwitch");
 				permissionSwitch.setAttribute("data-userid", student);
 				permissionSwitch.onchange = (event) => {
-					socket.emit('permChange', event.target.dataset.userid, event.target.value)
+					socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
 				};
 				if (studentData.permissions == 0) {
 					let teacherOption = document.createElement("option");
@@ -1006,7 +1008,7 @@
 
 			function deleteTicket(e) {
 				socket.emit('deleteTicket', e.dataset.studentName)
-				socket.emit('cpupdate')
+				socket.emit('cpUpdate')
 			}
 
 			function doStep(id) {
@@ -1052,8 +1054,8 @@
 			})
 
 			var allRoom = ""
-			socket.emit('cpupdate')
-			socket.on('cpupdate', function (room, pollHistory) {
+			socket.emit('cpUpdate')
+			socket.on('cpUpdate', function (room, pollHistory) {
 				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(JSON.parse(pollHistory))

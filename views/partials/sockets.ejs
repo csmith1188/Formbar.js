@@ -12,4 +12,8 @@
 	socket.on('break', () => {
 		document.getElementById('breakDialog').showModal()
 	})
+
+	socket.on('reload', () => {
+		location.reload()
+	})
 </script>

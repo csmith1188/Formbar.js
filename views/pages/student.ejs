@@ -159,7 +159,7 @@
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
 					socket.emit('vbUpdate')
-					socket.emit('cpupdate')
+					socket.emit('cpUpdate')
 					socket.emit('sfxPlay', 'sfx_up01')
 					let alertText = ''
 					setTimeout(function () {
@@ -190,11 +190,6 @@
 				// Checks if poll is active
 				// Creates any number of responses that were defined by the teacher
 				// Checks if teacher wanted text responses or not
-
-				// When a new poll is created or ended or new barmode is, this refreshes the page
-				socket.on('reload', function () {
-					location.reload()
-				})
 
 
 				/* _____     _   _   _   ______  ______  _____   _____
