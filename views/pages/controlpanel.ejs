@@ -746,75 +746,75 @@
 				permissionSwitch.onchange = (event) => {
 					socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
 				};
-				if (studentData.permissions == 0) {
+				if (studentData.classPermissions == 4) {
 					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 0);
+					teacherOption.setAttribute("value", 4);
 					teacherOption.setAttribute("selected", true);
 					teacherOption.innerText = "Teacher";
 					permissionSwitch.add(teacherOption);
-					let botOption = document.createElement("option");
-					botOption.setAttribute("value", 1);
-					botOption.innerText = "Bot";
-					permissionSwitch.add(botOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
 					let studentOption = document.createElement("option");
 					studentOption.setAttribute("value", 2);
 					studentOption.innerText = "Student";
 					permissionSwitch.add(studentOption);
 					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 3);
+					guestOption.setAttribute("value", 1);
 					guestOption.innerText = "Guest";
 					permissionSwitch.add(guestOption);
-				} else if (studentData.permissions == 1) {
+				} else if (studentData.classPermissions == 3) {
 					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 0);
+					teacherOption.setAttribute("value", 4);
 					teacherOption.innerText = "Teacher";
 					permissionSwitch.add(teacherOption);
-					let botOption = document.createElement("option");
-					botOption.setAttribute("value", 1);
-					botOption.setAttribute("selected", true);
-					botOption.innerText = "Bot";
-					permissionSwitch.add(botOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.setAttribute("selected", true);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
 					let studentOption = document.createElement("option");
 					studentOption.setAttribute("value", 2);
 					studentOption.innerText = "Student";
 					permissionSwitch.add(studentOption);
 					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 3);
+					guestOption.setAttribute("value", 1);
 					guestOption.innerText = "Guest";
 					permissionSwitch.add(guestOption);
 				} else if (studentData.permissions == 2) {
 					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 0);
+					teacherOption.setAttribute("value", 4);
 					teacherOption.innerText = "Teacher";
 					permissionSwitch.add(teacherOption);
-					let botOption = document.createElement("option");
-					botOption.setAttribute("value", 1);
-					botOption.innerText = "Bot";
-					permissionSwitch.add(botOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 1);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
 					let studentOption = document.createElement("option");
 					studentOption.setAttribute("value", 2);
 					studentOption.setAttribute("selected", true);
 					studentOption.innerText = "Student";
 					permissionSwitch.add(studentOption);
 					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 3);
+					guestOption.setAttribute("value", 1);
 					guestOption.innerText = "Guest";
 					permissionSwitch.add(guestOption);
-				} else if (studentData.permissions == 3) {
+				} else if (studentData.classPermissions == 1) {
 					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 0);
+					teacherOption.setAttribute("value", 4);
 					teacherOption.innerText = "Teacher";
 					permissionSwitch.add(teacherOption);
-					let botOption = document.createElement("option");
-					botOption.setAttribute("value", 1);
-					botOption.innerText = "Bot";
-					permissionSwitch.add(botOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
 					let studentOption = document.createElement("option");
 					studentOption.setAttribute("value", 2);
 					studentOption.innerText = "Student";
-					permissionSwitch.add(botOption);
+					permissionSwitch.add(modOption);
 					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 3);
+					guestOption.setAttribute("value", 1);
 					guestOption.setAttribute("selected", true);
 					guestOption.innerText = "Guest";
 					permissionSwitch.add(guestOption);
@@ -948,9 +948,9 @@
 
 				//sort by permissions
 				if (sort.permissions == 1) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
-				} else if (sort.permissions == 2) {
 					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
+				} else if (sort.permissions == 2) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
 				}
 
 				for (const student of Object.keys(newRoom.students)) {
