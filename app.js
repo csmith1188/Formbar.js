@@ -195,6 +195,11 @@ function isLoggedIn(req, res, next) {
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
+	let username = req.session.username
+	let classCode = req.session.class
+
+	if (cD.noClass.students[username]) classCode = 'noClass'
+
 	if (req.url) {
 		// Defines users desired endpoint
 		let urlPath = req.url
@@ -210,11 +215,11 @@ function permCheck(req, res, next) {
 		// Checks if users permissions are high enough
 		if (
 			PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
+			cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else if (
 			!PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
+			cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else {
 			res.render('pages/message', {
@@ -1030,13 +1035,14 @@ io.on('connection', (socket) => {
 	}
 
 	function vbUpdate() {
-		let classData = JSON.parse(JSON.stringify(cD[socket.request.session.class]))//Object.assign({}, cD[socket.request.session.class])
+		let classData = structuredClone(cD[socket.request.session.class])
 
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
 			if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
 		}
+
 
 		if (Object.keys(classData.poll.responses).length > 0) {
 			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
@@ -1081,7 +1087,6 @@ io.on('connection', (socket) => {
 		socket.leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
-		socket.request.session.class = 'noClass'
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
