@@ -80,6 +80,7 @@ const PAGE_PERMISSIONS = {
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	chat: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	poll: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	student: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
 	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	help: { permissions: STUDENT_PERMISSIONS, classPage: true },
@@ -266,6 +267,7 @@ function joinClass(userName, code) {
 								else {
 									user.classPermissions = STUDENT_PERMISSIONS
 								}
+
 								// Remove student from old class
 								delete cD.noClass.students[userName]
 								// Add the student to the newly created class
@@ -542,7 +544,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		cD[key] = new Classroom(className, key)
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
-		cD[key].students[req.session.username].classPermissions = req.session.classPermissions
+		cD[key].students[req.session.username].classPermissions = TEACHER_PERMISSIONS
 
 		req.session.class = key
 
@@ -574,9 +576,6 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			makeClass(classCode.key)
 		})
 	}
-
-	req.session.classPermissions = req.session.permissions
-	if (req.session.classPermissions > MAX_CLASS_PERMISSIONS) req.session.classPermissions = MAX_CLASS_PERMISSIONS
 })
 
 // D
@@ -689,14 +688,11 @@ app.post('/login', async (req, res) => {
 
 					if (loggedIn) {
 						req.session.class = classKey
-						req.session.classPermissions = classPermissions
 					} else {
 						// Add user to the session
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
 						req.session.class = 'noClass'
-						req.session.classPermissions = null
 					}
-					req.session.permissions = userData.permissions
 					// Add a cookie to transfer user credentials across site
 					req.session.username = userData.username
 					res.redirect('/')
@@ -755,7 +751,6 @@ app.post('/login', async (req, res) => {
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
 						// Add the user to the session in order to transfer data between each page
 						req.session.username = userData.username
-						req.session.permissions = userData.permissions
 						res.redirect('/')
 					}
 				})
@@ -842,18 +837,6 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	let checkComplete = await joinClass(req.session.username, code)
 	if (checkComplete === true) {
 		req.session.class = code
-		db.get(
-			'SELECT classusers.permissions FROM classusers JOIN classroom ON classusers.classuid = classroom.id JOIN users ON classusers.studentuid = users.id WHERE users.username = ? AND classroom.key = ? ',
-			[req.session.username, code],
-			(err, user) => {
-				if (err) console.error(err);
-				if (user) {
-					req.session.classPermissions = user.permissions
-					if (req.session.classPermissions > MAX_CLASS_PERMISSIONS) req.session.classPermissions = MAX_CLASS_PERMISSIONS
-				}
-				req.session.save()
-			}
-		)
 		res.redirect('/home')
 	} else {
 		// res.send('Error: no open class with that name')
@@ -1098,7 +1081,6 @@ io.on('connection', (socket) => {
 		socket.leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
-		socket.request.session.classPermissions = null
 		socket.request.session.class = 'noClass'
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
