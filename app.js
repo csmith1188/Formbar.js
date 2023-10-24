@@ -1333,7 +1333,7 @@ io.on('connection', (socket) => {
 						else if (classData) {
 							deleteStudents(classCode)
 							delete cD[classCode]
-							socket.broadcast.to(socket.request.session.class).emit('classEnded')
+							socket.broadcast.to(classCode).emit('classEnded')
 						}
 					}
 				)
