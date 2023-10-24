@@ -348,8 +348,8 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
-	res.render('pages/APIKEY', {
-		title: "API KEY",
+	res.render('pages/apiKey', {
+		title: "API Key",
 		API: cD[req.session.class].students[req.session.username].API
 	})
 })
@@ -1028,10 +1028,10 @@ io.on('connection', (socket) => {
 	}
 
 	function vbUpdate() {
-		let classData = structuredClone(cD[socket.request.session.class])
-
+		if (!socket.request.session.class) return
 		if (socket.request.session.class == 'noClass') return
 
+		let classData = structuredClone(cD[socket.request.session.class])
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
@@ -1363,6 +1363,8 @@ io.on('connection', (socket) => {
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
 		socket.join(className)
+		socket.request.session.class = className
+		socket.emit('joinRoom', socket.request.session.class)
 		vbUpdate()
 	})
 
@@ -1548,10 +1550,12 @@ io.on('connection', (socket) => {
 	socket.on('getUserClass', ({ username, api }) => {
 		function getClass(username) {
 			for (let className of Object.keys(cD)) {
-				if (cD[className].students[username])
-					return socket.emit('getUserClass', className)
+				if (cD[className].students[username]) {
+					if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
+					else return socket.emit('getUserClass', className)
+				}
 			}
-			socket.emit('getUserClass', { error: 'user is not logged int' })
+			socket.emit('getUserClass', { error: 'user is not logged in' })
 		}
 
 		if (api) {
