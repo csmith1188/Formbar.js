@@ -993,20 +993,18 @@ io.use((socket, next) => {
 	} else if (api) {
 		socket.request.session.api = api
 		socket.request.session.class = classCode
-		if (!cD[socket.request.session.class]) return next(new Error("class not started"))
+		if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'//return next(new Error("class not started"))
 		db.get(
 			'SELECT id, username, permissions FROM users WHERE API = ?',
 			[api],
 			(error, userData) => {
-				if (error) {
-					return next(error)
-				}
+				if (error) return next(error)
 				if (!userData) return next(new Error('not a valid API Key'))
 				next()
 			}
 		)
 	} else {
-		next(new Error("missing user or api"))
+		next(new Error("missing username or api"))
 	}
 })
 
@@ -1032,12 +1030,13 @@ io.on('connection', (socket) => {
 	function vbUpdate() {
 		let classData = structuredClone(cD[socket.request.session.class])
 
+		if (socket.request.session.class == 'noClass') return
+
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
 			if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
 		}
-
 
 		if (Object.keys(classData.poll.responses).length > 0) {
 			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
@@ -1310,6 +1309,7 @@ io.on('connection', (socket) => {
 				else if (classData) {
 					deleteStudents(classCode)
 					delete cD[classCode]
+					socket.broadcast.to(socket.request.session.class).emit('classEnded')
 				}
 			}
 		)
@@ -1333,6 +1333,7 @@ io.on('connection', (socket) => {
 						else if (classData) {
 							deleteStudents(classCode)
 							delete cD[classCode]
+							socket.broadcast.to(socket.request.session.class).emit('classEnded')
 						}
 					}
 				)
@@ -1353,6 +1354,7 @@ io.on('connection', (socket) => {
 						deleteStudent(username, classCode)
 					}
 					delete cD[classCode]
+					socket.broadcast.to(socket.request.session.class).emit('classEnded')
 				}
 			}
 		)
@@ -1361,6 +1363,11 @@ io.on('connection', (socket) => {
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
 		socket.join(className)
+		vbUpdate()
+	})
+
+	socket.on('leaveRoom', (className) => {
+		socket.leave(className)
 		vbUpdate()
 	})
 
@@ -1535,6 +1542,30 @@ io.on('connection', (socket) => {
 			[id]
 		)
 		pluginUpdate()
+	})
+
+	// sends the class code of the class a user is in
+	socket.on('getUserClass', ({ username, api }) => {
+		function getClass(username) {
+			for (let className of Object.keys(cD)) {
+				if (cD[className].students[username])
+					return socket.emit('getUserClass', className)
+			}
+			socket.emit('getUserClass', { error: 'user is not logged int' })
+		}
+
+		if (api) {
+			db.get(
+				'SELECT * FROM users WHERE API = ?',
+				[api],
+				(error, userData) => {
+					if (error) console.error(error)
+					if (!userData) socket.emit('getUserClass', { error: 'not a valid API Key' })
+					getClass(userData.username)
+				}
+			)
+		} else if (username) getClass(username)
+		else socket.emit('getUserClass', { error: 'missing username or api key' })
 	})
 })
 
