@@ -247,19 +247,28 @@ function joinClass(userName, code) {
 					if (err) {
 						console.error(err)
 					}
+					console.log(id.id, uid.id);
 					// Add the two id's to the junction table to link the user and class
 					db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
 						[id.id, uid.id],
 						(error, classUser) => {
 							if (error) console.error(error)
-							if (typeof classUser == 'undefined') {
+							if (!classUser) {
 								db.run(`INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)`,
 									[id.id, uid.id, 2, 0], (err) => {
 										if (err) {
 											console.error(err)
 										}
+										else {
+											let user = cD.noClass.students[userName]
+											user.classPermissions = 2
+											delete cD.noClass.students[userName]
+											cD[code].students[userName] = user
+											resolve(true)
+										}
 									}
 								)
+								return
 							}
 							// Get the student's session data ready to transport into new class
 							let user = cD.noClass.students[userName]
@@ -752,8 +761,10 @@ app.post('/login', async (req, res) => {
 					} else {
 						// Add user to session
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
 						// Add the user to the session in order to transfer data between each page
 						req.session.username = userData.username
+						req.session.class = 'noClass'
 						res.redirect('/')
 					}
 				})
