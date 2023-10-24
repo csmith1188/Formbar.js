@@ -431,7 +431,10 @@ input[type="radio"]:focus {
   margin-top: 15px;
 }
 
-#deleteStudents, .deleteStudent{
+#deleteStudents,
+#endClass,
+.deleteStudent
+{
   --theme-color: hsl(0, 100%, 12%);
   background-color: hsl(0, 94%, 74%);;
 }

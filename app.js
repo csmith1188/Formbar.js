@@ -124,7 +124,7 @@ class Classroom {
 		this.students = {}
 		this.poll = {
 			status: false,
-			responses: [],
+			responses: {},
 			textRes: false,
 			prompt: '',
 			weight: 1,
@@ -197,8 +197,6 @@ function isLoggedIn(req, res, next) {
 function permCheck(req, res, next) {
 	let username = req.session.username
 	let classCode = req.session.class
-
-	if (cD.noClass.students[username]) classCode = 'noClass'
 
 	if (req.url) {
 		// Defines users desired endpoint
@@ -866,7 +864,6 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		class: req.session.class
 	}
 
-	let posPollRes = cD[req.session.class].poll.responses
 	let answer = req.query.letter
 
 	if (answer) {
@@ -899,21 +896,19 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 				quiz: JSON.stringify(cD[req.session.class].quizObj.questions[req.query.question]),
 				title: "Quiz"
 			})
-
 		} else {
 			res.render('pages/message', {
 				message: "Error: please enter proper data",
 				title: 'Error'
 			})
 		}
-
 	} else if (req.query.question == undefined) {
 		res.render('pages/student', {
 			title: 'Student',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].poll.status,
-			posPollRes: JSON.stringify(cD[req.session.class].poll.responses),
-			posTextRes: JSON.stringify(cD[req.session.class].poll.textRes),
+			pollResponses: JSON.stringify(cD[req.session.class].poll.responses),
+			textResponse: JSON.stringify(cD[req.session.class].poll.textRes),
 			myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
 			myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
 			pollPrompt: cD[req.session.class].poll.prompt,
@@ -1087,6 +1082,8 @@ io.on('connection', (socket) => {
 		socket.leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
+		socket.request.session.class = 'noClass'
+		socket.request.session.save()
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
@@ -1156,8 +1153,10 @@ io.on('connection', (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		cD[socket.request.session.class].students[user].classPermissions = newPerm
+
 		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
 			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
+
 		db.get(
 			'SELECT id FROM classroom WHERE name = ?',
 			[cD[socket.request.session.class].className],
@@ -1169,6 +1168,7 @@ io.on('connection', (socket) => {
 				}
 			}
 		)
+
 		cpUpdate(socket.request.session.class)
 	})
 
@@ -1209,14 +1209,13 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].poll.weight = weight
 		cD[socket.request.session.class].poll.textRes = resTextBox
 		cD[socket.request.session.class].poll.prompt = pollPrompt
-		cD[socket.request.session.class].poll.response
 
 		for (var key in cD[socket.request.session.class].students) {
 			cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
 			cD[socket.request.session.class].students[key].pollRes.textRes = ""
 		}
 
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		vbUpdate()
 	})
 
@@ -1245,7 +1244,7 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].poll.prompt = ''
 		cD[socket.request.session.class].poll.status = false
 
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		vbUpdate()
 	})
 
@@ -1397,7 +1396,7 @@ io.on('connection', (socket) => {
 	// Moves to the next step
 	socket.on('doStep', (index) => {
 		// send reload to whole class
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		cD[socket.request.session.class].currentStep++
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			// Creates a poll based on the step data
@@ -1484,7 +1483,7 @@ io.on('connection', (socket) => {
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
 		cD[socket.request.session.class].mode = mode
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 	})
 
 	socket.on('pluginUpdate', () => {

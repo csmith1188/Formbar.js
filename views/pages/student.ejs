@@ -4,7 +4,7 @@
 	<%- include('../partials/sockets') %>
 		<%- include('../partials/formbar_header') %>
 
-			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-posTextRes%>, <%- quiz %>)">
+			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-textResponse%>, <%- quiz %>)">
 				<div id="lessonContent">
 					<%if(lesson.content !=undefined){%>
 						<h3 id="headerText">
@@ -72,11 +72,13 @@
 						pollContent.style.display = 'block'
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
-						var pollResponses = JSON.parse('<%- posPollRes %>');
-						console.log(pollResponses);
-						var posTextRes = '<%- posTextRes %>'
-						posTextRes = posTextRes.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
-						posTextRes = JSON.parse(posTextRes)
+						var pollResponses = '<%- pollResponses %>';
+						console.log(typeof pollResponses, pollResponses);
+						pollResponses = JSON.parse(pollResponses)
+						console.log(typeof pollResponses, pollResponses);
+						var textResponse = '<%- textResponse %>'
+						textResponse = textResponse.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
+						textResponse = JSON.parse(textResponse)
 						if (pollStatus) {
 							noPoll.style.display = 'none'
 							poll.style.display = 'block'
@@ -97,7 +99,7 @@
 											remove
 										</label>
 									`
-							if (posTextRes) {
+							if (textResponse) {
 								pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
 							}
 						} else {
@@ -137,7 +139,7 @@
 				| |     | |_| | | |___  | |___   ___| |
 				|_|     \_____/ |_____| |_____| /_____/ */
 				// Submits the users answer to the poll
-				// Takes the posPollRes value which defines the number of possible answers
+				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
 					var radios = document.getElementsByTagName('input')
 					var lettRes = ''
