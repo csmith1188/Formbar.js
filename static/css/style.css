@@ -431,10 +431,13 @@ input[type="radio"]:focus {
   margin-top: 15px;
 }
 
-/* #deleteStudents, .deleteStudent{
-  background-color: hsl(0, 100%, 20%);
-  --theme-color: hsl(0, 100%, 50%);
-} */
+#deleteStudents,
+#endClass,
+.deleteStudent
+{
+  --theme-color: hsl(0, 100%, 12%);
+  background-color: hsl(0, 94%, 74%);;
+}
 
 #responses{
   display: none;

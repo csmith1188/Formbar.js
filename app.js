@@ -124,7 +124,7 @@ class Classroom {
 		this.students = {}
 		this.poll = {
 			status: false,
-			responses: [],
+			responses: {},
 			textRes: false,
 			prompt: '',
 			weight: 1,
@@ -195,6 +195,9 @@ function isLoggedIn(req, res, next) {
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
+	let username = req.session.username
+	let classCode = req.session.class
+
 	if (req.url) {
 		// Defines users desired endpoint
 		let urlPath = req.url
@@ -210,11 +213,11 @@ function permCheck(req, res, next) {
 		// Checks if users permissions are high enough
 		if (
 			PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
+			cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else if (
 			!PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[req.session.class].students[req.session.username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
+			cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
 		) next()
 		else {
 			res.render('pages/message', {
@@ -244,19 +247,28 @@ function joinClass(userName, code) {
 					if (err) {
 						console.error(err)
 					}
+
 					// Add the two id's to the junction table to link the user and class
 					db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
 						[id.id, uid.id],
 						(error, classUser) => {
 							if (error) console.error(error)
-							if (typeof classUser == 'undefined') {
+							if (!classUser) {
 								db.run(`INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)`,
 									[id.id, uid.id, 2, 0], (err) => {
 										if (err) {
 											console.error(err)
 										}
+										else {
+											let user = cD.noClass.students[userName]
+											user.classPermissions = 2
+											delete cD.noClass.students[userName]
+											cD[code].students[userName] = user
+											resolve(true)
+										}
 									}
 								)
+								return
 							}
 							// Get the student's session data ready to transport into new class
 							let user = cD.noClass.students[userName]
@@ -345,8 +357,8 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
-	res.render('pages/APIKEY', {
-		title: "API KEY",
+	res.render('pages/apiKey', {
+		title: "API Key",
 		API: cD[req.session.class].students[req.session.username].API
 	})
 })
@@ -749,8 +761,10 @@ app.post('/login', async (req, res) => {
 					} else {
 						// Add user to session
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
 						// Add the user to the session in order to transfer data between each page
 						req.session.username = userData.username
+						req.session.class = 'noClass'
 						res.redirect('/')
 					}
 				})
@@ -861,7 +875,6 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		class: req.session.class
 	}
 
-	let posPollRes = cD[req.session.class].poll.responses
 	let answer = req.query.letter
 
 	if (answer) {
@@ -894,21 +907,19 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 				quiz: JSON.stringify(cD[req.session.class].quizObj.questions[req.query.question]),
 				title: "Quiz"
 			})
-
 		} else {
 			res.render('pages/message', {
 				message: "Error: please enter proper data",
 				title: 'Error'
 			})
 		}
-
 	} else if (req.query.question == undefined) {
 		res.render('pages/student', {
 			title: 'Student',
 			user: JSON.stringify(user),
 			pollStatus: cD[req.session.class].poll.status,
-			posPollRes: JSON.stringify(cD[req.session.class].poll.responses),
-			posTextRes: JSON.stringify(cD[req.session.class].poll.textRes),
+			pollResponses: JSON.stringify(cD[req.session.class].poll.responses),
+			textResponse: JSON.stringify(cD[req.session.class].poll.textRes),
 			myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
 			myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
 			pollPrompt: cD[req.session.class].poll.prompt,
@@ -993,20 +1004,18 @@ io.use((socket, next) => {
 	} else if (api) {
 		socket.request.session.api = api
 		socket.request.session.class = classCode
-		if (!cD[socket.request.session.class]) return next(new Error("class not started"))
+		if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'//return next(new Error("class not started"))
 		db.get(
 			'SELECT id, username, permissions FROM users WHERE API = ?',
 			[api],
 			(error, userData) => {
-				if (error) {
-					return next(error)
-				}
+				if (error) return next(error)
 				if (!userData) return next(new Error('not a valid API Key'))
 				next()
 			}
 		)
 	} else {
-		next(new Error("missing user or api"))
+		next(new Error("missing username or api"))
 	}
 })
 
@@ -1030,8 +1039,10 @@ io.on('connection', (socket) => {
 	}
 
 	function vbUpdate() {
-		let classData = JSON.parse(JSON.stringify(cD[socket.request.session.class]))//Object.assign({}, cD[socket.request.session.class])
+		if (!socket.request.session.class) return
+		if (socket.request.session.class == 'noClass') return
 
+		let classData = structuredClone(cD[socket.request.session.class])
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
@@ -1082,6 +1093,7 @@ io.on('connection', (socket) => {
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
 		socket.request.session.class = 'noClass'
+		socket.request.session.save()
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
@@ -1151,8 +1163,10 @@ io.on('connection', (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		cD[socket.request.session.class].students[user].classPermissions = newPerm
+
 		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
 			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
+
 		db.get(
 			'SELECT id FROM classroom WHERE name = ?',
 			[cD[socket.request.session.class].className],
@@ -1164,6 +1178,7 @@ io.on('connection', (socket) => {
 				}
 			}
 		)
+
 		cpUpdate(socket.request.session.class)
 	})
 
@@ -1204,14 +1219,13 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].poll.weight = weight
 		cD[socket.request.session.class].poll.textRes = resTextBox
 		cD[socket.request.session.class].poll.prompt = pollPrompt
-		cD[socket.request.session.class].poll.response
 
 		for (var key in cD[socket.request.session.class].students) {
 			cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
 			cD[socket.request.session.class].students[key].pollRes.textRes = ""
 		}
 
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		vbUpdate()
 	})
 
@@ -1240,7 +1254,7 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].poll.prompt = ''
 		cD[socket.request.session.class].poll.status = false
 
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		vbUpdate()
 	})
 
@@ -1306,6 +1320,7 @@ io.on('connection', (socket) => {
 				else if (classData) {
 					deleteStudents(classCode)
 					delete cD[classCode]
+					socket.broadcast.to(socket.request.session.class).emit('classEnded')
 				}
 			}
 		)
@@ -1329,6 +1344,7 @@ io.on('connection', (socket) => {
 						else if (classData) {
 							deleteStudents(classCode)
 							delete cD[classCode]
+							socket.broadcast.to(classCode).emit('classEnded')
 						}
 					}
 				)
@@ -1349,6 +1365,7 @@ io.on('connection', (socket) => {
 						deleteStudent(username, classCode)
 					}
 					delete cD[classCode]
+					socket.broadcast.to(socket.request.session.class).emit('classEnded')
 				}
 			}
 		)
@@ -1357,6 +1374,13 @@ io.on('connection', (socket) => {
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
 		socket.join(className)
+		socket.request.session.class = className
+		socket.emit('joinRoom', socket.request.session.class)
+		vbUpdate()
+	})
+
+	socket.on('leaveRoom', (className) => {
+		socket.leave(className)
 		vbUpdate()
 	})
 
@@ -1392,7 +1416,7 @@ io.on('connection', (socket) => {
 	// Moves to the next step
 	socket.on('doStep', (index) => {
 		// send reload to whole class
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 		cD[socket.request.session.class].currentStep++
 		if (cD[socket.request.session.class].steps[index] !== undefined) {
 			// Creates a poll based on the step data
@@ -1479,7 +1503,7 @@ io.on('connection', (socket) => {
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
 		cD[socket.request.session.class].mode = mode
-		io.to(socket.request.session.class).emit('reload')
+		socket.broadcast.to(socket.request.session.class).emit('reload')
 	})
 
 	socket.on('pluginUpdate', () => {
@@ -1531,6 +1555,32 @@ io.on('connection', (socket) => {
 			[id]
 		)
 		pluginUpdate()
+	})
+
+	// sends the class code of the class a user is in
+	socket.on('getUserClass', ({ username, api }) => {
+		function getClass(username) {
+			for (let className of Object.keys(cD)) {
+				if (cD[className].students[username]) {
+					if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
+					else return socket.emit('getUserClass', className)
+				}
+			}
+			socket.emit('getUserClass', { error: 'user is not logged in' })
+		}
+
+		if (api) {
+			db.get(
+				'SELECT * FROM users WHERE API = ?',
+				[api],
+				(error, userData) => {
+					if (error) console.error(error)
+					if (!userData) socket.emit('getUserClass', { error: 'not a valid API Key' })
+					getClass(userData.username)
+				}
+			)
+		} else if (username) getClass(username)
+		else socket.emit('getUserClass', { error: 'missing username or api key' })
 	})
 })
 

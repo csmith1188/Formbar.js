@@ -432,7 +432,7 @@
 					socket.emit('startPoll', 3, false, "Thumbs?", [
 						{ answer: "Up", weight: 0.9, color: '#00FF00' },
 						{ answer: "Down", weight: 1.1, color: '#FF0000' },
-						{ answer: "Wiggle", weight: 1, color: '#FFFF00' }
+						{ answer: "Wiggle", weight: 1, color: '#00FFFF' }
 					], false, 1);
 				};
 			};
@@ -788,7 +788,7 @@
 					teacherOption.innerText = "Teacher";
 					permissionSwitch.add(teacherOption);
 					let modOption = document.createElement("option");
-					modOption.setAttribute("value", 1);
+					modOption.setAttribute("value", 3);
 					modOption.innerText = "Mod";
 					permissionSwitch.add(modOption);
 					let studentOption = document.createElement("option");
@@ -1056,7 +1056,6 @@
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
 				room = JSON.parse(room)
-				console.log(room);
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(JSON.parse(pollHistory))
 				allRoom = room
