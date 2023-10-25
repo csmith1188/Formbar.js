@@ -247,7 +247,7 @@ function joinClass(userName, code) {
 					if (err) {
 						console.error(err)
 					}
-					console.log(id.id, uid.id);
+
 					// Add the two id's to the junction table to link the user and class
 					db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
 						[id.id, uid.id],
