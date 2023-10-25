@@ -210,6 +210,11 @@ function permCheck(req, res, next) {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 
+		if (!cD[classCode].students[username]) {
+			req.session.class = 'noClass'
+			classCode = 'noClass'
+		}
+
 		// Checks if users permissions are high enough
 		if (
 			PAGE_PERMISSIONS[urlPath].classPage &&
@@ -1237,6 +1242,7 @@ io.on('connection', (socket) => {
 		let date = `${dateConfig.getMonth() + 1}.${dateConfig.getDate()}.${dateConfig.getFullYear()}`
 
 		data.prompt = cD[socket.request.session.class].poll.prompt
+
 		for (const key in cD[socket.request.session.class].students) {
 			data.names.push(cD[socket.request.session.class].students[key].username)
 			data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
