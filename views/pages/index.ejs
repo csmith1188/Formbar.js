@@ -1,22 +1,84 @@
 <%- include('../partials/header_content') %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-<h1>Formbar</h1>
-<div style="text-align:center ;">
-    <a href="/poll">Poll Submit</a>
-    <br>
-    <a href="/chat">Chatroom</a>
-    <br>
-    <a href="/controlpanel">Teacher Controls</a>
-    <br>
-    <a href="/virtualbar">Virtual Bar</a>
-</div>
-</body>
-</html>
-<%- include('../partials/footer_content') %>
+    <%- include('../partials/sockets') %>
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+
+        <body id="colorContent">
+            <div id="content" class="contentBox">
+                <h1 class="headerText">Formbar</h1>
+                <div id="indexGrid">
+                    <a href="/student" class="quickButton">Student Panel</a>
+                    <a href="/controlPanel" class="quickButton">Teacher Controls</a>
+                    <a href="/virtualbar" class="quickButton">Virtual Bar</a>
+                    <a href="/help" class="quickButton">Help Ticket Creation</a>
+                    <a href="/plugins" class="quickButton">Plugins</a>
+                    <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
+                        Take Break
+                    </button>
+                </div>
+            </div>
+            <dialog id="requestBreakDialog" class="contentBox">
+                <form onsubmit="submitBreak(event)">
+                    <h3 style="margin-top: 0;">Take a break</h3>
+                    <div id="breakInputs" class="centered">
+                        <label class="form-control" id="pollControl" for="bathroom">
+                            <input type="radio" name="option" id="bathroom" value="Bathroom" required checked>
+                            Bathroom
+                        </label>
+                        <label class="form-control" id="pollControl" for="other">
+                            <input type="radio" name="option" id="other" value="other">
+                            Other
+                        </label>
+                        <textarea class="hidden" id="otherText" cols="25" rows="3" maxlength="150"></textarea>
+                    </div>
+                    <div id="takeBreak" class="hCentered">
+                        <button class="quickButton" id="cancel" type="button"
+                            onclick="document.getElementById('requestBreakDialog').close();">Cancel</button>
+                        <button class="quickButton" type="submit">Take Break</button>
+                    </div>
+                </form>
+            </dialog>
+            <%- include('../partials/body_content') %>
+        </body>
+
+        </html>
+
+        <script type="text/javascript">
+            socket.emit('vbUpdate')
+            socket.emit('cpUpdate')
+
+            let options = document.getElementsByName('option')
+            for (let option of options) {
+                option.onchange = () => {
+                    let otherRadio = document.getElementById('other')
+                    let otherText = document.getElementById('otherText')
+
+                    if (otherRadio.checked) {
+                        otherText.required = true
+                        otherText.classList.remove('hidden')
+                    }
+                    else {
+                        otherText.required = false
+                        otherText.classList.add('hidden')
+                    }
+                }
+            }
+
+            function submitBreak() {
+                event.preventDefault()
+                document.getElementById('requestBreakDialog').close()
+
+                let reason = document.querySelector('input[name=option]:checked').value
+                if (reason == 'other')
+                    reason = document.getElementById('otherText').value
+
+                socket.emit('requestBreak', reason)
+            }
+        </script>
+        <%- include('../partials/footer_content') %>

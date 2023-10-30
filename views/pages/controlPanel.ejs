@@ -1,0 +1,1151 @@
+<%- include('../partials/header_content') %>
+	<%- include('../partials/sockets') %>
+		<!DOCTYPE html>
+		<html lang="en">
+
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<script src="/js/iro.js"></script>
+			<script src="/js/floating-ui-core.js"></script>
+			<script src="/js/floating-ui-dom.js"></script>
+		</head>
+
+		<body onload="load(<%-pollStatus%>)">
+			<%- include('../partials/formbar_header') %>
+				<header id="quickMenu">
+					<button id="menuUsers" class="quickButton pressed" onclick="toUsers()">Users</button>
+					<button id="menuPolls" class="quickButton" onclick="toPolls()">Poll </button>
+					<button id="menuLesson" class="quickButton" onclick="toLesson()">Make a Lesson</button>
+					<button id="menuPlugins" class="quickButton" onclick="toPlugins()">Plugins</button>
+				</header>
+
+				<p id="classCode">Class Code:</p>
+				<div id="permChanges">
+					<div id="permChangeKey">
+
+					</div>
+					<div id="permFilterBoxes">
+						Filter:
+						<button type="button" id="help" class="filter">Help tickets</button>
+						<button type="button" id="break" class="filter">Break</button>
+						<button type="button" id="polls" class="filter">Polls</button>
+					</div>
+					<div id="permSortBoxes">
+						Sort:
+						<button type="button" id="name" class="sort">Name</button>
+						<button type="button" id="polls" class="sort">Polls</button>
+						<button type="button" id="helpTime" class="sort">Help Time</button>
+						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+					</div>
+					<button id="deleteStudents" onclick="((event) => {socket.emit('deleteStudents')})()">
+						Delete All Students
+					</button>
+					<button id="endClass" onclick="((event) => {socket.emit('endClass');location.reload()})()">
+						End Class
+					</button>
+					<div id="permChangeList">
+
+					</div>
+
+				</div>
+				<div id="pollChanges">
+					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
+					<div id="startPollForm">
+						<label for="resNumber">How many possible responses?</label>
+						<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+						<br>
+						<label for="resTextBox">Would like to accept text responses?</label>
+						<input type="checkbox" id="resTextBox">
+						<br>
+						<label for="pollBox">Prompt for the poll?</label>
+						<input type="text" id="pollBox" placeholder="Prompt (optional)">
+						<br>
+						<label for="changeNames">Customize the answer options?</label>
+						<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()" class="quickButton">
+						<br>
+						<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+						<button id="resetColors" class="quickButton">Reset Colors</button>
+						<div id="responses">
+						</div>
+						<br>
+						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
+						<input type="checkbox" id="blind">
+						<br>
+						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')" class="quickButton">
+						<br>
+						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
+							<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
+					</div>
+					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
+					<br>
+					<br>
+					<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+						Polls</button>
+				</div>
+				<div id="previousPolls">
+
+				</div>
+				<div id="lessonMaker">
+					<form method="post" enctype="multipart/form-data">
+						<input name="spreadsheet" type="file">
+						<input type="submit" class="quickButton">
+					</form>
+					<button type="button" id="nextStep">Next Step</button><br>
+					<br>
+					<form>
+						<label class="form-control" id="pollControl" for="modeP">
+							<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+							Poll Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modeL">
+							<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+							Lesson Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modeQ">
+							<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+							Quiz Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modePT">
+							<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+							Playtime Mode
+						</label>
+					</form>
+				</div>
+				<div id="plugins">
+				</div>
+				<%- include('../partials/body_content') %>
+		</body>
+
+		</html>
+		<script>
+			// 0 = off
+			// 1 = only
+			// 2 = except
+			let filter = {
+				help: 0,
+				break: 0,
+				polls: 0
+			}
+			// 0 = off
+			// 1 = descending
+			// 2 = ascending
+			let sort = {
+				name: 0,
+				polls: 0,
+				helpTime: 0,
+				permissions: 1
+			}
+
+			let filterState = {
+				help: [
+					'Help tickets',
+					'Help ticket in',
+					'No help ticket'
+				],
+				break: [
+					'Break',
+					'Taking a break',
+					'Not taking a break'
+				],
+				polls: [
+					'Polls',
+					'Responded to poll',
+					'Did not respond to poll',
+				]
+			}
+
+			let sortState = {
+				name: [
+					'Name',
+					'Name 🡇',
+					'Name 🡅'
+				],
+				polls: [
+					'Polls',
+					'Polls 🡇',
+					'Polls 🡅'
+				],
+				helpTime: [
+					'Help time',
+					'Sorting by Help time',
+				],
+				permissions: [
+					'Permissions',
+					'Permissions 🡇',
+					'Permissions 🡅'
+				]
+			}
+
+			let letterString = "abcdefghijklmnopqrstuvwxyz"
+			let generatedColors = []
+			let pollResponses = []
+			let colorPickers = []
+
+			var permChanges = document.getElementById('permChanges')
+			var permChangeKey = document.getElementById('permChangeKey')
+			var permChangeList = document.getElementById('permChangeList')
+			var pollChanges = document.getElementById('pollChanges')
+			var startPoll = document.getElementById('startPoll')
+			var resNumber = document.getElementById('resNumber')
+			var resTextBox = document.getElementById('resTextBox')
+			var endPoll = document.getElementById('endPoll')
+			var startPollForm = document.getElementById('startPollForm')
+			var pollPrompt = document.getElementById('pollBox')
+			var permFilterBoxes = document.getElementById('permFilterBoxes')
+			var pollFilter = document.getElementById('pollFilter')
+			var missingPollFilter = document.getElementById('missingPollFilter')
+			var lettFilter = document.getElementById('lettFilter')
+			var textFilter = document.getElementById('textFilter')
+			var permSort = document.getElementById('permSort')
+			var permSortLabel = document.getElementById('permSortLabel')
+			var helpFilter = document.getElementById('helpFilter')
+			var responsesDiv = document.getElementById('responses')
+			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
+			let resetColorsButton = document.getElementById('resetColors')
+			var lessonMaker = document.getElementById('lessonMaker')
+			var pluginsDiv = document.getElementById('plugins')
+			var previousPolls = document.getElementById('previousPolls')
+			var classCode = document.getElementById('classCode')
+			var menuUsers = document.getElementById('menuUsers')
+			var menuPolls = document.getElementById('menuPolls')
+			var menuLesson = document.getElementById('menuLesson')
+			var menuPlugins = document.getElementById('menuPlugins')
+
+			function HSLToHex(hue, saturation, lightness) {
+				// Normalize lightness to range 0-1
+				lightness /= 100;
+
+				// Calculate chroma
+				const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
+
+				// Function to get color component
+				function getColorComponent(colorIndex) {
+					const colorPosition = (colorIndex + hue / 30) % 12;
+					const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
+
+					// Return color component in hexadecimal format
+					return Math.round(255 * colorValue).toString(16).padStart(2, '0');
+				};
+
+				// Return the hex color
+				return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+			}
+
+			function hexToRGB(hexColor) {
+				hexColor = hexColor.substring(1)
+				let red = parseInt(hexColor.substring(0, 2), 16);
+				let green = parseInt(hexColor.substring(2, 4), 16);
+				let blue = parseInt(hexColor.substring(4, 6), 16);
+				return { red, green, blue };
+			}
+
+			function rgbToHSV(red, green, blue) {
+				red = red / 255, green = green / 255, blue = blue / 255;
+				let maxColor = Math.max(red, green, blue)
+				let minColor = Math.min(red, green, blue)
+				let hue, saturation, value = maxColor
+				let colorDifference = maxColor - minColor
+				saturation = maxColor === 0 ? 0 : colorDifference / maxColor
+				if (maxColor === minColor) {
+					hue = 0
+				} else {
+					switch (maxColor) {
+						case red: {
+							hue = (green - blue) / colorDifference + (green < blue ? 6 : 0)
+							break
+						}
+						case green: {
+							hue = (blue - red) / colorDifference + 2
+							break
+						}
+						case blue: {
+							hue = (red - green) / colorDifference + 4
+							break
+						}
+					}
+					hue /= 6
+				}
+				return { hue: hue * 360, saturation: saturation * 100, value: value * 100 }
+			}
+
+			function hexToHSV(hexColor) {
+				let { red, green, blue } = hexToRGB(hexColor)
+				return rgbToHSV(red, green, blue)
+			}
+
+			function generateColors(amount) {
+				// Initialize colors array
+				let colors = [];
+
+				// Initialize hue
+				let hue = 0
+
+				// Generate colors
+				for (let i = 0; i < amount; i++) {
+					// Add color to the colors array
+					colors.push(HSLToHex(hue, 100, 50));
+
+					// Increment hue
+					hue += 360 / amount
+				}
+
+				// Return the colors array
+				return colors;
+			}
+
+			// Function runs on page load
+			// Checks if poll is active or not and displays correct output
+			function load(pollStatus) {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'block'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
+				if (pollStatus) {
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+					lessonMaker.style.display = 'none'
+					previousPolls.style.display = 'none'
+				} else {
+					startPollForm.style.display = 'block'
+					endPoll.style.display = 'none'
+					previousPolls.style.display = 'none'
+					lessonMaker.style.display = 'none'
+				}
+			}
+			// Changes to the create a poll section of the page
+			function toPolls() {
+				pollChanges.style.display = 'block'
+				permChanges.style.display = 'none'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
+
+				menuUsers.classList.remove("pressed");
+				menuPolls.classList.add("pressed");
+				menuLesson.classList.remove("pressed");
+				menuPlugins.classList.remove("pressed");
+			}
+			// Changes to the permission change section of the page
+			function toUsers() {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'block'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
+
+				menuUsers.classList.add("pressed");
+				menuPolls.classList.remove("pressed");
+				menuLesson.classList.remove("pressed");
+				menuPlugins.classList.remove("pressed");
+			}
+
+			function toLesson() {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'none'
+				lessonMaker.style.display = 'block'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'none'
+
+				menuUsers.classList.remove("pressed");
+				menuPolls.classList.remove("pressed");
+				menuLesson.classList.add("pressed");
+				menuPlugins.classList.remove("pressed");
+			}
+
+			function toPlugins() {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'none'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'none'
+				pluginsDiv.style.display = 'block'
+
+				menuUsers.classList.remove("pressed");
+				menuPolls.classList.remove("pressed");
+				menuLesson.classList.remove("pressed");
+				menuPlugins.classList.add("pressed");
+			}
+
+			//displays the previos polls page
+			function displayPreviousPolls() {
+				pollChanges.style.display = 'none'
+				permChanges.style.display = 'none'
+				lessonMaker.style.display = 'none'
+				previousPolls.style.display = 'block'
+				pluginsDiv.style.display = 'none'
+			}
+			//makes the previous polls page
+			function buildPreviousPolls(data) {
+				previousPolls.innerHTML = ''
+				for (let i = data.length - 1; i >= 0; i--) {
+					previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})" class="quickButton">${data[i].date}</button>` + '</br>'
+				}
+
+			}
+
+			function displayPoll(data) {
+				socket.emit('previousPollDisplay', data)
+			}
+
+			socket.on('previousPollData', (data) => {
+				previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
+
+				for (let i = 0; i < data.names.length; i++) {
+					previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
+					previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
+					previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
+				}
+
+				previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpUpdate')">Return To Selection</button>`
+			})
+
+			// Starts a new poll that allows students to submit answers
+			// Check how many possible responses and if the teacher wants to accept text responses
+			function startPollFunc(pollType) {
+				if (pollType == 'poll') {
+					let blind = document.getElementById('blind').checked
+
+					let pollAnswers = []
+					for (let i = 0; i < resNumber.value; i++) {
+						let pollResponse = pollResponses[i]
+						let pollAnswer = {
+							answer: pollResponse.answer,
+							weight: pollResponse.weight,
+							color: pollResponse.color
+						}
+
+						pollAnswers.push(pollAnswer)
+					}
+					responsesDiv.style.display = 'none'
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+					permChanges.style.display = 'none'
+
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
+				} else if (pollType == 'TUTD') {
+					responsesDiv.style.display = 'none';
+					startPollForm.style.display = 'none';
+					endPoll.style.display = 'block';
+					permChanges.style.display = 'none';
+					socket.emit('startPoll', 3, false, "Thumbs?", [
+						{ answer: "Up", weight: 0.9, color: '#00FF00' },
+						{ answer: "Down", weight: 1.1, color: '#FF0000' },
+						{ answer: "Wiggle", weight: 1, color: '#00FFFF' }
+					], false, 1);
+				};
+			};
+
+			function responseAmountChange() {
+				if (resNumber.value < 1) resNumber.value = 1
+				if (resNumber.value > 26) resNumber.value = 26
+
+				generatedColors = generateColors(resNumber.value)
+				if (pollResponses.length > resNumber.value) {
+					let responseDivs = document.getElementsByClassName('response')
+					for (let i = resNumber.value; i < pollResponses.length; i++) {
+						responseDivs[i].remove()
+					}
+					pollResponses.splice(resNumber.value)
+				}
+
+				for (let i = pollResponses.length; i < resNumber.value; i++) {
+					pollResponses.push({
+						answer: '',
+						defaultAnswer: letterString[i],
+						color: '',
+						defaultColor: generateColors[i],
+						weight: 1,
+						defaultWeight: 1
+					})
+
+					let responseDiv = document.createElement('div')
+					responseDiv.className = 'response'
+					let colorPickerButton = document.createElement('button')
+					colorPickerButton.className = 'colorPickerButton'
+					colorPickerButton.id = i
+					colorPickerButton.onclick = (event) => {
+						event.preventDefault()
+						let id = Number(event.target.id)
+						let colorPickers = document.getElementsByClassName('colorPicker')
+
+						for (let colorPickerIndex = 0; colorPickerIndex < colorPickers.length; colorPickerIndex++) {
+							if (colorPickerIndex == id) continue
+
+							colorPickers[colorPickerIndex].style.display = 'none'
+						}
+
+						let colorPicker = colorPickers[id]
+						if (colorPicker.style.display == 'grid') {
+							colorPicker.style.display = 'none'
+						}
+						else {
+							colorPicker.style.display = 'grid'
+						}
+					}
+					responseDiv.appendChild(colorPickerButton)
+					let colorPickerDiv = document.createElement('div')
+					colorPickerDiv.className = 'colorPicker'
+					let buttonsDiv = document.createElement('div')
+					buttonsDiv.className = 'buttonsDiv'
+					let saveColor = document.createElement('button')
+					saveColor.className = 'quickButton'
+					saveColor.innerText = 'Save Color'
+					saveColor.onclick = (event) => {
+						event.preventDefault()
+						pollResponses[i].color = colorPickers[i].color.hexString
+						colorPickerButton.style.backgroundColor = colorPickers[i].color.hexString;
+						oldColor.style.backgroundColor = colorPickers[i].color.hexString;
+					}
+					buttonsDiv.appendChild(saveColor)
+					let resetColor = document.createElement('button')
+					resetColor.className = 'quickButton'
+					resetColor.innerText = 'Reset Color'
+					resetColor.onclick = (event) => {
+						event.preventDefault()
+						let responseDiv = document.getElementsByClassName('response')[i]
+						let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+						let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+						pollResponses[i].color = ''
+						colorPickers[i].color.set(generatedColors[i])
+						colorPickerButton.style.backgroundColor = generatedColors[i]
+						oldColor.style.backgroundColor = generatedColors[i]
+					}
+					buttonsDiv.appendChild(resetColor)
+					colorPickerDiv.appendChild(buttonsDiv)
+					let colorsDiv = document.createElement('div')
+					colorsDiv.className = 'colorsDiv'
+					let oldColor = document.createElement('div')
+					oldColor.className = 'oldColor'
+					colorsDiv.appendChild(oldColor)
+					let newColor = document.createElement('div')
+					newColor.className = 'newColor'
+					colorsDiv.appendChild(newColor)
+					colorPickerDiv.appendChild(colorsDiv)
+					let hexLabel = document.createElement('label')
+					hexLabel.className = 'hexLabel'
+					hexLabel.innerText = 'Hex '
+					let hexInput = document.createElement('input')
+					hexInput.className = 'hexInput'
+					hexInput.type = 'text'
+					hexInput.pattern = '[0-9A-Fa-f]{3,6}'
+					hexInput.onchange = (event) => {
+						event.preventDefault()
+						colorPickers[i].color.set('#' + event.target.value)
+					}
+					hexLabel.appendChild(hexInput)
+					colorPickerDiv.appendChild(hexLabel)
+					responseDiv.appendChild(colorPickerDiv)
+					let answerName = document.createElement('input')
+					answerName.type = 'text'
+					answerName.name = 'answerName'
+					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)}`
+					answerName.value = ''
+					answerName.onchange = (event) => {
+						pollResponses[i].answer = event.target.value;
+					}
+					responseDiv.appendChild(answerName)
+					responsesDiv.appendChild(responseDiv)
+
+					FloatingUIDOM.autoUpdate(
+						colorPickerButton,
+						colorPickerDiv,
+						() => {
+							FloatingUIDOM.computePosition(colorPickerButton, colorPickerDiv, {
+								placement: 'bottom',
+								middleware: [FloatingUIDOM.offset(10), FloatingUIDOM.flip()]
+							})
+								.then(({ x, y }) => {
+									Object.assign(colorPickerDiv.style, {
+										left: `${x}px`,
+										top: `${y}px`
+									})
+								})
+						})
+
+					colorPickers[i] = new iro.ColorPicker(colorPickerDiv, {
+						width: 100,
+						color: generatedColors[i],
+						id: i,
+						layoutDirection: 'horizontal',
+						layout: [
+							{
+								component: iro.ui.Wheel,
+							},
+							{
+								component: iro.ui.Slider,
+								options: {
+									sliderType: 'value'
+								}
+							}
+						]
+					});
+					colorPickers[i].on(['color:init', 'color:change'], color => {
+						let newColor = responseDiv.getElementsByClassName('newColor')[0]
+						let hexInput = responseDiv.getElementsByClassName('hexInput')[0]
+
+						newColor.style.backgroundColor = color.hexString
+						hexInput.value = color.hexString.substring(1)
+					})
+				}
+
+				let responseDivs = document.getElementsByClassName('response')
+				for (let i = 0; i < pollResponses.length; i++) {
+					let responseDiv = responseDivs[i]
+					let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+					let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+					pollResponses[i].defaultColor = generatedColors[i]
+					if (!pollResponses[i].color) {
+						colorPickerButton.style.backgroundColor = generatedColors[i]
+						oldColor.style.backgroundColor = generatedColors[i]
+					}
+					let hsv = hexToHSV(generatedColors[i])
+					colorPickers[i].color.initialValue = {
+						h: hsv.hue,
+						s: hsv.saturation,
+						v: hsv.value,
+						a: 1,
+					}
+				}
+			}
+			responseAmountChange()
+
+			resetAnswerNamesButton.onclick = () => {
+				let answerNames = document.getElementsByName('answerName')
+				for (let i = 0; i < pollResponses.length; i++) {
+					pollResponses[i].answer = pollResponses[i].defaultAnswer
+					answerNames[i].value = ''
+				}
+			}
+
+			function resetColors() {
+				for (let i = 0; i < pollResponses.length; i++) {
+					let responseDiv = document.getElementsByClassName('response')[i]
+					let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
+					let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+
+					pollResponses[i].color = ''
+					colorPickerButton.style.backgroundColor = generatedColors[i]
+					oldColor.style.backgroundColor = generatedColors[i]
+				}
+			}
+			resetColorsButton.onclick = resetColors
+
+			function showResponses() {
+				if (responsesDiv.style.display == 'grid')
+					responsesDiv.style.display = 'none'
+				else responsesDiv.style.display = 'grid'
+			}
+
+			function modeChange() {
+				let modeP = document.getElementById('modeP')
+				let modeL = document.getElementById('modeL')
+				let modeQ = document.getElementById('modeQ')
+				let modePT = document.getElementById('modePT')
+
+				if (modeP.checked) {
+					socket.emit('modechange', modeP.value)
+				} else if (modeL.checked) {
+					socket.emit('modechange', modeL.value)
+				} else if (modeQ.checked) {
+					socket.emit('modechange', modeQ.value)
+				} else if (modePT.checked) {
+					socket.emit('modechange', modePT.value)
+				}
+			}
+
+			// Ends the poll and reloads the users page to stop any more submission
+			function endPollFunc() {
+				socket.emit('endPoll')
+				startPollForm.style.display = 'block'
+				endPoll.style.display = 'none'
+			}
+
+			// makes student elements
+			function buildStudent(room, student) {
+				var newStudent = document.createElement("div");
+				newStudent.classList.add("student");
+				let studentElement = document.createElement("p");
+				studentElement.innerText += student;
+				newStudent.appendChild(studentElement);
+				let studentData = room.students[student]
+				if (studentData.break == true) {
+					let breakText = document.createElement("p");
+					breakText.innerText += "taking a break";
+					newStudent.appendChild(breakText);
+				}
+				else if (studentData.break) {
+					let breakDiv = document.createElement("div");
+					breakDiv.setAttribute("id", "break");
+					let breakNeeded = document.createElement("p");
+					breakNeeded.innerText = "Needs a break";
+					breakDiv.appendChild(breakNeeded);
+					let breakReason = document.createElement("p");
+					breakReason.innerText = `Reason: ${studentData.break}`;
+					breakDiv.appendChild(breakReason);
+					let breakApprove = document.createElement("button");
+					breakApprove.classList.add("quickButton");
+					breakApprove.onclick = approveBreak(true, studentData.username);
+					breakApprove.innerText = "Approve";
+					breakDiv.appendChild(breakApprove);
+					let breakDeny = document.createElement("button");
+					breakDeny.classList.add("quickButton");
+					breakApprove.onclick = approveBreak(false, studentData.username);
+					breakDeny.innerText = "Deny";
+					breakDiv.appendChild(breakDeny);
+					newStudent.appendChild(breakDiv);
+					let lineBreak = document.createElement("br");
+					newStudent.appendChild(lineBreak);
+				}
+				if (studentData.help) {
+					let help = document.createElement("p");
+					help.setAttribute("id", "help");
+					help.innerText = "sent help ticket";
+					if (studentData.help.reason) {
+						let helpReason = document.createElement("p");
+						helpReason.innerText = `reason ${studentData.help.reason}`;
+						help.appendChild(helpReason);
+					};
+					let helpTimeDisplay = document.createElement("p");
+					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`;
+					help.appendChild(helpTimeDisplay);
+					let deleteTicketButton = document.createElement("button");
+					deleteTicketButton.classList.add("quickButton");
+					deleteTicketButton.dataset.studentName = student;
+					deleteTicketButton.onclick = (event) => {
+						deleteTicket(event.target);
+					};
+					deleteTicketButton.innerText = "Delete Ticket";
+					help.appendChild(deleteTicketButton);
+					newStudent.appendChild(help);
+					let lineBreak = document.createElement("br");
+					newStudent.appendChild(lineBreak);
+				}
+				if (studentData.pollTextRes) {
+					let pollTextResponse = document.createElement("p");
+					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes}`;
+					newStudent.appendChild(pollTextResponse);
+				};
+				if (studentData.pollRes.buttonRes) {
+					let pollResponse = document.createElement("p");
+					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes}`;
+					newStudent.appendChild(pollResponse);
+				};
+				if (studentData.pollRes.textRes) {
+					let textResponse = document.createElement("p");
+					textResponse.innerText = `Text Response: ${studentData.pollRes.textRes}`;
+					newStudent.appendChild(textResponse);
+				};
+				let permissionSwitch = document.createElement("select");
+				permissionSwitch.setAttribute("name", "permSwitch");
+				permissionSwitch.setAttribute("class", "permSwitch");
+				permissionSwitch.setAttribute("data-userid", student);
+				permissionSwitch.onchange = (event) => {
+					socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
+				};
+				if (studentData.classPermissions == 4) {
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 4);
+					teacherOption.setAttribute("selected", true);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 1);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
+				} else if (studentData.classPermissions == 3) {
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 4);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.setAttribute("selected", true);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 1);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
+				} else if (studentData.permissions == 2) {
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 4);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.setAttribute("selected", true);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(studentOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 1);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
+				} else if (studentData.classPermissions == 1) {
+					let teacherOption = document.createElement("option");
+					teacherOption.setAttribute("value", 4);
+					teacherOption.innerText = "Teacher";
+					permissionSwitch.add(teacherOption);
+					let modOption = document.createElement("option");
+					modOption.setAttribute("value", 3);
+					modOption.innerText = "Mod";
+					permissionSwitch.add(modOption);
+					let studentOption = document.createElement("option");
+					studentOption.setAttribute("value", 2);
+					studentOption.innerText = "Student";
+					permissionSwitch.add(modOption);
+					let guestOption = document.createElement("option");
+					guestOption.setAttribute("value", 1);
+					guestOption.setAttribute("selected", true);
+					guestOption.innerText = "Guest";
+					permissionSwitch.add(guestOption);
+				}
+				newStudent.appendChild(permissionSwitch);
+				newStudent.append(" ");
+				let deleteStudentButton = document.createElement("button");
+				deleteStudentButton.className = 'deleteStudent quickButton'
+				deleteStudentButton.setAttribute("data-userid", student);
+				deleteStudentButton.onclick = (event) => {
+					socket.emit('deleteStudent', event.target.dataset.userid)
+				};
+				deleteStudentButton.innerText = "Delete User";
+				newStudent.appendChild(deleteStudentButton);
+				return newStudent;
+			}
+
+			// filters and sorts students
+			function filterSortChange() {
+				permChangeList.innerHTML = ''
+				let newStudent = ''
+				let newRoom = JSON.parse(JSON.stringify(allRoom))
+
+				let helpButton = document.getElementById("help");
+				let breakButton = document.getElementById("break");
+				let pollsButton = document.getElementById("polls");
+
+				//filter by help
+				if (filter.help == 1) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (!student.help) {
+							delete newRoom.students[username]
+						}
+					}
+				} else if (filter.help == 2) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (student.help) {
+							delete newRoom.students[username]
+						}
+					}
+				}
+
+				//filter by break
+				if (filter.break == 1) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (!student.break) {
+							delete newRoom.students[username]
+						}
+					}
+				} else if (filter.break == 2) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (student.break) {
+							delete newRoom.students[username]
+						}
+					}
+				}
+
+				//filter by poll
+				if (filter.polls == 1) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (!student.pollRes.buttonRes && !student.pollRes.textRes) {
+							delete newRoom.students[username]
+						}
+					}
+				} else if (filter.polls == 2) {
+					for (let [username, student] of Object.entries(newRoom.students)) {
+						if (student.pollRes.buttonRes || student.pollRes.textRes) {
+							delete newRoom.students[username]
+						}
+					}
+				}
+
+				//sort by name
+				if (sort.name == 1) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort())
+				} else if (sort.name == 2) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort().reverse())
+				}
+
+				//sort by help time
+				if (sort.helpTime == 1) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
+						objectA = entireA[1]
+						objectB = entireB[1]
+
+						if (objectA.help && objectB.help) {
+							const dateA = new Date()
+							dateA.setHours(objectA.help.time.hours)
+							dateA.setMinutes(objectA.help.time.minutes)
+							dateA.setSeconds(objectA.help.time.seconds)
+							const dateB = new Date()
+							dateB.setHours(objectB.help.time.hours)
+							dateB.setMinutes(objectB.help.time.minutes)
+							dateB.setSeconds(objectB.help.time.seconds)
+							if (dateA < dateB) {
+								return -1
+							}
+						}
+						else if (objectA.help) return -1
+					}))
+				}
+
+				//sort by poll
+				if (sort.polls == 1) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
+						objectA = entireA[1]
+						objectB = entireB[1]
+						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
+							return objectA.pollRes.textRes.localeCompare(objectB.pollRes.textRes)
+						} else if (objectA.pollRes.textRes) return -1
+						else if (objectB.pollRes.textRes) return 1
+						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
+							return objectA.pollRes.buttonRes.localeCompare(objectB.pollRes.buttonRes)
+						} else if (objectA.pollRes.buttonRes) return -1
+						else if (objectB.pollRes.buttonRes) return 1
+					}))
+				} else if (sort.polls == 2) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
+						objectA = entireA[1]
+						objectB = entireB[1]
+						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
+							return objectB.pollRes.textRes.localeCompare(objectA.pollRes.textRes)
+						} else if (objectA.pollRes.textRes) return 1
+						else if (objectB.pollRes.textRes) return -1
+						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
+							return objectB.pollRes.buttonRes.localeCompare(objectA.pollRes.buttonRes)
+						} else if (objectA.pollRes.buttonRes) return 1
+						else if (objectB.pollRes.buttonRes) return -1
+					}))
+				}
+
+				//sort by permissions
+				if (sort.permissions == 1) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
+				} else if (sort.permissions == 2) {
+					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
+				}
+
+				for (const student of Object.keys(newRoom.students)) {
+					permChangeList.appendChild(buildStudent(newRoom, student))
+				}
+			}
+
+			function makeLesson() {
+				let learningObj = document.getElementById('learningObj')
+				let dueAssigns = document.getElementById('dueAssigns')
+				socket.emit('lessonStart', learningObj.value)
+				alert('Lesson Created')
+			}
+
+			// sets filters
+			for (let filterElement of document.getElementsByClassName('filter')) {
+				filterElement.onclick = () => {
+					filter[filterElement.id] += 1
+					if (filter[filterElement.id] > 2) {
+						filter[filterElement.id] = 0
+					}
+					if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
+					else filterElement.classList.add('pressed')
+					filterElement.innerText = filterState[filterElement.id][filter[filterElement.id]]
+					filterSortChange()
+				}
+			}
+
+			// sets sorts
+			for (let sortElement of document.getElementsByClassName('sort')) {
+				sortElement.onclick = () => {
+					for (let sortType of Object.keys(sort)) {
+						if (sortType != sortElement.id) {
+							sort[sortType] = 0
+							let otherSortElements = document.querySelector('.sort#' + sortType)
+							if (otherSortElements) {
+								otherSortElements.classList.remove('pressed')
+								otherSortElements.innerText = sortState[sortType][sort[sortType]]
+							}
+						}
+					}
+					sort[sortElement.id] += 1
+					if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
+						sort[sortElement.id] = 0
+					}
+					else if (sort[sortElement.id] > 2) {
+						sort[sortElement.id] = 0
+					}
+					if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
+					else sortElement.classList.add('pressed')
+					sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
+					filterSortChange()
+				}
+			}
+
+			function deleteTicket(e) {
+				socket.emit('deleteTicket', e.dataset.studentName)
+				socket.emit('cpUpdate')
+			}
+
+			function doStep(id) {
+				alert('Step ' + id + ' activated')
+				socket.emit('doStep', id)
+			}
+
+			function makeLesson() {
+				let learningObj = document.getElementById('learningObj')
+				let dueAssigns = document.getElementById('dueAssigns')
+				socket.emit('lessonStart', learningObj.value)
+				alert('Lesson Created')
+			}
+
+			function approveBreak(breakApproval, username) {
+				socket.emit('approveBreak', breakApproval, username)
+			}
+
+			// close all color pickers if you press escape
+			document.addEventListener('keydown', function (event) {
+				if (event.key == 'Escape') {
+					let colorPickersDiv = document.getElementsByClassName('colorPicker')
+					for (let i = 0; i < colorPickersDiv.length; i++) {
+						colorPickers[i].color.set(pollResponses[i].color)
+						colorPickersDiv[i].style.display = 'none'
+					}
+				}
+			})
+
+			// close all color pickers if you click outside of them
+			document.addEventListener('click', (event) => {
+				if (
+					!event.target.closest('.colorPicker') &&
+					!event.target.classList.contains('colorPickerButton')
+				) {
+					let colorPickersDiv = document.getElementsByClassName('colorPicker')
+					for (let i = 0; i < colorPickers.length; i++) {
+						colorPickers[i].color.set(pollResponses[i].color)
+						colorPickersDiv[i].style.display = 'none'
+					}
+				}
+			})
+
+			var allRoom = ""
+			socket.emit('cpUpdate')
+			socket.on('cpUpdate', function (room, pollHistory) {
+				room = JSON.parse(room)
+				classCode.innerText = 'Class Code: ' + room.key
+				buildPreviousPolls(JSON.parse(pollHistory))
+				allRoom = room
+				document.getElementById('nextStep').onclick = () => {
+					doStep(allRoom.currentStep)
+					socket.emit('cpUpdate')
+				}
+				filterSortChange()
+			})
+			socket.emit('pluginUpdate')
+			socket.on('pluginUpdate', (plugins) => {
+				pluginsDiv.innerHTML = ''
+				for (let plugin of plugins) {
+					let pluginDiv = document.createElement('div')
+					pluginDiv.id = plugin.id
+					pluginDiv.className = 'plugin'
+					let pluginName = document.createElement('input')
+					pluginName.type = 'text'
+					pluginName.value = plugin.name
+					pluginName.placeholder = 'Name'
+					pluginName.onchange = (event) => {
+						socket.emit(
+							'changePlugin',
+							event.target.parentElement.id,
+							event.target.value,
+							null
+						)
+					}
+					pluginDiv.appendChild(pluginName)
+					let pluginURL = document.createElement('input')
+					pluginURL.type = 'url'
+					pluginURL.value = plugin.url
+					pluginURL.placeholder = 'URL'
+					pluginURL.onchange = (event) => {
+						let pluginURL = event.target
+
+						if (!pluginURL.checkValidity()) {
+							pluginURL.reportValidity()
+							return
+						}
+
+						socket.emit(
+							'changePlugin',
+							pluginURL.parentElement.id,
+							null,
+							pluginURL.value
+						)
+					}
+					pluginDiv.appendChild(pluginURL)
+					let removePlugin = document.createElement('button')
+					removePlugin.className = 'quickButton'
+					removePlugin.innerText = 'Remove Plugin'
+					removePlugin.onclick = (event) => {
+						socket.emit(
+							'removePlugin',
+							event.target.parentElement.id
+						)
+					}
+					pluginDiv.appendChild(removePlugin)
+					pluginsDiv.appendChild(pluginDiv)
+				}
+
+				let addPluginForm = document.createElement('div')
+				addPluginForm.id = 'addPluginForm'
+				let newPluginName = document.createElement('input')
+				newPluginName.id = 'newPluginName'
+				newPluginName.type = 'text'
+				newPluginName.placeholder = 'Name'
+				addPluginForm.append(newPluginName)
+				let newPluginURL = document.createElement('input')
+				newPluginURL.id = 'newPluginURL'
+				newPluginURL.type = 'url'
+				newPluginURL.placeholder = 'URL'
+				addPluginForm.append(newPluginURL)
+				let submitPlugin = document.createElement('button')
+				submitPlugin.className = 'quickButton'
+				submitPlugin.innerText = 'Add Plug-in'
+				submitPlugin.onclick = () => {
+					let newPluginName = document.getElementById('newPluginName')
+					let newPluginURL = document.getElementById('newPluginURL')
+
+					if (!newPluginURL.checkValidity()) {
+						newPluginURL.reportValidity()
+						return
+					}
+
+					socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
+				}
+				addPluginForm.append(submitPlugin)
+				pluginsDiv.append(addPluginForm)
+			})
+		</script>
+		<%- include('../partials/footer_content') %>

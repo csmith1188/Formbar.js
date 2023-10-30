@@ -1,0 +1,15 @@
+<style>
+    body {
+        padding-top: 72px;
+    }
+</style>
+<header id="formbarHeader">
+    <a href="/home" id="headerLogo">Formbar</a>
+    <a href="/student" class="headerTab">Student Panel</a>
+    <a href="/controlPanel" class="headerTab">Teacher Controls</a>
+    <a href="/virtualbar" class="headerTab">Virtual Bar</a>
+    <a href="/help" class="headerTab">Help Ticket Creation</a>
+    <a href="/plugins" class="headerTab">Plugins</a>
+    <a href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave Class</a>
+    <a href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</a>
+</header>
