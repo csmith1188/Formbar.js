@@ -1026,11 +1026,14 @@ io.use((socket, next) => {
 
 let rateLimits = {}
 
+let userSockets = {}
+
 //Handles the websocket communications
 io.on('connection', (socket) => {
 	if (socket.request.session.username) {
 		socket.join(socket.request.session.class)
 		socket.join(socket.request.session.username)
+		userSockets[socket.request.session.username] = socket
 	}
 	if (socket.request.session.api) {
 		socket.join(socket.request.session.class)
@@ -1094,11 +1097,11 @@ io.on('connection', (socket) => {
 	}
 
 	function deleteStudent(username, classCode) {
-		socket.leave(cD[classCode].className)
+		userSockets[username].leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
-		socket.request.session.class = 'noClass'
-		socket.request.session.save()
+		userSockets[username].request.session.class = 'noClass'
+		userSockets[username].request.session.save()
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
