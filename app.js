@@ -210,6 +210,11 @@ function permCheck(req, res, next) {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 
+		if (!cD[classCode].students[username]) {
+			req.session.class = 'noClass'
+			classCode = 'noClass'
+		}
+
 		// Checks if users permissions are high enough
 		if (
 			PAGE_PERMISSIONS[urlPath].classPage &&
@@ -1021,11 +1026,14 @@ io.use((socket, next) => {
 
 let rateLimits = {}
 
+let userSockets = {}
+
 //Handles the websocket communications
 io.on('connection', (socket) => {
 	if (socket.request.session.username) {
 		socket.join(socket.request.session.class)
 		socket.join(socket.request.session.username)
+		userSockets[socket.request.session.username] = socket
 	}
 	if (socket.request.session.api) {
 		socket.join(socket.request.session.class)
@@ -1089,11 +1097,11 @@ io.on('connection', (socket) => {
 	}
 
 	function deleteStudent(username, classCode) {
-		socket.leave(cD[classCode].className)
+		userSockets[username].leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
 		cD.noClass.students[username].classPermissions = null
-		socket.request.session.class = 'noClass'
-		socket.request.session.save()
+		userSockets[username].request.session.class = 'noClass'
+		userSockets[username].request.session.save()
 		delete cD[classCode].students[username]
 		io.to(username).emit('reload')
 	}
@@ -1237,6 +1245,7 @@ io.on('connection', (socket) => {
 		let date = `${dateConfig.getMonth() + 1}.${dateConfig.getDate()}.${dateConfig.getFullYear()}`
 
 		data.prompt = cD[socket.request.session.class].poll.prompt
+
 		for (const key in cD[socket.request.session.class].students) {
 			data.names.push(cD[socket.request.session.class].students[key].username)
 			data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
