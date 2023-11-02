@@ -85,7 +85,10 @@
 						Polls</button>
 				</div>
 				<div id="previousPolls">
-
+					<button id="toPolls" type="button" onclick="toPolls()">Return to polls</button>
+					<button id="toPollHistory" type="button" onclick="displayPoll()">Return To
+						Selection</button>
+					<div id="previousPollButtons"></div>
 				</div>
 				<div id="lessonMaker">
 					<form method="post" enctype="multipart/form-data">
@@ -207,6 +210,9 @@
 			var lessonMaker = document.getElementById('lessonMaker')
 			var pluginsDiv = document.getElementById('plugins')
 			var previousPolls = document.getElementById('previousPolls')
+			var previousPollButtons = document.getElementById('previousPollButtons')
+			var toPollsButton = document.getElementById('toPolls')
+			var toPollHistoryButton = document.getElementById('toPollHistory')
 			var classCode = document.getElementById('classCode')
 			var menuUsers = document.getElementById('menuUsers')
 			var menuPolls = document.getElementById('menuPolls')
@@ -375,31 +381,78 @@
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'block'
 				pluginsDiv.style.display = 'none'
+				displayPoll()
 			}
 			//makes the previous polls page
 			function buildPreviousPolls(data) {
-				previousPolls.innerHTML = ''
-				for (let i = data.length - 1; i >= 0; i--) {
-					previousPolls.innerHTML += `<button type="button" onclick="displayPoll(${data[i].id})" class="quickButton">${data[i].date}</button>` + '</br>'
-				}
+				previousPollButtons.innerHTML = ''
+				let br = document.createElement('br')
 
+				for (let pollIndex = data.length - 1; pollIndex >= 0; pollIndex--) {
+					let pollButton = document.createElement('button')
+					pollButton.type = "button"
+					pollButton.className = 'quickButton'
+					pollButton.innerText = data[pollIndex].date + ' ' + data[pollIndex].data.prompt
+					pollButton.onclick = (event) => {
+						event.preventDefault()
+						displayPoll(data[pollIndex].id)
+					}
+					previousPollButtons.appendChild(pollButton)
+
+					previousPollButtons.appendChild(br.cloneNode(true))
+
+
+					let previousPollDiv = document.createElement('div')
+					previousPollDiv.className = 'previousPoll'
+					previousPollDiv.id = data[pollIndex].id
+					previousPollDiv.style.display = 'none'
+
+					let previousPollPrompt = document.createElement('p')
+					previousPollPrompt.innerText = `Prompt: ${data[pollIndex].data.prompt}`
+					previousPollDiv.appendChild(previousPollPrompt)
+
+					for (let userIndex = 0; userIndex < data[pollIndex].data.names.length; userIndex++) {
+						let username = document.createElement('p')
+						username.innerText = `Name: ${data[pollIndex].data.names[userIndex]}`
+						previousPollDiv.appendChild(username)
+
+						let letter = document.createElement('p')
+						letter.innerText = `Letter: ${data[pollIndex].data.letter[userIndex]}`
+						previousPollDiv.appendChild(letter)
+
+						let text = document.createElement('p')
+						text.innerText = `Text: ${data[pollIndex].data.text[userIndex]}`
+						previousPollDiv.appendChild(text)
+					}
+					previousPolls.appendChild(previousPollDiv)
+				}
 			}
 
-			function displayPoll(data) {
-				socket.emit('previousPollDisplay', data)
-			}
+			function displayPoll(id) {
+				if (id) {
+					let previousPollDivs = document.getElementsByClassName('previousPoll')
 
-			socket.on('previousPollData', (data) => {
-				previousPolls.innerHTML = 'Prompt: ' + data.prompt + '</br>'
+					previousPollButtons.style.display = 'none'
+					toPollsButton.style.display = 'none'
+					toPollHistoryButton.style.display = ''
 
-				for (let i = 0; i < data.names.length; i++) {
-					previousPolls.innerHTML += 'Name: ' + data.names[i] + '</br>'
-					previousPolls.innerHTML += 'Letter: ' + data.letter[i] + '</br>'
-					previousPolls.innerHTML += 'Text: ' + data.text[i] + '</br></br>'
+					for (let pollDiv of previousPollDivs) {
+						if (pollDiv.id == id)
+							pollDiv.style.display = 'block'
+						else
+							pollDiv.style.display = 'none'
+					}
+				} else {
+					let previousPollDivs = document.getElementsByClassName('previousPoll')
+					previousPollButtons.style.display = 'block'
+					toPollsButton.style.display = ''
+					toPollHistoryButton.style.display = 'none'
+
+					for (let pollDiv of previousPollDivs) {
+						pollDiv.style.display = 'none'
+					}
 				}
-
-				previousPolls.innerHTML += `<button type="button" onclick="socket.emit('cpUpdate')">Return To Selection</button>`
-			})
+			}
 
 			// Starts a new poll that allows students to submit answers
 			// Check how many possible responses and if the teacher wants to accept text responses
@@ -541,7 +594,7 @@
 					let answerName = document.createElement('input')
 					answerName.type = 'text'
 					answerName.name = 'answerName'
-					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)}`
+					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)} `
 					answerName.value = ''
 					answerName.onchange = (event) => {
 						pollResponses[i].answer = event.target.value;
@@ -559,8 +612,8 @@
 							})
 								.then(({ x, y }) => {
 									Object.assign(colorPickerDiv.style, {
-										left: `${x}px`,
-										top: `${y}px`
+										left: `${x} px`,
+										top: `${y} px`
 									})
 								})
 						})
@@ -684,7 +737,7 @@
 					breakNeeded.innerText = "Needs a break";
 					breakDiv.appendChild(breakNeeded);
 					let breakReason = document.createElement("p");
-					breakReason.innerText = `Reason: ${studentData.break}`;
+					breakReason.innerText = `Reason: ${studentData.break} `;
 					breakDiv.appendChild(breakReason);
 					let breakApprove = document.createElement("button");
 					breakApprove.classList.add("quickButton");
@@ -706,11 +759,11 @@
 					help.innerText = "sent help ticket";
 					if (studentData.help.reason) {
 						let helpReason = document.createElement("p");
-						helpReason.innerText = `reason ${studentData.help.reason}`;
+						helpReason.innerText = `reason ${studentData.help.reason} `;
 						help.appendChild(helpReason);
 					};
 					let helpTimeDisplay = document.createElement("p");
-					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds}`;
+					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds} `;
 					help.appendChild(helpTimeDisplay);
 					let deleteTicketButton = document.createElement("button");
 					deleteTicketButton.classList.add("quickButton");
@@ -726,12 +779,12 @@
 				}
 				if (studentData.pollTextRes) {
 					let pollTextResponse = document.createElement("p");
-					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes}`;
+					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes} `;
 					newStudent.appendChild(pollTextResponse);
 				};
 				if (studentData.pollRes.buttonRes) {
 					let pollResponse = document.createElement("p");
-					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes}`;
+					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes} `;
 					newStudent.appendChild(pollResponse);
 				};
 				if (studentData.pollRes.textRes) {
@@ -1057,7 +1110,11 @@
 			socket.on('cpUpdate', function (room, pollHistory) {
 				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
-				buildPreviousPolls(JSON.parse(pollHistory))
+				pollHistory = JSON.parse(pollHistory)
+				for (let poll of pollHistory) {
+					poll.data = JSON.parse(poll.data)
+				}
+				buildPreviousPolls(pollHistory)
 				allRoom = room
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
