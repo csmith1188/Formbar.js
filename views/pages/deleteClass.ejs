@@ -1,0 +1,31 @@
+<%- include('../partials/header_content') %>
+    <%- include('../partials/sockets') %>
+
+        <body id="colorContent">
+            <%- include('../partials/formbar_header') %>
+                <div id="content" class="contentBox">
+                    <!-- <form action="deleteClass" method="post" id="selectClass" class="hidden"> -->
+                    <h2 class="headerText">Delete a class</h2>
+                    <select id="classrooms" name="name">
+                        <% ownerClasses.forEach(rooms=> { %>
+                            <option value="<%- rooms %>">
+                                <%- rooms %>
+                            </option>
+                            <% }) %>
+                    </select>
+                    <label for="deletePolls">Do you want to also delete it's polls</label>
+                    <input type="checkbox" id="deletePolls">
+                    <button class="quickButton" onclick="deleteClass()">Delete</button>
+                    <!-- <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;"> -->
+                    <!-- </form> -->
+                </div>
+        </body>
+
+        <script>
+            function deleteClass() {
+                let className = document.getElementById('classrooms').value
+                let deletePolls = document.getElementById('deletePolls').value
+
+                socket.emit('deleteClass', className, deletePolls)
+            }
+        </script>
