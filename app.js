@@ -87,8 +87,8 @@ const PAGE_PERMISSIONS = {
 	bgm: { permissions: MOD_PERMISSIONS, classPage: true },
 	sfx: { permissions: MOD_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	deleteClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
 	home: { permissions: GUEST_PERMISSIONS, classPage: false },
 }
@@ -171,7 +171,7 @@ function isAuthenticated(req, res, next) {
 	if (req.session.username) {
 		if (cD.noClass.students[req.session.username]) {
 			if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
-				res.redirect('/createClass')
+				res.redirect('/manageClass')
 			} else {
 				res.redirect('/selectClass')
 			}
@@ -217,6 +217,12 @@ function permCheck(req, res, next) {
 			classCode = 'noClass'
 		}
 
+		if (!PAGE_PERMISSIONS[urlPath])
+			res.render('pages/message', {
+				message: `Error: ${urlPath} is not in the page permissions`,
+				title: 'Error'
+			})
+
 		// Checks if users permissions are high enough
 		if (
 			PAGE_PERMISSIONS[urlPath].classPage &&
@@ -228,7 +234,7 @@ function permCheck(req, res, next) {
 		) next()
 		else {
 			res.render('pages/message', {
-				message: "Error: you don't have high enough permissions to access this page",
+				message: `Error: you don't have high enough permissions to access ${urlPath}`,
 				title: 'Error'
 			})
 		}
@@ -532,7 +538,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 // This allows the teacher to be in charge of all classes
 // The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
-app.get('/createClass', isLoggedIn, permCheck, (req, res) => {
+app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	var ownerClasses = []
 	// Finds all classes the teacher is the owner of
 	db.all(`SELECT name FROM classroom WHERE owner=?`,
@@ -540,7 +546,7 @@ app.get('/createClass', isLoggedIn, permCheck, (req, res) => {
 			rows.forEach(row => {
 				ownerClasses.push(row.name)
 			})
-			res.render('pages/createClass', {
+			res.render('pages/manageClass', {
 				title: 'Create Class',
 				ownerClasses: ownerClasses
 			})
@@ -584,13 +590,14 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		db.run(`INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)`, [className, req.session.username, key], (err) => {
 			if (err) {
 				console.error(err)
+			} else {
+				db.get(`SELECT id, key FROM classroom WHERE name=? AND owner = ?`, [className, req.session.username], (err, classRoom) => {
+					if (err) {
+						console.error(err)
+					}
+					makeClass(classRoom.id, classRoom.key)
+				})
 			}
-			db.get(`SELECT id, key FROM classroom WHERE name=? AND owner = ?`, [className, req.session.username], (err, classRoom) => {
-				if (err) {
-					console.error(err)
-				}
-				makeClass(classRoom.id, classRoom.key)
-			})
 		})
 	} else {
 		db.get(`SELECT id, key FROM classroom WHERE name=? AND owner = ?`, [className, req.session.username], (err, classRoom) => {
@@ -1035,8 +1042,19 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 // 404
 app.use((req, res, next) => {
+	// Defines users desired endpoint
+	let urlPath = req.url
+	// Checks if url has a / in it and removes it from the string
+	if (urlPath.indexOf('/') != -1) {
+		urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+	}
+	// Check for ?(urlParams) and removes it from the string
+	if (urlPath.indexOf('?') != -1) {
+		urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+	}
+
 	res.status(404).render('pages/message', {
-		message: "Error: page does not exist",
+		message: `Error: the page ${urlPath} does not exist`,
 		title: "Error"
 	})
 })
@@ -1414,9 +1432,9 @@ io.on('connection', (socket) => {
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
-			(err, classData) => {
+			(err, classRoom) => {
 				if (err) console.error(err);
-				else if (classData) {
+				else if (classRoom) {
 					endClass(classRoom.key)
 				}
 			}
@@ -1432,9 +1450,9 @@ io.on('connection', (socket) => {
 				}
 				db.run('DELETE FROM classroom WHERE id = ?', classRoom.id)
 
-				if (deletePolls)
-					db.run('DELETE FROM poll_history WHERE class = ?', classRoom.id)
-			} else res.redirect('/home')
+			}// else socket.emit('deleteClass',{error:'class does'})
+			if (deletePolls)
+				db.run('DELETE FROM poll_history WHERE class = ?', classRoom.id)
 		})
 	})
 

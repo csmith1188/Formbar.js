@@ -85,8 +85,10 @@
 						Polls</button>
 				</div>
 				<div id="previousPolls">
+					<button id="toPolls" type="button" onclick="toPolls()">Return to polls</button>
+					<button id="toPollHistory" type="button" onclick="displayPoll()">Return To
+						Selection</button>
 					<div id="previousPollButtons"></div>
-					<button type='button' onclick="socket.emit(' cpUpdate')"> Return To Selection</button>
 				</div>
 				<div id="lessonMaker">
 					<form method="post" enctype="multipart/form-data">
@@ -209,6 +211,8 @@
 			var pluginsDiv = document.getElementById('plugins')
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
+			var toPollsButton = document.getElementById('toPolls')
+			var toPollHistoryButton = document.getElementById('toPollHistory')
 			var classCode = document.getElementById('classCode')
 			var menuUsers = document.getElementById('menuUsers')
 			var menuPolls = document.getElementById('menuPolls')
@@ -377,6 +381,7 @@
 				lessonMaker.style.display = 'none'
 				previousPolls.style.display = 'block'
 				pluginsDiv.style.display = 'none'
+				displayPoll()
 			}
 			//makes the previous polls page
 			function buildPreviousPolls(data) {
@@ -387,7 +392,7 @@
 					let pollButton = document.createElement('button')
 					pollButton.type = "button"
 					pollButton.className = 'quickButton'
-					pollButton.innerText = data[pollIndex].date
+					pollButton.innerText = data[pollIndex].date + ' ' + data[pollIndex].data.prompt
 					pollButton.onclick = (event) => {
 						event.preventDefault()
 						displayPoll(data[pollIndex].id)
@@ -406,8 +411,7 @@
 					previousPollPrompt.innerText = `Prompt: ${data[pollIndex].data.prompt}`
 					previousPollDiv.appendChild(previousPollPrompt)
 
-					for (let userIndex = 0; userIndex < data[pollIndex].data.name; userIndex++) {
-
+					for (let userIndex = 0; userIndex < data[pollIndex].data.names.length; userIndex++) {
 						let username = document.createElement('p')
 						username.innerText = `Name: ${data[pollIndex].data.names[userIndex]}`
 						previousPollDiv.appendChild(username)
@@ -425,15 +429,28 @@
 			}
 
 			function displayPoll(id) {
-				console.log(id);
-				let previousPollDivs = document.getElementsByClassName('previousPoll')
+				if (id) {
+					let previousPollDivs = document.getElementsByClassName('previousPoll')
 
-				for (let pollDiv of previousPollDivs) {
-					if (pollDiv.id == id) {
-						pollDiv.style.display = 'block'
+					previousPollButtons.style.display = 'none'
+					toPollsButton.style.display = 'none'
+					toPollHistoryButton.style.display = ''
+
+					for (let pollDiv of previousPollDivs) {
+						if (pollDiv.id == id)
+							pollDiv.style.display = 'block'
+						else
+							pollDiv.style.display = 'none'
 					}
-					else
+				} else {
+					let previousPollDivs = document.getElementsByClassName('previousPoll')
+					previousPollButtons.style.display = 'block'
+					toPollsButton.style.display = ''
+					toPollHistoryButton.style.display = 'none'
+
+					for (let pollDiv of previousPollDivs) {
 						pollDiv.style.display = 'none'
+					}
 				}
 			}
 
@@ -1091,7 +1108,6 @@
 			var allRoom = ""
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
-				console.log(pollHistory);
 				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
 				pollHistory = JSON.parse(pollHistory)
