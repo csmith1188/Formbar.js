@@ -245,7 +245,7 @@ function permCheck(req, res, next) {
 function joinClass(userName, code) {
 	return new Promise((resolve, reject) => {
 		// Find the id of the class from the database
-		db.get(`SELECT id FROM classroom WHERE key=?`, [code], (err, id) => {
+		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, id) => {
 			if (err) {
 				console.error(err)
 				res.render('pages/message', {
@@ -256,7 +256,7 @@ function joinClass(userName, code) {
 			// Check to make sure there was a class with that name
 			if (id && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
-				db.get(`SELECT id FROM users WHERE username=?`, [userName], (err, uid) => {
+				db.get('SELECT id FROM users WHERE username=?', [userName], (err, uid) => {
 					if (err) {
 						console.error(err)
 					}
@@ -267,7 +267,7 @@ function joinClass(userName, code) {
 						(error, classUser) => {
 							if (error) console.error(error)
 							if (!classUser) {
-								db.run(`INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)`,
+								db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 									[id.id, uid.id, 2, 0], (err) => {
 										if (err) {
 											console.error(err)
@@ -422,7 +422,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 	if (req.file) {
 		cD[req.session.class].currentStep = 0
 		const result = excelToJson({
-			sourceFile: `${req.file.path}`,
+			sourceFile: req.file.path,
 			sheets: [{
 				name: 'Steps',
 				columnToKey: {
@@ -469,7 +469,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 					}
 				}
 				let quizLoad = excelToJson({
-					sourceFile: `${req.file.path}`,
+					sourceFile: req.file.path,
 					sheets: [{
 						name: nameQ,
 						columnToKey: colToKeyObj
@@ -499,7 +499,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 				*/
 				nameL = result['Steps'][key].prompt
 				let lessonLoad = excelToJson({
-					sourceFile: `${req.file.path}`,
+					sourceFile: req.file.path,
 					sheets: [{
 						name: nameL,
 						columnToKey: {
@@ -541,7 +541,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	var ownerClasses = []
 	// Finds all classes the teacher is the owner of
-	db.all(`SELECT name FROM classroom WHERE owner=?`,
+	db.all('SELECT name FROM classroom WHERE owner=?',
 		[req.session.username], (err, rows) => {
 			rows.forEach(row => {
 				ownerClasses.push(row.name)
@@ -587,11 +587,11 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			key += letter
 		}
 		// Add classroom to the database
-		db.run(`INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)`, [className, req.session.username, key], (err) => {
+		db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.username, key], (err) => {
 			if (err) {
 				console.error(err)
 			} else {
-				db.get(`SELECT id, key FROM classroom WHERE name=? AND owner = ?`, [className, req.session.username], (err, classRoom) => {
+				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
 					if (err) {
 						console.error(err)
 					}
@@ -600,7 +600,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			}
 		})
 	} else {
-		db.get(`SELECT id, key FROM classroom WHERE name=? AND owner = ?`, [className, req.session.username], (err, classRoom) => {
+		db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
 			if (err) {
 				console.error(err)
 			}
@@ -617,7 +617,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 app.get('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 	var ownerClasses = []
 	// Finds all classes the teacher is the owner of
-	db.all(`SELECT name FROM classroom WHERE owner=?`,
+	db.all('SELECT name FROM classroom WHERE owner=?',
 		[req.session.username], (err, rows) => {
 			rows.forEach(row => {
 				ownerClasses.push(row.name)
@@ -681,7 +681,7 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 // L
 /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
 app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	db.all(`SELECT * FROM lessons WHERE class=?`, cD[req.session.class].className, async (err, rows) => {
+	db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
 		if (err) {
 			console.error(err)
 		} else if (rows) {
@@ -727,7 +727,7 @@ app.post('/login', async (req, res) => {
 	// Check whether user is logging in or signing up
 	if (user.loginType == "login") {
 		// Get the users login in data to verify password
-		db.get(`SELECT * FROM users WHERE username=?`, [user.username], async (err, userData) => {
+		db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
 			if (err) {
 				console.error(err)
 			}
@@ -810,7 +810,7 @@ app.post('/login', async (req, res) => {
 						}
 					})
 				// Find the user in which was just created to get the id of the user
-				db.get(`SELECT * FROM users WHERE username=?`, [user.username], (err, userData) => {
+				db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
 					if (err) {
 						console.error(err)
 					} else {
@@ -855,7 +855,7 @@ app.post('/oauth', (req, res) => {
 	} = req.body
 	// If there is a username and password submitted, then it gets results from the database that match the username.
 	if (username && password) {
-		db.get(`SELECT * FROM users WHERE username = ?`, [username], (error, userData) => {
+		db.get('SELECT * FROM users WHERE username = ?', [username], (error, userData) => {
 			if (error) console.error(error)
 			// If there is userData returned, it saves the database password to a variable.
 			if (userData) {
@@ -934,7 +934,6 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 
 	if (answer) {
 		cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
-		db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.username])
 	}
 
 	//Quiz Setup and Queries
@@ -994,7 +993,6 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 		let answer = req.body.poll
 		if (answer) {
 			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
-			db.get('UPDATE users SET pollRes = ? WHERE username = ?', [answer, req.session.username])
 		}
 		res.redirect('/poll')
 	}
@@ -1101,7 +1099,7 @@ io.on('connection', (socket) => {
 	}
 
 	function cpUpdate(classCode) {
-		db.all(`SELECT * FROM poll_history WHERE class = ?`, cD[classCode].id, async (err, rows) => {
+		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
 			var pollHistory = rows
 			io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
 		})
@@ -1222,14 +1220,13 @@ io.on('connection', (socket) => {
 	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
 		cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 		cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
-		db.get('UPDATE users SET pollRes = ? WHERE username = ?', [res, socket.request.session.username])
 		for (let i = 0; i < resLength; i++) {
 			if (res) {
 				let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
 				cD[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
 				if (cD[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
-					db.get('GET digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (error, data) => {
-						db.get('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
+					db.get('SELECT digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (error, data) => {
+						db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
 					})
 					cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
 				};
@@ -1311,7 +1308,7 @@ io.on('connection', (socket) => {
 		let data = { prompt: '', names: [], letter: [], text: [] }
 
 		let dateConfig = new Date()
-		let date = `${dateConfig.getMonth() + 1}.${dateConfig.getDate()}.${dateConfig.getFullYear()}`
+		let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
 		data.prompt = cD[socket.request.session.class].poll.prompt
 
@@ -1321,7 +1318,7 @@ io.on('connection', (socket) => {
 			data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 		}
 
-		db.run(`INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)`,
+		db.run('INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 			[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
 				if (err) {
 					console.error(err)
@@ -1539,7 +1536,7 @@ io.on('connection', (socket) => {
 				cD[socket.request.session.class].mode = 'lesson'
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
 				cD[socket.request.session.class].lesson = lesson
-				db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+				db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 						if (err) {
 							console.error(err)
@@ -1557,7 +1554,7 @@ io.on('connection', (socket) => {
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
 				cD[socket.request.session.class].lesson = lesson
-				db.run(`INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)`,
+				db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 						if (err) {
 							console.error(err)
