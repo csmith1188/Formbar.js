@@ -383,6 +383,7 @@
 				pluginsDiv.style.display = 'none'
 				displayPoll()
 			}
+
 			//makes the previous polls page
 			function buildPreviousPolls(data) {
 				previousPollButtons.innerHTML = ''
@@ -491,15 +492,22 @@
 			};
 
 			function responseAmountChange() {
+				console.log('\n');
+				console.log(resNumber.value);
 				if (resNumber.value < 1) resNumber.value = 1
 				if (resNumber.value > 26) resNumber.value = 26
 
+				console.log(resNumber.value);
+
 				generatedColors = generateColors(resNumber.value)
 				if (pollResponses.length > resNumber.value) {
+
 					let responseDivs = document.getElementsByClassName('response')
 					for (let i = resNumber.value; i < pollResponses.length; i++) {
-						responseDivs[i].remove()
+						console.log(document.getElementById(`response${i}`), `#response${i}`);
+						document.getElementById(`response${i}`).remove()
 					}
+
 					pollResponses.splice(resNumber.value)
 				}
 
@@ -515,6 +523,7 @@
 
 					let responseDiv = document.createElement('div')
 					responseDiv.className = 'response'
+					responseDiv.id = `response${i}`
 					let colorPickerButton = document.createElement('button')
 					colorPickerButton.className = 'colorPickerButton'
 					colorPickerButton.id = i

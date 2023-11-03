@@ -8,12 +8,10 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-const { constants } = require('buffer')
 
 var app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
-
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -533,26 +531,6 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 	}
 })
 
-
-// Loads which classes the teacher is an owner of
-// This allows the teacher to be in charge of all classes
-// The teacher can give any perms to anyone they desire, which is useful at times
-// This also allows the teacher to kick or ban if needed
-app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
-	var ownerClasses = []
-	// Finds all classes the teacher is the owner of
-	db.all('SELECT name FROM classroom WHERE owner=?',
-		[req.session.username], (err, rows) => {
-			rows.forEach(row => {
-				ownerClasses.push(row.name)
-			})
-			res.render('pages/manageClass', {
-				title: 'Create Class',
-				ownerClasses: ownerClasses
-			})
-		})
-})
-
 // Allow teacher to create class
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
@@ -831,6 +809,24 @@ app.post('/login', async (req, res) => {
 })
 
 // M
+// Loads which classes the teacher is an owner of
+// This allows the teacher to be in charge of all classes
+// The teacher can give any perms to anyone they desire, which is useful at times
+// This also allows the teacher to kick or ban if needed
+app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
+	var ownerClasses = []
+	// Finds all classes the teacher is the owner of
+	db.all('SELECT name FROM classroom WHERE owner=?',
+		[req.session.username], (err, rows) => {
+			rows.forEach(row => {
+				ownerClasses.push(row.name)
+			})
+			res.render('pages/manageClass', {
+				title: 'Create Class',
+				ownerClasses: ownerClasses
+			})
+		})
+})
 
 // N
 
