@@ -220,7 +220,6 @@
 			var menuPlugins = document.getElementById('menuPlugins')
 
 			let currentUser = JSON.parse('<%- currentUser %>')
-			console.log(currentUser);
 
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
@@ -799,7 +798,6 @@
 					textResponse.innerText = `Text Response: ${studentData.pollRes.textRes}`;
 					newStudent.appendChild(textResponse);
 				};
-				console.log(studentData, currentUser);
 				if (studentData.classPermissions < currentUser.classPermissions) {
 					let permissionSwitch = document.createElement("select");
 					permissionSwitch.setAttribute("name", "permSwitch");
@@ -1118,7 +1116,6 @@
 			var allRoom = ""
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
-				console.log('cpUpdate');
 				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
 				pollHistory = JSON.parse(pollHistory)

@@ -5,7 +5,6 @@
 
 	function endBreak() {
 		socket.emit('endBreak')
-		console.log('break')
 		document.getElementById('breakDialog').close()
 	}
 
@@ -15,9 +14,5 @@
 
 	socket.on('reload', () => {
 		location.reload()
-	})
-
-	socket.on('cpUpdate', () => {
-		console.log('cpUpdate')
 	})
 </script>
