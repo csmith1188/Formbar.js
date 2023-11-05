@@ -40,7 +40,6 @@ io.use((socket, next) => {
 	sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
-
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
 
@@ -246,10 +245,6 @@ function joinClass(userName, code) {
 		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, id) => {
 			if (err) {
 				console.error(err)
-				res.render('pages/message', {
-					message: "Error: something went wrong",
-					title: 'Error'
-				})
 			}
 			// Check to make sure there was a class with that name
 			if (id && cD[code] && cD[code].key == code) {
@@ -270,13 +265,11 @@ function joinClass(userName, code) {
 										if (err) {
 											console.error(err)
 										}
-										else {
-											let user = cD.noClass.students[userName]
-											user.classPermissions = 2
-											delete cD.noClass.students[userName]
-											cD[code].students[userName] = user
-											resolve(true)
-										}
+										let user = cD.noClass.students[userName]
+										user.classPermissions = 2
+										delete cD.noClass.students[userName]
+										cD[code].students[userName] = user
+										resolve(true)
 									}
 								)
 								return
@@ -396,9 +389,9 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	*/
 	res.render('pages/controlPanel', {
 		title: "Control Panel",
-		pollStatus: cD[req.session.class].poll.status
+		pollStatus: cD[req.session.class].poll.status,
+		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 	})
-
 })
 
 // C
@@ -548,7 +541,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		cD[key] = new Classroom(id, className, key)
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
-		cD[key].students[req.session.username].classPermissions = TEACHER_PERMISSIONS
+		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
 
 		req.session.class = key
 
@@ -588,29 +581,6 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 })
 
 // D
-// Loads which classes the teacher is an owner of
-// This allows the teacher to be in charge of all classes
-// The teacher can give any perms to anyone they desire, which is useful at times
-// This also allows the teacher to kick or ban if needed
-app.get('/deleteClass', isLoggedIn, permCheck, (req, res) => {
-	var ownerClasses = []
-	// Finds all classes the teacher is the owner of
-	db.all('SELECT name FROM classroom WHERE owner=?',
-		[req.session.username], (err, rows) => {
-			rows.forEach(row => {
-				ownerClasses.push(row.name)
-			})
-			res.render('pages/deleteClass', {
-				title: 'Create Class',
-				ownerClasses: ownerClasses
-			})
-		})
-})
-
-// Allow teacher to create class
-// Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
-// This will allow the teacher to give students student perms, and guests student perms as well
-// Plus they can ban and kick as long as they can create classes
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 	let className = req.body.name
 
@@ -1088,6 +1058,9 @@ io.on('connection', (socket) => {
 	if (socket.request.session.username) {
 		socket.join(socket.request.session.class)
 		socket.join(socket.request.session.username)
+		socket.join(`permissions-${cD[socket.request.session.class].students[socket.request.session.username].permissions}`)
+		socket.join(`classPermissions-${cD[socket.request.session.class].students[socket.request.session.username].classPermissions}`)
+
 		userSockets[socket.request.session.username] = socket
 	}
 	if (socket.request.session.api) {
@@ -1095,17 +1068,20 @@ io.on('connection', (socket) => {
 	}
 
 	function cpUpdate(classCode) {
+		if (!classCode) classCode = socket.request.session.class
+
 		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
 			var pollHistory = rows
 			io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
 		})
 	}
 
-	function vbUpdate() {
-		if (!socket.request.session.class) return
-		if (socket.request.session.class == 'noClass') return
+	function vbUpdate(classCode) {
+		if (!classCode) classCode = socket.request.session.class
+		if (!classCode) return
+		if (classCode == 'noClass') return
 
-		let classData = structuredClone(cD[socket.request.session.class])
+		let classData = structuredClone(cD[classCode])
 		let responses = {}
 
 		for (let [username, student] of Object.entries(classData.students)) {
@@ -1129,7 +1105,7 @@ io.on('connection', (socket) => {
 			}
 		}
 
-		io.to(socket.request.session.class).emit('vbUpdate', {
+		io.to(classCode).emit('vbUpdate', {
 			status: classData.poll.status,
 			totalStudents: Object.keys(classData.students).length,
 			polls: responses,
@@ -1232,6 +1208,8 @@ io.on('connection', (socket) => {
 
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
+		newPerm = Number(newPerm)
+
 		cD[socket.request.session.class].students[user].classPermissions = newPerm
 
 		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
@@ -1248,11 +1226,14 @@ io.on('connection', (socket) => {
 				}
 			}
 		)
+		io.to(user).emit('reload')
 
-		cpUpdate(socket.request.session.class)
+		cpUpdate()
 	})
 
 	socket.on('permChange', (user, newPerm) => {
+		newPerm = Number(newPerm)
+
 		cD[socket.request.session.class].students[user].permissions = newPerm
 		db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
 	})
@@ -1337,13 +1318,14 @@ io.on('connection', (socket) => {
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
 		cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
+		cpUpdate()
 	})
 
 	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
 		let student = cD[socket.request.session.class].students[socket.request.session.username]
 		student.break = reason
-		cpUpdate(socket.request.session.class)
+		cpUpdate()
 	})
 
 	// Aproves the break ticket request
@@ -1351,7 +1333,7 @@ io.on('connection', (socket) => {
 		let student = cD[socket.request.session.class].students[username]
 		student.break = breakApproval
 		if (breakApproval) io.to(username).emit('break')
-		cpUpdate(socket.request.session.class)
+		cpUpdate()
 		vbUpdate()
 	})
 
@@ -1360,7 +1342,7 @@ io.on('connection', (socket) => {
 		let student = cD[socket.request.session.class].students[socket.request.session.username]
 		student.break = false
 
-		cpUpdate(socket.request.session.class)
+		cpUpdate()
 		vbUpdate()
 	})
 
@@ -1369,6 +1351,7 @@ io.on('connection', (socket) => {
 		const classCode = socket.request.session.class
 		deleteStudent(username, classCode)
 		cpUpdate(classCode)
+		vbUpdate(classCode)
 	})
 
 	// Deletes all students from the class
@@ -1376,6 +1359,7 @@ io.on('connection', (socket) => {
 		const classCode = socket.request.session.class
 		deleteStudents(classCode)
 		cpUpdate(classCode)
+		vbUpdate(classCode)
 	})
 
 	socket.on('leaveClass', () => {
@@ -1383,6 +1367,7 @@ io.on('connection', (socket) => {
 		const classCode = socket.request.session.class
 		deleteStudent(username, classCode)
 		cpUpdate(classCode)
+		vbUpdate(classCode)
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
@@ -1405,6 +1390,7 @@ io.on('connection', (socket) => {
 				delete cD[classCode].students[username]
 				socket.leave(className)
 				cpUpdate(classCode)
+				vbUpdate(classCode)
 				db.get(
 					'SELECT * FROM classroom WHERE owner=? AND key=?',
 					[username, classCode],
@@ -1464,7 +1450,7 @@ io.on('connection', (socket) => {
 
 	// Updates and stores poll history
 	socket.on('cpUpdate', () => {
-		cpUpdate(socket.request.session.class)
+		cpUpdate();
 	})
 
 	// socket.on('sfxGet', function () {

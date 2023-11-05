@@ -219,6 +219,9 @@
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
 
+			let currentUser = JSON.parse('<%- currentUser %>')
+			console.log(currentUser);
+
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
 				lightness /= 100;
@@ -492,19 +495,14 @@
 			};
 
 			function responseAmountChange() {
-				console.log('\n');
-				console.log(resNumber.value);
 				if (resNumber.value < 1) resNumber.value = 1
 				if (resNumber.value > 26) resNumber.value = 26
-
-				console.log(resNumber.value);
 
 				generatedColors = generateColors(resNumber.value)
 				if (pollResponses.length > resNumber.value) {
 
 					let responseDivs = document.getElementsByClassName('response')
 					for (let i = resNumber.value; i < pollResponses.length; i++) {
-						console.log(document.getElementById(`response${i}`), `#response${i}`);
 						document.getElementById(`response${i}`).remove()
 					}
 
@@ -801,87 +799,90 @@
 					textResponse.innerText = `Text Response: ${studentData.pollRes.textRes}`;
 					newStudent.appendChild(textResponse);
 				};
-				let permissionSwitch = document.createElement("select");
-				permissionSwitch.setAttribute("name", "permSwitch");
-				permissionSwitch.setAttribute("class", "permSwitch");
-				permissionSwitch.setAttribute("data-userid", student);
-				permissionSwitch.onchange = (event) => {
-					socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
-				};
-				if (studentData.classPermissions == 4) {
-					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 4);
-					teacherOption.setAttribute("selected", true);
-					teacherOption.innerText = "Teacher";
-					permissionSwitch.add(teacherOption);
-					let modOption = document.createElement("option");
-					modOption.setAttribute("value", 3);
-					modOption.innerText = "Mod";
-					permissionSwitch.add(modOption);
-					let studentOption = document.createElement("option");
-					studentOption.setAttribute("value", 2);
-					studentOption.innerText = "Student";
-					permissionSwitch.add(studentOption);
-					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 1);
-					guestOption.innerText = "Guest";
-					permissionSwitch.add(guestOption);
-				} else if (studentData.classPermissions == 3) {
-					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 4);
-					teacherOption.innerText = "Teacher";
-					permissionSwitch.add(teacherOption);
-					let modOption = document.createElement("option");
-					modOption.setAttribute("value", 3);
-					modOption.setAttribute("selected", true);
-					modOption.innerText = "Mod";
-					permissionSwitch.add(modOption);
-					let studentOption = document.createElement("option");
-					studentOption.setAttribute("value", 2);
-					studentOption.innerText = "Student";
-					permissionSwitch.add(studentOption);
-					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 1);
-					guestOption.innerText = "Guest";
-					permissionSwitch.add(guestOption);
-				} else if (studentData.permissions == 2) {
-					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 4);
-					teacherOption.innerText = "Teacher";
-					permissionSwitch.add(teacherOption);
-					let modOption = document.createElement("option");
-					modOption.setAttribute("value", 3);
-					modOption.innerText = "Mod";
-					permissionSwitch.add(modOption);
-					let studentOption = document.createElement("option");
-					studentOption.setAttribute("value", 2);
-					studentOption.setAttribute("selected", true);
-					studentOption.innerText = "Student";
-					permissionSwitch.add(studentOption);
-					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 1);
-					guestOption.innerText = "Guest";
-					permissionSwitch.add(guestOption);
-				} else if (studentData.classPermissions == 1) {
-					let teacherOption = document.createElement("option");
-					teacherOption.setAttribute("value", 4);
-					teacherOption.innerText = "Teacher";
-					permissionSwitch.add(teacherOption);
-					let modOption = document.createElement("option");
-					modOption.setAttribute("value", 3);
-					modOption.innerText = "Mod";
-					permissionSwitch.add(modOption);
-					let studentOption = document.createElement("option");
-					studentOption.setAttribute("value", 2);
-					studentOption.innerText = "Student";
-					permissionSwitch.add(modOption);
-					let guestOption = document.createElement("option");
-					guestOption.setAttribute("value", 1);
-					guestOption.setAttribute("selected", true);
-					guestOption.innerText = "Guest";
-					permissionSwitch.add(guestOption);
+				console.log(studentData, currentUser);
+				if (studentData.classPermissions < currentUser.classPermissions) {
+					let permissionSwitch = document.createElement("select");
+					permissionSwitch.setAttribute("name", "permSwitch");
+					permissionSwitch.setAttribute("class", "permSwitch");
+					permissionSwitch.setAttribute("data-userid", student);
+					permissionSwitch.onchange = (event) => {
+						socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
+					};
+					if (studentData.classPermissions == 4) {
+						let teacherOption = document.createElement("option");
+						teacherOption.setAttribute("value", 4);
+						teacherOption.setAttribute("selected", true);
+						teacherOption.innerText = "Teacher";
+						permissionSwitch.add(teacherOption);
+						let modOption = document.createElement("option");
+						modOption.setAttribute("value", 3);
+						modOption.innerText = "Mod";
+						permissionSwitch.add(modOption);
+						let studentOption = document.createElement("option");
+						studentOption.setAttribute("value", 2);
+						studentOption.innerText = "Student";
+						permissionSwitch.add(studentOption);
+						let guestOption = document.createElement("option");
+						guestOption.setAttribute("value", 1);
+						guestOption.innerText = "Guest";
+						permissionSwitch.add(guestOption);
+					} else if (studentData.classPermissions == 3) {
+						let teacherOption = document.createElement("option");
+						teacherOption.setAttribute("value", 4);
+						teacherOption.innerText = "Teacher";
+						permissionSwitch.add(teacherOption);
+						let modOption = document.createElement("option");
+						modOption.setAttribute("value", 3);
+						modOption.setAttribute("selected", true);
+						modOption.innerText = "Mod";
+						permissionSwitch.add(modOption);
+						let studentOption = document.createElement("option");
+						studentOption.setAttribute("value", 2);
+						studentOption.innerText = "Student";
+						permissionSwitch.add(studentOption);
+						let guestOption = document.createElement("option");
+						guestOption.setAttribute("value", 1);
+						guestOption.innerText = "Guest";
+						permissionSwitch.add(guestOption);
+					} else if (studentData.classPermissions == 2) {
+						let teacherOption = document.createElement("option");
+						teacherOption.setAttribute("value", 4);
+						teacherOption.innerText = "Teacher";
+						permissionSwitch.add(teacherOption);
+						let modOption = document.createElement("option");
+						modOption.setAttribute("value", 3);
+						modOption.innerText = "Mod";
+						permissionSwitch.add(modOption);
+						let studentOption = document.createElement("option");
+						studentOption.setAttribute("value", 2);
+						studentOption.setAttribute("selected", true);
+						studentOption.innerText = "Student";
+						permissionSwitch.add(studentOption);
+						let guestOption = document.createElement("option");
+						guestOption.setAttribute("value", 1);
+						guestOption.innerText = "Guest";
+						permissionSwitch.add(guestOption);
+					} else if (studentData.classPermissions == 1) {
+						let teacherOption = document.createElement("option");
+						teacherOption.setAttribute("value", 4);
+						teacherOption.innerText = "Teacher";
+						permissionSwitch.add(teacherOption);
+						let modOption = document.createElement("option");
+						modOption.setAttribute("value", 3);
+						modOption.innerText = "Mod";
+						permissionSwitch.add(modOption);
+						let studentOption = document.createElement("option");
+						studentOption.setAttribute("value", 2);
+						studentOption.innerText = "Student";
+						permissionSwitch.add(studentOption);
+						let guestOption = document.createElement("option");
+						guestOption.setAttribute("value", 1);
+						guestOption.setAttribute("selected", true);
+						guestOption.innerText = "Guest";
+						permissionSwitch.add(guestOption);
+					}
+					newStudent.appendChild(permissionSwitch);
 				}
-				newStudent.appendChild(permissionSwitch);
 				newStudent.append(" ");
 				let deleteStudentButton = document.createElement("button");
 				deleteStudentButton.className = 'deleteStudent quickButton'
@@ -1117,6 +1118,7 @@
 			var allRoom = ""
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
+				console.log('cpUpdate');
 				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
 				pollHistory = JSON.parse(pollHistory)
@@ -1131,6 +1133,7 @@
 				}
 				filterSortChange()
 			})
+
 			socket.emit('pluginUpdate')
 			socket.on('pluginUpdate', (plugins) => {
 				pluginsDiv.innerHTML = ''

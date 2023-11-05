@@ -22,25 +22,30 @@
                     <input type="text" name="submittionType" value="create" hidden>
                     <input type="submit" id="submitButton" class="quickButton" value="Create" onsubmit="return false;">
                 </form>
-                <h2 class="headerText">Delete a class</h2>
-                <select id="deleteClass" name="name">
-                    <% ownerClasses.forEach(rooms=> { %>
-                        <option value="<%- rooms %>">
-                            <%- rooms %>
-                        </option>
-                        <% }) %>
-                </select>
-                <label for="deletePolls">Do you want to also delete it's polls</label>
-                <input type="checkbox" id="deletePolls">
-                <button class="quickButton" onclick="deleteClass()">Delete</button>
+                <div id="deleteClass" class="hidden">
+                    <h2 class="headerText">Delete a class</h2>
+                    <select id="deleteClassSelect">
+                        <% ownerClasses.forEach(rooms=> { %>
+                            <option value="<%- rooms %>">
+                                <%- rooms %>
+                            </option>
+                            <% }) %>
+                    </select>
+                    <label for="deletePolls">Do you want to also delete it's polls</label>
+                    <input type="checkbox" id="deletePolls">
+                    <button class="quickButton" onclick="deleteClass()">Delete</button>
+                </div>
             </div>
         </body>
 
         <script>
-            if ("<%- ownerClasses %>") document.getElementById("selectClass").classList.remove("hidden");
+            if ("<%- ownerClasses %>") {
+                document.getElementById("selectClass").classList.remove("hidden");
+                document.getElementById("deleteClass").classList.remove("hidden");
+            }
 
             function deleteClass() {
-                let className = document.getElementById('deleteClass').value
+                let className = document.getElementById('deleteClassSelect').value
                 let deletePolls = document.getElementById('deletePolls').checked
 
                 socket.emit('deleteClass', className, deletePolls)
