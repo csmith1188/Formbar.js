@@ -73,9 +73,7 @@
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
 						var pollResponses = '<%- pollResponses %>';
-						console.log(typeof pollResponses, pollResponses);
 						pollResponses = JSON.parse(pollResponses)
-						console.log(typeof pollResponses, pollResponses);
 						var textResponse = '<%- textResponse %>'
 						textResponse = textResponse.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
 						textResponse = JSON.parse(textResponse)

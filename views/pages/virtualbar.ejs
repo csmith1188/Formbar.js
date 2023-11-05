@@ -65,7 +65,6 @@
 			socket.emit('vbUpdate')
 			// Gets data from server and send it the function
 			socket.on('vbUpdate', (pollsData) => {
-				console.log(pollsData);
 				if (!pollsData.status) {
 					noPoll.style.display = ''
 					return

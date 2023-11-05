@@ -860,15 +860,24 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 // selectClass
 //Send user to the select class page
 app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
-	res.render('pages/selectClass', {
-		title: 'Select Class'
-	})
+	db.all(
+		'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentuid JOIN classroom ON classusers.classuid = classroom.id WHERE users.username = ?',
+		[req.session.username],
+		(err, joinedClasses) => {
+			if (err) console.error(err);
+			res.render('pages/selectClass', {
+				title: 'Select Class',
+				joinedClasses
+			})
+		}
+	)
 })
 
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	let code = req.body.key.toLowerCase()
+
 	let checkComplete = await joinClass(req.session.username, code)
 	if (checkComplete === true) {
 		req.session.class = code
@@ -1428,8 +1437,8 @@ io.on('connection', (socket) => {
 					endClass(classRoom.key)
 				}
 				db.run('DELETE FROM classroom WHERE id = ?', classRoom.id)
-
-			}// else socket.emit('deleteClass',{error:'class does'})
+				db.run('DELETE FROM classusers WHERE classuid = ?', classRoom.id)
+			}
 			if (deletePolls)
 				db.run('DELETE FROM poll_history WHERE class = ?', classRoom.id)
 		})
