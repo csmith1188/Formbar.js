@@ -26,12 +26,14 @@
     </body>
 
     <script>
-        document.getElementById("joinedKey").oninput = function () {
-            if (this.value) document.getElementById("submitJoinedButton").classList.remove("unselectable");
-            else document.getElementById("submitJoinedButton").classList.add("unselectable");
-        };
-        document.getElementById("joinKey").oninput = function () {
-            if (this.value) document.getElementById("submitJoinButton").classList.remove("unselectable");
-            else document.getElementById("submitJoinButton").classList.add("unselectable");
-        };
+        if (document.getElementById("joinedKey")) {
+            document.getElementById("joinedKey").addEventListener('input', () => {
+                if (event.target.value) document.getElementById("submitJoinedButton").classList.remove("unselectable")
+                else document.getElementById("submitJoinedButton").classList.add("unselectable")
+            })
+        }
+        document.getElementById("joinKey").addEventListener('input', (event) => {
+            if (event.target.value) document.getElementById("submitJoinButton").classList.remove("unselectable")
+            else document.getElementById("submitJoinButton").classList.add("unselectable")
+        })
     </script>
