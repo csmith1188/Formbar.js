@@ -19,7 +19,7 @@ app.set('view engine', 'ejs')
 
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
-	secret: 'secret', //Used to sign into the session via cookies
+	secret: crypto.randomBytes(256).toString('hex'), //Used to sign into the session via cookies
 	resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
 	saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
 })
@@ -247,51 +247,54 @@ function joinClass(userName, code) {
 				console.error(err)
 			}
 			// Check to make sure there was a class with that name
-			if (id && cD[code] && cD[code].key == code) {
+			else if (id && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
 				db.get('SELECT id FROM users WHERE username=?', [userName], (err, uid) => {
 					if (err) {
 						console.error(err)
 					}
-
-					// Add the two id's to the junction table to link the user and class
-					db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-						[id.id, uid.id],
-						(error, classUser) => {
-							if (error) console.error(error)
-							if (!classUser) {
-								db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-									[id.id, uid.id, 2, 0], (err) => {
-										if (err) {
-											console.error(err)
+					else if (uid) {
+						// Add the two id's to the junction table to link the user and class
+						db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+							[uid.id, uid.id],
+							(error, classUser) => {
+								if (error) {
+									console.error(error)
+									return
+								}
+								if (!classUser) {
+									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+										[id.id, uid.id, GUEST_PERMISSIONS, 0], (err) => {
+											if (err) {
+												console.error(err)
+												return
+											}
+											let user = cD.noClass.students[userName]
+											user.classPermissions = 2
+											delete cD.noClass.students[userName]
+											cD[code].students[userName] = user
+											resolve(true)
 										}
-										let user = cD.noClass.students[userName]
-										user.classPermissions = 2
-										delete cD.noClass.students[userName]
-										cD[code].students[userName] = user
-										resolve(true)
-									}
-								)
-								return
-							}
-							// Get the student's session data ready to transport into new class
-							let user = cD.noClass.students[userName]
-							if (classUser.permissions > BANNED_PERMISSIONS) {
-								if (classUser) {
+									)
+									return
+								}
+								// Get the student's session data ready to transport into new class
+								let user = cD.noClass.students[userName]
+								if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
+
+								if (classUser)
 									user.classPermissions = classUser.permissions
-								}
-								else {
+								else
 									user.classPermissions = STUDENT_PERMISSIONS
-								}
 
 								// Remove student from old class
 								delete cD.noClass.students[userName]
 								// Add the student to the newly created class
 								cD[code].students[userName] = user
 								resolve(true)
-							} resolve(new Error('you are banned from that class'))
-						}
-					)
+							}
+						)
+					}
 				})
 			} else {
 				resolve(new Error('no open class with that code'))
@@ -562,20 +565,20 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			if (err) {
 				console.error(err)
 			} else {
-				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
+				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
 					if (err) {
 						console.error(err)
 					}
-					makeClass(classRoom.id, classRoom.key)
+					else if (classroom) makeClass(classroom.id, classroom.key)
 				})
 			}
 		})
 	} else {
-		db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
+		db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
 			if (err) {
 				console.error(err)
-			}
-			makeClass(classRoom.id, classRoom.key)
+			} else if (classroom)
+				makeClass(classroom.id, classroom.key)
 		})
 	}
 })
@@ -584,14 +587,15 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 	let className = req.body.name
 
-	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classRoom) => {
-		if (err) console.error(err);
-		if (classRoom) {
-			if (cD[classRoom.key]) {
+	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
+		if (err) {
+			console.error(err)
+		} else if (classroom) {
+			if (cD[classroom.key]) {
 				deleteStudents()
-				delete cD[classRoom.key]
+				delete cD[classroom.key]
 			}
-			db.run('DELETE FROM classroom WHERE name = ?', classRoom.name)
+			db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
 		} else res.redirect('/home')
 	})
 })
@@ -637,9 +641,7 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 				rows: rows,
 				title: "Previous Lesson"
 			})
-
 		}
-
 	})
 })
 
@@ -680,7 +682,7 @@ app.post('/login', async (req, res) => {
 				console.error(err)
 			}
 			// Check if a user with that name was found in the database
-			if (userData) {
+			else if (userData) {
 				// Decrypt users password
 				let tempPassword = decrypt(JSON.parse(userData.password))
 				if (userData.username == user.username && tempPassword == user.password) {
@@ -723,8 +725,9 @@ app.post('/login', async (req, res) => {
 		let permissions = STUDENT_PERMISSIONS
 
 		db.all('SELECT API, secret FROM users', (error, users) => {
-			if (error) console.error(error)
-			else {
+			if (error) {
+				console.error(error)
+			} else {
 				let existingAPIs = []
 				let existingSecrets = []
 				let newAPI
@@ -822,9 +825,11 @@ app.post('/oauth', (req, res) => {
 	// If there is a username and password submitted, then it gets results from the database that match the username.
 	if (username && password) {
 		db.get('SELECT * FROM users WHERE username = ?', [username], (error, userData) => {
-			if (error) console.error(error)
+			if (error) {
+				console.error(error)
+			}
 			// If there is userData returned, it saves the database password to a variable.
-			if (userData) {
+			else if (userData) {
 				let databasePassword = decrypt(JSON.parse(userData.password))
 				// It then compares the submitted password to the database password.
 				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
@@ -864,8 +869,9 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 		'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentuid JOIN classroom ON classusers.classuid = classroom.id WHERE users.username = ?',
 		[req.session.username],
 		(err, joinedClasses) => {
-			if (err) console.error(err);
-			res.render('pages/selectClass', {
+			if (err) {
+				console.error(err)
+			} else res.render('pages/selectClass', {
 				title: 'Select Class',
 				joinedClasses
 			})
@@ -1048,7 +1054,9 @@ io.use((socket, next) => {
 			'SELECT id, username, permissions FROM users WHERE API = ?',
 			[api],
 			(error, userData) => {
-				if (error) return next(error)
+				if (error) {
+					return next(error)
+				}
 				if (!userData) return next(new Error('not a valid API Key'))
 				next()
 			}
@@ -1130,7 +1138,10 @@ io.on('connection', (socket) => {
 			'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
 			[socket.request.session.class],
 			(error, plugins) => {
-				if (error) console.error(error)
+				if (error) {
+					console.error(error)
+					return
+				}
 				io.to(socket.request.session.class).emit('pluginUpdate', plugins)
 			}
 		)
@@ -1228,8 +1239,10 @@ io.on('connection', (socket) => {
 			'SELECT id FROM classroom WHERE name = ?',
 			[cD[socket.request.session.class].className],
 			(error, classId) => {
-				if (error) console.error(error)
-				if (classId) {
+				if (error) {
+					console.error(error)
+				}
+				else if (classId) {
 					classId = classId.id
 					db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [newPerm, classId, cD[socket.request.session.class].students[user].id])
 				}
@@ -1304,12 +1317,14 @@ io.on('connection', (socket) => {
 			data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 		}
 
-		db.run('INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
+		db.run(
+			'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 			[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
 				if (err) {
 					console.error(err)
 				}
-			})
+			}
+		)
 
 		cD[socket.request.session.class].poll.responses = {}
 		cD[socket.request.session.class].poll.prompt = ''
@@ -1380,10 +1395,12 @@ io.on('connection', (socket) => {
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
-			(err, classRoom) => {
-				if (err) console.error(err);
-				else if (classRoom) {
-					endClass(classRoom.key)
+			(err, classroom) => {
+				if (err) {
+					console.error(err)
+				}
+				else if (classroom) {
+					endClass(classroom.key)
 				}
 			}
 		)
@@ -1394,8 +1411,9 @@ io.on('connection', (socket) => {
 		const classCode = socket.request.session.class
 		const className = cD[classCode].className
 		socket.request.session.destroy((err) => {
-			if (err) console.error(err);
-			else {
+			if (err) {
+				console.error(err)
+			} else {
 				delete cD[classCode].students[username]
 				socket.leave(className)
 				cpUpdate(classCode)
@@ -1403,10 +1421,11 @@ io.on('connection', (socket) => {
 				db.get(
 					'SELECT * FROM classroom WHERE owner=? AND key=?',
 					[username, classCode],
-					(err, classRoom) => {
-						if (err) console.error(err);
-						else if (classRoom) {
-							endClass(classRoom.key)
+					(err, classroom) => {
+						if (err) {
+							console.error(err)
+						} else if (classroom) {
+							endClass(classroom.key)
 						}
 					}
 				)
@@ -1420,27 +1439,29 @@ io.on('connection', (socket) => {
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
-			(err, classRoom) => {
-				if (err) console.error(err);
-				else if (classRoom) {
-					endClass(classRoom.key)
+			(err, classroom) => {
+				if (err) {
+					console.error(err);
+				} else if (classroom) {
+					endClass(classroom.key)
 				}
 			}
 		)
 	})
 
 	socket.on('deleteClass', (className, deletePolls) => {
-		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classRoom) => {
-			if (err) console.error(err);
-			if (classRoom) {
-				if (cD[classRoom.key]) {
-					endClass(classRoom.key)
+		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
+			if (err) {
+				console.error(err)
+			} else if (classroom) {
+				if (cD[classroom.key]) {
+					endClass(classroom.key)
 				}
-				db.run('DELETE FROM classroom WHERE id = ?', classRoom.id)
-				db.run('DELETE FROM classusers WHERE classuid = ?', classRoom.id)
+				db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
+				db.run('DELETE FROM classusers WHERE classuid = ?', classroom.id)
 			}
 			if (deletePolls)
-				db.run('DELETE FROM poll_history WHERE class = ?', classRoom.id)
+				db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
 		})
 	})
 
@@ -1532,7 +1553,8 @@ io.on('connection', (socket) => {
 						if (err) {
 							console.error(err)
 						}
-					})
+					}
+				)
 				cD[socket.request.session.class].poll.textRes = false
 				cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
 				// Check this later, there's already a quiz if statement
@@ -1550,7 +1572,8 @@ io.on('connection', (socket) => {
 						if (err) {
 							console.error(err)
 						}
-					})
+					}
+				)
 			}
 		} else {
 			cD[socket.request.session.class].currentStep = 0
@@ -1589,7 +1612,10 @@ io.on('connection', (socket) => {
 				'UPDATE plugins set name=? WHERE id=?',
 				[name, id],
 				(error) => {
-					if (error) console.error(error)
+					if (error) {
+						console.error(error)
+						return
+					}
 					pluginUpdate()
 				}
 			)
@@ -1599,7 +1625,10 @@ io.on('connection', (socket) => {
 				'UPDATE plugins set url=? WHERE id=?',
 				[url, id],
 				(error) => {
-					if (error) console.error(error)
+					if (error) {
+						console.error(error)
+						return
+					}
 					pluginUpdate()
 				}
 			)
@@ -1611,13 +1640,15 @@ io.on('connection', (socket) => {
 			'SELECT * FROM classroom WHERE key = ?',
 			[socket.request.session.class],
 			(error, classData) => {
-				if (error) console.error(error)
-
-				db.run(
-					'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
-					[name, url, classData.id]
-				)
-				pluginUpdate()
+				if (error) {
+					console.error(error)
+				} else {
+					db.run(
+						'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+						[name, url, classData.id]
+					)
+					pluginUpdate()
+				}
 			}
 		)
 	})
@@ -1647,8 +1678,14 @@ io.on('connection', (socket) => {
 				'SELECT * FROM users WHERE API = ?',
 				[api],
 				(error, userData) => {
-					if (error) console.error(error)
-					if (!userData) socket.emit('getUserClass', { error: 'not a valid API Key' })
+					if (error) {
+						console.error(error)
+						return
+					}
+					if (!userData) {
+						socket.emit('getUserClass', { error: 'not a valid API Key' })
+						return
+					}
 					getClass(userData.username)
 				}
 			)
