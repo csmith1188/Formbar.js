@@ -8,6 +8,7 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
+const winston = require('winston');
 
 var app = express()
 const http = require('http').createServer(app)
@@ -25,14 +26,11 @@ var sessionMiddleware = session({
 })
 
 
-// PROMPT: What does this do?
 // Sets up middleware for the server by calling sessionMiddleware
 // adds session middleware to express
 app.use(sessionMiddleware)
 
 
-// PROMPT: Does this allow use to associate client logins with their websocket connection?
-// PROMPT: Where did you find information on this. Please put the link here.
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server
 // adds session middle ware to socket.io
@@ -53,6 +51,20 @@ app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@flo
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+const logger = winston.createLogger({
+	level: 'info',
+	format: winston.format.json(),
+	defaultMeta: { service: 'user-service' },
+	transports: [
+		//
+		// - Write all logs with importance level of `error` or less to `error.log`
+		// - Write all logs with importance level of `info` or less to `combined.log`
+		//
+		new winston.transports.File({ filename: 'error.log', level: 'error' }),
+		new winston.transports.File({ filename: 'combined.log' }),
+	],
+});
 
 //cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
@@ -1199,6 +1211,7 @@ io.on('connection', (socket) => {
 
 	// /poll websockets for updating the database
 	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
+		logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${res}, ${textRes}`);
 		cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 		cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
 		for (let i = 0; i < resLength; i++) {
@@ -1317,18 +1330,19 @@ io.on('connection', (socket) => {
 
 		socket.broadcast.to(socket.request.session.class).emit('reload')
 		vbUpdate()
-	})
+	});
 
 	// Sends poll and student response data to client side virtual bar
 	socket.on('vbUpdate', () => {
 		vbUpdate()
-	})
+	});
 
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
+		logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${reason}, ${time}`);
 		cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
-		cpUpdate()
-	})
+		cpUpdate();
+	});
 
 	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
