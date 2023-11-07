@@ -254,26 +254,27 @@ function permCheck(req, res, next) {
 function joinClass(userName, code) {
 	return new Promise((resolve, reject) => {
 		// Find the id of the class from the database
-		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, id) => {
+		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
 			if (err) {
 				console.error(err)
 			}
 			// Check to make sure there was a class with that name
-			else if (id && cD[code] && cD[code].key == code) {
+			else if (classId && cD[code] && cD[code].key == code) {
 				// Find the id of the user who is trying to join the class
-				db.get('SELECT id FROM users WHERE username=?', [userName], (err, uid) => {
+				db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
 					if (err) {
 						console.error(err)
 					}
-					else if (uid) {
+					else if (userId) {
 						// Add the two id's to the junction table to link the user and class
 						db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-							[uid.id, uid.id],
+							[classId.id, userId.id],
 							(error, classUser) => {
 								if (error) {
 									console.error(error)
 									return
 								}
+								console.log(classUser);
 								if (!classUser) {
 									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 										[id.id, uid.id, GUEST_PERMISSIONS, 0], (err) => {
