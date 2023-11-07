@@ -8,6 +8,7 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
+const { LogarithmicScale } = require('chart.js')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -19,7 +20,7 @@ app.set('view engine', 'ejs')
 
 // Create session for user information to be transferred from page to page
 var sessionMiddleware = session({
-	secret: 'secret', //Used to sign into the session via cookies
+	secret: crypto.randomBytes(256).toString('hex'), //Used to sign into the session via cookies
 	resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
 	saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
 })
@@ -95,11 +96,12 @@ const PAGE_PERMISSIONS = {
 class Student {
 	// Needs username, id from the database, and if permissions established already pass the updated value
 	// These will need to be put into the constructor in order to allow the creation of the object
-	constructor(username, id, permissions = STUDENT_PERMISSIONS, API) {
+	constructor(username, id, permissions = STUDENT_PERMISSIONS, API, customPolls = []) {
 		this.username = username
 		this.id = id
 		this.permissions = permissions
 		this.classPermissions = null
+		this.customPolls = customPolls
 		this.pollRes = {
 			buttonRes: '',
 			textRes: ''
@@ -117,10 +119,11 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key) {
+	constructor(id, className, key, customPolls = []) {
 		this.id = id
 		this.className = className
 		this.students = {}
+		this.customPolls = customPolls
 		this.poll = {
 			status: false,
 			responses: {},
@@ -138,6 +141,7 @@ class Classroom {
 		this.mode = 'poll'
 	}
 }
+
 //allows quizzes to be made
 class Quiz {
 	constructor(numOfQuestions, maxScore) {
@@ -147,7 +151,6 @@ class Quiz {
 		this.pointsPerQuestion = this.totalScore / numOfQuestions
 	}
 }
-
 
 //allows lessons to be made
 class Lesson {
@@ -384,14 +387,44 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		allStuds.push(val)
 	}
 
-	/* Uses EJS to render the template and display the information for the class.
-	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-	*/
-	res.render('pages/controlPanel', {
-		title: "Control Panel",
-		pollStatus: cD[req.session.class].poll.status,
-		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-	})
+	let userCustomPolls = cD[req.session.class].students[req.session.username].customPolls
+	let classroomCustomPolls = cD[req.session.class].customPolls
+	let publicCustomPolls = []
+	let customPollIds = userCustomPolls.concat(classroomCustomPolls)
+
+	db.all(
+		`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1`,
+		customPollIds,
+		(error, customPolls) => {
+			for (let customPoll of customPolls) {
+				customPoll.answers = JSON.parse(customPoll.answers)
+			}
+
+			customPolls = customPolls.reduce((newObject, customPoll) => {
+				newObject[customPoll.id] = customPoll
+				return newObject
+			}, {})
+
+			for (let customPoll of Object.values(customPolls)) {
+				if (customPoll.public) {
+					publicCustomPolls.push(customPoll.id)
+				}
+			}
+
+			/* Uses EJS to render the template and display the information for the class.
+			This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+			*/
+			res.render('pages/controlPanel', {
+				title: "Control Panel",
+				pollStatus: cD[req.session.class].poll.status,
+				currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
+				// userCustomPolls: JSON.stringify(userCustomPolls),
+				// classroomCustomPolls: JSON.stringify(classroomCustomPolls),
+				// publicCustomPolls: JSON.stringify(publicCustomPolls),
+				// customPolls: JSON.stringify(customPolls)
+			})
+		}
+	)
 })
 
 // C
@@ -532,13 +565,13 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 	let submittionType = req.body.submittionType
 	let className = req.body.name
 
-	function makeClass(id, key) {
+	function makeClass(id, key, customPolls) {
 		// Get the teachers session data ready to transport into new class
 		var user = cD.noClass.students[req.session.username]
 		// Remove teacher from old class
 		delete cD.noClass.students[req.session.username]
 		// Add class into the session data
-		cD[key] = new Classroom(id, className, key)
+		cD[key] = new Classroom(id, className, key, customPolls)
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
 		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -562,20 +595,20 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			if (err) {
 				console.error(err)
 			} else {
-				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
+				db.get('SELECT * FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
 					if (err) {
 						console.error(err)
 					}
-					makeClass(classRoom.id, classRoom.key)
+					makeClass(classroom.id, classroom.key, JSON.parse(classroom.custom_polls))
 				})
 			}
 		})
 	} else {
-		db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classRoom) => {
+		db.get('SELECT * FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
 			if (err) {
 				console.error(err)
 			}
-			makeClass(classRoom.id, classRoom.key)
+			makeClass(classroom.id, classroom.key, JSON.parse(classroom.custom_polls))
 		})
 	}
 })
@@ -584,14 +617,14 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 	let className = req.body.name
 
-	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classRoom) => {
+	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
 		if (err) console.error(err);
-		if (classRoom) {
-			if (cD[classRoom.key]) {
+		if (classroom) {
+			if (cD[classroom.key]) {
 				deleteStudents()
-				delete cD[classRoom.key]
+				delete cD[classroom.key]
 			}
-			db.run('DELETE FROM classroom WHERE name = ?', classRoom.name)
+			db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
 		} else res.redirect('/home')
 	})
 })
@@ -705,7 +738,7 @@ app.post('/login', async (req, res) => {
 						req.session.class = classKey
 					} else {
 						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API, JSON.parse(userData.custom_polls))
 						req.session.class = 'noClass'
 					}
 					// Add a cookie to transfer user credentials across site
@@ -763,7 +796,7 @@ app.post('/login', async (req, res) => {
 						console.error(err)
 					} else {
 						// Add user to session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API, JSON.parse(userData.custom_polls))
 
 						// Add the user to the session in order to transfer data between each page
 						req.session.username = userData.username
@@ -1136,6 +1169,44 @@ io.on('connection', (socket) => {
 		)
 	}
 
+	function customPollUpdate(username) {
+		let userSession = userSockets[username].request.session
+
+		let userCustomPolls = cD[userSession.class].students[userSession.username].customPolls
+		let classroomCustomPolls = cD[userSession.class].customPolls
+		let publicCustomPolls = []
+		let customPollIds = userCustomPolls.concat(classroomCustomPolls)
+
+		db.all(
+			`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1`,
+			customPollIds,
+			(error, customPolls) => {
+				for (let customPoll of customPolls) {
+					customPoll.answers = JSON.parse(customPoll.answers)
+				}
+
+				customPolls = customPolls.reduce((newObject, customPoll) => {
+					newObject[customPoll.id] = customPoll
+					return newObject
+				}, {})
+
+				for (let customPoll of Object.values(customPolls)) {
+					if (customPoll.public) {
+						publicCustomPolls.push(customPoll.id)
+					}
+				}
+
+				io.to(userSession.username).emit(
+					'customPollUpdate',
+					publicCustomPolls,
+					classroomCustomPolls,
+					userCustomPolls,
+					customPolls
+				)
+			}
+		)
+	}
+
 	function deleteStudent(username, classCode) {
 		userSockets[username].leave(cD[classCode].className)
 		cD.noClass.students[username] = cD[classCode].students[username]
@@ -1324,6 +1395,10 @@ io.on('connection', (socket) => {
 		vbUpdate()
 	})
 
+	socket.on('customPollUpdate', () => {
+		customPollUpdate(socket.request.session.username)
+	})
+
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
 		cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
@@ -1380,10 +1455,10 @@ io.on('connection', (socket) => {
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
-			(err, classRoom) => {
+			(err, classroom) => {
 				if (err) console.error(err);
-				else if (classRoom) {
-					endClass(classRoom.key)
+				else if (classroom) {
+					endClass(classroom.key)
 				}
 			}
 		)
@@ -1403,10 +1478,10 @@ io.on('connection', (socket) => {
 				db.get(
 					'SELECT * FROM classroom WHERE owner=? AND key=?',
 					[username, classCode],
-					(err, classRoom) => {
+					(err, classroom) => {
 						if (err) console.error(err);
-						else if (classRoom) {
-							endClass(classRoom.key)
+						else if (classroom) {
+							endClass(classroom.key)
 						}
 					}
 				)
@@ -1420,27 +1495,27 @@ io.on('connection', (socket) => {
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
 			[username, classCode],
-			(err, classRoom) => {
+			(err, classroom) => {
 				if (err) console.error(err);
-				else if (classRoom) {
-					endClass(classRoom.key)
+				else if (classroom) {
+					endClass(classroom.key)
 				}
 			}
 		)
 	})
 
 	socket.on('deleteClass', (className, deletePolls) => {
-		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classRoom) => {
+		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
 			if (err) console.error(err);
-			if (classRoom) {
-				if (cD[classRoom.key]) {
-					endClass(classRoom.key)
+			if (classroom) {
+				if (cD[classroom.key]) {
+					endClass(classroom.key)
 				}
-				db.run('DELETE FROM classroom WHERE id = ?', classRoom.id)
-				db.run('DELETE FROM classusers WHERE classuid = ?', classRoom.id)
+				db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
+				db.run('DELETE FROM classusers WHERE classuid = ?', classroom.id)
 			}
 			if (deletePolls)
-				db.run('DELETE FROM poll_history WHERE class = ?', classRoom.id)
+				db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
 		})
 	})
 

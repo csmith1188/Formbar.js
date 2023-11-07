@@ -10,29 +10,27 @@
 			<script src="/js/iro.js"></script>
 			<script src="/js/floating-ui-core.js"></script>
 			<script src="/js/floating-ui-dom.js"></script>
+			<script src="/js/tabs.js" defer></script>
 		</head>
 
-		<body onload="load(<%-pollStatus%>)">
+		<body>
 			<%- include('../partials/formbar_header') %>
 				<header id="quickMenu">
-					<button id="menuUsers" class="quickButton pressed" onclick="toUsers()">Users</button>
-					<button id="menuPolls" class="quickButton" onclick="toPolls()">Poll </button>
-					<button id="menuLesson" class="quickButton" onclick="toLesson()">Make a Lesson</button>
-					<button id="menuPlugins" class="quickButton" onclick="toPlugins()">Plugins</button>
+					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
+					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
+					<button id="pluginsMenu" class="quickButton tab" data-tab-group="mainTabs">Plugins</button>
 				</header>
 
 				<p id="classCode">Class Code:</p>
-				<div id="permChanges">
-					<div id="permChangeKey">
-
-					</div>
-					<div id="permFilterBoxes">
+				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+					<div id="userFilterBoxes">
 						Filter:
 						<button type="button" id="help" class="filter">Help tickets</button>
 						<button type="button" id="break" class="filter">Break</button>
 						<button type="button" id="polls" class="filter">Polls</button>
 					</div>
-					<div id="permSortBoxes">
+					<div id="userSortBoxes">
 						Sort:
 						<button type="button" id="name" class="sort">Name</button>
 						<button type="button" id="polls" class="sort">Polls</button>
@@ -45,52 +43,61 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass');location.reload()})()">
 						End Class
 					</button>
-					<div id="permChangeList">
-
+					<div id="users">
 					</div>
-
 				</div>
-				<div id="pollChanges">
-					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
-					<div id="startPollForm">
-						<label for="resNumber">How many possible responses?</label>
-						<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
-						<br>
-						<label for="resTextBox">Would like to accept text responses?</label>
-						<input type="checkbox" id="resTextBox">
-						<br>
-						<label for="pollBox">Prompt for the poll?</label>
-						<input type="text" id="pollBox" placeholder="Prompt (optional)">
-						<br>
-						<label for="changeNames">Customize the answer options?</label>
-						<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()" class="quickButton">
-						<br>
-						<button id="resetAnswerNames" class="quickButton">Reset Names</button>
-						<button id="resetColors" class="quickButton">Reset Colors</button>
-						<div id="responses">
+				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div id="customPollButtons">
+						<h2 class="headerText">Custom Polls:</h2>
+						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public Polls</button>
+						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class Polls</button>
+						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your Polls</button>
+					</div>
+					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
+						<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
+						<div id="startPollForm">
+							<label for="resNumber">How many possible responses?</label>
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+							<br>
+							<label for="resTextBox">Would like to accept text responses?</label>
+							<input type="checkbox" id="resTextBox">
+							<br>
+							<label for="pollBox">Prompt for the poll?</label>
+							<input type="text" id="pollBox" placeholder="Prompt (optional)">
+							<br>
+							<label for="changeNames">Customize the answer options?</label>
+							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
+								class="quickButton">
+							<br>
+							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+							<button id="resetColors" class="quickButton">Reset Colors</button>
+							<div id="responses"></div>
+							<br>
+							<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
+							<input type="checkbox" id="blind">
+							<br>
+							<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')"
+								class="quickButton">
+							<br>
 						</div>
+						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 						<br>
-						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
-						<input type="checkbox" id="blind">
 						<br>
-						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')" class="quickButton">
-						<br>
-						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
-							<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
+						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
 					</div>
-					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-					<br>
-					<br>
-					<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-						Polls</button>
+					<div id="publicPolls">
+					</div>
+					<div id="classPolls">
+					</div>
+					<div id="userPolls">
+					</div>
+					<div id="previousPolls" class="tabContent" data-tab-group="polls">
+						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to polls</button>
+						<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
+						<div id="previousPollButtons"></div>
+					</div>
 				</div>
-				<div id="previousPolls">
-					<button id="toPolls" type="button" onclick="toPolls()">Return to polls</button>
-					<button id="toPollHistory" type="button" onclick="displayPoll()">Return To
-						Selection</button>
-					<div id="previousPollButtons"></div>
-				</div>
-				<div id="lessonMaker">
+				<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
 					<form method="post" enctype="multipart/form-data">
 						<input name="spreadsheet" type="file">
 						<input type="submit" class="quickButton">
@@ -116,32 +123,20 @@
 						</label>
 					</form>
 				</div>
-				<div id="plugins">
+				<div id="pluginsMenu" class="tabContent" data-tab-group="mainTabs">
 				</div>
 				<%- include('../partials/body_content') %>
 		</body>
 
 		</html>
 		<script>
-			// 0 = off
-			// 1 = only
-			// 2 = except
-			let filter = {
-				help: 0,
-				break: 0,
-				polls: 0
-			}
-			// 0 = off
-			// 1 = descending
-			// 2 = ascending
-			let sort = {
-				name: 0,
-				polls: 0,
-				helpTime: 0,
-				permissions: 1
-			}
+			let currentUser = []
+			let userCustomPolls = []
+			let classroomCustomPolls = []
+			let publicCustomPolls = []
+			let customPolls = []
 
-			let filterState = {
+			const FilterState = {
 				help: [
 					'Help tickets',
 					'Help ticket in',
@@ -159,7 +154,7 @@
 				]
 			}
 
-			let sortState = {
+			const SortState = {
 				name: [
 					'Name',
 					'Name 🡇',
@@ -181,22 +176,36 @@
 				]
 			}
 
+			// 0 = off
+			// 1 = only
+			// 2 = except
+			let filter = {
+				help: 0,
+				break: 0,
+				polls: 0
+			}
+			// 0 = off
+			// 1 = descending
+			// 2 = ascending
+			let sort = {
+				name: 0,
+				polls: 0,
+				helpTime: 0,
+				permissions: 1
+			}
+
 			let letterString = "abcdefghijklmnopqrstuvwxyz"
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
 
-			var permChanges = document.getElementById('permChanges')
-			var permChangeKey = document.getElementById('permChangeKey')
-			var permChangeList = document.getElementById('permChangeList')
-			var pollChanges = document.getElementById('pollChanges')
+			var usersDiv = document.getElementById('users')
 			var startPoll = document.getElementById('startPoll')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
 			var endPoll = document.getElementById('endPoll')
 			var startPollForm = document.getElementById('startPollForm')
 			var pollPrompt = document.getElementById('pollBox')
-			var permFilterBoxes = document.getElementById('permFilterBoxes')
 			var pollFilter = document.getElementById('pollFilter')
 			var missingPollFilter = document.getElementById('missingPollFilter')
 			var lettFilter = document.getElementById('lettFilter')
@@ -207,8 +216,7 @@
 			var responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			var lessonMaker = document.getElementById('lessonMaker')
-			var pluginsDiv = document.getElementById('plugins')
+			var pluginsDiv = document.querySelector('div#pluginsMenu')
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
 			var toPollsButton = document.getElementById('toPolls')
@@ -216,10 +224,10 @@
 			var classCode = document.getElementById('classCode')
 			var menuUsers = document.getElementById('menuUsers')
 			var menuPolls = document.getElementById('menuPolls')
+			var mainPolls = document.getElementById('menuPolls')
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
-
-			let currentUser = JSON.parse('<%- currentUser %>')
+			let customPollsDiv = document.getElementById('customPolls')
 
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
@@ -303,87 +311,10 @@
 				return colors;
 			}
 
-			// Function runs on page load
-			// Checks if poll is active or not and displays correct output
-			function load(pollStatus) {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'block'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-				if (pollStatus) {
-					startPollForm.style.display = 'none'
-					endPoll.style.display = 'block'
-					lessonMaker.style.display = 'none'
-					previousPolls.style.display = 'none'
-				} else {
-					startPollForm.style.display = 'block'
-					endPoll.style.display = 'none'
-					previousPolls.style.display = 'none'
-					lessonMaker.style.display = 'none'
-				}
-			}
-			// Changes to the create a poll section of the page
-			function toPolls() {
-				pollChanges.style.display = 'block'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.add("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-			// Changes to the permission change section of the page
-			function toUsers() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'block'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.add("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-
-			function toLesson() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'block'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.add("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-
-			function toPlugins() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'block'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.add("pressed");
-			}
-
 			//displays the previos polls page
 			function displayPreviousPolls() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'block'
-				pluginsDiv.style.display = 'none'
-				displayPoll()
+				toPollHistoryButton.style.display = 'none'
+				changeTab('previousPolls', 'polls')
 			}
 
 			//makes the previous polls page
@@ -477,14 +408,12 @@
 					responsesDiv.style.display = 'none'
 					startPollForm.style.display = 'none'
 					endPoll.style.display = 'block'
-					permChanges.style.display = 'none'
 
 					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
 				} else if (pollType == 'TUTD') {
 					responsesDiv.style.display = 'none';
 					startPollForm.style.display = 'none';
 					endPoll.style.display = 'block';
-					permChanges.style.display = 'none';
 					socket.emit('startPoll', 3, false, "Thumbs?", [
 						{ answer: "Up", weight: 0.9, color: '#00FF00' },
 						{ answer: "Down", weight: 1.1, color: '#FF0000' },
@@ -895,7 +824,7 @@
 
 			// filters and sorts students
 			function filterSortChange() {
-				permChangeList.innerHTML = ''
+				usersDiv.innerHTML = ''
 				let newStudent = ''
 				let newRoom = JSON.parse(JSON.stringify(allRoom))
 
@@ -1015,7 +944,7 @@
 				}
 
 				for (const student of Object.keys(newRoom.students)) {
-					permChangeList.appendChild(buildStudent(newRoom, student))
+					usersDiv.appendChild(buildStudent(newRoom, student))
 				}
 			}
 
@@ -1035,7 +964,7 @@
 					}
 					if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
 					else filterElement.classList.add('pressed')
-					filterElement.innerText = filterState[filterElement.id][filter[filterElement.id]]
+					filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
 					filterSortChange()
 				}
 			}
@@ -1049,7 +978,7 @@
 							let otherSortElements = document.querySelector('.sort#' + sortType)
 							if (otherSortElements) {
 								otherSortElements.classList.remove('pressed')
-								otherSortElements.innerText = sortState[sortType][sort[sortType]]
+								otherSortElements.innerText = SortState[sortType][sort[sortType]]
 							}
 						}
 					}
@@ -1062,7 +991,7 @@
 					}
 					if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
 					else sortElement.classList.add('pressed')
-					sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
+					sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
 					filterSortChange()
 				}
 			}
@@ -1212,6 +1141,19 @@
 				}
 				addPluginForm.append(submitPlugin)
 				pluginsDiv.append(addPluginForm)
+			})
+
+			socket.emit('customPollUpdate')
+			socket.on('customPollUpdate', (
+				newPublicCustomPolls,
+				newClassroomCustomPolls,
+				newUserCustomPolls,
+				newCustomPolls
+			) => {
+				publicCustomPolls = newPublicCustomPolls
+				classroomCustomPolls = newClassroomCustomPolls
+				userCustomPolls = newUserCustomPolls
+				customPolls = newCustomPolls
 			})
 		</script>
 		<%- include('../partials/footer_content') %>
