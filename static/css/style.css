@@ -531,6 +531,15 @@ input[type="radio"]:focus {
 	height: fit-content;
 }
 
+.customPoll{
+	display: grid;
+	min-width: 30%;
+	width: fit-content;
+	margin: auto;
+	gap: 1.5rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 #plugins input,
 #plugins button {
 	margin: 4px;

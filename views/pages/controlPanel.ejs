@@ -85,11 +85,11 @@
 						<br>
 						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
 					</div>
-					<div id="publicPolls">
+					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
-					<div id="classPolls">
+					<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
-					<div id="userPolls">
+					<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
 					<div id="previousPolls" class="tabContent" data-tab-group="polls">
 						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to polls</button>
@@ -227,7 +227,6 @@
 			var mainPolls = document.getElementById('menuPolls')
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
-			let customPollsDiv = document.getElementById('customPolls')
 
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
@@ -1143,6 +1142,25 @@
 				pluginsDiv.append(addPluginForm)
 			})
 
+			function fillPolls(customPollsList, customPollsDiv) {
+				for (let customPollIndex of customPollsList) {
+					let customPoll = customPolls[customPollIndex]
+
+					let customPollDiv = document.createElement('div')
+					customPollDiv.className = 'customPoll'
+					let customPollName = document.createElement('p')
+					customPollName.innerText = customPoll.name
+					customPollDiv.appendChild(customPollName)
+					let edit = document.createElement('button')
+					edit.innerText = 'Edit'
+					customPollDiv.appendChild(edit)
+					let start = document.createElement('button')
+					start.innerText = 'Start'
+					customPollDiv.appendChild(start)
+					customPollsDiv.appendChild(customPollDiv)
+				}
+			}
+
 			socket.emit('customPollUpdate')
 			socket.on('customPollUpdate', (
 				newPublicCustomPolls,
@@ -1154,6 +1172,14 @@
 				classroomCustomPolls = newClassroomCustomPolls
 				userCustomPolls = newUserCustomPolls
 				customPolls = newCustomPolls
+
+				let publicPollsDiv = document.querySelector('div#publicPolls')
+				let classPollsDiv = document.querySelector('div#classPolls')
+				let userPollsDiv = document.querySelector('div#userPolls')
+
+				fillPolls(publicCustomPolls, publicPollsDiv)
+				fillPolls(classroomCustomPolls, classPollsDiv)
+				fillPolls(userCustomPolls, userPollsDiv)
 			})
 		</script>
 		<%- include('../partials/footer_content') %>
