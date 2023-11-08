@@ -277,7 +277,7 @@ function joinClass(userName, code) {
 								console.log(classUser);
 								if (!classUser) {
 									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-										[id.id, uid.id, GUEST_PERMISSIONS, 0], (err) => {
+										[classId.id, uid.id, GUEST_PERMISSIONS, 0], (err) => {
 											if (err) {
 												console.error(err)
 												return
