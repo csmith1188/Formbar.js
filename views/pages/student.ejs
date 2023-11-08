@@ -4,7 +4,7 @@
 	<%- include('../partials/sockets') %>
 		<%- include('../partials/formbar_header') %>
 
-			<body onload="pageload('<%-mode%>', <%-pollStatus%>, <%-textResponse%>, <%- quiz %>)">
+			<body>
 				<div id="lessonContent">
 					<%if(lesson.content !=undefined){%>
 						<h3 id="headerText">
@@ -32,20 +32,16 @@
 				</div>
 				<div id="pollContent">
 					<h1 id="noPoll" class="textColorContent">No active poll</h1>
-
 					<div id="poll">
 						<u>
-							<h2 id="headerText">
-								<%-pollPrompt%>
+							<h2 id="pollPrompt">
+
 							</h2>
 						</u>
-						<form id="pollForm">
-
-						</form>
+						<form id="pollForm"></form>
 						<br>
 						<button onclick="submitPoll()" class="quickButton">Submit</button>
 					</div>
-
 				</div>
 				<div id="quizContent">
 					<form id="quizForm" method="post" action="/student">
@@ -61,29 +57,33 @@
 				var pollContent = document.getElementById('pollContent')
 				var quizContent = document.getElementById('quizContent')
 				var lessonContent = document.getElementById('lessonContent')
-				var poll = document.getElementById('poll')
 				var noPoll = document.getElementById('noPoll')
-				var poll = document.getElementById('poll')
+				var pollDiv = document.getElementById('poll')
+				let pollPromptDisplay = document.getElementById('pollPrompt')
+
 				var oldLettRes = '<%- myRes %>'
 				var oldTextRes = '<%- myTextRes %>'
 
-				function pageload(mode, pollStatus, pollTextRes, quiz) {
+				let poll = {}
+				let mode = ''
+				let quiz = {}
+
+				function updatePage() {
 					if (mode == 'poll') {
 						pollContent.style.display = 'block'
 						quizContent.style.display = 'none'
 						lessonContent.style.display = 'none'
-						var pollResponses = '<%- pollResponses %>';
-						pollResponses = JSON.parse(pollResponses)
-						var textResponse = '<%- textResponse %>'
-						textResponse = textResponse.replace(/&#34;/g, '"').replace(/&#60;/g, ',')
-						textResponse = JSON.parse(textResponse)
-						if (pollStatus) {
-							noPoll.style.display = 'none'
-							poll.style.display = 'block'
 
-							if (pollForm.innerText) return
+						if (poll.status) {
+							noPoll.style.display = 'none'
+							pollDiv.style.display = 'block'
+
+							pollForm.innerHTML = ''
+
+							pollPromptDisplay.innerText = poll.prompt
+
 							// Creates all selectable answers and displays them to the user
-							for (let response of Object.values(pollResponses)) {
+							for (let response of Object.values(poll.responses)) {
 								pollForm.innerHTML += `
 										<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
 											<input type="radio" name="poll" id="${response.answer}" value="${response.answer}">
@@ -97,18 +97,17 @@
 											remove
 										</label>
 									`
-							if (textResponse) {
+							if (poll.textRes) {
 								pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
 							}
 						} else {
 							noPoll.style.display = 'block'
-							poll.style.display = 'none'
+							pollDiv.style.display = 'none'
 						}
 
 						if (oldLettRes) {
 							document.getElementById(oldLettRes).checked = true
 						}
-
 					} else if (mode == 'quiz') {
 						pollContent.style.display = 'none'
 						quizContent.style.display = 'block'
@@ -130,12 +129,7 @@
 						lessonContent.style.display = 'block'
 					}
 				}
-				/* _____   _____   _       _       _____
-				|  _  \ /  _  \ | |     | |     /  ___/
-				| |_| | | | | | | |     | |     | |___
-				|  ___/ | | | | | |     | |     \___  \
-				| |     | |_| | | |___  | |___   ___| |
-				|_|     \_____/ |_____| |_____| /_____/ */
+
 				// Submits the users answer to the poll
 				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
@@ -161,8 +155,9 @@
 					socket.emit('vbUpdate')
 					socket.emit('cpUpdate')
 					socket.emit('sfxPlay', 'sfx_up01')
+
 					let alertText = ''
-					setTimeout(function () {
+					setTimeout(() => {
 						if (lettRes)
 							alertText += 'Response submitted: ' + lettRes
 						else if (oldLettRes)
@@ -183,31 +178,59 @@
 					}, 100)
 				}
 
+				function isObjectEqual(objectA, objectB) {
+					for (let property in objectA) {
+						switch (typeof (objectA[property])) {
+							case 'object':
+								if (!isObjectEqual(objectA[property], objectB[property])) {
+									return false;
+								}
+								break;
+							case 'function':
+								if (typeof (objectB[property]) === 'undefined' ||
+									(property !== 'isEqual' && objectA[property].toString() !== objectB[property].toString())) {
+									return false;
+								}
+								break;
+							default:
+								if (objectA[property] !== objectB[property]) {
+									return false;
+								}
+						}
+					}
 
+					for (let property in objectB) {
+						if (typeof (objectA[property]) === 'undefined') {
+							return false;
+						}
+					}
 
+					return true;
+				}
 
-				// Function will run on page load
-				// Checks if poll is active
-				// Creates any number of responses that were defined by the teacher
-				// Checks if teacher wanted text responses or not
+				socket.emit('pollUpdate')
+				socket.on('pollUpdate', (newPoll) => {
+					if (isObjectEqual(poll, newPoll)) return
 
+					poll = newPoll
+					updatePage()
+				})
 
-				/* _____     _   _   _   ______  ______  _____   _____
-				/  _  \   | | | | | | |___  / |___  / | ____| /  ___/
-				| | | |   | | | | | |    / /     / /  | |__   | |___
-				| | | |   | | | | | |   / /     / /   |  __|  \___  \
-				| |_| |_  | |_| | | |  / /__   / /__  | |___   ___| |
-				\_______| \_____/ |_| /_____| /_____| |_____| /_____/  */
+				socket.emit('modeUpdate')
+				socket.on('modeUpdate', (newMode) => {
+					if (mode == newMode) return
 
+					mode = newMode
+					updatePage()
+				})
 
-				/* _       _____   _____   _____   _____   __   _   _____
-				| |     | ____| /  ___/ /  ___/ /  _  \ |  \ | | /  ___/
-				| |     | |__   | |___  | |___  | | | | |   \| | | |___
-				| |     |  __|  \___  \ \___  \ | | | | | |\   | \___  \
-				| |___  | |___   ___| |  ___| | | |_| | | | \  |  ___| |
-				|_____| |_____| /_____/ /_____/ \_____/ |_|  \_| /_____/  */
+				socket.emit('quizUpdate')
+				socket.on('quizUpdate', (newQuiz) => {
+					if (isObjectEqual(quiz, newQuiz)) return
 
-
+					quiz = newQuiz
+					updatePage()
+				})
 			</script>
 
 </html>
