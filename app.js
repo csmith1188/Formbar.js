@@ -134,7 +134,7 @@ class Classroom {
 		this.activeLesson = false
 		this.steps
 		this.currentStep = 0
-		this.quizObj = false
+		this.quiz = false
 		this.mode = 'poll'
 	}
 }
@@ -926,21 +926,21 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 	If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
 	*/
 	if (req.query.question == 'random') {
-		let random = Math.floor(Math.random() * cD[req.session.class].quizObj.questions.length)
+		let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
 		res.render('pages/queryquiz', {
-			quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
+			quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
 			title: "Quiz"
 		})
-		if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+		if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
 			res.render('pages/queryquiz', {
-				quiz: JSON.stringify(cD[req.session.class].quizObj.questions[random]),
+				quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
 				title: "Quiz"
 			})
 		}
 	} else if (isNaN(req.query.question) == false) {
-		if (cD[req.session.class].quizObj.questions[req.query.question] != undefined) {
+		if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
 			res.render('pages/queryquiz', {
-				quiz: JSON.stringify(cD[req.session.class].quizObj.questions[req.query.question]),
+				quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
 				title: "Quiz"
 			})
 		} else {
@@ -953,15 +953,9 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/student', {
 			title: 'Student',
 			user: JSON.stringify(user),
-			pollStatus: cD[req.session.class].poll.status,
-			pollResponses: JSON.stringify(cD[req.session.class].poll.responses),
-			textResponse: JSON.stringify(cD[req.session.class].poll.textRes),
 			myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
 			myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
-			pollPrompt: cD[req.session.class].poll.prompt,
-			quiz: JSON.stringify(cD[req.session.class].quizObj),
-			lesson: cD[req.session.class].lesson,
-			mode: cD[req.session.class].mode
+			lesson: cD[req.session.class].lesson
 		})
 	}
 })
@@ -981,18 +975,18 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 	if (req.body.question) {
 		let results = req.body.question
 		let totalScore = 0
-		for (let i = 0; i < cD[req.session.class].quizObj.questions.length; i++) {
-			if (results[i] == cD[req.session.class].quizObj.questions[i][1]) {
-				totalScore += cD[req.session.class].quizObj.pointsPerQuestion
+		for (let i = 0; i < cD[req.session.class].quiz.questions.length; i++) {
+			if (results[i] == cD[req.session.class].quiz.questions[i][1]) {
+				totalScore += cD[req.session.class].quiz.pointsPerQuestion
 			} else {
 				continue
 			}
 		}
-		cD[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quizObj.totalScore
+		cD[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quiz.totalScore
 
 		res.render('pages/results', {
 			totalScore: Math.floor(totalScore),
-			maxScore: cD[req.session.class].quizObj.totalScore,
+			maxScore: cD[req.session.class].quiz.totalScore,
 			title: "Results"
 		})
 	}
@@ -1132,6 +1126,22 @@ io.on('connection', (socket) => {
 			weight: classData.poll.weight,
 			blind: classData.poll.blind
 		})
+	}
+
+	function pollUpdate() {
+		io.to(socket.request.session.class).emit('pollUpdate', cD[socket.request.session.class].poll)
+	}
+
+	function modeUpdate() {
+		io.to(socket.request.session.class).emit('modeUpdate', cD[socket.request.session.class].mode)
+	}
+
+	function quizUpdate() {
+		io.to(socket.request.session.class).emit('quizUpdate', cD[socket.request.session.class].quiz)
+	}
+
+	function lessonUpdate() {
+		io.to(socket.request.session.class).emit('lessonUpdate', cD[socket.request.session.class].lesson)
 	}
 
 	function pluginUpdate() {
@@ -1299,7 +1309,7 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].students[key].pollRes.textRes = ""
 		}
 
-		socket.broadcast.to(socket.request.session.class).emit('reload')
+		pollUpdate()
 		vbUpdate()
 	})
 
@@ -1331,8 +1341,24 @@ io.on('connection', (socket) => {
 		cD[socket.request.session.class].poll.prompt = ''
 		cD[socket.request.session.class].poll.status = false
 
-		socket.broadcast.to(socket.request.session.class).emit('reload')
+		pollUpdate()
 		vbUpdate()
+	})
+
+	socket.on('pollUpdate', () => {
+		pollUpdate()
+	})
+
+	socket.on('modeUpdate', () => {
+		modeUpdate()
+	})
+
+	socket.on('quizUpdate', () => {
+		quizUpdate()
+	})
+
+	socket.on('lessonUpdate', () => {
+		lessonUpdate()
 	})
 
 	// Sends poll and student response data to client side virtual bar
@@ -1543,7 +1569,7 @@ io.on('connection', (socket) => {
 				questions = cD[socket.request.session.class].steps[index].questions
 				let quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
-				cD[socket.request.session.class].quizObj = quiz
+				cD[socket.request.session.class].quiz = quiz
 				// Creates lesson based on step data
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				cD[socket.request.session.class].mode = 'lesson'
@@ -1563,7 +1589,7 @@ io.on('connection', (socket) => {
 				questions = cD[socket.request.session.class].steps[index].questions
 				quiz = new Quiz(questions.length, 100)
 				quiz.questions = questions
-				cD[socket.request.session.class].quizObj = quiz
+				cD[socket.request.session.class].quiz = quiz
 				// Check this later, there's already a lesson if statement
 			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
 				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
@@ -1576,6 +1602,11 @@ io.on('connection', (socket) => {
 					}
 				)
 			}
+
+			pollUpdate()
+			modeUpdate()
+			quizUpdate()
+			lessonUpdate()
 		} else {
 			cD[socket.request.session.class].currentStep = 0
 		}
@@ -1600,7 +1631,7 @@ io.on('connection', (socket) => {
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
 		cD[socket.request.session.class].mode = mode
-		socket.broadcast.to(socket.request.session.class).emit('reload')
+		modeUpdate()
 	})
 
 	socket.on('pluginUpdate', () => {
