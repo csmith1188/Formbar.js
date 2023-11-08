@@ -547,6 +547,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 	let submittionType = req.body.submittionType
 	let className = req.body.name
+	let classId = req.body.id
 
 	function makeClass(id, key) {
 		// Get the teachers session data ready to transport into new class
@@ -574,11 +575,11 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			key += letter
 		}
 		// Add classroom to the database
-		db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.username, key], (err) => {
+		db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
 			if (err) {
 				console.error(err)
 			} else {
-				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
+				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
 					if (err) {
 						console.error(err)
 					}
@@ -587,7 +588,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			}
 		})
 	} else {
-		db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.username], (err, classroom) => {
+		db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 			if (err) {
 				console.error(err)
 			} else if (classroom)
@@ -724,6 +725,7 @@ app.post('/login', async (req, res) => {
 						req.session.class = 'noClass'
 					}
 					// Add a cookie to transfer user credentials across site
+					req.session.userId = userData.id
 					req.session.username = userData.username
 					res.redirect('/')
 				} else {
@@ -782,6 +784,7 @@ app.post('/login', async (req, res) => {
 						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
 
 						// Add the user to the session in order to transfer data between each page
+						req.session.userId = userData.id
 						req.session.username = userData.username
 						req.session.class = 'noClass'
 						res.redirect('/')
@@ -800,18 +803,11 @@ app.post('/login', async (req, res) => {
 // The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
-	var ownerClasses = []
 	// Finds all classes the teacher is the owner of
-	db.all('SELECT name FROM classroom WHERE owner=?',
-		[req.session.username], (err, rows) => {
-			rows.forEach(row => {
-				ownerClasses.push(row.name)
-			})
-			res.render('pages/manageClass', {
-				title: 'Create Class',
-				ownerClasses: ownerClasses
-			})
-		})
+	res.render('pages/manageClass', {
+		title: 'Create Class',
+		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+	})
 })
 
 // N
@@ -1196,6 +1192,16 @@ io.on('connection', (socket) => {
 		socket.broadcast.to(socket.request.session.class).emit('classEnded')
 	}
 
+	function getOwnedClasses(username) {
+		db.all('SELECT name, id FROM classroom WHERE owner=?',
+			[userSockets[username].request.session.userId], (err, ownedClasses) => {
+				if (err) {
+					console.error(err);
+				} else io.to(username).emit('getOwnedClasses', ownedClasses)
+			}
+		)
+	}
+
 	//rate limiter
 	socket.use((packet, next) => {
 		const user = socket.request.session.username
@@ -1248,6 +1254,8 @@ io.on('connection', (socket) => {
 				};
 			}
 		}
+		cpUpdate()
+		vbUpdate()
 	})
 
 	// Changes Permission of user. Takes which user and the new permission level
@@ -1428,6 +1436,7 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('leaveClass', () => {
+		const userId = socket.request.session.userId
 		const username = socket.request.session.username
 		const classCode = socket.request.session.class
 		deleteStudent(username, classCode)
@@ -1435,7 +1444,7 @@ io.on('connection', (socket) => {
 		vbUpdate(classCode)
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
-			[username, classCode],
+			[userId, classCode],
 			(err, classroom) => {
 				if (err) {
 					console.error(err)
@@ -1449,19 +1458,21 @@ io.on('connection', (socket) => {
 
 	socket.on('logout', () => {
 		const username = socket.request.session.username
+		const userId = socket.request.session.userId
 		const classCode = socket.request.session.class
 		const className = cD[classCode].className
 		socket.request.session.destroy((err) => {
 			if (err) {
 				console.error(err)
 			} else {
+				delete userSockets[username]
 				delete cD[classCode].students[username]
 				socket.leave(className)
 				cpUpdate(classCode)
 				vbUpdate(classCode)
 				db.get(
 					'SELECT * FROM classroom WHERE owner=? AND key=?',
-					[username, classCode],
+					[userId, classCode],
 					(err, classroom) => {
 						if (err) {
 							console.error(err)
@@ -1475,11 +1486,11 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('endClass', () => {
-		const username = socket.request.session.username
+		const userId = socket.request.session.userId
 		const classCode = socket.request.session.class
 		db.get(
 			'SELECT * FROM classroom WHERE owner=? AND key=?',
-			[username, classCode],
+			[userId, classCode],
 			(err, classroom) => {
 				if (err) {
 					console.error(err);
@@ -1490,8 +1501,8 @@ io.on('connection', (socket) => {
 		)
 	})
 
-	socket.on('deleteClass', (className, deletePolls) => {
-		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
+	socket.on('deleteClass', (classId) => {
+		db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
 			if (err) {
 				console.error(err)
 			} else if (classroom) {
@@ -1500,9 +1511,9 @@ io.on('connection', (socket) => {
 				}
 				db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
 				db.run('DELETE FROM classusers WHERE classuid = ?', classroom.id)
-			}
-			if (deletePolls)
 				db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
+			}
+			getOwnedClasses(socket.request.session.username)
 		})
 	})
 
@@ -1705,6 +1716,10 @@ io.on('connection', (socket) => {
 			[id]
 		)
 		pluginUpdate()
+	})
+
+	socket.on('getOwnedClasses', (username) => {
+		getOwnedClasses(username)
 	})
 
 	// sends the class code of the class a user is in

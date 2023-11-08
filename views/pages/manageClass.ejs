@@ -3,14 +3,10 @@
 
         <body id="colorContent">
             <div id="content" class="contentBox">
-                <form action="createClass" method="post" id="selectClass" class="hidden">
+                <form action="createClass" method="post" id="selectClassForm" class="hidden">
                     <h2 class="headerText">Select a class</h2>
-                    <select id="startClass" name="name">
-                        <% ownerClasses.forEach(rooms=> { %>
-                            <option value="<%- rooms %>">
-                                <%- rooms %>
-                            </option>
-                            <% }) %>
+                    <select id="startClassSelect" name="id">
+
                     </select>
                     <input type="text" name="submittionType" value="select" hidden>
                     <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;">
@@ -22,32 +18,51 @@
                     <input type="text" name="submittionType" value="create" hidden>
                     <input type="submit" id="submitButton" class="quickButton" value="Create" onsubmit="return false;">
                 </form>
-                <div id="deleteClass" class="hidden">
+                <div id="deleteClassForm" class="hidden">
                     <h2 class="headerText">Delete a class</h2>
-                    <select id="deleteClassSelect">
-                        <% ownerClasses.forEach(rooms=> { %>
-                            <option value="<%- rooms %>">
-                                <%- rooms %>
-                            </option>
-                            <% }) %>
-                    </select>
-                    <label for="deletePolls">Do you want to also delete it's polls</label>
-                    <input type="checkbox" id="deletePolls">
+                    <select id="deleteClassSelect"></select>
                     <button class="quickButton" onclick="deleteClass()">Delete</button>
                 </div>
             </div>
         </body>
 
         <script>
-            if ("<%- ownerClasses %>") {
-                document.getElementById("selectClass").classList.remove("hidden");
-                document.getElementById("deleteClass").classList.remove("hidden");
-            }
+            let currentUser = JSON.parse('<%- currentUser %>')
+
+            let startClassForm = document.getElementById("selectClassForm")
+            let deleteClassForm = document.getElementById("deleteClassForm")
+            let startClassSelect = document.getElementById("startClassSelect")
+            let deleteClassSelect = document.getElementById("deleteClassSelect")
 
             function deleteClass() {
-                let className = document.getElementById('deleteClassSelect').value
-                let deletePolls = document.getElementById('deletePolls').checked
+                console.log('hi');
+                let classId = deleteClassSelect.value
+                let className = deleteClassSelect.options[deleteClassSelect.selectedIndex].text
 
-                socket.emit('deleteClass', className, deletePolls)
+                console.log(className);
+                let confirmation = confirm(`are you sure you want to delete the class ${className}`)
+                if (!confirmation) return
+
+                socket.emit('deleteClass', classId)
             }
+
+            socket.emit('getOwnedClasses', currentUser.username)
+            socket.on('getOwnedClasses', (ownedClasses) => {
+                if (ownedClasses.length > 0) {
+                    startClassForm.classList.remove("hidden");
+                    deleteClassForm.classList.remove("hidden");
+                } else {
+                    startClassForm.classList.add("hidden");
+                    deleteClassForm.classList.add("hidden");
+                    return
+                }
+
+                for (let classroom of ownedClasses) {
+                    let option = document.createElement('option')
+                    option.value = classroom.id
+                    option.innerText = classroom.name
+                    startClassSelect.appendChild(option.cloneNode(true))
+                    deleteClassSelect.appendChild(option)
+                }
+            })
         </script>
