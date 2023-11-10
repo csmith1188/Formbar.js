@@ -152,8 +152,6 @@
 
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
-					socket.emit('vbUpdate')
-					socket.emit('cpUpdate')
 					socket.emit('sfxPlay', 'sfx_up01')
 
 					let alertText = ''
