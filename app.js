@@ -107,12 +107,20 @@ const PAGE_PERMISSIONS = {
 class Student {
 	// Needs username, id from the database, and if permissions established already pass the updated value
 	// These will need to be put into the constructor in order to allow the creation of the object
-	constructor(username, id, permissions = STUDENT_PERMISSIONS, API, customPolls = []) {
+	constructor(
+		username,
+		id,
+		permissions = STUDENT_PERMISSIONS,
+		API,
+		ownedPolls = [],
+		sharedPolls = []
+	) {
 		this.username = username
 		this.id = id
 		this.permissions = permissions
 		this.classPermissions = null
-		this.customPolls = customPolls
+		this.ownedPolls = ownedPolls || []
+		this.sharedPolls = sharedPolls || []
 		this.pollRes = {
 			buttonRes: '',
 			textRes: ''
@@ -134,7 +142,7 @@ class Classroom {
 		this.id = id
 		this.className = className
 		this.students = {}
-		this.customPolls = customPolls
+		this.customPolls = customPolls || []
 		this.poll = {
 			status: false,
 			responses: {},
@@ -276,7 +284,6 @@ function joinClass(userName, code) {
 									console.error(error)
 									return
 								}
-								console.log(classUser);
 								if (!classUser) {
 									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 										[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
@@ -402,44 +409,14 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		allStuds.push(val)
 	}
 
-	let userCustomPolls = cD[req.session.class].students[req.session.username].customPolls
-	let classroomCustomPolls = cD[req.session.class].customPolls
-	let publicCustomPolls = []
-	let customPollIds = userCustomPolls.concat(classroomCustomPolls)
-
-	db.all(
-		`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1`,
-		customPollIds,
-		(error, customPolls) => {
-			for (let customPoll of customPolls) {
-				customPoll.answers = JSON.parse(customPoll.answers)
-			}
-
-			customPolls = customPolls.reduce((newObject, customPoll) => {
-				newObject[customPoll.id] = customPoll
-				return newObject
-			}, {})
-
-			for (let customPoll of Object.values(customPolls)) {
-				if (customPoll.public) {
-					publicCustomPolls.push(customPoll.id)
-				}
-			}
-
-			/* Uses EJS to render the template and display the information for the class.
-			This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-			*/
-			res.render('pages/controlPanel', {
-				title: "Control Panel",
-				pollStatus: cD[req.session.class].poll.status,
-				currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
-				// userCustomPolls: JSON.stringify(userCustomPolls),
-				// classroomCustomPolls: JSON.stringify(classroomCustomPolls),
-				// publicCustomPolls: JSON.stringify(publicCustomPolls),
-				// customPolls: JSON.stringify(customPolls)
-			})
-		}
-	)
+	/* Uses EJS to render the template and display the information for the class.
+	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+	*/
+	res.render('pages/controlPanel', {
+		title: "Control Panel",
+		pollStatus: cD[req.session.class].poll.status,
+		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
+	})
 })
 
 // C
@@ -723,7 +700,7 @@ app.post('/login', async (req, res) => {
 	// Check whether user is logging in or signing up
 	if (user.loginType == "login") {
 		// Get the users login in data to verify password
-		db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
+		db.get('SELECT users.*, NULLIF(json_group_array(DISTINCT poll_shares.pollId), "[null]") as sharedPolls, NULLIF(json_group_array(DISTINCT custom_polls.id), "[null]") as ownedPolls FROM users LEFT JOIN poll_shares ON poll_shares.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
 			if (err) {
 				console.error(err)
 			}
@@ -753,7 +730,14 @@ app.post('/login', async (req, res) => {
 						req.session.class = classKey
 					} else {
 						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API, JSON.parse(userData.custom_polls))
+						cD.noClass.students[userData.username] = new Student(
+							userData.username,
+							userData.id,
+							userData.permissions,
+							userData.API,
+							JSON.parse(userData.ownedPolls),
+							JSON.parse(userData.sharedPolls)
+						)
 						req.session.class = 'noClass'
 					}
 					// Add a cookie to transfer user credentials across site
@@ -771,20 +755,26 @@ app.post('/login', async (req, res) => {
 	} else if (user.loginType == "new") {
 		let permissions = STUDENT_PERMISSIONS
 
-		db.all('SELECT API, secret FROM users', (error, users) => {
+		db.all('SELECT API, secret, username FROM users', (error, users) => {
 			if (error) {
 				console.error(error)
 			} else {
 				let existingAPIs = []
 				let existingSecrets = []
+				let existingUsernames = []
 				let newAPI
 				let newSecret
 
 				if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
-				for (let user of users) {
-					existingAPIs.push(user.API)
-					existingSecrets.push(user.secret)
+				for (let dbUser of users) {
+					existingAPIs.push(dbUser.API)
+					existingSecrets.push(dbUser.secret)
+
+					if (dbUser.username == user.username) {
+						res.redirect('/login')
+						return
+					}
 				}
 
 				do {
@@ -805,23 +795,30 @@ app.post('/login', async (req, res) => {
 					], (err) => {
 						if (err) {
 							console.error(err)
+							return
 						}
-					})
-				// Find the user in which was just created to get the id of the user
-				db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-					if (err) {
-						console.error(err)
-					} else {
-						// Add user to session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API, JSON.parse(userData.custom_polls))
+						// Find the user in which was just created to get the id of the user
+						db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+							if (err) {
+								console.error(err)
+							} else {
+								// Add user to session
+								cD.noClass.students[userData.username] = new Student(
+									userData.username,
+									userData.id,
+									userData.permissions,
+									userData.API
+								)
+								// Add the user to the session in order to transfer data between each page
+								req.session.userId = userData.id
+								req.session.username = userData.username
+								req.session.class = 'noClass'
+								res.redirect('/')
+							}
+						})
 
-						// Add the user to the session in order to transfer data between each page
-						req.session.userId = userData.id
-						req.session.username = userData.username
-						req.session.class = 'noClass'
-						res.redirect('/')
 					}
-				})
+				)
 			}
 		})
 	} else if (user.loginType == "guest") {
@@ -1201,14 +1198,19 @@ io.on('connection', (socket) => {
 	function customPollUpdate(username) {
 		let userSession = userSockets[username].request.session
 
-		let userCustomPolls = cD[userSession.class].students[userSession.username].customPolls
-		let classroomCustomPolls = cD[userSession.class].customPolls
+		let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
+		let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
+		let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
+		let classroomCustomPolls = structuredClone(cD[userSession.class].customPolls)
 		let publicCustomPolls = []
 		let customPollIds = userCustomPolls.concat(classroomCustomPolls)
 
 		db.all(
-			`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1`,
-			customPollIds,
+			`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ?`,
+			[
+				...customPollIds,
+				userSession.userId
+			],
 			(error, customPolls) => {
 				for (let customPoll of customPolls) {
 					customPoll.answers = JSON.parse(customPoll.answers)
@@ -1225,7 +1227,7 @@ io.on('connection', (socket) => {
 					}
 				}
 
-				io.to(userSession.username).emit(
+				io.to(username).emit(
 					'customPollUpdate',
 					publicCustomPolls,
 					classroomCustomPolls,
@@ -1363,7 +1365,7 @@ io.on('connection', (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
+	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
 		let generatedColors = generateColors(resNumber)
 
 		cD[socket.request.session.class].mode = 'poll'
@@ -1455,10 +1457,140 @@ io.on('connection', (socket) => {
 	// Sends poll and student response data to client side virtual bar
 	socket.on('vbUpdate', () => {
 		vbUpdate()
-	});
+	})
 
 	socket.on('customPollUpdate', () => {
 		customPollUpdate(socket.request.session.username)
+	})
+
+	socket.on('savePoll', (poll, id) => {
+		let userId = socket.request.session.userId
+
+		if (id) {
+			db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (error, poll) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+				if (userId != poll.owner) {
+					socket.emit('message', 'You do not have permission to edit this poll.')
+					return
+				}
+				db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ?`, [
+					poll.name,
+					poll.prompt,
+					JSON.stringify(poll.answers),
+					poll.textRes,
+					poll.blind,
+					poll.weight,
+					poll.public,
+					id
+				], (error) => {
+					if (error) {
+						console.error(error)
+						return
+					}
+					socket.emit('message', 'Poll saved successfully!')
+					customPollUpdate(socket.request.session.username)
+				})
+			})
+		} else {
+			db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
+				nextPollId = nextPollId.nextPollId + 1
+
+				db.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+					userId,
+					poll.name,
+					poll.prompt,
+					JSON.stringify(poll.answers),
+					poll.textRes,
+					poll.blind,
+					poll.weight,
+					poll.public
+				], (error) => {
+					if (error) {
+						console.error(error);
+						return
+					}
+					cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+					socket.emit('message', 'Poll saved successfully!')
+					customPollUpdate(socket.request.session.username)
+				})
+			})
+		}
+	})
+
+	socket.on('deletePoll', (pollId) => {
+		let userId = socket.request.session.userId
+
+		if (!pollId) {
+			socket.emit('message', 'No poll is selected.')
+			return
+		}
+
+		db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, (error, poll) => {
+			if (error) {
+				console.error(error)
+				return
+			}
+			if (userId != poll.owner) {
+				socket.emit('message', 'You do not have permission to delete this poll.')
+				return
+			}
+
+			db.run('DELETE FROM custom_polls WHERE id = ?', [pollId], (error) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+
+				for (let classroom of Object.values(cD)) {
+					for (let user of Object.values(classroom.students)) {
+						if (user.sharedPolls.includes(pollId)) {
+							user.sharedPolls.splice(user.sharedPolls.indexOf(pollId), 1)
+							customPollUpdate(user.username)
+						}
+
+						if (user.ownedPolls.includes(pollId)) {
+							user.ownedPolls.splice(user.ownedPolls.indexOf(pollId), 1)
+							customPollUpdate(user.username)
+						}
+					}
+				}
+
+				socket.emit('message', 'Poll deleted successfully!')
+				customPollUpdate(socket.request.session.username)
+			})
+		})
+	})
+
+	socket.on('setPublic', (pollId, value) => {
+		db.run(
+			'UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (error) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+
+				for (let socket of Object.values(userSockets)) {
+					customPollUpdate(socket.request.session.username)
+				}
+			}
+		)
+	})
+
+	socket.on('sharePoll', (pollId, username) => {
+		db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
+			if (error) {
+				console.error(error);
+				return
+			}
+			if (!user) {
+				socket.emit('message', 'User not found.');
+				return
+			}
+			// db.run('')
+		})
 	})
 
 	// Sends a help ticket

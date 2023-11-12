@@ -13,7 +13,7 @@
 			<script src="/js/tabs.js" defer></script>
 		</head>
 
-		<body>
+		<body onload="load(<%-pollStatus%>)">
 			<%- include('../partials/formbar_header') %>
 				<header id="quickMenu">
 					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
@@ -24,14 +24,14 @@
 
 				<p id="classCode">Class Code:</p>
 				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-					<div id="userFilterBoxes">
-						Filter:
+					<div id="userFilterBoxes" class="options">
+						<h2 class="headerText">Filter</h2>
 						<button type="button" id="help" class="filter">Help tickets</button>
 						<button type="button" id="break" class="filter">Break</button>
 						<button type="button" id="polls" class="filter">Polls</button>
 					</div>
-					<div id="userSortBoxes">
-						Sort:
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Sort</h2>
 						<button type="button" id="name" class="sort">Name</button>
 						<button type="button" id="polls" class="sort">Polls</button>
 						<button type="button" id="helpTime" class="sort">Help Time</button>
@@ -47,13 +47,19 @@
 					</div>
 				</div>
 				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
-					<div id="customPollButtons">
-						<h2 class="headerText">Custom Polls:</h2>
+					<div id="pollOptions" class="options">
+						<h2 class="headerText">Custom Polls</h2>
 						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public Polls</button>
 						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class Polls</button>
 						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your Polls</button>
 					</div>
 					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
+						<div id="pollActions" class="options">
+							<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
+							<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
+							<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
+							<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
+						</div>
 						<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
 						<div id="startPollForm">
 							<label for="resNumber">How many possible responses?</label>
@@ -76,12 +82,10 @@
 							<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
 							<input type="checkbox" id="blind">
 							<br>
-							<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')"
-								class="quickButton">
+							<button id="startPoll" onclick="startPoll()">Start Poll</button>
 							<br>
 						</div>
 						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-						<br>
 						<br>
 						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
 					</div>
@@ -130,11 +134,12 @@
 
 		</html>
 		<script>
-			let currentUser = []
+			let currentUser = JSON.parse('<%-currentUser%>')
 			let userCustomPolls = []
 			let classroomCustomPolls = []
 			let publicCustomPolls = []
 			let customPolls = []
+			let currentCustomPollId = null
 
 			const FilterState = {
 				help: [
@@ -200,7 +205,6 @@
 			let colorPickers = []
 
 			var usersDiv = document.getElementById('users')
-			var startPoll = document.getElementById('startPoll')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
 			var endPoll = document.getElementById('endPoll')
@@ -221,12 +225,28 @@
 			var previousPollButtons = document.getElementById('previousPollButtons')
 			var toPollsButton = document.getElementById('toPolls')
 			var toPollHistoryButton = document.getElementById('toPollHistory')
+			let blindCheck = document.getElementById('blind')
 			var classCode = document.getElementById('classCode')
 			var menuUsers = document.getElementById('menuUsers')
 			var menuPolls = document.getElementById('menuPolls')
 			var mainPolls = document.getElementById('menuPolls')
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
+			let unloadPollButton = document.getElementById('unload-poll')
+			let savePollButton = document.getElementById('save-poll')
+			let deletePollButton = document.getElementById('delete-poll')
+
+			// Function runs on page load
+			// Checks if poll is active or not and displays correct output
+			function load(pollStatus) {
+				if (pollStatus) {
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+				} else {
+					startPollForm.style.display = 'block'
+					endPoll.style.display = 'none'
+				}
+			}
 
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
@@ -387,41 +407,18 @@
 				}
 			}
 
-			// Starts a new poll that allows students to submit answers
-			// Check how many possible responses and if the teacher wants to accept text responses
-			function startPollFunc(pollType) {
-				if (pollType == 'poll') {
-					let blind = document.getElementById('blind').checked
+			function saveColor(index) {
+				let colorPickerButton = document.getElementsByClassName('colorPickerButton')[index]
+				let oldColor = document.getElementsByClassName('oldColor')[index]
 
-					let pollAnswers = []
-					for (let i = 0; i < resNumber.value; i++) {
-						let pollResponse = pollResponses[i]
-						let pollAnswer = {
-							answer: pollResponse.answer,
-							weight: pollResponse.weight,
-							color: pollResponse.color
-						}
+				pollResponses[index].color = colorPickers[index].color.hexString
+				colorPickerButton.style.backgroundColor = colorPickers[index].color.hexString;
+				oldColor.style.backgroundColor = colorPickers[index].color.hexString;
+			}
 
-						pollAnswers.push(pollAnswer)
-					}
-					responsesDiv.style.display = 'none'
-					startPollForm.style.display = 'none'
-					endPoll.style.display = 'block'
+			function responseAmountChange(amount) {
+				if (amount) resNumber.value = amount
 
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
-				} else if (pollType == 'TUTD') {
-					responsesDiv.style.display = 'none';
-					startPollForm.style.display = 'none';
-					endPoll.style.display = 'block';
-					socket.emit('startPoll', 3, false, "Thumbs?", [
-						{ answer: "Up", weight: 0.9, color: '#00FF00' },
-						{ answer: "Down", weight: 1.1, color: '#FF0000' },
-						{ answer: "Wiggle", weight: 1, color: '#00FFFF' }
-					], false, 1);
-				};
-			};
-
-			function responseAmountChange() {
 				if (resNumber.value < 1) resNumber.value = 1
 				if (resNumber.value > 26) resNumber.value = 26
 
@@ -434,6 +431,7 @@
 					}
 
 					pollResponses.splice(resNumber.value)
+					colorPickers.splice(resNumber.value)
 				}
 
 				for (let i = pollResponses.length; i < resNumber.value; i++) {
@@ -449,6 +447,7 @@
 					let responseDiv = document.createElement('div')
 					responseDiv.className = 'response'
 					responseDiv.id = `response${i}`
+
 					let colorPickerButton = document.createElement('button')
 					colorPickerButton.className = 'colorPickerButton'
 					colorPickerButton.id = i
@@ -472,20 +471,21 @@
 						}
 					}
 					responseDiv.appendChild(colorPickerButton)
+
 					let colorPickerDiv = document.createElement('div')
 					colorPickerDiv.className = 'colorPicker'
+
 					let buttonsDiv = document.createElement('div')
 					buttonsDiv.className = 'buttonsDiv'
-					let saveColor = document.createElement('button')
-					saveColor.className = 'quickButton'
-					saveColor.innerText = 'Save Color'
-					saveColor.onclick = (event) => {
-						event.preventDefault()
-						pollResponses[i].color = colorPickers[i].color.hexString
-						colorPickerButton.style.backgroundColor = colorPickers[i].color.hexString;
-						oldColor.style.backgroundColor = colorPickers[i].color.hexString;
+
+					let saveColorButton = document.createElement('button')
+					saveColorButton.className = 'quickButton'
+					saveColorButton.innerText = 'Save Color'
+					saveColorButton.onclick = () => {
+						saveColor(i)
 					}
-					buttonsDiv.appendChild(saveColor)
+					buttonsDiv.appendChild(saveColorButton)
+
 					let resetColor = document.createElement('button')
 					resetColor.className = 'quickButton'
 					resetColor.innerText = 'Reset Color'
@@ -501,16 +501,22 @@
 						oldColor.style.backgroundColor = generatedColors[i]
 					}
 					buttonsDiv.appendChild(resetColor)
+
 					colorPickerDiv.appendChild(buttonsDiv)
+
 					let colorsDiv = document.createElement('div')
 					colorsDiv.className = 'colorsDiv'
+
 					let oldColor = document.createElement('div')
 					oldColor.className = 'oldColor'
 					colorsDiv.appendChild(oldColor)
+
 					let newColor = document.createElement('div')
 					newColor.className = 'newColor'
 					colorsDiv.appendChild(newColor)
+
 					colorPickerDiv.appendChild(colorsDiv)
+
 					let hexLabel = document.createElement('label')
 					hexLabel.className = 'hexLabel'
 					hexLabel.innerText = 'Hex '
@@ -523,10 +529,14 @@
 						colorPickers[i].color.set('#' + event.target.value)
 					}
 					hexLabel.appendChild(hexInput)
+
 					colorPickerDiv.appendChild(hexLabel)
+
 					responseDiv.appendChild(colorPickerDiv)
+
 					let answerName = document.createElement('input')
 					answerName.type = 'text'
+					answerName.className = 'answerName'
 					answerName.name = 'answerName'
 					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)} `
 					answerName.value = ''
@@ -534,6 +544,7 @@
 						pollResponses[i].answer = event.target.value;
 					}
 					responseDiv.appendChild(answerName)
+
 					responsesDiv.appendChild(responseDiv)
 
 					FloatingUIDOM.autoUpdate(
@@ -600,13 +611,14 @@
 			}
 			responseAmountChange()
 
-			resetAnswerNamesButton.onclick = () => {
+			function resetAnswerNames() {
 				let answerNames = document.getElementsByName('answerName')
 				for (let i = 0; i < pollResponses.length; i++) {
 					pollResponses[i].answer = pollResponses[i].defaultAnswer
 					answerNames[i].value = ''
 				}
 			}
+			resetAnswerNamesButton.onclick = resetAnswerNames
 
 			function resetColors() {
 				for (let i = 0; i < pollResponses.length; i++) {
@@ -1016,6 +1028,204 @@
 				socket.emit('approveBreak', breakApproval, username)
 			}
 
+			// Starts a new poll that allows students to submit answers
+			// Check how many possible responses and if the teacher wants to accept text responses
+			function startPoll(customPollId) {
+				if (customPollId) {
+					let customPoll = customPolls[customPollId]
+
+					changeTab('mainPolls', 'polls')
+
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight)
+				} else {
+					let blind = blindCheck.checked
+
+					let pollAnswers = []
+					for (let i = 0; i < resNumber.value; i++) {
+						let pollResponse = pollResponses[i]
+						let pollAnswer = {
+							answer: pollResponse.answer,
+							weight: pollResponse.weight,
+							color: pollResponse.color
+						}
+
+						pollAnswers.push(pollAnswer)
+					}
+
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
+				}
+				responsesDiv.style.display = 'none'
+				startPollForm.style.display = 'none'
+				endPoll.style.display = 'block'
+			};
+
+			function editCustomPoll(customPollId) {
+				currentCustomPollId = customPollId
+				let customPoll = customPolls[currentCustomPollId]
+
+				unloadPollButton.style.display = ''
+				savePollButton.style.display = ''
+				if (customPoll.owner == currentUser.id) {
+					deletePollButton.style.display = ''
+				} else {
+					deletePollButton.style.display = 'none'
+				}
+
+				blindCheck.checked = customPoll.blind
+				pollPrompt.value = customPoll.prompt
+				resTextBox.checked = customPoll.textRes
+
+				responseAmountChange(customPoll.answers.length)
+
+				let answerInputs = document.getElementsByClassName('answerName')
+				for (let pollIndex = 0; pollIndex < customPoll.answers.length; pollIndex++) {
+					let answer = customPoll.answers[pollIndex]
+
+					pollResponses[pollIndex].answer = answer.answer
+					answerInputs[pollIndex].value = answer.answer
+
+					pollResponses[pollIndex].color = answer.color
+					colorPickers[pollIndex].color.set(pollResponses[pollIndex].color)
+					saveColor(pollIndex)
+
+					pollResponses[pollIndex].weight = answer.weight
+				}
+
+				changeTab('mainPolls', 'polls')
+				showResponses()
+			}
+
+			function unloadPoll() {
+				unloadPollButton.style.display = 'none'
+				savePollButton.style.display = 'none'
+				deletePollButton.style.display = 'none'
+
+				pollPrompt.value = ''
+				resTextBox.checked = false
+				blindCheck.checked = false
+
+				responseAmountChange(1)
+				resetAnswerNames()
+				resetColors()
+				currentCustomPollId = null
+			}
+
+			function savePoll() {
+				let customPoll = customPolls[currentCustomPollId]
+
+				customPoll.blind = blindCheck.checked
+				customPoll.prompt = pollPrompt.value
+				customPoll.textRes = resTextBox.checked
+
+				let pollAnswers = []
+				for (let i = 0; i < resNumber.value; i++) {
+					let pollResponse = pollResponses[i]
+					let pollAnswer = {
+						answer: pollResponse.answer,
+						weight: pollResponse.weight,
+						color: pollResponse.color
+					}
+
+					pollAnswers.push(pollAnswer)
+				}
+				customPoll.answers = pollAnswers
+
+				socket.emit('savePoll', customPoll, currentCustomPollId)
+			}
+
+			function savePollAs() {
+				let customPoll = {}
+
+				customPoll.name = prompt('What do you want to call this poll')
+
+				customPoll.blind = blindCheck.checked
+				customPoll.prompt = pollPrompt.value
+				customPoll.textRes = resTextBox.checked
+				customPoll.public = false
+				customPoll.weight = 1
+
+				let pollAnswers = []
+				for (let i = 0; i < resNumber.value; i++) {
+					let pollResponse = pollResponses[i]
+					let pollAnswer = {
+						answer: pollResponse.answer,
+						weight: pollResponse.weight,
+						color: pollResponse.color
+					}
+
+					pollAnswers.push(pollAnswer)
+				}
+				customPoll.answers = pollAnswers
+
+				socket.emit('savePoll', customPoll)
+			}
+
+			function sharePoll() {
+
+			}
+
+			function deletePoll(pollId) {
+				if (!pollId && !currentCustomPollId) {
+					alert('No poll selected')
+					return
+				}
+				if (!pollId) {
+					pollId = currentCustomPollId
+					unloadPoll()
+				}
+				console.log(pollId);
+
+				socket.emit('deletePoll', pollId)
+			}
+
+			function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
+				customPollsDiv.innerHTML = ''
+
+				if (customPollsList.length == 0) {
+					let noPolls = document.createElement('p')
+					noPolls.innerText = emptyText
+					customPollsDiv.appendChild(noPolls)
+				}
+
+				for (let customPollId of customPollsList) {
+					let customPoll = customPolls[customPollId]
+
+					let customPollDiv = document.createElement('div')
+					customPollDiv.className = 'customPoll'
+
+					let customPollName = document.createElement('p')
+					customPollName.className = 'custom-poll-name'
+					customPollName.innerText = customPoll.name
+					customPollDiv.appendChild(customPollName)
+
+					let editButton = document.createElement('button')
+					editButton.className = 'edit-custom-poll'
+					editButton.innerText = 'Edit'
+					editButton.onclick = () => {
+						editCustomPoll(customPollId)
+					}
+					customPollDiv.appendChild(editButton)
+
+					let startButton = document.createElement('button')
+					startButton.className = 'start-custom-poll'
+					startButton.innerText = 'Start'
+					startButton.onclick = () => {
+						startPoll(customPollId)
+					}
+					customPollDiv.appendChild(startButton)
+
+					if (customPoll.owner == currentUser.id) {
+						let deleteButton = document.createElement('button')
+						deleteButton.className = 'delete-poll'
+						deleteButton.innerText = 'Delete'
+						deleteButton.onclick = () => { deletePoll(customPollId) }
+						customPollDiv.appendChild(deleteButton)
+					}
+
+					customPollsDiv.appendChild(customPollDiv)
+				}
+			}
+
 			// close all color pickers if you press escape
 			document.addEventListener('keydown', function (event) {
 				if (event.key == 'Escape') {
@@ -1142,24 +1352,6 @@
 				pluginsDiv.append(addPluginForm)
 			})
 
-			function fillPolls(customPollsList, customPollsDiv) {
-				for (let customPollIndex of customPollsList) {
-					let customPoll = customPolls[customPollIndex]
-
-					let customPollDiv = document.createElement('div')
-					customPollDiv.className = 'customPoll'
-					let customPollName = document.createElement('p')
-					customPollName.innerText = customPoll.name
-					customPollDiv.appendChild(customPollName)
-					let edit = document.createElement('button')
-					edit.innerText = 'Edit'
-					customPollDiv.appendChild(edit)
-					let start = document.createElement('button')
-					start.innerText = 'Start'
-					customPollDiv.appendChild(start)
-					customPollsDiv.appendChild(customPollDiv)
-				}
-			}
 
 			socket.emit('customPollUpdate')
 			socket.on('customPollUpdate', (
@@ -1168,6 +1360,7 @@
 				newUserCustomPolls,
 				newCustomPolls
 			) => {
+				console.log('customPollUpdate');
 				publicCustomPolls = newPublicCustomPolls
 				classroomCustomPolls = newClassroomCustomPolls
 				userCustomPolls = newUserCustomPolls
@@ -1177,9 +1370,9 @@
 				let classPollsDiv = document.querySelector('div#classPolls')
 				let userPollsDiv = document.querySelector('div#userPolls')
 
-				fillPolls(publicCustomPolls, publicPollsDiv)
-				fillPolls(classroomCustomPolls, classPollsDiv)
-				fillPolls(userCustomPolls, userPollsDiv)
+				insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
+				insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
+				insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')
 			})
 		</script>
 		<%- include('../partials/footer_content') %>

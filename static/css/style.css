@@ -374,7 +374,7 @@ input[type="radio"]:focus {
 }
 
 #takeBreak #cancel {
-	--theme-color: #333;
+	--theme-color: hsl(0, 0%, 20%);
 	background-color: white;
 	margin-right: 10px;
 }
@@ -434,7 +434,9 @@ input[type="radio"]:focus {
 
 #deleteStudents,
 #endClass,
-.deleteStudent
+.deleteStudent,
+#delete-poll,
+.delete-poll
 {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);;
@@ -514,30 +516,33 @@ input[type="radio"]:focus {
 	margin: auto;
 }
 
-#customPollButtons{
+.options {
 	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	width: 35%;
-	margin-left: 32.5%;
+	justify-content: center;
+	gap: 1rem;
 	margin-bottom: 2%;
 }
 
-#customPollButtons * {
+.options * {
 	margin: 0;
 }
 
-#customPollButtons .quickButton{
-	height: fit-content;
+#pollOptions {
+	margin-bottom: 50px;
 }
 
-.customPoll{
+.customPoll {
 	display: grid;
 	min-width: 30%;
 	width: fit-content;
 	margin: auto;
 	gap: 1.5rem;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	grid-template-columns: repeat(5, 1fr);
+}
+
+.customPoll * {
+	min-width: 100px;
+	width: fit-content;
 }
 
 #plugins input,
