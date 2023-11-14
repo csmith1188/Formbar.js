@@ -367,6 +367,13 @@ function generateColors(amount) {
 	return colors;
 }
 
+function getUserClass(username) {
+	for (let classCode of Object.keys(cD)) {
+		if (cD[classCode].students[username]) return classCode
+	}
+	return null
+}
+
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
 
@@ -1277,6 +1284,23 @@ io.on('connection', (socket) => {
 		)
 	}
 
+	function getPollShares(pollId) {
+		return new Promise((resolve, reject) => {
+			db.all(
+				'SELECT pollId, userId, username FROM poll_shares LEFT JOIN users ON users.id = poll_shares.userId WHERE pollId = ?',
+				pollId,
+				(error, pollShares) => {
+					if (error) {
+						console.error(error)
+						reject(error)
+						return
+					}
+					resolve(pollShares)
+				}
+			)
+		})
+	}
+
 	//rate limiter
 	socket.use((packet, next) => {
 		const user = socket.request.session.username
@@ -1585,29 +1609,118 @@ io.on('connection', (socket) => {
 	socket.on('sharePoll', (pollId, username) => {
 		db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
 			if (error) {
-				console.error(error);
+				console.error(error)
 				return
 			}
 			if (!user) {
-				socket.emit('message', 'User not found.');
+				socket.emit('message', 'User does not exist')
 				return
 			}
-			// db.run('')
+
+			db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+
+				if (!poll) {
+					socket.emit('message', 'Poll does not exist (please contact the programmer)')
+					return
+				}
+
+				let name = 'Unnamed Poll'
+				if (poll.name) name = poll.name
+				else if (poll.prompt) name = poll.prompt
+
+				db.get(
+					'SELECT * FROM poll_shares WHERE pollId = ? AND userId = ?',
+					[pollId, user.id],
+					(error, sharePoll) => {
+						if (error) {
+							console.error(error);
+							return
+						}
+						if (sharePoll) {
+							socket.emit('message', `${name} is Already Shared with ${username}`)
+							return
+						}
+
+						db.run(
+							'INSERT INTO poll_shares (pollId, userId) VALUES (?, ?)',
+							[pollId, user.id],
+							async (error) => {
+								if (error) {
+									console.error(error)
+									return
+								}
+
+								socket.emit('message', `Shared ${name} with ${username}`)
+
+								let pollShares = await getPollShares(pollId)
+								socket.emit('getPollShares', pollShares)
+
+								let classCode = getUserClass(username)
+								if (classCode) {
+									cD[classCode].students[user.username].sharedPolls.push(pollId)
+
+									customPollUpdate(username)
+								}
+							}
+						)
+					}
+				)
+			})
 		})
 	})
 
-	socket.on('getPollShares', (pollId) => {
-		db.all(
-			'SELECT id, username FROM poll_shares LEFT JOIN users ON users.id = poll_shares.userId WHERE pollId = ?',
-			pollId,
-			(error, pollShares) => {
+	socket.on('removeShare', (pollId, userId) => {
+		db.get(
+			'SELECT * FROM poll_shares WHERE pollId=? AND userId = ?',
+			[pollId, userId],
+			(error, pollShare) => {
 				if (error) {
 					console.error(error)
-				} else if (pollShares) {
-					socket.emit('getPollShares', pollShares)
+					return
 				}
+				if (!pollShare) socket.emit('message', 'Poll is not shared to this user')
+
+				db.run(
+					'DELETE FROM poll_shares WHERE pollId = ? AND userId = ?',
+					[pollId, userId],
+					(error) => {
+						if (error) {
+							console.error(error)
+							return
+						}
+
+						db.get('SELECT * FROM users WHERE id = ?', userId, async (error, user) => {
+							if (error) {
+								console.error(error)
+							} else if (user) {
+								let classCode = getUserClass(user.username)
+								if (classCode) {
+									let sharedPolls = cD[classCode].students[user.username].sharedPolls
+									sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+
+									customPollUpdate(user.username)
+								}
+
+								socket.emit('message', 'Successfully unshared user')
+
+								let pollShares = await getPollShares(pollId)
+								socket.emit('getPollShares', pollShares)
+							}
+						})
+					}
+				)
 			}
 		)
+	})
+
+	socket.on('getPollShares', async (pollId) => {
+		let pollShares = await getPollShares(pollId)
+
+		socket.emit('getPollShares', pollShares)
 	})
 
 	// Sends a help ticket
@@ -1947,16 +2060,6 @@ io.on('connection', (socket) => {
 
 	// sends the class code of the class a user is in
 	socket.on('getUserClass', ({ username, api }) => {
-		function getClass(username) {
-			for (let className of Object.keys(cD)) {
-				if (cD[className].students[username]) {
-					if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
-					else return socket.emit('getUserClass', className)
-				}
-			}
-			socket.emit('getUserClass', { error: 'user is not logged in' })
-		}
-
 		if (api) {
 			db.get(
 				'SELECT * FROM users WHERE API = ?',
@@ -1973,7 +2076,13 @@ io.on('connection', (socket) => {
 					getClass(userData.username)
 				}
 			)
-		} else if (username) getClass(username)
+		} else if (username) {
+			let classCode = getUserClass(username)
+
+			if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
+			else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
+			else socket.emit('getUserClass', className)
+		}
 		else socket.emit('getUserClass', { error: 'missing username or api key' })
 	})
 })

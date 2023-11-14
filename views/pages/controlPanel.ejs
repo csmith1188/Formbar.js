@@ -130,11 +130,14 @@
 				<div id="pluginsMenu" class="tabContent" data-tab-group="mainTabs">
 				</div>
 				<dialog id="sharePollDialog">
-					<button onclick="document.getElementById('sharePollDialog').close()">Close</button>
+					<button
+						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
 					<div id="pollShares">
 
 					</div>
-					<input type="text" id="share" pattern="[a-z0-9]+" placeholder="Share To">
+					<label for="share">Share to</label>
+					<input type="text" name="share" id="sharePollInput" pattern="[a-z0-9]+" placeholder="Username"
+						onkeypress="if(event.key == 'Enter') sharePoll()">
 				</dialog>
 				<%- include('../partials/body_content') %>
 		</body>
@@ -146,7 +149,8 @@
 			let classroomCustomPolls = []
 			let publicCustomPolls = []
 			let customPolls = []
-			let currentCustomPollId = null
+			let editingPollId = null
+			let currentSharePollId = null
 
 			const FilterState = {
 				help: [
@@ -243,6 +247,7 @@
 			let savePollButton = document.getElementById('save-poll')
 			let deletePollButton = document.getElementById('delete-poll')
 			let sharePollDialog = document.getElementById('sharePollDialog')
+			let sharePollInput = document.getElementById('sharePollInput')
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -1068,8 +1073,8 @@
 			};
 
 			function editCustomPoll(customPollId) {
-				currentCustomPollId = customPollId
-				let customPoll = customPolls[currentCustomPollId]
+				editingPollId = customPollId
+				let customPoll = customPolls[editingPollId]
 
 				unloadPollButton.style.display = ''
 				savePollButton.style.display = ''
@@ -1115,11 +1120,11 @@
 				responseAmountChange(1)
 				resetAnswerNames()
 				resetColors()
-				currentCustomPollId = null
+				editingPollId = null
 			}
 
 			function savePoll() {
-				let customPoll = customPolls[currentCustomPollId]
+				let customPoll = customPolls[editingPollId]
 
 				customPoll.blind = blindCheck.checked
 				customPoll.prompt = pollPrompt.value
@@ -1138,7 +1143,7 @@
 				}
 				customPoll.answers = pollAnswers
 
-				socket.emit('savePoll', customPoll, currentCustomPollId)
+				socket.emit('savePoll', customPoll, editingPollId)
 			}
 
 			function savePollAs() {
@@ -1168,6 +1173,19 @@
 				socket.emit('savePoll', customPoll)
 			}
 
+			function openSharePoll(customPollId) {
+				currentSharePollId = customPollId
+				socket.emit('getPollShares', customPollId)
+
+				sharePollDialog.showModal()
+			}
+
+			function sharePoll() {
+				socket.emit('sharePoll', currentSharePollId, sharePollInput.value)
+
+				sharePollInput.value = ''
+			}
+
 			function publicToggle(customPollId) {
 				let customPoll = customPolls[customPollId]
 
@@ -1177,22 +1195,15 @@
 					socket.emit('setPublic', customPollId, true)
 			}
 
-			function sharePoll(customPollId) {
-				socket.emit('getPollShares', customPollId)
-
-				sharePollDialog.showModal()
-			}
-
 			function deletePoll(pollId) {
-				if (!pollId && !currentCustomPollId) {
+				if (!pollId && !editingPollId) {
 					alert('No poll selected')
 					return
 				}
 				if (!pollId) {
-					pollId = currentCustomPollId
+					pollId = editingPollId
 					unloadPoll()
 				}
-				console.log(pollId);
 
 				socket.emit('deletePoll', pollId)
 			}
@@ -1249,7 +1260,7 @@
 						shareButton.className = 'share-button'
 						shareButton.style.gridColumn = 4
 						shareButton.innerText = 'Share'
-						shareButton.onclick = () => { sharePoll(customPollId) }
+						shareButton.onclick = () => { openSharePoll(customPollId) }
 						customPollDiv.appendChild(shareButton)
 
 						let publicButton = document.createElement('button')
@@ -1408,7 +1419,6 @@
 				newUserCustomPolls,
 				newCustomPolls
 			) => {
-				console.log('customPollUpdate');
 				publicCustomPolls = newPublicCustomPolls
 				classroomCustomPolls = newClassroomCustomPolls
 				userCustomPolls = newUserCustomPolls
@@ -1429,6 +1439,7 @@
 				for (let pollShare of pollShares) {
 					let pollShareDiv = document.createElement('div')
 					pollShareDiv.className = 'pollShare'
+					pollShareDiv.style.display = 'flex'
 
 					let name = document.createElement('p')
 					name.innerText = pollShare.username
@@ -1436,8 +1447,9 @@
 
 					let remove = document.createElement('button')
 					remove.innerText = 'remove'
+					remove.className = 'quickButton'
 					remove.onclick = () => {
-						socket.emit('removeShare', pollShare.id)
+						socket.emit('removeShare', currentSharePollId, pollShare.userId)
 					}
 					pollShareDiv.appendChild(remove)
 

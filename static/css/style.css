@@ -547,6 +547,19 @@ input[type="radio"]:focus {
 	width: fit-content;
 }
 
+#pollShares {
+	display: grid;
+	justify-content: center;
+}
+
+.pollShare {
+	display: flex;
+}
+
+.pollShare button {
+	height: fit-content;
+}
+
 #plugins input,
 #plugins button {
 	margin: 4px;
