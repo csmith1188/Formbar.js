@@ -739,7 +739,7 @@ app.post('/login', async (req, res) => {
 	} else if (user.loginType == "new") {
 		let permissions = STUDENT_PERMISSIONS
 
-		db.all('SELECT API, secret FROM users', (error, users) => {
+		db.all('SELECT API, secret, username FROM users', (error, users) => {
 			if (error) {
 				console.error(error)
 			} else {
@@ -750,9 +750,14 @@ app.post('/login', async (req, res) => {
 
 				if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
-				for (let user of users) {
-					existingAPIs.push(user.API)
-					existingSecrets.push(user.secret)
+				for (let dbUser of users) {
+					existingAPIs.push(dbUser.API)
+					existingSecrets.push(dbUser.secret)
+
+					if (dbUser.username == user.username) {
+						res.redirect('/login')
+						return
+					}
 				}
 
 				do {
@@ -773,23 +778,26 @@ app.post('/login', async (req, res) => {
 					], (err) => {
 						if (err) {
 							console.error(err)
+							return
 						}
-					})
-				// Find the user in which was just created to get the id of the user
-				db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-					if (err) {
-						console.error(err)
-					} else {
-						// Add user to session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
 
-						// Add the user to the session in order to transfer data between each page
-						req.session.userId = userData.id
-						req.session.username = userData.username
-						req.session.class = 'noClass'
-						res.redirect('/')
+						// Find the user in which was just created to get the id of the user
+						db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+							if (err) {
+								console.error(err)
+							} else {
+								// Add user to session
+								cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
+								// Add the user to the session in order to transfer data between each page
+								req.session.userId = userData.id
+								req.session.username = userData.username
+								req.session.class = 'noClass'
+								res.redirect('/')
+							}
+						})
 					}
-				})
+				)
 			}
 		})
 	} else if (user.loginType == "guest") {
