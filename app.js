@@ -761,7 +761,6 @@ app.post('/login', async (req, res) => {
 			} else {
 				let existingAPIs = []
 				let existingSecrets = []
-				let existingUsernames = []
 				let newAPI
 				let newSecret
 
@@ -816,7 +815,6 @@ app.post('/login', async (req, res) => {
 								res.redirect('/')
 							}
 						})
-
 					}
 				)
 			}
