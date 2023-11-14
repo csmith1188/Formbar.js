@@ -357,7 +357,8 @@ input[type="radio"]:focus {
 	box-shadow: none;
 }
 
-#requestBreakDialog {
+#requestBreakDialog,
+#sharePollDialog {
 	width: 300px;
 	height: 300px;
 }
@@ -537,7 +538,8 @@ input[type="radio"]:focus {
 	width: fit-content;
 	margin: auto;
 	gap: 1.5rem;
-	grid-template-columns: repeat(5, 1fr);
+	/* grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); */
+	grid-template-columns:repeat(auto-fit, minmax(1fr));
 }
 
 .customPoll * {

@@ -705,7 +705,7 @@ app.post('/login', async (req, res) => {
 				console.error(err)
 			}
 			// Check if a user with that name was found in the database
-			else if (userData) {
+			else if (userData.username) {
 				// Decrypt users password
 				let tempPassword = decrypt(JSON.parse(userData.password))
 				if (userData.username == user.username && tempPassword == user.password) {
@@ -1210,6 +1210,11 @@ io.on('connection', (socket) => {
 				userSession.userId
 			],
 			(error, customPolls) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+
 				for (let customPoll of customPolls) {
 					customPoll.answers = JSON.parse(customPoll.answers)
 				}
@@ -1589,6 +1594,20 @@ io.on('connection', (socket) => {
 			}
 			// db.run('')
 		})
+	})
+
+	socket.on('getPollShares', (pollId) => {
+		db.all(
+			'SELECT id, username FROM poll_shares LEFT JOIN users ON users.id = poll_shares.userId WHERE pollId = ?',
+			pollId,
+			(error, pollShares) => {
+				if (error) {
+					console.error(error)
+				} else if (pollShares) {
+					socket.emit('getPollShares', pollShares)
+				}
+			}
+		)
 	})
 
 	// Sends a help ticket

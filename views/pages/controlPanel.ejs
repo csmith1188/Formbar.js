@@ -129,6 +129,13 @@
 				</div>
 				<div id="pluginsMenu" class="tabContent" data-tab-group="mainTabs">
 				</div>
+				<dialog id="sharePollDialog">
+					<button onclick="document.getElementById('sharePollDialog').close()">Close</button>
+					<div id="pollShares">
+
+					</div>
+					<input type="text" id="share" pattern="[a-z0-9]+" placeholder="Share To">
+				</dialog>
 				<%- include('../partials/body_content') %>
 		</body>
 
@@ -235,6 +242,7 @@
 			let unloadPollButton = document.getElementById('unload-poll')
 			let savePollButton = document.getElementById('save-poll')
 			let deletePollButton = document.getElementById('delete-poll')
+			let sharePollDialog = document.getElementById('sharePollDialog')
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -1160,8 +1168,19 @@
 				socket.emit('savePoll', customPoll)
 			}
 
-			function sharePoll() {
+			function publicToggle(customPollId) {
+				let customPoll = customPolls[customPollId]
 
+				if (customPoll.public)
+					socket.emit('setPublic', customPollId, false)
+				else
+					socket.emit('setPublic', customPollId, true)
+			}
+
+			function sharePoll(customPollId) {
+				socket.emit('getPollShares', customPollId)
+
+				sharePollDialog.showModal()
 			}
 
 			function deletePoll(pollId) {
@@ -1180,6 +1199,7 @@
 
 			function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 				customPollsDiv.innerHTML = ''
+				unnamedPolls = 0
 
 				if (customPollsList.length == 0) {
 					let noPolls = document.createElement('p')
@@ -1195,11 +1215,20 @@
 
 					let customPollName = document.createElement('p')
 					customPollName.className = 'custom-poll-name'
-					customPollName.innerText = customPoll.name
+					customPollName.style.gridColumn = 1
+					if (customPoll.name)
+						customPollName.innerText = customPoll.name
+					else if (customPoll.prompt)
+						customPollName.innerText = customPoll.prompt
+					else {
+						unnamedPolls++
+						customPollName.innerText = 'Unnamed Poll'
+					}
 					customPollDiv.appendChild(customPollName)
 
 					let editButton = document.createElement('button')
 					editButton.className = 'edit-custom-poll'
+					editButton.style.gridColumn = 2
 					editButton.innerText = 'Edit'
 					editButton.onclick = () => {
 						editCustomPoll(customPollId)
@@ -1208,6 +1237,7 @@
 
 					let startButton = document.createElement('button')
 					startButton.className = 'start-custom-poll'
+					startButton.style.gridColumn = 3
 					startButton.innerText = 'Start'
 					startButton.onclick = () => {
 						startPoll(customPollId)
@@ -1215,8 +1245,26 @@
 					customPollDiv.appendChild(startButton)
 
 					if (customPoll.owner == currentUser.id) {
+						let shareButton = document.createElement('button')
+						shareButton.className = 'share-button'
+						shareButton.style.gridColumn = 4
+						shareButton.innerText = 'Share'
+						shareButton.onclick = () => { sharePoll(customPollId) }
+						customPollDiv.appendChild(shareButton)
+
+						let publicButton = document.createElement('button')
+						publicButton.className = 'public-button'
+						publicButton.style.gridColumn = 5
+						if (customPoll.public)
+							publicButton.innerText = 'Make Private'
+						else
+							publicButton.innerText = 'Make Public'
+						publicButton.onclick = () => { publicToggle(customPollId) }
+						customPollDiv.appendChild(publicButton)
+
 						let deleteButton = document.createElement('button')
 						deleteButton.className = 'delete-poll'
+						deleteButton.style.gridColumn = 6
 						deleteButton.innerText = 'Delete'
 						deleteButton.onclick = () => { deletePoll(customPollId) }
 						customPollDiv.appendChild(deleteButton)
@@ -1365,7 +1413,6 @@
 				classroomCustomPolls = newClassroomCustomPolls
 				userCustomPolls = newUserCustomPolls
 				customPolls = newCustomPolls
-
 				let publicPollsDiv = document.querySelector('div#publicPolls')
 				let classPollsDiv = document.querySelector('div#classPolls')
 				let userPollsDiv = document.querySelector('div#userPolls')
@@ -1373,6 +1420,29 @@
 				insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 				insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
 				insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')
+			})
+
+			socket.on('getPollShares', (pollShares) => {
+				let pollSharesDiv = document.getElementById('pollShares')
+				pollSharesDiv.innerHTML = ''
+
+				for (let pollShare of pollShares) {
+					let pollShareDiv = document.createElement('div')
+					pollShareDiv.className = 'pollShare'
+
+					let name = document.createElement('p')
+					name.innerText = pollShare.username
+					pollShareDiv.appendChild(name)
+
+					let remove = document.createElement('button')
+					remove.innerText = 'remove'
+					remove.onclick = () => {
+						socket.emit('removeShare', pollShare.id)
+					}
+					pollShareDiv.appendChild(remove)
+
+					pollSharesDiv.appendChild(pollShareDiv)
+				}
 			})
 		</script>
 		<%- include('../partials/footer_content') %>
