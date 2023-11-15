@@ -100,7 +100,7 @@
 										</label>
 									`
 							if (textResponse) {
-								pollForm.innerHTML += `<br><input type="text" name="resText" id="resTextBox" value="${oldTextRes}">`
+								pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
 							}
 						} else {
 							noPoll.style.display = 'block'
@@ -142,8 +142,10 @@
 				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
 					var radios = document.getElementsByTagName('input')
+					var textareas = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
+					var textAreaRes = ''
 					for (var i = 0; i < radios.length; i++) {
 
 						if (radios[i].type === 'radio' && radios[i].checked) {
@@ -151,15 +153,12 @@
 							lettRes = radios[i].value
 
 						}
-						if (radios[i].type === 'text') {
-							// Defines the text input of the user
-							textRes = radios[i].value
-						}
+
 
 					}
-
+					textAreaRes = textareas.value
 					// Sends user input to the server
-					socket.emit('pollResp', lettRes, textRes)
+					socket.emit('pollResp', lettRes, textAreaRes)
 					socket.emit('vbUpdate')
 					socket.emit('cpUpdate')
 					socket.emit('sfxPlay', 'sfx_up01')
