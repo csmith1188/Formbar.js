@@ -699,10 +699,11 @@ app.post('/login', async (req, res) => {
 			else if (userData) {
 				// Decrypt users password
 				let tempPassword = decrypt(JSON.parse(userData.password))
-				if (userData.username == user.username && tempPassword == user.password) {
+				if (tempPassword == user.password) {
 					let loggedIn = false
 					let classKey = ''
 					let classPermissions
+
 					for (let classData of Object.values(cD)) {
 						if (classData.key) {
 							for (let username of Object.keys(classData.students)) {
@@ -729,10 +730,16 @@ app.post('/login', async (req, res) => {
 					req.session.username = userData.username
 					res.redirect('/')
 				} else {
-					res.redirect('/login')
+					res.render('pages/message', {
+						message: "Incorrect password",
+						title: 'Login'
+					})
 				}
 			} else {
-				res.redirect('/login')
+				res.render('pages/message', {
+					message: "user does not exist",
+					title: 'Login'
+				})
 			}
 		})
 
