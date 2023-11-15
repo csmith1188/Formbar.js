@@ -274,7 +274,6 @@ function joinClass(userName, code) {
 									console.error(error)
 									return
 								}
-								console.log(classUser);
 								if (!classUser) {
 									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 										[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
@@ -1282,19 +1281,12 @@ io.on('connection', (socket) => {
 		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
 			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
 
-		db.get(
-			'SELECT id FROM classroom WHERE name = ?',
-			[cD[socket.request.session.class].className],
-			(error, classId) => {
-				if (error) {
-					console.error(error)
-				}
-				else if (classId) {
-					classId = classId.id
-					db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [newPerm, classId, cD[socket.request.session.class].students[user].id])
-				}
-			}
-		)
+		db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [
+			newPerm,
+			cD[socket.request.session.class].id,
+			cD[socket.request.session.class].students[user].id
+		])
+
 		io.to(user).emit('reload')
 
 		cpUpdate()
