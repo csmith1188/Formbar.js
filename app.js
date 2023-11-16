@@ -54,15 +54,16 @@ var db = new sqlite3.Database('database/database.db')
 
 const logger = winston.createLogger({
 	level: 'info',
-	format: winston.format.json(),
-	defaultMeta: { service: 'user-service' },
+	format: winston.format.combine(
+		winston.format.timestamp(),
+		winston.format.printf(({ timestamp, level, message }) => {
+			return `[${timestamp}] ${level}: ${message}`
+		})
+	),
 	transports: [
-		//
-		// - Write all logs with importance level of `error` or less to `error.log`
-		// - Write all logs with importance level of `info` or less to `combined.log`
-		//
-		new winston.transports.File({ filename: 'error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'combined.log' }),
+		new winston.transports.File({ filename: 'logs/combined.log' }),
+		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+		new winston.transports.Console({ level: 'error' })
 	],
 });
 
@@ -1765,4 +1766,5 @@ io.on('connection', (socket) => {
 
 http.listen(420, () => {
 	console.log('Running on port: 420')
+	logger.log('info', 'start')
 })
