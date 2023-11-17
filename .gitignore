@@ -3,5 +3,4 @@ database/database.db
 .vscode/
 uploads/
 
-error.log
-combined.log
+*.log

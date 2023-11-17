@@ -177,20 +177,24 @@ This allows websites to check on their own if the user is logged in
 This also allows for the website to check for permissions
 */
 function isAuthenticated(req, res, next) {
-	if (req.session.username) {
-		if (cD.noClass.students[req.session.username]) {
-			if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
-				res.redirect('/manageClass')
+	try {
+		if (req.session.username) {
+			if (cD.noClass.students[req.session.username]) {
+				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+					res.redirect('/manageClass')
+				} else {
+					res.redirect('/selectClass')
+				}
 			} else {
-				res.redirect('/selectClass')
+				next()
 			}
 		} else {
-			next()
+			res.redirect('/login')
 		}
-	} else {
-		res.redirect('/login')
-	}
-}
+	} catch (err) {
+		logger.log("error", err);
+	};
+};
 
 // Check if user is logged in. Only used for create and select class pages
 // Use isAuthenticated function for any other pages
@@ -206,115 +210,128 @@ function isLoggedIn(req, res, next) {
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
-	let username = req.session.username
-	let classCode = req.session.class
-
-	if (req.url) {
-		// Defines users desired endpoint
-		let urlPath = req.url
-		// Checks if url has a / in it and removes it from the string
-		if (urlPath.indexOf('/') != -1) {
-			urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+	try {
+		let username = req.session.username
+		let classCode = req.session.class
+	
+		if (req.url) {
+			// Defines users desired endpoint
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+			if (!cD[classCode].students[username]) {
+				req.session.class = 'noClass'
+				classCode = 'noClass'
+			}
+	
+			if (!PAGE_PERMISSIONS[urlPath])
+				res.render('pages/message', {
+					message: `Error: ${urlPath} is not in the page permissions`,
+					title: 'Error'
+				})
+	
+			// Checks if users permissions are high enough
+			if (
+				PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) next()
+			else if (
+				!PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) next()
+			else {
+				res.render('pages/message', {
+					message: `Error: you don't have high enough permissions to access ${urlPath}`,
+					title: 'Error'
+				})
+			}
 		}
-		// Check for ?(urlParams) and removes it from the string
-		if (urlPath.indexOf('?') != -1) {
-			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-		}
-
-		if (!cD[classCode].students[username]) {
-			req.session.class = 'noClass'
-			classCode = 'noClass'
-		}
-
-		if (!PAGE_PERMISSIONS[urlPath])
-			res.render('pages/message', {
-				message: `Error: ${urlPath} is not in the page permissions`,
-				title: 'Error'
-			})
-
-		// Checks if users permissions are high enough
-		if (
-			PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-		) next()
-		else if (
-			!PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-		) next()
-		else {
-			res.render('pages/message', {
-				message: `Error: you don't have high enough permissions to access ${urlPath}`,
-				title: 'Error'
-			})
-		}
-	}
-}
+	} catch (err) {
+		logger.log("error", err);
+	};
+};
 
 // Allows the user to join a class
 function joinClass(userName, code) {
 	return new Promise((resolve, reject) => {
-		// Find the id of the class from the database
-		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
-			if (err) {
-				console.error(err)
-			}
-			// Check to make sure there was a class with that name
-			else if (classId && cD[code] && cD[code].key == code) {
-				// Find the id of the user who is trying to join the class
-				db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
-					if (err) {
-						console.error(err)
-					}
-					else if (userId) {
-						// Add the two id's to the junction table to link the user and class
-						db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-							[classId.id, userId.id],
-							(error, classUser) => {
-								if (error) {
-									console.error(error)
-									return
-								}
-								console.log(classUser);
-								if (!classUser) {
-									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-										[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
-											if (err) {
-												console.error(err)
-												return
+		try {
+			// Find the id of the class from the database
+			db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
+				try {
+					// Check to make sure there was a class with that name
+					if (classId && cD[code] && cD[code].key == code) {
+						// Find the id of the user who is trying to join the class
+						db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
+							try {
+								if (userId) {
+									// Add the two id's to the junction table to link the user and class
+									db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+										[classId.id, userId.id],
+										(error, classUser) => {
+											try {
+												console.log(classUser);
+												if (!classUser) {
+													db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+														[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
+															try {
+																if (err) {
+																	logger.log("error", err)
+																	return
+																}
+																let user = cD.noClass.students[userName]
+																user.classPermissions = 2
+																delete cD.noClass.students[userName]
+																cD[code].students[userName] = user
+																resolve(true)
+															} catch(err) {
+																logger.log("error", err);
+															};
+														}
+													);
+													return
+												};
+												// Get the student's session data ready to transport into new class
+												let user = cD.noClass.students[userName]
+												if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
+				
+												if (classUser)
+													user.classPermissions = classUser.permissions
+												else
+													user.classPermissions = STUDENT_PERMISSIONS
+				
+												// Remove student from old class
+												delete cD.noClass.students[userName]
+												// Add the student to the newly created class
+												cD[code].students[userName] = user
+												resolve(true)
+											} catch(err) {
+												logger.log("error", err);
 											}
-											let user = cD.noClass.students[userName]
-											user.classPermissions = 2
-											delete cD.noClass.students[userName]
-											cD[code].students[userName] = user
-											resolve(true)
 										}
 									)
-									return
 								}
-								// Get the student's session data ready to transport into new class
-								let user = cD.noClass.students[userName]
-								if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
-
-								if (classUser)
-									user.classPermissions = classUser.permissions
-								else
-									user.classPermissions = STUDENT_PERMISSIONS
-
-								// Remove student from old class
-								delete cD.noClass.students[userName]
-								// Add the student to the newly created class
-								cD[code].students[userName] = user
-								resolve(true)
-							}
-						)
+							} catch(err) {
+								logger.log("error", err);
+							};
+						});
+					} else {
+						logger.log("error", "no open class with that code");
 					}
-				})
-			} else {
-				resolve(new Error('no open class with that code'))
-			}
-		})
-	})
-}
+				} catch(err) {
+					logger.log("error", err);
+				};
+			});
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
+};
 
 // Function to convert HSL to Hex
 function convertHSLToHex(hue, saturation, lightness) {
@@ -392,23 +409,27 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
 app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
-	let students = cD[req.session.class].students
-	let keys = Object.keys(students)
-	let allStuds = []
-	for (var i = 0; i < keys.length; i++) {
-		var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-		allStuds.push(val)
-	}
-
-	/* Uses EJS to render the template and display the information for the class.
-	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-	*/
-	res.render('pages/controlPanel', {
-		title: "Control Panel",
-		pollStatus: cD[req.session.class].poll.status,
-		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-	})
-})
+	try {
+		let students = cD[req.session.class].students
+		let keys = Object.keys(students)
+		let allStuds = []
+		for (var i = 0; i < keys.length; i++) {
+			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
+			allStuds.push(val)
+		}
+	
+		/* Uses EJS to render the template and display the information for the class.
+		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+		*/
+		res.render('pages/controlPanel', {
+			title: "Control Panel",
+			pollStatus: cD[req.session.class].poll.status,
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // C
 
@@ -419,200 +440,221 @@ Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-	//Initialze a list to push each step to - Riley R., May 22, 2023
-	let steps = []
-	/*
-	Uses Excel to JSON to read the sent excel spreadsheet.
-	Each main column has been assigned a label in order to differentiate them.
-	It loops through the whole object - Riley R., May 22, 2023
-	*/
-	if (req.file) {
-		cD[req.session.class].currentStep = 0
-		const result = excelToJson({
-			sourceFile: req.file.path,
-			sheets: [{
-				name: 'Steps',
-				columnToKey: {
-					A: 'index',
-					B: 'type',
-					C: 'prompt',
-					D: 'response',
-					E: 'labels'
-				}
-			}]
-		})
-
-		/* For In Loop that iterates through the created object.
-		 Allows for the use of steps inside of a progressive lesson.
-		 Checks the object's type using a conditional - Riley R., May 22, 2023
+	try {
+		//Initialze a list to push each step to - Riley R., May 22, 2023
+		let steps = []
+		/*
+		Uses Excel to JSON to read the sent excel spreadsheet.
+		Each main column has been assigned a label in order to differentiate them.
+		It loops through the whole object - Riley R., May 22, 2023
 		*/
-		for (const key in result['Steps']) {
-			let step = {}
-			// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
-			if (result['Steps'][key].type == 'Poll') {
-				step.type = 'poll'
-				step.labels = result['Steps'][key].labels.split(', ')
-				step.responses = result['Steps'][key].response
-				step.prompt = result['Steps'][key].prompt
-				steps.push(step)
-				// Creates an object with all the data required to start a quiz
-			} else if (result['Steps'][key].type == 'Quiz') {
-				let nameQ = result['Steps'][key].prompt
-				let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-				let colToKeyObj = {
-					A: 'index',
-					B: 'question',
-					C: 'key'
-				}
-				let i = 0
-				/*
-				Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
-				Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
-				*/
-				for (const letterI in letters) {
-					if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
-						colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
-						i++
+		if (req.file) {
+			cD[req.session.class].currentStep = 0
+			const result = excelToJson({
+				sourceFile: req.file.path,
+				sheets: [{
+					name: 'Steps',
+					columnToKey: {
+						A: 'index',
+						B: 'type',
+						C: 'prompt',
+						D: 'response',
+						E: 'labels'
 					}
-				}
-				let quizLoad = excelToJson({
-					sourceFile: req.file.path,
-					sheets: [{
-						name: nameQ,
-						columnToKey: colToKeyObj
-					}]
-				})
-				let questionList = []
-				for (let i = 1; i < quizLoad[nameQ].length; i++) {
-					let questionMaker = []
-
-					questionMaker.push(quizLoad[nameQ][i].question)
-					questionMaker.push(quizLoad[nameQ][i].key)
+				}]
+			})
+	
+			/* For In Loop that iterates through the created object.
+			 Allows for the use of steps inside of a progressive lesson.
+			 Checks the object's type using a conditional - Riley R., May 22, 2023
+			*/
+			for (const key in result['Steps']) {
+				let step = {}
+				// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
+				if (result['Steps'][key].type == 'Poll') {
+					step.type = 'poll'
+					step.labels = result['Steps'][key].labels.split(', ')
+					step.responses = result['Steps'][key].response
+					step.prompt = result['Steps'][key].prompt
+					steps.push(step)
+					// Creates an object with all the data required to start a quiz
+				} else if (result['Steps'][key].type == 'Quiz') {
+					let nameQ = result['Steps'][key].prompt
+					let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+					let colToKeyObj = {
+						A: 'index',
+						B: 'question',
+						C: 'key'
+					}
+					let i = 0
+					/*
+					Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
+					Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
+					*/
 					for (const letterI in letters) {
-						if (quizLoad[nameQ][i][letters.charAt(letterI)] != undefined) {
-							questionMaker.push(quizLoad[nameQ][i][letters.charAt(letterI)])
+						if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
+							colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
+							i++
 						}
 					}
-					questionList.push(questionMaker)
-				}
-				step.type = 'quiz'
-				step.questions = questionList
-				steps.push(step)
-			} else if (result['Steps'][key].type == 'Lesson') {
-				/*
-				Creates an object with all necessary data in order to make a lesson.
-				The data is stored on a page in an excel spreadsheet.
-				the name of this page is defined in the main page of the excel spreadsheet. - Riley R., May 22, 2023
-				*/
-				nameL = result['Steps'][key].prompt
-				let lessonLoad = excelToJson({
-					sourceFile: req.file.path,
-					sheets: [{
-						name: nameL,
-						columnToKey: {
-							A: 'header',
-							B: 'data'
+					let quizLoad = excelToJson({
+						sourceFile: req.file.path,
+						sheets: [{
+							name: nameQ,
+							columnToKey: colToKeyObj
+						}]
+					})
+					let questionList = []
+					for (let i = 1; i < quizLoad[nameQ].length; i++) {
+						let questionMaker = []
+	
+						questionMaker.push(quizLoad[nameQ][i].question)
+						questionMaker.push(quizLoad[nameQ][i].key)
+						for (const letterI in letters) {
+							if (quizLoad[nameQ][i][letters.charAt(letterI)] != undefined) {
+								questionMaker.push(quizLoad[nameQ][i][letters.charAt(letterI)])
+							}
 						}
-					}]
-				})
-				let lessonArr = []
-				for (let i = 1; i < lessonLoad[nameL].length; i++) {
-					let lessonMaker = [lessonLoad[nameL][i].header]
-
-					let lessonContent = lessonLoad[nameL][i].data.split(', ')
-					for (let u = 0; u < lessonContent.length; u++) {
-						lessonMaker.push(lessonContent[u])
+						questionList.push(questionMaker)
 					}
-					lessonArr.push(lessonMaker)
+					step.type = 'quiz'
+					step.questions = questionList
+					steps.push(step)
+				} else if (result['Steps'][key].type == 'Lesson') {
+					/*
+					Creates an object with all necessary data in order to make a lesson.
+					The data is stored on a page in an excel spreadsheet.
+					the name of this page is defined in the main page of the excel spreadsheet. - Riley R., May 22, 2023
+					*/
+					nameL = result['Steps'][key].prompt
+					let lessonLoad = excelToJson({
+						sourceFile: req.file.path,
+						sheets: [{
+							name: nameL,
+							columnToKey: {
+								A: 'header',
+								B: 'data'
+							}
+						}]
+					})
+					let lessonArr = []
+					for (let i = 1; i < lessonLoad[nameL].length; i++) {
+						let lessonMaker = [lessonLoad[nameL][i].header]
+	
+						let lessonContent = lessonLoad[nameL][i].data.split(', ')
+						for (let u = 0; u < lessonContent.length; u++) {
+							lessonMaker.push(lessonContent[u])
+						}
+						lessonArr.push(lessonMaker)
+					}
+	
+					let dateConfig = new Date()
+	
+					step.type = 'lesson'
+					step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+					step.lesson = lessonArr
+					steps.push(step)
 				}
-
-				let dateConfig = new Date()
-
-				step.type = 'lesson'
-				step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-				step.lesson = lessonArr
-				steps.push(step)
 			}
+	
+			cD[req.session.class].steps = steps
+			res.redirect('/controlPanel')
 		}
-
-		cD[req.session.class].steps = steps
-		res.redirect('/controlPanel')
-	}
-})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // Allow teacher to create class
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
 // Plus they can ban and kick as long as they can create classes
 app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
-	let submittionType = req.body.submittionType
-	let className = req.body.name
-	let classId = req.body.id
-
-	function makeClass(id, key) {
-		// Get the teachers session data ready to transport into new class
-		var user = cD.noClass.students[req.session.username]
-		// Remove teacher from old class
-		delete cD.noClass.students[req.session.username]
-		// Add class into the session data
-		cD[key] = new Classroom(id, className, key)
-		// Add the teacher to the newly created class
-		cD[key].students[req.session.username] = user
-		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
-
-		req.session.class = key
-
-		res.redirect('/home')
-	}
-	// Checks if teacher is creating a new class or joining an old class
-	//generates a 4 character key
-	//this is used for students who want to enter a class
-	if (submittionType == 'create') {
-		let key = ''
-		for (let i = 0; i < 4; i++) {
-			let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-			let letter = keygen[Math.floor(Math.random() * keygen.length)]
-			key += letter
-		}
-		// Add classroom to the database
-		db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
-			if (err) {
-				console.error(err)
-			} else {
-				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
-					if (err) {
-						console.error(err)
-					}
-					else if (classroom) makeClass(classroom.id, classroom.key)
-				})
+	try {
+		let submittionType = req.body.submittionType
+		let className = req.body.name
+		let classId = req.body.id
+	
+		function makeClass(id, key) {
+			try {
+				// Get the teachers session data ready to transport into new class
+				var user = cD.noClass.students[req.session.username]
+				// Remove teacher from old class
+				delete cD.noClass.students[req.session.username]
+				// Add class into the session data
+				cD[key] = new Classroom(id, className, key)
+				// Add the teacher to the newly created class
+				cD[key].students[req.session.username] = user
+				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+				console.log(cD[key].students[req.session.username].classPermissions);
+		
+				req.session.class = key
+		
+				res.redirect('/home')
+			} catch(err) {
+				logger.log("error", err);
+			};
+		};
+		// Checks if teacher is creating a new class or joining an old class
+		//generates a 4 character key
+		//this is used for students who want to enter a class
+		if (submittionType == 'create') {
+			let key = ''
+			for (let i = 0; i < 4; i++) {
+				let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+				let letter = keygen[Math.floor(Math.random() * keygen.length)]
+				key += letter
 			}
-		})
-	} else {
-		db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
-			if (err) {
-				console.error(err)
-			} else if (classroom)
-				makeClass(classroom.id, classroom.key)
-		})
-	}
-})
+			// Add classroom to the database
+			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
+				try {
+					db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
+						try {
+							if (classroom) makeClass(classroom.id, classroom.key);
+						} catch(err) {
+							logger.log("error", err);
+						};
+					});
+				} catch(err) {
+					logger.log("error", err);
+				};
+			});
+		} else {
+			db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+				try {
+					if (classroom) makeClass(classroom.id, classroom.key);
+				} catch(err) {
+					logger.log("error", err);
+				};
+			});
+		};
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // D
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
-	let className = req.body.name
-
-	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
-		if (err) {
-			console.error(err)
-		} else if (classroom) {
-			if (cD[classroom.key]) {
-				deleteStudents()
-				delete cD[classroom.key]
-			}
-			db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
-		} else res.redirect('/home')
-	})
-})
+	try {
+		let className = req.body.name
+	
+		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
+			try {
+				if (classroom) {
+					if (cD[classroom.key]) {
+						deleteStudents()
+						delete cD[classroom.key]
+					}
+					db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
+				} else res.redirect('/home')
+			} catch(err) {
+				logger.log("error", err);
+			};
+		});
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // E
 
@@ -626,17 +668,25 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 // It renders the home page so teachers and students can navigate to it
 // It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/index', {
-		title: 'Home'
-	})
-})
+	try {
+		res.render('pages/index', {
+			title: 'Home'
+		})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 
 app.get('/help', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/help', {
-		title: "Help"
-	})
-})
+	try {
+		res.render('pages/help', {
+			title: "Help"
+		})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // I
 
@@ -647,155 +697,168 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 // L
 /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
 app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
-		if (err) {
-			console.error(err)
-		} else if (rows) {
-			res.render('pages/previousLesson', {
-				rows: rows,
-				title: "Previous Lesson"
-			})
-		}
-	})
-})
+	try {
+		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
+			try {
+				if (rows) {
+					res.render('pages/previousLesson', {
+						rows: rows,
+						title: "Previous Lesson"
+					})
+				}
+			} catch(err) {
+				logger.log("error", err);
+			};
+		});
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	let lesson = JSON.parse(req.body.data)
-	res.render('pages/lesson', {
-		lesson: lesson,
-		title: "Today's Lesson"
-	})
-})
+	try {
+		let lesson = JSON.parse(req.body.data)
+		res.render('pages/lesson', {
+			lesson: lesson,
+			title: "Today's Lesson"
+		})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
-	res.render('pages/login', {
-		title: 'Login'
-	})
-})
+	try {
+		res.render('pages/login', {
+			title: 'Login'
+		})
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
 // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
 // This also encrypts passwords to make sure people's accounts don't get hacked
 app.post('/login', async (req, res) => {
-	var user = {
-		username: req.body.username,
-		password: req.body.password,
-		loginType: req.body.loginType,
-		userType: req.body.userType
-	}
-	var passwordCrypt = encrypt(user.password)
-	// Check whether user is logging in or signing up
-	if (user.loginType == "login") {
-		// Get the users login in data to verify password
-		db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
-			if (err) {
-				console.error(err)
-			}
-			// Check if a user with that name was found in the database
-			else if (userData) {
-				// Decrypt users password
-				let tempPassword = decrypt(JSON.parse(userData.password))
-				if (userData.username == user.username && tempPassword == user.password) {
-					let loggedIn = false
-					let classKey = ''
-					let classPermissions
-					for (let classData of Object.values(cD)) {
-						if (classData.key) {
-							for (let username of Object.keys(classData.students)) {
-								if (username == userData.username) {
-									loggedIn = true
-									classKey = classData.key
-									classPermissions = classData.students[username].permissions
+	try {
+		var user = {
+			username: req.body.username,
+			password: req.body.password,
+			loginType: req.body.loginType,
+			userType: req.body.userType
+		}
+		var passwordCrypt = encrypt(user.password)
+		// Check whether user is logging in or signing up
+		if (user.loginType == "login") {
+			// Get the users login in data to verify password
+			db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
+				if (err) {
+					console.error(err)
+				}
+				// Check if a user with that name was found in the database
+				else if (userData) {
+					// Decrypt users password
+					let tempPassword = decrypt(JSON.parse(userData.password))
+					if (tempPassword == user.password) {
+						let loggedIn = false
+						let classKey = ''
+						let classPermissions
 
-									break
+						for (let classData of Object.values(cD)) {
+							if (classData.key) {
+								for (let username of Object.keys(classData.students)) {
+									if (username == userData.username) {
+										loggedIn = true
+										classKey = classData.key
+										classPermissions = classData.students[username].permissions
+
+										break
+									}
 								}
 							}
 						}
-					}
-
-					if (loggedIn) {
-						req.session.class = classKey
 					} else {
-						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-						req.session.class = 'noClass'
+						res.render('pages/message', {
+							message: "user does not exist",
+							title: 'Login'
+						})
 					}
-					// Add a cookie to transfer user credentials across site
-					req.session.userId = userData.id
-					req.session.username = userData.username
-					res.redirect('/')
+				}
+			})
+		} else if (user.loginType == "new") {
+			let permissions = STUDENT_PERMISSIONS
+	
+			db.all('SELECT API, secret, username FROM users', (error, users) => {
+				if (error) {
+					console.error(error)
 				} else {
-					res.redirect('/login')
-				}
-			} else {
-				res.redirect('/login')
-			}
-		})
-
-	} else if (user.loginType == "new") {
-		let permissions = STUDENT_PERMISSIONS
-
-		db.all('SELECT API, secret FROM users', (error, users) => {
-			if (error) {
-				console.error(error)
-			} else {
-				let existingAPIs = []
-				let existingSecrets = []
-				let newAPI
-				let newSecret
-
-				if (users.length == 0) permissions = MANAGER_PERMISSIONS
-
-				for (let user of users) {
-					existingAPIs.push(user.API)
-					existingSecrets.push(user.secret)
-				}
-
-				do {
-					newAPI = crypto.randomBytes(64).toString('hex')
-				} while (existingAPIs.includes(newAPI))
-				do {
-					newSecret = crypto.randomBytes(256).toString('hex')
-				} while (existingSecrets.includes(newSecret))
-
-				// Add the new user to the database
-				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
-					[
-						user.username,
-						JSON.stringify(passwordCrypt),
-						permissions,
-						newAPI,
-						newSecret
-					], (err) => {
-						if (err) {
-							console.error(err)
+					let existingAPIs = []
+					let existingSecrets = []
+					let newAPI
+					let newSecret
+	
+					if (users.length == 0) permissions = MANAGER_PERMISSIONS
+	
+					for (let dbUser of users) {
+						existingAPIs.push(dbUser.API)
+						existingSecrets.push(dbUser.secret)
+						if (dbUser.username == user.username) {
+							res.redirect('/login')
+							return
 						}
-					})
-				// Find the user in which was just created to get the id of the user
-				db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-					if (err) {
-						console.error(err)
-					} else {
-						// Add user to session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-
-						// Add the user to the session in order to transfer data between each page
-						req.session.userId = userData.id
-						req.session.username = userData.username
-						req.session.class = 'noClass'
-						res.redirect('/')
 					}
-				})
-			}
-		})
-	} else if (user.loginType == "guest") {
-
-	}
-})
+	
+					do {
+						newAPI = crypto.randomBytes(64).toString('hex')
+					} while (existingAPIs.includes(newAPI))
+					do {
+						newSecret = crypto.randomBytes(256).toString('hex')
+					} while (existingSecrets.includes(newSecret))
+		
+					// Add the new user to the database
+					db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+						[
+							user.username,
+							JSON.stringify(passwordCrypt),
+							permissions,
+							newAPI,
+							newSecret
+						], (err) => {
+							if (err) {
+								console.error(err)
+								return
+							}
+							// Find the user in which was just created to get the id of the user
+							db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+								if (err) {
+									console.error(err)
+								} else {
+									// Add user to session
+									cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+										
+									// Add the user to the session in order to transfer data between each page
+									req.session.userId = userData.id
+									req.session.username = userData.username
+									req.session.class = 'noClass'
+									res.redirect('/')
+								}
+							})
+						}
+					)
+				}
+			})
+		} else if (user.loginType == "guest") {
+	
+		}
+	} catch(err) {
+		logger.log("error", err);
+	};
+});
 
 // M
 // Loads which classes the teacher is an owner of
@@ -1267,19 +1330,12 @@ io.on('connection', (socket) => {
 		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
 			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
 
-		db.get(
-			'SELECT id FROM classroom WHERE name = ?',
-			[cD[socket.request.session.class].className],
-			(error, classId) => {
-				if (error) {
-					console.error(error)
-				}
-				else if (classId) {
-					classId = classId.id
-					db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [newPerm, classId, cD[socket.request.session.class].students[user].id])
-				}
-			}
-		)
+		db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [
+			newPerm,
+			cD[socket.request.session.class].id,
+			cD[socket.request.session.class].students[user].id
+		])
+
 		io.to(user).emit('reload')
 
 		cpUpdate()
