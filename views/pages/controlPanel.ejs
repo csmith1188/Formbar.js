@@ -54,7 +54,7 @@
 					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
 					<div id="startPollForm">
 						<label for="resNumber">How many possible responses?</label>
-						<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+						<input type="number" id="resNumber" min="0" max="26" step="1" value="0" onchange="responseAmountChange()">
 						<br>
 						<label for="resTextBox">Would like to accept text responses?</label>
 						<input type="checkbox" id="resTextBox">
@@ -438,7 +438,7 @@
 			};
 
 			function responseAmountChange() {
-				if (resNumber.value < 1) resNumber.value = 1
+				if (resNumber.value < 0) resNumber.value = 0
 				if (resNumber.value > 26) resNumber.value = 26
 
 				generatedColors = generateColors(resNumber.value)
