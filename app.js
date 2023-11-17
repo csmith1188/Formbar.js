@@ -99,7 +99,6 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	home: { permissions: GUEST_PERMISSIONS, classPage: false },
 }
 
 
@@ -370,7 +369,7 @@ app.use('/api', apiRoutes)
 // This allows it to check if the user is logged in along with the home page
 // It also allows for redirection to any other page if needed
 app.get('/', isAuthenticated, (req, res) => {
-	res.redirect('/home')
+	res.redirect('/student')
 })
 
 
@@ -562,7 +561,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 		req.session.class = key
 
-		res.redirect('/home')
+		res.redirect('/student')
 	}
 	// Checks if teacher is creating a new class or joining an old class
 	//generates a 4 character key
@@ -610,7 +609,7 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 				delete cD[classroom.key]
 			}
 			db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
-		} else res.redirect('/home')
+		} else res.redirect('/student')
 	})
 })
 
@@ -621,15 +620,7 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 // G
 
 // H
-// This is the home page, where the teacher and students can access can access the formbar js
-// It also shows the color and title of the formbar js
-// It renders the home page so teachers and students can navigate to it
-// It uses the authenitication to make sure the user is actually logged in
-app.get('/home', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/index', {
-		title: 'Home'
-	})
-})
+
 
 
 app.get('/help', isAuthenticated, permCheck, (req, res) => {
@@ -896,7 +887,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	let checkComplete = await joinClass(req.session.username, code)
 	if (checkComplete === true) {
 		req.session.class = code
-		res.redirect('/home')
+		res.redirect('/student')
 	} else {
 		// res.send('Error: no open class with that name')
 		res.render('pages/message', {
@@ -1398,7 +1389,8 @@ io.on('connection', (socket) => {
 	socket.on('requestBreak', (reason) => {
 		let student = cD[socket.request.session.class].students[socket.request.session.username]
 		student.break = reason
-		cpUpdate()
+		console.log(student.break)
+		cpUpdate(socket.request.session.class)
 	})
 
 	// Aproves the break ticket request
@@ -1408,6 +1400,7 @@ io.on('connection', (socket) => {
 		if (breakApproval) io.to(username).emit('break')
 		cpUpdate()
 		vbUpdate()
+		console.log (breakApproval, username)
 	})
 
 	// Ends the break

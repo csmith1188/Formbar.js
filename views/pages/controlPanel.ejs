@@ -747,12 +747,12 @@
 					breakDiv.appendChild(breakReason);
 					let breakApprove = document.createElement("button");
 					breakApprove.classList.add("quickButton");
-					breakApprove.onclick = approveBreak(true, studentData.username);
+					breakApprove.onclick = ()=> {approveBreak(true, studentData.username)};
 					breakApprove.innerText = "Approve";
 					breakDiv.appendChild(breakApprove);
 					let breakDeny = document.createElement("button");
 					breakDeny.classList.add("quickButton");
-					breakApprove.onclick = approveBreak(false, studentData.username);
+					breakDeny.onclick = () => {approveBreak(false, studentData.username)};
 					breakDeny.innerText = "Deny";
 					breakDiv.appendChild(breakDeny);
 					newStudent.appendChild(breakDiv);
