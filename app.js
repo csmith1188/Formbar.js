@@ -289,7 +289,7 @@ function joinClass(userName, code) {
 																delete cD.noClass.students[userName]
 																cD[code].students[userName] = user
 																resolve(true)
-															} catch(err) {
+															} catch (err) {
 																logger.log("error", err);
 															};
 														}
@@ -310,20 +310,20 @@ function joinClass(userName, code) {
 												// Add the student to the newly created class
 												cD[code].students[userName] = user
 												resolve(true)
-											} catch(err) {
+											} catch (err) {
 												logger.log("error", err);
 											}
 										}
 									)
 								}
-							} catch(err) {
+							} catch (err) {
 								logger.log("error", err);
 							};
 						});
 					} else {
 						logger.log("error", "no open class with that code");
 					}
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
@@ -394,10 +394,14 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
-	res.render('pages/apiKey', {
-		title: "API Key",
-		API: cD[req.session.class].students[req.session.username].API
-	})
+	try {
+		res.render('pages/apiKey', {
+			title: "API Key",
+			API: cD[req.session.class].students[req.session.username].API
+		})
+	} catch (err) {
+		logger.log('error', err)
+	}
 })
 
 // B
@@ -426,7 +430,7 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 			pollStatus: cD[req.session.class].poll.status,
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -560,7 +564,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			cD[req.session.class].steps = steps
 			res.redirect('/controlPanel')
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -591,7 +595,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				req.session.class = key
 
 				res.redirect('/home')
-			} catch(err) {
+			} catch (err) {
 				logger.log("error", err);
 			};
 		};
@@ -611,11 +615,11 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 					db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
 							if (classroom) makeClass(classroom.id, classroom.key);
-						} catch(err) {
+						} catch (err) {
 							logger.log("error", err);
 						};
 					});
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
@@ -623,12 +627,12 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 				try {
 					if (classroom) makeClass(classroom.id, classroom.key);
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
 		};
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -647,11 +651,11 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 					}
 					db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
 				} else res.redirect('/home')
-			} catch(err) {
+			} catch (err) {
 				logger.log("error", err);
 			};
 		});
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -672,7 +676,7 @@ app.get('/home', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/index', {
 			title: 'Home'
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -683,7 +687,7 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/help', {
 			title: "Help"
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -706,11 +710,11 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 						title: "Previous Lesson"
 					})
 				}
-			} catch(err) {
+			} catch (err) {
 				logger.log("error", err);
 			};
 		});
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -722,7 +726,7 @@ app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 			lesson: lesson,
 			title: "Today's Lesson"
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -735,7 +739,7 @@ app.get('/login', (req, res) => {
 		res.render('pages/login', {
 			title: 'Login'
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -787,7 +791,7 @@ app.post('/login', async (req, res) => {
 							})
 						}
 					}
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
@@ -840,27 +844,31 @@ app.post('/login', async (req, res) => {
 									if (err) {
 										console.error(err)
 									} else {
-										// Add user to session
-										cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+										try {
+											// Add user to session
+											cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
 
-										// Add the user to the session in order to transfer data between each page
-										req.session.userId = userData.id
-										req.session.username = userData.username
-										req.session.class = 'noClass'
-										res.redirect('/')
+											// Add the user to the session in order to transfer data between each page
+											req.session.userId = userData.id
+											req.session.username = userData.username
+											req.session.class = 'noClass'
+											res.redirect('/')
+										} catch (err) {
+											logger.log('error', err)
+										}
 									}
 								})
 							}
 						)
 					}
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
 		} else if (user.loginType == "guest") {
 
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -877,7 +885,7 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 			title: 'Create Class',
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -894,7 +902,7 @@ app.get('/oauth', (req, res) => {
 			title: "Oauth",
 			redirectURL: redirectURL
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -924,13 +932,13 @@ app.post('/oauth', (req, res) => {
 						} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
 						// If there in no userData, then it redirects back to the oauth page.
 					} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
 			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
 		} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -942,7 +950,7 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 			{
 				title: 'Plugins'
 			})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -969,12 +977,12 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 						title: 'Select Class',
 						joinedClasses
 					})
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			}
 		);
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -985,7 +993,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
 		let code = req.body.key.toLowerCase()
 
-		let checkComplete = await joinClass(req.session.username, code)
+		let checkComplete = await joinClass(req.session.username, code).catch(err => logger.log('error', err))
 		if (checkComplete === true) {
 			req.session.class = code
 			res.redirect('/home')
@@ -996,7 +1004,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 				title: 'Error'
 			})
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1062,7 +1070,7 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 				lesson: cD[req.session.class].lesson
 			})
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1098,7 +1106,7 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 				title: "Results"
 			})
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1116,7 +1124,7 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 			io: io,
 			className: cD[req.session.class].className
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1147,7 +1155,7 @@ app.use((req, res, next) => {
 			message: `Error: the page ${urlPath} does not exist`,
 			title: "Error"
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1172,7 +1180,7 @@ io.use((socket, next) => {
 					try {
 						if (!userData) return next(new Error('not a valid API Key'))
 						next()
-					} catch(err) {
+					} catch (err) {
 						logger.log("error", err);
 					};
 				}
@@ -1180,7 +1188,7 @@ io.use((socket, next) => {
 		} else {
 			logger.log("error", "Missing username of api");
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 });
@@ -1203,7 +1211,7 @@ io.on('connection', (socket) => {
 		if (socket.request.session.api) {
 			socket.join(socket.request.session.class)
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err);
 	};
 
@@ -1215,11 +1223,11 @@ io.on('connection', (socket) => {
 				try {
 					var pollHistory = rows
 					io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
-				} catch(err) {
+				} catch (err) {
 					logger.log("error", err);
 				};
 			});
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1263,7 +1271,7 @@ io.on('connection', (socket) => {
 				weight: classData.poll.weight,
 				blind: classData.poll.blind
 			})
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	}
@@ -1271,7 +1279,7 @@ io.on('connection', (socket) => {
 	function pollUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('pollUpdate', cD[socket.request.session.class].poll)
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1279,7 +1287,7 @@ io.on('connection', (socket) => {
 	function modeUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('modeUpdate', cD[socket.request.session.class].mode)
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1287,7 +1295,7 @@ io.on('connection', (socket) => {
 	function quizUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('quizUpdate', cD[socket.request.session.class].quiz)
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1295,7 +1303,7 @@ io.on('connection', (socket) => {
 	function lessonUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('lessonUpdate', cD[socket.request.session.class].lesson)
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1308,12 +1316,12 @@ io.on('connection', (socket) => {
 				(error, plugins) => {
 					try {
 						io.to(socket.request.session.class).emit('pluginUpdate', plugins)
-					} catch(err) {
+					} catch (err) {
 						logger.log("error", err);
 					};
 				}
 			)
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1327,7 +1335,7 @@ io.on('connection', (socket) => {
 			userSockets[username].request.session.save()
 			delete cD[classCode].students[username]
 			io.to(username).emit('reload')
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1339,7 +1347,7 @@ io.on('connection', (socket) => {
 					deleteStudent(username, classCode)
 				}
 			}
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1351,7 +1359,7 @@ io.on('connection', (socket) => {
 			}
 			delete cD[classCode]
 			socket.broadcast.to(socket.request.session.class).emit('classEnded')
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1362,12 +1370,12 @@ io.on('connection', (socket) => {
 				[userSockets[username].request.session.userId], (err, ownedClasses) => {
 					try {
 						io.to(username).emit('getOwnedClasses', ownedClasses)
-					} catch(err) {
+					} catch (err) {
 						logger.log("error", err);
 					};
 				}
 			);
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	};
@@ -1400,19 +1408,24 @@ io.on('connection', (socket) => {
 
 			if (userRequests[requestType].length >= limit) {
 				setTimeout(() => {
-					userRequests[requestType].shift()
+					try {
+
+						userRequests[requestType].shift()
+					} catch (err) {
+						logger.log('error', err)
+					}
 				}, blockTime)
 			} else {
 				userRequests[requestType].push(now)
 				next()
 			}
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	});
 
 	// /poll websockets for updating the database
-	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
+	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
 			logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${res}, ${textRes}`);
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
@@ -1425,7 +1438,7 @@ io.on('connection', (socket) => {
 						db.get('SELECT digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (error, data) => {
 							try {
 								db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
-							} catch(err) {
+							} catch (err) {
 								logger.log("error", err);
 							};
 						});
@@ -1435,7 +1448,7 @@ io.on('connection', (socket) => {
 			}
 			cpUpdate()
 			vbUpdate()
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	})
@@ -1459,64 +1472,64 @@ io.on('connection', (socket) => {
 			io.to(user).emit('reload')
 
 			cpUpdate()
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	});
 
 	socket.on('permChange', (user, newPerm) => {
 		try {
-newPerm = Number(newPerm)
-	
+			newPerm = Number(newPerm)
+
 			cD[socket.request.session.class].students[user].permissions = newPerm
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	});
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
+	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
 		try {
-let generatedColors = generateColors(resNumber)
-	
+			let generatedColors = generateColors(resNumber)
+
 			cD[socket.request.session.class].mode = 'poll'
 			cD[socket.request.session.class].poll.blind = blind
-cD[socket.request.session.class].poll.status = true
-	
+			cD[socket.request.session.class].poll.status = true
+
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
 				let letterString = "abcdefghijklmnopqrstuvwxyz"
 				let answer = letterString[i]
 				let weight = 1
-let color = generatedColors[i]
-	
+				let color = generatedColors[i]
+
 				if (polls[i].answer)
 					answer = polls[i].answer
 				if (polls[i].weight)
 					weight = polls[i].weight
 				if (polls[i].color)
-color = polls[i].color
-	
+					color = polls[i].color
+
 				cD[socket.request.session.class].poll.responses[answer] = {
 					answer: answer,
 					weight: weight,
-color: color
-}
-}
-	
+					color: color
+				}
+			}
+
 			cD[socket.request.session.class].poll.weight = weight
 			cD[socket.request.session.class].poll.textRes = resTextBox
-cD[socket.request.session.class].poll.prompt = pollPrompt
-	
+			cD[socket.request.session.class].poll.prompt = pollPrompt
+
 			for (var key in cD[socket.request.session.class].students) {
 				cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
-cD[socket.request.session.class].students[key].pollRes.textRes = ""
-}
-	
+				cD[socket.request.session.class].students[key].pollRes.textRes = ""
+			}
+
 			pollUpdate()
 			vbUpdate()
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	});
@@ -1524,19 +1537,19 @@ cD[socket.request.session.class].students[key].pollRes.textRes = ""
 	// End the current poll. Does not take any arguments
 	socket.on('endPoll', () => {
 		try {
-let data = { prompt: '', names: [], letter: [], text: [] }
-	
+			let data = { prompt: '', names: [], letter: [], text: [] }
+
 			let dateConfig = new Date()
-let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-	
-data.prompt = cD[socket.request.session.class].poll.prompt
-	
+			let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+
+			data.prompt = cD[socket.request.session.class].poll.prompt
+
 			for (const key in cD[socket.request.session.class].students) {
 				data.names.push(cD[socket.request.session.class].students[key].username)
 				data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
-data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
-}
-	
+				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
+			}
+
 			db.run(
 				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
@@ -1545,14 +1558,14 @@ data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 					};
 				}
 			);
-	
+
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
-cD[socket.request.session.class].poll.status = false
-	
+			cD[socket.request.session.class].poll.status = false
+
 			pollUpdate()
 			vbUpdate()
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err);
 		};
 	});
@@ -1581,51 +1594,51 @@ cD[socket.request.session.class].poll.status = false
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
 		try {
-		  logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${reason}, ${time}`);
-		  cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
-		  cpUpdate();
+			logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${reason}, ${time}`);
+			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
+			cpUpdate();
 		} catch (err) {
-		  logger.log('error', err)
+			logger.log('error', err)
 		}
-	  });
+	});
 
-	  // Sends a break ticket
-	  socket.on('requestBreak', (reason) => {
+	// Sends a break ticket
+	socket.on('requestBreak', (reason) => {
 		try {
-		  let student = cD[socket.request.session.class].students[socket.request.session.username]
-		  student.break = reason
-		  cpUpdate()
+			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			student.break = reason
+			cpUpdate()
 		} catch (err) {
-		  lgger.log('error', err)
+			logger.log('error', err)
 		}
-	  })
+	})
 
-	  // Aproves the break ticket request
-	  socket.on('approveBreak', (breakApproval, username) => {
+	// Aproves the break ticket request
+	socket.on('approveBreak', (breakApproval, username) => {
 		try {
-		  let student = cD[socket.request.session.class].students[username]
-		  student.break = breakApproval
-		  if (breakApproval) io.to(username).emit('break')
-		  cpUpdate()
-		  vbUpdate()
+			let student = cD[socket.request.session.class].students[username]
+			student.break = breakApproval
+			if (breakApproval) io.to(username).emit('break')
+			cpUpdate()
+			vbUpdate()
 		} catch (err) {
-		  logger.log('error', err)
+			logger.log('error', err)
 		}
-	  })
+	})
 
-	  // Ends the break
-	  socket.on('endBreak', () => {
+	// Ends the break
+	socket.on('endBreak', () => {
 		try {
-		  let student = cD[socket.request.session.class].students[socket.request.session.username]
-		  student.break = false
+			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			student.break = false
 
-		  cpUpdate()
-		  vbUpdate()
+			cpUpdate()
+			vbUpdate()
 		} catch (err) {
-		  logger.log('error', err)
+			logger.log('error', err)
 		}
-	  })
-	 
+	})
+
 	// Deletes a user from the class
 	socket.on('deleteStudent', (username) => {
 		try {
@@ -2007,7 +2020,7 @@ cD[socket.request.session.class].poll.status = false
 			try {
 				for (let className of Object.keys(cD)) {
 					if (cD[className].students[username]) {
-					if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
+						if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
 						else return socket.emit('getUserClass', className)
 					}
 				}
