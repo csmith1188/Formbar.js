@@ -138,11 +138,11 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, customPolls = []) {
+	constructor(id, className, key, sharedPolls = []) {
 		this.id = id
 		this.className = className
 		this.students = {}
-		this.customPolls = customPolls || []
+		this.sharedPolls = sharedPolls || []
 		this.poll = {
 			status: false,
 			responses: {},
@@ -571,7 +571,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		// Remove teacher from old class
 		delete cD.noClass.students[req.session.username]
 		// Add class into the session data
-		cD[key] = new Classroom(id, className, key, customPolls)
+		cD[key] = new Classroom(id, className, key, JSON.parse(customPolls))
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
 		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -604,11 +604,12 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			}
 		})
 	} else {
-		db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+		db.get('SELECT classroom.id, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?', [classId], (err, classroom) => {
 			if (err) {
 				console.error(err)
-			} else if (classroom)
-				makeClass(classroom.id, classroom.key)
+			} else if (classroom) {
+				makeClass(classroom.id, classroom.key, classroom.sharedPolls)
+			}
 		})
 	}
 })
@@ -1213,7 +1214,7 @@ io.on('connection', (socket) => {
 		let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
 		let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
 		let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-		let classroomCustomPolls = structuredClone(cD[userSession.class].customPolls)
+		let classroomCustomPolls = structuredClone(cD[userSession.class].sharedPolls)
 		let publicCustomPolls = []
 		let customPollIds = userCustomPolls.concat(classroomCustomPolls)
 
@@ -1606,7 +1607,7 @@ io.on('connection', (socket) => {
 		)
 	})
 
-	socket.on('sharePoll', (pollId, username) => {
+	socket.on('sharePollToUser', (pollId, username) => {
 		db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
 			if (error) {
 				console.error(error)
@@ -1673,7 +1674,7 @@ io.on('connection', (socket) => {
 		})
 	})
 
-	socket.on('removeShare', (pollId, userId) => {
+	socket.on('removeUserShare', (pollId, userId) => {
 		db.get(
 			'SELECT * FROM shared_polls WHERE pollId=? AND userId = ?',
 			[pollId, userId],
@@ -1721,6 +1722,72 @@ io.on('connection', (socket) => {
 		let pollShares = await getPollShares(pollId)
 
 		socket.emit('getPollShares', pollShares)
+	})
+
+	socket.on('sharePollToClass', (pollId, classCode) => {
+		db.get('SELECT * FROM classroom WHERE key = ?', classCode, (error, classroom) => {
+			if (error) {
+				console.error(error)
+				return
+			}
+			if (!classroom) {
+				socket.emit('message', 'There is no class with that code.')
+				return
+			}
+
+			db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+
+				if (!poll) {
+					socket.emit('message', 'Poll does not exist (please contact the programmer)')
+					return
+				}
+
+				let name = 'Unnamed Poll'
+				if (poll.name) name = poll.name
+				else if (poll.prompt) name = poll.prompt
+
+				db.get(
+					'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+					[pollId, classroom.id],
+					(error, sharePoll) => {
+						if (error) {
+							console.error(error);
+							return
+						}
+						if (sharePoll) {
+							socket.emit('message', `${name} is Already Shared with that class`)
+							return
+						}
+
+						db.run(
+							'INSERT INTO class_polls (pollId, classId) VALUES (?, ?)',
+							[pollId, classroom.id],
+							async (error) => {
+								if (error) {
+									console.error(error)
+									return
+								}
+
+								socket.emit('message', `Shared ${name} with that class`)
+
+								let pollShares = await getPollShares(pollId)
+								socket.emit('getPollShares', pollShares)
+
+								for (let username of Object.keys(cD[classCode].students)) {
+									console.log(username);
+									cD[classCode].sharedPolls.push(pollId)
+									customPollUpdate(username)
+								}
+							}
+						)
+					}
+				)
+			})
+		})
 	})
 
 	// Sends a help ticket

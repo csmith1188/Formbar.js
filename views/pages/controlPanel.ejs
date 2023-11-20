@@ -139,6 +139,7 @@
 					<input type="text" name="share" id="sharePollInput" pattern="[a-z0-9]+" placeholder="Username"
 						onkeypress="if(event.key == 'Enter') sharePoll()">
 				</dialog>
+				<button onclick="socket.emit('sharePollToClass', 5 , 'vmjj')">click me</button>
 				<%- include('../partials/body_content') %>
 		</body>
 
@@ -1182,7 +1183,7 @@
 			}
 
 			function sharePoll() {
-				socket.emit('sharePoll', currentSharePollId, sharePollInput.value)
+				socket.emit('sharePollToUser', currentSharePollId, sharePollInput.value)
 
 				sharePollInput.value = ''
 			}
@@ -1213,6 +1214,7 @@
 				customPollsDiv.innerHTML = ''
 				unnamedPolls = 0
 
+				console.log(customPollsList, emptyText);
 				if (customPollsList.length == 0) {
 					let noPolls = document.createElement('p')
 					noPolls.innerText = emptyText
@@ -1450,7 +1452,7 @@
 					remove.innerText = 'remove'
 					remove.className = 'quickButton'
 					remove.onclick = () => {
-						socket.emit('removeShare', currentSharePollId, pollShare.userId)
+						socket.emit('removeUserShare', currentSharePollId, pollShare.userId)
 					}
 					pollShareDiv.appendChild(remove)
 
