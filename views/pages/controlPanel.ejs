@@ -132,14 +132,20 @@
 				<dialog id="sharePollDialog">
 					<button
 						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
-					<div id="pollShares">
-
-					</div>
-					<label for="share">Share to</label>
-					<input type="text" name="share" id="sharePollInput" pattern="[a-z0-9]+" placeholder="Username"
-						onkeypress="if(event.key == 'Enter') sharePoll()">
+					<p>
+						<label for="share">Share to User</label>
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+							onkeypress="if(event.key == 'Enter') sharePoll('user')">
+					</p>
+					<div id="userPollShares"></div>
+					<p>
+						<label for="share">Share to Class</label>
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+							onkeypress="if(event.key == 'Enter') sharePoll('class')">
+					</p>
+					<div id="classPollShares"></div>
 				</dialog>
-				<button onclick="socket.emit('sharePollToClass', 5 , 'vmjj')">click me</button>
+				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
 				<%- include('../partials/body_content') %>
 		</body>
 
@@ -152,6 +158,7 @@
 			let customPolls = []
 			let editingPollId = null
 			let currentSharePollId = null
+			let currentSharePollType = null
 
 			const FilterState = {
 				help: [
@@ -248,7 +255,8 @@
 			let savePollButton = document.getElementById('save-poll')
 			let deletePollButton = document.getElementById('delete-poll')
 			let sharePollDialog = document.getElementById('sharePollDialog')
-			let sharePollInput = document.getElementById('sharePollInput')
+			let sharePollUserInput = document.getElementById('sharePollUserInput')
+			let sharePollClassInput = document.getElementById('sharePollClassInput')
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -1079,11 +1087,12 @@
 				let customPoll = customPolls[editingPollId]
 
 				unloadPollButton.style.display = ''
-				savePollButton.style.display = ''
 				if (customPoll.owner == currentUser.id) {
 					deletePollButton.style.display = ''
+					savePollButton.style.display = ''
 				} else {
 					deletePollButton.style.display = 'none'
+					savePollButton.style.display = 'none'
 				}
 
 				blindCheck.checked = customPoll.blind
@@ -1177,15 +1186,20 @@
 
 			function openSharePoll(customPollId) {
 				currentSharePollId = customPollId
-				socket.emit('getPollShares', customPollId)
+				socket.emit('getPollShareIds', customPollId)
 
 				sharePollDialog.showModal()
 			}
 
-			function sharePoll() {
-				socket.emit('sharePollToUser', currentSharePollId, sharePollInput.value)
+			function sharePoll(type) {
+				if (type == 'user')
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
+				else if (type == 'class')
+					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
+				else alert('Invalid share poll type')
 
-				sharePollInput.value = ''
+				sharePollUserInput.value = ''
+				sharePollClassInput.value = ''
 			}
 
 			function publicToggle(customPollId) {
@@ -1214,7 +1228,6 @@
 				customPollsDiv.innerHTML = ''
 				unnamedPolls = 0
 
-				console.log(customPollsList, emptyText);
 				if (customPollsList.length == 0) {
 					let noPolls = document.createElement('p')
 					noPolls.innerText = emptyText
@@ -1223,6 +1236,8 @@
 
 				for (let customPollId of customPollsList) {
 					let customPoll = customPolls[customPollId]
+
+					if (!customPoll) continue
 
 					let customPollDiv = document.createElement('div')
 					customPollDiv.className = 'customPoll'
@@ -1435,28 +1450,39 @@
 				insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')
 			})
 
-			socket.on('getPollShares', (pollShares) => {
-				let pollSharesDiv = document.getElementById('pollShares')
-				pollSharesDiv.innerHTML = ''
+			socket.on('getPollShareIds', (userPollShares, classPollShares) => {
+				let userPollSharesDiv = document.getElementById('userPollShares')
+				userPollSharesDiv.innerHTML = ''
+				let classPollSharesDiv = document.getElementById('classPollShares')
+				classPollSharesDiv.innerHTML = ''
 
-				for (let pollShare of pollShares) {
+				function addPollShare(socketName, pollName, id, pollsShareDiv) {
 					let pollShareDiv = document.createElement('div')
 					pollShareDiv.className = 'pollShare'
 					pollShareDiv.style.display = 'flex'
 
 					let name = document.createElement('p')
-					name.innerText = pollShare.username
+					name.innerText = pollName
 					pollShareDiv.appendChild(name)
 
 					let remove = document.createElement('button')
 					remove.innerText = 'remove'
 					remove.className = 'quickButton'
 					remove.onclick = () => {
-						socket.emit('removeUserShare', currentSharePollId, pollShare.userId)
+						socketName, currentSharePollId, id
+						socket.emit(socketName, currentSharePollId, id)
 					}
 					pollShareDiv.appendChild(remove)
 
-					pollSharesDiv.appendChild(pollShareDiv)
+					pollsShareDiv.appendChild(pollShareDiv)
+				}
+
+				for (let pollShare of userPollShares) {
+					addPollShare('removeUserPollShare', pollShare.username, pollShare.userId, userPollSharesDiv)
+				}
+
+				for (let pollShare of classPollShares) {
+					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
 				}
 			})
 		</script>

@@ -571,7 +571,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		// Remove teacher from old class
 		delete cD.noClass.students[req.session.username]
 		// Add class into the session data
-		cD[key] = new Classroom(id, className, key, JSON.parse(customPolls))
+		cD[key] = new Classroom(id, className, key, customPolls)
 		// Add the teacher to the newly created class
 		cD[key].students[req.session.username] = user
 		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -608,7 +608,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			if (err) {
 				console.error(err)
 			} else if (classroom) {
-				makeClass(classroom.id, classroom.key, classroom.sharedPolls)
+				makeClass(classroom.id, classroom.key, JSON.parse(classroom.sharedPolls))
 			}
 		})
 	}
@@ -1292,21 +1292,30 @@ io.on('connection', (socket) => {
 		)
 	}
 
-	function getPollShares(pollId) {
-		return new Promise((resolve, reject) => {
-			db.all(
-				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
-				pollId,
-				(error, pollShares) => {
-					if (error) {
-						console.error(error)
-						reject(error)
-						return
-					}
-					resolve(pollShares)
+	function getPollShareIds(pollId) {
+		db.all(
+			'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
+			pollId,
+			(error, userPollShares) => {
+				if (error) {
+					console.error(error)
+					return
 				}
-			)
-		})
+
+				db.all(
+					'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId = ?',
+					pollId,
+					(error, classPollShares) => {
+						if (error) {
+							console.error(error)
+							return
+						}
+
+						socket.emit('getPollShareIds', userPollShares, classPollShares)
+					}
+				)
+			}
+		)
 	}
 
 	//rate limiter
@@ -1556,7 +1565,7 @@ io.on('connection', (socket) => {
 			return
 		}
 
-		db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, (error, poll) => {
+		db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, async (error, poll) => {
 			if (error) {
 				console.error(error)
 				return
@@ -1566,29 +1575,46 @@ io.on('connection', (socket) => {
 				return
 			}
 
-			db.run('DELETE FROM custom_polls WHERE id = ?', [pollId], (error) => {
-				if (error) {
-					console.error(error)
-					return
-				}
+			await db.run('BEGIN TRANSACTION')
 
-				for (let classroom of Object.values(cD)) {
-					for (let user of Object.values(classroom.students)) {
-						if (user.sharedPolls.includes(pollId)) {
-							user.sharedPolls.splice(user.sharedPolls.indexOf(pollId), 1)
-							customPollUpdate(user.username)
-						}
+			await Promise.all([
+				db.run('DELETE FROM custom_polls WHERE id = ?', pollId),
+				db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId),
+				db.run('DELETE FROM class_polls WHERE pollId = ?', pollId)
+			]).catch((error) => {
+				console.error(error);
+				db.run('ROLLBACK')
+			})
 
-						if (user.ownedPolls.includes(pollId)) {
-							user.ownedPolls.splice(user.ownedPolls.indexOf(pollId), 1)
-							customPollUpdate(user.username)
-						}
+			await db.run('COMMIT')
+
+			for (let classroom of Object.values(cD)) {
+				let updatePolls = false
+
+				if (classroom.sharedPolls) {
+					if (classroom.sharedPolls.includes(pollId)) {
+						classroom.sharedPolls.splice(classroom.sharedPolls.indexOf(pollId), 1)
+						updatePolls = true
 					}
 				}
 
-				socket.emit('message', 'Poll deleted successfully!')
-				customPollUpdate(socket.request.session.username)
-			})
+				for (let user of Object.values(classroom.students)) {
+					if (user.sharedPolls.includes(pollId)) {
+						user.sharedPolls.splice(user.sharedPolls.indexOf(pollId), 1)
+						updatePolls = true
+					}
+
+					if (user.ownedPolls.includes(pollId)) {
+						user.ownedPolls.splice(user.ownedPolls.indexOf(pollId), 1)
+						updatePolls = true
+					}
+
+					if (updatePolls)
+						customPollUpdate(user.username)
+				}
+			}
+
+			socket.emit('message', 'Poll deleted successfully!')
 		})
 	})
 
@@ -1657,8 +1683,7 @@ io.on('connection', (socket) => {
 
 								socket.emit('message', `Shared ${name} with ${username}`)
 
-								let pollShares = await getPollShares(pollId)
-								socket.emit('getPollShares', pollShares)
+								getPollShareIds(pollId)
 
 								let classCode = getUserClass(username)
 								if (classCode) {
@@ -1674,9 +1699,9 @@ io.on('connection', (socket) => {
 		})
 	})
 
-	socket.on('removeUserShare', (pollId, userId) => {
+	socket.on('removeUserPollShare', (pollId, userId) => {
 		db.get(
-			'SELECT * FROM shared_polls WHERE pollId=? AND userId = ?',
+			'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
 			[pollId, userId],
 			(error, pollShare) => {
 				if (error) {
@@ -1694,22 +1719,20 @@ io.on('connection', (socket) => {
 							return
 						}
 
+						socket.emit('message', 'Successfully unshared user')
+						getPollShareIds(pollId)
+
 						db.get('SELECT * FROM users WHERE id = ?', userId, async (error, user) => {
 							if (error) {
 								console.error(error)
+								return
 							} else if (user) {
 								let classCode = getUserClass(user.username)
-								if (classCode) {
-									let sharedPolls = cD[classCode].students[user.username].sharedPolls
-									sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+								if (!classCode) return
 
-									customPollUpdate(user.username)
-								}
-
-								socket.emit('message', 'Successfully unshared user')
-
-								let pollShares = await getPollShares(pollId)
-								socket.emit('getPollShares', pollShares)
+								let sharedPolls = cD[classCode].students[user.username].sharedPolls
+								sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+								customPollUpdate(user.username)
 							}
 						})
 					}
@@ -1718,10 +1741,8 @@ io.on('connection', (socket) => {
 		)
 	})
 
-	socket.on('getPollShares', async (pollId) => {
-		let pollShares = await getPollShares(pollId)
-
-		socket.emit('getPollShares', pollShares)
+	socket.on('getPollShareIds', async (pollId) => {
+		getPollShareIds(pollId)
 	})
 
 	socket.on('sharePollToClass', (pollId, classCode) => {
@@ -1774,12 +1795,10 @@ io.on('connection', (socket) => {
 
 								socket.emit('message', `Shared ${name} with that class`)
 
-								let pollShares = await getPollShares(pollId)
-								socket.emit('getPollShares', pollShares)
+								getPollShareIds(pollId)
 
+								cD[classCode].sharedPolls.push(pollId)
 								for (let username of Object.keys(cD[classCode].students)) {
-									console.log(username);
-									cD[classCode].sharedPolls.push(pollId)
 									customPollUpdate(username)
 								}
 							}
@@ -1788,6 +1807,49 @@ io.on('connection', (socket) => {
 				)
 			})
 		})
+	})
+
+	socket.on('removeClassPollShare', (pollId, classId) => {
+		db.get(
+			'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+			[pollId, classId],
+			(error, pollShare) => {
+				if (error) {
+					console.error(error)
+					return
+				}
+				if (!pollShare) socket.emit('message', 'Poll is not shared to this class')
+
+				db.run(
+					'DELETE FROM class_polls WHERE pollId = ? AND classId = ?',
+					[pollId, classId],
+					(error) => {
+						if (error) {
+							console.error(error)
+							return
+						}
+
+						socket.emit('message', 'Successfully unshared class')
+						getPollShareIds(pollId)
+
+						db.get('SELECT * FROM classroom WHERE id = ?', classId, async (error, classroom) => {
+							if (error) {
+								console.error(error)
+								return
+							} else if (classroom) {
+								if (!cD[classroom.key]) return
+
+								let sharedPolls = cD[classroom.key].sharedPolls
+								sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+								for (let username of Object.keys(cD[classroom.key].students)) {
+									customPollUpdate(username)
+								}
+							}
+						})
+					}
+				)
+			}
+		)
 	})
 
 	// Sends a help ticket
