@@ -707,7 +707,7 @@ app.post('/login', async (req, res) => {
 	// Check whether user is logging in or signing up
 	if (user.loginType == "login") {
 		// Get the users login in data to verify password
-		db.get('SELECT users.*, NULLIF(json_group_array(DISTINCT poll_shares.pollId), "[null]") as sharedPolls, NULLIF(json_group_array(DISTINCT custom_polls.id), "[null]") as ownedPolls FROM users LEFT JOIN poll_shares ON poll_shares.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
+		db.get('SELECT users.*, NULLIF(json_group_array(DISTINCT shared_polls.pollId), "[null]") as sharedPolls, NULLIF(json_group_array(DISTINCT custom_polls.id), "[null]") as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
 			if (err) {
 				console.error(err)
 			}
@@ -1294,7 +1294,7 @@ io.on('connection', (socket) => {
 	function getPollShares(pollId) {
 		return new Promise((resolve, reject) => {
 			db.all(
-				'SELECT pollId, userId, username FROM poll_shares LEFT JOIN users ON users.id = poll_shares.userId WHERE pollId = ?',
+				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
 				pollId,
 				(error, pollShares) => {
 					if (error) {
@@ -1633,7 +1633,7 @@ io.on('connection', (socket) => {
 				else if (poll.prompt) name = poll.prompt
 
 				db.get(
-					'SELECT * FROM poll_shares WHERE pollId = ? AND userId = ?',
+					'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
 					[pollId, user.id],
 					(error, sharePoll) => {
 						if (error) {
@@ -1646,7 +1646,7 @@ io.on('connection', (socket) => {
 						}
 
 						db.run(
-							'INSERT INTO poll_shares (pollId, userId) VALUES (?, ?)',
+							'INSERT INTO shared_polls (pollId, userId) VALUES (?, ?)',
 							[pollId, user.id],
 							async (error) => {
 								if (error) {
@@ -1675,7 +1675,7 @@ io.on('connection', (socket) => {
 
 	socket.on('removeShare', (pollId, userId) => {
 		db.get(
-			'SELECT * FROM poll_shares WHERE pollId=? AND userId = ?',
+			'SELECT * FROM shared_polls WHERE pollId=? AND userId = ?',
 			[pollId, userId],
 			(error, pollShare) => {
 				if (error) {
@@ -1685,7 +1685,7 @@ io.on('connection', (socket) => {
 				if (!pollShare) socket.emit('message', 'Poll is not shared to this user')
 
 				db.run(
-					'DELETE FROM poll_shares WHERE pollId = ? AND userId = ?',
+					'DELETE FROM shared_polls WHERE pollId = ? AND userId = ?',
 					[pollId, userId],
 					(error) => {
 						if (error) {
