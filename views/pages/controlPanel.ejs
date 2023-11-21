@@ -10,30 +10,28 @@
 			<script src="/js/iro.js"></script>
 			<script src="/js/floating-ui-core.js"></script>
 			<script src="/js/floating-ui-dom.js"></script>
+			<script src="/js/tabs.js" defer></script>
 		</head>
 
 		<body onload="load(<%-pollStatus%>)">
 			<%- include('../partials/formbar_header') %>
 				<header id="quickMenu">
-					<button id="menuUsers" class="quickButton pressed" onclick="toUsers()">Users</button>
-					<button id="menuPolls" class="quickButton" onclick="toPolls()">Poll </button>
-					<button id="menuLesson" class="quickButton" onclick="toLesson()">Make a Lesson</button>
-					<button id="menuPlugins" class="quickButton" onclick="toPlugins()">Plugins</button>
+					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
+					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
+					<button id="pluginsMenu" class="quickButton tab" data-tab-group="mainTabs">Plugins</button>
 				</header>
 
 				<p id="classCode">Class Code:</p>
-				<div id="permChanges">
-					<div id="permChangeKey">
-
-					</div>
-					<div id="permFilterBoxes">
-						Filter:
+				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+					<div id="userFilterBoxes" class="options">
+						<h2 class="headerText">Filter</h2>
 						<button type="button" id="help" class="filter">Help tickets</button>
 						<button type="button" id="break" class="filter">Break</button>
 						<button type="button" id="polls" class="filter">Polls</button>
 					</div>
-					<div id="permSortBoxes">
-						Sort:
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Sort</h2>
 						<button type="button" id="name" class="sort">Name</button>
 						<button type="button" id="polls" class="sort">Polls</button>
 						<button type="button" id="helpTime" class="sort">Help Time</button>
@@ -45,52 +43,65 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass');location.reload()})()">
 						End Class
 					</button>
-					<div id="permChangeList">
-
+					<div id="users">
 					</div>
-
 				</div>
-				<div id="pollChanges">
-					<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
-					<div id="startPollForm">
-						<label for="resNumber">How many possible responses?</label>
-						<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
-						<br>
-						<label for="resTextBox">Would like to accept text responses?</label>
-						<input type="checkbox" id="resTextBox">
-						<br>
-						<label for="pollBox">Prompt for the poll?</label>
-						<input type="text" id="pollBox" placeholder="Prompt (optional)">
-						<br>
-						<label for="changeNames">Customize the answer options?</label>
-						<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()" class="quickButton">
-						<br>
-						<button id="resetAnswerNames" class="quickButton">Reset Names</button>
-						<button id="resetColors" class="quickButton">Reset Colors</button>
-						<div id="responses">
+				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div id="pollOptions" class="options">
+						<h2 class="headerText">Custom Polls</h2>
+						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public Polls</button>
+						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class Polls</button>
+						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your Polls</button>
+					</div>
+					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
+						<div id="pollActions" class="options">
+							<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
+							<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
+							<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
+							<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
 						</div>
+						<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
+						<div id="startPollForm">
+							<label for="resNumber">How many possible responses?</label>
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+							<br>
+							<label for="resTextBox">Would like to accept text responses?</label>
+							<input type="checkbox" id="resTextBox">
+							<br>
+							<label for="pollBox">Prompt for the poll?</label>
+							<input type="text" id="pollBox" placeholder="Prompt (optional)">
+							<br>
+							<label for="changeNames">Customize the answer options?</label>
+							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
+								class="quickButton">
+							<br>
+							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+							<button id="resetColors" class="quickButton">Reset Colors</button>
+							<div id="responses"></div>
+							<br>
+							<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
+							<input type="checkbox" id="blind">
+							<br>
+							<button id="startPoll" onclick="startPoll()">Start Poll</button>
+							<br>
+						</div>
+						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 						<br>
-						<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
-						<input type="checkbox" id="blind">
-						<br>
-						<input type="button" id="startPoll" value="Start Poll" onclick="startPollFunc('poll')" class="quickButton">
-						<br>
-						<h3 class="headerText" style="margin-bottom: 0;">Premade Polls:</h1>
-							<input type="button" value="TUTD" onclick="startPollFunc('TUTD')" class="quickButton">
+						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
 					</div>
-					<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-					<br>
-					<br>
-					<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-						Polls</button>
+					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
+					</div>
+					<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
+					</div>
+					<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
+					</div>
+					<div id="previousPolls" class="tabContent" data-tab-group="polls">
+						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to polls</button>
+						<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
+						<div id="previousPollButtons"></div>
+					</div>
 				</div>
-				<div id="previousPolls">
-					<button id="toPolls" type="button" onclick="toPolls()">Return to polls</button>
-					<button id="toPollHistory" type="button" onclick="displayPoll()">Return To
-						Selection</button>
-					<div id="previousPollButtons"></div>
-				</div>
-				<div id="lessonMaker">
+				<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
 					<form method="post" enctype="multipart/form-data">
 						<input name="spreadsheet" type="file">
 						<input type="submit" class="quickButton">
@@ -116,32 +127,40 @@
 						</label>
 					</form>
 				</div>
-				<div id="plugins">
+				<div id="pluginsMenu" class="tabContent" data-tab-group="mainTabs">
 				</div>
+				<dialog id="sharePollDialog">
+					<button
+						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
+					<p>
+						<label for="share">Share to User</label>
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+							onkeypress="if(event.key == 'Enter') sharePoll('user')">
+					</p>
+					<div id="userPollShares"></div>
+					<p>
+						<label for="share">Share to Class</label>
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+							onkeypress="if(event.key == 'Enter') sharePoll('class')">
+					</p>
+					<div id="classPollShares"></div>
+				</dialog>
+				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
 				<%- include('../partials/body_content') %>
 		</body>
 
 		</html>
 		<script>
-			// 0 = off
-			// 1 = only
-			// 2 = except
-			let filter = {
-				help: 0,
-				break: 0,
-				polls: 0
-			}
-			// 0 = off
-			// 1 = descending
-			// 2 = ascending
-			let sort = {
-				name: 0,
-				polls: 0,
-				helpTime: 0,
-				permissions: 1
-			}
+			let currentUser = JSON.parse('<%-currentUser%>')
+			let userCustomPolls = []
+			let classroomCustomPolls = []
+			let publicCustomPolls = []
+			let customPolls = []
+			let editingPollId = null
+			let currentSharePollId = null
+			let currentSharePollType = null
 
-			let filterState = {
+			const FilterState = {
 				help: [
 					'Help tickets',
 					'Help ticket in',
@@ -159,7 +178,7 @@
 				]
 			}
 
-			let sortState = {
+			const SortState = {
 				name: [
 					'Name',
 					'Name 🡇',
@@ -181,22 +200,35 @@
 				]
 			}
 
+			// 0 = off
+			// 1 = only
+			// 2 = except
+			let filter = {
+				help: 0,
+				break: 0,
+				polls: 0
+			}
+			// 0 = off
+			// 1 = descending
+			// 2 = ascending
+			let sort = {
+				name: 0,
+				polls: 0,
+				helpTime: 0,
+				permissions: 1
+			}
+
 			let letterString = "abcdefghijklmnopqrstuvwxyz"
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
 
-			var permChanges = document.getElementById('permChanges')
-			var permChangeKey = document.getElementById('permChangeKey')
-			var permChangeList = document.getElementById('permChangeList')
-			var pollChanges = document.getElementById('pollChanges')
-			var startPoll = document.getElementById('startPoll')
+			var usersDiv = document.getElementById('users')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
 			var endPoll = document.getElementById('endPoll')
 			var startPollForm = document.getElementById('startPollForm')
 			var pollPrompt = document.getElementById('pollBox')
-			var permFilterBoxes = document.getElementById('permFilterBoxes')
 			var pollFilter = document.getElementById('pollFilter')
 			var missingPollFilter = document.getElementById('missingPollFilter')
 			var lettFilter = document.getElementById('lettFilter')
@@ -207,19 +239,36 @@
 			var responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			var lessonMaker = document.getElementById('lessonMaker')
-			var pluginsDiv = document.getElementById('plugins')
+			var pluginsDiv = document.querySelector('div#pluginsMenu')
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
 			var toPollsButton = document.getElementById('toPolls')
 			var toPollHistoryButton = document.getElementById('toPollHistory')
+			let blindCheck = document.getElementById('blind')
 			var classCode = document.getElementById('classCode')
 			var menuUsers = document.getElementById('menuUsers')
 			var menuPolls = document.getElementById('menuPolls')
+			var mainPolls = document.getElementById('menuPolls')
 			var menuLesson = document.getElementById('menuLesson')
 			var menuPlugins = document.getElementById('menuPlugins')
+			let unloadPollButton = document.getElementById('unload-poll')
+			let savePollButton = document.getElementById('save-poll')
+			let deletePollButton = document.getElementById('delete-poll')
+			let sharePollDialog = document.getElementById('sharePollDialog')
+			let sharePollUserInput = document.getElementById('sharePollUserInput')
+			let sharePollClassInput = document.getElementById('sharePollClassInput')
 
-			let currentUser = JSON.parse('<%- currentUser %>')
+			// Function runs on page load
+			// Checks if poll is active or not and displays correct output
+			function load(pollStatus) {
+				if (pollStatus) {
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+				} else {
+					startPollForm.style.display = 'block'
+					endPoll.style.display = 'none'
+				}
+			}
 
 			function HSLToHex(hue, saturation, lightness) {
 				// Normalize lightness to range 0-1
@@ -303,87 +352,10 @@
 				return colors;
 			}
 
-			// Function runs on page load
-			// Checks if poll is active or not and displays correct output
-			function load(pollStatus) {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'block'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-				if (pollStatus) {
-					startPollForm.style.display = 'none'
-					endPoll.style.display = 'block'
-					lessonMaker.style.display = 'none'
-					previousPolls.style.display = 'none'
-				} else {
-					startPollForm.style.display = 'block'
-					endPoll.style.display = 'none'
-					previousPolls.style.display = 'none'
-					lessonMaker.style.display = 'none'
-				}
-			}
-			// Changes to the create a poll section of the page
-			function toPolls() {
-				pollChanges.style.display = 'block'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.add("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-			// Changes to the permission change section of the page
-			function toUsers() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'block'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.add("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-
-			function toLesson() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'block'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'none'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.add("pressed");
-				menuPlugins.classList.remove("pressed");
-			}
-
-			function toPlugins() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'none'
-				pluginsDiv.style.display = 'block'
-
-				menuUsers.classList.remove("pressed");
-				menuPolls.classList.remove("pressed");
-				menuLesson.classList.remove("pressed");
-				menuPlugins.classList.add("pressed");
-			}
-
 			//displays the previos polls page
 			function displayPreviousPolls() {
-				pollChanges.style.display = 'none'
-				permChanges.style.display = 'none'
-				lessonMaker.style.display = 'none'
-				previousPolls.style.display = 'block'
-				pluginsDiv.style.display = 'none'
-				displayPoll()
+				toPollHistoryButton.style.display = 'none'
+				changeTab('previousPolls', 'polls')
 			}
 
 			//makes the previous polls page
@@ -457,43 +429,18 @@
 				}
 			}
 
-			// Starts a new poll that allows students to submit answers
-			// Check how many possible responses and if the teacher wants to accept text responses
-			function startPollFunc(pollType) {
-				if (pollType == 'poll') {
-					let blind = document.getElementById('blind').checked
+			function saveColor(index) {
+				let colorPickerButton = document.getElementsByClassName('colorPickerButton')[index]
+				let oldColor = document.getElementsByClassName('oldColor')[index]
 
-					let pollAnswers = []
-					for (let i = 0; i < resNumber.value; i++) {
-						let pollResponse = pollResponses[i]
-						let pollAnswer = {
-							answer: pollResponse.answer,
-							weight: pollResponse.weight,
-							color: pollResponse.color
-						}
+				pollResponses[index].color = colorPickers[index].color.hexString
+				colorPickerButton.style.backgroundColor = colorPickers[index].color.hexString;
+				oldColor.style.backgroundColor = colorPickers[index].color.hexString;
+			}
 
-						pollAnswers.push(pollAnswer)
-					}
-					responsesDiv.style.display = 'none'
-					startPollForm.style.display = 'none'
-					endPoll.style.display = 'block'
-					permChanges.style.display = 'none'
+			function responseAmountChange(amount) {
+				if (amount) resNumber.value = amount
 
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
-				} else if (pollType == 'TUTD') {
-					responsesDiv.style.display = 'none';
-					startPollForm.style.display = 'none';
-					endPoll.style.display = 'block';
-					permChanges.style.display = 'none';
-					socket.emit('startPoll', 3, false, "Thumbs?", [
-						{ answer: "Up", weight: 0.9, color: '#00FF00' },
-						{ answer: "Down", weight: 1.1, color: '#FF0000' },
-						{ answer: "Wiggle", weight: 1, color: '#00FFFF' }
-					], false, 1);
-				};
-			};
-
-			function responseAmountChange() {
 				if (resNumber.value < 1) resNumber.value = 1
 				if (resNumber.value > 26) resNumber.value = 26
 
@@ -506,6 +453,7 @@
 					}
 
 					pollResponses.splice(resNumber.value)
+					colorPickers.splice(resNumber.value)
 				}
 
 				for (let i = pollResponses.length; i < resNumber.value; i++) {
@@ -521,6 +469,7 @@
 					let responseDiv = document.createElement('div')
 					responseDiv.className = 'response'
 					responseDiv.id = `response${i}`
+
 					let colorPickerButton = document.createElement('button')
 					colorPickerButton.className = 'colorPickerButton'
 					colorPickerButton.id = i
@@ -544,20 +493,21 @@
 						}
 					}
 					responseDiv.appendChild(colorPickerButton)
+
 					let colorPickerDiv = document.createElement('div')
 					colorPickerDiv.className = 'colorPicker'
+
 					let buttonsDiv = document.createElement('div')
 					buttonsDiv.className = 'buttonsDiv'
-					let saveColor = document.createElement('button')
-					saveColor.className = 'quickButton'
-					saveColor.innerText = 'Save Color'
-					saveColor.onclick = (event) => {
-						event.preventDefault()
-						pollResponses[i].color = colorPickers[i].color.hexString
-						colorPickerButton.style.backgroundColor = colorPickers[i].color.hexString;
-						oldColor.style.backgroundColor = colorPickers[i].color.hexString;
+
+					let saveColorButton = document.createElement('button')
+					saveColorButton.className = 'quickButton'
+					saveColorButton.innerText = 'Save Color'
+					saveColorButton.onclick = () => {
+						saveColor(i)
 					}
-					buttonsDiv.appendChild(saveColor)
+					buttonsDiv.appendChild(saveColorButton)
+
 					let resetColor = document.createElement('button')
 					resetColor.className = 'quickButton'
 					resetColor.innerText = 'Reset Color'
@@ -573,16 +523,22 @@
 						oldColor.style.backgroundColor = generatedColors[i]
 					}
 					buttonsDiv.appendChild(resetColor)
+
 					colorPickerDiv.appendChild(buttonsDiv)
+
 					let colorsDiv = document.createElement('div')
 					colorsDiv.className = 'colorsDiv'
+
 					let oldColor = document.createElement('div')
 					oldColor.className = 'oldColor'
 					colorsDiv.appendChild(oldColor)
+
 					let newColor = document.createElement('div')
 					newColor.className = 'newColor'
 					colorsDiv.appendChild(newColor)
+
 					colorPickerDiv.appendChild(colorsDiv)
+
 					let hexLabel = document.createElement('label')
 					hexLabel.className = 'hexLabel'
 					hexLabel.innerText = 'Hex '
@@ -595,10 +551,14 @@
 						colorPickers[i].color.set('#' + event.target.value)
 					}
 					hexLabel.appendChild(hexInput)
+
 					colorPickerDiv.appendChild(hexLabel)
+
 					responseDiv.appendChild(colorPickerDiv)
+
 					let answerName = document.createElement('input')
 					answerName.type = 'text'
+					answerName.className = 'answerName'
 					answerName.name = 'answerName'
 					answerName.placeholder = `Answer ${String.fromCharCode(i + 97)} `
 					answerName.value = ''
@@ -606,6 +566,7 @@
 						pollResponses[i].answer = event.target.value;
 					}
 					responseDiv.appendChild(answerName)
+
 					responsesDiv.appendChild(responseDiv)
 
 					FloatingUIDOM.autoUpdate(
@@ -672,13 +633,14 @@
 			}
 			responseAmountChange()
 
-			resetAnswerNamesButton.onclick = () => {
+			function resetAnswerNames() {
 				let answerNames = document.getElementsByName('answerName')
 				for (let i = 0; i < pollResponses.length; i++) {
 					pollResponses[i].answer = pollResponses[i].defaultAnswer
 					answerNames[i].value = ''
 				}
 			}
+			resetAnswerNamesButton.onclick = resetAnswerNames
 
 			function resetColors() {
 				for (let i = 0; i < pollResponses.length; i++) {
@@ -895,7 +857,7 @@
 
 			// filters and sorts students
 			function filterSortChange() {
-				permChangeList.innerHTML = ''
+				usersDiv.innerHTML = ''
 				let newStudent = ''
 				let newRoom = JSON.parse(JSON.stringify(allRoom))
 
@@ -1015,7 +977,7 @@
 				}
 
 				for (const student of Object.keys(newRoom.students)) {
-					permChangeList.appendChild(buildStudent(newRoom, student))
+					usersDiv.appendChild(buildStudent(newRoom, student))
 				}
 			}
 
@@ -1035,7 +997,7 @@
 					}
 					if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
 					else filterElement.classList.add('pressed')
-					filterElement.innerText = filterState[filterElement.id][filter[filterElement.id]]
+					filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
 					filterSortChange()
 				}
 			}
@@ -1049,7 +1011,7 @@
 							let otherSortElements = document.querySelector('.sort#' + sortType)
 							if (otherSortElements) {
 								otherSortElements.classList.remove('pressed')
-								otherSortElements.innerText = sortState[sortType][sort[sortType]]
+								otherSortElements.innerText = SortState[sortType][sort[sortType]]
 							}
 						}
 					}
@@ -1062,7 +1024,7 @@
 					}
 					if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
 					else sortElement.classList.add('pressed')
-					sortElement.innerText = sortState[sortElement.id][sort[sortElement.id]]
+					sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
 					filterSortChange()
 				}
 			}
@@ -1086,6 +1048,259 @@
 
 			function approveBreak(breakApproval, username) {
 				socket.emit('approveBreak', breakApproval, username)
+			}
+
+			// Starts a new poll that allows students to submit answers
+			// Check how many possible responses and if the teacher wants to accept text responses
+			function startPoll(customPollId) {
+				if (customPollId) {
+					let customPoll = customPolls[customPollId]
+
+					changeTab('mainPolls', 'polls')
+
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight)
+				} else {
+					let blind = blindCheck.checked
+
+					let pollAnswers = []
+					for (let i = 0; i < resNumber.value; i++) {
+						let pollResponse = pollResponses[i]
+						let pollAnswer = {
+							answer: pollResponse.answer,
+							weight: pollResponse.weight,
+							color: pollResponse.color
+						}
+
+						pollAnswers.push(pollAnswer)
+					}
+
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
+				}
+				responsesDiv.style.display = 'none'
+				startPollForm.style.display = 'none'
+				endPoll.style.display = 'block'
+				changeTab('usersMenu', 'mainTabs')
+			};
+
+			function editCustomPoll(customPollId) {
+				editingPollId = customPollId
+				let customPoll = customPolls[editingPollId]
+
+				unloadPollButton.style.display = ''
+				if (customPoll.owner == currentUser.id) {
+					deletePollButton.style.display = ''
+					savePollButton.style.display = ''
+				} else {
+					deletePollButton.style.display = 'none'
+					savePollButton.style.display = 'none'
+				}
+
+				blindCheck.checked = customPoll.blind
+				pollPrompt.value = customPoll.prompt
+				resTextBox.checked = customPoll.textRes
+
+				responseAmountChange(customPoll.answers.length)
+
+				let answerInputs = document.getElementsByClassName('answerName')
+				for (let pollIndex = 0; pollIndex < customPoll.answers.length; pollIndex++) {
+					let answer = customPoll.answers[pollIndex]
+
+					pollResponses[pollIndex].answer = answer.answer
+					answerInputs[pollIndex].value = answer.answer
+
+					pollResponses[pollIndex].color = answer.color
+					colorPickers[pollIndex].color.set(pollResponses[pollIndex].color)
+					saveColor(pollIndex)
+
+					pollResponses[pollIndex].weight = answer.weight
+				}
+
+				changeTab('mainPolls', 'polls')
+				showResponses()
+			}
+
+			function unloadPoll() {
+				unloadPollButton.style.display = 'none'
+				savePollButton.style.display = 'none'
+				deletePollButton.style.display = 'none'
+
+				pollPrompt.value = ''
+				resTextBox.checked = false
+				blindCheck.checked = false
+
+				responseAmountChange(1)
+				resetAnswerNames()
+				resetColors()
+				editingPollId = null
+			}
+
+			function savePoll() {
+				let customPoll = customPolls[editingPollId]
+
+				customPoll.blind = blindCheck.checked
+				customPoll.prompt = pollPrompt.value
+				customPoll.textRes = resTextBox.checked
+
+				let pollAnswers = []
+				for (let i = 0; i < resNumber.value; i++) {
+					let pollResponse = pollResponses[i]
+					let pollAnswer = {
+						answer: pollResponse.answer,
+						weight: pollResponse.weight,
+						color: pollResponse.color
+					}
+
+					pollAnswers.push(pollAnswer)
+				}
+				customPoll.answers = pollAnswers
+
+				socket.emit('savePoll', customPoll, editingPollId)
+			}
+
+			function savePollAs() {
+				let customPoll = {}
+
+				customPoll.name = prompt('What do you want to call this poll')
+
+				customPoll.blind = blindCheck.checked
+				customPoll.prompt = pollPrompt.value
+				customPoll.textRes = resTextBox.checked
+				customPoll.public = false
+				customPoll.weight = 1
+
+				let pollAnswers = []
+				for (let i = 0; i < resNumber.value; i++) {
+					let pollResponse = pollResponses[i]
+					let pollAnswer = {
+						answer: pollResponse.answer,
+						weight: pollResponse.weight,
+						color: pollResponse.color
+					}
+
+					pollAnswers.push(pollAnswer)
+				}
+				customPoll.answers = pollAnswers
+
+				socket.emit('savePoll', customPoll)
+			}
+
+			function openSharePoll(customPollId) {
+				currentSharePollId = customPollId
+				socket.emit('getPollShareIds', customPollId)
+
+				sharePollDialog.showModal()
+			}
+
+			function sharePoll(type) {
+				if (type == 'user')
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
+				else if (type == 'class')
+					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
+				else alert('Invalid share poll type')
+
+				sharePollUserInput.value = ''
+				sharePollClassInput.value = ''
+			}
+
+			function publicToggle(customPollId) {
+				let customPoll = customPolls[customPollId]
+
+				if (customPoll.public)
+					socket.emit('setPublic', customPollId, false)
+				else
+					socket.emit('setPublic', customPollId, true)
+			}
+
+			function deletePoll(pollId) {
+				if (!pollId && !editingPollId) {
+					alert('No poll selected')
+					return
+				}
+				if (!pollId) {
+					pollId = editingPollId
+					unloadPoll()
+				}
+
+				socket.emit('deletePoll', pollId)
+			}
+
+			function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
+				customPollsDiv.innerHTML = ''
+				unnamedPolls = 0
+
+				if (customPollsList.length == 0) {
+					let noPolls = document.createElement('p')
+					noPolls.innerText = emptyText
+					customPollsDiv.appendChild(noPolls)
+				}
+
+				for (let customPollId of customPollsList) {
+					let customPoll = customPolls[customPollId]
+
+					if (!customPoll) continue
+
+					let customPollDiv = document.createElement('div')
+					customPollDiv.className = 'customPoll'
+
+					let customPollName = document.createElement('p')
+					customPollName.className = 'custom-poll-name'
+					customPollName.style.gridColumn = 1
+					if (customPoll.name)
+						customPollName.innerText = customPoll.name
+					else if (customPoll.prompt)
+						customPollName.innerText = customPoll.prompt
+					else {
+						unnamedPolls++
+						customPollName.innerText = 'Unnamed Poll'
+					}
+					customPollDiv.appendChild(customPollName)
+
+					let editButton = document.createElement('button')
+					editButton.className = 'edit-custom-poll'
+					editButton.style.gridColumn = 2
+					editButton.innerText = 'Edit'
+					editButton.onclick = () => {
+						editCustomPoll(customPollId)
+					}
+					customPollDiv.appendChild(editButton)
+
+					let startButton = document.createElement('button')
+					startButton.className = 'start-custom-poll'
+					startButton.style.gridColumn = 3
+					startButton.innerText = 'Start'
+					startButton.onclick = () => {
+						startPoll(customPollId)
+					}
+					customPollDiv.appendChild(startButton)
+
+					if (customPoll.owner == currentUser.id) {
+						let shareButton = document.createElement('button')
+						shareButton.className = 'share-button'
+						shareButton.style.gridColumn = 4
+						shareButton.innerText = 'Share'
+						shareButton.onclick = () => { openSharePoll(customPollId) }
+						customPollDiv.appendChild(shareButton)
+
+						let publicButton = document.createElement('button')
+						publicButton.className = 'public-button'
+						publicButton.style.gridColumn = 5
+						if (customPoll.public)
+							publicButton.innerText = 'Make Private'
+						else
+							publicButton.innerText = 'Make Public'
+						publicButton.onclick = () => { publicToggle(customPollId) }
+						customPollDiv.appendChild(publicButton)
+
+						let deleteButton = document.createElement('button')
+						deleteButton.className = 'delete-poll'
+						deleteButton.style.gridColumn = 6
+						deleteButton.innerText = 'Delete'
+						deleteButton.onclick = () => { deletePoll(customPollId) }
+						customPollDiv.appendChild(deleteButton)
+					}
+
+					customPollsDiv.appendChild(customPollDiv)
+				}
 			}
 
 			// close all color pickers if you press escape
@@ -1212,6 +1427,63 @@
 				}
 				addPluginForm.append(submitPlugin)
 				pluginsDiv.append(addPluginForm)
+			})
+
+
+			socket.emit('customPollUpdate')
+			socket.on('customPollUpdate', (
+				newPublicCustomPolls,
+				newClassroomCustomPolls,
+				newUserCustomPolls,
+				newCustomPolls
+			) => {
+				publicCustomPolls = newPublicCustomPolls
+				classroomCustomPolls = newClassroomCustomPolls
+				userCustomPolls = newUserCustomPolls
+				customPolls = newCustomPolls
+				let publicPollsDiv = document.querySelector('div#publicPolls')
+				let classPollsDiv = document.querySelector('div#classPolls')
+				let userPollsDiv = document.querySelector('div#userPolls')
+
+				insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
+				insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
+				insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')
+			})
+
+			socket.on('getPollShareIds', (userPollShares, classPollShares) => {
+				let userPollSharesDiv = document.getElementById('userPollShares')
+				userPollSharesDiv.innerHTML = ''
+				let classPollSharesDiv = document.getElementById('classPollShares')
+				classPollSharesDiv.innerHTML = ''
+
+				function addPollShare(socketName, pollName, id, pollsShareDiv) {
+					let pollShareDiv = document.createElement('div')
+					pollShareDiv.className = 'pollShare'
+					pollShareDiv.style.display = 'flex'
+
+					let name = document.createElement('p')
+					name.innerText = pollName
+					pollShareDiv.appendChild(name)
+
+					let remove = document.createElement('button')
+					remove.innerText = 'remove'
+					remove.className = 'quickButton'
+					remove.onclick = () => {
+						socketName, currentSharePollId, id
+						socket.emit(socketName, currentSharePollId, id)
+					}
+					pollShareDiv.appendChild(remove)
+
+					pollsShareDiv.appendChild(pollShareDiv)
+				}
+
+				for (let pollShare of userPollShares) {
+					addPollShare('removeUserPollShare', pollShare.username, pollShare.userId, userPollSharesDiv)
+				}
+
+				for (let pollShare of classPollShares) {
+					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
+				}
 			})
 		</script>
 		<%- include('../partials/footer_content') %>

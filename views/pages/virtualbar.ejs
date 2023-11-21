@@ -32,14 +32,15 @@
 
 		<script src="js/chart.js"></script>
 		<script>
-			var mychart = document.getElementById('virtualbar').getContext("2d")
-			var doughnutChart = new Chart(mychart, {
+			var virtualbar = document.getElementById('virtualbar')
+			var doughnutChart = new Chart(virtualbar.getContext("2d"), {
 				type: 'doughnut',
 				data: {
 					labels: [],
 					datasets: [{
 						backgroundColor: [],
-						data: []
+						data: [],
+						borderColor: 'black'
 					}]
 				},
 				options: {
@@ -51,9 +52,8 @@
 								font: {
 									size: 20
 								},
-								color: 'black'
+								color: 'black',
 							}
-
 						}
 					}
 				}
@@ -65,12 +65,15 @@
 			socket.emit('vbUpdate')
 			// Gets data from server and send it the function
 			socket.on('vbUpdate', (pollsData) => {
-				if (!pollsData.status) {
+				console.log(pollsData);
+				if (pollsData.status) {
+					noPoll.style.display = 'none'
+					virtualbar.style.display = ''
+				} else {
 					noPoll.style.display = ''
+					virtualbar.style.display = 'none'
 					return
 				}
-
-				noPoll.style.display = 'none'
 
 				//reset virtual bar
 				doughnutChart.data.datasets[0].backgroundColor = []
@@ -86,7 +89,7 @@
 
 				// make the polls blind unless all students answered
 				if (totalStudents == totalResponses) {
-					pollsData.blindPoll = false
+					pollsData.blind = false
 				}
 
 				var labelsArray = []
@@ -95,7 +98,7 @@
 				let studResponses = {}
 				// Loops through object to get each label of the possible answers
 				// Also, create a new variable for each possible answer
-				if (pollsData.blindPoll) {
+				if (pollsData.blind) {
 					labelsArray.push('Responses')
 					studResponses.responses = 0
 				} else {
@@ -109,19 +112,19 @@
 
 				// Loops through all possible answers and generates a new color variant for each answer
 				// All possible answers should have a different color
-				if (pollsData.blindPoll) {
+				if (pollsData.blind) {
 					doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
 				} else {
 					for (let poll of Object.values(pollsData.polls)) {
 						doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
 					}
 				}
-				doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
+				doughnutChart.data.datasets[0].backgroundColor.push('hsl(0, 0%, 85%)')
 				// Loops through all student answers and adds them to a total tally
 				// Student response corresponds with a property name in studResponses
 				studResponses.noResponse += totalStudents - totalResponses
 				for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-					if (pollsData.blindPoll)
+					if (pollsData.blind)
 						studResponses.responses += pollData.responses
 					else studResponses[poll] += pollData.responses
 				}

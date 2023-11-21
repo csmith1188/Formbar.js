@@ -12,6 +12,10 @@
 		document.getElementById('breakDialog').showModal()
 	})
 
+	socket.on('message', (message) => {
+		alert(message)
+	})
+
 	socket.on('reload', () => {
 		location.reload()
 	})
