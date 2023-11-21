@@ -24,7 +24,6 @@ async function getUser(request) {
 					}
 					return resolve(userData)
 				} else {
-					console.log(userData)
 					return reject('not a valid API Key')
 				}
 			}
@@ -127,6 +126,7 @@ const api = (cD) => {
 		let classData = Object.assign({}, cD[key])
 		for (let username of Object.keys(classData.students)) {
 			delete classData.students[username].pollRes
+			delete classData.students[username].API
 		}
 		response.json(classData)
 	})
@@ -146,7 +146,6 @@ const api = (cD) => {
 			(error, dbClassData) => {
 				if (error) console.log(error)
 				if (dbClassData) {
-					console.log(dbClassData)
 					// response.json(dbClassData)
 					// return
 					let students = {}

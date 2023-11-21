@@ -5,12 +5,15 @@
 
 	function endBreak() {
 		socket.emit('endBreak')
-		console.log('break')
 		document.getElementById('breakDialog').close()
 	}
 
 	socket.on('break', () => {
 		document.getElementById('breakDialog').showModal()
+	})
+
+	socket.on('message', (message) => {
+		alert(message)
 	})
 
 	socket.on('reload', () => {
