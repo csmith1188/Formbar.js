@@ -177,20 +177,24 @@ This allows websites to check on their own if the user is logged in
 This also allows for the website to check for permissions
 */
 function isAuthenticated(req, res, next) {
-	if (req.session.username) {
-		if (cD.noClass.students[req.session.username]) {
-			if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
-				res.redirect('/manageClass')
+	try {
+		if (req.session.username) {
+			if (cD.noClass.students[req.session.username]) {
+				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+					res.redirect('/manageClass')
+				} else {
+					res.redirect('/selectClass')
+				}
 			} else {
-				res.redirect('/selectClass')
+				next()
 			}
 		} else {
-			next()
+			res.redirect('/login')
 		}
-	} else {
-		res.redirect('/login')
-	}
-}
+	} catch (err) {
+		logger.log("error", err);
+	};
+};
 
 // Check if user is logged in. Only used for create and select class pages
 // Use isAuthenticated function for any other pages
@@ -206,114 +210,128 @@ function isLoggedIn(req, res, next) {
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
-	let username = req.session.username
-	let classCode = req.session.class
+	try {
+		let username = req.session.username
+		let classCode = req.session.class
 
-	if (req.url) {
-		// Defines users desired endpoint
-		let urlPath = req.url
-		// Checks if url has a / in it and removes it from the string
-		if (urlPath.indexOf('/') != -1) {
-			urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-		}
-		// Check for ?(urlParams) and removes it from the string
-		if (urlPath.indexOf('?') != -1) {
-			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-		}
+		if (req.url) {
+			// Defines users desired endpoint
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+			if (!cD[classCode].students[username]) {
+				req.session.class = 'noClass'
+				classCode = 'noClass'
+			}
 
-		if (!cD[classCode].students[username]) {
-			req.session.class = 'noClass'
-			classCode = 'noClass'
-		}
+			if (!PAGE_PERMISSIONS[urlPath])
+				res.render('pages/message', {
+					message: `Error: ${urlPath} is not in the page permissions`,
+					title: 'Error'
+				})
 
-		if (!PAGE_PERMISSIONS[urlPath])
-			res.render('pages/message', {
-				message: `Error: ${urlPath} is not in the page permissions`,
-				title: 'Error'
-			})
-
-		// Checks if users permissions are high enough
-		if (
-			PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-		) next()
-		else if (
-			!PAGE_PERMISSIONS[urlPath].classPage &&
-			cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-		) next()
-		else {
-			res.render('pages/message', {
-				message: `Error: you don't have high enough permissions to access ${urlPath}`,
-				title: 'Error'
-			})
+			// Checks if users permissions are high enough
+			if (
+				PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) next()
+			else if (
+				!PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) next()
+			else {
+				res.render('pages/message', {
+					message: `Error: you don't have high enough permissions to access ${urlPath}`,
+					title: 'Error'
+				})
+			}
 		}
-	}
-}
+	} catch (err) {
+		logger.log("error", err);
+	};
+};
 
 // Allows the user to join a class
 function joinClass(userName, code) {
 	return new Promise((resolve, reject) => {
-		// Find the id of the class from the database
-		db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
-			if (err) {
-				console.error(err)
-			}
-			// Check to make sure there was a class with that name
-			else if (classId && cD[code] && cD[code].key == code) {
-				// Find the id of the user who is trying to join the class
-				db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
-					if (err) {
-						console.error(err)
-					}
-					else if (userId) {
-						// Add the two id's to the junction table to link the user and class
-						db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-							[classId.id, userId.id],
-							(error, classUser) => {
-								if (error) {
-									console.error(error)
-									return
-								}
-								if (!classUser) {
-									db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-										[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
-											if (err) {
-												console.error(err)
-												return
+		try {
+			// Find the id of the class from the database
+			db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
+				try {
+					// Check to make sure there was a class with that name
+					if (classId && cD[code] && cD[code].key == code) {
+						// Find the id of the user who is trying to join the class
+						db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
+							try {
+								if (userId) {
+									// Add the two id's to the junction table to link the user and class
+									db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+										[classId.id, userId.id],
+										(error, classUser) => {
+											try {
+												console.log(classUser);
+												if (!classUser) {
+													db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+														[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
+															try {
+																if (err) {
+																	logger.log("error", err)
+																	return
+																}
+																let user = cD.noClass.students[userName]
+																user.classPermissions = 2
+																delete cD.noClass.students[userName]
+																cD[code].students[userName] = user
+																resolve(true)
+															} catch (err) {
+																logger.log("error", err);
+															};
+														}
+													);
+													return
+												};
+												// Get the student's session data ready to transport into new class
+												let user = cD.noClass.students[userName]
+												if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
+
+												if (classUser)
+													user.classPermissions = classUser.permissions
+												else
+													user.classPermissions = STUDENT_PERMISSIONS
+
+												// Remove student from old class
+												delete cD.noClass.students[userName]
+												// Add the student to the newly created class
+												cD[code].students[userName] = user
+												resolve(true)
+											} catch (err) {
+												logger.log("error", err);
 											}
-											let user = cD.noClass.students[userName]
-											user.classPermissions = 2
-											delete cD.noClass.students[userName]
-											cD[code].students[userName] = user
-											resolve(true)
 										}
 									)
-									return
 								}
-								// Get the student's session data ready to transport into new class
-								let user = cD.noClass.students[userName]
-								if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
-
-								if (classUser)
-									user.classPermissions = classUser.permissions
-								else
-									user.classPermissions = STUDENT_PERMISSIONS
-
-								// Remove student from old class
-								delete cD.noClass.students[userName]
-								// Add the student to the newly created class
-								cD[code].students[userName] = user
-								resolve(true)
-							}
-						)
+							} catch (err) {
+								logger.log("error", err);
+							};
+						});
+					} else {
+						logger.log("error", "no open class with that code");
 					}
-				})
-			} else {
-				resolve(new Error('no open class with that code'))
-			}
-		})
-	})
-}
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
+};
 
 // Function to convert HSL to Hex
 function convertHSLToHex(hue, saturation, lightness) {
@@ -376,10 +394,14 @@ app.get('/', isAuthenticated, (req, res) => {
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
-	res.render('pages/apiKey', {
-		title: "API Key",
-		API: cD[req.session.class].students[req.session.username].API
-	})
+	try {
+		res.render('pages/apiKey', {
+			title: "API Key",
+			API: cD[req.session.class].students[req.session.username].API
+		})
+	} catch (err) {
+		logger.log('error', err)
+	}
 })
 
 // B
@@ -391,23 +413,27 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 // Used to update students permissions, handle polls and their corresponsing responses
 // On render it will send all students in that class to the page
 app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
-	let students = cD[req.session.class].students
-	let keys = Object.keys(students)
-	let allStuds = []
-	for (var i = 0; i < keys.length; i++) {
-		var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-		allStuds.push(val)
-	}
+	try {
+		let students = cD[req.session.class].students
+		let keys = Object.keys(students)
+		let allStuds = []
+		for (var i = 0; i < keys.length; i++) {
+			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
+			allStuds.push(val)
+		}
 
-	/* Uses EJS to render the template and display the information for the class.
-	This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-	*/
-	res.render('pages/controlPanel', {
-		title: "Control Panel",
-		pollStatus: cD[req.session.class].poll.status,
-		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-	})
-})
+		/* Uses EJS to render the template and display the information for the class.
+		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+		*/
+		res.render('pages/controlPanel', {
+			title: "Control Panel",
+			pollStatus: cD[req.session.class].poll.status,
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // C
 
@@ -418,200 +444,221 @@ Could use a switch if need be, but for now it's all broken up by if statements.
 Use the provided template when testing things. - Riley R., May 22, 2023
 */
 app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permCheck, (req, res) => {
-	//Initialze a list to push each step to - Riley R., May 22, 2023
-	let steps = []
-	/*
-	Uses Excel to JSON to read the sent excel spreadsheet.
-	Each main column has been assigned a label in order to differentiate them.
-	It loops through the whole object - Riley R., May 22, 2023
-	*/
-	if (req.file) {
-		cD[req.session.class].currentStep = 0
-		const result = excelToJson({
-			sourceFile: req.file.path,
-			sheets: [{
-				name: 'Steps',
-				columnToKey: {
-					A: 'index',
-					B: 'type',
-					C: 'prompt',
-					D: 'response',
-					E: 'labels'
-				}
-			}]
-		})
-
-		/* For In Loop that iterates through the created object.
-		 Allows for the use of steps inside of a progressive lesson.
-		 Checks the object's type using a conditional - Riley R., May 22, 2023
+	try {
+		//Initialze a list to push each step to - Riley R., May 22, 2023
+		let steps = []
+		/*
+		Uses Excel to JSON to read the sent excel spreadsheet.
+		Each main column has been assigned a label in order to differentiate them.
+		It loops through the whole object - Riley R., May 22, 2023
 		*/
-		for (const key in result['Steps']) {
-			let step = {}
-			// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
-			if (result['Steps'][key].type == 'Poll') {
-				step.type = 'poll'
-				step.labels = result['Steps'][key].labels.split(', ')
-				step.responses = result['Steps'][key].response
-				step.prompt = result['Steps'][key].prompt
-				steps.push(step)
-				// Creates an object with all the data required to start a quiz
-			} else if (result['Steps'][key].type == 'Quiz') {
-				let nameQ = result['Steps'][key].prompt
-				let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-				let colToKeyObj = {
-					A: 'index',
-					B: 'question',
-					C: 'key'
-				}
-				let i = 0
-				/*
-				Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
-				Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
-				*/
-				for (const letterI in letters) {
-					if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
-						colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
-						i++
+		if (req.file) {
+			cD[req.session.class].currentStep = 0
+			const result = excelToJson({
+				sourceFile: req.file.path,
+				sheets: [{
+					name: 'Steps',
+					columnToKey: {
+						A: 'index',
+						B: 'type',
+						C: 'prompt',
+						D: 'response',
+						E: 'labels'
 					}
-				}
-				let quizLoad = excelToJson({
-					sourceFile: req.file.path,
-					sheets: [{
-						name: nameQ,
-						columnToKey: colToKeyObj
-					}]
-				})
-				let questionList = []
-				for (let i = 1; i < quizLoad[nameQ].length; i++) {
-					let questionMaker = []
+				}]
+			})
 
-					questionMaker.push(quizLoad[nameQ][i].question)
-					questionMaker.push(quizLoad[nameQ][i].key)
+			/* For In Loop that iterates through the created object.
+			 Allows for the use of steps inside of a progressive lesson.
+			 Checks the object's type using a conditional - Riley R., May 22, 2023
+			*/
+			for (const key in result['Steps']) {
+				let step = {}
+				// Creates an object with all the data required to start a poll - Riley R., May 22, 2023
+				if (result['Steps'][key].type == 'Poll') {
+					step.type = 'poll'
+					step.labels = result['Steps'][key].labels.split(', ')
+					step.responses = result['Steps'][key].response
+					step.prompt = result['Steps'][key].prompt
+					steps.push(step)
+					// Creates an object with all the data required to start a quiz
+				} else if (result['Steps'][key].type == 'Quiz') {
+					let nameQ = result['Steps'][key].prompt
+					let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+					let colToKeyObj = {
+						A: 'index',
+						B: 'question',
+						C: 'key'
+					}
+					let i = 0
+					/*
+					Names the cells of the sheet after C to A-Z for the use of them in Quizzes (A, B, and C in the spreadsheet are the index, question, and key, not the answers)
+					Creates a way to have multiple responses to quizzes- Riley R., May 22, 2023
+					*/
 					for (const letterI in letters) {
-						if (quizLoad[nameQ][i][letters.charAt(letterI)] != undefined) {
-							questionMaker.push(quizLoad[nameQ][i][letters.charAt(letterI)])
+						if (letters.charAt(letterI) != 'A' && letters.charAt(letterI) != 'B' && letters.charAt(letterI) != 'C') {
+							colToKeyObj[letters.charAt(letterI)] = letters.charAt(i)
+							i++
 						}
 					}
-					questionList.push(questionMaker)
-				}
-				step.type = 'quiz'
-				step.questions = questionList
-				steps.push(step)
-			} else if (result['Steps'][key].type == 'Lesson') {
-				/*
-				Creates an object with all necessary data in order to make a lesson.
-				The data is stored on a page in an excel spreadsheet.
-				the name of this page is defined in the main page of the excel spreadsheet. - Riley R., May 22, 2023
-				*/
-				nameL = result['Steps'][key].prompt
-				let lessonLoad = excelToJson({
-					sourceFile: req.file.path,
-					sheets: [{
-						name: nameL,
-						columnToKey: {
-							A: 'header',
-							B: 'data'
+					let quizLoad = excelToJson({
+						sourceFile: req.file.path,
+						sheets: [{
+							name: nameQ,
+							columnToKey: colToKeyObj
+						}]
+					})
+					let questionList = []
+					for (let i = 1; i < quizLoad[nameQ].length; i++) {
+						let questionMaker = []
+
+						questionMaker.push(quizLoad[nameQ][i].question)
+						questionMaker.push(quizLoad[nameQ][i].key)
+						for (const letterI in letters) {
+							if (quizLoad[nameQ][i][letters.charAt(letterI)] != undefined) {
+								questionMaker.push(quizLoad[nameQ][i][letters.charAt(letterI)])
+							}
 						}
-					}]
-				})
-				let lessonArr = []
-				for (let i = 1; i < lessonLoad[nameL].length; i++) {
-					let lessonMaker = [lessonLoad[nameL][i].header]
-
-					let lessonContent = lessonLoad[nameL][i].data.split(', ')
-					for (let u = 0; u < lessonContent.length; u++) {
-						lessonMaker.push(lessonContent[u])
+						questionList.push(questionMaker)
 					}
-					lessonArr.push(lessonMaker)
+					step.type = 'quiz'
+					step.questions = questionList
+					steps.push(step)
+				} else if (result['Steps'][key].type == 'Lesson') {
+					/*
+					Creates an object with all necessary data in order to make a lesson.
+					The data is stored on a page in an excel spreadsheet.
+					the name of this page is defined in the main page of the excel spreadsheet. - Riley R., May 22, 2023
+					*/
+					nameL = result['Steps'][key].prompt
+					let lessonLoad = excelToJson({
+						sourceFile: req.file.path,
+						sheets: [{
+							name: nameL,
+							columnToKey: {
+								A: 'header',
+								B: 'data'
+							}
+						}]
+					})
+					let lessonArr = []
+					for (let i = 1; i < lessonLoad[nameL].length; i++) {
+						let lessonMaker = [lessonLoad[nameL][i].header]
+
+						let lessonContent = lessonLoad[nameL][i].data.split(', ')
+						for (let u = 0; u < lessonContent.length; u++) {
+							lessonMaker.push(lessonContent[u])
+						}
+						lessonArr.push(lessonMaker)
+					}
+
+					let dateConfig = new Date()
+
+					step.type = 'lesson'
+					step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+					step.lesson = lessonArr
+					steps.push(step)
 				}
-
-				let dateConfig = new Date()
-
-				step.type = 'lesson'
-				step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-				step.lesson = lessonArr
-				steps.push(step)
 			}
-		}
 
-		cD[req.session.class].steps = steps
-		res.redirect('/controlPanel')
-	}
-})
+			cD[req.session.class].steps = steps
+			res.redirect('/controlPanel')
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // Allow teacher to create class
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
 // Plus they can ban and kick as long as they can create classes
 app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
-	let submittionType = req.body.submittionType
-	let className = req.body.name
-	let classId = req.body.id
+	try {
+		let submittionType = req.body.submittionType
+		let className = req.body.name
+		let classId = req.body.id
 
-	function makeClass(id, key) {
-		// Get the teachers session data ready to transport into new class
-		var user = cD.noClass.students[req.session.username]
-		// Remove teacher from old class
-		delete cD.noClass.students[req.session.username]
-		// Add class into the session data
-		cD[key] = new Classroom(id, className, key)
-		// Add the teacher to the newly created class
-		cD[key].students[req.session.username] = user
-		cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+		function makeClass(id, key) {
+			try {
+				// Get the teachers session data ready to transport into new class
+				var user = cD.noClass.students[req.session.username]
+				// Remove teacher from old class
+				delete cD.noClass.students[req.session.username]
+				// Add class into the session data
+				cD[key] = new Classroom(id, className, key)
+				// Add the teacher to the newly created class
+				cD[key].students[req.session.username] = user
+				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+				console.log(cD[key].students[req.session.username].classPermissions);
 
-		req.session.class = key
+				req.session.class = key
 
-		res.redirect('/home')
-	}
-	// Checks if teacher is creating a new class or joining an old class
-	//generates a 4 character key
-	//this is used for students who want to enter a class
-	if (submittionType == 'create') {
-		let key = ''
-		for (let i = 0; i < 4; i++) {
-			let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-			let letter = keygen[Math.floor(Math.random() * keygen.length)]
-			key += letter
-		}
-		// Add classroom to the database
-		db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
-			if (err) {
-				console.error(err)
-			} else {
-				db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
-					if (err) {
-						console.error(err)
-					}
-					else if (classroom) makeClass(classroom.id, classroom.key)
-				})
+				res.redirect('/home')
+			} catch (err) {
+				logger.log("error", err);
+			};
+		};
+		// Checks if teacher is creating a new class or joining an old class
+		//generates a 4 character key
+		//this is used for students who want to enter a class
+		if (submittionType == 'create') {
+			let key = ''
+			for (let i = 0; i < 4; i++) {
+				let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+				let letter = keygen[Math.floor(Math.random() * keygen.length)]
+				key += letter
 			}
-		})
-	} else {
-		db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
-			if (err) {
-				console.error(err)
-			} else if (classroom)
-				makeClass(classroom.id, classroom.key)
-		})
-	}
-})
+			// Add classroom to the database
+			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
+				try {
+					db.get('SELECT id, key FROM classroom WHERE name=? AND owner = ?', [className, req.session.userId], (err, classroom) => {
+						try {
+							if (classroom) makeClass(classroom.id, classroom.key);
+						} catch (err) {
+							logger.log("error", err);
+						};
+					});
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		} else {
+			db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+				try {
+					if (classroom) makeClass(classroom.id, classroom.key);
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		};
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // D
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
-	let className = req.body.name
+	try {
+		let className = req.body.name
 
-	db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
-		if (err) {
-			console.error(err)
-		} else if (classroom) {
-			if (cD[classroom.key]) {
-				deleteStudents()
-				delete cD[classroom.key]
-			}
-			db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
-		} else res.redirect('/home')
-	})
-})
+		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
+			try {
+				if (classroom) {
+					if (cD[classroom.key]) {
+						deleteStudents()
+						delete cD[classroom.key]
+					}
+					db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
+				} else res.redirect('/home')
+			} catch (err) {
+				logger.log("error", err);
+			};
+		});
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // E
 
@@ -625,17 +672,25 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 // It renders the home page so teachers and students can navigate to it
 // It uses the authenitication to make sure the user is actually logged in
 app.get('/home', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/index', {
-		title: 'Home'
-	})
-})
+	try {
+		res.render('pages/index', {
+			title: 'Home'
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 
 app.get('/help', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/help', {
-		title: "Help"
-	})
-})
+	try {
+		res.render('pages/help', {
+			title: "Help"
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // I
 
@@ -646,170 +701,177 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 // L
 /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
 app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
-		if (err) {
-			console.error(err)
-		} else if (rows) {
-			res.render('pages/previousLesson', {
-				rows: rows,
-				title: "Previous Lesson"
-			})
-		}
-	})
-})
+	try {
+		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
+			try {
+				if (rows) {
+					res.render('pages/previousLesson', {
+						rows: rows,
+						title: "Previous Lesson"
+					})
+				}
+			} catch (err) {
+				logger.log("error", err);
+			};
+		});
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	let lesson = JSON.parse(req.body.data)
-	res.render('pages/lesson', {
-		lesson: lesson,
-		title: "Today's Lesson"
-	})
-})
+	try {
+		let lesson = JSON.parse(req.body.data)
+		res.render('pages/lesson', {
+			lesson: lesson,
+			title: "Today's Lesson"
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
-	res.render('pages/login', {
-		title: 'Login'
-	})
-})
+	try {
+		res.render('pages/login', {
+			title: 'Login'
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
 // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
 // This also encrypts passwords to make sure people's accounts don't get hacked
 app.post('/login', async (req, res) => {
-	var user = {
-		username: req.body.username,
-		password: req.body.password,
-		loginType: req.body.loginType,
-		userType: req.body.userType
-	}
-	var passwordCrypt = encrypt(user.password)
-	// Check whether user is logging in or signing up
-	if (user.loginType == "login") {
-		// Get the users login in data to verify password
-		db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
-			if (err) {
-				console.error(err)
-			}
-			// Check if a user with that name was found in the database
-			else if (userData) {
-				// Decrypt users password
-				let tempPassword = decrypt(JSON.parse(userData.password))
-				if (tempPassword == user.password) {
-					let loggedIn = false
-					let classKey = ''
-					let classPermissions
+	try {
+		var user = {
+			username: req.body.username,
+			password: req.body.password,
+			loginType: req.body.loginType,
+			userType: req.body.userType
+		}
+		var passwordCrypt = encrypt(user.password)
+		// Check whether user is logging in or signing up
+		if (user.loginType == "login") {
+			// Get the users login in data to verify password
+			db.get('SELECT * FROM users WHERE username=?', [user.username], async (err, userData) => {
+				try {
+					// Check if a user with that name was found in the database
+					if (userData) {
+						// Decrypt users password
+						let tempPassword = decrypt(JSON.parse(userData.password))
+						if (tempPassword == user.password) {
+							let loggedIn = false
+							let classKey = ''
+							let classPermissions
 
-					for (let classData of Object.values(cD)) {
-						if (classData.key) {
-							for (let username of Object.keys(classData.students)) {
-								if (username == userData.username) {
-									loggedIn = true
-									classKey = classData.key
-									classPermissions = classData.students[username].permissions
+							for (let classData of Object.values(cD)) {
+								if (classData.key) {
+									for (let username of Object.keys(classData.students)) {
+										if (username == userData.username) {
+											loggedIn = true
+											classKey = classData.key
+											classPermissions = classData.students[username].permissions
 
-									break
+											break
+										}
+									}
 								}
 							}
+						} else {
+							res.render('pages/message', {
+								message: "user does not exist",
+								title: 'Login'
+							})
 						}
 					}
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		} else if (user.loginType == "new") {
+			let permissions = STUDENT_PERMISSIONS
 
-					if (loggedIn) {
-						req.session.class = classKey
+			db.all('SELECT API, secret, username FROM users', (error, users) => {
+				try {
+					if (error) {
+						console.error(error)
 					} else {
-						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-						req.session.class = 'noClass'
-					}
-					// Add a cookie to transfer user credentials across site
-					req.session.userId = userData.id
-					req.session.username = userData.username
-					res.redirect('/')
-				} else {
-					res.render('pages/message', {
-						message: "Incorrect password",
-						title: 'Login'
-					})
-				}
-			} else {
-				res.render('pages/message', {
-					message: "user does not exist",
-					title: 'Login'
-				})
-			}
-		})
+						let existingAPIs = []
+						let existingSecrets = []
+						let newAPI
+						let newSecret
 
-	} else if (user.loginType == "new") {
-		let permissions = STUDENT_PERMISSIONS
+						if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
-		db.all('SELECT API, secret, username FROM users', (error, users) => {
-			if (error) {
-				console.error(error)
-			} else {
-				let existingAPIs = []
-				let existingSecrets = []
-				let newAPI
-				let newSecret
-
-				if (users.length == 0) permissions = MANAGER_PERMISSIONS
-
-				for (let dbUser of users) {
-					existingAPIs.push(dbUser.API)
-					existingSecrets.push(dbUser.secret)
-
-					if (dbUser.username == user.username) {
-						res.redirect('/login')
-						return
-					}
-				}
-
-				do {
-					newAPI = crypto.randomBytes(64).toString('hex')
-				} while (existingAPIs.includes(newAPI))
-				do {
-					newSecret = crypto.randomBytes(256).toString('hex')
-				} while (existingSecrets.includes(newSecret))
-
-				// Add the new user to the database
-				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
-					[
-						user.username,
-						JSON.stringify(passwordCrypt),
-						permissions,
-						newAPI,
-						newSecret
-					], (err) => {
-						if (err) {
-							console.error(err)
-							return
+						for (let dbUser of users) {
+							existingAPIs.push(dbUser.API)
+							existingSecrets.push(dbUser.secret)
+							if (dbUser.username == user.username) {
+								res.redirect('/login')
+								return
+							}
 						}
 
-						// Find the user in which was just created to get the id of the user
-						db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-							if (err) {
-								console.error(err)
-							} else {
-								// Add user to session
-								cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+						do {
+							newAPI = crypto.randomBytes(64).toString('hex')
+						} while (existingAPIs.includes(newAPI))
+						do {
+							newSecret = crypto.randomBytes(256).toString('hex')
+						} while (existingSecrets.includes(newSecret))
 
-								// Add the user to the session in order to transfer data between each page
-								req.session.userId = userData.id
-								req.session.username = userData.username
-								req.session.class = 'noClass'
-								res.redirect('/')
+						// Add the new user to the database
+						db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+							[
+								user.username,
+								JSON.stringify(passwordCrypt),
+								permissions,
+								newAPI,
+								newSecret
+							], (err) => {
+								if (err) {
+									console.error(err)
+									return
+								}
+								// Find the user in which was just created to get the id of the user
+								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+									if (err) {
+										console.error(err)
+									} else {
+										try {
+											// Add user to session
+											cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
+											// Add the user to the session in order to transfer data between each page
+											req.session.userId = userData.id
+											req.session.username = userData.username
+											req.session.class = 'noClass'
+											res.redirect('/')
+										} catch (err) {
+											logger.log('error', err)
+										}
+									}
+								})
 							}
-						})
+						)
 					}
-				)
-			}
-		})
-	} else if (user.loginType == "guest") {
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		} else if (user.loginType == "guest") {
 
-	}
-})
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // M
 // Loads which classes the teacher is an owner of
@@ -817,12 +879,16 @@ app.post('/login', async (req, res) => {
 // The teacher can give any perms to anyone they desire, which is useful at times
 // This also allows the teacher to kick or ban if needed
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
-	// Finds all classes the teacher is the owner of
-	res.render('pages/manageClass', {
-		title: 'Create Class',
-		currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-	})
-})
+	try {
+		// Finds all classes the teacher is the owner of
+		res.render('pages/manageClass', {
+			title: 'Create Class',
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // N
 
@@ -830,51 +896,64 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 /* This is what happens when the server tries to authenticate a user. It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as
 a variable. */
 app.get('/oauth', (req, res) => {
-	let redirectURL = req.query.redirectURL
-	res.render('pages/oauth.ejs', {
-		title: "Oauth",
-		redirectURL: redirectURL
-	})
-})
+	try {
+		let redirectURL = req.query.redirectURL
+		res.render('pages/oauth.ejs', {
+			title: "Oauth",
+			redirectURL: redirectURL
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // This is what happens after the user submits their authentication data.
 app.post('/oauth', (req, res) => {
-	// It saves the username, password, and the redirectURL that is submitted.
-	const {
-		username,
-		password,
-		redirectURL
-	} = req.body
-	// If there is a username and password submitted, then it gets results from the database that match the username.
-	if (username && password) {
-		db.get('SELECT * FROM users WHERE username = ?', [username], (error, userData) => {
-			if (error) {
-				console.error(error)
-			}
-			// If there is userData returned, it saves the database password to a variable.
-			else if (userData) {
-				let databasePassword = decrypt(JSON.parse(userData.password))
-				// It then compares the submitted password to the database password.
-				// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-				if (databasePassword == password) {
-					var token = jwt.sign({ username: username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
-					res.redirect(`${redirectURL}?token=${token}`)
-					// If it does not match, then it redirects you back to the oauth page.
-				} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-				// If there in no userData, then it redirects back to the oauth page.
-			} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-		})
-		// If either a username, password, or both is not returned, then it redirects back to the oauth page.
-	} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-})
+	try {
+		// It saves the username, password, and the redirectURL that is submitted.
+		const {
+			username,
+			password,
+			redirectURL
+		} = req.body
+		// If there is a username and password submitted, then it gets results from the database that match the username.
+		if (username && password) {
+			db.get('SELECT * FROM users WHERE username = ?', [username], (error, userData) => {
+				try {
+					// If there is userData returned, it saves the database password to a variable.
+					if (userData) {
+						let databasePassword = decrypt(JSON.parse(userData.password))
+						// It then compares the submitted password to the database password.
+						// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
+						if (databasePassword == password) {
+							var token = jwt.sign({ username: username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
+							res.redirect(`${redirectURL}?token=${token}`)
+							// If it does not match, then it redirects you back to the oauth page.
+						} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+						// If there in no userData, then it redirects back to the oauth page.
+					} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
+		} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // P
 app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/plugins.ejs',
-		{
-			title: 'Plugins'
-		})
-})
+	try {
+		res.render('pages/plugins.ejs',
+			{
+				title: 'Plugins'
+			})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // Q
 
@@ -888,37 +967,47 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 // selectClass
 //Send user to the select class page
 app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
-	db.all(
-		'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentuid JOIN classroom ON classusers.classuid = classroom.id WHERE users.username = ?',
-		[req.session.username],
-		(err, joinedClasses) => {
-			if (err) {
-				console.error(err)
-			} else res.render('pages/selectClass', {
-				title: 'Select Class',
-				joinedClasses
-			})
-		}
-	)
-})
+	try {
+		db.all(
+			'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentuid JOIN classroom ON classusers.classuid = classroom.id WHERE users.username = ?',
+			[req.session.username],
+			(err, joinedClasses) => {
+				try {
+					res.render('pages/selectClass', {
+						title: 'Select Class',
+						joinedClasses
+					})
+				} catch (err) {
+					logger.log("error", err);
+				};
+			}
+		);
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
-	let code = req.body.key.toLowerCase()
+	try {
+		let code = req.body.key.toLowerCase()
 
-	let checkComplete = await joinClass(req.session.username, code)
-	if (checkComplete === true) {
-		req.session.class = code
-		res.redirect('/home')
-	} else {
-		// res.send('Error: no open class with that name')
-		res.render('pages/message', {
-			message: `Error: ${checkComplete.message}`,
-			title: 'Error'
-		})
-	}
-})
+		let checkComplete = await joinClass(req.session.username, code).catch(err => logger.log('error', err))
+		if (checkComplete === true) {
+			req.session.class = code
+			res.redirect('/home')
+		} else {
+			// res.send('Error: no open class with that name')
+			res.render('pages/message', {
+				message: `Error: ${checkComplete.message}`,
+				title: 'Error'
+			})
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 
 /* Student page, the layout is controlled by different "modes" to display different information.
@@ -928,91 +1017,99 @@ Quiz: Displaying a quiz with questions that can be answered by the student
 Lesson: used to display an agenda of sorts to the stufent, but really any important info can be put in a lesson - Riley R., May 22, 2023
 */
 app.get('/student', isAuthenticated, permCheck, (req, res) => {
-	//Poll Setup
-	let user = {
-		name: req.session.username,
-		class: req.session.class
-	}
+	try {
+		//Poll Setup
+		let user = {
+			name: req.session.username,
+			class: req.session.class
+		}
 
-	let answer = req.query.letter
+		let answer = req.query.letter
 
-	if (answer) {
-		cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
-	}
+		if (answer) {
+			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
+		}
 
-	//Quiz Setup and Queries
-	/* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
+		//Quiz Setup and Queries
+		/* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
 
-	formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
+		formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
 
-	If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
-	*/
-	if (req.query.question == 'random') {
-		let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
-		res.render('pages/queryquiz', {
-			quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
-			title: "Quiz"
-		})
-		if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
+		If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
+		*/
+		if (req.query.question == 'random') {
+			let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
 			res.render('pages/queryquiz', {
 				quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
 				title: "Quiz"
 			})
-		}
-	} else if (isNaN(req.query.question) == false) {
-		if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
-			res.render('pages/queryquiz', {
-				quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
-				title: "Quiz"
+			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
+				res.render('pages/queryquiz', {
+					quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
+					title: "Quiz"
+				})
+			}
+		} else if (isNaN(req.query.question) == false) {
+			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
+				res.render('pages/queryquiz', {
+					quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
+					title: "Quiz"
+				})
+			} else {
+				res.render('pages/message', {
+					message: "Error: please enter proper data",
+					title: 'Error'
+				})
+			}
+		} else if (req.query.question == undefined) {
+			res.render('pages/student', {
+				title: 'Student',
+				user: JSON.stringify(user),
+				myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
+				myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
+				lesson: cD[req.session.class].lesson
 			})
-		} else {
-			res.render('pages/message', {
-				message: "Error: please enter proper data",
-				title: 'Error'
-			})
 		}
-	} else if (req.query.question == undefined) {
-		res.render('pages/student', {
-			title: 'Student',
-			user: JSON.stringify(user),
-			myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
-			myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
-			lesson: cD[req.session.class].lesson
-		})
-	}
-})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 /* This is for when you send poll data via a post command or when you submit a quiz.
 If it's a poll it'll save your response to the student object and the database.
 - Riley R., May 24, 2023
 */
 app.post('/student', isAuthenticated, permCheck, (req, res) => {
-	if (req.query.poll) {
-		let answer = req.body.poll
-		if (answer) {
-			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
-		}
-		res.redirect('/poll')
-	}
-	if (req.body.question) {
-		let results = req.body.question
-		let totalScore = 0
-		for (let i = 0; i < cD[req.session.class].quiz.questions.length; i++) {
-			if (results[i] == cD[req.session.class].quiz.questions[i][1]) {
-				totalScore += cD[req.session.class].quiz.pointsPerQuestion
-			} else {
-				continue
+	try {
+		if (req.query.poll) {
+			let answer = req.body.poll
+			if (answer) {
+				cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
 			}
+			res.redirect('/poll')
 		}
-		cD[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quiz.totalScore
+		if (req.body.question) {
+			let results = req.body.question
+			let totalScore = 0
+			for (let i = 0; i < cD[req.session.class].quiz.questions.length; i++) {
+				if (results[i] == cD[req.session.class].quiz.questions[i][1]) {
+					totalScore += cD[req.session.class].quiz.pointsPerQuestion
+				} else {
+					continue
+				}
+			}
+			cD[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quiz.totalScore
 
-		res.render('pages/results', {
-			totalScore: Math.floor(totalScore),
-			maxScore: cD[req.session.class].quiz.totalScore,
-			title: "Results"
-		})
-	}
-})
+			res.render('pages/results', {
+				totalScore: Math.floor(totalScore),
+				maxScore: cD[req.session.class].quiz.totalScore,
+				title: "Results"
+			})
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 
 // T
@@ -1021,12 +1118,16 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
-	res.render('pages/virtualbar', {
-		title: 'Virtual Bar',
-		io: io,
-		className: cD[req.session.class].className
-	})
-})
+	try {
+		res.render('pages/virtualbar', {
+			title: 'Virtual Bar',
+			io: io,
+			className: cD[req.session.class].className
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 // W
 
@@ -1038,50 +1139,59 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 
 // 404
 app.use((req, res, next) => {
-	// Defines users desired endpoint
-	let urlPath = req.url
-	// Checks if url has a / in it and removes it from the string
-	if (urlPath.indexOf('/') != -1) {
-		urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-	}
-	// Check for ?(urlParams) and removes it from the string
-	if (urlPath.indexOf('?') != -1) {
-		urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-	}
+	try {
+		// Defines users desired endpoint
+		let urlPath = req.url
+		// Checks if url has a / in it and removes it from the string
+		if (urlPath.indexOf('/') != -1) {
+			urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+		}
+		// Check for ?(urlParams) and removes it from the string
+		if (urlPath.indexOf('?') != -1) {
+			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+		}
 
-	res.status(404).render('pages/message', {
-		message: `Error: the page ${urlPath} does not exist`,
-		title: "Error"
-	})
-})
+		res.status(404).render('pages/message', {
+			message: `Error: the page ${urlPath} does not exist`,
+			title: "Error"
+		})
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 
 // Middleware for sockets
 // Authentication for users and plugins to connect to formbar websockets
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
-	let { api, classCode } = socket.request._query
-	if (socket.request.session.username) {
-		next()
-	} else if (api) {
-		socket.request.session.api = api
-		socket.request.session.class = classCode
-		if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'//return next(new Error("class not started"))
-		db.get(
-			'SELECT id, username, permissions FROM users WHERE API = ?',
-			[api],
-			(error, userData) => {
-				if (error) {
-					return next(error)
+	try {
+		let { api, classCode } = socket.request._query
+		if (socket.request.session.username) {
+			next()
+		} else if (api) {
+			socket.request.session.api = api
+			socket.request.session.class = classCode
+			if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'//return next(new Error("class not started"))
+			db.get(
+				'SELECT id, username, permissions FROM users WHERE API = ?',
+				[api],
+				(error, userData) => {
+					try {
+						if (!userData) return next(new Error('not a valid API Key'))
+						next()
+					} catch (err) {
+						logger.log("error", err);
+					};
 				}
-				if (!userData) return next(new Error('not a valid API Key'))
-				next()
-			}
-		)
-	} else {
-		next(new Error("missing username or api"))
-	}
-})
+			);
+		} else {
+			logger.log("error", "Missing username of api");
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
+});
 
 let rateLimits = {}
 
@@ -1089,288 +1199,375 @@ let userSockets = {}
 
 //Handles the websocket communications
 io.on('connection', (socket) => {
-	if (socket.request.session.username) {
-		socket.join(socket.request.session.class)
-		socket.join(socket.request.session.username)
-		socket.join(`permissions-${cD[socket.request.session.class].students[socket.request.session.username].permissions}`)
-		socket.join(`classPermissions-${cD[socket.request.session.class].students[socket.request.session.username].classPermissions}`)
+	try {
+		if (socket.request.session.username) {
+			socket.join(socket.request.session.class)
+			socket.join(socket.request.session.username)
+			socket.join(`permissions-${cD[socket.request.session.class].students[socket.request.session.username].permissions}`)
+			socket.join(`classPermissions-${cD[socket.request.session.class].students[socket.request.session.username].classPermissions}`)
 
-		userSockets[socket.request.session.username] = socket
-	}
-	if (socket.request.session.api) {
-		socket.join(socket.request.session.class)
-	}
+			userSockets[socket.request.session.username] = socket
+		}
+		if (socket.request.session.api) {
+			socket.join(socket.request.session.class)
+		}
+	} catch (err) {
+		logger.log("error", err);
+	};
 
 	function cpUpdate(classCode) {
-		if (!classCode) classCode = socket.request.session.class
+		try {
+			if (!classCode) classCode = socket.request.session.class
 
-		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
-			var pollHistory = rows
-			io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
-		})
-	}
+			db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
+				try {
+					var pollHistory = rows
+					io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
+				} catch (err) {
+					logger.log("error", err);
+				};
+			});
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function vbUpdate(classCode) {
-		if (!classCode) classCode = socket.request.session.class
-		if (!classCode) return
-		if (classCode == 'noClass') return
+		try {
+			if (!classCode) classCode = socket.request.session.class
+			if (!classCode) return
+			if (classCode == 'noClass') return
 
-		let classData = structuredClone(cD[classCode])
-		let responses = {}
+			let classData = structuredClone(cD[classCode])
+			let responses = {}
 
-		for (let [username, student] of Object.entries(classData.students)) {
-			if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
-		}
+			for (let [username, student] of Object.entries(classData.students)) {
+				if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
+			}
 
-		if (Object.keys(classData.poll.responses).length > 0) {
-			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
-				responses[resKey] = {
-					...resValue,
-					responses: 0
+			if (Object.keys(classData.poll.responses).length > 0) {
+				for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
+					responses[resKey] = {
+						...resValue,
+						responses: 0
+					}
+				}
+
+				for (let studentData of Object.values(classData.students)) {
+					if (
+						studentData &&
+						Object.keys(responses).includes(studentData.pollRes.buttonRes)
+					)
+						responses[studentData.pollRes.buttonRes].responses++
 				}
 			}
 
-			for (let studentData of Object.values(classData.students)) {
-				if (
-					studentData &&
-					Object.keys(responses).includes(studentData.pollRes.buttonRes)
-				)
-					responses[studentData.pollRes.buttonRes].responses++
-			}
-		}
-
-		io.to(classCode).emit('vbUpdate', {
-			status: classData.poll.status,
-			totalStudents: Object.keys(classData.students).length,
-			polls: responses,
-			textRes: classData.poll.textRes,
-			prompt: classData.poll.prompt,
-			weight: classData.poll.weight,
-			blind: classData.poll.blind
-		})
+			io.to(classCode).emit('vbUpdate', {
+				status: classData.poll.status,
+				totalStudents: Object.keys(classData.students).length,
+				polls: responses,
+				textRes: classData.poll.textRes,
+				prompt: classData.poll.prompt,
+				weight: classData.poll.weight,
+				blind: classData.poll.blind
+			})
+		} catch (err) {
+			logger.log("error", err);
+		};
 	}
 
 	function pollUpdate() {
-		io.to(socket.request.session.class).emit('pollUpdate', cD[socket.request.session.class].poll)
-	}
+		try {
+			io.to(socket.request.session.class).emit('pollUpdate', cD[socket.request.session.class].poll)
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function modeUpdate() {
-		io.to(socket.request.session.class).emit('modeUpdate', cD[socket.request.session.class].mode)
-	}
+		try {
+			io.to(socket.request.session.class).emit('modeUpdate', cD[socket.request.session.class].mode)
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function quizUpdate() {
-		io.to(socket.request.session.class).emit('quizUpdate', cD[socket.request.session.class].quiz)
-	}
+		try {
+			io.to(socket.request.session.class).emit('quizUpdate', cD[socket.request.session.class].quiz)
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function lessonUpdate() {
-		io.to(socket.request.session.class).emit('lessonUpdate', cD[socket.request.session.class].lesson)
-	}
+		try {
+			io.to(socket.request.session.class).emit('lessonUpdate', cD[socket.request.session.class].lesson)
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function pluginUpdate() {
-		db.all(
-			'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
-			[socket.request.session.class],
-			(error, plugins) => {
-				if (error) {
-					console.error(error)
-					return
+		try {
+			db.all(
+				'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
+				[socket.request.session.class],
+				(error, plugins) => {
+					try {
+						io.to(socket.request.session.class).emit('pluginUpdate', plugins)
+					} catch (err) {
+						logger.log("error", err);
+					};
 				}
-				io.to(socket.request.session.class).emit('pluginUpdate', plugins)
-			}
-		)
-	}
+			)
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function deleteStudent(username, classCode) {
-		userSockets[username].leave(cD[classCode].className)
-		cD.noClass.students[username] = cD[classCode].students[username]
-		cD.noClass.students[username].classPermissions = null
-		userSockets[username].request.session.class = 'noClass'
-		userSockets[username].request.session.save()
-		delete cD[classCode].students[username]
-		io.to(username).emit('reload')
-	}
+		try {
+			userSockets[username].leave(cD[classCode].className)
+			cD.noClass.students[username] = cD[classCode].students[username]
+			cD.noClass.students[username].classPermissions = null
+			userSockets[username].request.session.class = 'noClass'
+			userSockets[username].request.session.save()
+			delete cD[classCode].students[username]
+			io.to(username).emit('reload')
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function deleteStudents(classCode) {
-		for (let username of Object.keys(cD[classCode].students)) {
-			if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
-				deleteStudent(username, classCode)
+		try {
+			for (let username of Object.keys(cD[classCode].students)) {
+				if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
+					deleteStudent(username, classCode)
+				}
 			}
-		}
-	}
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function endClass(classCode) {
-		for (let username of Object.keys(cD[classCode].students)) {
-			deleteStudent(username, classCode)
-		}
-		delete cD[classCode]
-		socket.broadcast.to(socket.request.session.class).emit('classEnded')
-	}
+		try {
+			for (let username of Object.keys(cD[classCode].students)) {
+				deleteStudent(username, classCode)
+			}
+			delete cD[classCode]
+			socket.broadcast.to(socket.request.session.class).emit('classEnded')
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	function getOwnedClasses(username) {
-		db.all('SELECT name, id FROM classroom WHERE owner=?',
-			[userSockets[username].request.session.userId], (err, ownedClasses) => {
-				if (err) {
-					console.error(err);
-				} else io.to(username).emit('getOwnedClasses', ownedClasses)
-			}
-		)
-	}
+		try {
+			db.all('SELECT name, id FROM classroom WHERE owner=?',
+				[userSockets[username].request.session.userId], (err, ownedClasses) => {
+					try {
+						io.to(username).emit('getOwnedClasses', ownedClasses)
+					} catch (err) {
+						logger.log("error", err);
+					};
+				}
+			);
+		} catch (err) {
+			logger.log("error", err);
+		};
+	};
 
 	//rate limiter
 	socket.use((packet, next) => {
-		const user = socket.request.session.username
-		const now = Date.now()
-		const limit = 5
-		const timeFrame = 3000
-		const blockTime = 3000
-		const allowedRequests = ['pollResp', 'help', 'break']
+		try {
+			const user = socket.request.session.username
+			const now = Date.now()
+			const limit = 5
+			const timeFrame = 3000
+			const blockTime = 3000
+			const allowedRequests = ['pollResp', 'help', 'break']
 
-		if (!rateLimits[user]) {
-			rateLimits[user] = {}
-		}
+			if (!rateLimits[user]) {
+				rateLimits[user] = {}
+			}
 
-		const userRequests = rateLimits[user]
+			const userRequests = rateLimits[user]
 
-		const requestType = packet[0]
-		if (!allowedRequests.includes(requestType)) {
-			next()
-			return
-		}
+			const requestType = packet[0]
+			if (!allowedRequests.includes(requestType)) {
+				next()
+				return
+			}
 
-		userRequests[requestType] = userRequests[requestType] || []
+			userRequests[requestType] = userRequests[requestType] || []
 
-		userRequests[requestType] = userRequests[requestType].filter((timestamp) => now - timestamp < timeFrame)
+			userRequests[requestType] = userRequests[requestType].filter((timestamp) => now - timestamp < timeFrame)
 
-		if (userRequests[requestType].length >= limit) {
-			setTimeout(() => {
-				userRequests[requestType].shift()
-			}, blockTime)
-		} else {
-			userRequests[requestType].push(now)
-			next()
-		}
-	})
+			if (userRequests[requestType].length >= limit) {
+				setTimeout(() => {
+					try {
+
+						userRequests[requestType].shift()
+					} catch (err) {
+						logger.log('error', err)
+					}
+				}, blockTime)
+			} else {
+				userRequests[requestType].push(now)
+				next()
+			}
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
 
 	// /poll websockets for updating the database
-	socket.on('pollResp', function (res, textRes, resWeight, resLength) {
-		logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${res}, ${textRes}`);
-		cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
-		cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
-		for (let i = 0; i < resLength; i++) {
-			if (res) {
-				let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
-				cD[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
-				if (cD[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
-					db.get('SELECT digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (error, data) => {
-						db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
-					})
-					cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
-				};
+	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
+		try {
+			logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${res}, ${textRes}`);
+			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
+			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
+			for (let i = 0; i < resLength; i++) {
+				if (res) {
+					let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
+					cD[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
+					if (cD[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
+						db.get('SELECT digipogs FROM classusers WHERE studentid = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (error, data) => {
+							try {
+								db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
+							} catch (err) {
+								logger.log("error", err);
+							};
+						});
+						cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
+					};
+				}
 			}
-		}
-		cpUpdate()
-		vbUpdate()
+			cpUpdate()
+			vbUpdate()
+		} catch (err) {
+			logger.log("error", err);
+		};
 	})
 
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
-		newPerm = Number(newPerm)
+		try {
+			newPerm = Number(newPerm)
 
-		cD[socket.request.session.class].students[user].classPermissions = newPerm
+			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
-		if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
-			cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
+			if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
+				cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
 
-		db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [
-			newPerm,
-			cD[socket.request.session.class].id,
-			cD[socket.request.session.class].students[user].id
-		])
+			db.run('UPDATE classusers SET permissions = ? WHERE classuid = ? AND studentuid = ?', [
+				newPerm,
+				cD[socket.request.session.class].id,
+				cD[socket.request.session.class].students[user].id
+			])
 
-		io.to(user).emit('reload')
+			io.to(user).emit('reload')
 
-		cpUpdate()
-	})
+			cpUpdate()
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
 
 	socket.on('permChange', (user, newPerm) => {
-		newPerm = Number(newPerm)
+		try {
+			newPerm = Number(newPerm)
 
-		cD[socket.request.session.class].students[user].permissions = newPerm
-		db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
-	})
+			cD[socket.request.session.class].students[user].permissions = newPerm
+			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', function (resNumber, resTextBox, pollPrompt, polls, blind, weight) {
-		let generatedColors = generateColors(resNumber)
+	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
+		try {
+			let generatedColors = generateColors(resNumber)
 
-		cD[socket.request.session.class].mode = 'poll'
-		cD[socket.request.session.class].poll.blind = blind
-		cD[socket.request.session.class].poll.status = true
+			cD[socket.request.session.class].mode = 'poll'
+			cD[socket.request.session.class].poll.blind = blind
+			cD[socket.request.session.class].poll.status = true
 
-		// Creates an object for every answer possible the teacher is allowing
-		for (let i = 0; i < resNumber; i++) {
-			let letterString = "abcdefghijklmnopqrstuvwxyz"
-			let answer = letterString[i]
-			let weight = 1
-			let color = generatedColors[i]
+			// Creates an object for every answer possible the teacher is allowing
+			for (let i = 0; i < resNumber; i++) {
+				let letterString = "abcdefghijklmnopqrstuvwxyz"
+				let answer = letterString[i]
+				let weight = 1
+				let color = generatedColors[i]
 
-			if (polls[i].answer)
-				answer = polls[i].answer
-			if (polls[i].weight)
-				weight = polls[i].weight
-			if (polls[i].color)
-				color = polls[i].color
+				if (polls[i].answer)
+					answer = polls[i].answer
+				if (polls[i].weight)
+					weight = polls[i].weight
+				if (polls[i].color)
+					color = polls[i].color
 
-			cD[socket.request.session.class].poll.responses[answer] = {
-				answer: answer,
-				weight: weight,
-				color: color
+				cD[socket.request.session.class].poll.responses[answer] = {
+					answer: answer,
+					weight: weight,
+					color: color
+				}
 			}
-		}
 
-		cD[socket.request.session.class].poll.weight = weight
-		cD[socket.request.session.class].poll.textRes = resTextBox
-		cD[socket.request.session.class].poll.prompt = pollPrompt
+			cD[socket.request.session.class].poll.weight = weight
+			cD[socket.request.session.class].poll.textRes = resTextBox
+			cD[socket.request.session.class].poll.prompt = pollPrompt
 
-		for (var key in cD[socket.request.session.class].students) {
-			cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
-			cD[socket.request.session.class].students[key].pollRes.textRes = ""
-		}
+			for (var key in cD[socket.request.session.class].students) {
+				cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
+				cD[socket.request.session.class].students[key].pollRes.textRes = ""
+			}
 
-		pollUpdate()
-		vbUpdate()
-	})
+			pollUpdate()
+			vbUpdate()
+		} catch (err) {
+			logger.log("error", err);
+		};
+	});
 
 	// End the current poll. Does not take any arguments
 	socket.on('endPoll', () => {
-		let data = { prompt: '', names: [], letter: [], text: [] }
+		try {
+			let data = { prompt: '', names: [], letter: [], text: [] }
 
-		let dateConfig = new Date()
-		let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+			let dateConfig = new Date()
+			let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
-		data.prompt = cD[socket.request.session.class].poll.prompt
+			data.prompt = cD[socket.request.session.class].poll.prompt
 
-		for (const key in cD[socket.request.session.class].students) {
-			data.names.push(cD[socket.request.session.class].students[key].username)
-			data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
-			data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
-		}
-
-		db.run(
-			'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-			[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-				if (err) {
-					console.error(err)
-				}
+			for (const key in cD[socket.request.session.class].students) {
+				data.names.push(cD[socket.request.session.class].students[key].username)
+				data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
+				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 			}
-		)
 
-		cD[socket.request.session.class].poll.responses = {}
-		cD[socket.request.session.class].poll.prompt = ''
-		cD[socket.request.session.class].poll.status = false
+			db.run(
+				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
+				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
+					if (err) {
+						logger.log("error", err);
+					};
+				}
+			);
 
-		pollUpdate()
-		vbUpdate()
+			cD[socket.request.session.class].poll.responses = {}
+			cD[socket.request.session.class].poll.prompt = ''
+			cD[socket.request.session.class].poll.status = false
+
+			pollUpdate()
+			vbUpdate()
+		} catch (err) {
+			logger.log("error", err);
+		};
 	});
 
 	socket.on('pollUpdate', () => {
@@ -1396,145 +1593,201 @@ io.on('connection', (socket) => {
 
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
-		logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${reason}, ${time}`);
-		cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
-		cpUpdate();
+		try {
+			logger.info(`${socket.handshake.address}, ${socket.request.session.username}, ${reason}, ${time}`);
+			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
+			cpUpdate();
+		} catch (err) {
+			logger.log('error', err)
+		}
 	});
 
 	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
-		let student = cD[socket.request.session.class].students[socket.request.session.username]
-		student.break = reason
-		cpUpdate()
+		try {
+			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			student.break = reason
+			cpUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Aproves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
-		let student = cD[socket.request.session.class].students[username]
-		student.break = breakApproval
-		if (breakApproval) io.to(username).emit('break')
-		cpUpdate()
-		vbUpdate()
+		try {
+			let student = cD[socket.request.session.class].students[username]
+			student.break = breakApproval
+			if (breakApproval) io.to(username).emit('break')
+			cpUpdate()
+			vbUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Ends the break
 	socket.on('endBreak', () => {
-		let student = cD[socket.request.session.class].students[socket.request.session.username]
-		student.break = false
+		try {
+			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			student.break = false
 
-		cpUpdate()
-		vbUpdate()
+			cpUpdate()
+			vbUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Deletes a user from the class
 	socket.on('deleteStudent', (username) => {
-		const classCode = socket.request.session.class
-		deleteStudent(username, classCode)
-		cpUpdate(classCode)
-		vbUpdate(classCode)
+		try {
+			const classCode = socket.request.session.class
+			deleteStudent(username, classCode)
+			cpUpdate(classCode)
+			vbUpdate(classCode)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Deletes all students from the class
 	socket.on('deleteStudents', () => {
-		const classCode = socket.request.session.class
-		deleteStudents(classCode)
-		cpUpdate(classCode)
-		vbUpdate(classCode)
+		try {
+			const classCode = socket.request.session.class
+			deleteStudents(classCode)
+			cpUpdate(classCode)
+			vbUpdate(classCode)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('leaveClass', () => {
-		const userId = socket.request.session.userId
-		const username = socket.request.session.username
-		const classCode = socket.request.session.class
-		deleteStudent(username, classCode)
-		cpUpdate(classCode)
-		vbUpdate(classCode)
-		db.get(
-			'SELECT * FROM classroom WHERE owner=? AND key=?',
-			[userId, classCode],
-			(err, classroom) => {
-				if (err) {
-					console.error(err)
+		try {
+			const userId = socket.request.session.userId
+			const username = socket.request.session.username
+			const classCode = socket.request.session.class
+			deleteStudent(username, classCode)
+			cpUpdate(classCode)
+			vbUpdate(classCode)
+			db.get(
+				'SELECT * FROM classroom WHERE owner=? AND key=?',
+				[userId, classCode],
+				(err, classroom) => {
+					if (err) {
+						console.error(err)
+					}
+					else if (classroom) {
+						endClass(classroom.key)
+					}
 				}
-				else if (classroom) {
-					endClass(classroom.key)
-				}
-			}
-		)
+			)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('logout', () => {
-		const username = socket.request.session.username
-		const userId = socket.request.session.userId
-		const classCode = socket.request.session.class
-		const className = cD[classCode].className
-		socket.request.session.destroy((err) => {
-			if (err) {
-				console.error(err)
-			} else {
-				delete userSockets[username]
-				delete cD[classCode].students[username]
-				socket.leave(className)
-				cpUpdate(classCode)
-				vbUpdate(classCode)
-				db.get(
-					'SELECT * FROM classroom WHERE owner=? AND key=?',
-					[userId, classCode],
-					(err, classroom) => {
-						if (err) {
-							console.error(err)
-						} else if (classroom) {
-							endClass(classroom.key)
+		try {
+			const username = socket.request.session.username
+			const userId = socket.request.session.userId
+			const classCode = socket.request.session.class
+			const className = cD[classCode].className
+			socket.request.session.destroy((err) => {
+				if (err) {
+					console.error(err)
+				} else {
+					delete userSockets[username]
+					delete cD[classCode].students[username]
+					socket.leave(className)
+					cpUpdate(classCode)
+					vbUpdate(classCode)
+					db.get(
+						'SELECT * FROM classroom WHERE owner=? AND key=?',
+						[userId, classCode],
+						(err, classroom) => {
+							if (err) {
+								console.error(err)
+							} else if (classroom) {
+								endClass(classroom.key)
+							}
 						}
-					}
-				)
-			}
-		})
+					)
+				}
+			})
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('endClass', () => {
-		const userId = socket.request.session.userId
-		const classCode = socket.request.session.class
-		db.get(
-			'SELECT * FROM classroom WHERE owner=? AND key=?',
-			[userId, classCode],
-			(err, classroom) => {
-				if (err) {
-					console.error(err);
-				} else if (classroom) {
-					endClass(classroom.key)
+		try {
+			const userId = socket.request.session.userId
+			const classCode = socket.request.session.class
+			db.get(
+				'SELECT * FROM classroom WHERE owner=? AND key=?',
+				[userId, classCode],
+				(err, classroom) => {
+					try {
+						if (err) {
+							console.error(err);
+						} else if (classroom) {
+							endClass(classroom.key)
+						}
+					} catch (err) {
+						logger.log('error', err)
+					}
 				}
-			}
-		)
+			)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('deleteClass', (classId) => {
-		db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
-			if (err) {
-				console.error(err)
-			} else if (classroom) {
-				if (cD[classroom.key]) {
-					endClass(classroom.key)
+		try {
+			db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
+				try {
+					if (err) {
+						console.error(err)
+					} else if (classroom) {
+						if (cD[classroom.key]) {
+							endClass(classroom.key)
+						}
+						db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
+						db.run('DELETE FROM classusers WHERE classuid = ?', classroom.id)
+						db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
+					}
+					getOwnedClasses(socket.request.session.username)
+				} catch (err) {
+					logger.log('error', err)
 				}
-				db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
-				db.run('DELETE FROM classusers WHERE classuid = ?', classroom.id)
-				db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
-			}
-			getOwnedClasses(socket.request.session.username)
-		})
+			})
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
-		socket.join(className)
-		socket.request.session.class = className
-		socket.emit('joinRoom', socket.request.session.class)
-		vbUpdate()
+		try {
+			socket.join(className)
+			socket.request.session.class = className
+			socket.emit('joinRoom', socket.request.session.class)
+			vbUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('leaveRoom', (className) => {
-		socket.leave(className)
-		vbUpdate()
+		try {
+			socket.leave(className)
+			vbUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Updates and stores poll history
@@ -1556,114 +1809,137 @@ io.on('connection', (socket) => {
 
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollindex) => {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
-			if (err) {
-				console.error(err)
-			} else {
-				io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
-			}
-		})
-
+		try {
+			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
+				try {
+					if (err) {
+						console.error(err)
+					} else {
+						io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
+					}
+				} catch (err) {
+					logger.log('error', err)
+				}
+			})
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Moves to the next step
 	socket.on('doStep', (index) => {
-		// send reload to whole class
-		socket.broadcast.to(socket.request.session.class).emit('reload')
-		cD[socket.request.session.class].currentStep++
-		if (cD[socket.request.session.class].steps[index] !== undefined) {
-			// Creates a poll based on the step data
-			if (cD[socket.request.session.class].steps[index].type == 'poll') {
+		try {
+			// send reload to whole class
+			socket.broadcast.to(socket.request.session.class).emit('reload')
+			cD[socket.request.session.class].currentStep++
+			if (cD[socket.request.session.class].steps[index] !== undefined) {
+				// Creates a poll based on the step data
+				if (cD[socket.request.session.class].steps[index].type == 'poll') {
 
-				cD[socket.request.session.class].mode = 'poll'
+					cD[socket.request.session.class].mode = 'poll'
 
-				if (cD[socket.request.session.class].poll.status == true) {
-					cD[socket.request.session.class].poll.responses = {}
-					cD[socket.request.session.class].poll.prompt = ""
-					cD[socket.request.session.class].poll.status = false
-				};
+					if (cD[socket.request.session.class].poll.status == true) {
+						cD[socket.request.session.class].poll.responses = {}
+						cD[socket.request.session.class].poll.prompt = ""
+						cD[socket.request.session.class].poll.status = false
+					};
 
-				cD[socket.request.session.class].poll.status = true
-				// Creates an object for every answer possible the teacher is allowing
-				for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
-					if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
-						let letterString = "abcdefghijklmnopqrstuvwxyz"
-						cD[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
-					} else {
-						cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = { answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i] }
+					cD[socket.request.session.class].poll.status = true
+					// Creates an object for every answer possible the teacher is allowing
+					for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
+						if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
+							let letterString = "abcdefghijklmnopqrstuvwxyz"
+							cD[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
+						} else {
+							cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = { answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i] }
+						}
 					}
+					cD[socket.request.session.class].poll.textRes = false
+					cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
+					// Creates a new quiz based on step data
+				} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
+					cD[socket.request.session.class].mode = 'quiz'
+					questions = cD[socket.request.session.class].steps[index].questions
+					let quiz = new Quiz(questions.length, 100)
+					quiz.questions = questions
+					cD[socket.request.session.class].quiz = quiz
+					// Creates lesson based on step data
+				} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
+					cD[socket.request.session.class].mode = 'lesson'
+					let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
+					cD[socket.request.session.class].lesson = lesson
+					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
+						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+							if (err) {
+								console.error(err)
+							}
+						}
+					)
+					cD[socket.request.session.class].poll.textRes = false
+					cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
+					// Check this later, there's already a quiz if statement
+				} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
+					questions = cD[socket.request.session.class].steps[index].questions
+					quiz = new Quiz(questions.length, 100)
+					quiz.questions = questions
+					cD[socket.request.session.class].quiz = quiz
+					// Check this later, there's already a lesson if statement
+				} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
+					let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
+					cD[socket.request.session.class].lesson = lesson
+					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
+						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+							if (err) {
+								console.error(err)
+							}
+						}
+					)
 				}
-				cD[socket.request.session.class].poll.textRes = false
-				cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
-				// Creates a new quiz based on step data
-			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
-				cD[socket.request.session.class].mode = 'quiz'
-				questions = cD[socket.request.session.class].steps[index].questions
-				let quiz = new Quiz(questions.length, 100)
-				quiz.questions = questions
-				cD[socket.request.session.class].quiz = quiz
-				// Creates lesson based on step data
-			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
-				cD[socket.request.session.class].mode = 'lesson'
-				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
-				cD[socket.request.session.class].lesson = lesson
-				db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
-						if (err) {
-							console.error(err)
-						}
-					}
-				)
-				cD[socket.request.session.class].poll.textRes = false
-				cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
-				// Check this later, there's already a quiz if statement
-			} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
-				questions = cD[socket.request.session.class].steps[index].questions
-				quiz = new Quiz(questions.length, 100)
-				quiz.questions = questions
-				cD[socket.request.session.class].quiz = quiz
-				// Check this later, there's already a lesson if statement
-			} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
-				let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
-				cD[socket.request.session.class].lesson = lesson
-				db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-					[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
-						if (err) {
-							console.error(err)
-						}
-					}
-				)
-			}
 
-			pollUpdate()
-			modeUpdate()
-			quizUpdate()
-			lessonUpdate()
-		} else {
-			cD[socket.request.session.class].currentStep = 0
+				pollUpdate()
+				modeUpdate()
+				quizUpdate()
+				lessonUpdate()
+			} else {
+				cD[socket.request.session.class].currentStep = 0
+			}
+		} catch (err) {
+			logger.log('error', err)
 		}
 	})
 
 	// Check later, there's already a socket.on for previousPollDisplay
 	socket.on('previousPollDisplay', (pollindex) => {
-		db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
-			if (err) {
-				console.error(err)
-			} else {
-				io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
-			}
-		})
+		try {
+			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
+				if (err) {
+					console.error(err)
+				} else {
+					io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
+				}
+			})
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Deletes help ticket
 	socket.on('deleteTicket', (student) => {
-		cD[socket.request.session.class].students[student].help = ''
+		try {
+			cD[socket.request.session.class].students[student].help = ''
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
-		cD[socket.request.session.class].mode = mode
-		modeUpdate()
+		try {
+			cD[socket.request.session.class].mode = mode
+			modeUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('pluginUpdate', () => {
@@ -1671,58 +1947,67 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('changePlugin', (id, name, url) => {
-		if (name) {
-			db.run(
-				'UPDATE plugins set name=? WHERE id=?',
-				[name, id],
-				(error) => {
+		try {
+			if (name) {
+				db.run(
+					'UPDATE plugins set name=? WHERE id=?',
+					[name, id],
+					(error) => {
+						if (error) {
+							console.error(error)
+							return
+						}
+						pluginUpdate()
+					}
+				)
+			}
+			else if (url) {
+				db.run('UPDATE plugins set url=? WHERE id=?', [url, id], (error) => {
 					if (error) {
 						console.error(error)
 						return
 					}
 					pluginUpdate()
-				}
-			)
-		}
-		else if (url) {
-			db.run(
-				'UPDATE plugins set url=? WHERE id=?',
-				[url, id],
-				(error) => {
-					if (error) {
-						console.error(error)
-						return
-					}
-					pluginUpdate()
-				}
-			)
+				})
+			}
+		} catch (err) {
+			logger.log('error', err)
 		}
 	})
 
 	socket.on('addPlugin', (name, url) => {
-		db.get(
-			'SELECT * FROM classroom WHERE key = ?',
-			[socket.request.session.class],
-			(error, classData) => {
-				if (error) {
-					console.error(error)
-				} else {
-					db.run(
-						'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
-						[name, url, classData.id]
-					)
-					pluginUpdate()
+		try {
+			db.get(
+				'SELECT * FROM classroom WHERE key = ?',
+				[socket.request.session.class],
+				(error, classData) => {
+					try {
+						if (error) {
+							console.error(error)
+						} else {
+							db.run(
+								'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+								[name, url, classData.id]
+							)
+							pluginUpdate()
+						}
+					} catch (err) {
+						logger.log('error', err)
+					}
 				}
-			}
-		)
+			)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('removePlugin', (id) => {
-		db.run(
-			'DELETE FROM plugins WHERE id=?',
-			[id]
-		)
-		pluginUpdate()
+		try {
+			db.run('DELETE FROM plugins WHERE id=?', [id])
+			pluginUpdate()
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
 	socket.on('getOwnedClasses', (username) => {
@@ -1732,20 +2017,22 @@ io.on('connection', (socket) => {
 	// sends the class code of the class a user is in
 	socket.on('getUserClass', ({ username, api }) => {
 		function getClass(username) {
-			for (let className of Object.keys(cD)) {
-				if (cD[className].students[username]) {
-					if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
-					else return socket.emit('getUserClass', className)
+			try {
+				for (let className of Object.keys(cD)) {
+					if (cD[className].students[username]) {
+						if (className == 'noClass') return socket.emit('getUserClass', { error: 'user is not in a class' })
+						else return socket.emit('getUserClass', className)
+					}
 				}
+				socket.emit('getUserClass', { error: 'user is not logged in' })
+			} catch (err) {
+				logger.log('error', err)
 			}
-			socket.emit('getUserClass', { error: 'user is not logged in' })
 		}
 
-		if (api) {
-			db.get(
-				'SELECT * FROM users WHERE API = ?',
-				[api],
-				(error, userData) => {
+		try {
+			if (api) {
+				db.get('SELECT * FROM users WHERE API = ?', [api], (error, userData) => {
 					if (error) {
 						console.error(error)
 						return
@@ -1755,10 +2042,12 @@ io.on('connection', (socket) => {
 						return
 					}
 					getClass(userData.username)
-				}
-			)
-		} else if (username) getClass(username)
-		else socket.emit('getUserClass', { error: 'missing username or api key' })
+				})
+			} else if (username) getClass(username)
+			else socket.emit('getUserClass', { error: 'missing username or api key' })
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 })
 
