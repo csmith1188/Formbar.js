@@ -99,7 +99,6 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	home: { permissions: GUEST_PERMISSIONS, classPage: false },
 }
 
 
@@ -404,7 +403,7 @@ app.use('/api', apiRoutes)
 // This allows it to check if the user is logged in along with the home page
 // It also allows for redirection to any other page if needed
 app.get('/', isAuthenticated, (req, res) => {
-	res.redirect('/home')
+	res.redirect('/student')
 })
 
 
@@ -684,19 +683,6 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 // G
 
 // H
-// This is the home page, where the teacher and students can access can access the formbar js
-// It also shows the color and title of the formbar js
-// It renders the home page so teachers and students can navigate to it
-// It uses the authenitication to make sure the user is actually logged in
-app.get('/home', isAuthenticated, permCheck, (req, res) => {
-	try {
-		res.render('pages/index', {
-			title: 'Home'
-		})
-	} catch (err) {
-		logger.log("error", err);
-	};
-});
 
 
 app.get('/help', isAuthenticated, permCheck, (req, res) => {

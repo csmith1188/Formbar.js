@@ -10,6 +10,7 @@
 
 	socket.on('break', () => {
 		document.getElementById('breakDialog').showModal()
+		console.log("BreakSocket")
 	})
 
 	socket.on('message', (message) => {
