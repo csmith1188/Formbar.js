@@ -284,7 +284,6 @@ function joinClass(userName, code) {
 										[classId.id, userId.id],
 										(error, classUser) => {
 											try {
-												console.log(classUser);
 												if (!classUser) {
 													db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 														[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
@@ -606,11 +605,10 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
 				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
-				console.log(cD[key].students[req.session.username].classPermissions);
 
 				req.session.class = key
 
-				res.redirect('/home')
+				res.redirect('/')
 			} catch (err) {
 				logger.log("error", err);
 			};
@@ -666,7 +664,7 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 						delete cD[classroom.key]
 					}
 					db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
-				} else res.redirect('/home')
+				} else res.redirect('/')
 			} catch (err) {
 				logger.log("error", err);
 			};
@@ -766,7 +764,7 @@ app.post('/login', async (req, res) => {
 			db.get('SELECT users.*, NULLIF(json_group_array(DISTINCT shared_polls.pollId), "[null]") as sharedPolls, NULLIF(json_group_array(DISTINCT custom_polls.id), "[null]") as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
 				try {
 					// Check if a user with that name was found in the database
-					if (userData) {
+					if (userData.username) {
 						// Decrypt users password
 						let tempPassword = decrypt(JSON.parse(userData.password))
 						if (tempPassword == user.password) {
@@ -787,6 +785,18 @@ app.post('/login', async (req, res) => {
 									}
 								}
 							}
+
+							if (loggedIn) {
+								req.session.class = classKey
+							} else {
+								// Add user to the session
+								cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+								req.session.class = 'noClass'
+							}
+							// Add a cookie to transfer user credentials across site
+							req.session.userId = userData.id
+							req.session.username = userData.username
+							res.redirect('/')
 						} else {
 							res.render('pages/message', {
 								message: "Incorrect password",
@@ -845,67 +855,47 @@ app.post('/login', async (req, res) => {
 						return
 					}
 				}
-				// Find the user in which was just created to get the id of the user
-				db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-					if (err) {
-						console.error(err)
-					} else {
-						// Add user to session
-						cD.noClass.students[userData.username] = new Student(
-							userData.username,
-							userData.id,
-							userData.permissions,
-							userData.API
-						)
-						// Add the user to the session in order to transfer data between each page
-						req.session.userId = userData.id
-						req.session.username = userData.username
-						req.session.class = 'noClass'
-						res.redirect('/')
 
-						do {
-							newAPI = crypto.randomBytes(64).toString('hex')
-						} while (existingAPIs.includes(newAPI))
-						do {
-							newSecret = crypto.randomBytes(256).toString('hex')
-						} while (existingSecrets.includes(newSecret))
+				do {
+					newAPI = crypto.randomBytes(64).toString('hex')
+				} while (existingAPIs.includes(newAPI))
+				do {
+					newSecret = crypto.randomBytes(256).toString('hex')
+				} while (existingSecrets.includes(newSecret))
 
-						// Add the new user to the database
-						db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
-							[
-								user.username,
-								JSON.stringify(passwordCrypt),
-								permissions,
-								newAPI,
-								newSecret
-							], (err) => {
-								if (err) {
-									console.error(err)
-									return
+				// Add the new user to the database
+				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+					[
+						user.username,
+						JSON.stringify(passwordCrypt),
+						permissions,
+						newAPI,
+						newSecret
+					], (err) => {
+						if (err) {
+							console.error(err)
+							return
+						}
+						// Find the user in which was just created to get the id of the user
+						db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+							if (err) {
+								console.error(err)
+							} else {
+								try {
+									// Add user to session
+									cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
+									// Add the user to the session in order to transfer data between each page
+									req.session.userId = userData.id
+									req.session.username = userData.username
+									req.session.class = 'noClass'
+									res.redirect('/')
+								} catch (err) {
+									logger.log('error', err)
 								}
-								// Find the user in which was just created to get the id of the user
-								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-									if (err) {
-										console.error(err)
-									} else {
-										try {
-											// Add user to session
-											cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-
-											// Add the user to the session in order to transfer data between each page
-											req.session.userId = userData.id
-											req.session.username = userData.username
-											req.session.class = 'noClass'
-											res.redirect('/')
-										} catch (err) {
-											logger.log('error', err)
-										}
-									}
-								})
 							}
-						)
-					}
-				})
+						})
+					})
 			})
 		} else if (user.loginType == "guest") {
 
@@ -1038,7 +1028,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 		let checkComplete = await joinClass(req.session.username, code).catch(err => logger.log('error', err))
 		if (checkComplete === true) {
 			req.session.class = code
-			res.redirect('/home')
+			res.redirect('/')
 		} else {
 			// res.send('Error: no open class with that name')
 			res.render('pages/message', {
@@ -1228,7 +1218,7 @@ io.use((socket, next) => {
 				}
 			);
 		} else {
-			logger.log("error", "Missing username of api");
+			logger.log("error", "Missing username or api");
 		}
 	} catch (err) {
 		logger.log("error", err);
