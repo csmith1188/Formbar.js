@@ -13,6 +13,10 @@
 		console.log("BreakSocket")
 	})
 
+	socket.on('message', (message) => {
+		alert(message)
+	})
+
 	socket.on('reload', () => {
 		location.reload()
 	})
