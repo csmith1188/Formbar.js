@@ -228,6 +228,9 @@
 					quiz = newQuiz
 					updatePage()
 				})
+
+				socket.emit('cpUpdate')
+				socket.emit('vbUpdate')
 			</script>
 
 </html>
