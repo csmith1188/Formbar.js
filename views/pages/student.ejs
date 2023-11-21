@@ -97,7 +97,7 @@
 											remove
 										</label>
 									`
-							if (textResponse) {
+							if (poll.textRes) {
 								pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
 							}
 						} else {
@@ -134,10 +134,9 @@
 				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
 					var radios = document.getElementsByTagName('input')
-					var textareas = document.getElementById("resTextBox")
+					var textarea = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
-					var textAreaRes = ''
 					for (var i = 0; i < radios.length; i++) {
 
 						if (radios[i].type === 'radio' && radios[i].checked) {
@@ -148,7 +147,8 @@
 
 
 					}
-					textAreaRes = textareas.value
+					if (textarea)
+						textRes = textarea.value
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
 					socket.emit('sfxPlay', 'sfx_up01')
