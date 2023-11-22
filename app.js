@@ -1249,10 +1249,14 @@ app.use((req, res, next) => {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 
-		res.status(404).render('pages/message', {
-			message: `Error: the page ${urlPath} does not exist`,
-			title: "Error"
-		})
+		if (urlPath.startsWith('api/')) {
+			res.status(404).json(`Error: the page ${urlPath} does not exist`)
+		} else {
+			res.status(404).render('pages/message', {
+				message: `Error: the page ${urlPath} does not exist`,
+				title: "Error"
+			})
+		}
 	} catch (err) {
 		logger.log("error", err);
 	};
