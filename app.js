@@ -8,7 +8,7 @@ const excelToJson = require('convert-excel-to-json')
 const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-const winston = require('winston');
+const winston = require('winston')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -65,7 +65,7 @@ const logger = winston.createLogger({
 		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
 		new winston.transports.Console({ level: 'error' })
 	],
-});
+})
 
 //cD is the class dictionary, it stores all of the information on classes and students
 var cD = {
@@ -211,10 +211,14 @@ function isAuthenticated(req, res, next) {
 // Created for the first page since there is no check before this
 // This allows for a first check in where the user gets checked by the webpage
 function isLoggedIn(req, res, next) {
-	if (req.session.username) {
-		next()
-	} else {
-		res.redirect('/login')
+	try {
+		if (req.session.username) {
+			next()
+		} else {
+			res.redirect('/login')
+		}
+	} catch (err) {
+		logger.log('error', err);
 	}
 }
 
@@ -275,120 +279,151 @@ function joinClass(userName, code) {
 			db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
 				try {
 					// Check to make sure there was a class with that name
-					if (classId && cD[code] && cD[code].key == code) {
-						// Find the id of the user who is trying to join the class
-						db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
-							try {
-								if (userId) {
-									// Add the two id's to the junction table to link the user and class
-									db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-										[classId.id, userId.id],
-										(error, classUser) => {
-											try {
-												if (!classUser) {
-													db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-														[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
-															try {
-																if (err) {
-																	logger.log("error", err)
-																	return
-																}
-																let user = cD.noClass.students[userName]
-																user.classPermissions = 2
-																delete cD.noClass.students[userName]
-																cD[code].students[userName] = user
-																resolve(true)
-															} catch (err) {
-																logger.log("error", err);
-															};
-														}
-													);
-													return
-												};
-												// Get the student's session data ready to transport into new class
-												let user = cD.noClass.students[userName]
-												if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
-
-												if (classUser)
-													user.classPermissions = classUser.permissions
-												else
-													user.classPermissions = STUDENT_PERMISSIONS
-
-												// Remove student from old class
-												delete cD.noClass.students[userName]
-												// Add the student to the newly created class
-												cD[code].students[userName] = user
-												resolve(true)
-											} catch (err) {
-												logger.log("error", err);
-											}
-										}
-									)
-								}
-							} catch (err) {
-								logger.log("error", err);
-							};
-						});
-					} else {
-						logger.log("error", "no open class with that code");
+					if (!classId || !cD[code] || cD[code].key != code) {
+						reject(new Error('no open class with that code'))
+						return
 					}
+
+					// Find the id of the user who is trying to join the class
+					db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
+						try {
+							if (userId) {
+								// Add the two id's to the junction table to link the user and class
+								db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+									[classId.id, userId.id],
+									(err, classUser) => {
+										try {
+											if (err) {
+												logger.log("error", err)
+												reject(new Error('something went wrong'))
+												return
+											}
+
+											if (!classUser) {
+												db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+													[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
+														try {
+															if (err) {
+																logger.log("error", err)
+																reject(new Error('something went wrong'))
+																return
+															}
+
+															let user = cD.noClass.students[userName]
+															user.classPermissions = GUEST_PERMISSIONS
+
+															// Remove student from old class
+															delete cD.noClass.students[userName]
+															// Add the student to the newly created class
+															cD[code].students[userName] = user
+															resolve(true)
+														} catch (err) {
+															logger.log("error", err)
+															reject(new Error('something went wrong'))
+														}
+													}
+												)
+												return
+											}
+
+											// Get the student's session data ready to transport into new class
+											let user = cD.noClass.students[userName]
+											if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
+
+											user.classPermissions = classUser.permissions
+
+											// Remove student from old class
+											delete cD.noClass.students[userName]
+											// Add the student to the newly created class
+											cD[code].students[userName] = user
+											resolve(true)
+										} catch (err) {
+											logger.log("error", err)
+											reject(new Error('something went wrong'))
+										}
+									}
+								)
+							}
+						} catch (err) {
+							logger.log("error", err)
+							reject(new Error('something went wrong'))
+						}
+					})
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
+					logger.log("error", err)
+					reject(new Error('something went wrong'))
+				}
+			})
 		} catch (err) {
-			logger.log("error", err);
-		};
-	});
-};
+			logger.log("error", err)
+			reject(new Error('something went wrong'))
+		}
+	})
+}
 
 // Function to convert HSL to Hex
 function convertHSLToHex(hue, saturation, lightness) {
-	// Normalize lightness to range 0-1
-	lightness /= 100;
+	try {
+		// Normalize lightness to range 0-1
+		lightness /= 100;
 
-	// Calculate chroma
-	const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
+		// Calculate chroma
+		const chroma = saturation * Math.min(lightness, 1 - lightness) / 100;
 
-	// Function to get color component
-	function getColorComponent(colorIndex) {
-		const colorPosition = (colorIndex + hue / 30) % 12;
-		const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
+		// Function to get color component
+		function getColorComponent(colorIndex) {
+			try {
+				const colorPosition = (colorIndex + hue / 30) % 12;
+				const colorValue = lightness - chroma * Math.max(Math.min(colorPosition - 3, 9 - colorPosition, 1), -1);
 
-		// Return color component in hexadecimal format
-		return Math.round(255 * colorValue).toString(16).padStart(2, '0');
-	};
+				// Return color component in hexadecimal format
+				return Math.round(255 * colorValue).toString(16).padStart(2, '0');
+			} catch (err) {
+				logger.log('error', err)
+			}
+		};
 
-	// Return the hex color
-	return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+		// Return the hex color
+		return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
+	} catch (err) {
+		logger.log('error', err)
+	}
 }
 
 // Function to generate colors
 function generateColors(amount) {
-	// Initialize colors array
-	let colors = [];
+	try {
+		// Initialize colors array
+		let colors = [];
 
-	// Initialize hue
-	let hue = 0
+		// Initialize hue
+		let hue = 0
 
-	// Generate colors
-	for (let i = 0; i < amount; i++) {
-		// Add color to the colors array
-		colors.push(convertHSLToHex(hue, 100, 50));
+		// Generate colors
+		for (let i = 0; i < amount; i++) {
+			// Add color to the colors array
+			colors.push(convertHSLToHex(hue, 100, 50));
 
-		// Increment hue
-		hue += 360 / amount
+			// Increment hue
+			hue += 360 / amount
+		}
+
+		// Return the colors array
+		return colors;
+	} catch (err) {
+		logger.log('error', err)
 	}
-
-	// Return the colors array
-	return colors;
 }
 
 function getUserClass(username) {
-	for (let classCode of Object.keys(cD)) {
-		if (cD[classCode].students[username]) return classCode
+	try {
+		for (let classCode of Object.keys(cD)) {
+			if (cD[classCode].students[username]) return classCode
+		}
+		return null
+	} catch (err) {
+		logger.log('error', err)
 	}
-	return null
 }
 
 //import routes
@@ -595,14 +630,14 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		let className = req.body.name
 		let classId = req.body.id
 
-		function makeClass(id, key) {
+		function makeClass(id, className, key, sharedPolls = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
 				// Remove teacher from old class
 				delete cD.noClass.students[req.session.username]
 				// Add class into the session data
-				cD[key] = new Classroom(id, className, key)
+				cD[key] = new Classroom(id, className, key, sharedPolls)
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
 				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -612,8 +647,8 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				res.redirect('/')
 			} catch (err) {
 				logger.log("error", err);
-			};
-		};
+			}
+		}
 		// Checks if teacher is creating a new class or joining an old class
 		//generates a 4 character key
 		//this is used for students who want to enter a class
@@ -624,33 +659,62 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				let letter = keygen[Math.floor(Math.random() * keygen.length)]
 				key += letter
 			}
+
 			// Add classroom to the database
 			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
 				try {
-					db.get('SELECT classroom.id, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?', [className, req.session.userId], (err, classroom) => {
+					db.get('SELECT classroom.id, classroom.name, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
-							if (classroom) makeClass(classroom.id, classroom.key, JSON.parse(classroom.sharedPolls))
+							if (err) {
+								logger.log('error', err)
+								return
+							}
+
+							if (!classroom.id) {
+								res.render('pages/message', {
+									message: "Class does not exist (please contact the programmer)",
+									title: 'Login'
+								})
+							}
+
+							makeClass(
+								classroom.id,
+								classroom.name,
+								classroom.key,
+								JSON.parse(classroom.sharedPolls)
+							)
 						} catch (err) {
-							logger.log("error", err);
-						};
-					});
+							logger.log("error", err)
+						}
+					})
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
+					logger.log("error", err)
+				}
+			})
 		} else {
-			db.get('SELECT id, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+			db.get('SELECT id, name, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 				try {
-					if (classroom) makeClass(classroom.id, classroom.key);
+					if (!classroom) {
+						res.render('pages/message', {
+							message: "Class does not exist (please contact the programmer)",
+							title: 'Login'
+						})
+					}
+
+					makeClass(
+						classroom.id,
+						classroom.name,
+						classroom.key,
+					)
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
-		};
+					logger.log("error", err)
+				}
+			})
+		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log("error", err)
+	}
+})
 
 // D
 app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
@@ -713,13 +777,13 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 					})
 				}
 			} catch (err) {
-				logger.log("error", err);
-			};
-		});
+				logger.log("error", err)
+			}
+		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log("error", err)
+	}
+})
 
 app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	try {
@@ -729,9 +793,9 @@ app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 			title: "Today's Lesson"
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log("error", err)
+	}
+})
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
@@ -742,9 +806,9 @@ app.get('/login', (req, res) => {
 			title: 'Login'
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log("error", err)
+	}
+})
 
 // This lets the user log into the server, it uses each element from the database to allow the server to do so
 // This lets users actually log in instead of not being able to log in at all
@@ -820,7 +884,7 @@ app.post('/login', async (req, res) => {
 			db.all('SELECT API, secret, username FROM users', (error, users) => {
 				try {
 					if (error) {
-						console.error(error)
+						logger.log('error', error)
 					} else {
 						// Add user to the session
 						cD.noClass.students[userData.username] = new Student(
@@ -874,28 +938,32 @@ app.post('/login', async (req, res) => {
 						newSecret
 					], (err) => {
 						if (err) {
-							console.error(err)
+							logger.log('error', err)
 							return
 						}
-						// Find the user in which was just created to get the id of the user
-						db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-							if (err) {
-								console.error(err)
-							} else {
-								try {
-									// Add user to session
-									cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-
-									// Add the user to the session in order to transfer data between each page
-									req.session.userId = userData.id
-									req.session.username = userData.username
-									req.session.class = 'noClass'
-									res.redirect('/')
-								} catch (err) {
+						try {
+							// Find the user in which was just created to get the id of the user
+							db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+								if (err) {
 									logger.log('error', err)
+								} else {
+									try {
+										// Add user to session
+										cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+
+										// Add the user to the session in order to transfer data between each page
+										req.session.userId = userData.id
+										req.session.username = userData.username
+										req.session.class = 'noClass'
+										res.redirect('/')
+									} catch (err) {
+										logger.log('error', err)
+									}
 								}
-							}
-						})
+							})
+						} catch (err) {
+							logger.log('error', err)
+						}
 					})
 			})
 		} else if (user.loginType == "guest") {
@@ -1026,21 +1094,18 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
 		let code = req.body.key.toLowerCase()
 
-		let checkComplete = await joinClass(req.session.username, code).catch(err => logger.log('error', err))
-		if (checkComplete === true) {
-			req.session.class = code
-			res.redirect('/')
-		} else {
-			// res.send('Error: no open class with that name')
-			res.render('pages/message', {
-				message: `Error: ${checkComplete.message}`,
-				title: 'Error'
-			})
-		}
+		await joinClass(req.session.username, code)
+
+		req.session.class = code
+		res.redirect('/')
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log("error", err)
+		res.render('pages/message', {
+			message: `Error: ${err.message}`,
+			title: 'Error'
+		})
+	}
+})
 
 
 /* Student page, the layout is controlled by different "modes" to display different information.
@@ -1209,9 +1274,10 @@ io.use((socket, next) => {
 			db.get(
 				'SELECT id, username, permissions FROM users WHERE API = ?',
 				[api],
-				(error, userData) => {
+				(err, userData) => {
 					try {
-						if (!userData) return next(new Error('not a valid API Key'))
+						if (err) logger.log("error", err)
+						else if (!userData) return next(new Error('not a valid API Key'))
 						next()
 					} catch (err) {
 						logger.log("error", err);
@@ -1257,13 +1323,13 @@ io.on('connection', (socket) => {
 					var pollHistory = rows
 					io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
+					logger.log("error", err)
+				}
+			})
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log("error", err)
+		}
+	}
 
 	function vbUpdate(classCode) {
 		try {
@@ -1350,61 +1416,73 @@ io.on('connection', (socket) => {
 					try {
 						io.to(socket.request.session.class).emit('pluginUpdate', plugins)
 					} catch (err) {
-						logger.log("error", err);
-					};
+						logger.log("error", err)
+					}
+				}
+			)
+		} catch (err) {
+			logger.log("error", err)
+		}
+	}
+
+	function customPollUpdate(username) {
+		try {
+			let userSession = userSockets[username].request.session
+
+			let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
+			let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
+			let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
+			let classroomCustomPolls = structuredClone(cD[userSession.class].sharedPolls)
+			let publicCustomPolls = []
+			let customPollIds = userCustomPolls.concat(classroomCustomPolls)
+
+			db.all(
+				`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ?`,
+				[
+					...customPollIds,
+					userSession.userId
+				],
+				(err, customPolls) => {
+					try {
+						if (err) {
+							logger.log('error', err)
+							return
+						}
+
+						for (let customPoll of customPolls) {
+							customPoll.answers = JSON.parse(customPoll.answers)
+						}
+
+						customPolls = customPolls.reduce((newObject, customPoll) => {
+							try {
+								newObject[customPoll.id] = customPoll
+								return newObject
+							} catch (err) {
+								logger.log("error", err)
+							}
+						}, {})
+
+						for (let customPoll of Object.values(customPolls)) {
+							if (customPoll.public) {
+								publicCustomPolls.push(customPoll.id)
+							}
+						}
+
+						io.to(username).emit(
+							'customPollUpdate',
+							publicCustomPolls,
+							classroomCustomPolls,
+							userCustomPolls,
+							customPolls
+						)
+					} catch (err) {
+						logger.log('error', err)
+					}
 				}
 			)
 		} catch (err) {
 			logger.log("error", err);
-		};
-	};
-
-	function customPollUpdate(username) {
-		let userSession = userSockets[username].request.session
-
-		let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
-		let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
-		let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-		let classroomCustomPolls = structuredClone(cD[userSession.class].sharedPolls)
-		let publicCustomPolls = []
-		let customPollIds = userCustomPolls.concat(classroomCustomPolls)
-
-		db.all(
-			`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ?`,
-			[
-				...customPollIds,
-				userSession.userId
-			],
-			(error, customPolls) => {
-				if (error) {
-					console.error(error)
-					return
-				}
-
-				for (let customPoll of customPolls) {
-					customPoll.answers = JSON.parse(customPoll.answers)
-				}
-
-				customPolls = customPolls.reduce((newObject, customPoll) => {
-					newObject[customPoll.id] = customPoll
-					return newObject
-				}, {})
-
-				for (let customPoll of Object.values(customPolls)) {
-					if (customPoll.public) {
-						publicCustomPolls.push(customPoll.id)
-					}
-				}
-
-				io.to(username).emit(
-					'customPollUpdate',
-					publicCustomPolls,
-					classroomCustomPolls,
-					userCustomPolls,
-					customPolls
-				)
-			}
-		)
+		}
 	}
 
 	function deleteStudent(username, classCode) {
@@ -1462,29 +1540,41 @@ io.on('connection', (socket) => {
 	};
 
 	function getPollShareIds(pollId) {
-		db.all(
-			'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
-			pollId,
-			(error, userPollShares) => {
-				if (error) {
-					console.error(error)
-					return
-				}
-
-				db.all(
-					'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId = ?',
-					pollId,
-					(error, classPollShares) => {
-						if (error) {
-							console.error(error)
+		try {
+			db.all(
+				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
+				pollId,
+				(err, userPollShares) => {
+					try {
+						if (err) {
+							logger.log('error', error)
 							return
 						}
 
-						socket.emit('getPollShareIds', userPollShares, classPollShares)
+						db.all(
+							'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId = ?',
+							pollId,
+							(err, classPollShares) => {
+								try {
+									if (err) {
+										logger.log('error', err)
+										return
+									}
+
+									socket.emit('getPollShareIds', userPollShares, classPollShares)
+								} catch (err) {
+									logger.log("error", err)
+								}
+							}
+						)
+					} catch (err) {
+
 					}
-				)
-			}
-		)
+				}
+			)
+		} catch (err) {
+			logger.log("error", err)
+		}
 	}
 
 	//rate limiter
@@ -1546,18 +1636,18 @@ io.on('connection', (socket) => {
 							try {
 								db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
 							} catch (err) {
-								logger.log("error", err);
-							};
-						});
+								logger.log("error", err)
+							}
+						})
 						cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
-					};
+					}
 				}
 			}
 			cpUpdate()
 			vbUpdate()
 		} catch (err) {
-			logger.log("error", err);
-		};
+			logger.log("error", err)
+		}
 	})
 
 	// Changes Permission of user. Takes which user and the new permission level
@@ -1660,11 +1750,9 @@ io.on('connection', (socket) => {
 			db.run(
 				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-					if (err) {
-						logger.log("error", err);
-					};
+					if (err) logger.log("error", err)
 				}
-			);
+			)
 
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
@@ -1703,355 +1791,483 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('savePoll', (poll, id) => {
-		let userId = socket.request.session.userId
+		try {
+			let userId = socket.request.session.userId
 
-		if (id) {
-			db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (error, poll) => {
-				if (error) {
-					console.error(error)
-					return
-				}
-				if (userId != poll.owner) {
-					socket.emit('message', 'You do not have permission to edit this poll.')
-					return
-				}
-				db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ?`, [
-					poll.name,
-					poll.prompt,
-					JSON.stringify(poll.answers),
-					poll.textRes,
-					poll.blind,
-					poll.weight,
-					poll.public,
-					id
-				], (error) => {
-					if (error) {
-						console.error(error)
-						return
-					}
-					socket.emit('message', 'Poll saved successfully!')
-					customPollUpdate(socket.request.session.username)
-				})
-			})
-		} else {
-			db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
-				nextPollId = nextPollId.nextPollId + 1
+			if (id) {
+				db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (error, poll) => {
+					try {
+						if (error) {
+							logger.log('error', error)
+							return
+						}
 
-				db.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-					userId,
-					poll.name,
-					poll.prompt,
-					JSON.stringify(poll.answers),
-					poll.textRes,
-					poll.blind,
-					poll.weight,
-					poll.public
-				], (error) => {
-					if (error) {
-						console.error(error);
-						return
+						if (userId != poll.owner) {
+							socket.emit('message', 'You do not have permission to edit this poll.')
+							return
+						}
+
+						db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ?`, [
+							poll.name,
+							poll.prompt,
+							JSON.stringify(poll.answers),
+							poll.textRes,
+							poll.blind,
+							poll.weight,
+							poll.public,
+							id
+						], (err) => {
+							try {
+								if (err) {
+									logger.log('error', err)
+									return
+								}
+								socket.emit('message', 'Poll saved successfully!')
+								customPollUpdate(socket.request.session.username)
+							} catch (err) {
+								logger.log("error", err)
+							}
+						})
+					} catch (err) {
+						logger.log("error", err)
 					}
-					cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
-					socket.emit('message', 'Poll saved successfully!')
-					customPollUpdate(socket.request.session.username)
 				})
-			})
+			} else {
+				db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
+					try {
+						if (err) {
+							logger.log("error", err)
+							return
+						}
+						nextPollId = nextPollId.nextPollId + 1
+
+						db.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+							userId,
+							poll.name,
+							poll.prompt,
+							JSON.stringify(poll.answers),
+							poll.textRes,
+							poll.blind,
+							poll.weight,
+							poll.public
+						], (err) => {
+							try {
+								if (err) {
+									logger.log('error', err);
+									return
+								}
+
+								cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+								socket.emit('message', 'Poll saved successfully!')
+								customPollUpdate(socket.request.session.username)
+							} catch (err) {
+								logger.log("error", err)
+							}
+						})
+					} catch (err) {
+						logger.log("error", err)
+					}
+				})
+			}
+		} catch (err) {
+			logger.log("error", err);
 		}
 	})
 
 	socket.on('deletePoll', (pollId) => {
-		let userId = socket.request.session.userId
+		try {
+			let userId = socket.request.session.userId
 
-		if (!pollId) {
-			socket.emit('message', 'No poll is selected.')
-			return
-		}
-
-		db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, async (error, poll) => {
-			if (error) {
-				console.error(error)
-				return
-			}
-			if (userId != poll.owner) {
-				socket.emit('message', 'You do not have permission to delete this poll.')
+			if (!pollId) {
+				socket.emit('message', 'No poll is selected.')
 				return
 			}
 
-			await db.run('BEGIN TRANSACTION')
+			db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, async (err, poll) => {
+				try {
+					if (err) {
+						logger.log('error', err)
+						return
+					}
 
-			await Promise.all([
-				db.run('DELETE FROM custom_polls WHERE id = ?', pollId),
-				db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId),
-				db.run('DELETE FROM class_polls WHERE pollId = ?', pollId)
-			]).catch((error) => {
-				console.error(error);
-				db.run('ROLLBACK')
+					if (userId != poll.owner) {
+						socket.emit('message', 'You do not have permission to delete this poll.')
+						return
+					}
+
+					await db.run('BEGIN TRANSACTION')
+
+					await Promise.all([
+						db.run('DELETE FROM custom_polls WHERE id = ?', pollId),
+						db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId),
+						db.run('DELETE FROM class_polls WHERE pollId = ?', pollId)
+					]).catch((err) => {
+						logger.log("error", err)
+						db.run('ROLLBACK')
+					})
+
+					await db.run('COMMIT')
+
+					for (let classroom of Object.values(cD)) {
+						let updatePolls = false
+
+						if (classroom.sharedPolls) {
+							if (classroom.sharedPolls.includes(pollId)) {
+								classroom.sharedPolls.splice(classroom.sharedPolls.indexOf(pollId), 1)
+								updatePolls = true
+							}
+						}
+
+						for (let user of Object.values(classroom.students)) {
+							if (user.sharedPolls.includes(pollId)) {
+								user.sharedPolls.splice(user.sharedPolls.indexOf(pollId), 1)
+								updatePolls = true
+							}
+
+							if (user.ownedPolls.includes(pollId)) {
+								user.ownedPolls.splice(user.ownedPolls.indexOf(pollId), 1)
+								updatePolls = true
+							}
+
+							if (updatePolls)
+								customPollUpdate(user.username)
+						}
+					}
+
+					socket.emit('message', 'Poll deleted successfully!')
+				} catch (err) {
+					logger.log("error", err)
+				}
 			})
-
-			await db.run('COMMIT')
-
-			for (let classroom of Object.values(cD)) {
-				let updatePolls = false
-
-				if (classroom.sharedPolls) {
-					if (classroom.sharedPolls.includes(pollId)) {
-						classroom.sharedPolls.splice(classroom.sharedPolls.indexOf(pollId), 1)
-						updatePolls = true
-					}
-				}
-
-				for (let user of Object.values(classroom.students)) {
-					if (user.sharedPolls.includes(pollId)) {
-						user.sharedPolls.splice(user.sharedPolls.indexOf(pollId), 1)
-						updatePolls = true
-					}
-
-					if (user.ownedPolls.includes(pollId)) {
-						user.ownedPolls.splice(user.ownedPolls.indexOf(pollId), 1)
-						updatePolls = true
-					}
-
-					if (updatePolls)
-						customPollUpdate(user.username)
-				}
-			}
-
-			socket.emit('message', 'Poll deleted successfully!')
-		})
+		} catch (err) {
+			logger.log("error", err)
+		}
 	})
 
 	socket.on('setPublic', (pollId, value) => {
-		db.run(
-			'UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (error) => {
-				if (error) {
-					console.error(error)
-					return
-				}
+		try {
+			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (error) => {
+				try {
+					if (error) {
+						logger.log('error', error)
+						return
+					}
 
-				for (let socket of Object.values(userSockets)) {
-					customPollUpdate(socket.request.session.username)
+					for (let socket of Object.values(userSockets)) {
+						customPollUpdate(socket.request.session.username)
+					}
+				} catch (err) {
+					logger.log("error", err)
 				}
-			}
-		)
+			})
+		} catch (err) {
+			logger.log("error", err)
+		}
 	})
 
 	socket.on('sharePollToUser', (pollId, username) => {
-		db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
-			if (error) {
-				console.error(error)
-				return
-			}
-			if (!user) {
-				socket.emit('message', 'User does not exist')
-				return
-			}
+		try {
+			db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
+				try {
+					if (error) {
+						logger.log('error', error)
+						return
+					}
 
-			db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
-				if (error) {
-					console.error(error)
-					return
+					if (!user) {
+						socket.emit('message', 'User does not exist')
+						return
+					}
+
+					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
+						try {
+							if (error) {
+								logger.log('error', error)
+								return
+							}
+
+							if (!poll) {
+								socket.emit('message', 'Poll does not exist (please contact the programmer)')
+								return
+							}
+
+							let name = 'Unnamed Poll'
+							if (poll.name) name = poll.name
+							else if (poll.prompt) name = poll.prompt
+
+							db.get(
+								'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
+								[pollId, user.id],
+								(error, sharePoll) => {
+									try {
+										if (error) {
+											logger.log('error', error);
+											return
+										}
+
+										if (sharePoll) {
+											socket.emit('message', `${name} is Already Shared with ${username}`)
+											return
+										}
+
+										db.run(
+											'INSERT INTO shared_polls (pollId, userId) VALUES (?, ?)',
+											[pollId, user.id],
+											async (error) => {
+												try {
+													if (error) {
+														logger.log('error', error)
+														return
+													}
+
+													socket.emit('message', `Shared ${name} with ${username}`)
+
+													getPollShareIds(pollId)
+
+													let classCode = getUserClass(username)
+													if (classCode) {
+														cD[classCode].students[user.username].sharedPolls.push(pollId)
+
+														customPollUpdate(username)
+													}
+												} catch (err) {
+													logger.log("error", err)
+												}
+											}
+										)
+									} catch (err) {
+										logger.log("error", err)
+									}
+								}
+							)
+						} catch (err) {
+							logger.log("error", err)
+						}
+					})
+				} catch (err) {
+					logger.log('error', err)
 				}
+			})
+		} catch (err) {
+			logger.log("error", err)
+		}
+	})
 
-				if (!poll) {
-					socket.emit('message', 'Poll does not exist (please contact the programmer)')
-					return
-				}
-
-				let name = 'Unnamed Poll'
-				if (poll.name) name = poll.name
-				else if (poll.prompt) name = poll.prompt
-
-				db.get(
-					'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
-					[pollId, user.id],
-					(error, sharePoll) => {
+	socket.on('removeUserPollShare', (pollId, userId) => {
+		try {
+			db.get(
+				'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
+				[pollId, userId],
+				(error, pollShare) => {
+					try {
 						if (error) {
-							console.error(error);
+							logger.log('error', error)
 							return
 						}
-						if (sharePoll) {
-							socket.emit('message', `${name} is Already Shared with ${username}`)
+
+						if (!pollShare) {
+							socket.emit('message', 'Poll is not shared to this user')
 							return
 						}
 
 						db.run(
-							'INSERT INTO shared_polls (pollId, userId) VALUES (?, ?)',
-							[pollId, user.id],
-							async (error) => {
-								if (error) {
-									console.error(error)
-									return
-								}
+							'DELETE FROM shared_polls WHERE pollId = ? AND userId = ?',
+							[pollId, userId],
+							(error) => {
+								try {
+									if (error) {
+										logger.log('error', error)
+										return
+									}
 
-								socket.emit('message', `Shared ${name} with ${username}`)
+									socket.emit('message', 'Successfully unshared user')
+									getPollShareIds(pollId)
 
-								getPollShareIds(pollId)
+									db.get('SELECT * FROM users WHERE id = ?', userId, async (error, user) => {
+										try {
+											if (error) {
+												logger.log('error', error)
+												return
+											} else if (user) {
+												let classCode = getUserClass(user.username)
+												if (!classCode) return
 
-								let classCode = getUserClass(username)
-								if (classCode) {
-									cD[classCode].students[user.username].sharedPolls.push(pollId)
-
-									customPollUpdate(username)
+												let sharedPolls = cD[classCode].students[user.username].sharedPolls
+												sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+												customPollUpdate(user.username)
+											}
+										} catch (err) {
+											logger.log("error", err)
+										}
+									})
+								} catch (err) {
+									logger.log("error", err)
 								}
 							}
 						)
+					} catch (err) {
+						logger.log("error", err)
 					}
-				)
-			})
-		})
-	})
-
-	socket.on('removeUserPollShare', (pollId, userId) => {
-		db.get(
-			'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
-			[pollId, userId],
-			(error, pollShare) => {
-				if (error) {
-					console.error(error)
-					return
 				}
-				if (!pollShare) socket.emit('message', 'Poll is not shared to this user')
-
-				db.run(
-					'DELETE FROM shared_polls WHERE pollId = ? AND userId = ?',
-					[pollId, userId],
-					(error) => {
-						if (error) {
-							console.error(error)
-							return
-						}
-
-						socket.emit('message', 'Successfully unshared user')
-						getPollShareIds(pollId)
-
-						db.get('SELECT * FROM users WHERE id = ?', userId, async (error, user) => {
-							if (error) {
-								console.error(error)
-								return
-							} else if (user) {
-								let classCode = getUserClass(user.username)
-								if (!classCode) return
-
-								let sharedPolls = cD[classCode].students[user.username].sharedPolls
-								sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-								customPollUpdate(user.username)
-							}
-						})
-					}
-				)
-			}
-		)
+			)
+		} catch (err) {
+			logger.log('error', err)
+		}
 	})
 
-	socket.on('getPollShareIds', async (pollId) => {
+	socket.on('getPollShareIds', (pollId) => {
 		getPollShareIds(pollId)
 	})
 
 	socket.on('sharePollToClass', (pollId, classCode) => {
-		db.get('SELECT * FROM classroom WHERE key = ?', classCode, (error, classroom) => {
-			if (error) {
-				console.error(error)
-				return
-			}
-			if (!classroom) {
-				socket.emit('message', 'There is no class with that code.')
-				return
-			}
+		try {
+			db.get('SELECT * FROM classroom WHERE key = ?', classCode, (error, classroom) => {
+				try {
+					if (error) {
+						logger.log('error', error)
+						return
+					}
 
-			db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
-				if (error) {
-					console.error(error)
-					return
+					if (!classroom) {
+						socket.emit('message', 'There is no class with that code.')
+						return
+					}
+
+					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
+						try {
+							if (error) {
+								logger.log('error', error)
+								return
+							}
+
+							if (!poll) {
+								socket.emit('message', 'Poll does not exist (please contact the programmer)')
+								return
+							}
+
+							let name = 'Unnamed Poll'
+							if (poll.name) name = poll.name
+							else if (poll.prompt) name = poll.prompt
+
+							db.get(
+								'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+								[pollId, classroom.id],
+								(error, sharePoll) => {
+									try {
+										if (error) {
+											logger.log('error', error);
+											return
+										}
+
+										if (sharePoll) {
+											socket.emit('message', `${name} is Already Shared with that class`)
+											return
+										}
+
+										db.run(
+											'INSERT INTO class_polls (pollId, classId) VALUES (?, ?)',
+											[pollId, classroom.id],
+											async (error) => {
+												try {
+													if (error) {
+														logger.log('error', error)
+														return
+													}
+
+													socket.emit('message', `Shared ${name} with that class`)
+
+													getPollShareIds(pollId)
+
+													cD[classCode].sharedPolls.push(pollId)
+													for (let username of Object.keys(cD[classCode].students)) {
+														customPollUpdate(username)
+													}
+												} catch (err) {
+													logger.log("error", err)
+												}
+											}
+										)
+									} catch (err) {
+										logger.log("error", err)
+									}
+								}
+							)
+						} catch (err) {
+							logger.log("error", err)
+						}
+					})
+				} catch (err) {
+					logger.log("error", err)
 				}
+			})
+		} catch (err) {
+			logger.log("error", err)
+		}
+	})
 
-				if (!poll) {
-					socket.emit('message', 'Poll does not exist (please contact the programmer)')
-					return
-				}
-
-				let name = 'Unnamed Poll'
-				if (poll.name) name = poll.name
-				else if (poll.prompt) name = poll.prompt
-
-				db.get(
-					'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
-					[pollId, classroom.id],
-					(error, sharePoll) => {
+	socket.on('removeClassPollShare', (pollId, classId) => {
+		try {
+			db.get(
+				'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+				[pollId, classId],
+				(error, pollShare) => {
+					try {
 						if (error) {
-							console.error(error);
+							logger.log('error', error)
 							return
 						}
-						if (sharePoll) {
-							socket.emit('message', `${name} is Already Shared with that class`)
+
+						if (!pollShare) {
+							socket.emit('message', 'Poll is not shared to this class')
 							return
 						}
 
 						db.run(
-							'INSERT INTO class_polls (pollId, classId) VALUES (?, ?)',
-							[pollId, classroom.id],
-							async (error) => {
-								if (error) {
-									console.error(error)
-									return
-								}
+							'DELETE FROM class_polls WHERE pollId = ? AND classId = ?',
+							[pollId, classId],
+							(error) => {
+								try {
+									if (error) {
+										logger.log('error', error)
+										return
+									}
 
-								socket.emit('message', `Shared ${name} with that class`)
+									socket.emit('message', 'Successfully unshared class')
+									getPollShareIds(pollId)
 
-								getPollShareIds(pollId)
+									db.get('SELECT * FROM classroom WHERE id = ?', classId, async (error, classroom) => {
+										try {
+											if (error) {
+												logger.log('error', error)
+												return
+											}
 
-								cD[classCode].sharedPolls.push(pollId)
-								for (let username of Object.keys(cD[classCode].students)) {
-									customPollUpdate(username)
+											if (classroom) {
+												if (!cD[classroom.key]) return
+
+												let sharedPolls = cD[classroom.key].sharedPolls
+												sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+												for (let username of Object.keys(cD[classroom.key].students)) {
+													customPollUpdate(username)
+												}
+											}
+										} catch (err) {
+											logger.log('error', err)
+										}
+									})
+								} catch (err) {
+									logger.log("error", err)
 								}
 							}
 						)
+					} catch (err) {
+						logger.log("error", err)
 					}
-				)
-			})
-		})
-	})
-
-	socket.on('removeClassPollShare', (pollId, classId) => {
-		db.get(
-			'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
-			[pollId, classId],
-			(error, pollShare) => {
-				if (error) {
-					console.error(error)
-					return
 				}
-				if (!pollShare) socket.emit('message', 'Poll is not shared to this class')
-
-				db.run(
-					'DELETE FROM class_polls WHERE pollId = ? AND classId = ?',
-					[pollId, classId],
-					(error) => {
-						if (error) {
-							console.error(error)
-							return
-						}
-
-						socket.emit('message', 'Successfully unshared class')
-						getPollShareIds(pollId)
-
-						db.get('SELECT * FROM classroom WHERE id = ?', classId, async (error, classroom) => {
-							if (error) {
-								console.error(error)
-								return
-							} else if (classroom) {
-								if (!cD[classroom.key]) return
-
-								let sharedPolls = cD[classroom.key].sharedPolls
-								sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-								for (let username of Object.keys(cD[classroom.key].students)) {
-									customPollUpdate(username)
-								}
-							}
-						})
-					}
-				)
-			}
-		)
+			)
+		} catch (err) {
+			logger.log("error", err)
+		}
 	})
 
 	// Sends a help ticket
@@ -2139,7 +2355,7 @@ io.on('connection', (socket) => {
 				[userId, classCode],
 				(err, classroom) => {
 					if (err) {
-						console.error(err)
+						logger.log('error', err)
 					}
 					else if (classroom) {
 						endClass(classroom.key)
@@ -2158,9 +2374,12 @@ io.on('connection', (socket) => {
 			const classCode = socket.request.session.class
 			const className = cD[classCode].className
 			socket.request.session.destroy((err) => {
-				if (err) {
-					console.error(err)
-				} else {
+				try {
+					if (err) {
+						logger.log('error', err)
+						return
+					}
+
 					delete userSockets[username]
 					delete cD[classCode].students[username]
 					socket.leave(className)
@@ -2171,12 +2390,14 @@ io.on('connection', (socket) => {
 						[userId, classCode],
 						(err, classroom) => {
 							if (err) {
-								console.error(err)
+								logger.log('error', err)
 							} else if (classroom) {
 								endClass(classroom.key)
 							}
 						}
 					)
+				} catch (err) {
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
@@ -2194,7 +2415,7 @@ io.on('connection', (socket) => {
 				(err, classroom) => {
 					try {
 						if (err) {
-							console.error(err);
+							logger.log('error', err);
 						} else if (classroom) {
 							endClass(classroom.key)
 						}
@@ -2213,7 +2434,7 @@ io.on('connection', (socket) => {
 			db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
 				try {
 					if (err) {
-						console.error(err)
+						logger.log('error', err)
 					} else if (classroom) {
 						if (cD[classroom.key]) {
 							endClass(classroom.key)
@@ -2276,7 +2497,7 @@ io.on('connection', (socket) => {
 			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 				try {
 					if (err) {
-						console.error(err)
+						logger.log('error', err)
 					} else {
 						io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
 					}
@@ -2334,7 +2555,7 @@ io.on('connection', (socket) => {
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 							if (err) {
-								console.error(err)
+								logger.log('error', err)
 							}
 						}
 					)
@@ -2353,7 +2574,7 @@ io.on('connection', (socket) => {
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
 							if (err) {
-								console.error(err)
+								logger.log('error', err)
 							}
 						}
 					)
@@ -2375,10 +2596,15 @@ io.on('connection', (socket) => {
 	socket.on('previousPollDisplay', (pollindex) => {
 		try {
 			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
-				if (err) {
-					console.error(err)
-				} else {
+				try {
+					if (err) {
+						logger.log('error', err)
+						return
+					}
+
 					io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
+				} catch (err) {
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
@@ -2417,17 +2643,16 @@ io.on('connection', (socket) => {
 					[name, id],
 					(error) => {
 						if (error) {
-							console.error(error)
+							logger.log('error', error)
 							return
 						}
 						pluginUpdate()
 					}
 				)
-			}
-			else if (url) {
+			} else if (url) {
 				db.run('UPDATE plugins set url=? WHERE id=?', [url, id], (error) => {
 					if (error) {
-						console.error(error)
+						logger.log('error', error)
 						return
 					}
 					pluginUpdate()
@@ -2446,14 +2671,15 @@ io.on('connection', (socket) => {
 				(error, classData) => {
 					try {
 						if (error) {
-							console.error(error)
-						} else {
-							db.run(
-								'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
-								[name, url, classData.id]
-							)
-							pluginUpdate()
+							logger.log('error', error)
+							return
 						}
+
+						db.run(
+							'INSERT INTO plugins(name, url, classuid) VALUES(?, ?, ?)',
+							[name, url, classData.id]
+						)
+						pluginUpdate()
 					} catch (err) {
 						logger.log('error', err)
 					}
@@ -2497,13 +2723,15 @@ io.on('connection', (socket) => {
 			if (api) {
 				db.get('SELECT * FROM users WHERE API = ?', [api], (error, userData) => {
 					if (error) {
-						console.error(error)
+						logger.log('error', error)
 						return
 					}
+
 					if (!userData) {
 						socket.emit('getUserClass', { error: 'not a valid API Key' })
 						return
 					}
+
 					getClass(userData.username)
 				}
 				)
