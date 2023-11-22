@@ -1,70 +1,70 @@
 /* --- GENERAL --- */
 
 :root {
-  /*All pages can use this set of colors*/
+	/*All pages can use this set of colors*/
 
-  --color-red: #bf0000;
-  --color-brown: #802000;
-  --color-orange: #ff4000;
-  --color-gold: #fa0;
-  --color-yellow: #ffbf00;
-  --color-green: #00bf00;
-  --color-cyan: #009fbf;
-  --color-blue: #0040bf;
-  --color-purple: #bf00ff;
-  --color-pink: #ff4080;
-  --dark-gray: #555;
+	--color-red: #bf0000;
+	--color-brown: #802000;
+	--color-orange: #ff4000;
+	--color-gold: #fa0;
+	--color-yellow: #ffbf00;
+	--color-green: #00bf00;
+	--color-cyan: #009fbf;
+	--color-blue: #0040bf;
+	--color-purple: #bf00ff;
+	--color-pink: #ff4080;
+	--dark-gray: #555;
 
-  --light-red: #ff6860;
-  --light-brown: #bf6040;
-  --light-orange: #ff8f40;
-  --light-yellow: #ffdf40;
-  --light-green: #80ff80;
-  --light-cyan: #80ffff;
-  --light-blue: #bfcfff;
-  --light-purple: #df80ff;
-  --light-pink: #ff80bfff;
-  --light-gray: #ccc;
+	--light-red: #ff6860;
+	--light-brown: #bf6040;
+	--light-orange: #ff8f40;
+	--light-yellow: #ffdf40;
+	--light-green: #80ff80;
+	--light-cyan: #80ffff;
+	--light-blue: #bfcfff;
+	--light-purple: #df80ff;
+	--light-pink: #ff80bfff;
+	--light-gray: #ccc;
 
-  --bg-dark: #333;
-  --bg-darker: #222;
-  --bg-dark-highlight: #444;
-  --bg-dark-red: #400;
-  --bg-dark-yellow: #430;
-  --bg-dark-green: #243;
-  --bg-dark-blue: #000922;
-  --bg-dark-purple: #423;
+	--bg-dark: #333;
+	--bg-darker: #222;
+	--bg-dark-highlight: #444;
+	--bg-dark-red: #400;
+	--bg-dark-yellow: #430;
+	--bg-dark-green: #243;
+	--bg-dark-blue: #000922;
+	--bg-dark-purple: #423;
 
-  --bg-light: #d0c8e0;
-  --bg-light-blue: #def;
+	--bg-light: #d0c8e0;
+	--bg-light-blue: #def;
 }
 
 body {
-  font: 16px "Segoe UI", sans-serif;
-  padding: 8px;
-  text-align: center;
-  --theme-color: var(--color-blue);
+	font: 16px "Segoe UI", sans-serif;
+	padding: 8px;
+	text-align: center;
+	--theme-color: var(--color-blue);
 }
 
 h1 {
-  text-align: center;
-  margin-top: 12px;
+	text-align: center;
+	margin-top: 12px;
 }
 
 h2 {
-  margin-top: 32px;
+	margin-top: 32px;
 }
 
 a {
-  text-decoration: none;
+	text-decoration: none;
 }
 
 * {
-  accent-color: var(--theme-color);
+	accent-color: var(--theme-color);
 }
 
 input {
-  font-size: inherit;
+	font-size: inherit;
 }
 
 input[type="text"],
@@ -73,180 +73,181 @@ input[type="password"],
 input[type="url"],
 textarea,
 select {
-  background: var(--emphasis-color);
-  font-size: inherit;
-  font-family: inherit;
-  border: 1px solid;
-  margin: 2px 1px;
-  resize: none;
+	background: var(--emphasis-color);
+	font-size: inherit;
+	font-family: inherit;
+	border: 1px solid;
+	margin: 2px 1px;
+	resize: none;
 }
 
 input[type="number"] {
-  width: 48px;
+	width: 48px;
 }
 
 input[type="checkbox"] {
-  width: 1em;
-  height: 1em;
-  vertical-align: middle;
+	width: 1em;
+	height: 1em;
+	vertical-align: middle;
 }
 
 button,
 .quickButton {
-  padding: 3px 6px;
-  border-radius: 8px;
-  font-size: inherit;
-  font-family: inherit;
-  background-color: var(--bg-light-blue);
-  color: var(--theme-color);
-  border: 2px solid var(--theme-color);
-  margin: 2px 1px;
-  cursor: pointer;
-  transition-duration: 0.2s;
-  transition-property: transform, box-shadow;
+	padding: 3px 6px;
+	border-radius: 8px;
+	font-size: inherit;
+	font-family: inherit;
+	background-color: var(--bg-light-blue);
+	color: var(--theme-color);
+	border: 2px solid var(--theme-color);
+	margin: 2px 1px;
+	cursor: pointer;
+	transition-duration: 0.2s;
+	transition-property: transform, box-shadow;
 }
 
 .quickButton {
-  display: inline-block;
+	display: inline-block;
 }
 
 /*Pop-out effect*/
-:is(button, .quickButton):not(.pressed):not(.unselectable):where(:hover, :focus-visible) {
-  transform: translate(2px, -2px);
-  box-shadow: -1px 1px var(--theme-color), -2px 2px var(--theme-color);
+:is(button, .quickButton):not(.unselectable):where(:hover, :focus-visible),
+:is(button.tab.unselectable, .quickButton.tab.unselectable):where(:hover, :focus-visible) {
+	transform: translate(3px, -3px);
+	box-shadow: -1.5px 1.5px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%), -3px 3px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%);
 }
 
 :is(button, .quickButton):not(.unselectable):active {
-  background: var(--theme-color);
-  color: white;
-  transform: none !important;
-  box-shadow: none !important;
+	background: var(--theme-color);
+	color: white;
+	transform: none !important;
+	box-shadow: none !important;
 }
 
 /*Shows that the button is currently active*/
 button.pressed,
 .quickButton.pressed {
-  background-color: var(--theme-color);
-  color: white;
+	background-color: var(--theme-color);
+	color: white;
 }
 
 dialog {
-  box-shadow: 3px 3px 10px black;
+	box-shadow: 3px 3px 10px black;
 }
 
 /*Shows that the element can't be interacted with*/
-.unselectable {
-  opacity: 50%;
-  cursor: not-allowed;
+.unselectable:not(.tab) {
+	opacity: 50%;
+	cursor: not-allowed;
 }
 
 /*Makes the element invisible*/
 .hidden {
-  display: none !important;
+	display: none !important;
 }
 
 /*Makes the element take up the entire screen*/
 .fullScreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding: 8px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	padding: 8px;
 }
 
 /*Centers the element horizontally within its parent*/
 .hCentered {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	text-align: center;
 }
 
 /*Centers the element vertically within its parent*/
 .vCentered {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
 }
 
 /*Centers the element horizontally and vertically*/
 .centered, .hCentered.vCentered {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
 }
 
 #colorContent {
-  background-color: var(--bg-light);
+	background-color: var(--bg-light);
 }
 
 .textColorContent {
-  color: var(--theme-color);
+	color: var(--theme-color);
 }
 
 #content {
-  /* width: fit-content; */
-  /* max-width: 600px; */
-  width: 600px;
-  margin: auto;
-  padding: 100px 10px 10px;
-  background: white;
-  overflow: auto;
-  position: relative;
-  text-align: center;
+	/* width: fit-content; */
+	/* max-width: 600px; */
+	width: 600px;
+	margin: auto;
+	padding: 100px 10px 10px;
+	background: white;
+	overflow: auto;
+	position: relative;
+	text-align: center;
 }
 
 .contentBox {
-  border: solid 2px black;
-  border-radius: 10px;
-  padding: 20px !important;
-  font-size: 20px;
+	border: solid 2px black;
+	border-radius: 10px;
+	padding: 20px !important;
+	font-size: 20px;
 }
 
 .contentBox h1 {
-  font-size: 40px;
+	font-size: 40px;
 }
 
 #formbarHeader {
-  position: fixed;
-  width: 110%;
-  z-index: 1;
-  top: 0;
-  left: -5%;
-  display: flex;
-  justify-content: center;
-  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
-  box-shadow: 0 3px 10px black;
-  user-select: none;
+	position: fixed;
+	width: 110%;
+	z-index: 1;
+	top: 0;
+	left: -5%;
+	display: flex;
+	justify-content: center;
+	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
+	box-shadow: 0 3px 10px black;
+	user-select: none;
 }
 
 .headerTab {
-  padding: 12px 16px;
-  font-size: 21px;
-  color: var(--light-gray);
-  cursor: pointer;
+	padding: 12px 16px;
+	font-size: 21px;
+	color: var(--light-gray);
+	cursor: pointer;
 }
 
 .headerTab:hover ,
 .headerTab:focus {
-  background-color: #00000055;
-  color: white;
+	background-color: #00000055;
+	color: white;
 }
 
 #headerLogo {
-  padding: 8px 16px 10px;
-  font-size: 24px;
-  font-family: 'Arial Black';
-  color: white;
-  text-decoration: underline dotted;
-  cursor: pointer;
+	padding: 8px 16px 10px;
+	font-size: 24px;
+	font-family: 'Arial Black';
+	color: white;
+	text-decoration: underline dotted;
+	cursor: pointer;
 }
 
 .headerText {
-  color: var(--theme-color);
+	color: var(--theme-color);
 }
 
 /* Custom radio button code */
@@ -254,314 +255,360 @@ dialog {
 *,
 *:before,
 *:after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 #pollControl {
-  display: grid;
-  place-content: center;
-  min-height: 20px;
+	display: grid;
+	place-content: center;
+	min-height: 20px;
 }
 
 .form-control {
-  font-family: system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: bold;
-  line-height: 1.1;
-  display: grid;
-  grid-template-columns: 1em auto;
-  gap: 0.5em;
+	font-family: system-ui, sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+	line-height: 1.1;
+	display: grid;
+	grid-template-columns: 1em auto;
+	gap: 0.5em;
 }
 
 .form-control+.form-control {
-  margin-top: 1em;
+	margin-top: 1em;
 }
 
 .form-control:focus-within {
-  color: var(--theme-color);
+	color: var(--theme-color);
 }
 
 input[type="radio"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: var(--form-background);
-  margin: 0;
-  font: inherit;
-  color: currentColor;
-  width: 1.15em;
-  height: 1.15em;
-  border: 0.15em solid currentColor;
-  border-radius: 50%;
-  transform: translateY(-0.075em);
-  display: grid;
-  place-content: center;
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: var(--form-background);
+	margin: 0;
+	font: inherit;
+	color: currentColor;
+	width: 1.15em;
+	height: 1.15em;
+	border: 0.15em solid currentColor;
+	border-radius: 50%;
+	transform: translateY(-0.075em);
+	display: grid;
+	place-content: center;
 }
 
 input[type="radio"]::before {
-  content: "";
-  width: 0.65em;
-  height: 0.65em;
-  border-radius: 50%;
-  transform: scale(0);
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--theme-color);
-  background-color: CanvasText;
+	content: "";
+	width: 0.65em;
+	height: 0.65em;
+	border-radius: 50%;
+	transform: scale(0);
+	transition: 120ms transform ease-in-out;
+	box-shadow: inset 1em 1em var(--theme-color);
+	background-color: CanvasText;
 }
 
 input[type="radio"]:checked::before {
-  transform: scale(1);
+	transform: scale(1);
 }
 
 input[type="radio"]:focus {
-  outline: max(2px, 0.15em) solid currentColor;
-  outline-offset: max(2px, 0.15em);
+	outline: max(2px, 0.15em) solid currentColor;
+	outline-offset: max(2px, 0.15em);
 }
 
 /* --- LOGIN --- */
 
 .loginBox {
-  width: 256px;
-  height: 30px;
-  display: block;
-  margin: auto !important;
-  margin-top: 8px !important;
-  text-align: left;
-  font-size: 16px;
+	width: 256px;
+	height: 30px;
+	display: block;
+	margin: auto !important;
+	margin-top: 8px !important;
+	text-align: left;
+	font-size: 16px;
 }
 
 /* --- HOMEPAGE --- */
 
 #indexGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 270px);
-  gap: 15px;
-  justify-content: center;
+	display: grid;
+	grid-template-columns: repeat(2, 270px);
+	gap: 15px;
+	justify-content: center;
 }
 
 #indexGrid .quickButton {
-  width: 100%;
-  padding: 20px;
-  font-size: 24px;
-  margin: 0;
-  transition-duration: 0ms;
+	width: 100%;
+	padding: 20px;
+	font-size: 24px;
+	margin: 0;
+	transition-duration: 0ms;
 }
 
 #indexGrid .quickButton:hover,
 #indexGrid .quickButton:focus-visible {
-  background: linear-gradient(to right, var(--color-blue), var(--color-purple));
-  color: white;
-  border-color: transparent;
-  border-width: 2px 0;
-  transform: none;
-  box-shadow: none;
+	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
+	color: white;
+	border-color: transparent;
+	border-width: 2px 0;
+	transform: none;
+	box-shadow: none;
 }
 
-#requestBreakDialog {
-  width: 300px;
-  height: 300px;
+#requestBreakDialog,
+#sharePollDialog {
+	width: 300px;
+	height: 300px;
 }
 
 #otherText {
-  font-size: 14px;
-  margin-top: 15px;
+	font-size: 14px;
+	margin-top: 15px;
 }
 
 #takeBreak {
-  position: absolute;
-  width: 100%;
-  bottom: 20px;
+	position: absolute;
+	width: 100%;
+	bottom: 20px;
 }
 
 #takeBreak #cancel {
-  --theme-color: #333;
-  background-color: white;
-  margin-right: 10px;
+	--theme-color: hsl(0, 0%, 20%);
+	background-color: white;
+	margin-right: 10px;
 }
 
 #takeBreak #cancel:active {
-  background-color: var(--theme-color);
+	background-color: var(--theme-color);
 }
 
 /* --- STUDENT PANEL --- */
 
 #pollForm label {
-  width: fit-content;
-  margin: 1em auto 0;
-  filter: brightness(75%);
-  user-select: none;
+	width: fit-content;
+	margin: 1em auto 0;
+	filter: brightness(75%);
+	user-select: none;
 }
 
 /* --- CONTROL PANEL --- */
 
 #quickmenu {
-  text-align: center;
-  margin: auto;
-  margin-bottom: 16px;
+	text-align: center;
+	margin: auto;
+	margin-bottom: 16px;
 }
 
 #quickmenu .quickButton {
-  width: 200px;
-  margin: 0 5px;
-  border-radius: 9999px;
-  font-size: 20px;
-  border-width: 2px;
-  padding: 3px;
+	width: 200px;
+	margin: 0 5px;
+	border-radius: 9999px;
+	font-size: 20px;
+	border-width: 2px;
+	padding: 3px;
 }
 
 #permChanges {
-  font-size: 18px;
+	font-size: 18px;
 }
 
 #permChanges button,
 #permChanges .quickButton {
-  font-size: 16px;
+	font-size: 16px;
 }
 
 .filter,
 .sort {
-  line-height: 1.25;
-  margin: 5px 2px;
+	line-height: 1.25;
+	margin: 5px 2px;
 }
 
 #startPollForm {
-  line-height: 2;
+	line-height: 2;
 }
 
 #deleteStudents{
-  margin-top: 15px;
+	margin-top: 15px;
 }
 
 #deleteStudents,
 #endClass,
-.deleteStudent
+.deleteStudent,
+#delete-poll,
+.delete-poll
 {
-  --theme-color: hsl(0, 100%, 12%);
-  background-color: hsl(0, 94%, 74%);;
+	--theme-color: hsl(0, 100%, 12%);
+	background-color: hsl(0, 94%, 74%);;
 }
 
 #responses{
-  display: none;
-  width: 40%;
-  margin-left: 30%;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	display: none;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .colorPickerButton {
-  display: inline-block;
-  width: 1.25em;
-  height: 1.25em;
-  border: 3px solid hsl(0, 0%, 60%);
-  border-radius: 100%;
-  margin: 0 2px 5px;
-  vertical-align: middle;
+	display: inline-block;
+	width: 1.25em;
+	height: 1.25em;
+	border: 3px solid hsl(0, 0%, 60%);
+	border-radius: 100%;
+	margin: 0 2px 5px;
+	vertical-align: middle;
 }
 
 .colorPicker {
-  position: absolute;
-  background-color: hsl(0, 100%, 100%);
-  border: 3px solid hsl(0, 0%, 60%);
-  border-radius: 10%;
-  padding: 20px;
-  inset: unset;
-  display: none;
-  width: max-content;
-  top: 0;
-  left: 0;
-  gap: 10px;
+	position: absolute;
+	background-color: hsl(0, 100%, 100%);
+	border: 3px solid hsl(0, 0%, 60%);
+	border-radius: 10%;
+	padding: 20px;
+	inset: unset;
+	display: none;
+	width: max-content;
+	top: 0;
+	left: 0;
+	gap: 10px;
 }
 
 .colorPicker .colorsDiv{
-  grid-column: 1;
-  grid-row: 1 / 3;
+	grid-column: 1;
+	grid-row: 1 / 3;
 }
 
 .colorPicker .IroColorPicker{
-  grid-column: 2;
-  grid-row: 1;
+	grid-column: 2;
+	grid-row: 1;
 }
 
 .colorPicker .hexLabel{
-  grid-column: 2;
-  grid-row: 2;
+	grid-column: 2;
+	grid-row: 2;
 }
 
 .hexInput{
-  width: 60px;
+	width: 60px;
 }
 
 .colorPicker .buttonsDiv{
-  grid-column: 1 / 3;
-  grid-row: 3;
-  display: flex;
-  justify-content: space-around;
-  gap: 10px;
+	grid-column: 1 / 3;
+	grid-row: 3;
+	display: flex;
+	justify-content: space-around;
+	gap: 10px;
 }
 
 .oldColor, .newColor {
-  height: 50%;
-  width: 70%;
+	height: 50%;
+	width: 70%;
 }
 
 #startPoll {
-  font-size: 18px;
-  margin-top: 8px;
+	font-size: 18px;
+	margin-top: 8px;
 }
 
 #endPoll {
-  font-size: 18px;
-  margin: auto;
+	font-size: 18px;
+	margin: auto;
+}
+
+.options {
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	margin-bottom: 2%;
+}
+
+.options * {
+	margin: 0;
+}
+
+#pollOptions {
+	margin-bottom: 50px;
+}
+
+.customPoll {
+	display: grid;
+	min-width: 30%;
+	width: fit-content;
+	margin: auto;
+	gap: 1.5rem;
+	/* grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); */
+	grid-template-columns:repeat(auto-fit, minmax(1fr));
+}
+
+.customPoll * {
+	min-width: 100px;
+	width: fit-content;
+}
+
+#pollShares {
+	display: grid;
+	justify-content: center;
+}
+
+.pollShare {
+	display: flex;
+}
+
+.pollShare button {
+	height: fit-content;
 }
 
 #plugins input,
 #plugins button {
-  margin: 4px;
-  vertical-align: middle;
+	margin: 4px;
+	vertical-align: middle;
 }
 
 #plugins button {
-  font-size: 14px;
-  width: 110px;
+	font-size: 14px;
+	width: 110px;
 }
 
 /* --- VIRTUAL BAR --- */
 
 #virtualBar {
-  width: calc(100% - 32px);
+	width: calc(100% - 32px);
 }
 
 #pixBox {
-  width: 100%;
-  height: 64px;
-  box-sizing: border-box;
-  border: 1px solid white;
-  display: flex;
-  justify-content: space-around;
-  user-select: none;
+	width: 100%;
+	height: 64px;
+	box-sizing: border-box;
+	border: 1px solid white;
+	display: flex;
+	justify-content: space-around;
+	user-select: none;
 }
 
 #text {
-  width: 10ch;
-  padding: 0 4px;
-  border: 1px white;
-  border-style: solid solid none;
-  background: black;
-  font: 32px monospace;
-  text-transform: uppercase;
-  overflow: hidden;
+	width: 10ch;
+	padding: 0 4px;
+	border: 1px white;
+	border-style: solid solid none;
+	background: black;
+	font: 32px monospace;
+	text-transform: uppercase;
+	overflow: hidden;
 }
 
 /* --- BGM & SFX --- */
 
 #playStop .quickButton {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  background-color: var(--bg-light-blue);
-  color: var(--theme-color);
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	background-color: var(--bg-light-blue);
+	color: var(--theme-color);
 }
 
 #nowPlaying {
-  text-align: center;
-  color: var(--theme-color);
+	text-align: center;
+	color: var(--theme-color);
 }
