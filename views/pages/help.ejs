@@ -48,10 +48,10 @@
                     minutes: today.getMinutes(),
                     seconds: today.getSeconds()
                 }
-                alert('Help ticket sent')
                 socket.emit('help', reason, time)
                 socket.emit('cpUpdate')
                 socket.emit('sfxPlay', "sfx_up04")
+                alert('Help ticket sent')
             }
 
             let options = document.getElementsByName('option')
@@ -82,7 +82,7 @@
                 socket.emit('requestBreak', reason)
             }
 
-            
+
         </script>
 
         </html>
