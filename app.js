@@ -43,17 +43,22 @@ app.use(express.urlencoded({ extended: true }))
 
 
 // Use a static folder for web page assets
-app.use(express.static(__dirname + '/static'));
-app.use('/js/chart.js', express.static(__dirname + '/node_modules/chart.js/dist/chart.umd.js'));
-app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist/iro.min.js'));
-app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'));
-app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'));
+app.use(express.static(__dirname + '/static'))
+app.use('/js/chart.js', express.static(__dirname + '/node_modules/chart.js/dist/chart.umd.js'))
+app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist/iro.min.js'))
+app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
+app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
-
 const logger = winston.createLogger({
-	level: 'info',
+	levels: {
+		'critical': 0,
+		'error': 1,
+		'warning': 2,
+		'info': 3,
+		'verbose': 4
+	},
 	format: winston.format.combine(
 		winston.format.timestamp(),
 		winston.format.printf(({ timestamp, level, message }) => {
@@ -61,8 +66,10 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.File({ filename: 'logs/combined.log' }),
+		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
 		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
+		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
@@ -180,188 +187,7 @@ class Lesson {
 }
 
 // Functions
-/*
-Check if user has logged in
-Place at the start of any page that needs to verify if a user is logged in or not
-This allows websites to check on their own if the user is logged in
-This also allows for the website to check for permissions
-*/
-function isAuthenticated(req, res, next) {
-	try {
-		if (req.session.username) {
-			if (cD.noClass.students[req.session.username]) {
-				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
-					res.redirect('/manageClass')
-				} else {
-					res.redirect('/selectClass')
-				}
-			} else {
-				next()
-			}
-		} else {
-			res.redirect('/login')
-		}
-	} catch (err) {
-		logger.log("error", err);
-	};
-};
-
-// Check if user is logged in. Only used for create and select class pages
-// Use isAuthenticated function for any other pages
-// Created for the first page since there is no check before this
-// This allows for a first check in where the user gets checked by the webpage
-function isLoggedIn(req, res, next) {
-	try {
-		if (req.session.username) {
-			next()
-		} else {
-			res.redirect('/login')
-		}
-	} catch (err) {
-		logger.log('error', err);
-	}
-}
-
-// Check if user has the permission levels to enter that page
-function permCheck(req, res, next) {
-	try {
-		let username = req.session.username
-		let classCode = req.session.class
-
-		if (req.url) {
-			// Defines users desired endpoint
-			let urlPath = req.url
-			// Checks if url has a / in it and removes it from the string
-			if (urlPath.indexOf('/') != -1) {
-				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-			}
-			// Check for ?(urlParams) and removes it from the string
-			if (urlPath.indexOf('?') != -1) {
-				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-			}
-			if (!cD[classCode].students[username]) {
-				req.session.class = 'noClass'
-				classCode = 'noClass'
-			}
-
-			if (!PAGE_PERMISSIONS[urlPath])
-				res.render('pages/message', {
-					message: `Error: ${urlPath} is not in the page permissions`,
-					title: 'Error'
-				})
-
-			// Checks if users permissions are high enough
-			if (
-				PAGE_PERMISSIONS[urlPath].classPage &&
-				cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) next()
-			else if (
-				!PAGE_PERMISSIONS[urlPath].classPage &&
-				cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) next()
-			else {
-				res.render('pages/message', {
-					message: `Error: you don't have high enough permissions to access ${urlPath}`,
-					title: 'Error'
-				})
-			}
-		}
-	} catch (err) {
-		logger.log("error", err);
-	};
-};
-
-// Allows the user to join a class
-function joinClass(userName, code) {
-	return new Promise((resolve, reject) => {
-		try {
-			// Find the id of the class from the database
-			db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classId) => {
-				try {
-					// Check to make sure there was a class with that name
-					if (!classId || !cD[code] || cD[code].key != code) {
-						reject(new Error('no open class with that code'))
-						return
-					}
-
-					// Find the id of the user who is trying to join the class
-					db.get('SELECT id FROM users WHERE username=?', [userName], (err, userId) => {
-						try {
-							if (userId) {
-								// Add the two id's to the junction table to link the user and class
-								db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
-									[classId.id, userId.id],
-									(err, classUser) => {
-										try {
-											if (err) {
-												logger.log("error", err)
-												reject(new Error('something went wrong'))
-												return
-											}
-
-											if (!classUser) {
-												db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-													[classId.id, userId.id, GUEST_PERMISSIONS, 0], (err) => {
-														try {
-															if (err) {
-																logger.log("error", err)
-																reject(new Error('something went wrong'))
-																return
-															}
-
-															let user = cD.noClass.students[userName]
-															user.classPermissions = GUEST_PERMISSIONS
-
-															// Remove student from old class
-															delete cD.noClass.students[userName]
-															// Add the student to the newly created class
-															cD[code].students[userName] = user
-															resolve(true)
-														} catch (err) {
-															logger.log("error", err)
-															reject(new Error('something went wrong'))
-														}
-													}
-												)
-												return
-											}
-
-											// Get the student's session data ready to transport into new class
-											let user = cD.noClass.students[userName]
-											if (classUser.permissions <= BANNED_PERMISSIONS) resolve(new Error('you are banned from that class'))
-
-											user.classPermissions = classUser.permissions
-
-											// Remove student from old class
-											delete cD.noClass.students[userName]
-											// Add the student to the newly created class
-											cD[code].students[userName] = user
-											resolve(true)
-										} catch (err) {
-											logger.log("error", err)
-											reject(new Error('something went wrong'))
-										}
-									}
-								)
-							}
-						} catch (err) {
-							logger.log("error", err)
-							reject(new Error('something went wrong'))
-						}
-					})
-				} catch (err) {
-					logger.log("error", err)
-					reject(new Error('something went wrong'))
-				}
-			})
-		} catch (err) {
-			logger.log("error", err)
-			reject(new Error('something went wrong'))
-		}
-	})
-}
-
-// Function to convert HSL to Hex
+// Global functions
 function convertHSLToHex(hue, saturation, lightness) {
 	try {
 		// Normalize lightness to range 0-1
@@ -380,19 +206,21 @@ function convertHSLToHex(hue, saturation, lightness) {
 				return Math.round(255 * colorValue).toString(16).padStart(2, '0');
 			} catch (err) {
 				logger.log('error', err)
+				return new Error('There was a server error try again.')
 			}
-		};
+		}
 
 		// Return the hex color
 		return `#${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)}`;
 	} catch (err) {
 		logger.log('error', err)
+		return new Error('There was a server error try again.')
 	}
 }
 
-// Function to generate colors
 function generateColors(amount) {
 	try {
+		logger.log('verbose', 'Generate colors')
 		// Initialize colors array
 		let colors = [];
 
@@ -409,23 +237,251 @@ function generateColors(amount) {
 		}
 
 		// Return the colors array
+		logger.log('verbose', `colors=(${colors})`)
 		return colors;
 	} catch (err) {
 		logger.log('error', err)
+		return new Error('There was a server error try again.')
 	}
 }
 
 function getUserClass(username) {
 	try {
+		logger.log('verbose', `get user's class username=(${username})`)
+
 		for (let classCode of Object.keys(cD)) {
-			if (cD[classCode].students[username]) return classCode
+			if (cD[classCode].students[username]) {
+				logger.log('verbose', `classCode=(${classCode})`)
+				return classCode
+			}
 		}
+		logger.log('verbose', `classCode=(${null})`)
 		return null
 	} catch (err) {
 		logger.log('error', err)
+		return new Error('There was a server error try again.')
 	}
 }
 
+// Express functions
+/*
+Check if user has logged in
+Place at the start of any page that needs to verify if a user is logged in or not
+This allows websites to check on their own if the user is logged in
+This also allows for the website to check for permissions
+*/
+function isAuthenticated(req, res, next) {
+	logger.log('info', `Authenticating ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+	try {
+		if (req.session.username) {
+			if (cD.noClass.students[req.session.username]) {
+				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+					res.redirect('/manageClass')
+				} else {
+					res.redirect('/selectClass')
+				}
+			} else {
+				next()
+			}
+		} else {
+			res.redirect('/login')
+		}
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+}
+
+// Check if user is logged in. Only used for create and select class pages
+// Use isAuthenticated function for any other pages
+// Created for the first page since there is no check before this
+// This allows for a first check in where the user gets checked by the webpage
+function isLoggedIn(req, res, next) {
+	try {
+		logger.log('info', `Checking if logged in ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		if (req.session.username) {
+			next()
+		} else {
+			res.redirect('/login')
+		}
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+}
+
+// Check if user has the permission levels to enter that page
+function permCheck(req, res, next) {
+	try {
+		let username = req.session.username
+		let classCode = req.session.class
+
+		logger.log('info', `Checking permission ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
+		if (req.url) {
+			// Defines users desired endpoint
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+
+			if (!cD[classCode].students[username]) {
+				req.session.class = 'noClass'
+				classCode = 'noClass'
+			}
+
+			logger.log('verbose', `urlPath=(${urlPath})`)
+			if (!PAGE_PERMISSIONS[urlPath]) {
+				logger.log('info', `${urlPath} is not in the page permissions`)
+				res.render('pages/message', {
+					message: `Error: ${urlPath} is not in the page permissions`,
+					title: 'Error'
+				})
+			}
+
+			// Checks if users permissions are high enough
+			if (
+				PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) next()
+			else if (
+				!PAGE_PERMISSIONS[urlPath].classPage &&
+				cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
+			) {
+				next()
+			}
+			else {
+				logger.log('info', 'Not enough permissions')
+				res.render('pages/message', {
+					message: `Error: you don't have high enough permissions to access ${urlPath}`,
+					title: 'Error'
+				})
+			}
+		}
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+}
+
+// Allows the user to join a class
+
+function joinClass(username, code) {
+	return new Promise((resolve, reject) => {
+		try {
+			logger.log('info', `Attempting to join class username=(${username}) classCode=(${code})`)
+
+			// Find the id of the class from the database
+			db.get('SELECT id FROM classroom WHERE key=?', [code], (err, classroom) => {
+				try {
+					if (err) {
+						reject(err)
+						return
+					}
+
+					// Check to make sure there was a class with that code
+					if (!classroom || !cD[code]) {
+						logger.log('info', 'No open class with that code')
+						reject('no open class with that code')
+						return
+					}
+
+					// Find the id of the user who is trying to join the class
+					db.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
+						try {
+							if (err) {
+								reject(err)
+								return
+							}
+
+							if (!user) {
+								logger.log('critical', 'User is not in database')
+								reject('user is not in database')
+							}
+
+							// Add the two id's to the junction table to link the user and class
+							db.get('SELECT * FROM classusers WHERE classuid = ? AND studentuid = ?',
+								[classroom.id, user.id],
+								(err, classUser) => {
+									try {
+										if (err) {
+											reject(err)
+											return
+										}
+
+										if (classUser) {
+											// Get the student's session data ready to transport into new class
+											let user = cD.noClass.students[username]
+											if (classUser.permissions <= BANNED_PERMISSIONS) {
+												logger.log('info', 'User is banned')
+												reject('you are banned from that class')
+											}
+
+											user.classPermissions = classUser.permissions
+
+											// Remove student from old class
+											delete cD.noClass.students[username]
+											// Add the student to the newly created class
+											cD[code].students[username] = user
+											logger.log('verbose', `cD=(${cD})`)
+											resolve(true)
+										} else {
+											db.run('INSERT INTO classusers(classuid, studentuid, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+												[classroom.id, user.id, GUEST_PERMISSIONS, 0], (err) => {
+													try {
+														if (err) {
+															reject(err)
+															return
+														}
+
+														logger.log('info', 'Added user to classusers')
+
+														let user = cD.noClass.students[username]
+														user.classPermissions = GUEST_PERMISSIONS
+
+														// Remove student from old class
+														delete cD.noClass.students[username]
+														// Add the student to the newly created class
+														cD[code].students[username] = user
+														logger.log('verbose', `cD=(${cD})`)
+														resolve(true)
+													} catch (err) {
+														reject(err)
+													}
+												}
+											)
+										}
+									} catch (err) {
+										reject(err)
+									}
+								}
+							)
+						} catch (err) {
+							reject(err)
+						}
+					})
+				} catch (err) {
+					reject(err)
+				}
+			})
+		} catch (err) {
+			reject(err)
+		}
+	})
+}
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
 
@@ -438,7 +494,17 @@ app.use('/api', apiRoutes)
 // This allows it to check if the user is logged in along with the home page
 // It also allows for redirection to any other page if needed
 app.get('/', isAuthenticated, (req, res) => {
-	res.redirect('/student')
+	try {
+		logger.log('info', `get / ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		res.redirect('/student')
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
 })
 
 
@@ -446,12 +512,18 @@ app.get('/', isAuthenticated, (req, res) => {
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isAuthenticated, (req, res) => {
 	try {
+		logger.log('info', `get /apikey ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		res.render('pages/apiKey', {
-			title: "API Key",
+			title: 'API Key',
 			API: cD[req.session.class].students[req.session.username].API
 		})
 	} catch (err) {
 		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
 	}
 })
 
@@ -468,6 +540,9 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		let students = cD[req.session.class].students
 		let keys = Object.keys(students)
 		let allStuds = []
+
+		logger.log('info', `get /controlPanel ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		for (var i = 0; i < keys.length; i++) {
 			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
 			allStuds.push(val)
@@ -477,14 +552,18 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
 		*/
 		res.render('pages/controlPanel', {
-			title: "Control Panel",
+			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // C
 
@@ -498,6 +577,8 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 	try {
 		//Initialze a list to push each step to - Riley R., May 22, 2023
 		let steps = []
+
+		logger.log('info', `post /controlPanel ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		/*
 		Uses Excel to JSON to read the sent excel spreadsheet.
 		Each main column has been assigned a label in order to differentiate them.
@@ -616,9 +697,13 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			res.redirect('/controlPanel')
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // Allow teacher to create class
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
@@ -630,10 +715,15 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		let className = req.body.name
 		let classId = req.body.id
 
+		logger.log('info', `post /createClass ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
+
 		function makeClass(id, className, key, sharedPolls = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
+
+				logger.log('verbose', `Making class id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
 				// Remove teacher from old class
 				delete cD.noClass.students[req.session.username]
 				// Add class into the session data
@@ -646,7 +736,11 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 				res.redirect('/')
 			} catch (err) {
-				logger.log("error", err);
+				logger.log('error', err)
+				res.render('pages/message', {
+					message: `Error: There was a server error try again.`,
+					title: 'Error'
+				})
 			}
 		}
 		// Checks if teacher is creating a new class or joining an old class
@@ -663,18 +757,35 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			// Add classroom to the database
 			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
 				try {
+					if (err) {
+						logger.log('error', err)
+						res.render('pages/message', {
+							message: `Error: There was a server error try again.`,
+							title: 'Error'
+						})
+						return
+					}
+
+					logger.log('verbose', `Added classroom to database`)
+
 					db.get('SELECT classroom.id, classroom.name, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
 							if (err) {
 								logger.log('error', err)
+								res.render('pages/message', {
+									message: `Error: There was a server error try again.`,
+									title: 'Error'
+								})
 								return
 							}
 
 							if (!classroom.id) {
+								logger.log('critical', `Class does not exist (please contact the programmer)`)
 								res.render('pages/message', {
-									message: "Class does not exist (please contact the programmer)",
+									message: 'Class does not exist (please contact the programmer)',
 									title: 'Login'
 								})
+								return
 							}
 
 							makeClass(
@@ -684,21 +795,40 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								JSON.parse(classroom.sharedPolls)
 							)
 						} catch (err) {
-							logger.log("error", err)
+							logger.log('error', err)
+							res.render('pages/message', {
+								message: `Error: There was a server error try again.`,
+								title: 'Error'
+							})
 						}
 					})
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
+					})
 				}
 			})
 		} else {
 			db.get('SELECT id, name, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 				try {
-					if (!classroom) {
+					if (err) {
+						logger.log('error', err)
 						res.render('pages/message', {
-							message: "Class does not exist (please contact the programmer)",
+							message: `Error: There was a server error try again.`,
+							title: 'Error'
+						})
+						return
+					}
+
+					if (!classroom) {
+						logger.log('critical', `Class does not exist (please contact the programmer)`)
+						res.render('pages/message', {
+							message: 'Class does not exist (please contact the programmer)',
 							title: 'Login'
 						})
+						return
 					}
 
 					makeClass(
@@ -707,37 +837,24 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						classroom.key,
 					)
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
+					})
 				}
 			})
 		}
 	} catch (err) {
-		logger.log("error", err)
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
 	}
 })
 
 // D
-app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
-	try {
-		let className = req.body.name
-
-		db.get('SELECT * FROM classroom WHERE name = ?', className, (err, classroom) => {
-			try {
-				if (classroom) {
-					if (cD[classroom.key]) {
-						deleteStudents()
-						delete cD[classroom.key]
-					}
-					db.run('DELETE FROM classroom WHERE name = ?', classroom.name)
-				} else res.redirect('/')
-			} catch (err) {
-				logger.log("error", err);
-			};
-		});
-	} catch (err) {
-		logger.log("error", err);
-	};
-});
 
 // E
 
@@ -746,17 +863,21 @@ app.post('/deleteClass', isLoggedIn, permCheck, (req, res) => {
 // G
 
 // H
-
-
 app.get('/help', isAuthenticated, permCheck, (req, res) => {
 	try {
+		logger.log('info', `post /help ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		res.render('pages/help', {
-			title: "Help"
+			title: 'Help'
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // I
 
@@ -765,48 +886,23 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 // K
 
 // L
-/* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
-app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	try {
-		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
-			try {
-				if (rows) {
-					res.render('pages/previousLesson', {
-						rows: rows,
-						title: "Previous Lesson"
-					})
-				}
-			} catch (err) {
-				logger.log("error", err)
-			}
-		})
-	} catch (err) {
-		logger.log("error", err)
-	}
-})
-
-app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
-	try {
-		let lesson = JSON.parse(req.body.data)
-		res.render('pages/lesson', {
-			lesson: lesson,
-			title: "Today's Lesson"
-		})
-	} catch (err) {
-		logger.log("error", err)
-	}
-})
 // This renders the login page
 // It displays the title and the color of the login page of the formbar js
 // It allows for the login to check if the user wants to login to the server
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
 	try {
+		logger.log('info', `get /login ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		res.render('pages/login', {
 			title: 'Login'
 		})
 	} catch (err) {
-		logger.log("error", err)
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
 	}
 })
 
@@ -823,156 +919,199 @@ app.post('/login', async (req, res) => {
 			userType: req.body.userType
 		}
 		var passwordCrypt = encrypt(user.password)
+
+		logger.log('info', `post /login ip=(${req.ip}) session=(${JSON.stringify(req.session)} loginData=(${JSON.stringify(user)})`)
+
 		// Check whether user is logging in or signing up
-		if (user.loginType == "login") {
+		if (user.loginType == 'login') {
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, NULLIF(json_group_array(DISTINCT shared_polls.pollId), "[null]") as sharedPolls, NULLIF(json_group_array(DISTINCT custom_polls.id), "[null]") as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
 				try {
-					// Check if a user with that name was found in the database
-					if (userData.username) {
-						// Decrypt users password
-						let tempPassword = decrypt(JSON.parse(userData.password))
-						if (tempPassword == user.password) {
-							let loggedIn = false
-							let classKey = ''
-							let classPermissions
-
-							for (let classData of Object.values(cD)) {
-								if (classData.key) {
-									for (let username of Object.keys(classData.students)) {
-										if (username == userData.username) {
-											loggedIn = true
-											classKey = classData.key
-											classPermissions = classData.students[username].permissions
-
-											break
-										}
-									}
-								}
-							}
-
-							if (loggedIn) {
-								req.session.class = classKey
-							} else {
-								// Add user to the session
-								cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
-								req.session.class = 'noClass'
-							}
-							// Add a cookie to transfer user credentials across site
-							req.session.userId = userData.id
-							req.session.username = userData.username
-							res.redirect('/')
-						} else {
-							res.render('pages/message', {
-								message: "Incorrect password",
-								title: 'Login'
-							})
-						}
-					} else {
+					// Check if a user with that name was not found in the database
+					if (!userData.username) {
+						logger.log('verbose', `User does not exist`)
 						res.render('pages/message', {
-							message: "user does not exist",
+							message: 'No user found with that username.',
 							title: 'Login'
 						})
+						return
 					}
+
+					// Decrypt users password
+					let tempPassword = decrypt(JSON.parse(userData.password))
+					if (tempPassword != user.password) {
+						logger.log('verbose', `Incorrect password`)
+						res.render('pages/message', {
+							message: 'Incorrect password',
+							title: 'Login'
+						})
+						return
+					}
+
+					let loggedIn = false
+					let classKey = ''
+
+					for (let classData of Object.values(cD)) {
+						if (classData.key) {
+							for (let username of Object.keys(classData.students)) {
+								if (username == userData.username) {
+									loggedIn = true
+									classKey = classData.key
+
+									break
+								}
+							}
+						}
+					}
+
+					if (loggedIn) {
+						logger.log('verbose', `User is already logged in`)
+						req.session.class = classKey
+					} else {
+						// Add user to the session
+						cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+						req.session.class = 'noClass'
+					}
+					// Add a cookie to transfer user credentials across site
+					req.session.userId = userData.id
+					req.session.username = userData.username
+
+					logger.log('verbose', `session=(${JSON.stringify(req.session)})`)
+					logger.log('verbose', `cD=(${JSON.stringify(cD)})`)
+
+					res.redirect('/')
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
-		} else if (user.loginType == "new") {
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
+					})
+				}
+			})
+		} else if (user.loginType == 'new') {
 			let permissions = STUDENT_PERMISSIONS
 
 			db.all('SELECT API, secret, username FROM users', (error, users) => {
 				try {
 					if (error) {
 						logger.log('error', error)
-					} else {
-						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(
-							userData.username,
-							userData.id,
-							userData.permissions,
-							userData.API,
-							JSON.parse(userData.ownedPolls),
-							JSON.parse(userData.sharedPolls)
-						)
-						req.session.class = 'noClass'
-					}
-					// Add a cookie to transfer user credentials across site
-					req.session.userId = userData.id
-					req.session.username = userData.username
-					res.redirect('/')
-				} catch (err) {
-					logger.log('error', err)
-				}
-
-				let existingAPIs = []
-				let existingSecrets = []
-				let newAPI
-				let newSecret
-
-				if (users.length == 0) permissions = MANAGER_PERMISSIONS
-
-				for (let dbUser of users) {
-					existingAPIs.push(dbUser.API)
-					existingSecrets.push(dbUser.secret)
-					if (dbUser.username == user.username) {
-						res.redirect('/login')
 						return
 					}
-				}
 
-				do {
-					newAPI = crypto.randomBytes(64).toString('hex')
-				} while (existingAPIs.includes(newAPI))
-				do {
-					newSecret = crypto.randomBytes(256).toString('hex')
-				} while (existingSecrets.includes(newSecret))
+					let existingAPIs = []
+					let existingSecrets = []
+					let newAPI
+					let newSecret
 
-				// Add the new user to the database
-				db.run('INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
-					[
-						user.username,
-						JSON.stringify(passwordCrypt),
-						permissions,
-						newAPI,
-						newSecret
-					], (err) => {
-						if (err) {
-							logger.log('error', err)
+					if (users.length == 0) permissions = MANAGER_PERMISSIONS
+
+					for (let dbUser of users) {
+						existingAPIs.push(dbUser.API)
+						existingSecrets.push(dbUser.secret)
+						if (dbUser.username == user.username) {
+							logger.log('verbose', `User already exists`)
+							res.render('pages/message', {
+								message: 'A user with that username already exists.',
+								title: 'Login'
+							})
 							return
 						}
-						try {
-							// Find the user in which was just created to get the id of the user
-							db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+					}
+
+					do {
+						newAPI = crypto.randomBytes(64).toString('hex')
+					} while (existingAPIs.includes(newAPI))
+					do {
+						newSecret = crypto.randomBytes(256).toString('hex')
+					} while (existingSecrets.includes(newSecret))
+
+					// Add the new user to the database
+					db.run(
+						'INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+						[
+							user.username,
+							JSON.stringify(passwordCrypt),
+							permissions,
+							newAPI,
+							newSecret
+						], (err) => {
+							try {
 								if (err) {
 									logger.log('error', err)
-								} else {
+									res.render('pages/message', {
+										message: `Error: There was a server error try again.`,
+										title: 'Error'
+									})
+									return
+								}
+
+								logger.log('verbose', `Added user to database`)
+
+								// Find the user in which was just created to get the id of the user
+								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
 									try {
+										if (err) {
+											logger.log('error', err)
+											res.render('pages/message', {
+												message: `Error: There was a server error try again.`,
+												title: 'Error'
+											})
+											return
+										}
+
 										// Add user to session
-										cD.noClass.students[userData.username] = new Student(userData.username, userData.id, userData.permissions, userData.API)
+										cD.noClass.students[userData.username] = new Student(
+											userData.username,
+											userData.id,
+											userData.permissions,
+											userData.API,
+										)
 
 										// Add the user to the session in order to transfer data between each page
 										req.session.userId = userData.id
 										req.session.username = userData.username
 										req.session.class = 'noClass'
+
+										logger.log('verbose', `session=(${JSON.stringify(req.session)})`)
+										logger.log('verbose', `cD=(${JSON.stringify(cD)})`)
+
 										res.redirect('/')
 									} catch (err) {
 										logger.log('error', err)
+										res.render('pages/message', {
+											message: `Error: There was a server error try again.`,
+											title: 'Error'
+										})
 									}
-								}
-							})
-						} catch (err) {
-							logger.log('error', err)
+								})
+							} catch (err) {
+								logger.log('error', err)
+								res.render('pages/message', {
+									message: `Error: There was a server error try again.`,
+									title: 'Error'
+								})
+							}
 						}
+					)
+				} catch (err) {
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
 					})
+				}
 			})
-		} else if (user.loginType == "guest") {
+		} else if (user.loginType == 'guest') {
 
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // M
 // Loads which classes the teacher is an owner of
@@ -981,15 +1120,22 @@ app.post('/login', async (req, res) => {
 // This also allows the teacher to kick or ban if needed
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	try {
+		logger.log('info', `get /manageClass ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `currentUser=(${JSON.stringify(cD[req.session.class].students[req.session.username])})`)
+
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
 			title: 'Create Class',
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // N
 
@@ -999,14 +1145,22 @@ a variable. */
 app.get('/oauth', (req, res) => {
 	try {
 		let redirectURL = req.query.redirectURL
+
+		logger.log('info', `get /oauth ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `redirectURL=(${redirectURL})`)
+
 		res.render('pages/oauth.ejs', {
-			title: "Oauth",
+			title: 'Oauth',
 			redirectURL: redirectURL
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // This is what happens after the user submits their authentication data.
 app.post('/oauth', (req, res) => {
@@ -1017,44 +1171,134 @@ app.post('/oauth', (req, res) => {
 			password,
 			redirectURL
 		} = req.body
+
+		logger.log('info', `post /oauth ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `username=(${username}) redirectURL=(${redirectURL})`)
+
 		// If there is a username and password submitted, then it gets results from the database that match the username.
 		if (username && password) {
-			db.get('SELECT * FROM users WHERE username = ?', [username], (error, userData) => {
+			db.get('SELECT * FROM users WHERE username = ?', [username], (err, userData) => {
 				try {
-					// If there is userData returned, it saves the database password to a variable.
-					if (userData) {
-						let databasePassword = decrypt(JSON.parse(userData.password))
-						// It then compares the submitted password to the database password.
-						// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-						if (databasePassword == password) {
-							var token = jwt.sign({ username: username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
-							res.redirect(`${redirectURL}?token=${token}`)
-							// If it does not match, then it redirects you back to the oauth page.
-						} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
-						// If there in no userData, then it redirects back to the oauth page.
-					} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+					if (err) {
+						logger.log('error', err)
+						res.render('pages/message', {
+							message: `Error: There was a server error try again.`,
+							title: 'Error'
+						})
+						return
+					}
+
+					// Check if a user with that name was not found in the database
+					if (!userData.username) {
+						logger.log('verbose', `User does not exist`)
+						res.render('pages/message', {
+							message: 'No user found with that username.',
+							title: 'Login'
+						})
+						return
+					}
+
+					// Decrypt users password
+					let databasePassword = decrypt(JSON.parse(userData.password))
+					if (databasePassword != password) {
+						logger.log('verbose', `incorrect password`)
+						res.render('pages/message', {
+							message: 'Incorrect password',
+							title: 'Login'
+						})
+						return
+					}
+
+					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
+					var token = jwt.sign({ username: userData.username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
+
+					logger.log('verbose', `Successfully Logged in with oauth`)
+
+					res.redirect(`${redirectURL}?token=${token}`)
 				} catch (err) {
-					logger.log("error", err);
-				};
-			});
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
+					})
+				}
+			})
 			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
 		} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // P
+/* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
+app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
+	try {
+		logger.log('info', `get /previousLessons ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, rows) => {
+			try {
+				if (rows) {
+					res.render('pages/previousLesson', {
+						rows: rows,
+						title: 'Previous Lesson'
+					})
+				}
+			} catch (err) {
+				logger.log('error', err)
+				res.render('pages/message', {
+					message: `Error: There was a server error try again.`,
+					title: 'Error'
+				})
+			}
+		})
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
+
+app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
+	try {
+		let lesson = JSON.parse(req.body.data)
+
+		logger.log('info', `post /previousLessons ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		res.render('pages/lesson', {
+			lesson: lesson,
+			title: "Today's Lesson"
+		})
+	} catch (err) {
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
+
 app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 	try {
-		res.render('pages/plugins.ejs',
-			{
-				title: 'Plugins'
-			})
+		logger.log('info', `get /plugins ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		res.render('pages/plugins.ejs', {
+			title: 'Plugins'
+		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // Q
 
@@ -1064,34 +1308,53 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 
 
 // S
-
-// selectClass
-//Send user to the select class page
 app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 	try {
+		logger.log('info', `get /selectClass ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		db.all(
 			'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentuid JOIN classroom ON classusers.classuid = classroom.id WHERE users.username = ?',
 			[req.session.username],
 			(err, joinedClasses) => {
 				try {
+					if (err) {
+						logger.log('error', err)
+						res.render('pages/message', {
+							message: `Error: There was a server error try again.`,
+							title: 'Error'
+						})
+						return
+					}
+
+					logger.log('verbose', `joinedClasses=(${JSON.stringify(joinedClasses)})`)
 					res.render('pages/selectClass', {
 						title: 'Select Class',
-						joinedClasses
+						joinedClasses: joinedClasses
 					})
 				} catch (err) {
-					logger.log("error", err);
-				};
+					logger.log('error', err)
+					res.render('pages/message', {
+						message: `Error: There was a server error try again.`,
+						title: 'Error'
+					})
+				}
 			}
-		);
+		)
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 
 //Adds user to a selected class, typically from the select class page
 app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
+		logger.log('info', `post /selectClass ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		let code = req.body.key.toLowerCase()
 
 		await joinClass(req.session.username, code)
@@ -1099,11 +1362,18 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 		req.session.class = code
 		res.redirect('/')
 	} catch (err) {
-		logger.log("error", err)
-		res.render('pages/message', {
-			message: `Error: ${err.message}`,
-			title: 'Error'
-		})
+		if (typeof err === 'string') {
+			res.render('pages/message', {
+				message: `Error: ${err.message}`,
+				title: 'Error'
+			})
+		} else {
+			logger.log('error', err)
+			res.render('pages/message', {
+				message: `Error: There was a server error try again.`,
+				title: 'Error'
+			})
+		}
 	}
 })
 
@@ -1121,8 +1391,9 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			name: req.session.username,
 			class: req.session.class
 		}
-
 		let answer = req.query.letter
+
+		logger.log('info', `get /student ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		if (answer) {
 			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
@@ -1139,23 +1410,23 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
 			res.render('pages/queryquiz', {
 				quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
-				title: "Quiz"
+				title: 'Quiz'
 			})
 			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
 				res.render('pages/queryquiz', {
 					quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
-					title: "Quiz"
+					title: 'Quiz'
 				})
 			}
 		} else if (isNaN(req.query.question) == false) {
 			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
 				res.render('pages/queryquiz', {
 					quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
-					title: "Quiz"
+					title: 'Quiz'
 				})
 			} else {
 				res.render('pages/message', {
-					message: "Error: please enter proper data",
+					message: 'Error: please enter proper data',
 					title: 'Error'
 				})
 			}
@@ -1169,9 +1440,13 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			})
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 /* This is for when you send poll data via a post command or when you submit a quiz.
 If it's a poll it'll save your response to the student object and the database.
@@ -1179,6 +1454,9 @@ If it's a poll it'll save your response to the student object and the database.
 */
 app.post('/student', isAuthenticated, permCheck, (req, res) => {
 	try {
+		logger.log('info', `post /student ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `query=(${JSON.stringify(req.query)})`)
+
 		if (req.query.poll) {
 			let answer = req.body.poll
 			if (answer) {
@@ -1201,13 +1479,17 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 			res.render('pages/results', {
 				totalScore: Math.floor(totalScore),
 				maxScore: cD[req.session.class].quiz.totalScore,
-				title: "Results"
+				title: 'Results'
 			})
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 
 // T
@@ -1217,15 +1499,21 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 	try {
+		logger.log('info', `get /virtualbar ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
 		res.render('pages/virtualbar', {
 			title: 'Virtual Bar',
 			io: io,
 			className: cD[req.session.class].className
 		})
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 // W
 
@@ -1249,18 +1537,23 @@ app.use((req, res, next) => {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 
+		logger.log('warning', `404 urlPath=(${urlPath}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		if (urlPath.startsWith('api/')) {
 			res.status(404).json(`Error: the page ${urlPath} does not exist`)
 		} else {
 			res.status(404).render('pages/message', {
 				message: `Error: the page ${urlPath} does not exist`,
-				title: "Error"
+				title: 'Error'
 			})
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
 
 
 // Middleware for sockets
@@ -1274,27 +1567,28 @@ io.use((socket, next) => {
 		} else if (api) {
 			socket.request.session.api = api
 			socket.request.session.class = classCode
-			if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'//return next(new Error("class not started"))
+			if (!cD[socket.request.session.class]) socket.request.session.class = 'noClass'
+
 			db.get(
 				'SELECT id, username, permissions FROM users WHERE API = ?',
 				[api],
 				(err, userData) => {
 					try {
-						if (err) logger.log("error", err)
+						if (err) logger.log('error', err)
 						else if (!userData) return next(new Error('not a valid API Key'))
 						next()
 					} catch (err) {
-						logger.log("error", err);
-					};
+						logger.log('error', err)
+					}
 				}
-			);
+			)
 		} else {
-			logger.log("error", "Missing username or api");
+			logger.log('info', 'Missing username or api')
 		}
 	} catch (err) {
-		logger.log("error", err);
-	};
-});
+		logger.log('error', err)
+	}
+})
 
 let rateLimits = {}
 
@@ -1315,7 +1609,7 @@ io.on('connection', (socket) => {
 			socket.join(socket.request.session.class)
 		}
 	} catch (err) {
-		logger.log("error", err);
+		logger.log('error', err);
 	};
 
 	function cpUpdate(classCode) {
@@ -1327,11 +1621,11 @@ io.on('connection', (socket) => {
 					var pollHistory = rows
 					io.to(classCode).emit('cpUpdate', JSON.stringify(cD[classCode]), JSON.stringify(pollHistory))
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	}
 
@@ -1375,7 +1669,7 @@ io.on('connection', (socket) => {
 				blind: classData.poll.blind
 			})
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		};
 	}
 
@@ -1383,49 +1677,54 @@ io.on('connection', (socket) => {
 		try {
 			io.to(socket.request.session.class).emit('pollUpdate', cD[socket.request.session.class].poll)
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function modeUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('modeUpdate', cD[socket.request.session.class].mode)
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function quizUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('quizUpdate', cD[socket.request.session.class].quiz)
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function lessonUpdate() {
 		try {
 			io.to(socket.request.session.class).emit('lessonUpdate', cD[socket.request.session.class].lesson)
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function pluginUpdate() {
 		try {
 			db.all(
 				'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
 				[socket.request.session.class],
-				(error, plugins) => {
+				(err, plugins) => {
 					try {
+						if (err) {
+							logger.log('error', err)
+							return
+						}
+
 						io.to(socket.request.session.class).emit('pluginUpdate', plugins)
 					} catch (err) {
-						logger.log("error", err)
+						logger.log('error', err)
 					}
 				}
 			)
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	}
 
@@ -1462,7 +1761,7 @@ io.on('connection', (socket) => {
 								newObject[customPoll.id] = customPoll
 								return newObject
 							} catch (err) {
-								logger.log("error", err)
+								logger.log('error', err)
 							}
 						}, {})
 
@@ -1485,7 +1784,7 @@ io.on('connection', (socket) => {
 				}
 			)
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err)
 		}
 	}
 
@@ -1499,9 +1798,9 @@ io.on('connection', (socket) => {
 			delete cD[classCode].students[username]
 			io.to(username).emit('reload')
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function deleteStudents(classCode) {
 		try {
@@ -1511,9 +1810,9 @@ io.on('connection', (socket) => {
 				}
 			}
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function endClass(classCode) {
 		try {
@@ -1523,25 +1822,30 @@ io.on('connection', (socket) => {
 			delete cD[classCode]
 			socket.broadcast.to(socket.request.session.class).emit('classEnded')
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function getOwnedClasses(username) {
 		try {
 			db.all('SELECT name, id FROM classroom WHERE owner=?',
 				[userSockets[username].request.session.userId], (err, ownedClasses) => {
 					try {
+						if (err) {
+							logger.log('error', err)
+							return
+						}
+
 						io.to(username).emit('getOwnedClasses', ownedClasses)
 					} catch (err) {
-						logger.log("error", err);
-					};
+						logger.log('error', err)
+					}
 				}
-			);
+			)
 		} catch (err) {
-			logger.log("error", err);
-		};
-	};
+			logger.log('error', err)
+		}
+	}
 
 	function getPollShareIds(pollId) {
 		try {
@@ -1567,7 +1871,7 @@ io.on('connection', (socket) => {
 
 									socket.emit('getPollShareIds', userPollShares, classPollShares)
 								} catch (err) {
-									logger.log("error", err)
+									logger.log('error', err)
 								}
 							}
 						)
@@ -1577,7 +1881,7 @@ io.on('connection', (socket) => {
 				}
 			)
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	}
 
@@ -1621,7 +1925,7 @@ io.on('connection', (socket) => {
 				next()
 			}
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		};
 	});
 
@@ -1640,7 +1944,7 @@ io.on('connection', (socket) => {
 							try {
 								db.run('UPDATE classusers SET digiPogs = ? WHERE studentuid = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id])
 							} catch (err) {
-								logger.log("error", err)
+								logger.log('error', err)
 							}
 						})
 						cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
@@ -1650,7 +1954,7 @@ io.on('connection', (socket) => {
 			cpUpdate()
 			vbUpdate()
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -1674,7 +1978,7 @@ io.on('connection', (socket) => {
 
 			cpUpdate()
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		};
 	});
 
@@ -1685,7 +1989,7 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].students[user].permissions = newPerm
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		};
 	});
 
@@ -1700,7 +2004,7 @@ io.on('connection', (socket) => {
 
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
-				let letterString = "abcdefghijklmnopqrstuvwxyz"
+				let letterString = 'abcdefghijklmnopqrstuvwxyz'
 				let answer = letterString[i]
 				let weight = 1
 				let color = generatedColors[i]
@@ -1724,16 +2028,16 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].poll.prompt = pollPrompt
 
 			for (var key in cD[socket.request.session.class].students) {
-				cD[socket.request.session.class].students[key].pollRes.buttonRes = ""
-				cD[socket.request.session.class].students[key].pollRes.textRes = ""
+				cD[socket.request.session.class].students[key].pollRes.buttonRes = ''
+				cD[socket.request.session.class].students[key].pollRes.textRes = ''
 			}
 
 			pollUpdate()
 			vbUpdate()
 		} catch (err) {
-			logger.log("error", err);
-		};
-	});
+			logger.log('error', err)
+		}
+	})
 
 	// End the current poll. Does not take any arguments
 	socket.on('endPoll', () => {
@@ -1754,7 +2058,7 @@ io.on('connection', (socket) => {
 			db.run(
 				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-					if (err) logger.log("error", err)
+					if (err) logger.log('error', err)
 				}
 			)
 
@@ -1765,7 +2069,7 @@ io.on('connection', (socket) => {
 			pollUpdate()
 			vbUpdate()
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		};
 	});
 
@@ -1829,18 +2133,18 @@ io.on('connection', (socket) => {
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
-								logger.log("error", err)
+								logger.log('error', err)
 							}
 						})
 					} catch (err) {
-						logger.log("error", err)
+						logger.log('error', err)
 					}
 				})
 			} else {
 				db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
 					try {
 						if (err) {
-							logger.log("error", err)
+							logger.log('error', err)
 							return
 						}
 						nextPollId = nextPollId.nextPollId + 1
@@ -1865,16 +2169,16 @@ io.on('connection', (socket) => {
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
-								logger.log("error", err)
+								logger.log('error', err)
 							}
 						})
 					} catch (err) {
-						logger.log("error", err)
+						logger.log('error', err)
 					}
 				})
 			}
 		} catch (err) {
-			logger.log("error", err);
+			logger.log('error', err);
 		}
 	})
 
@@ -1906,7 +2210,7 @@ io.on('connection', (socket) => {
 						db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId),
 						db.run('DELETE FROM class_polls WHERE pollId = ?', pollId)
 					]).catch((err) => {
-						logger.log("error", err)
+						logger.log('error', err)
 						db.run('ROLLBACK')
 					})
 
@@ -1940,11 +2244,11 @@ io.on('connection', (socket) => {
 
 					socket.emit('message', 'Poll deleted successfully!')
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -1961,11 +2265,11 @@ io.on('connection', (socket) => {
 						customPollUpdate(socket.request.session.username)
 					}
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -1991,6 +2295,7 @@ io.on('connection', (socket) => {
 							}
 
 							if (!poll) {
+								logger.log('critical', 'Poll does not exist (please contact the programmer)')
 								socket.emit('message', 'Poll does not exist (please contact the programmer)')
 								return
 							}
@@ -2035,17 +2340,17 @@ io.on('connection', (socket) => {
 														customPollUpdate(username)
 													}
 												} catch (err) {
-													logger.log("error", err)
+													logger.log('error', err)
 												}
 											}
 										)
 									} catch (err) {
-										logger.log("error", err)
+										logger.log('error', err)
 									}
 								}
 							)
 						} catch (err) {
-							logger.log("error", err)
+							logger.log('error', err)
 						}
 					})
 				} catch (err) {
@@ -2053,7 +2358,7 @@ io.on('connection', (socket) => {
 				}
 			})
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -2101,16 +2406,16 @@ io.on('connection', (socket) => {
 												customPollUpdate(user.username)
 											}
 										} catch (err) {
-											logger.log("error", err)
+											logger.log('error', err)
 										}
 									})
 								} catch (err) {
-									logger.log("error", err)
+									logger.log('error', err)
 								}
 							}
 						)
 					} catch (err) {
-						logger.log("error", err)
+						logger.log('error', err)
 					}
 				}
 			)
@@ -2145,6 +2450,7 @@ io.on('connection', (socket) => {
 							}
 
 							if (!poll) {
+								logger.log('critical', 'Poll does not exist (please contact the programmer)')
 								socket.emit('message', 'Poll does not exist (please contact the programmer)')
 								return
 							}
@@ -2187,25 +2493,25 @@ io.on('connection', (socket) => {
 														customPollUpdate(username)
 													}
 												} catch (err) {
-													logger.log("error", err)
+													logger.log('error', err)
 												}
 											}
 										)
 									} catch (err) {
-										logger.log("error", err)
+										logger.log('error', err)
 									}
 								}
 							)
 						} catch (err) {
-							logger.log("error", err)
+							logger.log('error', err)
 						}
 					})
 				} catch (err) {
-					logger.log("error", err)
+					logger.log('error', err)
 				}
 			})
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -2260,17 +2566,17 @@ io.on('connection', (socket) => {
 										}
 									})
 								} catch (err) {
-									logger.log("error", err)
+									logger.log('error', err)
 								}
 							}
 						)
 					} catch (err) {
-						logger.log("error", err)
+						logger.log('error', err)
 					}
 				}
 			)
 		} catch (err) {
-			logger.log("error", err)
+			logger.log('error', err)
 		}
 	})
 
@@ -2528,7 +2834,7 @@ io.on('connection', (socket) => {
 
 					if (cD[socket.request.session.class].poll.status == true) {
 						cD[socket.request.session.class].poll.responses = {}
-						cD[socket.request.session.class].poll.prompt = ""
+						cD[socket.request.session.class].poll.prompt = ''
 						cD[socket.request.session.class].poll.status = false
 					};
 
@@ -2536,7 +2842,7 @@ io.on('connection', (socket) => {
 					// Creates an object for every answer possible the teacher is allowing
 					for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
 						if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
-							let letterString = "abcdefghijklmnopqrstuvwxyz"
+							let letterString = 'abcdefghijklmnopqrstuvwxyz'
 							cD[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
 						} else {
 							cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = { answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i] }
@@ -2756,5 +3062,5 @@ io.on('connection', (socket) => {
 
 http.listen(420, () => {
 	console.log('Running on port: 420')
-	logger.log('info', 'start')
+	logger.log('info', 'Start')
 })
