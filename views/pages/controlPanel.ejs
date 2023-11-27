@@ -1344,12 +1344,7 @@
 			var allRoom = ""
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', function (room, pollHistory) {
-				room = JSON.parse(room)
 				classCode.innerText = 'Class Code: ' + room.key
-				pollHistory = JSON.parse(pollHistory)
-				for (let poll of pollHistory) {
-					poll.data = JSON.parse(poll.data)
-				}
 				buildPreviousPolls(pollHistory)
 				allRoom = room
 				document.getElementById('nextStep').onclick = () => {
