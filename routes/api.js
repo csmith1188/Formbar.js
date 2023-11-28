@@ -6,71 +6,174 @@ const winston = require('winston');
 var db = new sqlite3.Database('database/database.db')
 
 const logger = winston.createLogger({
-	level: 'info',
-	format: winston.format.json(),
-	defaultMeta: { service: 'user-service' },
+	levels: {
+		'critical': 0,
+		'error': 1,
+		'warning': 2,
+		'info': 3,
+		'verbose': 4
+	},
+	format: winston.format.combine(
+		winston.format.timestamp(),
+		winston.format.printf(({ timestamp, level, message }) => {
+			return `[${timestamp}] ${level}: ${message}`
+		})
+	),
 	transports: [
-		//
-		// - Write all logs with importance level of `error` or less to `error.log`
-		// - Write all logs with importance level of `info` or less to `combined.log`
-		//
-		new winston.transports.File({ filename: 'error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'combined.log' }),
+		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
+		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
+		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
+		new winston.transports.Console({ level: 'error' })
 	],
 })
 
-// gets user data from the database based on the api key
-async function getUser(request) {
-	try {
-		if (!request.headers.api) return { error: 'no API Key' }
-
-		let user = new Promise((resolve, reject) => {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE API = ?',
-				[request.headers.api],
-				(error, userData) => {
-					try {
-						if (error) return reject(error)
-
-						if (!userData) return reject('not a valid API Key')
-
-						if (request.query.class) {
-							userData.class = request.query.class
-						}
-						return resolve(userData)
-					} catch (err) {
-						reject(err)
-					}
-				}
-			)
-		})
-
-		return user
-	} catch (err) {
-		logger.log('error', err)
-	}
-}
-
-// checks to see if the user is authenticated
-async function isAuthenticated(request, response, next) {
-	try {
-		let user = await getUser(request).catch(err => { logger.log('error', err) })
-
-		if (user.error) {
-			response.json(user.error)
-			return
-		}
-
-		if (user) request.session.user = user
-
-		next()
-	} catch (err) {
-		logger.log('error', err)
-	}
-}
-
 function api(cD) {
 	try {
+		// checks to see if the user is authenticated
+		async function isAuthenticated(req, res, next) {
+			try {
+				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
+
+				let user = await getUser(req)
+
+				if (user instanceof Error) {
+					res.json({ error: 'There was a server error try again.' })
+					throw user
+				}
+				if (user.error) {
+					logger.log('info', user.error)
+					res.json({ error: user.error })
+					return
+				}
+
+				if (user)
+					req.session.user = user
+
+				next()
+			} catch (err) {
+				logger.log('error', err)
+			}
+		}
+
+		// gets a user's current class
+		function getUserClass(username) {
+			try {
+				logger.log('info', `[getUserClass] username=(${username})`)
+
+				for (let classCode of Object.keys(cD)) {
+					if (cD[classCode].students[username]) {
+						logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
+						return classCode
+					}
+				}
+
+				logger.log('verbose', `[getUserClass] classCode=(${null})`)
+				return null
+			} catch (err) {
+				return err
+			}
+		}
+
+		// gets user data from the database based on the api key
+		async function getUser(req) {
+			try {
+				logger.log('info', `[getUser]`)
+
+				if (!req.headers.api) return { error: 'No API key' }
+
+				let user = await new Promise((resolve, reject) => {
+					db.get(
+						'SELECT id, username, permissions FROM users WHERE API = ?',
+						[req.headers.api],
+						(err, userData) => {
+							try {
+								if (err) throw err
+
+								if (!userData) {
+									resolve({ error: 'Not a valid API key' })
+									return
+								}
+
+								let classCode = getUserClass(userData.username)
+
+								if (classCode instanceof Error) throw classCode
+								if (classCode) userData.class = classCode
+								else userData.class = null
+
+								return resolve(userData)
+							} catch (err) {
+								reject(err)
+							}
+						}
+					)
+				})
+
+				return user
+			} catch (err) {
+				return err
+			}
+		}
+
+		// gets all users from a class
+		async function getClassUsers(key) {
+			try {
+				logger.log('info', `[getClassUsers] classCode=(${key})`)
+
+				let dbClassUsers = await new Promise((resolve, reject) => {
+					db.all(
+						'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.id = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
+						[key],
+						(err, dbClassUsers) => {
+							try {
+								if (err) throw err
+
+								if (!dbClassUsers) {
+									resolve({ error: 'class does not exist' })
+								}
+
+								resolve(dbClassUsers)
+							} catch (err) {
+								reject(err)
+							}
+						}
+					)
+				})
+				if (dbClassUsers.error) return dbClassUsers
+
+				let classUsers = {}
+				let cDClassUsers = {}
+				if (cD[key])
+					cDClassUsers = cD[key].students
+
+				for (let user of dbClassUsers) {
+					classUsers[user.username] = {
+						loggedIn: false,
+						...user,
+						help: null,
+						break: null,
+						quizScore: null,
+						pogMeter: null
+					}
+
+					let cdUser = cDClassUsers[user.username]
+					if (cdUser) {
+						classUsers[user.username].loggedIn = true
+						classUsers[user.username].help = cdUser.help
+						classUsers[user.username].break = cdUser.break
+						classUsers[user.username].quizScore = cdUser.quizScore
+						classUsers[user.username].pogMeter = cdUser.pogMeter
+					}
+				}
+
+				logger.log('verbose', `[getClassUsers] classUsers=(${JSON.stringify(classUsers)})`)
+
+				return classUsers
+			} catch (err) {
+				return err
+			}
+		}
+
 		// remove restricted data from the class data
 		for (let classData of Object.values(cD)) {
 			for (let studentData of Object.values(classData.students)) {
@@ -82,19 +185,11 @@ function api(cD) {
 		router.use(isAuthenticated)
 
 		// returns the user
-		router.get('/me', async (request, response) => {
+		router.get('/me', async (req, res) => {
 			try {
-				let user = await getUser(request).catch(err => { logger.log('error', err) })
+				logger.log('info', `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-				if (user.error) {
-					response.json(user.error)
-					return
-				}
-
-				if (!user || !user.username) {
-					response.json({ error: 'missing API key' })
-					return
-				}
+				let user = req.session.user
 
 				if (
 					!user.class ||
@@ -103,14 +198,12 @@ function api(cD) {
 				) {
 					db.get('SELECT id, username, permissions FROM users where username=?',
 						[user.username],
-						(error, userData) => {
+						(err, userData) => {
 							try {
-								if (error) {
-									console.log(error)
-									return
-								}
+								if (err) throw err
 
-								response.json({
+								logger.log('verbose', `[get api/me] response=(${JSON.stringify({ loggedIn: false, username: userData.username, id: userData.id, permissions: userData.permissions, help: null, break: null, quizScore: null })}`)
+								res.json({
 									loggedIn: false,
 									username: userData.username,
 									id: userData.id,
@@ -127,133 +220,133 @@ function api(cD) {
 					return
 				}
 
-				response.json({
+				logger.log('verbose', `[get api/me] response=(${JSON.stringify({ loggedIn: true, ...cD[user.class].students[user.username], pollRes: undefined })})`)
+				res.json({
 					loggedIn: true,
 					...cD[user.class].students[user.username],
 					pollRes: undefined
 				})
 			} catch (err) {
 				logger.log('error', err)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 
 		// returns the class data from the class code called key
-		router.get('/class/:key', async (request, response) => {
+		router.get('/class/:key', async (req, res) => {
 			try {
-				let user = await getUser(request)
+				let key = req.params.key
 
-				if (user.error) {
-					response.json(user.error)
-					return
-				}
-
-				let key = request.params.key
-
-				if (!cD[key]) {
-					response.json({ error: 'class not started' })
-					return
-				}
-
-				if (!cD[key].students[user.username]) {
-					response.json({ error: 'user is not logged into the select class' })
-					return
-				}
+				logger.log('info', `[get api/class/${key}] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				let classData = structuredClone(cD[key])
-				for (let username of Object.keys(classData.students)) {
-					delete classData.students[username].pollRes
-					classData.students[username] = Object.assign({ loggedIn: true }, classData.students[username])
-				}
-				response.json(classData)
-			} catch (err) {
-				logger.log('error', err)
-			}
-		})
-
-		// returns the logged in users in a class
-		router.get('/class/:key/current-students', (request, response) => {
-			try {
-				let key = request.params.key
-
-				if (!cD[key]) {
-					response.json({ error: 'class not started' })
+				if (!classData) {
+					res.json({ error: 'Class not started' })
 					return
 				}
 
-				let classData = structuredClone(cD[key])
-				for (let username of Object.keys(classData.students)) {
-					delete classData.students[username].pollRes
-					delete classData.students[username].API
+				let user = req.session.user
+
+				if (!classData.students[user.username]) {
+					logger.log('verbose', `[get api/class/${key}] user is not logged in`)
+					res.json({ error: 'User is not logged into the selected class' })
+					return
 				}
-				response.json(classData)
+
+				let classUsers = await getClassUsers(key)
+
+				if (classUsers.error) {
+					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
+					res.json(classUsers)
+				}
+
+				classData.students = classUsers
+
+				logger.log('verbose', `[get api/class/${key}] response=(${JSON.stringify(classData)})`)
+				res.json(classData)
 			} catch (err) {
 				logger.log('error', err)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 
 		// returns all the users in a class
-		router.get('/class/:key/all-students', (request, response) => {
+		router.get('/class/:key/students', async (req, res) => {
 			try {
-				let key = request.params.key
+				let key = req.params.key
+
+				logger.log('info', `get api/class/${key}/students ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				if (!cD[key]) {
-					response.json({ error: 'class not started' })
+					logger.log('verbose', `[get api/class/${key}/students] class not started`)
+					res.json({ error: 'Class not started' })
 					return
 				}
 
-				db.all(
-					'SELECT DISTINCT users.id, users.username, CASE WHEN users.username = classroom.owner THEN users.permissions ELSE classusers.permissions END AS permissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.username = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
-					[key],
-					(error, dbClassData) => {
-						try {
-							if (error) {
-								logger.log('error', error)
-								return
-							}
 
-							if (!dbClassData) {
-								response.json({ error: 'class does not exist' })
-								return
-							}
+				let user = req.session.user
 
-							let students = {}
-							for (let dbUser of dbClassData) {
-								let currentUser = cD[key].students[dbUser.username]
-								students[dbUser.username] = {
-									loggedIn: currentUser ? true : false,
-									username: dbUser.username,
-									id: dbUser.id,
-									permissions: dbUser.permissions,
-									help: currentUser ? currentUser.help : null,
-									break: currentUser ? currentUser.break : null,
-									quizScore: currentUser ? currentUser.quizScore : null
-								}
-							}
-							response.json(students)
-						} catch (err) {
-							logger.log('error', err)
-						}
-					}
-				)
+				if (!cD[key].students[user.username]) {
+					logger.log('verbose', `[get api/class/${key}/students] user is not logged in`)
+					res.json({ error: 'User is not logged into the selected class' })
+					return
+				}
+
+				let classUsers = await getClassUsers(key)
+
+				if (classUsers.error) {
+					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
+					res.json(classUsers)
+				}
+
+				logger.log('verbose', `[get api/class/${key}/students] response=(${JSON.stringify(classUsers)})`)
+				res.json(classUsers)
 			} catch (err) {
 				logger.log('error', err)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 
 		// returns the poll data for a class
-		router.get('/class/:key/polls', (request, response) => {
+		router.get('/class/:key/polls', (req, res) => {
 			try {
-				let key = request.params.key
+				let key = req.params.key
+
+				logger.log('info', `[get api/class/${key}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+				if (!cD[key]) {
+					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
+					res.json({ error: 'Class not started' })
+					return
+				}
+
+				let user = req.session.user
+
+				if (!cD[key].students[user.username]) {
+					logger.log('verbose', `[get api/class/${key}/polls] user is not logged in`)
+					res.json({ error: 'User is not logged into the selected class' })
+					return
+				}
+
 				let classData = structuredClone(cD[key])
 				let polls = {}
 
 				if (!classData) {
-					response.json({ error: 'class not started' })
+					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
+					res.json({ error: 'Class not started' })
 					return
 				}
 
-				if (!classData.pollStatus) {
-					response.json({ error: 'no poll' })
+				if (!classData.poll.status) {
+					logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify({ status: classData.poll.status, totalStudents: Object.keys(classData.students).length, pollPrompt: classData.poll.prompt, blindPoll: classData.poll.blind, weight: classData.poll.weight, polls: polls })})`)
+					res.json({
+						status: classData.poll.status,
+						totalStudents: Object.keys(classData.students).length,
+						pollPrompt: classData.poll.prompt,
+						blindPoll: classData.poll.blind,
+						weight: classData.poll.weight,
+						polls: polls
+					})
 					return
 				}
 
@@ -277,10 +370,13 @@ function api(cD) {
 					}
 				}
 
-				response.json({
+				logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify({ status: classData.poll.status, totalStudents: Object.keys(classData.students).length, pollPrompt: classData.poll.prompt, blindPoll: classData.poll.blindPoll, weight: classData.poll.weight, polls: polls })})`)
+				res.json({
+					status: classData.poll.status,
 					totalStudents: Object.keys(classData.students).length,
-					pollPrompt: classData.pollPrompt,
-					blindPoll: classData.blindPoll,
+					pollPrompt: classData.poll.prompt,
+					blindPoll: classData.poll.blindPoll,
+					weight: classData.poll.weight,
 					polls: polls
 				})
 			} catch (err) {

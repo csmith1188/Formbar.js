@@ -137,18 +137,18 @@
 					var textarea = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
-					for (var i = 0; i < radios.length; i++) {
 
+					for (var i = 0; i < radios.length; i++) {
 						if (radios[i].type === 'radio' && radios[i].checked) {
 							// Defines the letter response of the user
 							lettRes = radios[i].value
-
 						}
-
-
 					}
+
+
 					if (textarea)
 						textRes = textarea.value
+
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
 					socket.emit('sfxPlay', 'sfx_up01')
