@@ -59,19 +59,19 @@ function api(cD) {
 		// gets a user's current class
 		function getUserClass(username) {
 			try {
-				logger.log('info', `get user's current class username=(${username})`)
+				logger.log('info', `[getUserClass] username=(${username})`)
 
 				for (let classCode of Object.keys(cD)) {
 					if (cD[classCode].students[username]) {
-						logger.log('verbose', `classCode=(${classCode})`)
+						logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
 						return classCode
 					}
 				}
-				logger.log('verbose', `classCode=(${null})`)
+
+				logger.log('verbose', `[getUserClass] classCode=(${null})`)
 				return null
 			} catch (err) {
-				logger.log('error', err)
-				return new Error('There was a server error try again.')
+				return err
 			}
 		}
 
@@ -86,19 +86,16 @@ function api(cD) {
 					db.get(
 						'SELECT id, username, permissions FROM users WHERE API = ?',
 						[req.headers.api],
-						async (err, userData) => {
+						(err, userData) => {
 							try {
-								if (err) {
-									reject(err)
-									return
-								}
+								if (err) throw err
 
 								if (!userData) {
 									resolve({ error: 'Not a valid API key' })
 									return
 								}
 
-								let classCode = await getUserClass(userData.username)
+								let classCode = getUserClass(userData.username)
 
 								if (classCode instanceof Error) throw classCode
 								if (classCode) userData.class = classCode
@@ -114,7 +111,6 @@ function api(cD) {
 
 				return user
 			} catch (err) {
-				logger.log('error', err)
 				return err
 			}
 		}
@@ -130,24 +126,20 @@ function api(cD) {
 						[key],
 						(err, dbClassUsers) => {
 							try {
-								if (err) {
-									logger.log('error', err)
-									reject(err)
-								}
+								if (err) throw err
 
 								if (!dbClassUsers) {
-									logger.log('info', 'class does not exist')
-									reject('class does not exist')
+									resolve({ error: 'class does not exist' })
 								}
 
 								resolve(dbClassUsers)
 							} catch (err) {
-								logger.log('error', err)
 								reject(err)
 							}
 						}
 					)
 				})
+				if (dbClassUsers.error) return dbClassUsers
 
 				let classUsers = {}
 				let cDClassUsers = {}
@@ -263,9 +255,9 @@ function api(cD) {
 
 				let classUsers = await getClassUsers(key)
 
-				if (classUsers instanceof Error) {
-					res.json({ error: 'There was a server error try again.' })
-					throw classUsers
+				if (classUsers.error) {
+					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
+					res.json(classUsers)
 				}
 
 				classData.students = classUsers
@@ -274,6 +266,7 @@ function api(cD) {
 				res.json(classData)
 			} catch (err) {
 				logger.log('error', err)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 
@@ -301,15 +294,16 @@ function api(cD) {
 
 				let classUsers = await getClassUsers(key)
 
-				if (classUsers instanceof Error) {
-					res.json({ error: 'There was a server error try again.' })
-					throw classUsers
+				if (classUsers.error) {
+					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
+					res.json(classUsers)
 				}
 
 				logger.log('verbose', `[get api/class/${key}/students] response=(${JSON.stringify(classUsers)})`)
 				res.json(classUsers)
 			} catch (err) {
 				logger.log('error', err)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 

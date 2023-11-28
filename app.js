@@ -232,7 +232,7 @@ function generateColors(amount) {
 	try {
 		logger.log('info', `[generateColors] amount=(${amount})`)
 		// Initialize colors array
-		let colors = [];
+		let colors = []
 
 		// Initialize hue
 		let hue = 0
@@ -252,7 +252,7 @@ function generateColors(amount) {
 
 		// Return the colors array
 		logger.log('verbose', `[generateColors] colors=(${colors})`)
-		return colors;
+		return colors
 	} catch (err) {
 		return err
 	}
@@ -769,27 +769,13 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			// Add classroom to the database
 			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						res.render('pages/message', {
-							message: `Error: There was a server error try again.`,
-							title: 'Error'
-						})
-						return
-					}
+					if (err) throw err
 
 					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
 					db.get('SELECT classroom.id, classroom.name, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
-							if (err) {
-								logger.log('error', err.stack)
-								res.render('pages/message', {
-									message: `Error: There was a server error try again.`,
-									title: 'Error'
-								})
-								return
-							}
+							if (err) throw err
 
 							if (!classroom.id) {
 								logger.log('critical', `Class does not exist`)
@@ -829,14 +815,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		} else {
 			db.get('SELECT id, name, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						res.render('pages/message', {
-							message: `Error: There was a server error try again.`,
-							title: 'Error'
-						})
-						return
-					}
+					if (err) throw err
 
 					if (!classroom) {
 						logger.log('critical', `Class does not exist`)
@@ -1023,12 +1002,9 @@ app.post('/login', async (req, res) => {
 
 			let permissions = STUDENT_PERMISSIONS
 
-			db.all('SELECT API, secret, username FROM users', (error, users) => {
+			db.all('SELECT API, secret, username FROM users', (err, users) => {
 				try {
-					if (error) {
-						logger.log('error', error)
-						return
-					}
+					if (err) throw err
 
 					let existingAPIs = []
 					let existingSecrets = []
@@ -1068,28 +1044,14 @@ app.post('/login', async (req, res) => {
 							newSecret
 						], (err) => {
 							try {
-								if (err) {
-									logger.log('error', err.stack)
-									res.render('pages/message', {
-										message: `Error: There was a server error try again.`,
-										title: 'Error'
-									})
-									return
-								}
+								if (err) throw err
 
 								logger.log('verbose', `[post /login] Added user to database`)
 
 								// Find the user in which was just created to get the id of the user
 								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
 									try {
-										if (err) {
-											logger.log('error', err.stack)
-											res.render('pages/message', {
-												message: `Error: There was a server error try again.`,
-												title: 'Error'
-											})
-											return
-										}
+										if (err) throw err
 
 										// Add user to session
 										cD.noClass.students[userData.username] = new Student(
@@ -1211,14 +1173,7 @@ app.post('/oauth', (req, res) => {
 		if (username && password) {
 			db.get('SELECT * FROM users WHERE username = ?', [username], (err, userData) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						res.render('pages/message', {
-							message: `Error: There was a server error try again.`,
-							title: 'Error'
-						})
-						return
-					}
+					if (err) throw err
 
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
@@ -1274,9 +1229,7 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 
 		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, lessons) => {
 			try {
-				if (err) {
-					throw err
-				}
+				if (err) throw err
 
 				logger.log('verbose', `[get /previousLessons] rows=(${JSON.stringify(lessons)})`)
 
@@ -1353,14 +1306,7 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 			[req.session.username],
 			(err, joinedClasses) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						res.render('pages/message', {
-							message: `Error: There was a server error try again.`,
-							title: 'Error'
-						})
-						return
-					}
+					if (err) throw err
 
 					logger.log('verbose', `[get /selectClass] joinedClasses=(${JSON.stringify(joinedClasses)})`)
 					res.render('pages/selectClass', {
@@ -1625,10 +1571,7 @@ io.use((socket, next) => {
 				[api],
 				(err, userData) => {
 					try {
-						if (err) {
-							logger.log('error', err.stack)
-							return
-						}
+						if (err) throw err
 						if (!userData) {
 							logger.log('verbose', '[socket authentication] not a valid API Key')
 							next(new Error('Not a valid API key'))
@@ -1813,10 +1756,7 @@ io.on('connection', (socket) => {
 				[classCode],
 				(err, plugins) => {
 					try {
-						if (err) {
-							logger.log('error', err.stack)
-							return
-						}
+						if (err) throw err
 
 						logger.log('verbose', `[pluginUpdate] plugins=(${JSON.stringify(plugins)})`)
 
@@ -1854,10 +1794,7 @@ io.on('connection', (socket) => {
 				],
 				(err, customPollsData) => {
 					try {
-						if (err) {
-							logger.log('error', err.stack)
-							return
-						}
+						if (err) throw err
 
 						for (let customPoll of customPollsData) {
 							customPoll.answers = JSON.parse(customPoll.answers)
@@ -1954,10 +1891,7 @@ io.on('connection', (socket) => {
 			db.all('SELECT name, id FROM classroom WHERE owner=?',
 				[userSockets[username].request.session.userId], (err, ownedClasses) => {
 					try {
-						if (err) {
-							logger.log('error', err.stack)
-							return
-						}
+						if (err) throw err
 
 						logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
 
@@ -1981,18 +1915,14 @@ io.on('connection', (socket) => {
 				pollId,
 				(err, userPollShares) => {
 					try {
-						if (err) {
-							throw err
-						}
+						if (err) throw err
 
 						db.all(
 							'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId = ?',
 							pollId,
 							(err, classPollShares) => {
 								try {
-									if (err) {
-										throw err
-									}
+									if (err) throw err
 
 									logger.log('info', `[getPollShareIds] userPollShares=(${JSON.stringify(userPollShares)}) classPollShares=(${JSON.stringify(classPollShares)})`)
 
@@ -2123,17 +2053,21 @@ io.on('connection', (socket) => {
 				cD[socket.request.session.class].students[user].id
 			])
 
+			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
 			io.to(user).emit('reload')
 
 			cpUpdate()
 		} catch (err) {
-			logger.log('error', err.stack);
-		};
-	});
+			logger.log('error', err.stack)
+		}
+	})
 
 	socket.on('permChange', (user, newPerm) => {
 		try {
 			newPerm = Number(newPerm)
+
+			logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[permChange] user=(${user}) newPerm=(${newPerm})`)
 
 			cD[socket.request.session.class].students[user].permissions = newPerm
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
@@ -2145,6 +2079,9 @@ io.on('connection', (socket) => {
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
 		try {
+			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
+
 			let generatedColors = generateColors(resNumber)
 
 			if (generatedColors instanceof Error) throw generatedColors
@@ -2183,8 +2120,11 @@ io.on('connection', (socket) => {
 				cD[socket.request.session.class].students[key].pollRes.textRes = ''
 			}
 
+			logger.log('verbose', `[startPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+
 			pollUpdate()
 			vbUpdate()
+			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -2193,6 +2133,8 @@ io.on('connection', (socket) => {
 	// End the current poll. Does not take any arguments
 	socket.on('endPoll', () => {
 		try {
+			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
 			let dateConfig = new Date()
@@ -2210,6 +2152,7 @@ io.on('connection', (socket) => {
 				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
 					if (err) logger.log('error', err.stack)
+					else logger.log('verbose', '[endPoll] saved poll to history')
 				}
 			)
 
@@ -2217,49 +2160,64 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].poll.prompt = ''
 			cD[socket.request.session.class].poll.status = false
 
+			logger.log('verbose', `[endPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+
 			pollUpdate()
 			vbUpdate()
+			cpUpdate()
 		} catch (err) {
-			logger.log('error', err.stack);
-		};
-	});
+			logger.log('error', err.stack)
+		}
+	})
 
 	socket.on('pollUpdate', () => {
+		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		pollUpdate()
 	})
 
 	socket.on('modeUpdate', () => {
+		logger.log('info', `[modeUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		modeUpdate()
 	})
 
 	socket.on('quizUpdate', () => {
+		logger.log('info', `[quizUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		quizUpdate()
 	})
 
 	socket.on('lessonUpdate', () => {
+		logger.log('info', `[lessonUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		lessonUpdate()
 	})
 
 	// Sends poll and student response data to client side virtual bar
 	socket.on('vbUpdate', () => {
+		logger.log('info', `[vbUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		vbUpdate()
 	})
 
 	socket.on('customPollUpdate', () => {
+		logger.log('info', `[customPollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		customPollUpdate(socket.request.session.username)
 	})
 
 	socket.on('savePoll', (poll, id) => {
 		try {
+			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
+
 			let userId = socket.request.session.userId
 
 			if (id) {
-				db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (error, poll) => {
+				db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (err, poll) => {
 					try {
-						if (error) {
-							logger.log('error', error)
-							return
-						}
+						if (err) throw err
 
 						if (userId != poll.owner) {
 							socket.emit('message', 'You do not have permission to edit this poll.')
@@ -2277,10 +2235,8 @@ io.on('connection', (socket) => {
 							id
 						], (err) => {
 							try {
-								if (err) {
-									logger.log('error', err.stack)
-									return
-								}
+								if (err) throw err
+
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
@@ -2294,10 +2250,9 @@ io.on('connection', (socket) => {
 			} else {
 				db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
 					try {
-						if (err) {
-							logger.log('error', err.stack)
-							return
-						}
+						if (err) throw err
+						if (!nextPollId) logger.log('critical', '[savePoll] nextPollId not found')
+
 						nextPollId = nextPollId.nextPollId + 1
 
 						db.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
@@ -2311,10 +2266,7 @@ io.on('connection', (socket) => {
 							poll.public
 						], (err) => {
 							try {
-								if (err) {
-									logger.log('error', err.stack);
-									return
-								}
+								if (err) throw err
 
 								cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
 								socket.emit('message', 'Poll saved successfully!')
@@ -2337,6 +2289,9 @@ io.on('connection', (socket) => {
 		try {
 			let userId = socket.request.session.userId
 
+			logger.log('info', `[deletePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) pollId=(${pollId})`)
+			logger.log('info', `[deletePoll] pollId=(${pollId})`)
+
 			if (!pollId) {
 				socket.emit('message', 'No poll is selected.')
 				return
@@ -2344,28 +2299,48 @@ io.on('connection', (socket) => {
 
 			db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, async (err, poll) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						return
-					}
+					if (err) throw err
+
+					logger.log('info', `[deletePoll] poll=(${JSON.stringify(poll)})`)
 
 					if (userId != poll.owner) {
+						logger.log('info', '[deletePoll] not owner')
 						socket.emit('message', 'You do not have permission to delete this poll.')
 						return
 					}
 
-					await db.run('BEGIN TRANSACTION')
+					db.run('BEGIN TRANSACTION')
 
 					await Promise.all([
-						db.run('DELETE FROM custom_polls WHERE id = ?', pollId),
-						db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId),
-						db.run('DELETE FROM class_polls WHERE pollId = ?', pollId)
-					]).catch((err) => {
-						logger.log('error', err.stack)
-						db.run('ROLLBACK')
+						new Promise((resolve, reject) => {
+							db.run('DELETE FROM custom_polls WHERE i = ?', pollId, (err) => {
+								if (err) reject(err)
+								else resolve()
+							})
+						}),
+						new Promise((resolve, reject) => {
+							db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId, (err) => {
+								if (err) reject(err)
+								else resolve()
+							})
+						}),
+						new Promise((resolve, reject) => {
+							db.run('DELETE FROM class_polls WHERE pollId = ?', pollId, (err) => {
+								if (err) reject(err)
+								else resolve()
+							})
+						})
+					]).catch(async (err) => {
+						await new Promise((resolve, reject) => {
+							db.run('ROLLBACK', (err) => {
+								if (err) reject(err)
+								else resolve()
+							})
+						})
+						throw err
 					})
 
-					await db.run('COMMIT')
+					db.run('COMMIT')
 
 					for (let classroom of Object.values(cD)) {
 						let updatePolls = false
@@ -2388,32 +2363,36 @@ io.on('connection', (socket) => {
 								updatePolls = true
 							}
 
+							console.log(user.username, updatePolls);
 							if (updatePolls)
 								customPollUpdate(user.username)
 						}
 					}
 
+					logger.log('info', '[deletePoll] deleted')
 					socket.emit('message', 'Poll deleted successfully!')
 				} catch (err) {
 					logger.log('error', err.stack)
+					socket.emit('message', 'There was a server error try again.')
 				}
 			})
 		} catch (err) {
 			logger.log('error', err.stack)
+			socket.emit('message', 'There was a server error try again.')
 		}
 	})
 
 	socket.on('setPublic', (pollId, value) => {
 		try {
-			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (error) => {
-				try {
-					if (error) {
-						logger.log('error', error)
-						return
-					}
+			logger.log('info', `[setPublic] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[setPublic] pollId=(${pollId}) value=(${value})`)
 
-					for (let socket of Object.values(userSockets)) {
-						customPollUpdate(socket.request.session.username)
+			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (err) => {
+				try {
+					if (err) throw err
+
+					for (let userSocket of Object.values(userSockets)) {
+						customPollUpdate(userSocket.request.session.username)
 					}
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -2426,23 +2405,22 @@ io.on('connection', (socket) => {
 
 	socket.on('sharePollToUser', (pollId, username) => {
 		try {
-			db.get('SELECT * FROM users WHERE username = ?', username, (error, user) => {
+			logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[sharePollToUser] pollId=(${pollId}) username=(${username})`)
+
+			db.get('SELECT * FROM users WHERE username = ?', username, (err, user) => {
 				try {
-					if (error) {
-						logger.log('error', error)
-						return
-					}
+					if (err) throw err
 
 					if (!user) {
+						logger.log('info', 'User does not exist')
 						socket.emit('message', 'User does not exist')
 						return
 					}
 
 					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (err, poll) => {
 						try {
-							if (err) {
-								throw err
-							}
+							if (err) throw err
 
 							if (!poll) {
 								logger.log('critical', 'Poll does not exist')
@@ -2459,9 +2437,7 @@ io.on('connection', (socket) => {
 								[pollId, user.id],
 								(err, sharePoll) => {
 									try {
-										if (err) {
-											throw err
-										}
+										if (err) throw err
 
 										if (sharePoll) {
 											socket.emit('message', `${name} is Already Shared with ${username}`)
@@ -2471,12 +2447,9 @@ io.on('connection', (socket) => {
 										db.run(
 											'INSERT INTO shared_polls (pollId, userId) VALUES (?, ?)',
 											[pollId, user.id],
-											async (error) => {
+											async (err) => {
 												try {
-													if (error) {
-														logger.log('error', error)
-														return
-													}
+													if (err) throw err
 
 													socket.emit('message', `Shared ${name} with ${username}`)
 
@@ -2520,17 +2493,18 @@ io.on('connection', (socket) => {
 
 	socket.on('removeUserPollShare', (pollId, userId) => {
 		try {
+			logger.log('info', `[removeUserPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeUserPollShare] pollId=(${pollId}) userId=(${userId})`)
+
 			db.get(
 				'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
 				[pollId, userId],
-				(error, pollShare) => {
+				(err, pollShare) => {
 					try {
-						if (error) {
-							logger.log('error', error)
-							return
-						}
+						if (err) throw err
 
 						if (!pollShare) {
+							logger.log('critical', '[removeUserPollShare] Poll is not shared to this user')
 							socket.emit('message', 'Poll is not shared to this user')
 							return
 						}
@@ -2538,31 +2512,31 @@ io.on('connection', (socket) => {
 						db.run(
 							'DELETE FROM shared_polls WHERE pollId = ? AND userId = ?',
 							[pollId, userId],
-							(error) => {
+							(err) => {
 								try {
-									if (error) {
-										logger.log('error', error)
-										return
-									}
+									if (err) throw err
 
 									socket.emit('message', 'Successfully unshared user')
 									getPollShareIds(pollId)
 
-									db.get('SELECT * FROM users WHERE id = ?', userId, async (error, user) => {
+									db.get('SELECT * FROM users WHERE id = ?', userId, async (err, user) => {
 										try {
-											if (error) {
-												logger.log('error', error)
+											if (err) throw err
+
+											if (!user) {
+												logger.log('critical', '[removeUserPollShare] User does not exist')
+												socket.emit('message', 'User does not exist')
 												return
-											} else if (user) {
-												let classCode = getUserClass(user.username)
-
-												if (classCode instanceof Error) throw classCode
-												if (!classCode) return
-
-												let sharedPolls = cD[classCode].students[user.username].sharedPolls
-												sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-												customPollUpdate(user.username)
 											}
+
+											let classCode = getUserClass(user.username)
+
+											if (classCode instanceof Error) throw classCode
+											if (!classCode) return
+
+											let sharedPolls = cD[classCode].students[user.username].sharedPolls
+											sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+											customPollUpdate(user.username)
 										} catch (err) {
 											logger.log('error', err.stack)
 										}
@@ -2583,29 +2557,29 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('getPollShareIds', (pollId) => {
+		logger.log('info', `[getPollShareIds] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
+
 		getPollShareIds(pollId)
 	})
 
 	socket.on('sharePollToClass', (pollId, classCode) => {
 		try {
-			db.get('SELECT * FROM classroom WHERE key = ?', classCode, (error, classroom) => {
+			logger.log('info', `[sharePollToClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[sharePollToClass] pollId=(${pollId}) classCode=(${classCode})`)
+
+			db.get('SELECT * FROM classroom WHERE key = ?', classCode, (err, classroom) => {
 				try {
-					if (error) {
-						logger.log('error', error)
-						return
-					}
+					if (err) throw err
 
 					if (!classroom) {
 						socket.emit('message', 'There is no class with that code.')
 						return
 					}
 
-					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (error, poll) => {
+					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (err, poll) => {
 						try {
-							if (error) {
-								logger.log('error', error)
-								return
-							}
+							if (err) throw err
 
 							if (!poll) {
 								logger.log('critical', 'Poll does not exist (please contact the programmer)')
@@ -2620,12 +2594,9 @@ io.on('connection', (socket) => {
 							db.get(
 								'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
 								[pollId, classroom.id],
-								(error, sharePoll) => {
+								(err, sharePoll) => {
 									try {
-										if (error) {
-											logger.log('error', error);
-											return
-										}
+										if (err) throw err
 
 										if (sharePoll) {
 											socket.emit('message', `${name} is Already Shared with that class`)
@@ -2635,12 +2606,9 @@ io.on('connection', (socket) => {
 										db.run(
 											'INSERT INTO class_polls (pollId, classId) VALUES (?, ?)',
 											[pollId, classroom.id],
-											async (error) => {
+											async (err) => {
 												try {
-													if (error) {
-														logger.log('error', error)
-														return
-													}
+													if (err) throw err
 
 													socket.emit('message', `Shared ${name} with that class`)
 
@@ -2675,15 +2643,15 @@ io.on('connection', (socket) => {
 
 	socket.on('removeClassPollShare', (pollId, classId) => {
 		try {
+			logger.log('info', `[removeClassPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeClassPollShare] pollId=(${pollId}) classId=(${classId})`)
+
 			db.get(
 				'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
 				[pollId, classId],
-				(error, pollShare) => {
+				(err, pollShare) => {
 					try {
-						if (error) {
-							logger.log('error', error)
-							return
-						}
+						if (err) throw err
 
 						if (!pollShare) {
 							socket.emit('message', 'Poll is not shared to this class')
@@ -2693,31 +2661,27 @@ io.on('connection', (socket) => {
 						db.run(
 							'DELETE FROM class_polls WHERE pollId = ? AND classId = ?',
 							[pollId, classId],
-							(error) => {
+							(err) => {
 								try {
-									if (error) {
-										logger.log('error', error)
-										return
-									}
+									if (err) throw err
 
 									socket.emit('message', 'Successfully unshared class')
 									getPollShareIds(pollId)
 
-									db.get('SELECT * FROM classroom WHERE id = ?', classId, async (error, classroom) => {
+									db.get('SELECT * FROM classroom WHERE id = ?', classId, async (err, classroom) => {
 										try {
-											if (error) {
-												logger.log('error', error)
+											if (err) throw err
+
+											if (!classroom) {
+												logger.log('critical', 'Classroom does not exist')
 												return
 											}
+											if (!cD[classroom.key]) return
 
-											if (classroom) {
-												if (!cD[classroom.key]) return
-
-												let sharedPolls = cD[classroom.key].sharedPolls
-												sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-												for (let username of Object.keys(cD[classroom.key].students)) {
-													customPollUpdate(username)
-												}
+											let sharedPolls = cD[classroom.key].sharedPolls
+											sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
+											for (let username of Object.keys(cD[classroom.key].students)) {
+												customPollUpdate(username)
 											}
 										} catch (err) {
 											logger.log('error', err.stack)
@@ -2741,18 +2705,30 @@ io.on('connection', (socket) => {
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
 		try {
+			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
+
 			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
-			cpUpdate();
+
+			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+
+			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
-	});
+	})
 
 	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
 		try {
+			logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[requestBreak] reason=(${reason})`)
+
 			let student = cD[socket.request.session.class].students[socket.request.session.username]
 			student.break = reason
+
+			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+
 			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -2762,8 +2738,14 @@ io.on('connection', (socket) => {
 	// Aproves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
 		try {
+			logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) username=(${username})`)
+
 			let student = cD[socket.request.session.class].students[username]
 			student.break = breakApproval
+
+			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[username])})`)
+
 			if (breakApproval) io.to(username).emit('break')
 			cpUpdate()
 			vbUpdate()
@@ -2775,8 +2757,12 @@ io.on('connection', (socket) => {
 	// Ends the break
 	socket.on('endBreak', () => {
 		try {
+			logger.log('info', `[endBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			let student = cD[socket.request.session.class].students[socket.request.session.username]
 			student.break = false
+
+			logger.log('verbose', `[endBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 			vbUpdate()
@@ -2788,6 +2774,9 @@ io.on('connection', (socket) => {
 	// Deletes a user from the class
 	socket.on('deleteStudent', (username) => {
 		try {
+			logger.log('info', `[deleteStudent] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteStudent] username=(${username})`)
+
 			const classCode = socket.request.session.class
 			deleteStudent(username, classCode)
 			cpUpdate(classCode)
@@ -2800,6 +2789,8 @@ io.on('connection', (socket) => {
 	// Deletes all students from the class
 	socket.on('deleteStudents', () => {
 		try {
+			logger.log('info', `[deleteStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			const classCode = socket.request.session.class
 			deleteStudents(classCode)
 			cpUpdate(classCode)
@@ -2811,22 +2802,21 @@ io.on('connection', (socket) => {
 
 	socket.on('leaveClass', () => {
 		try {
+			logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			const userId = socket.request.session.userId
 			const username = socket.request.session.username
 			const classCode = socket.request.session.class
 			deleteStudent(username, classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
+
 			db.get(
 				'SELECT * FROM classroom WHERE owner=? AND key=?',
 				[userId, classCode],
 				(err, classroom) => {
-					if (err) {
-						logger.log('error', err.stack)
-					}
-					else if (classroom) {
-						endClass(classroom.key)
-					}
+					if (err) logger.log('error', err.stack)
+					else if (classroom) endClass(classroom.key)
 				}
 			)
 		} catch (err) {
@@ -2836,31 +2826,29 @@ io.on('connection', (socket) => {
 
 	socket.on('logout', () => {
 		try {
+			logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			const username = socket.request.session.username
 			const userId = socket.request.session.userId
 			const classCode = socket.request.session.class
 			const className = cD[classCode].className
+
 			socket.request.session.destroy((err) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-						return
-					}
+					if (err) throw err
 
 					delete userSockets[username]
 					delete cD[classCode].students[username]
 					socket.leave(className)
 					cpUpdate(classCode)
 					vbUpdate(classCode)
+
 					db.get(
 						'SELECT * FROM classroom WHERE owner=? AND key=?',
 						[userId, classCode],
 						(err, classroom) => {
-							if (err) {
-								logger.log('error', err.stack)
-							} else if (classroom) {
-								endClass(classroom.key)
-							}
+							if (err) logger.log('error', err.stack)
+							if (classroom) endClass(classroom.key)
 						}
 					)
 				} catch (err) {
@@ -2874,21 +2862,17 @@ io.on('connection', (socket) => {
 
 	socket.on('endClass', () => {
 		try {
+			logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 			const userId = socket.request.session.userId
 			const classCode = socket.request.session.class
+
 			db.get(
 				'SELECT * FROM classroom WHERE owner=? AND key=?',
 				[userId, classCode],
 				(err, classroom) => {
-					try {
-						if (err) {
-							logger.log('error', err.stack);
-						} else if (classroom) {
-							endClass(classroom.key)
-						}
-					} catch (err) {
-						logger.log('error', err.stack)
-					}
+					if (err) logger.log('error', err.stack)
+					else if (classroom) endClass(classroom.key)
 				}
 			)
 		} catch (err) {
@@ -2898,18 +2882,21 @@ io.on('connection', (socket) => {
 
 	socket.on('deleteClass', (classId) => {
 		try {
+			logger.log('info', `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteClass] classId=(${classId})`)
+
 			db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-					} else if (classroom) {
-						if (cD[classroom.key]) {
-							endClass(classroom.key)
-						}
+					if (err) throw err
+
+					if (classroom) {
+						if (cD[classroom.key]) endClass(classroom.key)
+
 						db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
 						db.run('DELETE FROM classusers WHERE classId = ?', classroom.id)
 						db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
 					}
+
 					getOwnedClasses(socket.request.session.username)
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -2923,6 +2910,9 @@ io.on('connection', (socket) => {
 	// Joins a classroom for websocket usage
 	socket.on('joinRoom', (className) => {
 		try {
+			logger.log('info', `[joinRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[joinRoom] className=(${className})`)
+
 			socket.join(className)
 			socket.request.session.class = className
 			socket.emit('joinRoom', socket.request.session.class)
@@ -2934,6 +2924,9 @@ io.on('connection', (socket) => {
 
 	socket.on('leaveRoom', (className) => {
 		try {
+			logger.log('info', `[leaveRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[leaveRoom] className=(${className})`)
+
 			socket.leave(className)
 			vbUpdate()
 		} catch (err) {
@@ -2943,6 +2936,8 @@ io.on('connection', (socket) => {
 
 	// Updates and stores poll history
 	socket.on('cpUpdate', () => {
+		logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		cpUpdate();
 	})
 
@@ -2961,13 +2956,14 @@ io.on('connection', (socket) => {
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollindex) => {
 		try {
+			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[previousPollDisplay] pollindex=(${pollindex})`)
+
 			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
 				try {
-					if (err) {
-						logger.log('error', err.stack)
-					} else {
-						io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
-					}
+					if (err) throw err
+
+					io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
 				} catch (err) {
 					logger.log('error', err.stack)
 				}
@@ -2980,13 +2976,16 @@ io.on('connection', (socket) => {
 	// Moves to the next step
 	socket.on('doStep', (index) => {
 		try {
+			logger.log('info', `[doStep] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[doStep] index=(${index})`)
+
 			// send reload to whole class
 			socket.broadcast.to(socket.request.session.class).emit('reload')
 			cD[socket.request.session.class].currentStep++
+
 			if (cD[socket.request.session.class].steps[index] !== undefined) {
 				// Creates a poll based on the step data
 				if (cD[socket.request.session.class].steps[index].type == 'poll') {
-
 					cD[socket.request.session.class].mode = 'poll'
 
 					if (cD[socket.request.session.class].poll.status == true) {
@@ -3021,9 +3020,7 @@ io.on('connection', (socket) => {
 					cD[socket.request.session.class].lesson = lesson
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
-							if (err) {
-								logger.log('error', err.stack)
-							}
+							if (err) logger.log('error', err.stack)
 						}
 					)
 					cD[socket.request.session.class].poll.textRes = false
@@ -3040,9 +3037,7 @@ io.on('connection', (socket) => {
 					cD[socket.request.session.class].lesson = lesson
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
 						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
-							if (err) {
-								logger.log('error', err.stack)
-							}
+							if (err) logger.log('error', err.stack)
 						}
 					)
 				}
@@ -3059,30 +3054,15 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	// Check later, there's already a socket.on for previousPollDisplay
-	socket.on('previousPollDisplay', (pollindex) => {
-		try {
-			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
-				try {
-					if (err) {
-						logger.log('error', err.stack)
-						return
-					}
-
-					io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
-				} catch (err) {
-					logger.log('error', err.stack)
-				}
-			})
-		} catch (err) {
-			logger.log('error', err.stack)
-		}
-	})
-
 	// Deletes help ticket
 	socket.on('deleteTicket', (student) => {
 		try {
+			logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteTicket] student=(${student})`)
+
 			cD[socket.request.session.class].students[student].help = ''
+
+			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3091,7 +3071,13 @@ io.on('connection', (socket) => {
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
 		try {
+			logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[modechange] mode=(${mode})`)
+
 			cD[socket.request.session.class].mode = mode
+
+			logger.log('verbose', `[modechange] classData=(${cD[socket.request.session.class]})`)
+
 			modeUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -3099,32 +3085,31 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('pluginUpdate', () => {
+		logger.log('info', `[pluginUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
 		pluginUpdate()
 	})
 
 	socket.on('changePlugin', (id, name, url) => {
 		try {
+			logger.log('info', `[changePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[changePlugin] id=(${id}) name=(${name}) url=(${url})`)
+
 			if (name) {
 				db.run(
 					'UPDATE plugins set name=? WHERE id=?',
 					[name, id],
-					(error) => {
-						if (error) {
-							logger.log('error', error)
-							return
-						}
-						pluginUpdate()
+					(err) => {
+						if (err) logger.log('error', err)
+						else pluginUpdate()
 					}
 				)
 			} else if (url) {
-				db.run('UPDATE plugins set url=? WHERE id=?', [url, id], (error) => {
-					if (error) {
-						logger.log('error', error)
-						return
-					}
-					pluginUpdate()
+				db.run('UPDATE plugins set url=? WHERE id=?', [url, id], (err) => {
+					if (err) logger.log('error', err)
+					else pluginUpdate()
 				})
-			}
+			} else logger.log('critical', 'changePlugin called without name or url')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3132,15 +3117,15 @@ io.on('connection', (socket) => {
 
 	socket.on('addPlugin', (name, url) => {
 		try {
+			logger.log('info', `[addPlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[addPlugin] name=(${name}) url=(${url})`)
+
 			db.get(
 				'SELECT * FROM classroom WHERE key = ?',
 				[socket.request.session.class],
-				(error, classData) => {
+				(err, classData) => {
 					try {
-						if (error) {
-							logger.log('error', error)
-							return
-						}
+						if (err) throw err
 
 						db.run(
 							'INSERT INTO plugins(name, url, classId) VALUES(?, ?, ?)',
@@ -3159,6 +3144,9 @@ io.on('connection', (socket) => {
 
 	socket.on('removePlugin', (id) => {
 		try {
+			logger.log('info', `[removePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removePlugin] id=(${id})`)
+
 			db.run('DELETE FROM plugins WHERE id=?', [id])
 			pluginUpdate()
 		} catch (err) {
@@ -3167,30 +3155,38 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('getOwnedClasses', (username) => {
+		logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[getOwnedClasses] username=(${username})`)
+
 		getOwnedClasses(username)
 	})
 
 	// sends the class code of the class a user is in
 	socket.on('getUserClass', ({ username, api }) => {
 		try {
+			logger.log('info', `[getUserClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[getUserClass] username=(${username}) api=(${api})`)
+
 			if (api) {
-				db.get('SELECT * FROM users WHERE API = ?', [api], (error, userData) => {
-					if (error) {
-						logger.log('error', error)
-						return
+				db.get('SELECT * FROM users WHERE API = ?', [api], (err, userData) => {
+					try {
+						if (err) throw err
+						if (!userData) {
+							socket.emit('getUserClass', { error: 'not a valid API Key' })
+							return
+						}
+
+						let classCode = getUserClass(userData.username)
+
+						if (classCode instanceof Error) throw classCode
+
+						if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
+						else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
+						else socket.emit('getUserClass', className)
+					} catch (err) {
+						logger.log('error', err.stack)
+						socket.emit('getUserClass', { error: 'There was a server error try again.' })
 					}
-					if (!userData) {
-						socket.emit('getUserClass', { error: 'not a valid API Key' })
-						return
-					}
-
-					let classCode = getUserClass(userData.username)
-
-					if (classCode instanceof Error) throw classCode
-
-					if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
-					else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
-					else socket.emit('getUserClass', className)
 				})
 			} else if (username) {
 				let classCode = getUserClass(username)
@@ -3200,10 +3196,10 @@ io.on('connection', (socket) => {
 				if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
 				else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
 				else socket.emit('getUserClass', className)
-			}
-			else socket.emit('getUserClass', { error: 'missing username or api key' })
+			} else socket.emit('getUserClass', { error: 'missing username or api key' })
 		} catch (err) {
 			logger.log('error', err.stack)
+			socket.emit('getUserClass', { error: 'There was a server error try again.' })
 		}
 	})
 })
