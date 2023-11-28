@@ -10,8 +10,33 @@
                     <!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
                 </form>
                 <button onclick="help()" class="quickButton">Send Ticket</button>
+                <button class="quickButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
+                    Take Break
+                </button>
                 <%- include('../partials/body_content') %>
         </body>
+
+        <dialog id="requestBreakDialog" class="contentBox">
+            <form onsubmit="submitBreak(event)">
+                <h3 style="margin-top: 0;">Take a break</h3>
+                <div id="breakInputs" class="centered">
+                    <label class="form-control" id="pollControl" for="bathroom">
+                        <input type="radio" name="option" id="bathroom" value="Bathroom" required checked>
+                        Bathroom
+                    </label>
+                    <label class="form-control" id="pollControl" for="other">
+                        <input type="radio" name="option" id="other" value="other">
+                        Other
+                    </label>
+                    <textarea class="hidden" id="otherText" cols="25" rows="3" maxlength="150"></textarea>
+                </div>
+                <div id="takeBreak" class="hCentered">
+                    <button class="quickButton" id="cancel" type="button"
+                        onclick="document.getElementById('requestBreakDialog').close();">Cancel</button>
+                    <button class="quickButton" type="submit">Take Break</button>
+                </div>
+            </form>
+        </dialog>
 
         <script>
             var today = new Date()
@@ -23,11 +48,41 @@
                     minutes: today.getMinutes(),
                     seconds: today.getSeconds()
                 }
-                alert('Help ticket sent')
                 socket.emit('help', reason, time)
                 socket.emit('cpUpdate')
                 socket.emit('sfxPlay', "sfx_up04")
+                alert('Help ticket sent')
             }
+
+            let options = document.getElementsByName('option')
+            for (let option of options) {
+                option.onchange = () => {
+                    let otherRadio = document.getElementById('other')
+                    let otherText = document.getElementById('otherText')
+
+                    if (otherRadio.checked) {
+                        otherText.required = true
+                        otherText.classList.remove('hidden')
+                    }
+                    else {
+                        otherText.required = false
+                        otherText.classList.add('hidden')
+                    }
+                }
+            }
+
+            function submitBreak() {
+                event.preventDefault()
+                document.getElementById('requestBreakDialog').close()
+
+                let reason = document.querySelector('input[name=option]:checked').value
+                if (reason == 'other')
+                    reason = document.getElementById('otherText').value
+
+                socket.emit('requestBreak', reason)
+            }
+
+
         </script>
 
         </html>
