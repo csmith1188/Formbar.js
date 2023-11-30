@@ -32,7 +32,13 @@
             socket.emit('pluginUpdate')
             socket.on('pluginUpdate', (plugins) => {
                 let br = document.createElement('br')
-                console.log(plugins)
+                pluginsDiv.innerHTML = ''
+
+                if (plugins.length == 0) {
+                    pluginsDiv.innerHTML = '<p style="font-size: 18px;">No plugins installed</p>'
+                    return
+                }
+
                 for (let plugin of plugins) {
                     let pluginLink = document.createElement('a')
                     pluginLink.className = 'quickButton'
