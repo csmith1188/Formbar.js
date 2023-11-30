@@ -303,6 +303,13 @@ function api(cD) {
 						classUsers[user.username].pogMeter = cdUser.pogMeter
 					}
 
+					if (classPermissions <= MOD_PERMISSIONS) {
+						if (classUsers[user.username].help)
+							classUsers[user.username].help = true
+						if (typeof classUsers[user.username].break == 'string')
+							classUsers[user.username].break = false
+					}
+
 					if (classPermissions <= STUDENT_PERMISSIONS) {
 						delete classUsers[user.username].permissions
 						delete classUsers[user.username].classPermissions
@@ -310,14 +317,6 @@ function api(cD) {
 						delete classUsers[user.username].break
 						delete classUsers[user.username].quizScore
 						delete classUsers[user.username].pogMeter
-					}
-
-					if (classPermissions <= MOD_PERMISSIONS) {
-						delete classUsers[user.username].permissions
-						delete classUsers[user.username].classPermissions
-						classUsers[user.username].help = Boolean(classUsers[user.username].help)
-						classUsers[user.username].break = Boolean(classUsers[user.username].break)
-						delete classUsers[user.username].quizScore
 					}
 				}
 
@@ -458,6 +457,7 @@ function api(cD) {
 				}
 
 				classData.students = classUsers
+				delete classData.sharedPolls
 
 				logger.log('verbose', `[get api/class/${key}] response=(${JSON.stringify(classData)})`)
 				res.json(classData)
@@ -502,13 +502,6 @@ function api(cD) {
 				logger.log('error', err.stack)
 				res.json({ error: 'There was a server error try again.' })
 			}
-		})
-
-		router.get('/test', async (req, res) => {
-			let user = req.session.user
-
-			let a = await test(user, '5hn7')
-			res.json(a)
 		})
 
 		// returns the poll data for a class
