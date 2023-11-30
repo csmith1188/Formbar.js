@@ -151,8 +151,8 @@ class Student {
 			buttonRes: '',
 			textRes: ''
 		}
-		this.help = ''
-		this.break = ''
+		this.help = false
+		this.break = false
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
@@ -532,13 +532,13 @@ app.get('/', isAuthenticated, (req, res) => {
 
 		if (req.session.classPermissions >= TEACHER_PERMISSIONS) res.redirect('/controlPanel')
 		else res.redirect('/student')
-} catch (err) {
-	logger.log('error', err.stack)
-	res.render('pages/message', {
-		message: `Error: There was a server error try again.`,
-		title: 'Error'
-	})
-}
+	} catch (err) {
+		logger.log('error', err.stack)
+		res.render('pages/message', {
+			message: `Error: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
 })
 
 

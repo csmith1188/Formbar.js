@@ -91,7 +91,6 @@ function api(cD) {
 				classCode = urlPath.split('/')[1]
 			}
 
-			console.log(urlPath)
 			if (urlPath == 'me') {
 				next()
 				return
@@ -108,7 +107,6 @@ function api(cD) {
 			}
 
 			if (urlPath.endsWith('/polls')) {
-				console.log('polls')
 				next()
 				return
 			}
