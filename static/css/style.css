@@ -106,6 +106,21 @@ button,
 	transition-property: transform, box-shadow;
 }
 
+.breakButton {	padding: 3px 6px;
+	border-radius: 8px;
+	font-size: 150%;
+	font-family: inherit;
+	background-color: var(--bg-light-blue);
+	color: var(--theme-color);
+	border: 2px solid var(--theme-color);
+	margin: 2px 1px;
+	cursor: pointer;
+	transition-duration: 0.2s;
+	transition-property: transform, box-shadow;
+	width: 200px;
+	height: 100px;
+}
+
 .quickButton {
 	display: inline-block;
 }
@@ -343,6 +358,14 @@ input[type="radio"]:focus {
 	width: 100%;
 	padding: 20px;
 	font-size: 24px;
+	margin: 0;
+	transition-duration: 0ms;
+}
+
+#indexGrid .breakButton {
+	width: 150%;
+	padding: 20px;
+	font-size: 30px;
 	margin: 0;
 	transition-duration: 0ms;
 }
