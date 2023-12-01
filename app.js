@@ -9,6 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
+const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -530,8 +531,11 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (req.session.classPermissions >= TEACHER_PERMISSIONS) res.redirect('/controlPanel')
-		else res.redirect('/student')
+		if (cD[req.session.class].students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+			res.redirect('/controlPanel')
+		} else {
+			res.redirect('/student')
+		}
 	} catch (err) {
 		logger.log('error', err.stack)
 		res.render('pages/message', {
