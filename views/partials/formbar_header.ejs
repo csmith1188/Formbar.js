@@ -13,6 +13,8 @@
 </header>
 <script>
     document.body.style.backgroundColor = getCookie("theme")
+    if (getCookie("theme") == "white") document.body.style.color = "black";
+    else if (getCookie("theme") == "rgb(50, 50, 50)") document.body.style.color = "white";
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -22,10 +24,12 @@
         if (getCookie("theme") == "white") {
             document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC"
             document.body.style.backgroundColor = getCookie("theme")
+            document.body.style.color = "white"
         }
         else if (getCookie("theme") == "rgb(50, 50, 50)") {
             document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"
             document.body.style.backgroundColor = getCookie("theme")
+            document.body.style.color = "black"
         }
         else {document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"}
     }
