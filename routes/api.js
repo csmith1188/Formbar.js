@@ -28,6 +28,15 @@ const logger = winston.createLogger({
 	],
 })
 
+// Constants
+// permissions levels
+const MANAGER_PERMISSIONS = 5
+const TEACHER_PERMISSIONS = 4
+const MOD_PERMISSIONS = 3
+const STUDENT_PERMISSIONS = 2
+const GUEST_PERMISSIONS = 1
+const BANNED_PERMISSIONS = 0
+
 function api(cD) {
 	try {
 		// checks to see if the user is authenticated
@@ -35,7 +44,7 @@ function api(cD) {
 			try {
 				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
-				let user = await getUser(req)
+				let user = await getCurrentUser(req)
 
 				if (user instanceof Error) {
 					res.json({ error: 'There was a server error try again.' })
@@ -50,10 +59,67 @@ function api(cD) {
 				if (user)
 					req.session.user = user
 
+				logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
+
 				next()
 			} catch (err) {
-				logger.log('error', err)
+				logger.log('error', err.stack)
 			}
+		}
+
+		function apiPermCheck(req, res, next) {
+			let username = req.session.user.username
+			let permissions = req.session.user.permissions
+			let classPermissions = req.session.user.classPermissions
+			let classCode = req.session.user.class
+
+			logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
+
+			if (!req.url) return
+
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+
+			if (urlPath.startsWith('class/')) {
+				classCode = urlPath.split('/')[1]
+			}
+
+			if (urlPath == 'me') {
+				next()
+				return
+			}
+
+			if (!cD[classCode]) {
+				res.json({ error: 'Class not started' })
+				return
+			}
+
+			if (!cD[classCode].students[username]) {
+				res.json({ error: 'You are not in this class.' })
+				return
+			}
+
+			if (urlPath.endsWith('/polls')) {
+				next()
+				return
+			}
+
+			if (
+				permissions <= GUEST_PERMISSIONS ||
+				classPermissions <= GUEST_PERMISSIONS
+			) {
+				res.json({ error: 'You do not have permission to access this page.' })
+				return
+			}
+
+			next()
 		}
 
 		// gets a user's current class
@@ -64,44 +130,33 @@ function api(cD) {
 				for (let classCode of Object.keys(cD)) {
 					if (cD[classCode].students[username]) {
 						logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
-						return classCode
+						return {
+							classCode: classCode,
+							classPermissions: cD[classCode].students[username].classPermissions
+						}
 					}
 				}
 
 				logger.log('verbose', `[getUserClass] classCode=(${null})`)
-				return null
+				return { classCode: null, classPermissions: null }
 			} catch (err) {
-				return err
+				return { error: err }
 			}
 		}
 
-		// gets user data from the database based on the api key
-		async function getUser(req) {
+		// gets a user's name from api
+		async function getUsername(api) {
 			try {
-				logger.log('info', `[getUser]`)
-
-				if (!req.headers.api) return { error: 'No API key' }
+				if (!api) return 'missing api'
 
 				let user = await new Promise((resolve, reject) => {
 					db.get(
-						'SELECT id, username, permissions FROM users WHERE API = ?',
-						[req.headers.api],
-						(err, userData) => {
+						'SELECT username FROM users WHERE api = ?',
+						[api],
+						(err, user) => {
 							try {
 								if (err) throw err
-
-								if (!userData) {
-									resolve({ error: 'Not a valid API key' })
-									return
-								}
-
-								let classCode = getUserClass(userData.username)
-
-								if (classCode instanceof Error) throw classCode
-								if (classCode) userData.class = classCode
-								else userData.class = null
-
-								return resolve(userData)
+								resolve(user)
 							} catch (err) {
 								reject(err)
 							}
@@ -109,20 +164,103 @@ function api(cD) {
 					)
 				})
 
-				return user
+				return user.username
+			} catch (err) {
+				return err
+			}
+		}
+
+		// gets user data from the database based on the api key
+		async function getCurrentUser(req) {
+			try {
+				logger.log('info', `[getCurrentUser] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+				let username = await getUsername(req.headers.api)
+				if (username instanceof Error) throw username
+
+				let { classCode, error } = getUserClass(username)
+				if (error) throw error
+
+				let dbUser = await new Promise((resolve, reject) => {
+					if (!classCode) {
+						db.get(
+							'SELECT id, username, permissions, NULL AS classPermissions FROM users WHERE username = ?',
+							[username],
+							(err, dbUser) => {
+								try {
+									if (err) throw err
+
+									if (!dbUser) {
+										resolve({ error: 'user does not exist in this class' })
+									}
+
+									resolve(dbUser)
+								} catch (err) {
+									reject(err)
+								}
+							}
+						)
+						return
+					}
+
+					db.get(
+						'SELECT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ? AND users.username = ?',
+						[classCode, username],
+						(err, dbUser) => {
+							try {
+								if (err) throw err
+
+								if (!dbUser) {
+									resolve({ error: 'user does not exist in this class' })
+								}
+
+								resolve(dbUser)
+							} catch (err) {
+								reject(err)
+							}
+						}
+					)
+				})
+				if (dbUser.error) return dbUser
+
+				let userData = {
+					loggedIn: false,
+					...dbUser,
+					help: null,
+					break: null,
+					quizScore: null,
+					pogMeter: null
+				}
+
+				if (cD[classCode] && cD[classCode].students && cD[classCode].students[dbUser.username]) {
+					let cdUser = cD[classCode].students[dbUser.username]
+					if (cdUser) {
+						userData.loggedIn = true
+						userData.help = cdUser.help
+						userData.break = cdUser.break
+						userData.quizScore = cdUser.quizScore
+						userData.pogMeter = cdUser.pogMeter
+					}
+				}
+
+				logger.log('verbose', `[getCurrentUser] userData=(${JSON.stringify(userData)})`)
+
+				return userData
 			} catch (err) {
 				return err
 			}
 		}
 
 		// gets all users from a class
-		async function getClassUsers(key) {
+		async function getClassUsers(user, key) {
 			try {
+				let classPermissions = user.classPermissions
+
 				logger.log('info', `[getClassUsers] classCode=(${key})`)
 
 				let dbClassUsers = await new Promise((resolve, reject) => {
 					db.all(
-						'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentuid OR users.id = classroom.owner INNER JOIN classroom ON classusers.classuid = classroom.id WHERE classroom.key = ?',
+						'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?',
 						[key],
 						(err, dbClassUsers) => {
 							try {
@@ -164,11 +302,101 @@ function api(cD) {
 						classUsers[user.username].quizScore = cdUser.quizScore
 						classUsers[user.username].pogMeter = cdUser.pogMeter
 					}
+
+					if (classPermissions <= MOD_PERMISSIONS) {
+						if (classUsers[user.username].help)
+							classUsers[user.username].help = true
+						if (typeof classUsers[user.username].break == 'string')
+							classUsers[user.username].break = false
+					}
+
+					if (classPermissions <= STUDENT_PERMISSIONS) {
+						delete classUsers[user.username].permissions
+						delete classUsers[user.username].classPermissions
+						delete classUsers[user.username].help
+						delete classUsers[user.username].break
+						delete classUsers[user.username].quizScore
+						delete classUsers[user.username].pogMeter
+					}
 				}
 
 				logger.log('verbose', `[getClassUsers] classUsers=(${JSON.stringify(classUsers)})`)
 
 				return classUsers
+			} catch (err) {
+				return err
+			}
+		}
+
+
+		// gets user data from the database based on the api key
+		async function getUser(user, key) {
+			try {
+				let classPermissions = user.classPermissions
+
+				logger.log('info', `[getUser] classCode=(${key})`)
+
+				let dbUser = await new Promise((resolve, reject) => {
+					db.get(
+						'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ? AND users.id = ?',
+						[key, user.id],
+						(err, dbUser) => {
+							try {
+								if (err) throw err
+
+								if (!dbUser) {
+									resolve({ error: 'user does not exist in this class' })
+								}
+
+								resolve(dbUser)
+							} catch (err) {
+								reject(err)
+							}
+						}
+					)
+				})
+				if (dbUser.error) return dbUser
+
+				let userData = {
+					loggedIn: false,
+					...dbUser,
+					help: null,
+					break: null,
+					quizScore: null,
+					pogMeter: null
+				}
+
+				if (cD[key] && cD[key].students && cD[key].students[dbUser.username]) {
+					let cdUser = cD[key].students[dbUser.username]
+					if (cdUser) {
+						userData.loggedIn = true
+						userData.help = cdUser.help
+						userData.break = cdUser.break
+						userData.quizScore = cdUser.quizScore
+						userData.pogMeter = cdUser.pogMeter
+					}
+				}
+
+				if (classPermissions <= STUDENT_PERMISSIONS) {
+					delete userData.permissions
+					delete userData.classPermissions
+					delete userData.help
+					delete userData.break
+					delete userData.quizScore
+					delete userData.pogMeter
+				}
+
+				if (classPermissions <= MOD_PERMISSIONS) {
+					delete userData.permissions
+					delete userData.classPermissions
+					userData.help = Boolean(userData.help)
+					userData.break = Boolean(userData.break)
+					delete userData.quizScore
+				}
+
+				logger.log('verbose', `[getUser] userData=(${JSON.stringify(userData)})`)
+
+				return userData
 			} catch (err) {
 				return err
 			}
@@ -183,6 +411,7 @@ function api(cD) {
 		}
 
 		router.use(isAuthenticated)
+		router.use(apiPermCheck)
 
 		// returns the user
 		router.get('/me', async (req, res) => {
@@ -191,43 +420,10 @@ function api(cD) {
 
 				let user = req.session.user
 
-				if (
-					!user.class ||
-					!cD[user.class] ||
-					!cD[user.class].students[user.username]
-				) {
-					db.get('SELECT id, username, permissions FROM users where username=?',
-						[user.username],
-						(err, userData) => {
-							try {
-								if (err) throw err
-
-								logger.log('verbose', `[get api/me] response=(${JSON.stringify({ loggedIn: false, username: userData.username, id: userData.id, permissions: userData.permissions, help: null, break: null, quizScore: null })}`)
-								res.json({
-									loggedIn: false,
-									username: userData.username,
-									id: userData.id,
-									permissions: userData.permissions,
-									help: null,
-									break: null,
-									quizScore: null
-								})
-							} catch (err) {
-								logger.log('error', err)
-							}
-						}
-					)
-					return
-				}
-
-				logger.log('verbose', `[get api/me] response=(${JSON.stringify({ loggedIn: true, ...cD[user.class].students[user.username], pollRes: undefined })})`)
-				res.json({
-					loggedIn: true,
-					...cD[user.class].students[user.username],
-					pollRes: undefined
-				})
+				logger.log('verbose', `[get api/me] response=(${JSON.stringify(user)}`)
+				res.json(user)
 			} catch (err) {
-				logger.log('error', err)
+				logger.log('error', err.stack)
 				res.json({ error: 'There was a server error try again.' })
 			}
 		})
@@ -253,7 +449,7 @@ function api(cD) {
 					return
 				}
 
-				let classUsers = await getClassUsers(key)
+				let classUsers = await getClassUsers(user, key)
 
 				if (classUsers.error) {
 					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
@@ -261,11 +457,12 @@ function api(cD) {
 				}
 
 				classData.students = classUsers
+				delete classData.sharedPolls
 
 				logger.log('verbose', `[get api/class/${key}] response=(${JSON.stringify(classData)})`)
 				res.json(classData)
 			} catch (err) {
-				logger.log('error', err)
+				logger.log('error', err.stack)
 				res.json({ error: 'There was a server error try again.' })
 			}
 		})
@@ -292,7 +489,7 @@ function api(cD) {
 					return
 				}
 
-				let classUsers = await getClassUsers(key)
+				let classUsers = await getClassUsers(user, key)
 
 				if (classUsers.error) {
 					logger.log('info', `[get api/class/${key}] ${classUsers.error}`)
@@ -302,7 +499,7 @@ function api(cD) {
 				logger.log('verbose', `[get api/class/${key}/students] response=(${JSON.stringify(classUsers)})`)
 				res.json(classUsers)
 			} catch (err) {
-				logger.log('error', err)
+				logger.log('error', err.stack)
 				res.json({ error: 'There was a server error try again.' })
 			}
 		})
@@ -380,13 +577,13 @@ function api(cD) {
 					polls: polls
 				})
 			} catch (err) {
-				logger.log('error', err)
+				logger.log('error', err.stack)
 			}
 		})
 
 		return router
 	} catch (err) {
-		logger.log('error', err)
+		logger.log('error', err.stack)
 	}
 }
 

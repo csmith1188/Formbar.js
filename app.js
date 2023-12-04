@@ -9,6 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
+const fs = require("fs");
 
 var app = express()
 const http = require('http').createServer(app)
@@ -49,6 +50,10 @@ app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 
+const jsonLogData = fs.readFileSync("logNumbers.json");
+var logNumbers = JSON.parse(jsonLogData);
+console.log(logNumbers);
+
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
 const logger = winston.createLogger({
@@ -62,7 +67,14 @@ const logger = winston.createLogger({
 	format: winston.format.combine(
 		winston.format.timestamp(),
 		winston.format.printf(({ timestamp, level, message }) => {
-			return `[${timestamp}] ${level}: ${message}`
+			if (level == "error") {
+				logNumbers.error++;
+				var logNumbersString = JSON.stringify(logNumbers);
+				fs.writeFile("logNumbers.json", logNumbersString);
+				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
+			} else {
+				return `[${timestamp}] ${level}: ${message}`
+			}
 		})
 	),
 	transports: [
@@ -89,8 +101,6 @@ const STUDENT_PERMISSIONS = 2
 const GUEST_PERMISSIONS = 1
 const BANNED_PERMISSIONS = 0
 
-const MAX_CLASS_PERMISSIONS = TEACHER_PERMISSIONS
-
 // Permission level needed to access each page
 const PAGE_PERMISSIONS = {
 	controlPanel: { permissions: TEACHER_PERMISSIONS, classPage: true },
@@ -107,6 +117,27 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
+}
+
+const SOCKET_PERMISSIONS = {
+	pollResp: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	classPermChange: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	permChange: { permissions: TEACHER_PERMISSIONS, classSocket: false },
+	startPoll: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	endPoll: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	help: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	requestBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	approveBreak: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	endBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	deleteStudent: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	deleteStudents: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	endClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	deleteClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	doStep: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	modechange: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	changePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	addPlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	removePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true }
 }
 
 
@@ -132,8 +163,8 @@ class Student {
 			buttonRes: '',
 			textRes: ''
 		}
-		this.help = ''
-		this.break = ''
+		this.help = false
+		this.break = false
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
@@ -405,9 +436,9 @@ function isAuthenticated(req, res, next) {
 			res.redirect('/login')
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -426,9 +457,9 @@ function isLoggedIn(req, res, next) {
 			res.redirect('/login')
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -487,9 +518,9 @@ function permCheck(req, res, next) {
 			}
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -511,11 +542,15 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		res.redirect('/student')
+		if (cD[req.session.class].students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+			res.redirect('/controlPanel')
+		} else {
+			res.redirect('/student')
+		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -533,9 +568,9 @@ app.get('/apikey', isAuthenticated, (req, res) => {
 			API: cD[req.session.class].students[req.session.username].API
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -571,9 +606,9 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -712,9 +747,9 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			res.redirect('/controlPanel')
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -797,17 +832,17 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 							res.redirect('/')
 						} catch (err) {
-							logger.log('error', err.stack)
+							logger.log('error', err.stack);
 							res.render('pages/message', {
-								message: `Error: There was a server error try again.`,
+								message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 								title: 'Error'
 							})
 						}
 					})
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
@@ -836,18 +871,18 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 					res.redirect('/')
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
 			})
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -870,9 +905,9 @@ app.get('/help', isAuthenticated, permCheck, (req, res) => {
 			title: 'Help'
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -897,9 +932,9 @@ app.get('/login', (req, res) => {
 			title: 'Login'
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -990,9 +1025,9 @@ app.post('/login', async (req, res) => {
 
 					res.redirect('/')
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
@@ -1071,26 +1106,26 @@ app.post('/login', async (req, res) => {
 
 										res.redirect('/')
 									} catch (err) {
-										logger.log('error', err.stack)
+										logger.log('error', err.stack);
 										res.render('pages/message', {
-											message: `Error: There was a server error try again.`,
+											message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 											title: 'Error'
 										})
 									}
 								})
 							} catch (err) {
-								logger.log('error', err.stack)
+								logger.log('error', err.stack);
 								res.render('pages/message', {
-									message: `Error: There was a server error try again.`,
+									message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 									title: 'Error'
 								})
 							}
 						}
 					)
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
@@ -1099,9 +1134,9 @@ app.post('/login', async (req, res) => {
 			logger.log('verbose', `[post /login] Logging in as guest`)
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1123,9 +1158,9 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1148,9 +1183,9 @@ app.get('/oauth', (req, res) => {
 			redirectURL: redirectURL
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1203,9 +1238,9 @@ app.post('/oauth', (req, res) => {
 
 					res.redirect(`${redirectURL}?token=${token}`)
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
@@ -1213,9 +1248,9 @@ app.post('/oauth', (req, res) => {
 			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
 		} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1238,17 +1273,17 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 					title: 'Previous Lesson'
 				})
 			} catch (err) {
-				logger.log('error', err.stack)
+				logger.log('error', err.stack);
 				res.render('pages/message', {
-					message: `Error: There was a server error try again.`,
+					message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 					title: 'Error'
 				})
 			}
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1265,9 +1300,9 @@ app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 			title: "Today's Lesson"
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1281,9 +1316,9 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 			title: 'Plugins'
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1314,18 +1349,18 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 						joinedClasses: joinedClasses
 					})
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 					res.render('pages/message', {
-						message: `Error: There was a server error try again.`,
+						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 						title: 'Error'
 					})
 				}
 			}
 		)
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1352,9 +1387,9 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 		req.session.class = code
 		res.redirect('/')
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1433,9 +1468,9 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			})
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1481,9 +1516,9 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 			})
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1505,9 +1540,9 @@ app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 			className: cD[req.session.class].className
 		})
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1545,9 +1580,9 @@ app.use((req, res, next) => {
 			})
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 		res.render('pages/message', {
-			message: `Error: There was a server error try again.`,
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
 		})
 	}
@@ -1583,7 +1618,7 @@ io.use((socket, next) => {
 
 						next()
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}
 			)
@@ -1592,7 +1627,7 @@ io.use((socket, next) => {
 			next(new Error('Missing API key'))
 		}
 	} catch (err) {
-		logger.log('error', err.stack)
+		logger.log('error', err.stack);
 	}
 })
 
@@ -1636,11 +1671,11 @@ io.on('connection', (socket) => {
 
 					io.to(classCode).emit('cpUpdate', cD[classCode], pollHistory)
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 				}
 			})
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1689,7 +1724,7 @@ io.on('connection', (socket) => {
 				blind: classData.poll.blind
 			})
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1702,7 +1737,7 @@ io.on('connection', (socket) => {
 
 			io.to(classCode).emit('pollUpdate', cD[socket.request.session.class].poll)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1715,7 +1750,7 @@ io.on('connection', (socket) => {
 
 			io.to(classCode).emit('modeUpdate', cD[socket.request.session.class].mode)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1728,7 +1763,7 @@ io.on('connection', (socket) => {
 
 			io.to(classCode).emit('quizUpdate', cD[socket.request.session.class].quiz)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1741,7 +1776,7 @@ io.on('connection', (socket) => {
 
 			io.to(classCode).emit('lessonUpdate', cD[socket.request.session.class].lesson)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1762,12 +1797,12 @@ io.on('connection', (socket) => {
 
 						io.to(classCode).emit('pluginUpdate', plugins)
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}
 			)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1805,7 +1840,7 @@ io.on('connection', (socket) => {
 								newObject[customPoll.id] = customPoll
 								return newObject
 							} catch (err) {
-								logger.log('error', err.stack)
+								logger.log('error', err.stack);
 							}
 						}, {})
 
@@ -1825,12 +1860,12 @@ io.on('connection', (socket) => {
 							customPollsData
 						)
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}
 			)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1849,7 +1884,7 @@ io.on('connection', (socket) => {
 
 			io.to(username).emit('reload')
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1863,7 +1898,7 @@ io.on('connection', (socket) => {
 				}
 			}
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1880,7 +1915,7 @@ io.on('connection', (socket) => {
 
 			socket.broadcast.to(socket.request.session.class).emit('classEnded')
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1897,12 +1932,12 @@ io.on('connection', (socket) => {
 
 						io.to(username).emit('getOwnedClasses', ownedClasses)
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}
 			)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1928,7 +1963,7 @@ io.on('connection', (socket) => {
 
 									socket.emit('getPollShareIds', userPollShares, classPollShares)
 								} catch (err) {
-									logger.log('error', err.stack)
+									logger.log('error', err.stack);
 								}
 							}
 						)
@@ -1938,7 +1973,7 @@ io.on('connection', (socket) => {
 				}
 			)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -1978,13 +2013,40 @@ io.on('connection', (socket) => {
 					try {
 						userRequests[requestType].shift()
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}, blockTime)
 			} else {
 				userRequests[requestType].push(currentTime)
 				next()
 			}
+		} catch (err) {
+			logger.log('error', err.stack);
+		}
+	})
+
+	//permission check
+	socket.use((packet, next) => {
+		try {
+			const username = socket.request.session.username
+			const classCode = socket.request.session.class
+			const socketType = packet[0]
+
+			if (!SOCKET_PERMISSIONS[socketType]) {
+				next()
+				return
+			}
+
+			if (
+				SOCKET_PERMISSIONS[socketType].classSocket &&
+				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+			) next()
+			else if (
+				!SOCKET_PERMISSIONS[socketType].classSocket &&
+				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+			) next()
+			else socket.emit('message', `You do not have permission to do that.`)
+
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -2014,11 +2076,11 @@ io.on('connection', (socket) => {
 
 										logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username}`)
 									} catch (err) {
-										logger.log('error', err.stack)
+										logger.log('error', err.stack);
 									}
 								})
 							} catch (err) {
-								logger.log('error', err.stack)
+								logger.log('error', err.stack);
 							}
 						})
 						cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
@@ -2030,7 +2092,7 @@ io.on('connection', (socket) => {
 			cpUpdate()
 			vbUpdate()
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2044,9 +2106,6 @@ io.on('connection', (socket) => {
 
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
-			if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
-				cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
-
 			db.run('UPDATE classusers SET permissions = ? WHERE classId = ? AND studentId = ?', [
 				newPerm,
 				cD[socket.request.session.class].id,
@@ -2058,7 +2117,7 @@ io.on('connection', (socket) => {
 
 			cpUpdate()
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2072,7 +2131,7 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].students[user].permissions = newPerm
 			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2126,7 +2185,7 @@ io.on('connection', (socket) => {
 			vbUpdate()
 			cpUpdate()
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2151,8 +2210,9 @@ io.on('connection', (socket) => {
 			db.run(
 				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-					if (err) logger.log('error', err.stack)
-					else logger.log('verbose', '[endPoll] saved poll to history')
+					if (err) {
+						logger.log('error', err.stack);
+					} else logger.log('verbose', '[endPoll] saved poll to history')
 				}
 			)
 
@@ -2166,7 +2226,7 @@ io.on('connection', (socket) => {
 			vbUpdate()
 			cpUpdate()
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2240,11 +2300,11 @@ io.on('connection', (socket) => {
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
-								logger.log('error', err.stack)
+								logger.log('error', err.stack);
 							}
 						})
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				})
 			} else {
@@ -2272,11 +2332,11 @@ io.on('connection', (socket) => {
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
-								logger.log('error', err.stack)
+								logger.log('error', err.stack);
 							}
 						})
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				})
 			}
@@ -2372,13 +2432,11 @@ io.on('connection', (socket) => {
 					logger.log('info', '[deletePoll] deleted')
 					socket.emit('message', 'Poll deleted successfully!')
 				} catch (err) {
-					logger.log('error', err.stack)
-					socket.emit('message', 'There was a server error try again.')
+					logger.log('error', err.stack);
 				}
 			})
 		} catch (err) {
-			logger.log('error', err.stack)
-			socket.emit('message', 'There was a server error try again.')
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2395,11 +2453,11 @@ io.on('connection', (socket) => {
 						customPollUpdate(userSocket.request.session.username)
 					}
 				} catch (err) {
-					logger.log('error', err.stack)
+					logger.log('error', err.stack);
 				}
 			})
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2464,30 +2522,25 @@ io.on('connection', (socket) => {
 
 													customPollUpdate(username)
 												} catch (err) {
-													logger.log('error', err.stack)
-													socket.emit('message', 'There was a server error try again.')
+													logger.log('error', err.stack);
 												}
 											}
 										)
 									} catch (err) {
-										logger.log('error', err.stack)
-										socket.emit('message', 'There was a server error try again.')
+										logger.log('error', err.stack);
 									}
 								}
 							)
 						} catch (err) {
-							logger.log('error', err.stack)
-							socket.emit('message', 'There was a server error try again.')
+							logger.log('error', err.stack);
 						}
 					})
 				} catch (err) {
-					logger.log('error', err.stack)
-					socket.emit('message', 'There was a server error try again.')
+					logger.log('error', err.stack);
 				}
 			})
 		} catch (err) {
-			logger.log('error', err.stack)
-			socket.emit('message', 'There was a server error try again.')
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2538,21 +2591,21 @@ io.on('connection', (socket) => {
 											sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
 											customPollUpdate(user.username)
 										} catch (err) {
-											logger.log('error', err.stack)
+											logger.log('error', err.stack);
 										}
 									})
 								} catch (err) {
-									logger.log('error', err.stack)
+									logger.log('error', err.stack);
 								}
 							}
 						)
 					} catch (err) {
-						logger.log('error', err.stack)
+						logger.log('error', err.stack);
 					}
 				}
 			)
 		} catch (err) {
-			logger.log('error', err.stack)
+			logger.log('error', err.stack);
 		}
 	})
 
@@ -2684,7 +2737,7 @@ io.on('connection', (socket) => {
 												customPollUpdate(username)
 											}
 										} catch (err) {
-											logger.log('error', err.stack)
+											logger.log('error', err.stack);
 										}
 									})
 								} catch (err) {
