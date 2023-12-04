@@ -9,6 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
+const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -89,8 +90,6 @@ const STUDENT_PERMISSIONS = 2
 const GUEST_PERMISSIONS = 1
 const BANNED_PERMISSIONS = 0
 
-const MAX_CLASS_PERMISSIONS = TEACHER_PERMISSIONS
-
 // Permission level needed to access each page
 const PAGE_PERMISSIONS = {
 	controlPanel: { permissions: TEACHER_PERMISSIONS, classPage: true },
@@ -107,6 +106,27 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
+}
+
+const SOCKET_PERMISSIONS = {
+	pollResp: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	classPermChange: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	permChange: { permissions: TEACHER_PERMISSIONS, classSocket: false },
+	startPoll: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	endPoll: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	help: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	requestBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	approveBreak: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	endBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
+	deleteStudent: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	deleteStudents: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	endClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	deleteClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	doStep: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	modechange: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	changePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	addPlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	removePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true }
 }
 
 
@@ -132,8 +152,8 @@ class Student {
 			buttonRes: '',
 			textRes: ''
 		}
-		this.help = ''
-		this.break = ''
+		this.help = false
+		this.break = false
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
@@ -511,7 +531,11 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		res.redirect('/student')
+		if (cD[req.session.class].students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+			res.redirect('/controlPanel')
+		} else {
+			res.redirect('/student')
+		}
 	} catch (err) {
 		logger.log('error', err.stack)
 		res.render('pages/message', {
@@ -1990,6 +2014,33 @@ io.on('connection', (socket) => {
 		}
 	})
 
+	//permission check
+	socket.use((packet, next) => {
+		try {
+			const username = socket.request.session.username
+			const classCode = socket.request.session.class
+			const socketType = packet[0]
+
+			if (!SOCKET_PERMISSIONS[socketType]) {
+				next()
+				return
+			}
+
+			if (
+				SOCKET_PERMISSIONS[socketType].classSocket &&
+				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+			) next()
+			else if (
+				!SOCKET_PERMISSIONS[socketType].classSocket &&
+				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+			) next()
+			else socket.emit('message', `You do not have permission to do that.`)
+
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
@@ -2043,9 +2094,6 @@ io.on('connection', (socket) => {
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
 
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
-
-			if (cD[socket.request.session.class].students[user].classPermissions > MAX_CLASS_PERMISSIONS)
-				cD[socket.request.session.class].students[user].classPermissions = MAX_CLASS_PERMISSIONS
 
 			db.run('UPDATE classusers SET permissions = ? WHERE classId = ? AND studentId = ?', [
 				newPerm,
