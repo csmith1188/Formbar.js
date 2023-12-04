@@ -4,12 +4,33 @@
     }
 </style>
 <header id="formbarHeader">
-    <a href="/student" id="headerLogo">Formbar</a>
-    <a href="/student" class="headerTab">Student Panel</a>
-    <a href="/controlPanel" class="headerTab">Teacher Controls</a>
-    <a href="/virtualbar" class="headerTab">Virtual Bar</a>
-    <a href="/help" class="headerTab">Help Ticket Creation</a>
+    <a href="/" id="headerLogo">Formbar</a>
+    <a href="/" class="headerTab">Panel</a>
     <a href="/plugins" class="headerTab">Plugins</a>
     <a href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave Class</a>
     <a href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</a>
+    <button onclick="changeTheme()">LM/DM</button>
 </header>
+<script>
+    document.body.style.backgroundColor = getCookie("theme")
+    if (getCookie("theme") == "white") document.body.style.color = "black";
+    else if (getCookie("theme") == "rgb(50, 50, 50)") document.body.style.color = "white";
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+    function changeTheme() {
+        if (getCookie("theme") == "white") {
+            document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC"
+            document.body.style.backgroundColor = getCookie("theme")
+            document.body.style.color = "white"
+        }
+        else if (getCookie("theme") == "rgb(50, 50, 50)") {
+            document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"
+            document.body.style.backgroundColor = getCookie("theme")
+            document.body.style.color = "black"
+        }
+        else {document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"}
+    }
+</script>
