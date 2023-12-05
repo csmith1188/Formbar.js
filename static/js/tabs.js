@@ -3,6 +3,8 @@ to use tabs
 for each tab button add the class tab
 for each tab content add the class tabContent
 to connect the tab button to the tab content add the data-tab-group attribute
+add default to the tab content that should be shown by default
+and add pressed to the starting tab button
 
 the tab button and content can be any type of element
 the tab button and content can be anywhere in the html

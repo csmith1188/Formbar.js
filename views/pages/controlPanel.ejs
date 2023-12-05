@@ -17,6 +17,7 @@
 			<%- include('../partials/formbar_header') %>
 				<header id="quickMenu">
 					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
 					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
 					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
 					<button id="pluginsMenu" class="quickButton tab" data-tab-group="mainTabs">Plugins</button>
@@ -46,6 +47,7 @@
 					<div id="users">
 					</div>
 				</div>
+				<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
 				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div id="pollOptions" class="options">
 						<h2 class="headerText">Custom Polls</h2>
@@ -857,14 +859,24 @@
 					newStudent.appendChild(permissionSwitch);
 				}
 				newStudent.append(" ");
-				let deleteStudentButton = document.createElement("button");
+				if (studentData.classPermissions < currentUser.classPermissions) {
+					let banStudentButton = document.createElement("button")
+					banStudentButton.className = 'banStudent quickButton'
+					banStudentButton.setAttribute("data-user", student)
+					banStudentButton.innerText = "Ban User"
+					banStudentButton.onclick = (event) => {
+						socket.emit('banStudent', student)
+					}
+					newStudent.appendChild(banStudentButton)
+				}
+				let deleteStudentButton = document.createElement("button")
 				deleteStudentButton.className = 'deleteStudent quickButton'
-				deleteStudentButton.setAttribute("data-userid", student);
+				deleteStudentButton.setAttribute("data-userid", student)
 				deleteStudentButton.onclick = (event) => {
-					socket.emit('deleteStudent', event.target.dataset.userid)
+					socket.emit('deleteStudent', student)
 				};
-				deleteStudentButton.innerText = "Delete User";
-				newStudent.appendChild(deleteStudentButton);
+				deleteStudentButton.innerText = "Delete User"
+				newStudent.appendChild(deleteStudentButton)
 				return newStudent;
 			}
 
@@ -1491,6 +1503,28 @@
 
 				for (let pollShare of classPollShares) {
 					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
+				}
+			})
+
+			socket.emit('bannedStudentsUpdate')
+			socket.on('bannedStudentsUpdate', (bannedStudents) => {
+				let bannedDiv = document.querySelector('#bannedMenu.tabContent')
+				bannedDiv.innerHTML = ''
+
+				for (let bannedStudent of bannedStudents) {
+					let bannedStudentDiv = document.createElement('div')
+					bannedStudentDiv.className = 'bannedStudent'
+					bannedStudentName = document.createElement('p')
+					bannedStudentName.innerText = bannedStudent
+					bannedStudentDiv.appendChild(bannedStudentName)
+					unban = document.createElement('button')
+					unban.innerText = 'unban'
+					unban.className = 'quickButton'
+					unban.onclick = () => {
+						socket.emit('unbanStudent', bannedStudent)
+					}
+					bannedStudentDiv.appendChild(unban)
+					document.querySelector('#bannedMenu.tabContent').appendChild(bannedStudentDiv)
 				}
 			})
 		</script>
