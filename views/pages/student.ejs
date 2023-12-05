@@ -90,7 +90,7 @@
 					<h3 style="margin-top: 0;">Take a break</h3>
 					<div id="breakInputs" class="centered">
 						<label class="form-control" id="pollControl" for="bathroom">
-							<input type="radio" name="option" id="bathroom" value="Bathroom" required checked>
+							<input type="radio" name="option" id="bathroom" value="Bathroom" required>
 							Bathroom
 						</label>
 						<label class="form-control" id="pollControl" for="other">
@@ -194,7 +194,7 @@
 					var textarea = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
-
+					//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
 					for (var i = 0; i < radios.length; i++) {
 						if (radios[i].type === 'radio' && radios[i].checked) {
 							// Defines the letter response of the user
@@ -229,7 +229,9 @@
 
 						oldLettRes = lettRes
 						oldTextRes = textRes
+						location.reload()
 					}, 100)
+					
 				}
 
 				function isObjectEqual(objectA, objectB) {
