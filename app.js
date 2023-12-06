@@ -1596,7 +1596,7 @@ app.use((req, res, next) => {
 // The user must be logged in order to connect to websockets
 io.use((socket, next) => {
 	try {
-		let { api } = socket.request._query
+		let { api } = socket.request.headers
 
 		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
 
