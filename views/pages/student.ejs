@@ -86,7 +86,7 @@
 			</body>
 
 			<dialog id="requestBreakDialog" class="contentBox">
-				<form onsubmit="submitBreak(event)">
+				<form onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
 					<h3 style="margin-top: 0;">Take a break</h3>
 					<div id="breakInputs" class="centered">
 						<label class="form-control" id="pollControl" for="bathroom">
@@ -101,7 +101,7 @@
 					</div>
 					<div id="takeBreak" class="hCentered">
 						<button class="quickButton" id="cancel" type="button"
-							onclick="document.getElementById('requestBreakDialog').close();">Cancel</button>
+							onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
 						<button class="quickButton" type="submit">Take Break</button>
 					</div>
 				</form>
@@ -229,7 +229,6 @@
 
 						oldLettRes = lettRes
 						oldTextRes = textRes
-						location.reload()
 					}, 100)
 					
 				}
@@ -295,6 +294,7 @@
 			<script>
 				var mychart = document.getElementById('virtualbar').getContext("2d")
 				var doughnutChart = new Chart(mychart, {
+					
 					type: 'doughnut',
 					data: {
 						labels: [],
