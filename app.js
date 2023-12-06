@@ -1597,7 +1597,6 @@ app.use((req, res, next) => {
 io.use((socket, next) => {
 	try {
 		let { api } = socket.request.headers
-		console.log(socket.handshake.headers);
 
 		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
 
