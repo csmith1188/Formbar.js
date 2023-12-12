@@ -156,6 +156,7 @@ function api(cD) {
 						(err, user) => {
 							try {
 								if (err) throw err
+								if (!user) resolve({ error: 'user not found' })
 								resolve(user)
 							} catch (err) {
 								reject(err)
@@ -164,6 +165,7 @@ function api(cD) {
 					)
 				})
 
+				if (user.error) return user
 				return user.username
 			} catch (err) {
 				return err
@@ -176,6 +178,7 @@ function api(cD) {
 				logger.log('info', `[getCurrentUser] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				let username = await getUsername(req.headers.api)
+				if (username.error) return username
 				if (username instanceof Error) throw username
 
 				let { classCode, error } = getUserClass(username)
@@ -402,13 +405,30 @@ function api(cD) {
 			}
 		}
 
-		// remove restricted data from the class data
-		for (let classData of Object.values(cD)) {
-			for (let studentData of Object.values(classData.students)) {
-				delete studentData.API
-				delete studentData.pollTextRes
+		function getPollResponses(classData) {
+			let tempPolls = {}
+
+			if (!classData.poll.status) return {}
+
+			if (Object.keys(classData.poll.responses).length == 0) return {}
+
+			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
+				tempPolls[resKey] = {
+					...resValue,
+					responses: 0
+				}
 			}
+			for (let student of Object.values(classData.students)) {
+				if (
+					student &&
+					Object.keys(tempPolls).includes(student.pollRes.buttonRes)
+				)
+					tempPolls[student.pollRes.buttonRes].responses++
+			}
+
+			return tempPolls
 		}
+
 
 		router.use(isAuthenticated)
 		router.use(apiPermCheck)
@@ -440,6 +460,7 @@ function api(cD) {
 					res.json({ error: 'Class not started' })
 					return
 				}
+				classData.poll.responses = getPollResponses(classData)
 
 				let user = req.session.user
 
@@ -526,7 +547,7 @@ function api(cD) {
 				}
 
 				let classData = structuredClone(cD[key])
-				let polls = {}
+				classData.poll.responses = getPollResponses(classData)
 
 				if (!classData) {
 					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
@@ -534,48 +555,14 @@ function api(cD) {
 					return
 				}
 
-				if (!classData.poll.status) {
-					logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify({ status: classData.poll.status, totalStudents: Object.keys(classData.students).length, pollPrompt: classData.poll.prompt, blindPoll: classData.poll.blind, weight: classData.poll.weight, polls: polls })})`)
-					res.json({
-						status: classData.poll.status,
-						totalStudents: Object.keys(classData.students).length,
-						pollPrompt: classData.poll.prompt,
-						blindPoll: classData.poll.blind,
-						weight: classData.poll.weight,
-						polls: polls
-					})
-					return
-				}
-
-				for (let [username, student] of Object.entries(classData.students)) {
-					if (student.break == true || student.permissions == 0) delete classData.students[username]
-				}
-
-				if (Object.keys(classData.posPollResObj).length > 0) {
-					for (let [resKey, resValue] of Object.entries(classData.posPollResObj)) {
-						polls[resKey] = {
-							...resValue,
-							responses: 0
-						}
-					}
-					for (let studentData of Object.values(classData.students)) {
-						if (
-							studentData &&
-							Object.keys(polls).includes(studentData.pollRes)
-						)
-							polls[studentData.pollRes].responses++
-					}
-				}
-
-				logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify({ status: classData.poll.status, totalStudents: Object.keys(classData.students).length, pollPrompt: classData.poll.prompt, blindPoll: classData.poll.blindPoll, weight: classData.poll.weight, polls: polls })})`)
-				res.json({
-					status: classData.poll.status,
+				classData.poll = {
+					status: classData.status,
 					totalStudents: Object.keys(classData.students).length,
-					pollPrompt: classData.poll.prompt,
-					blindPoll: classData.poll.blindPoll,
-					weight: classData.poll.weight,
-					polls: polls
-				})
+					...classData.poll
+				}
+
+				logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify(classData.poll)})`)
+				res.json(classData.poll)
 			} catch (err) {
 				logger.log('error', err.stack)
 			}
