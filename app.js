@@ -131,7 +131,7 @@ const SOCKET_PERMISSIONS = {
 	deleteStudent: { permissions: TEACHER_PERMISSIONS, classSocket: true },
 	deleteStudents: { permissions: TEACHER_PERMISSIONS, classSocket: true },
 	endClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	deleteClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
+	deleteClass: { permissions: TEACHER_PERMISSIONS, classSocket: false },
 	doStep: { permissions: TEACHER_PERMISSIONS, classSocket: true },
 	modechange: { permissions: MOD_PERMISSIONS, classSocket: true },
 	changePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
@@ -2040,6 +2040,8 @@ io.on('connection', (socket) => {
 			const classCode = socket.request.session.class
 			const socketType = packet[0]
 
+			console.log(socketType, SOCKET_PERMISSIONS[socketType], cD[classCode].students[username].classPermissions);
+
 			if (!SOCKET_PERMISSIONS[socketType]) {
 				next()
 				return
@@ -2051,7 +2053,7 @@ io.on('connection', (socket) => {
 			) next()
 			else if (
 				!SOCKET_PERMISSIONS[socketType].classSocket &&
-				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+				cD[classCode].students[username].permissions >= SOCKET_PERMISSIONS[socketType].permissions
 			) next()
 			else socket.emit('message', `You do not have permission to do that.`)
 
