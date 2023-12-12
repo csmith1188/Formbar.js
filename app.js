@@ -70,7 +70,7 @@ const logger = winston.createLogger({
 			if (level == "error") {
 				logNumbers.error++;
 				var logNumbersString = JSON.stringify(logNumbers);
-				fs.writeFile("logNumbers.json", logNumbersString);
+				fs.writeFileSync("logNumbers.json", logNumbersString);
 				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
 			} else {
 				return `[${timestamp}] ${level}: ${message}`

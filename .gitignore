@@ -4,3 +4,4 @@ database/database.db
 uploads/
 
 *.log
+logNumbers.json
