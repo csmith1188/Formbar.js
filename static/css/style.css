@@ -480,7 +480,8 @@ input[type="radio"]:focus {
 #endClass,
 .deleteStudent,
 #delete-poll,
-.delete-poll
+.delete-poll,
+.banStudent
 {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);;
