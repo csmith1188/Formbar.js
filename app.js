@@ -10,6 +10,7 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
+const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -544,7 +545,10 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+		if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
+			res.redirect('/managerPanel')
+
+		} else if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
 			res.redirect('/student')
@@ -757,6 +761,36 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 	}
 })
 
+app.get('/managerPanel', isAuthenticated, permCheck, (req, res) => {
+	try {
+		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		let students = cD[req.session.class].students
+		let keys = Object.keys(students)
+		let allStuds = []
+
+		for (var i = 0; i < keys.length; i++) {
+			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
+			allStuds.push(val)
+		}
+
+		/* Uses EJS to render the template and display the information for the class.
+		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
+		*/
+		res.render('pages/managerPanel', {
+			title: 'Manager Panel',
+			pollStatus: cD[req.session.class].poll.status,
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch (err) {
+		logger.log('error', err.stack);
+		res.render('pages/message', {
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
+
 // Allow teacher to create class
 // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
 // This will allow the teacher to give students student perms, and guests student perms as well
@@ -782,7 +816,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				cD[key] = new Classroom(id, className, key, sharedPolls)
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
-				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+				cD[key].students[req.session.username].classPermissions = TEACHER_PERMISSIONS
 
 				req.session.class = key
 
@@ -2152,7 +2186,7 @@ io.on('connection', (socket) => {
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
 
 			let generatedColors = generateColors(resNumber)
-
+			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
 
 			cD[socket.request.session.class].mode = 'poll'
