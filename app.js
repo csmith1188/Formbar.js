@@ -10,7 +10,6 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
-const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -103,41 +102,93 @@ const BANNED_PERMISSIONS = 0
 
 // Permission level needed to access each page
 const PAGE_PERMISSIONS = {
-	controlPanel: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	chat: { permissions: STUDENT_PERMISSIONS, classPage: true },
-	poll: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	student: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
 	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	help: { permissions: STUDENT_PERMISSIONS, classPage: true },
-	bgm: { permissions: MOD_PERMISSIONS, classPage: true },
-	sfx: { permissions: MOD_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
 }
 
-const SOCKET_PERMISSIONS = {
-	pollResp: { permissions: STUDENT_PERMISSIONS, classSocket: true },
-	classPermChange: { permissions: MOD_PERMISSIONS, classSocket: true },
-	permChange: { permissions: MOD_PERMISSIONS, classSocket: false },
-	startPoll: { permissions: MOD_PERMISSIONS, classSocket: true },
-	endPoll: { permissions: MOD_PERMISSIONS, classSocket: true },
-	help: { permissions: STUDENT_PERMISSIONS, classSocket: true },
-	requestBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
-	approveBreak: { permissions: MOD_PERMISSIONS, classSocket: true },
-	endBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
-	deleteStudent: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	deleteStudents: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	endClass: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	deleteClass: { permissions: TEACHER_PERMISSIONS, classSocket: false },
-	doStep: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	modechange: { permissions: MOD_PERMISSIONS, classSocket: true },
-	changePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	addPlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true },
-	removePlugin: { permissions: TEACHER_PERMISSIONS, classSocket: true }
+const PASSIVE_SOCKETS = [
+	'pollUpdate',
+	'modeUpdate',
+	'quizUpdate',
+	'lessonUpdate',
+	'vbUpdate',
+	'cpUpdate',
+	'joinRoom',
+	'leaveRoom',
+	'pluginUpdate',
+	'customPollUpdate',
+	'bannedStudentsUpdate'
+]
+
+const GLOBAL_SOCKET_PERMISSIONS = {
+	permChange: MANAGER_PERMISSIONS,
+	deleteClass: TEACHER_PERMISSIONS,
+	getOwnedClasses: TEACHER_PERMISSIONS,
+	logout: GUEST_PERMISSIONS,
+	getUserClass: GUEST_PERMISSIONS
+}
+
+const CLASS_SOCKET_PERMISSIONS = {
+	help: STUDENT_PERMISSIONS,
+	pollResp: STUDENT_PERMISSIONS,
+	requestBreak: STUDENT_PERMISSIONS,
+	endBreak: STUDENT_PERMISSIONS,
+	pollUpdate: STUDENT_PERMISSIONS,
+	modeUpdate: STUDENT_PERMISSIONS,
+	quizUpdate: STUDENT_PERMISSIONS,
+	lessonUpdate: STUDENT_PERMISSIONS,
+	vbUpdate: GUEST_PERMISSIONS,
+	leaveClass: GUEST_PERMISSIONS,
+	joinRoom: GUEST_PERMISSIONS,
+	leaveRoom: GUEST_PERMISSIONS,
+	cpUpdate: MOD_PERMISSIONS,
+	previousPollDisplay: TEACHER_PERMISSIONS,
+	pluginUpdate: STUDENT_PERMISSIONS,
+	setClassPermissionSetting: MANAGER_PERMISSIONS
+}
+
+// make a better name for this
+const CLASS_SOCKET_PERMISSION_SETTINGS = {
+	startPoll: 'controlPolls',
+	endPoll: 'controlPolls',
+	customPollUpdate: 'controlPolls',
+	savePoll: 'controlPolls',
+	deletePoll: 'controlPolls',
+	setPublicPoll: 'controlPolls',
+	sharePollToUser: 'controlPolls',
+	removeUserPollShare: 'controlPolls',
+	getPollShareIds: 'controlPolls',
+	sharePollToClass: 'controlPolls',
+	removeClassPollShare: 'controlPolls',
+	doStep: 'controlPolls',
+	classPermChange: 'manageStudents',
+	deleteStudent: 'manageStudents',
+	deleteStudents: 'manageStudents',
+	approveBreak: 'breakAndHelp',
+	deleteTicket: 'breakAndHelp',
+	changePlugin: 'manageClass',
+	addPlugin: 'manageClass',
+	removePlugin: 'manageClass',
+	endClass: 'manageClass',
+	modechange: 'manageClass',
+	bannedStudentsUpdate: 'manageStudents',
+	banStudent: 'manageStudents',
+	unbanStudent: 'manageStudents'
+}
+
+const DEFAULT_CLASS_PERMISSIONS = {
+	games: MOD_PERMISSIONS,
+	controlPolls: STUDENT_PERMISSIONS,
+	manageStudents: TEACHER_PERMISSIONS,
+	breakAndHelp: MOD_PERMISSIONS,
+	manageClass: TEACHER_PERMISSIONS
 }
 
 
@@ -176,7 +227,7 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, sharedPolls = []) {
+	constructor(id, className, key, permissions, sharedPolls = []) {
 		this.id = id
 		this.className = className
 		this.students = {}
@@ -196,6 +247,7 @@ class Classroom {
 		this.currentStep = 0
 		this.quiz = false
 		this.mode = 'poll'
+		this.permissions = permissions
 	}
 }
 
@@ -545,10 +597,10 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
-			res.redirect('/managerPanel')
-
-		} else if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+		// if (cD[req.session.class].students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+		// 	res.redirect('/managerPanel')
+		// } else
+		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
 			res.redirect('/student')
@@ -609,7 +661,8 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
+			settingsPermissions: cD[req.session.class].permissions.manageClass,
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -804,20 +857,37 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
-		function makeClass(id, className, key, sharedPolls = []) {
+		function makeClass(id, className, key, permissions, sharedPolls = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
 
 				logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
-				// Remove teacher from old class
+				// Remove teacher from no class
 				delete cD.noClass.students[req.session.username]
-				// Add class into the session data
-				cD[key] = new Classroom(id, className, key, sharedPolls)
+
+				if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
+					for (let permission of Object.keys(permissions)) {
+						if (!DEFAULT_CLASS_PERMISSIONS[permission]) {
+							delete permissions[permission]
+						}
+					}
+
+					for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
+						if (!permissions[permission]) {
+							permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
+						}
+					}
+					db.run('UPDATE classroom SET permissions = ? WHERE key = ?', [JSON.stringify(permissions), key], (err) => {
+						if (err) logger.log('error', err.stack)
+					})
+				}
+				cD[key] = new Classroom(id, className, key, permissions, sharedPolls)
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
-				cD[key].students[req.session.username].classPermissions = TEACHER_PERMISSIONS
+				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
 
+				// Add class into the session data
 				req.session.class = key
 
 				return true
@@ -838,13 +908,13 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			}
 
 			// Add classroom to the database
-			db.run('INSERT INTO classroom(name, owner, key) VALUES(?, ?, ?)', [className, req.session.userId, key], (err) => {
+			db.run('INSERT INTO classroom(name, owner, key, permissions) VALUES(?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS)], (err) => {
 				try {
 					if (err) throw err
 
 					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
-					db.get('SELECT classroom.id, classroom.name, classroom.key, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
+					db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
 							if (err) throw err
 
@@ -861,6 +931,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								classroom.id,
 								classroom.name,
 								classroom.key,
+								JSON.parse(classroom.permissions),
 								JSON.parse(classroom.sharedPolls)
 							)
 
@@ -884,7 +955,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT id, name, key FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+			db.get('SELECT id, name, key, permissions FROM classroom WHERE id = ?', [classId], (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -901,6 +972,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						classroom.id,
 						classroom.name,
 						classroom.key,
+						JSON.parse(classroom.permissions)
 					)
 
 					if (makeClassStatus instanceof Error) throw makeClassStatus
@@ -933,21 +1005,6 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 // G
 
 // H
-app.get('/help', isAuthenticated, permCheck, (req, res) => {
-	try {
-		logger.log('info', `[post /help] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-		res.render('pages/help', {
-			title: 'Help'
-		})
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
-})
 
 // I
 
@@ -1953,9 +2010,8 @@ io.on('connection', (socket) => {
 			}
 			delete cD[classCode]
 
-			logger.log('verbose', `[endClass] cD=(${JSON.parse(cD)})`)
-
-			socket.broadcast.to(socket.request.session.class).emit('classEnded')
+			logger.log('verbose', `[endClass] cD=(${JSON.stringify(cD)})`)
+			socket.broadcast.to(classCode).emit('classEnded')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2074,25 +2130,32 @@ io.on('connection', (socket) => {
 			const classCode = socket.request.session.class
 			const socketType = packet[0]
 
-			console.log(socketType, SOCKET_PERMISSIONS[socketType], cD[classCode].students[username].classPermissions);
-
-			if (!SOCKET_PERMISSIONS[socketType]) {
-				next()
-				return
-			}
-
 			if (
-				SOCKET_PERMISSIONS[socketType].classSocket &&
-				cD[classCode].students[username].classPermissions >= SOCKET_PERMISSIONS[socketType].permissions
+				GLOBAL_SOCKET_PERMISSIONS[socketType] &&
+				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[socketType]
 			) next()
 			else if (
-				!SOCKET_PERMISSIONS[socketType].classSocket &&
-				cD[classCode].students[username].permissions >= SOCKET_PERMISSIONS[socketType].permissions
+				CLASS_SOCKET_PERMISSIONS[socketType] &&
+				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
 			) next()
-			else socket.emit('message', `You do not have permission to do that.`)
-
+			else if (
+				CLASS_SOCKET_PERMISSION_SETTINGS[socketType] &&
+				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]] &&
+				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]]
+			) next()
+			else {
+				if (!PASSIVE_SOCKETS.includes(socketType))
+					socket.emit('message', 'You do not have permission to do that.')
+				next(new Error())
+			}
 		} catch (err) {
 			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('error', (err) => {
+		if (err && err.message) {
+			console.log(err.message);
 		}
 	})
 
@@ -2228,6 +2291,7 @@ io.on('connection', (socket) => {
 			pollUpdate()
 			vbUpdate()
 			cpUpdate()
+			socket.emit('startPoll')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2269,6 +2333,7 @@ io.on('connection', (socket) => {
 			pollUpdate()
 			vbUpdate()
 			cpUpdate()
+			socket.emit('endPoll')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2483,10 +2548,10 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('setPublic', (pollId, value) => {
+	socket.on('setPublicPoll', (pollId, value) => {
 		try {
-			logger.log('info', `[setPublic] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[setPublic] pollId=(${pollId}) value=(${value})`)
+			logger.log('info', `[setPublicPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[setPublicPoll] pollId=(${pollId}) value=(${value})`)
 
 			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (err) => {
 				try {
@@ -3335,6 +3400,7 @@ io.on('connection', (socket) => {
 
 					deleteStudent(user)
 					bannedStudentsUpdate()
+					cpUpdate()
 					socket.emit('message', `Banned ${user}`)
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -3387,6 +3453,28 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 			socket.emit('message', 'There was a server error try again.')
+		}
+	})
+
+	socket.on('setClassPermissionSetting', (permission, level) => {
+		try {
+			logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
+
+			let classCode = socket.request.session.class
+			cD[classCode].permissions[permission] = level
+			db.run('UPDATE classroom SET permissions = ? WHERE id = ?', [JSON.stringify(cD[classCode].permissions), cD[classCode].id], (err) => {
+				try {
+					if (err) throw err
+
+					logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
+					cpUpdate()
+				} catch (err) {
+					logger.log('error', err.stack)
+				}
+			})
+		} catch (err) {
+			logger.log('error', err.stack)
 		}
 	})
 })

@@ -67,8 +67,7 @@
 					<%- include('../partials/formbar_header') %>
 						<h1>Need Help?</h1>
 						<form id="eventForm">
-							<textarea id="ticket" cols="30" rows="5" maxlength="150"
-								placeholder="Reason (optional)"></textarea>
+							<textarea id="ticket" cols="30" rows="5" maxlength="150" placeholder="Reason (optional)"></textarea>
 							<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
 						</form>
 						<button onclick="help()" class="quickButton">Send Ticket</button>
@@ -190,7 +189,7 @@
 				// Submits the users answer to the poll
 				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
-					var radios = document.getElementsByTagName('input')
+					var radios = document.getElementsByName('poll')
 					var textarea = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
