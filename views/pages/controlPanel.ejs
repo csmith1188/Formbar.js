@@ -1118,7 +1118,7 @@
 
 						pollAnswers.push(pollAnswer)
 					}
-					console.log('hi');
+
 					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
 				}
 			}
@@ -1380,8 +1380,6 @@
 					socket.emit('cpUpdate')
 				}
 				filterSortChange()
-
-				console.log(currentUser, allRoom.permissions);
 
 				if (currentUser.classPermissions >= allRoom.permissions.manageStudents) {
 					bannedTabButton.style.display = ''

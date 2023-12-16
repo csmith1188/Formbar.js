@@ -185,7 +185,7 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS,
-	controlPolls: STUDENT_PERMISSIONS,
+	controlPolls: MOD_PERMISSIONS,
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS,
 	manageClass: TEACHER_PERMISSIONS
@@ -463,6 +463,12 @@ function joinClass(username, code) {
 			reject(err)
 		}
 	})
+}
+
+function camelCaseToNormal(str) {
+	let result = str.replace(/([A-Z])/g, " $1")
+	result = result.charAt(0).toUpperCase() + result.slice(1)
+	return result
 }
 
 // Express functions
@@ -2130,23 +2136,35 @@ io.on('connection', (socket) => {
 			const classCode = socket.request.session.class
 			const socketType = packet[0]
 
+			console.log(
+				socketType,
+				username,
+				cD[classCode].students[username].classPermissions,
+				CLASS_SOCKET_PERMISSIONS[socketType],
+				CLASS_SOCKET_PERMISSIONS[socketType] &&
+				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
+			);
+
 			if (
 				GLOBAL_SOCKET_PERMISSIONS[socketType] &&
 				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[socketType]
-			) next()
-			else if (
+			) {
+				next()
+			} else if (
 				CLASS_SOCKET_PERMISSIONS[socketType] &&
 				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
-			) next()
-			else if (
+			) {
+				console.log('hi');
+				next()
+			} else if (
 				CLASS_SOCKET_PERMISSION_SETTINGS[socketType] &&
 				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]] &&
 				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]]
-			) next()
-			else {
+			) {
+				next()
+			} else {
 				if (!PASSIVE_SOCKETS.includes(socketType))
-					socket.emit('message', 'You do not have permission to do that.')
-				next(new Error())
+					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(socketType)}.`)
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
