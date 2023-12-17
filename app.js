@@ -2136,15 +2136,6 @@ io.on('connection', (socket) => {
 			const classCode = socket.request.session.class
 			const socketType = packet[0]
 
-			console.log(
-				socketType,
-				username,
-				cD[classCode].students[username].classPermissions,
-				CLASS_SOCKET_PERMISSIONS[socketType],
-				CLASS_SOCKET_PERMISSIONS[socketType] &&
-				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
-			);
-
 			if (
 				GLOBAL_SOCKET_PERMISSIONS[socketType] &&
 				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[socketType]
@@ -2154,7 +2145,6 @@ io.on('connection', (socket) => {
 				CLASS_SOCKET_PERMISSIONS[socketType] &&
 				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
 			) {
-				console.log('hi');
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSION_SETTINGS[socketType] &&
@@ -2168,12 +2158,6 @@ io.on('connection', (socket) => {
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
-		}
-	})
-
-	socket.on('error', (err) => {
-		if (err && err.message) {
-			console.log(err.message);
 		}
 	})
 
