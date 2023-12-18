@@ -117,6 +117,7 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
+	// managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 const SOCKET_PERMISSIONS = {
@@ -124,6 +125,7 @@ const SOCKET_PERMISSIONS = {
 	classPermChange: { permissions: MOD_PERMISSIONS, classSocket: true },
 	permChange: { permissions: MOD_PERMISSIONS, classSocket: false },
 	startPoll: { permissions: MOD_PERMISSIONS, classSocket: true },
+	clearPoll: { permissions: MOD_PERMISSIONS, classSocket: true },
 	endPoll: { permissions: MOD_PERMISSIONS, classSocket: true },
 	help: { permissions: STUDENT_PERMISSIONS, classSocket: true },
 	requestBreak: { permissions: STUDENT_PERMISSIONS, classSocket: true },
@@ -545,10 +547,10 @@ app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
-			res.redirect('/managerPanel')
+		// if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
+		// 	res.redirect('/managerPanel')
 
-		} else if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
 			res.redirect('/student')
@@ -1082,7 +1084,7 @@ app.post('/login', async (req, res) => {
 					let newAPI
 					let newSecret
 
-					if (users.length == 0) permissions = MANAGER_PERMISSIONS
+					if (users.length == 0) permissions = TEACHER_PERMISSIONS
 
 					for (let dbUser of users) {
 						existingAPIs.push(dbUser.API)
@@ -1944,6 +1946,45 @@ io.on('connection', (socket) => {
 		}
 	}
 
+	function endPoll () {
+		try {
+			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+			let data = { prompt: '', names: [], letter: [], text: [] }
+
+			let dateConfig = new Date()
+			let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+
+			data.prompt = cD[socket.request.session.class].poll.prompt
+
+			for (const key in cD[socket.request.session.class].students) {
+				data.names.push(cD[socket.request.session.class].students[key].username)
+				data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
+				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
+			}
+
+			db.run(
+				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
+				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
+					if (err) {
+						logger.log('error', err.stack);
+					} else logger.log('verbose', '[clearPoll] saved poll to history')
+				}
+			)
+
+
+			cD[socket.request.session.class].poll.status = false
+
+			logger.log('verbose', `[clearPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+
+			pollUpdate()
+			vbUpdate()
+			cpUpdate()
+		} catch (err) {
+			logger.log('error', err.stack);
+		}
+	}
+
 	function endClass(classCode) {
 		try {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
@@ -2234,45 +2275,31 @@ io.on('connection', (socket) => {
 	})
 
 	// End the current poll. Does not take any arguments
-	socket.on('endPoll', () => {
-		try {
-			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-			let data = { prompt: '', names: [], letter: [], text: [] }
-
-			let dateConfig = new Date()
-			let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-
-			data.prompt = cD[socket.request.session.class].poll.prompt
-
-			for (const key in cD[socket.request.session.class].students) {
-				data.names.push(cD[socket.request.session.class].students[key].username)
-				data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
-				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
-			}
-
-			db.run(
-				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-					if (err) {
-						logger.log('error', err.stack);
-					} else logger.log('verbose', '[endPoll] saved poll to history')
-				}
-			)
-
+	socket.on('clearPoll', () => {
+		try { endPoll ()
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
-			cD[socket.request.session.class].poll.status = false
+			cD[socket.request.session.class].poll = {
+				status: false,
+				responses: {},
+				textRes: false,
+				prompt: '',
+				weight: 1,
+				blind: false,
 
-			logger.log('verbose', `[endPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+			}
+		vbUpdate ()		} catch (err) {
+			logger.log('error', err.stack);
+		}
+	})
 
-			pollUpdate()
-			vbUpdate()
-			cpUpdate()
+	socket.on('endPoll', () => {
+		try { endPoll ()
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
+	
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
