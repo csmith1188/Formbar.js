@@ -20,7 +20,7 @@
 					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
 					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
 					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
-					<button id="pluginsMenu" class="quickButton tab" data-tab-group="mainTabs">Plugins</button>
+					<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
 				</header>
 
 				<p id="classCode">Class Code:</p>
@@ -131,7 +131,17 @@
 						</label>
 					</form>
 				</div>
-				<div id="pluginsMenu" class="tabContent" data-tab-group="mainTabs">
+				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div class="options">
+						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
+						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
+					</div>
+					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
+						<h2>Permissions</h2>
+						<div id="permissionsList"></div>
+					</div>
+					<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
+					</div>
 				</div>
 				<dialog id="sharePollDialog">
 					<button
@@ -244,7 +254,8 @@
 			var responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			var pluginsDiv = document.querySelector('div#pluginsMenu')
+			let settingsDiv = document.querySelector('.tabContent#settingsMenu')
+			var pluginsDiv = document.querySelector('.tabContent#plugins')
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
 			var toPollsButton = document.getElementById('toPolls')
@@ -262,6 +273,13 @@
 			let sharePollDialog = document.getElementById('sharePollDialog')
 			let sharePollUserInput = document.getElementById('sharePollUserInput')
 			let sharePollClassInput = document.getElementById('sharePollClassInput')
+			let permissionsDiv = document.querySelector('#permissionsList')
+			let usersTabButton = document.querySelector('.tab#userMenu')
+			let bannedTabButton = document.querySelector('.tab#bannedMenu')
+			let pollsTabButton = document.querySelector('.tab#pollsMenu')
+			let settingsTabButton = document.querySelector('.tab#settingsMenu')
+			let permissionsTabButton = document.querySelector('.tab#permissions')
+			let pluginsTabButton = document.querySelector('.tab#plugins')
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -357,6 +375,12 @@
 
 				// Return the colors array
 				return colors;
+			}
+
+			function camelCaseToNormal(str) {
+				let result = str.replace(/([A-Z])/g, " $1")
+				result = result.charAt(0).toUpperCase() + result.slice(1)
+				return result
 			}
 
 			//displays the previos polls page
@@ -707,8 +731,6 @@
 
 			function endPollFunc() {
 				socket.emit('endPoll')
-				startPollForm.style.display = 'block'
-				endPoll.style.display = 'none'
 			}
 
 			// makes student elements
@@ -868,9 +890,7 @@
 						permissionSwitch.add(guestOption);
 					}
 					newStudent.appendChild(permissionSwitch);
-				}
-				newStudent.append(" ");
-				if (studentData.classPermissions < currentUser.classPermissions) {
+					newStudent.append(" ");
 					let banStudentButton = document.createElement("button")
 					banStudentButton.className = 'banStudent quickButton'
 					banStudentButton.setAttribute("data-user", student)
@@ -879,15 +899,15 @@
 						socket.emit('banStudent', student)
 					}
 					newStudent.appendChild(banStudentButton)
+					let deleteStudentButton = document.createElement("button")
+					deleteStudentButton.className = 'deleteStudent quickButton'
+					deleteStudentButton.setAttribute("data-userid", student)
+					deleteStudentButton.onclick = (event) => {
+						socket.emit('deleteStudent', student)
+					};
+					deleteStudentButton.innerText = "Delete User"
+					newStudent.appendChild(deleteStudentButton)
 				}
-				let deleteStudentButton = document.createElement("button")
-				deleteStudentButton.className = 'deleteStudent quickButton'
-				deleteStudentButton.setAttribute("data-userid", student)
-				deleteStudentButton.onclick = (event) => {
-					socket.emit('deleteStudent', student)
-				};
-				deleteStudentButton.innerText = "Delete User"
-				newStudent.appendChild(deleteStudentButton)
 				return newStudent;
 			}
 
@@ -1243,9 +1263,9 @@
 				let customPoll = customPolls[customPollId]
 
 				if (customPoll.public)
-					socket.emit('setPublic', customPollId, false)
+					socket.emit('setPublicPoll', customPollId, false)
 				else
-					socket.emit('setPublic', customPollId, true)
+					socket.emit('setPublicPoll', customPollId, true)
 			}
 
 			function deletePoll(pollId) {
@@ -1367,7 +1387,7 @@
 
 			var allRoom = ""
 			socket.emit('cpUpdate')
-			socket.on('cpUpdate', function (room, pollHistory) {
+			socket.on('cpUpdate', (room, pollHistory) => {
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(pollHistory)
 				allRoom = room
@@ -1376,6 +1396,96 @@
 					socket.emit('cpUpdate')
 				}
 				filterSortChange()
+
+				if (currentUser.classPermissions >= allRoom.permissions.manageStudents) {
+					bannedTabButton.style.display = ''
+				} else {
+					bannedTabButton.style.display = 'none'
+
+					if (bannedTabButton.classList.contains('pressed')) {
+						changeTab('usersMenu', 'mainTabs')
+					}
+				}
+
+				if (currentUser.classPermissions >= allRoom.permissions.controlPolls) {
+					pollsTabButton.style.display = ''
+				} else {
+					pollsTabButton.style.display = 'none'
+
+					if (pollsTabButton.classList.contains('pressed')) {
+						changeTab('usersMenu', 'mainTabs')
+					}
+				}
+
+				if (currentUser.classPermissions >= allRoom.permissions.manageClass) {
+					settingsTabButton.style.display = ''
+				} else {
+					settingsTabButton.style.display = 'none'
+
+					if (settingsTabButton.classList.contains('pressed')) {
+						changeTab('usersMenu', 'mainTabs')
+					}
+				}
+
+				if (currentUser.classPermissions >= 5) {
+					permissionsTabButton.style.display = ''
+				} else {
+					permissionsTabButton.style.display = 'none'
+
+					if (permissionsTabButton.classList.contains('pressed')) {
+						changeTab('plugins', 'settingsTabs')
+					}
+				}
+
+				if (allRoom.poll.status) {
+					responsesDiv.style.display = 'none'
+					startPollForm.style.display = 'none'
+					endPoll.style.display = 'block'
+				} else {
+					responsesDiv.style.display = ''
+					startPollForm.style.display = ''
+					endPoll.style.display = 'none'
+				}
+
+				permissionsDiv.innerHTML = ''
+				for (let [permission, level] of Object.entries(allRoom.permissions)) {
+					let permissionLabel = document.createElement('label')
+					permissionLabel.innerText = camelCaseToNormal(permission)
+					let permissionSelect = document.createElement('select')
+					permissionSelect.className = 'permissionSelect'
+					permissionSelect.id = permission
+					permissionSelect.onchange = (event) => {
+						let select = event.target
+						socket.emit('setClassPermissionSetting', select.id, select.options[select.selectedIndex].value)
+					}
+					let ownerOption = document.createElement('option')
+					ownerOption.value = 5
+					ownerOption.selected = level == 5
+					ownerOption.innerText = 'Owner'
+					permissionSelect.appendChild(ownerOption)
+					let teacherOption = document.createElement('option')
+					teacherOption.value = 4
+					teacherOption.selected = level == 4
+					teacherOption.innerText = 'Teacher'
+					permissionSelect.appendChild(teacherOption)
+					let modOption = document.createElement('option')
+					modOption.value = 3
+					modOption.selected = level == 3
+					modOption.innerText = 'Mod'
+					permissionSelect.appendChild(modOption)
+					let studentOption = document.createElement('option')
+					studentOption.value = 2
+					studentOption.selected = level == 2
+					studentOption.innerText = 'Student'
+					permissionSelect.appendChild(studentOption)
+					let guestOption = document.createElement('option')
+					guestOption.value = 1
+					guestOption.selected = level == 1
+					guestOption.innerText = 'Guest'
+					permissionSelect.appendChild(guestOption)
+					permissionLabel.appendChild(permissionSelect)
+					permissionsDiv.appendChild(permissionLabel)
+				}
 			})
 
 			socket.emit('pluginUpdate')
@@ -1538,6 +1648,18 @@
 					bannedStudentDiv.appendChild(unban)
 					document.querySelector('#bannedMenu.tabContent').appendChild(bannedStudentDiv)
 				}
+			})
+
+			socket.on('startPoll', () => {
+				responsesDiv.style.display = 'none'
+				startPollForm.style.display = 'none'
+				endPoll.style.display = 'block'
+				changeTab('usersMenu', 'mainTabs')
+			})
+
+			socket.on('endPoll', () => {
+				startPollForm.style.display = 'block'
+				endPoll.style.display = 'none'
 			})
 		</script>
 		<%- include('../partials/footer_content') %>

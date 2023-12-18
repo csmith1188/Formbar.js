@@ -487,7 +487,7 @@ input[type="radio"]:focus {
 	background-color: hsl(0, 94%, 74%);;
 }
 
-#responses{
+#responses {
 	display: none;
 	width: 40%;
 	margin-left: 30%;
@@ -613,6 +613,18 @@ input[type="radio"]:focus {
 #plugins button {
 	font-size: 14px;
 	width: 110px;
+}
+
+#settingsMenu #permissionsList {
+	display: grid;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.permissionSelect {
+	margin-left: 0.5rem;
 }
 
 /* --- VIRTUAL BAR --- */

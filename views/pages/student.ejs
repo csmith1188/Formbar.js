@@ -67,8 +67,7 @@
 					<%- include('../partials/formbar_header') %>
 						<h1>Need Help?</h1>
 						<form id="eventForm">
-							<textarea id="ticket" cols="30" rows="5" maxlength="150"
-								placeholder="Reason (optional)"></textarea>
+							<textarea id="ticket" cols="30" rows="5" maxlength="150" placeholder="Reason (optional)"></textarea>
 							<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
 						</form>
 						<button onclick="help()" class="quickButton">Send Ticket</button>
@@ -86,7 +85,8 @@
 			</body>
 
 			<dialog id="requestBreakDialog" class="contentBox">
-				<form onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
+				<form
+					onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
 					<h3 style="margin-top: 0;">Take a break</h3>
 					<div id="breakInputs" class="centered">
 						<label class="form-control" id="pollControl" for="bathroom">
@@ -190,7 +190,7 @@
 				// Submits the users answer to the poll
 				// Takes the pollResponses value which defines the number of possible answers
 				function submitPoll() {
-					var radios = document.getElementsByTagName('input')
+					var radios = document.getElementsByName('poll')
 					var textarea = document.getElementById("resTextBox")
 					var lettRes = ''
 					var textRes = ''
@@ -208,7 +208,6 @@
 
 					// Sends user input to the server
 					socket.emit('pollResp', lettRes, textRes)
-					socket.emit('sfxPlay', 'sfx_up01')
 
 					let alertText = ''
 					setTimeout(() => {
@@ -230,7 +229,7 @@
 						oldLettRes = lettRes
 						oldTextRes = textRes
 					}, 100)
-					
+
 				}
 
 				function isObjectEqual(objectA, objectB) {
@@ -294,7 +293,7 @@
 			<script>
 				var mychart = document.getElementById('virtualbar').getContext("2d")
 				var doughnutChart = new Chart(mychart, {
-					
+
 					type: 'doughnut',
 					data: {
 						labels: [],
@@ -409,7 +408,6 @@
 					}
 					socket.emit('help', reason, time)
 					socket.emit('cpUpdate')
-					socket.emit('sfxPlay', "sfx_up04")
 					alert('Help ticket sent')
 				}
 
