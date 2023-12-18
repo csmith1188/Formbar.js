@@ -162,7 +162,7 @@
 							pollDiv.style.display = 'none'
 						}
 
-						if (oldLettRes) {
+						if (oldLettRes && document.getElementById (oldLettRes)) {
 							document.getElementById(oldLettRes).checked = true
 						}
 					} else if (mode == 'quiz') {
@@ -324,8 +324,8 @@
 				// Calls for data
 				socket.emit('vbUpdate')
 				// Gets data from server and send it the function
-				socket.on('vbUpdate', (pollsData) => {
-					if (!pollsData.status) {
+				socket.on('vbUpdate', (pollsData) => { console.log(pollsData)
+					if (!pollsData.status && Object.keys(pollsData.polls).length==0 ) {
 						noPoll.style.display = ''
 						return
 					}

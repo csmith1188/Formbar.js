@@ -62,7 +62,7 @@
 							<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
 							<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
 						</div>
-						<h2 class="headerText" style="margin-top: 0;">Start/End Poll</h2>
+						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 						<div id="startPollForm">
 							<label for="resNumber">How many possible responses?</label>
 							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
@@ -88,6 +88,8 @@
 							<br>
 						</div>
 						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
+						<br>
+						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
 						<br>
 						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
 					</div>
@@ -239,6 +241,7 @@
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
 			var endPoll = document.getElementById('endPoll')
+			var clearPoll = document.getElementById('clearPoll')
 			var startPollForm = document.getElementById('startPollForm')
 			var pollPrompt = document.getElementById('pollBox')
 			var pollFilter = document.getElementById('pollFilter')
@@ -283,9 +286,11 @@
 			function load(pollStatus) {
 				if (pollStatus) {
 					startPollForm.style.display = 'none'
+					clearPoll.style.display = 'block'
 					endPoll.style.display = 'block'
 				} else {
 					startPollForm.style.display = 'block'
+					clearPoll.style.display = 'none'
 					endPoll.style.display = 'none'
 				}
 			}
@@ -718,6 +723,12 @@
 			}
 
 			// Ends the poll and reloads the users page to stop any more submission
+			function clearPollFunc() {
+				socket.emit('clearPoll')
+				startPollForm.style.display = 'block'
+				clearPoll.style.display = 'none'
+			}
+
 			function endPollFunc() {
 				socket.emit('endPoll')
 			}
@@ -1121,7 +1132,12 @@
 
 					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
 				}
-			}
+				responsesDiv.style.display = 'none'
+				startPollForm.style.display = 'none'
+				clearPoll.style.display = 'block'
+				endPoll.style.display = 'block'
+				changeTab('usersMenu', 'mainTabs')
+			};
 
 			function editCustomPoll(customPollId) {
 				editingPollId = customPollId
