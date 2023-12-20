@@ -51,9 +51,12 @@
 				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div id="pollOptions" class="options">
 						<h2 class="headerText">Custom Polls</h2>
-						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public Polls</button>
-						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class Polls</button>
-						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your Polls</button>
+						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public
+							Polls</button>
+						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class
+							Polls</button>
+						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your
+							Polls</button>
 					</div>
 					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
 						<div id="pollActions" class="options">
@@ -65,7 +68,8 @@
 						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 						<div id="startPollForm">
 							<label for="resNumber">How many possible responses?</label>
-							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
+								onchange="responseAmountChange()">
 							<br>
 							<label for="resTextBox">Would like to accept text responses?</label>
 							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
@@ -81,7 +85,8 @@
 							<button id="resetColors" class="quickButton">Reset Colors</button>
 							<div id="responses"></div>
 							<br>
-							<label for="blind">Blind poll? (Responses won't be visible until everyone has answered)</label>
+							<label for="blind">Blind poll? (Responses won't be visible until everyone has
+								answered)</label>
 							<input type="checkbox" id="blind">
 							<br>
 							<button id="startPoll" onclick="startPoll()">Start Poll</button>
@@ -92,6 +97,7 @@
 						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
 						<br>
 						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
+
 					</div>
 					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
@@ -100,7 +106,8 @@
 					<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
 					<div id="previousPolls" class="tabContent" data-tab-group="polls">
-						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to polls</button>
+						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
+							polls</button>
 						<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
 						<div id="previousPollButtons"></div>
 					</div>
@@ -148,14 +155,14 @@
 						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
 					<p>
 						<label for="share">Share to User</label>
-						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
-							onkeypress="if(event.key == 'Enter') sharePoll('user')">
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+"
+							placeholder="Username" onkeypress="if(event.key == 'Enter') sharePoll('user')">
 					</p>
 					<div id="userPollShares"></div>
 					<p>
 						<label for="share">Share to Class</label>
-						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
-							onkeypress="if(event.key == 'Enter') sharePoll('class')">
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+"
+							placeholder="Class Code" onkeypress="if(event.key == 'Enter') sharePoll('class')">
 					</p>
 					<div id="classPollShares"></div>
 				</dialog>
@@ -889,6 +896,57 @@
 						guestOption.innerText = "Guest";
 						permissionSwitch.add(guestOption);
 					}
+					let toggleDialog = document.createElement('button');
+					toggleDialog.innerText = "Tags";
+					toggleDialog.addEventListener('click', function () {
+						studentTags.showModal();
+					});
+					let studentTags = document.createElement('dialog');
+					studentTags.innerHTML = '<p>' + student + '</p>';
+					let closeButton = document.createElement('button');
+					closeButton.textContent = 'Save';
+					let tagForm = document.createElement('form');
+					tagForm.setAttribute('id', student + "tags");
+					var tagNames = ["Senior", "Junior", "Sophomore", "Freshman"];
+					for (let i = 0; i < tagNames.length; i++) {
+						let checkbox = document.createElement('input');
+						checkbox.type = 'checkbox';
+						checkbox.name = `checkbox${tagNames[i]}`;
+						checkbox.value = tagNames[i];
+						let label = document.createElement('label');
+						label.textContent = tagNames[i];
+						label.setAttribute('for', `checkbox${i}`);
+
+						tagForm.appendChild(checkbox);
+						tagForm.appendChild(label);
+						tagForm.appendChild(document.createElement('br'));
+					}
+					studentTags.appendChild(tagForm)
+					studentTags.appendChild(closeButton);
+					document.body.appendChild(studentTags);
+					closeButton.addEventListener('click', function () {
+						studentData.tags = ""
+						var allTags = ""
+						studentTags.showModal();
+						let checkboxForm = document.getElementById(student + "tags");
+						let checkboxes = checkboxForm.getElementsByTagName("input");
+						for (let i = 0; i < checkboxes.length; i++) {
+							let checkbox = checkboxes[i];
+							// Check if the checkbox is checked
+							if (checkbox.type === "checkbox") {
+								if (checkbox.checked) {
+									// Add the checkbox value to the studentData.tags array
+									allTags += checkbox.value + ", "
+									
+								}
+							}
+						}
+						studentData.tags = allTags.split(", ")
+						studentData.tags.pop()
+						console.log(studentData.tags);
+						studentTags.close();
+					});
+					newStudent.appendChild(toggleDialog);
 					newStudent.appendChild(permissionSwitch);
 					newStudent.append(" ");
 					let banStudentButton = document.createElement("button")
