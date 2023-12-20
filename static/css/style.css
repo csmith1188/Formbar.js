@@ -433,13 +433,33 @@ input[type="radio"]:focus {
 	padding: 3px;
 }
 
-#permChanges {
+#usersMenu {
 	font-size: 18px;
 }
 
-#permChanges button,
-#permChanges .quickButton {
+#usersMenu button,
+#usersMenu .quickButton {
 	font-size: 16px;
+}
+
+#bannedMenu.tabContent {
+	display: grid;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+	justify-content: center;
+}
+
+.bannedStudent {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	max-width: 50%;
+}
+
+.bannedStudent button {
+	height: fit-content;
 }
 
 .filter,
@@ -460,13 +480,14 @@ input[type="radio"]:focus {
 #endClass,
 .deleteStudent,
 #delete-poll,
-.delete-poll
+.delete-poll,
+.banStudent
 {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);;
 }
 
-#responses{
+#responses {
 	display: none;
 	width: 40%;
 	margin-left: 30%;
@@ -535,7 +556,7 @@ input[type="radio"]:focus {
 	margin-top: 8px;
 }
 
-#endPoll {
+#clearPoll {
 	font-size: 18px;
 	margin: auto;
 }
@@ -592,6 +613,18 @@ input[type="radio"]:focus {
 #plugins button {
 	font-size: 14px;
 	width: 110px;
+}
+
+#settingsMenu #permissionsList {
+	display: grid;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.permissionSelect {
+	margin-left: 0.5rem;
 }
 
 /* --- VIRTUAL BAR --- */
