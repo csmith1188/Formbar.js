@@ -927,7 +927,6 @@
 					closeButton.addEventListener('click', function () {
 						studentData.tags = ""
 						var allTags = ""
-						studentTags.showModal();
 						let checkboxForm = document.getElementById(student + "tags");
 						let checkboxes = checkboxForm.getElementsByTagName("input");
 						for (let i = 0; i < checkboxes.length; i++) {
@@ -936,8 +935,7 @@
 							if (checkbox.type === "checkbox") {
 								if (checkbox.checked) {
 									// Add the checkbox value to the studentData.tags array
-									allTags += checkbox.value + ", "
-									
+									allTags += checkbox.value + ", "									
 								}
 							}
 						}
