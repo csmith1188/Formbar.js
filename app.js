@@ -111,7 +111,7 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	// managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 const PASSIVE_SOCKETS = [
@@ -158,7 +158,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 // make a better name for this
 const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	startPoll: 'controlPolls',
-  clearPoll: 'controlPolls',
+	clearPoll: 'controlPolls',
 	endPoll: 'controlPolls',
 	customPollUpdate: 'controlPolls',
 	savePoll: 'controlPolls',
@@ -466,6 +466,7 @@ function joinClass(username, code) {
 		}
 	})
 }
+
 
 function camelCaseToNormal(str) {
 	let result = str.replace(/([A-Z])/g, " $1")
@@ -2007,7 +2008,7 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function endPoll () {
+	function endPoll() {
 		try {
 			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
@@ -2340,7 +2341,8 @@ io.on('connection', (socket) => {
 
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
 			cD[socket.request.session.class].poll = {
@@ -2352,18 +2354,20 @@ io.on('connection', (socket) => {
 				blind: false,
 
 			}
-		vbUpdate ()		} catch (err) {
+			vbUpdate()
+		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
 
 	socket.on('endPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
-	
+
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
