@@ -158,7 +158,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 // make a better name for this
 const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	startPoll: 'controlPolls',
-  clearPoll: 'controlPolls',
+	clearPoll: 'controlPolls',
 	endPoll: 'controlPolls',
 	customPollUpdate: 'controlPolls',
 	savePoll: 'controlPolls',
@@ -1331,7 +1331,11 @@ app.post('/oauth', (req, res) => {
 					}
 
 					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-					var token = jwt.sign({ username: userData.username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
+					var token = jwt.sign({
+						id: userData.id,
+						username: userData.username,
+						permissions: userData.permissions
+					}, userData.secret, { expiresIn: '30m' })
 
 					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
 
@@ -2007,7 +2011,7 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function endPoll () {
+	function endPoll() {
 		try {
 			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
@@ -2340,7 +2344,8 @@ io.on('connection', (socket) => {
 
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
 			cD[socket.request.session.class].poll = {
@@ -2352,18 +2357,20 @@ io.on('connection', (socket) => {
 				blind: false,
 
 			}
-		vbUpdate ()		} catch (err) {
+			vbUpdate()
+		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
 
 	socket.on('endPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
-	
+
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
