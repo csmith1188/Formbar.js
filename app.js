@@ -10,6 +10,7 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
+const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
 const http = require('http').createServer(app)
@@ -55,6 +56,38 @@ var logNumbers = JSON.parse(jsonLogData);
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+function createLoggerTransport(level) {
+	let transport = new winston.transports.DailyRotateFile({
+		filename: `logs/application-${level}-%DATE%.log`,
+	})
+}
+
+var criticalTransport = new winston.transports.DailyRotateFile({
+	filename: "logs/application-critical-%DATE%.log",
+	datePattern: "YYYY-MM-DD-HH",
+	maxFiles: "30d",
+	level: "critical"
+});
+
+var errorTransport = new winston.transports.DailyRotateFile({
+	filename: "logs/application-error-%DATE%.log",
+	datePattern: "YYYY-MM-DD-HH",
+	maxFiles: "30d",
+	level: "error"
+});
+
+var infoTransport = new winston.transports.DailyRotateFile({
+	filename: "logs/application-info-%DATE%.log",
+	datePattern: "YYYY-MM-DD-HH",
+	maxFiles: "30d",
+	level: "info"
+});
+
+var verboseTransport = new winston.transports.DailyRotateFile({
+
+})
+
 const logger = winston.createLogger({
 	levels: {
 		critical: 0,
@@ -77,10 +110,12 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
-		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
-		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
+		new winston.transports.DailyRotateFile({
+			filename: "logs/application-verbose-%DATE%.log",
+			datePattern: "YYYY-MM-DD-HH",
+			maxFiles: "30d",
+			level: "verbose"
+		}),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
