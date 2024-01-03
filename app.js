@@ -9,7 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
-const fs = require("fs");
+const fs = require("fs")
 
 var app = express()
 const http = require('http').createServer(app)
@@ -194,6 +194,23 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	manageClass: TEACHER_PERMISSIONS
 }
 
+// Add currentUser and permission constants to all pages
+app.use((req, res, next) => {
+	if (req.session.class)
+		res.locals.currentUser = cD[req.session.class].students[req.session.username]
+
+	res.locals = {
+		...res.locals,
+		MANAGER_PERMISSIONS,
+		TEACHER_PERMISSIONS,
+		MOD_PERMISSIONS,
+		STUDENT_PERMISSIONS,
+		GUEST_PERMISSIONS,
+		BANNED_PERMISSIONS
+	}
+
+	next()
+})
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -669,7 +686,6 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
 			settingsPermissions: cD[req.session.class].permissions.manageClass,
 		})
 	} catch (err) {
@@ -1226,7 +1242,6 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
 			title: 'Create Class',
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1237,13 +1252,12 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	}
 })
 
-app.get('/managerPanel', permCheck, (req, res) => {
+app.get('/managerPanel', isLoggedIn, permCheck, (req, res) => {
 	try {
 		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/managerPanel', {
-			title: 'Manager Panel',
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+			title: 'Manager Panel'
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
