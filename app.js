@@ -119,6 +119,7 @@ const PASSIVE_SOCKETS = [
 	'modeUpdate',
 	'quizUpdate',
 	'lessonUpdate',
+	'managerUpdate',
 	'vbUpdate',
 	'cpUpdate',
 	'joinRoom',
@@ -487,7 +488,9 @@ function isAuthenticated(req, res, next) {
 
 		if (req.session.username) {
 			if (cD.noClass.students[req.session.username]) {
-				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+				if (cD.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+					res.redirect('/manageClass')
+				} else if (cD.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 					res.redirect('/manageClass')
 				} else {
 					res.redirect('/selectClass')
@@ -605,8 +608,6 @@ app.use('/api', apiRoutes)
 app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		// if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
-		// 	res.redirect('/managerPanel')
 		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
@@ -812,36 +813,6 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			cD[req.session.class].steps = steps
 			res.redirect('/controlPanel')
 		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
-})
-
-app.get('/managerPanel', isAuthenticated, permCheck, (req, res) => {
-	try {
-		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-		let students = cD[req.session.class].students
-		let keys = Object.keys(students)
-		let allStuds = []
-
-		for (var i = 0; i < keys.length; i++) {
-			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-			allStuds.push(val)
-		}
-
-		/* Uses EJS to render the template and display the information for the class.
-		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-		*/
-		res.render('pages/managerPanel', {
-			title: 'Manager Panel',
-			pollStatus: cD[req.session.class].poll.status,
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-		})
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -1255,6 +1226,23 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
 			title: 'Create Class',
+			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch (err) {
+		logger.log('error', err.stack);
+		res.render('pages/message', {
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
+
+app.get('/managerPanel', permCheck, (req, res) => {
+	try {
+		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		res.render('pages/managerPanel', {
+			title: 'Manager Panel',
 			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
 		})
 	} catch (err) {
