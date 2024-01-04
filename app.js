@@ -53,6 +53,7 @@ app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@flo
 
 const jsonLogData = fs.readFileSync("logNumbers.json");
 var logNumbers = JSON.parse(jsonLogData);
+var logNumbersString = "";
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
@@ -60,33 +61,19 @@ var db = new sqlite3.Database('database/database.db')
 function createLoggerTransport(level) {
 	let transport = new winston.transports.DailyRotateFile({
 		filename: `logs/application-${level}-%DATE%.log`,
-	})
-}
+		datePattern: "YYYY-MM-DD-HH",
+		maxFiles: "30d",
+		level: level
+	});
 
-var criticalTransport = new winston.transports.DailyRotateFile({
-	filename: "logs/application-critical-%DATE%.log",
-	datePattern: "YYYY-MM-DD-HH",
-	maxFiles: "30d",
-	level: "critical"
-});
+	transport.on("rotate", function(oldFilename, newFilename) {
+		logNumbers.error = 0;
+		logNumbersString = JSON.stringify(logNumbers);
+		fs.writeFileSync("logNumbers.json", logNumbersString);
+	});
 
-var errorTransport = new winston.transports.DailyRotateFile({
-	filename: "logs/application-error-%DATE%.log",
-	datePattern: "YYYY-MM-DD-HH",
-	maxFiles: "30d",
-	level: "error"
-});
-
-var infoTransport = new winston.transports.DailyRotateFile({
-	filename: "logs/application-info-%DATE%.log",
-	datePattern: "YYYY-MM-DD-HH",
-	maxFiles: "30d",
-	level: "info"
-});
-
-var verboseTransport = new winston.transports.DailyRotateFile({
-
-})
+	return transport;
+};
 
 const logger = winston.createLogger({
 	levels: {
@@ -101,7 +88,7 @@ const logger = winston.createLogger({
 		winston.format.printf(({ timestamp, level, message }) => {
 			if (level == "error") {
 				logNumbers.error++;
-				var logNumbersString = JSON.stringify(logNumbers);
+				logNumbersString = JSON.stringify(logNumbers);
 				fs.writeFileSync("logNumbers.json", logNumbersString);
 				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
 			} else {
@@ -110,12 +97,10 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.DailyRotateFile({
-			filename: "logs/application-verbose-%DATE%.log",
-			datePattern: "YYYY-MM-DD-HH",
-			maxFiles: "30d",
-			level: "verbose"
-		}),
+		createLoggerTransport("critical"),
+		createLoggerTransport("error"),
+		createLoggerTransport("info"),
+		createLoggerTransport("verbose"),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
