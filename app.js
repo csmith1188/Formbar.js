@@ -126,7 +126,7 @@ const PASSIVE_SOCKETS = [
 	'leaveRoom',
 	'pluginUpdate',
 	'customPollUpdate',
-	'bannedStudentsUpdate'
+	'classBannedUsersUpdate'
 ]
 
 const GLOBAL_SOCKET_PERMISSIONS = {
@@ -135,7 +135,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
 	getUserClass: GUEST_PERMISSIONS,
-	managerUpdate: MANAGER_PERMISSIONS
+	managerUpdate: MANAGER_PERMISSIONS,
+	deleteUser: MANAGER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -173,8 +174,8 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	removeClassPollShare: 'controlPolls',
 	doStep: 'controlPolls',
 	classPermChange: 'manageStudents',
-	deleteStudent: 'manageStudents',
-	deleteStudents: 'manageStudents',
+	classKickUser: 'manageStudents',
+	classKickStudents: 'manageStudents',
 	approveBreak: 'breakAndHelp',
 	deleteTicket: 'breakAndHelp',
 	changePlugin: 'manageClass',
@@ -182,9 +183,9 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	removePlugin: 'manageClass',
 	endClass: 'manageClass',
 	modechange: 'manageClass',
-	bannedStudentsUpdate: 'manageStudents',
-	banStudent: 'manageStudents',
-	unbanStudent: 'manageStudents'
+	classBannedUsersUpdate: 'manageStudents',
+	classBanUser: 'manageStudents',
+	classUnbanUser: 'manageStudents'
 }
 
 const DEFAULT_CLASS_PERMISSIONS = {
@@ -609,6 +610,33 @@ function permCheck(req, res, next) {
 			title: 'Error'
 		})
 	}
+}
+
+async function runQuerySync(query, ...params) {
+	return new Promise((resolve, reject) => {
+		db.run(query, params, (err) => {
+			if (err) reject(err)
+			else resolve()
+		})
+	})
+}
+
+function runQuery(query, params) {
+	return new Promise((resolve, reject) => {
+		db.run(query, params, (err) => {
+			if (err) reject(new Error(err))
+			else resolve()
+		})
+	})
+}
+
+function getAll(query, params) {
+	return new Promise((resolve, reject) => {
+		db.all(query, params, (err, rows) => {
+			if (err) reject(new Error(err))
+			else resolve(rows)
+		})
+	})
 }
 
 
@@ -1134,7 +1162,7 @@ app.post('/login', async (req, res) => {
 					let newAPI
 					let newSecret
 
-					if (users.length == 0) permissions = TEACHER_PERMISSIONS
+					if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
 					for (let dbUser of users) {
 						existingAPIs.push(dbUser.API)
@@ -1754,6 +1782,31 @@ io.on('connection', (socket) => {
 		logger.log('error', err.stack);
 	}
 
+	async function managerUpdate() {
+		let [users, classrooms] = await Promise.all([
+			new Promise((resolve, reject) => {
+				db.all('SELECT id, username, permissions FROM users', (err, users) => {
+					if (err) reject(new Error(err))
+					else {
+						users = users.reduce((tempUsers, tmepUser) => {
+							tempUsers[tmepUser.username] = tmepUser
+							return tempUsers
+						}, {})
+						resolve(users)
+					}
+				})
+			}),
+			new Promise((resolve, reject) => {
+				db.get('SELECT * FROM classroom', (err, classrooms) => {
+					if (err) reject(new Error(err))
+					else resolve(classrooms)
+				})
+			})
+		])
+
+		io.emit('managerUpdate', users, classrooms)
+	}
+
 	function cpUpdate(classCode = socket.request.session.class) {
 		try {
 			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
@@ -1956,10 +2009,10 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function bannedStudentsUpdate(classCode = socket.request.session.class) {
+	function classBannedUsersUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[bannedStudentsUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[bannedStudentsUpdate] classCode=(${classCode})`)
+			logger.log('info', `[classBannedUsersUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classBannedUsersUpdate] classCode=(${classCode})`)
 
 			if (!classCode || classCode == 'noClass') return
 
@@ -1968,7 +2021,7 @@ io.on('connection', (socket) => {
 					if (err) throw err
 
 					bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.username)
-					io.to(classCode).emit('bannedStudentsUpdate', bannedStudents)
+					io.to(classCode).emit('classBannedUsersUpdate', bannedStudents)
 				} catch (err) {
 					logger.log('error', err.stack)
 				}
@@ -1978,9 +2031,9 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function deleteStudent(username, classCode = socket.request.session.class) {
+	function classKickUser(username, classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[deleteStudent] username=(${username}) classCode=(${classCode})`)
+			logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
 
 			userSockets[username].leave(cD[classCode].className)
 			cD.noClass.students[username] = cD[classCode].students[username]
@@ -1989,7 +2042,7 @@ io.on('connection', (socket) => {
 			userSockets[username].request.session.save()
 			delete cD[classCode].students[username]
 
-			logger.log('verbose', `[deleteStudent] cD=(${JSON.stringify(cD)})`)
+			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(cD)})`)
 
 			io.to(username).emit('reload')
 		} catch (err) {
@@ -1997,18 +2050,49 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function deleteStudents(classCode) {
+	function classKickStudents(classCode) {
 		try {
-			logger.log('info', `[deleteStudents] classCode=(${classCode})`)
+			logger.log('info', `[classKickStudents] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
-					deleteStudent(username, classCode)
+					classKickUser(username, classCode)
 				}
 			}
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
+	}
+
+	function logout(socket) {
+		const username = socket.request.session.username
+		const userId = socket.request.session.userId
+		const classCode = socket.request.session.class
+		const className = cD[classCode].className
+
+		socket.request.session.destroy((err) => {
+			try {
+				if (err) throw err
+
+				delete userSockets[username]
+				delete cD[classCode].students[username]
+				socket.leave(className)
+				socket.emit('reload')
+				cpUpdate(classCode)
+				vbUpdate(classCode)
+
+				db.get(
+					'SELECT * FROM classroom WHERE owner=? AND key=?',
+					[userId, classCode],
+					(err, classroom) => {
+						if (err) logger.log('error', err.stack)
+						if (classroom) endClass(classroom.key)
+					}
+				)
+			} catch (err) {
+				logger.log('error', err.stack)
+			}
+		})
 	}
 
 	function endPoll() {
@@ -2055,7 +2139,7 @@ io.on('connection', (socket) => {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
-				deleteStudent(username, classCode)
+				classKickUser(username, classCode)
 			}
 			delete cD[classCode]
 
@@ -2121,6 +2205,45 @@ io.on('connection', (socket) => {
 			)
 		} catch (err) {
 			logger.log('error', err.stack);
+		}
+	}
+
+	async function deleteCustomPolls(userId) {
+		try {
+			const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner = ?', userId)
+
+			if (customPolls.length == 0) return
+
+			await runQuery('DELETE FROM custom_polls WHERE userId = ?', customPolls[0].userId)
+
+			for (let customPoll of customPolls) {
+				await runQuery('DELETE FROM shared_polls WHERE pollId = ?', customPoll.pollId)
+			}
+		} catch (err) {
+			throw err
+		}
+	}
+
+	async function deleteClassrooms(userId) {
+		try {
+			const classrooms = await getAll('SELECT * FROM classroom WHERE owner = ?', userId)
+
+			if (classrooms.length == 0) return
+
+			await runQuery('DELETE FROM classroom WHERE owner = ?', classrooms[0].owner)
+
+			for (let classroom of classrooms) {
+				if (cD[classroom.key]) endClass(classroom.key)
+
+				await Promise.all([
+					runQuery('DELETE FROM classusers WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM class_polls WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM plugins WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM lessons WHERE class = ?', classroom.id)
+				])
+			}
+		} catch (err) {
+			throw err
 		}
 	}
 
@@ -2251,8 +2374,6 @@ io.on('connection', (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		try {
-			newPerm = Number(newPerm)
-
 			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
 
@@ -2280,8 +2401,15 @@ io.on('connection', (socket) => {
 			logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[permChange] user=(${user}) newPerm=(${newPerm})`)
 
-			cD[socket.request.session.class].students[user].permissions = newPerm
-			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
+			let classCode = getUserClass(user)
+			if (classCode instanceof Error) throw classCode
+
+			if (classCode)
+				cD[classCode].students[user].permissions = newPerm
+
+			io.to(user).emit('reload')
+
+			db.run('UPDATE users SET permissions = ? WHERE id = ?', [newPerm, user])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2511,38 +2639,18 @@ io.on('connection', (socket) => {
 						return
 					}
 
-					db.run('BEGIN TRANSACTION')
+					await runQuery('BEGIN TRANSACTION')
 
 					await Promise.all([
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM custom_polls WHERE i = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						}),
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						}),
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM class_polls WHERE pollId = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						})
+						runQuery('DELETE FROM custom_polls WHERE id = ?', pollId),
+						runQuery('DELETE FROM shared_polls WHERE pollId = ?', pollId),
+						runQuery('DELETE FROM class_polls WHERE pollId = ?', pollId),
 					]).catch(async (err) => {
-						await new Promise((resolve, reject) => {
-							db.run('ROLLBACK', (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						})
+						await runQuery('ROLLBACK')
 						throw err
 					})
 
-					db.run('COMMIT')
+					await runQuery('COMMIT')
 
 					for (let classroom of Object.values(cD)) {
 						let updatePolls = false
@@ -2966,13 +3074,13 @@ io.on('connection', (socket) => {
 	})
 
 	// Deletes a user from the class
-	socket.on('deleteStudent', (username) => {
+	socket.on('classKickUser', (username) => {
 		try {
-			logger.log('info', `[deleteStudent] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[deleteStudent] username=(${username})`)
+			logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickUser] username=(${username})`)
 
 			const classCode = socket.request.session.class
-			deleteStudent(username, classCode)
+			classKickUser(username, classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -2981,12 +3089,12 @@ io.on('connection', (socket) => {
 	})
 
 	// Deletes all students from the class
-	socket.on('deleteStudents', () => {
+	socket.on('classKickStudents', () => {
 		try {
-			logger.log('info', `[deleteStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			const classCode = socket.request.session.class
-			deleteStudents(classCode)
+			classKickStudents(classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3001,7 +3109,7 @@ io.on('connection', (socket) => {
 			const userId = socket.request.session.userId
 			const username = socket.request.session.username
 			const classCode = socket.request.session.class
-			deleteStudent(username, classCode)
+			classKickUser(username, classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 
@@ -3022,33 +3130,7 @@ io.on('connection', (socket) => {
 		try {
 			logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-			const username = socket.request.session.username
-			const userId = socket.request.session.userId
-			const classCode = socket.request.session.class
-			const className = cD[classCode].className
-
-			socket.request.session.destroy((err) => {
-				try {
-					if (err) throw err
-
-					delete userSockets[username]
-					delete cD[classCode].students[username]
-					socket.leave(className)
-					cpUpdate(classCode)
-					vbUpdate(classCode)
-
-					db.get(
-						'SELECT * FROM classroom WHERE owner=? AND key=?',
-						[userId, classCode],
-						(err, classroom) => {
-							if (err) logger.log('error', err.stack)
-							if (classroom) endClass(classroom.key)
-						}
-					)
-				} catch (err) {
-					logger.log('error', err.stack)
-				}
-			})
+			logout(socket)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3126,6 +3208,10 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
+	})
+
+	socket.on('managerUpdate', () => {
+		managerUpdate()
 	})
 
 	// Updates and stores poll history
@@ -3397,11 +3483,11 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('bannedStudentsUpdate', () => {
-		bannedStudentsUpdate()
+	socket.on('classBannedUsersUpdate', () => {
+		classBannedUsersUpdate()
 	})
 
-	socket.on('banStudent', (user) => {
+	socket.on('classBanUser', (user) => {
 		try {
 			logger.log('info', `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[ban] user=(${user})`)
@@ -3431,8 +3517,8 @@ io.on('connection', (socket) => {
 					if (cD[socket.request.session.class].students[user])
 						cD[socket.request.session.class].students[user].classPermissions = 0
 
-					deleteStudent(user)
-					bannedStudentsUpdate()
+					classKickUser(user)
+					classBannedUsersUpdate()
 					cpUpdate()
 					socket.emit('message', `Banned ${user}`)
 				} catch (err) {
@@ -3446,7 +3532,7 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('unbanStudent', (user) => {
+	socket.on('classUnbanUser', (user) => {
 		try {
 			logger.log('info', `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[unban] user=(${user})`)
@@ -3476,7 +3562,7 @@ io.on('connection', (socket) => {
 					if (cD[socket.request.session.class].students[user])
 						cD[socket.request.session.class].students[user].permissions = 1
 
-					bannedStudentsUpdate()
+					classBannedUsersUpdate()
 					socket.emit('message', `Unbanned ${user}`)
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -3508,6 +3594,50 @@ io.on('connection', (socket) => {
 			})
 		} catch (err) {
 			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('deleteUser', async (userId) => {
+		try {
+			logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteUser] userId=(${userId})`)
+
+			const user = await new Promise((resolve, reject) => {
+				db.get('SELECT * FROM users WHERE id = ?', userId, (err, user) => {
+					if (err) reject(err)
+					resolve(user)
+				})
+			})
+			if (!user) {
+				socket.emit('message', 'User not found')
+				return
+			}
+
+			if (userSockets[user.username])
+				logout(userSockets[user.username])
+
+			try {
+				await runQuery('BEGIN TRANSACTION')
+
+				await Promise.all([
+					runQuery('DELETE FROM users WHERE id = ?', userId),
+					runQuery('DELETE FROM classusers WHERE studentId = ?', userId),
+					runQuery('DELETE FROM shared_polls WHERE userId = ?', userId),
+				])
+
+				await deleteCustomPolls(userId)
+				await deleteClassrooms(userId)
+
+				await runQuery('COMMIT')
+				await managerUpdate()
+				socket.emit('message', 'User deleted successfully')
+			} catch (err) {
+				await runQuery('ROLLBACK')
+				throw err
+			}
+		} catch (err) {
+			logger.log('error', err.stack);
+			socket.emit('message', 'There was a server error try again.');
 		}
 	})
 })

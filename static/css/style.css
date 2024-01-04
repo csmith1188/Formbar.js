@@ -472,13 +472,14 @@ input[type="radio"]:focus {
 	line-height: 2;
 }
 
-#deleteStudents{
+#kickStudents {
 	margin-top: 15px;
 }
 
-#deleteStudents,
+.deleteUser,
+#kickStudents,
+#kickStudents,
 #endClass,
-.deleteStudent,
 #delete-poll,
 .delete-poll,
 .banStudent

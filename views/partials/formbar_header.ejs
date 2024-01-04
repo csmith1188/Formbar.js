@@ -5,7 +5,7 @@
 </style>
 <header id="formbarHeader">
   <a href="/" id="headerLogo">Formbar</a>
-  <% if (currentUser) { %>
+  <% if (locals.currentUser) { %>
     <% if (currentUser.classPermissions) { %>
       <a href="/" class="headerTab">Panel</a>
       <% } %>
@@ -13,16 +13,19 @@
           <a href="/managerPanel" class="headerTab">Manager</a>
           <% } %>
             <% if (!currentUser.classPermissions) { %>
-              <a href="/manageClass" class="headerTab">Manage Class</a>
-              <% } %>
-                <% if (currentUser.classPermissions>=STUDENT_PERMISSIONS) { %>
-                  <a href="/plugins" class="headerTab">Plugins</a>
-                  <a href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
-                    Class</a>
-                  <% }%>
-                    <a href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</a>
-                    <% } %>
-                      <button onclick="changeTheme()">LM/DM</button>
+              <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                <a href="/manageClass" class="headerTab">Manage Class</a>
+                <% } %>
+                  <a href="/selectClass" class="headerTab">Join Class</a>
+                  <% } %>
+                    <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+                      <a href="/plugins" class="headerTab">Plugins</a>
+                      <a href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
+                        Class</a>
+                      <% } %>
+                        <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
+                        <% } %>
+                          <button onclick="changeTheme()">LM/DM</button>
 </header>
 <script>
   document.body.style.backgroundColor = getCookie("theme")
@@ -48,4 +51,6 @@
       document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"
     }
   }
+
+  console.log('<%- JSON.stringify(currentUser) %>');
 </script>
