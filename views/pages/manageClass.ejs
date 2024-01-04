@@ -27,10 +27,8 @@
                     </div>
                 </div>
         </body>
-
         <script>
-            let currentUser = JSON.parse('<%- currentUser %>')
-
+            let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
             let startClassForm = document.getElementById("selectClassForm")
             let deleteClassForm = document.getElementById("deleteClassForm")
             let startClassSelect = document.getElementById("startClassSelect")

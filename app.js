@@ -134,7 +134,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
-	getUserClass: GUEST_PERMISSIONS
+	getUserClass: GUEST_PERMISSIONS,
+	managerUpdate: MANAGER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -506,7 +507,7 @@ function isAuthenticated(req, res, next) {
 		if (req.session.username) {
 			if (cD.noClass.students[req.session.username]) {
 				if (cD.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
-					res.redirect('/manageClass')
+					res.redirect('/managerPanel')
 				} else if (cD.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 					res.redirect('/manageClass')
 				} else {
