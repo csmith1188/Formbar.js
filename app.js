@@ -133,7 +133,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
-	getUserClass: GUEST_PERMISSIONS
+	getUserClass: GUEST_PERMISSIONS,
+	saveTags: TEACHER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -158,7 +159,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 // make a better name for this
 const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	startPoll: 'controlPolls',
-  clearPoll: 'controlPolls',
+	clearPoll: 'controlPolls',
 	endPoll: 'controlPolls',
 	customPollUpdate: 'controlPolls',
 	savePoll: 'controlPolls',
@@ -204,12 +205,14 @@ class Student {
 		permissions = STUDENT_PERMISSIONS,
 		API,
 		ownedPolls = [],
-		sharedPolls = []
+		sharedPolls = [],
+		tags
 	) {
 		this.username = username
 		this.id = id
 		this.permissions = permissions
 		this.classPermissions = null
+		this.tags = db.get('SELECT tags FROM users WHERE id=' + id)
 		this.ownedPolls = ownedPolls || []
 		this.sharedPolls = sharedPolls || []
 		this.pollRes = {
@@ -1111,7 +1114,9 @@ app.post('/login', async (req, res) => {
 							userData.permissions,
 							userData.API,
 							JSON.parse(userData.ownedPolls),
-							JSON.parse(userData.sharedPolls)
+							JSON.parse(userData.sharedPolls),
+							userData.tags
+
 						)
 						req.session.class = 'noClass'
 					}
@@ -2007,7 +2012,7 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function endPoll () {
+	function endPoll() {
 		try {
 			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
@@ -2340,7 +2345,8 @@ io.on('connection', (socket) => {
 
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 			cD[socket.request.session.class].poll.responses = {}
 			cD[socket.request.session.class].poll.prompt = ''
 			cD[socket.request.session.class].poll = {
@@ -2352,18 +2358,20 @@ io.on('connection', (socket) => {
 				blind: false,
 
 			}
-		vbUpdate ()		} catch (err) {
+			vbUpdate()
+		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
 
 	socket.on('endPoll', () => {
-		try { endPoll ()
+		try {
+			endPoll()
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	})
-	
+
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3502,7 +3510,36 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
-	})
+	});
+	socket.on('saveTags', 
+	(studentId, tags) => {
+		try {
+			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+			//cD[socket.request.session.class].students[studentId].tags = tags
+			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
+				if (err) {
+					return console.error(err.message);
+				}
+				if (row) {
+					// Row exists, update it
+					db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
+						if (err) {
+							return console.error(err.message);
+						}
+						console.log(`Row(s) updated: ${this.changes}`);
+					});
+				} else {
+					console.log(`No row found with id ${studentId}`);
+				}
+			});
+		}
+
+		catch (err) {
+			logger.log('error', err.stack)
+		}
+	}
+	);
 })
 
 

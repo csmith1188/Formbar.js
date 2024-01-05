@@ -96,7 +96,8 @@
 						<br>
 						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
 						<br>
-						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous Polls</button>
+						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+							Polls</button>
 
 					</div>
 					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
@@ -140,7 +141,8 @@
 				</div>
 				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div class="options">
-						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
+						<button id="permissions" class="quickButton tab pressed"
+							data-tab-group="settingsTabs">Permissions</button>
 						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
 					</div>
 					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
@@ -913,6 +915,12 @@
 						checkbox.type = 'checkbox';
 						checkbox.name = `checkbox${tagNames[i]}`;
 						checkbox.value = tagNames[i];
+						// studentData.tags.split(",").forEach(tag => {
+						// 	console.log(tag, tagNames[i]);
+						// 	if (tag == tagNames[i]) {
+						// 		checkbox.checked = true;
+						// 	}
+						// });
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -922,7 +930,6 @@
 						tagForm.appendChild(document.createElement('br'));
 					}
 					studentTags.appendChild(tagForm)
-					studentTags.appendChild(closeButton);
 					document.body.appendChild(studentTags);
 					closeButton.addEventListener('click', function () {
 						studentData.tags = ""
@@ -935,15 +942,18 @@
 							if (checkbox.type === "checkbox") {
 								if (checkbox.checked) {
 									// Add the checkbox value to the studentData.tags array
-									allTags += checkbox.value + ", "									
+									allTags += checkbox.value + ", "
 								}
 							}
 						}
 						studentData.tags = allTags.split(", ")
 						studentData.tags.pop()
-						console.log(studentData.tags);
+						studentData.tags.sort()
+						console.log(studentData.id, studentData.tags);
+						socket.emit('saveTags', studentData.id, studentData.tags)
 						studentTags.close();
 					});
+					studentTags.appendChild(closeButton);
 					newStudent.appendChild(toggleDialog);
 					newStudent.appendChild(permissionSwitch);
 					newStudent.append(" ");
