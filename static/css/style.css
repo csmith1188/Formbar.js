@@ -333,6 +333,11 @@ input[type="radio"]:focus {
 	outline-offset: max(2px, 0.15em);
 }
 
+/* --- Manager Panel --- */
+.ipListToggle {
+	margin: 1rem 0;
+}
+
 /* --- LOGIN --- */
 
 .loginBox {

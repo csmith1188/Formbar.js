@@ -1516,8 +1516,8 @@
 					pluginURL.onchange = (event) => {
 						let pluginURL = event.target
 
-						if (!pluginURL.checkValidity()) {
-							pluginURL.reportValidity()
+						if (!event.target.checkValidity()) {
+							event.target.reportValidity()
 							return
 						}
 

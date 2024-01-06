@@ -3,33 +3,40 @@
 		<!DOCTYPE html>
 		<html lang="en">
 
-		<head>
-			<meta charset="UTF-8">
-			<meta http-equiv="X-UA-Compatible" content="IE=edge">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<script src="/js/tabs.js" defer></script>
-		</head>
+			<head>
+				<meta charset="UTF-8">
+				<meta http-equiv="X-UA-Compatible" content="IE=edge">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<script src="/js/tabs.js" defer></script>
+			</head>
 
-		<body">
-			<%- include('../partials/formbar_header') %>
-				<header id="quickMenu">
-					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-					<!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
-				</header>
+			<body>
+				<%- include('../partials/formbar_header') %>
+					<header id="quickMenu">
+						<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+						<button id="ipMenu" class="quickButton tab" data-tab-group="mainTabs">IP Addresses</button>
+						<!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
+					</header>
 
-				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-					<!-- <div id="userFilterBoxes" class="options">
+					<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+						<!-- <div id="userFilterBoxes" class="options">
 							<h2 class="headerText">Filter</h2>
 						</div> -->
-					<div id="userSortBoxes" class="options">
-						<h2 class="headerText">Sort</h2>
-						<button type="button" id="name" class="sort">Name</button>
-						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+						<div id="userSortBoxes" class="options">
+							<h2 class="headerText">Sort</h2>
+							<button type="button" id="name" class="sort">Name</button>
+							<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+						</div>
+						<div id="users">
+						</div>
 					</div>
-					<div id="users">
+					<div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
+						<button id="whitelist" class="quickButton tab" data-tab-group="ipTabs">Whitelist</button>
+						<button id="blacklist" class="quickButton tab pressed" data-tab-group="ipTabs">Blacklist</button>
+						<div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
+						<div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
 					</div>
-				</div>
-				<!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+					<!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div class="options">
 						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
 						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
@@ -39,21 +46,14 @@
 						<div id="permissionsList"></div>
 					</div>
 				</div> -->
-				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
-				<%- include('../partials/body_content') %>
-					</body>
+					<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+					<%- include('../partials/body_content') %>
+			</body>
 
 		</html>
 		<script>
 			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
 			let users = {}
-			let userCustomPolls = []
-			let classroomCustomPolls = []
-			let publicCustomPolls = []
-			let customPolls = []
-			let editingPollId = null
-			let currentSharePollId = null
-			let currentSharePollType = null
 
 			const FilterState = {
 			}
@@ -84,54 +84,9 @@
 				permissions: 1
 			}
 
-			let letterString = "abcdefghijklmnopqrstuvwxyz"
-			let generatedColors = []
-			let pollResponses = []
-			let colorPickers = []
-
-			var usersDiv = document.getElementById('users')
-			var resNumber = document.getElementById('resNumber')
-			var resTextBox = document.getElementById('resTextBox')
-			var endPoll = document.getElementById('endPoll')
-			var clearPoll = document.getElementById('clearPoll')
-			var startPollForm = document.getElementById('startPollForm')
-			var pollPrompt = document.getElementById('pollBox')
-			var pollFilter = document.getElementById('pollFilter')
-			var missingPollFilter = document.getElementById('missingPollFilter')
-			var lettFilter = document.getElementById('lettFilter')
-			var textFilter = document.getElementById('textFilter')
-			var permSort = document.getElementById('permSort')
-			var permSortLabel = document.getElementById('permSortLabel')
-			var helpFilter = document.getElementById('helpFilter')
-			var responsesDiv = document.getElementById('responses')
-			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
-			let resetColorsButton = document.getElementById('resetColors')
-			let settingsDiv = document.querySelector('.tabContent#settingsMenu')
-			var pluginsDiv = document.querySelector('.tabContent#plugins')
-			var previousPolls = document.getElementById('previousPolls')
-			var previousPollButtons = document.getElementById('previousPollButtons')
-			var toPollsButton = document.getElementById('toPolls')
-			var toPollHistoryButton = document.getElementById('toPollHistory')
-			let blindCheck = document.getElementById('blind')
-			var classCode = document.getElementById('classCode')
-			var menuUsers = document.getElementById('menuUsers')
-			var menuPolls = document.getElementById('menuPolls')
-			var mainPolls = document.getElementById('menuPolls')
-			var menuLesson = document.getElementById('menuLesson')
-			var menuPlugins = document.getElementById('menuPlugins')
-			let unloadPollButton = document.getElementById('unload-poll')
-			let savePollButton = document.getElementById('save-poll')
-			let deletePollButton = document.getElementById('delete-poll')
-			let sharePollDialog = document.getElementById('sharePollDialog')
-			let sharePollUserInput = document.getElementById('sharePollUserInput')
-			let sharePollClassInput = document.getElementById('sharePollClassInput')
-			let permissionsDiv = document.querySelector('#permissionsList')
-			let usersTabButton = document.querySelector('.tab#userMenu')
-			let bannedTabButton = document.querySelector('.tab#bannedMenu')
-			let pollsTabButton = document.querySelector('.tab#pollsMenu')
-			let settingsTabButton = document.querySelector('.tab#settingsMenu')
-			let permissionsTabButton = document.querySelector('.tab#permissions')
-			let pluginsTabButton = document.querySelector('.tab#plugins')
+			let usersDiv = document.getElementById('users')
+			let whitelistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#whitelist')
+			let blacklistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#blacklist')
 
 			function camelCaseToNormal(str) {
 				let result = str.replace(/([A-Z])/g, " $1")
@@ -141,8 +96,6 @@
 
 			// makes user elements
 			function buildUser(userData) {
-				console.log(userData);
-
 				var newUser = document.createElement("div")
 				newUser.classList.add("user")
 				let userElement = document.createElement("p")
@@ -236,7 +189,7 @@
 					banUserButton.setAttribute("data-user", userData.id)
 					banUserButton.innerText = "Ban User"
 					banUserButton.onclick = (event) => {
-						socket.emit('banUser', userData.id)
+						socket.emit('banUser', { id: userData.id })
 					}
 					newUser.appendChild(banUserButton)
 					let deleteUserButton = document.createElement("button")
@@ -322,6 +275,90 @@
 				users = tempUsers
 
 				filterSortChange()
+			})
+			socket.emit('ipUpdate')
+			socket.on('ipUpdate', (type, active, ips) => {
+				let ipListDiv
+				if (type == 'whitelist') ipListDiv = whitelistIpsDiv
+				else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
+
+				ipListDiv.innerHTML = ''
+
+				console.log(type, active, ips);
+
+				let ipListToggle = document.createElement('button')
+				ipListToggle.className = 'quickButton ipListToggle'
+				if (active)
+					ipListToggle.classList = 'pressed'
+				ipListToggle.innerText = `Toggle ${type}`
+				ipListToggle.onclick = (event) => {
+					socket.emit('toggleIpList', event.target.parentElement.id)
+				}
+				ipListDiv.appendChild(ipListToggle)
+
+				for (let ip of Object.values(ips)) {
+					let ipDiv = document.createElement('div')
+					ipDiv.id = ip.id
+					ipDiv.className = 'ipDiv'
+					let ipName = document.createElement('input')
+					ipName.type = 'text'
+					ipName.value = ip.ip
+					ipName.placeholder = 'IP Address'
+					ipName.onchange = (event) => {
+						if (!event.target.checkValidity()) {
+							event.target.reportValidity()
+							return
+						}
+
+						socket.emit(
+							'changeIp',
+							event.target.parentElement.parentElement.id,
+							event.target.parentElement.id,
+							event.target.value
+						)
+					}
+					ipDiv.appendChild(ipName)
+					let removeIp = document.createElement('button')
+					removeIp.className = 'quickButton'
+					removeIp.innerText = 'Remove Ip'
+					removeIp.onclick = (event) => {
+						socket.emit(
+							'removeIp',
+							event.target.parentElement.parentElement.id,
+							event.target.parentElement.id
+						)
+					}
+					ipDiv.appendChild(removeIp)
+					ipListDiv.appendChild(ipDiv)
+				}
+
+				let addIpForm = document.createElement('div')
+				addIpForm.id = 'addIpForm'
+				let newIp = document.createElement('input')
+				newIp.id = 'newIp'
+				newIp.type = 'text'
+				newIp.placeholder = 'IP Address'
+				newIp.onchange = (event) => {
+					if (!event.target.checkValidity()) {
+						event.target.reportValidity()
+						return
+					}
+				}
+				addIpForm.append(newIp)
+				let submitIp = document.createElement('button')
+				submitIp.className = 'quickButton'
+				submitIp.innerText = 'Add IP'
+				submitIp.onclick = (event) => {
+					let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`)
+
+					socket.emit(
+						'addIp',
+						newIp.parentElement.parentElement.id,
+						newIp.value
+					)
+				}
+				addIpForm.append(submitIp)
+				ipListDiv.append(addIpForm)
 			})
 		</script>
 		<% - include('../partials/footer_content') %>

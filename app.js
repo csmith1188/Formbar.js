@@ -50,11 +50,11 @@ app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 
-const jsonLogData = fs.readFileSync("logNumbers.json");
-var logNumbers = JSON.parse(jsonLogData);
+let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
+let settings = JSON.parse(fs.readFileSync("settings.json"))
 
 // Establishes the connection to the database file
-var db = new sqlite3.Database('database/database.db')
+let db = new sqlite3.Database('database/database.db')
 const logger = winston.createLogger({
 	levels: {
 		critical: 0,
@@ -86,10 +86,12 @@ const logger = winston.createLogger({
 })
 
 //cD is the class dictionary, it stores all of the information on classes and students
-var cD = {
+let cD = {
 	noClass: { students: {} }
 }
 
+let whitelistedIps = {}
+let blacklistedIps = {}
 
 // Constants
 // permissions levels
@@ -120,6 +122,7 @@ const PASSIVE_SOCKETS = [
 	'quizUpdate',
 	'lessonUpdate',
 	'managerUpdate',
+	'ipUpdate',
 	'vbUpdate',
 	'cpUpdate',
 	'joinRoom',
@@ -135,8 +138,13 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
 	getUserClass: GUEST_PERMISSIONS,
+	deleteUser: MANAGER_PERMISSIONS,
 	managerUpdate: MANAGER_PERMISSIONS,
-	deleteUser: MANAGER_PERMISSIONS
+	ipUpdate: MANAGER_PERMISSIONS,
+	addIp: MANAGER_PERMISSIONS,
+	removeIp: MANAGER_PERMISSIONS,
+	changeIp: MANAGER_PERMISSIONS,
+	toggleIpList: MANAGER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -612,15 +620,6 @@ function permCheck(req, res, next) {
 	}
 }
 
-async function runQuerySync(query, ...params) {
-	return new Promise((resolve, reject) => {
-		db.run(query, params, (err) => {
-			if (err) reject(err)
-			else resolve()
-		})
-	})
-}
-
 function runQuery(query, params) {
 	return new Promise((resolve, reject) => {
 		db.run(query, params, (err) => {
@@ -639,6 +638,14 @@ function getAll(query, params) {
 	})
 }
 
+async function getIpAccess(type) {
+	let ipList = await getAll(`SELECT id, ip FROM ip_${type}`)
+	return ipList.reduce((ips, ip) => {
+		ips[ip.id] = ip
+		return ips
+	}, {})
+}
+
 
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
@@ -646,6 +653,38 @@ const apiRoutes = require('./routes/api.js')(cD)
 //add routes to express
 app.use('/api', apiRoutes)
 
+// check if ip is banned
+app.use((req, res, next) => {
+	let ip = req.ip
+	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
+
+	if (settings.whitelistActive && Object.keys(whitelistedIps).length > 0) {
+		const isWhitelisted = Object.values(whitelistedIps)
+			.some(value => ip.startsWith(value.ip))
+
+		if (!isWhitelisted) {
+			res.render('pages/message', {
+				message: 'Your IP has been banned',
+				title: 'Banned'
+			})
+			return
+		}
+	}
+	if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
+		const isBlacklisted = Object.values(blacklistedIps)
+			.some(value => ip.startsWith(value.ip))
+
+		if (isBlacklisted) {
+			res.render('pages/message', {
+				message: 'Your IP has been banned',
+				title: 'Banned'
+			})
+			return
+		}
+	}
+
+	next()
+})
 
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -671,7 +710,7 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
-app.get('/apikey', isAuthenticated, (req, res) => {
+app.get('/apikey', isLoggedIn, (req, res) => {
 	try {
 		logger.log('info', `[get /apikey] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
@@ -1720,50 +1759,48 @@ app.use((req, res, next) => {
 })
 
 
-// Middleware for sockets
 // Authentication for users and plugins to connect to formbar websockets
 // The user must be logged in order to connect to websockets
-io.use((socket, next) => {
-	try {
-		let { api } = socket.request.headers
+// io.use((socket, next) => {
+// 	try {
+// 		let { api } = socket.request.headers
 
-		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+// 		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
 
-		if (socket.request.session.username) {
-			next()
-		} else if (api) {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE API = ?',
-				[api],
-				(err, userData) => {
-					try {
-						if (err) throw err
-						if (!userData) {
-							logger.log('verbose', '[socket authentication] not a valid API Key')
-							next(new Error('Not a valid API key'))
-							return
-						}
+// 		if (socket.request.session.username) {
+// 			next()
+// 		} else if (api) {
+// 			db.get(
+// 				'SELECT id, username, permissions FROM users WHERE API = ?',
+// 				[api],
+// 				(err, userData) => {
+// 					try {
+// 						if (err) throw err
+// 						if (!userData) {
+// 							logger.log('verbose', '[socket authentication] not a valid API Key')
+// 							next(new Error('Not a valid API key'))
+// 							return
+// 						}
 
-						socket.request.session.api = api
-						socket.request.session.class = 'noClass'
+// 						socket.request.session.api = api
+// 						socket.request.session.class = 'noClass'
 
-						next()
-					} catch (err) {
-						logger.log('error', err.stack);
-					}
-				}
-			)
-		} else {
-			logger.log('info', '[socket authentication] Missing username or api')
-			next(new Error('Missing API key'))
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-	}
-})
+// 						next()
+// 					} catch (err) {
+// 						logger.log('error', err.stack);
+// 					}
+// 				}
+// 			)
+// 		} else {
+// 			logger.log('info', '[socket authentication] Missing username or api')
+// 			next(new Error('Missing API key'))
+// 		}
+// 	} catch (err) {
+// 		logger.log('error', err.stack);
+// 	}
+// })
 
 let rateLimits = {}
-
 let userSockets = {}
 
 //Handles the websocket communications
@@ -2247,8 +2284,82 @@ io.on('connection', (socket) => {
 		}
 	}
 
+	function ipUpdate(type, username) {
+		try {
+			logger.log('info', `[ipUpdate] username=(${username})`)
+
+			let ipList = {}
+			if (type == 'whitelist') ipList = whitelistedIps
+			else if (type == 'blacklist') ipList = blacklistedIps
+
+			if (type) {
+				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
+			} else {
+				ipUpdate('whitelist', username)
+				ipUpdate('blacklist', username)
+			}
+		} catch (err) {
+			logger.log('error', err.stack);
+		}
+	}
+
+	async function reloadPageByIp(ip) {
+		for (let userSocket of await io.fetchSockets()) {
+			let userIp = userSocket.handshake.address
+
+			if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
+
+			if (userIp.startsWith(ip)) {
+				userSocket.emit('reload')
+			}
+		}
+	}
+
+	// authentication for sockets
+	socket.use(([event, ...args], next) => {
+		try {
+			let { api } = socket.request.headers
+
+			logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+
+			if (socket.request.session.username) {
+				next()
+			} else if (api) {
+				db.get(
+					'SELECT id, username, permissions FROM users WHERE API = ?',
+					[api],
+					(err, userData) => {
+						try {
+							if (err) throw err
+							if (!userData) {
+								logger.log('verbose', '[socket authentication] not a valid API Key')
+								next(new Error('Not a valid API key'))
+								return
+							}
+
+							socket.request.session.api = api
+							socket.request.session.class = 'noClass'
+
+							next()
+						} catch (err) {
+							logger.log('error', err.stack)
+						}
+					}
+				)
+			} else if (event == 'reload') {
+				next()
+			} else {
+				logger.log('info', '[socket authentication] Missing username or api')
+				next(new Error('Missing API key'))
+			}
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
 	//rate limiter
-	socket.use((packet, next) => {
+	socket.use(([event, ...args], next) => {
 		try {
 			const username = socket.request.session.username
 			const currentTime = Date.now()
@@ -2265,29 +2376,28 @@ io.on('connection', (socket) => {
 
 			const userRequests = rateLimits[username]
 
-			const requestType = packet[0]
-			if (!limitedRequests.includes(requestType)) {
+			if (!limitedRequests.includes(event)) {
 				next()
 				return
 			}
 
-			userRequests[requestType] = userRequests[requestType] || []
+			userRequests[event] = userRequests[event] || []
 
-			userRequests[requestType] = userRequests[requestType].filter((timestamp) => currentTime - timestamp < timeFrame)
+			userRequests[event] = userRequests[event].filter((timestamp) => currentTime - timestamp < timeFrame)
 
 			logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
 
-			if (userRequests[requestType].length >= limit) {
+			if (userRequests[event].length >= limit) {
 				socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
 				setTimeout(() => {
 					try {
-						userRequests[requestType].shift()
+						userRequests[event].shift()
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
 				}, blockTime)
 			} else {
-				userRequests[requestType].push(currentTime)
+				userRequests[event].push(currentTime)
 				next()
 			}
 		} catch (err) {
@@ -2296,31 +2406,30 @@ io.on('connection', (socket) => {
 	})
 
 	//permission check
-	socket.use((packet, next) => {
+	socket.use(([event, ...args], next) => {
 		try {
-			const username = socket.request.session.username
-			const classCode = socket.request.session.class
-			const socketType = packet[0]
+			let username = socket.request.session.username
+			let classCode = socket.request.session.class
 
 			if (
-				GLOBAL_SOCKET_PERMISSIONS[socketType] &&
-				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[socketType]
+				GLOBAL_SOCKET_PERMISSIONS[event] &&
+				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
 			) {
 				next()
 			} else if (
-				CLASS_SOCKET_PERMISSIONS[socketType] &&
-				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
+				CLASS_SOCKET_PERMISSIONS[event] &&
+				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
 			) {
 				next()
 			} else if (
-				CLASS_SOCKET_PERMISSION_SETTINGS[socketType] &&
-				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]] &&
-				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]]
+				CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
+				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
+				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
 			) {
 				next()
 			} else {
-				if (!PASSIVE_SOCKETS.includes(socketType))
-					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(socketType)}.`)
+				if (!PASSIVE_SOCKETS.includes(event))
+					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(event)}.`)
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -2498,7 +2607,6 @@ io.on('connection', (socket) => {
 			logger.log('error', err.stack);
 		}
 	})
-
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3636,14 +3744,167 @@ io.on('connection', (socket) => {
 				throw err
 			}
 		} catch (err) {
-			logger.log('error', err.stack);
-			socket.emit('message', 'There was a server error try again.');
+			logger.log('error', err.stack)
+			socket.emit('message', 'There was a server error try again.')
 		}
+	})
+
+	socket.on('ipUpdate', () => {
+		ipUpdate(null, socket.request.session.username)
+	})
+
+	socket.on('changeIp', (type, id, ip) => {
+		try {
+			logger.log('info', `[changeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[changeIp] type=(${type}) id=(${id}) ip=(${ip})`)
+
+			if (type != 'whitelist' && type != 'blacklist') {
+				logger.log('critical', 'invalid type')
+				socket.emit('message', 'Invalid Ip type')
+				return
+			}
+
+			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+				if (err) {
+					logger.log('error', err.stack)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				if (!dbIp) {
+					socket.emit('message', 'Ip not found')
+					return
+				}
+
+
+				db.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
+					if (err) logger.log('error', err)
+					else {
+						if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
+						else if (type == 'blacklist') blacklistedIps[dbIp.id].ip = ip
+
+						reloadPageByIp(ip)
+						reloadPageByIp(dbIp.ip)
+						ipUpdate(type)
+					}
+				})
+			})
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('addIp', (type, ip) => {
+		logger.log('info', `[addIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[addIp] type=(${type}) ip=(${ip})`)
+
+		if (type != 'whitelist' && type != 'blacklist') {
+			logger.log('critical', 'invalid type')
+			socket.emit('message', 'Invalid Ip type')
+			return
+		}
+
+		db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+			if (err) {
+				logger.log('error', err.stack)
+				socket.emit('message', 'There was a server error try again.')
+				return
+			}
+
+			if (dbIp) {
+				socket.emit('message', `IP already in ${type}`)
+				return
+			}
+
+			db.run(`INSERT INTO ip_${type} (ip) VALUES (?)`, [ip], (err) => {
+				if (err) {
+					logger.log('error', err.stack)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+					if (err) {
+						logger.log('error', err.stack)
+						socket.emit('message', 'There was a server error try again.')
+						return
+					}
+
+					if (type == 'whitelist') whitelistedIps[dbIp.id] = dbIp
+					else if (type == 'blacklist') blacklistedIps[dbIp.id] = dbIp
+
+					reloadPageByIp(ip)
+					ipUpdate(type)
+					socket.emit('message', `IP added to ${type}`)
+				})
+			})
+		})
+	})
+
+	socket.on('removeIp', (type, id) => {
+		try {
+			logger.log('info', `[removeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeIp] type=(${type}) id=(${id})`)
+
+			if (type != 'whitelist' && type != 'blacklist') {
+				logger.log('critical', 'invalid type')
+				socket.emit('message', 'Invalid Ip type')
+				return
+			}
+
+			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+				if (err) {
+					logger.log('error', err)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				if (!dbIp) {
+					socket.emit('message', 'Ip not found')
+					return
+				}
+
+				db.run(`DELETE FROM ip_${type} WHERE id=?`, [id], (err) => {
+					if (err) {
+						logger.log('error', err)
+						socket.emit('message', 'There was a server error try again.')
+						return
+					}
+
+					reloadPageByIp(dbIp.ip)
+					if (type == 'whitelist') delete whitelistedIps[id]
+					else if (type == 'blacklist') delete blacklistedIps[id]
+					ipUpdate(type)
+				})
+			})
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('toggleIpList', (type) => {
+		logger.log('info', `[toggleIpList] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[toggleIpList] type=(${type})`)
+
+		console.log(type);
+
+		if (type != 'whitelist' && type != 'blacklist') {
+			logger.log('critical', 'invalid type')
+			socket.emit('message', 'Invalid Ip type')
+			return
+		}
+
+		settings[`${type}Active`] = !settings[`${type}Active`]
+		fs.writeFileSync('./settings.json', JSON.stringify(settings))
+
+		ipUpdate(type)
 	})
 })
 
 
-http.listen(420, () => {
+http.listen(420, async () => {
+	whitelistedIps = await getIpAccess('whitelist')
+	blacklistedIps = await getIpAccess('blacklist')
 	console.log('Running on port: 420')
 	logger.log('info', 'Start')
 })
