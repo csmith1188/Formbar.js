@@ -212,7 +212,7 @@ class Student {
 		this.id = id
 		this.permissions = permissions
 		this.classPermissions = null
-		this.tags = db.get('SELECT tags FROM users WHERE id=' + id)
+		this.tags = tags
 		this.ownedPolls = ownedPolls || []
 		this.sharedPolls = sharedPolls || []
 		this.pollRes = {
@@ -1198,6 +1198,9 @@ app.post('/login', async (req, res) => {
 											userData.id,
 											userData.permissions,
 											userData.API,
+											JSON.parse(userData.ownedPolls),
+											JSON.parse(userData.sharedPolls),
+											userData.tags
 										)
 
 										// Add the user to the session in order to transfer data between each page
