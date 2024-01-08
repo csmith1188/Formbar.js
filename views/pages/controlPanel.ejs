@@ -742,7 +742,6 @@
 			function endPollFunc() {
 				socket.emit('endPoll')
 			}
-
 			// makes student elements
 			function buildStudent(room, student) {
 				var newStudent = document.createElement("div");
@@ -916,12 +915,11 @@
 						checkbox.type = 'checkbox';
 						checkbox.name = `checkbox${tagNames[i]}`;
 						checkbox.value = tagNames[i];
-						// studentData.tags.split(",").forEach(tag => {
-						// 	console.log(tag, tagNames[i]);
-						// 	if (tag == tagNames[i]) {
-						// 		checkbox.checked = true;
-						// 	}
-						// });
+						studentData.tags.split(",").forEach(tag => {
+							if (tag == tagNames[i]) {
+								checkbox.checked = true;
+							}
+						});
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -950,7 +948,6 @@
 						studentData.tags = allTags.split(", ")
 						studentData.tags.pop()
 						studentData.tags.sort()
-						console.log(studentData.id, studentData.tags);
 						socket.emit('saveTags', studentData.id, studentData.tags)
 						studentTags.close();
 					});
@@ -1457,6 +1454,7 @@
 			socket.on('cpUpdate', (room, pollHistory) => {
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(pollHistory)
+				console.log(room);
 				allRoom = room
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
