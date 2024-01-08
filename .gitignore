@@ -6,3 +6,4 @@ uploads/
 *.log
 logNumbers.json
 settings.json
+logs/**-audit.json
