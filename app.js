@@ -65,7 +65,7 @@ function createLoggerTransport(level) {
 		level: level
 	});
 
-	transport.on("rotate", function(oldFilename, newFilename) {
+	transport.on("rotate", function (oldFilename, newFilename) {
 		logNumbers.error = 0;
 		logNumbersString = JSON.stringify(logNumbers);
 		fs.writeFileSync("logNumbers.json", logNumbersString);
@@ -1273,8 +1273,8 @@ app.post('/login', async (req, res) => {
 											userData.id,
 											userData.permissions,
 											userData.API,
-											JSON.parse(userData.ownedPolls),
-											JSON.parse(userData.sharedPolls),
+											[],
+											[],
 											userData.tags
 										)
 
@@ -1429,7 +1429,11 @@ app.post('/oauth', (req, res) => {
 					}
 
 					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-					var token = jwt.sign({ username: userData.username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
+					var token = jwt.sign({
+						id: userData.id,
+						username: userData.username,
+						permissions: userData.permissions
+					}, userData.secret, { expiresIn: '30m' })
 
 					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
 
@@ -3940,34 +3944,34 @@ io.on('connection', (socket) => {
 		}
 		ipUpdate(type)
 	})
-	socket.on('saveTags', 
-	(studentId, tags) => {
-		try {
-			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-			//cD[socket.request.session.class].students[studentId].tags = tags
-			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
-				if (err) {
-					return console.error(err.message);
-				}
-				if (row) {
-					// Row exists, update it
-					db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
-						if (err) {
-							return console.error(err.message);
-						}
-						console.log(`Row(s) updated: ${this.changes}`);
-					});
-				} else {
-					console.log(`No row found with id ${studentId}`);
-				}
-			});
-		}
+	socket.on('saveTags',
+		(studentId, tags) => {
+			try {
+				logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+				logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+				//cD[socket.request.session.class].students[studentId].tags = tags
+				db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
+					if (err) {
+						return console.error(err.message);
+					}
+					if (row) {
+						// Row exists, update it
+						db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
+							if (err) {
+								return console.error(err.message);
+							}
+							console.log(`Row(s) updated: ${this.changes}`);
+						});
+					} else {
+						console.log(`No row found with id ${studentId}`);
+					}
+				});
+			}
 
-		catch (err) {
-			logger.log('error', err.stack)
-		}
-	});
+			catch (err) {
+				logger.log('error', err.stack)
+			}
+		});
 })
 
 
