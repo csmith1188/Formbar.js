@@ -10,6 +10,7 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
+const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
 const http = require('http').createServer(app)
@@ -52,9 +53,28 @@ app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@flo
 
 const jsonLogData = fs.readFileSync("logNumbers.json");
 var logNumbers = JSON.parse(jsonLogData);
+var logNumbersString = "";
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+function createLoggerTransport(level) {
+	let transport = new winston.transports.DailyRotateFile({
+		filename: `logs/application-${level}-%DATE%.log`,
+		datePattern: "YYYY-MM-DD-HH",
+		maxFiles: "30d",
+		level: level
+	});
+
+	transport.on("rotate", function(oldFilename, newFilename) {
+		logNumbers.error = 0;
+		logNumbersString = JSON.stringify(logNumbers);
+		fs.writeFileSync("logNumbers.json", logNumbersString);
+	});
+
+	return transport;
+};
+
 const logger = winston.createLogger({
 	levels: {
 		critical: 0,
@@ -68,7 +88,7 @@ const logger = winston.createLogger({
 		winston.format.printf(({ timestamp, level, message }) => {
 			if (level == "error") {
 				logNumbers.error++;
-				var logNumbersString = JSON.stringify(logNumbers);
+				logNumbersString = JSON.stringify(logNumbers);
 				fs.writeFileSync("logNumbers.json", logNumbersString);
 				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
 			} else {
@@ -77,10 +97,10 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
-		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
-		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
+		createLoggerTransport("critical"),
+		createLoggerTransport("error"),
+		createLoggerTransport("info"),
+		createLoggerTransport("verbose"),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
@@ -133,7 +153,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
-	getUserClass: GUEST_PERMISSIONS
+	getUserClass: GUEST_PERMISSIONS,
+	saveTags: TEACHER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -204,12 +225,14 @@ class Student {
 		permissions = STUDENT_PERMISSIONS,
 		API,
 		ownedPolls = [],
-		sharedPolls = []
+		sharedPolls = [],
+		tags
 	) {
 		this.username = username
 		this.id = id
 		this.permissions = permissions
 		this.classPermissions = null
+		this.tags = db.get('SELECT tags FROM users WHERE id=' + id)
 		this.ownedPolls = ownedPolls || []
 		this.sharedPolls = sharedPolls || []
 		this.pollRes = {
@@ -1111,7 +1134,9 @@ app.post('/login', async (req, res) => {
 							userData.permissions,
 							userData.API,
 							JSON.parse(userData.ownedPolls),
-							JSON.parse(userData.sharedPolls)
+							JSON.parse(userData.sharedPolls),
+							userData.tags
+
 						)
 						req.session.class = 'noClass'
 					}
@@ -3509,7 +3534,36 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
-	})
+	});
+	socket.on('saveTags', 
+	(studentId, tags) => {
+		try {
+			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+			//cD[socket.request.session.class].students[studentId].tags = tags
+			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
+				if (err) {
+					return console.error(err.message);
+				}
+				if (row) {
+					// Row exists, update it
+					db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
+						if (err) {
+							return console.error(err.message);
+						}
+						console.log(`Row(s) updated: ${this.changes}`);
+					});
+				} else {
+					console.log(`No row found with id ${studentId}`);
+				}
+			});
+		}
+
+		catch (err) {
+			logger.log('error', err.stack)
+		}
+	}
+	);
 })
 
 
