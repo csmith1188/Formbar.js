@@ -2304,13 +2304,21 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	async function reloadPageByIp(ip) {
+	async function reloadPageByIp(include, ip) {
 		for (let userSocket of await io.fetchSockets()) {
 			let userIp = userSocket.handshake.address
 
 			if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
 
-			if (userIp.startsWith(ip)) {
+			if (
+				(include &&
+					userIp.startsWith(ip)
+				) ||
+				(
+					!include &&
+					!userIp.startsWith(ip)
+				)
+			) {
 				userSocket.emit('reload')
 			}
 		}
@@ -3783,8 +3791,9 @@ io.on('connection', (socket) => {
 						if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
 						else if (type == 'blacklist') blacklistedIps[dbIp.id].ip = ip
 
-						reloadPageByIp(ip)
-						reloadPageByIp(dbIp.ip)
+
+						reloadPageByIp(type == 'whitelist', ip)
+						reloadPageByIp(type == 'whitelist', dbIp.ip)
 						ipUpdate(type)
 					}
 				})
@@ -3833,7 +3842,7 @@ io.on('connection', (socket) => {
 					if (type == 'whitelist') whitelistedIps[dbIp.id] = dbIp
 					else if (type == 'blacklist') blacklistedIps[dbIp.id] = dbIp
 
-					reloadPageByIp(ip)
+					reloadPageByIp(type != 'whitelist', ip)
 					ipUpdate(type)
 					socket.emit('message', `IP added to ${type}`)
 				})
@@ -3871,7 +3880,7 @@ io.on('connection', (socket) => {
 						return
 					}
 
-					reloadPageByIp(dbIp.ip)
+					reloadPageByIp(type != 'whitelist', dbIp.ip)
 					if (type == 'whitelist') delete whitelistedIps[id]
 					else if (type == 'blacklist') delete blacklistedIps[id]
 					ipUpdate(type)
@@ -3886,8 +3895,6 @@ io.on('connection', (socket) => {
 		logger.log('info', `[toggleIpList] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 		logger.log('info', `[toggleIpList] type=(${type})`)
 
-		console.log(type);
-
 		if (type != 'whitelist' && type != 'blacklist') {
 			logger.log('critical', 'invalid type')
 			socket.emit('message', 'Invalid Ip type')
@@ -3897,6 +3904,13 @@ io.on('connection', (socket) => {
 		settings[`${type}Active`] = !settings[`${type}Active`]
 		fs.writeFileSync('./settings.json', JSON.stringify(settings))
 
+		let ipList
+		if (type == 'whitelist') ipList = whitelistedIps
+		else if (type == 'blacklist') ipList = blacklistedIps
+
+		for (let ip of Object.values(ipList)) {
+			reloadPageByIp(type != 'whitelist', ip.ip)
+		}
 		ipUpdate(type)
 	})
 })

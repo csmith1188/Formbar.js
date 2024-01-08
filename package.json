@@ -17,6 +17,12 @@
 		"url": "https://github.com/csmith1188/Formbar.js/issues"
 	},
 	"homepage": "https://github.com/csmith1188/Formbar.js#readme",
+	"nodemonConfig": {
+		"ignore": [
+			"settings.json",
+			"logNumbers.json"
+		]
+	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.5.3",
 		"@jaames/iro": "^5.5.2",
