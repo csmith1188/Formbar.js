@@ -10,6 +10,7 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
+const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
 const http = require('http').createServer(app)
@@ -52,9 +53,28 @@ app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@flo
 
 const jsonLogData = fs.readFileSync("logNumbers.json");
 var logNumbers = JSON.parse(jsonLogData);
+var logNumbersString = "";
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+function createLoggerTransport(level) {
+	let transport = new winston.transports.DailyRotateFile({
+		filename: `logs/application-${level}-%DATE%.log`,
+		datePattern: "YYYY-MM-DD-HH",
+		maxFiles: "30d",
+		level: level
+	});
+
+	transport.on("rotate", function(oldFilename, newFilename) {
+		logNumbers.error = 0;
+		logNumbersString = JSON.stringify(logNumbers);
+		fs.writeFileSync("logNumbers.json", logNumbersString);
+	});
+
+	return transport;
+};
+
 const logger = winston.createLogger({
 	levels: {
 		critical: 0,
@@ -68,7 +88,7 @@ const logger = winston.createLogger({
 		winston.format.printf(({ timestamp, level, message }) => {
 			if (level == "error") {
 				logNumbers.error++;
-				var logNumbersString = JSON.stringify(logNumbers);
+				logNumbersString = JSON.stringify(logNumbers);
 				fs.writeFileSync("logNumbers.json", logNumbersString);
 				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
 			} else {
@@ -77,10 +97,10 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
-		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
-		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
+		createLoggerTransport("critical"),
+		createLoggerTransport("error"),
+		createLoggerTransport("info"),
+		createLoggerTransport("verbose"),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
