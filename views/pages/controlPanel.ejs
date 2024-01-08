@@ -38,10 +38,10 @@
 						<button type="button" id="helpTime" class="sort">Help Time</button>
 						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 					</div>
-					<button id="deleteStudents" onclick="((event) => {socket.emit('deleteStudents')})()">
-						Delete All Students
+					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
+						Kick All Students
 					</button>
-					<button id="endClass" onclick="((event) => {socket.emit('endClass');location.reload()})()">
+					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
 						End Class
 					</button>
 					<div id="users">
@@ -174,7 +174,8 @@
 
 		</html>
 		<script>
-			let currentUser = JSON.parse('<%-currentUser%>')
+			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
+			console.log(currentUser);
 			let userCustomPolls = []
 			let classroomCustomPolls = []
 			let publicCustomPolls = []
@@ -741,7 +742,6 @@
 			function endPollFunc() {
 				socket.emit('endPoll')
 			}
-
 			// makes student elements
 			function buildStudent(room, student) {
 				var newStudent = document.createElement("div");
@@ -915,12 +915,11 @@
 						checkbox.type = 'checkbox';
 						checkbox.name = `checkbox${tagNames[i]}`;
 						checkbox.value = tagNames[i];
-						// studentData.tags.split(",").forEach(tag => {
-						// 	console.log(tag, tagNames[i]);
-						// 	if (tag == tagNames[i]) {
-						// 		checkbox.checked = true;
-						// 	}
-						// });
+						studentData.tags.split(",").forEach(tag => {
+							if (tag == tagNames[i]) {
+								checkbox.checked = true;
+							}
+						});
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -949,7 +948,6 @@
 						studentData.tags = allTags.split(", ")
 						studentData.tags.pop()
 						studentData.tags.sort()
-						console.log(studentData.id, studentData.tags);
 						socket.emit('saveTags', studentData.id, studentData.tags)
 						studentTags.close();
 					});
@@ -962,17 +960,17 @@
 					banStudentButton.setAttribute("data-user", student)
 					banStudentButton.innerText = "Ban User"
 					banStudentButton.onclick = (event) => {
-						socket.emit('banStudent', student)
+						socket.emit('classBanUser', student)
 					}
 					newStudent.appendChild(banStudentButton)
-					let deleteStudentButton = document.createElement("button")
-					deleteStudentButton.className = 'deleteStudent quickButton'
-					deleteStudentButton.setAttribute("data-userid", student)
-					deleteStudentButton.onclick = (event) => {
-						socket.emit('deleteStudent', student)
+					let kickUserButton = document.createElement("button")
+					kickUserButton.className = 'kickUser quickButton'
+					kickUserButton.setAttribute("data-userid", student)
+					kickUserButton.onclick = (event) => {
+						socket.emit('classKickUser', student)
 					};
-					deleteStudentButton.innerText = "Delete User"
-					newStudent.appendChild(deleteStudentButton)
+					kickUserButton.innerText = "Kick User"
+					newStudent.appendChild(kickUserButton)
 				}
 				return newStudent;
 			}
@@ -981,7 +979,7 @@
 			function filterSortChange() {
 				usersDiv.innerHTML = ''
 				let newStudent = ''
-				let newRoom = JSON.parse(JSON.stringify(allRoom))
+				let newRoom = allRoom
 
 				let helpButton = document.getElementById("help");
 				let breakButton = document.getElementById("break");
@@ -1456,6 +1454,7 @@
 			socket.on('cpUpdate', (room, pollHistory) => {
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(pollHistory)
+				console.log(room);
 				allRoom = room
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
@@ -1581,8 +1580,8 @@
 					pluginURL.onchange = (event) => {
 						let pluginURL = event.target
 
-						if (!pluginURL.checkValidity()) {
-							pluginURL.reportValidity()
+						if (!event.target.checkValidity()) {
+							event.target.reportValidity()
 							return
 						}
 
@@ -1694,8 +1693,8 @@
 				}
 			})
 
-			socket.emit('bannedStudentsUpdate')
-			socket.on('bannedStudentsUpdate', (bannedStudents) => {
+			socket.emit('classBannedUsersUpdate')
+			socket.on('classBannedUsersUpdate', (bannedStudents) => {
 				let bannedDiv = document.querySelector('#bannedMenu.tabContent')
 				bannedDiv.innerHTML = ''
 
@@ -1709,7 +1708,7 @@
 					unban.innerText = 'unban'
 					unban.className = 'quickButton'
 					unban.onclick = () => {
-						socket.emit('unbanStudent', bannedStudent)
+						socket.emit('classUnbanUser', bannedStudent)
 					}
 					bannedStudentDiv.appendChild(unban)
 					document.querySelector('#bannedMenu.tabContent').appendChild(bannedStudentDiv)

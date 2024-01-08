@@ -5,3 +5,4 @@ uploads/
 
 *.log
 logNumbers.json
+settings.json
