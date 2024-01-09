@@ -3742,7 +3742,7 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
-	})
+	});
 
 	socket.on('deleteUser', async (userId) => {
 		try {
@@ -3945,11 +3945,11 @@ io.on('connection', (socket) => {
 		ipUpdate(type)
 	})
 	socket.on('saveTags',
-		(studentId, tags) => {
+		(studentId, tags, username) => {
 			try {
 				logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 				logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-				//cD[socket.request.session.class].students[studentId].tags = tags
+				cD[socket.request.session.class].students[username].tags = tags.toString()
 				db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
 					if (err) {
 						return console.error(err.message);
@@ -3960,7 +3960,6 @@ io.on('connection', (socket) => {
 							if (err) {
 								return console.error(err.message);
 							}
-							console.log(`Row(s) updated: ${this.changes}`);
 						});
 					} else {
 						console.log(`No row found with id ${studentId}`);
@@ -3971,7 +3970,8 @@ io.on('connection', (socket) => {
 			catch (err) {
 				logger.log('error', err.stack)
 			}
-		});
+		}
+	);
 })
 
 

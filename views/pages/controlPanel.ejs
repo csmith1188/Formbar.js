@@ -823,6 +823,7 @@
 					permissionSwitch.setAttribute("class", "permSwitch");
 					permissionSwitch.setAttribute("data-userid", student);
 					permissionSwitch.onchange = (event) => {
+						console.log(event);
 						socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
 					};
 					if (studentData.classPermissions == 4) {
@@ -909,17 +910,18 @@
 					closeButton.textContent = 'Save';
 					let tagForm = document.createElement('form');
 					tagForm.setAttribute('id', student + "tags");
-					var tagNames = ["Senior", "Junior", "Sophomore", "Freshman"];
+					var tagNames = ["Senior", "Junior", "Sophomore", "Freshman", "FormbarJS", "OnlyPogs", "PokePucks", "Fiverr"];
 					for (let i = 0; i < tagNames.length; i++) {
 						let checkbox = document.createElement('input');
 						checkbox.type = 'checkbox';
 						checkbox.name = `checkbox${tagNames[i]}`;
 						checkbox.value = tagNames[i];
-						studentData.tags.split(",").forEach(tag => {
+						if (studentData.tags != null && studentData.tags != undefined) {
+							studentData.tags.split(",").forEach(tag => {
 							if (tag == tagNames[i]) {
 								checkbox.checked = true;
 							}
-						});
+						})};
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -948,7 +950,7 @@
 						studentData.tags = allTags.split(", ")
 						studentData.tags.pop()
 						studentData.tags.sort()
-						socket.emit('saveTags', studentData.id, studentData.tags)
+						socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
 						studentTags.close();
 					});
 					studentTags.appendChild(closeButton);
@@ -1454,7 +1456,6 @@
 			socket.on('cpUpdate', (room, pollHistory) => {
 				classCode.innerText = 'Class Code: ' + room.key
 				buildPreviousPolls(pollHistory)
-				console.log(room);
 				allRoom = room
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
