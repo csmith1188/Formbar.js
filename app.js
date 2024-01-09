@@ -2165,7 +2165,7 @@ io.on('connection', (socket) => {
 
 	function endPoll() {
 		try {
-			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
@@ -2199,6 +2199,21 @@ io.on('connection', (socket) => {
 			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack);
+		}
+	}
+
+	function clearPoll(classCode = socket.request.session.class) {
+		endPoll()
+		cD[classCode].poll.responses = {}
+		cD[classCode].poll.prompt = ''
+		cD[classCode].poll = {
+			status: false,
+			responses: {},
+			textRes: false,
+			prompt: '',
+			weight: 1,
+			blind: false,
+
 		}
 	}
 
@@ -2569,6 +2584,8 @@ io.on('connection', (socket) => {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
 
+			clearPoll()
+
 			let generatedColors = generateColors(resNumber)
 			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
@@ -2621,18 +2638,8 @@ io.on('connection', (socket) => {
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
 		try {
-			endPoll()
-			cD[socket.request.session.class].poll.responses = {}
-			cD[socket.request.session.class].poll.prompt = ''
-			cD[socket.request.session.class].poll = {
-				status: false,
-				responses: {},
-				textRes: false,
-				prompt: '',
-				weight: 1,
-				blind: false,
+			clearPoll()
 
-			}
 			vbUpdate()
 		} catch (err) {
 			logger.log('error', err.stack);
