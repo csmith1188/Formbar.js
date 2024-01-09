@@ -10,6 +10,7 @@ const upload = multer({ dest: 'uploads/' }) //Selects a file destination for upl
 const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs");
+const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
 const http = require('http').createServer(app)
@@ -50,11 +51,29 @@ app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 
-const jsonLogData = fs.readFileSync("logNumbers.json");
-var logNumbers = JSON.parse(jsonLogData);
+let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
+let settings = JSON.parse(fs.readFileSync("settings.json"))
 
 // Establishes the connection to the database file
-var db = new sqlite3.Database('database/database.db')
+let db = new sqlite3.Database('database/database.db')
+
+function createLoggerTransport(level) {
+	let transport = new winston.transports.DailyRotateFile({
+		filename: `logs/application-${level}-%DATE%.log`,
+		datePattern: "YYYY-MM-DD-HH",
+		maxFiles: "30d",
+		level: level
+	});
+
+	transport.on("rotate", function (oldFilename, newFilename) {
+		logNumbers.error = 0;
+		logNumbersString = JSON.stringify(logNumbers);
+		fs.writeFileSync("logNumbers.json", logNumbersString);
+	});
+
+	return transport;
+};
+
 const logger = winston.createLogger({
 	levels: {
 		critical: 0,
@@ -68,7 +87,7 @@ const logger = winston.createLogger({
 		winston.format.printf(({ timestamp, level, message }) => {
 			if (level == "error") {
 				logNumbers.error++;
-				var logNumbersString = JSON.stringify(logNumbers);
+				logNumbersString = JSON.stringify(logNumbers);
 				fs.writeFileSync("logNumbers.json", logNumbersString);
 				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
 			} else {
@@ -77,19 +96,21 @@ const logger = winston.createLogger({
 		})
 	),
 	transports: [
-		new winston.transports.File({ filename: 'logs/critical.log', level: 'critical' }),
-		new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-		new winston.transports.File({ filename: 'logs/info.log', level: 'info' }),
-		new winston.transports.File({ filename: 'logs/verbose.log', level: 'verbose' }),
+		createLoggerTransport("critical"),
+		createLoggerTransport("error"),
+		createLoggerTransport("info"),
+		createLoggerTransport("verbose"),
 		new winston.transports.Console({ level: 'error' })
 	],
 })
 
 //cD is the class dictionary, it stores all of the information on classes and students
-var cD = {
+let cD = {
 	noClass: { students: {} }
 }
 
+let whitelistedIps = {}
+let blacklistedIps = {}
 
 // Constants
 // permissions levels
@@ -111,7 +132,7 @@ const PAGE_PERMISSIONS = {
 	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	// managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 const PASSIVE_SOCKETS = [
@@ -119,13 +140,15 @@ const PASSIVE_SOCKETS = [
 	'modeUpdate',
 	'quizUpdate',
 	'lessonUpdate',
+	'managerUpdate',
+	'ipUpdate',
 	'vbUpdate',
 	'cpUpdate',
 	'joinRoom',
 	'leaveRoom',
 	'pluginUpdate',
 	'customPollUpdate',
-	'bannedStudentsUpdate'
+	'classBannedUsersUpdate'
 ]
 
 const GLOBAL_SOCKET_PERMISSIONS = {
@@ -134,6 +157,13 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
 	getUserClass: GUEST_PERMISSIONS,
+	deleteUser: MANAGER_PERMISSIONS,
+	managerUpdate: MANAGER_PERMISSIONS,
+	ipUpdate: MANAGER_PERMISSIONS,
+	addIp: MANAGER_PERMISSIONS,
+	removeIp: MANAGER_PERMISSIONS,
+	changeIp: MANAGER_PERMISSIONS,
+	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS
 }
 
@@ -172,8 +202,8 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	removeClassPollShare: 'controlPolls',
 	doStep: 'controlPolls',
 	classPermChange: 'manageStudents',
-	deleteStudent: 'manageStudents',
-	deleteStudents: 'manageStudents',
+	classKickUser: 'manageStudents',
+	classKickStudents: 'manageStudents',
 	approveBreak: 'breakAndHelp',
 	deleteTicket: 'breakAndHelp',
 	changePlugin: 'manageClass',
@@ -181,9 +211,9 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	removePlugin: 'manageClass',
 	endClass: 'manageClass',
 	modechange: 'manageClass',
-	bannedStudentsUpdate: 'manageStudents',
-	banStudent: 'manageStudents',
-	unbanStudent: 'manageStudents'
+	classBannedUsersUpdate: 'manageStudents',
+	classBanUser: 'manageStudents',
+	classUnbanUser: 'manageStudents'
 }
 
 const DEFAULT_CLASS_PERMISSIONS = {
@@ -194,6 +224,23 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	manageClass: TEACHER_PERMISSIONS
 }
 
+// Add currentUser and permission constants to all pages
+app.use((req, res, next) => {
+	if (req.session.class)
+		res.locals.currentUser = cD[req.session.class].students[req.session.username]
+
+	res.locals = {
+		...res.locals,
+		MANAGER_PERMISSIONS,
+		TEACHER_PERMISSIONS,
+		MOD_PERMISSIONS,
+		STUDENT_PERMISSIONS,
+		GUEST_PERMISSIONS,
+		BANNED_PERMISSIONS
+	}
+
+	next()
+})
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
@@ -470,6 +517,7 @@ function joinClass(username, code) {
 	})
 }
 
+
 function camelCaseToNormal(str) {
 	let result = str.replace(/([A-Z])/g, " $1")
 	result = result.charAt(0).toUpperCase() + result.slice(1)
@@ -489,7 +537,9 @@ function isAuthenticated(req, res, next) {
 
 		if (req.session.username) {
 			if (cD.noClass.students[req.session.username]) {
-				if (cD.noClass.students[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+				if (cD.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+					res.redirect('/managerPanel')
+				} else if (cD.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 					res.redirect('/manageClass')
 				} else {
 					res.redirect('/selectClass')
@@ -592,6 +642,32 @@ function permCheck(req, res, next) {
 	}
 }
 
+function runQuery(query, params) {
+	return new Promise((resolve, reject) => {
+		db.run(query, params, (err) => {
+			if (err) reject(new Error(err))
+			else resolve()
+		})
+	})
+}
+
+function getAll(query, params) {
+	return new Promise((resolve, reject) => {
+		db.all(query, params, (err, rows) => {
+			if (err) reject(new Error(err))
+			else resolve(rows)
+		})
+	})
+}
+
+async function getIpAccess(type) {
+	let ipList = await getAll(`SELECT id, ip FROM ip_${type}`)
+	return ipList.reduce((ips, ip) => {
+		ips[ip.id] = ip
+		return ips
+	}, {})
+}
+
 
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
@@ -599,6 +675,38 @@ const apiRoutes = require('./routes/api.js')(cD)
 //add routes to express
 app.use('/api', apiRoutes)
 
+// check if ip is banned
+app.use((req, res, next) => {
+	let ip = req.ip
+	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
+
+	if (settings.whitelistActive && Object.keys(whitelistedIps).length > 0) {
+		const isWhitelisted = Object.values(whitelistedIps)
+			.some(value => ip.startsWith(value.ip))
+
+		if (!isWhitelisted) {
+			res.render('pages/message', {
+				message: 'Your IP has been banned',
+				title: 'Banned'
+			})
+			return
+		}
+	}
+	if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
+		const isBlacklisted = Object.values(blacklistedIps)
+			.some(value => ip.startsWith(value.ip))
+
+		if (isBlacklisted) {
+			res.render('pages/message', {
+				message: 'Your IP has been banned',
+				title: 'Banned'
+			})
+			return
+		}
+	}
+
+	next()
+})
 
 // This is the root page, it is where the users first get checked by the home page
 // It is used to redirect to the home page
@@ -607,8 +715,6 @@ app.use('/api', apiRoutes)
 app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		// if (cD[req.session.class].students[req.session.username].classPermissions >= MANAGER_PERMISSIONS) {
-		// 	res.redirect('/managerPanel')
 		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
@@ -626,7 +732,7 @@ app.get('/', isAuthenticated, (req, res) => {
 
 // A
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
-app.get('/apikey', isAuthenticated, (req, res) => {
+app.get('/apikey', isLoggedIn, (req, res) => {
 	try {
 		logger.log('info', `[get /apikey] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
@@ -670,7 +776,6 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username]),
 			settingsPermissions: cD[req.session.class].permissions.manageClass,
 		})
 	} catch (err) {
@@ -814,36 +919,6 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 			cD[req.session.class].steps = steps
 			res.redirect('/controlPanel')
 		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
-})
-
-app.get('/managerPanel', isAuthenticated, permCheck, (req, res) => {
-	try {
-		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-		let students = cD[req.session.class].students
-		let keys = Object.keys(students)
-		let allStuds = []
-
-		for (var i = 0; i < keys.length; i++) {
-			var val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-			allStuds.push(val)
-		}
-
-		/* Uses EJS to render the template and display the information for the class.
-		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
-		*/
-		res.render('pages/managerPanel', {
-			title: 'Manager Panel',
-			pollStatus: cD[req.session.class].poll.status,
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
-		})
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -1150,7 +1225,7 @@ app.post('/login', async (req, res) => {
 					let newAPI
 					let newSecret
 
-					if (users.length == 0) permissions = TEACHER_PERMISSIONS
+					if (users.length == 0) permissions = MANAGER_PERMISSIONS
 
 					for (let dbUser of users) {
 						existingAPIs.push(dbUser.API)
@@ -1198,8 +1273,8 @@ app.post('/login', async (req, res) => {
 											userData.id,
 											userData.permissions,
 											userData.API,
-											JSON.parse(userData.ownedPolls),
-											JSON.parse(userData.sharedPolls),
+											[],
+											[],
 											userData.tags
 										)
 
@@ -1262,7 +1337,22 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
 			title: 'Create Class',
-			currentUser: JSON.stringify(cD[req.session.class].students[req.session.username])
+		})
+	} catch (err) {
+		logger.log('error', err.stack);
+		res.render('pages/message', {
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+			title: 'Error'
+		})
+	}
+})
+
+app.get('/managerPanel', isLoggedIn, permCheck, (req, res) => {
+	try {
+		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+		res.render('pages/managerPanel', {
+			title: 'Manager Panel'
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1339,7 +1429,11 @@ app.post('/oauth', (req, res) => {
 					}
 
 					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-					var token = jwt.sign({ username: userData.username, permissions: userData.permissions }, userData.secret, { expiresIn: '30m' })
+					var token = jwt.sign({
+						id: userData.id,
+						username: userData.username,
+						permissions: userData.permissions
+					}, userData.secret, { expiresIn: '30m' })
 
 					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
 
@@ -1696,50 +1790,48 @@ app.use((req, res, next) => {
 })
 
 
-// Middleware for sockets
 // Authentication for users and plugins to connect to formbar websockets
 // The user must be logged in order to connect to websockets
-io.use((socket, next) => {
-	try {
-		let { api } = socket.request.headers
+// io.use((socket, next) => {
+// 	try {
+// 		let { api } = socket.request.headers
 
-		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+// 		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
 
-		if (socket.request.session.username) {
-			next()
-		} else if (api) {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE API = ?',
-				[api],
-				(err, userData) => {
-					try {
-						if (err) throw err
-						if (!userData) {
-							logger.log('verbose', '[socket authentication] not a valid API Key')
-							next(new Error('Not a valid API key'))
-							return
-						}
+// 		if (socket.request.session.username) {
+// 			next()
+// 		} else if (api) {
+// 			db.get(
+// 				'SELECT id, username, permissions FROM users WHERE API = ?',
+// 				[api],
+// 				(err, userData) => {
+// 					try {
+// 						if (err) throw err
+// 						if (!userData) {
+// 							logger.log('verbose', '[socket authentication] not a valid API Key')
+// 							next(new Error('Not a valid API key'))
+// 							return
+// 						}
 
-						socket.request.session.api = api
-						socket.request.session.class = 'noClass'
+// 						socket.request.session.api = api
+// 						socket.request.session.class = 'noClass'
 
-						next()
-					} catch (err) {
-						logger.log('error', err.stack);
-					}
-				}
-			)
-		} else {
-			logger.log('info', '[socket authentication] Missing username or api')
-			next(new Error('Missing API key'))
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-	}
-})
+// 						next()
+// 					} catch (err) {
+// 						logger.log('error', err.stack);
+// 					}
+// 				}
+// 			)
+// 		} else {
+// 			logger.log('info', '[socket authentication] Missing username or api')
+// 			next(new Error('Missing API key'))
+// 		}
+// 	} catch (err) {
+// 		logger.log('error', err.stack);
+// 	}
+// })
 
 let rateLimits = {}
-
 let userSockets = {}
 
 //Handles the websocket communications
@@ -1756,6 +1848,31 @@ io.on('connection', (socket) => {
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
+	}
+
+	async function managerUpdate() {
+		let [users, classrooms] = await Promise.all([
+			new Promise((resolve, reject) => {
+				db.all('SELECT id, username, permissions FROM users', (err, users) => {
+					if (err) reject(new Error(err))
+					else {
+						users = users.reduce((tempUsers, tmepUser) => {
+							tempUsers[tmepUser.username] = tmepUser
+							return tempUsers
+						}, {})
+						resolve(users)
+					}
+				})
+			}),
+			new Promise((resolve, reject) => {
+				db.get('SELECT * FROM classroom', (err, classrooms) => {
+					if (err) reject(new Error(err))
+					else resolve(classrooms)
+				})
+			})
+		])
+
+		io.emit('managerUpdate', users, classrooms)
 	}
 
 	function cpUpdate(classCode = socket.request.session.class) {
@@ -1960,10 +2077,10 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function bannedStudentsUpdate(classCode = socket.request.session.class) {
+	function classBannedUsersUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[bannedStudentsUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[bannedStudentsUpdate] classCode=(${classCode})`)
+			logger.log('info', `[classBannedUsersUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classBannedUsersUpdate] classCode=(${classCode})`)
 
 			if (!classCode || classCode == 'noClass') return
 
@@ -1972,7 +2089,7 @@ io.on('connection', (socket) => {
 					if (err) throw err
 
 					bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.username)
-					io.to(classCode).emit('bannedStudentsUpdate', bannedStudents)
+					io.to(classCode).emit('classBannedUsersUpdate', bannedStudents)
 				} catch (err) {
 					logger.log('error', err.stack)
 				}
@@ -1982,9 +2099,9 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function deleteStudent(username, classCode = socket.request.session.class) {
+	function classKickUser(username, classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[deleteStudent] username=(${username}) classCode=(${classCode})`)
+			logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
 
 			userSockets[username].leave(cD[classCode].className)
 			cD.noClass.students[username] = cD[classCode].students[username]
@@ -1993,7 +2110,7 @@ io.on('connection', (socket) => {
 			userSockets[username].request.session.save()
 			delete cD[classCode].students[username]
 
-			logger.log('verbose', `[deleteStudent] cD=(${JSON.stringify(cD)})`)
+			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(cD)})`)
 
 			io.to(username).emit('reload')
 		} catch (err) {
@@ -2001,18 +2118,49 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function deleteStudents(classCode) {
+	function classKickStudents(classCode) {
 		try {
-			logger.log('info', `[deleteStudents] classCode=(${classCode})`)
+			logger.log('info', `[classKickStudents] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
-					deleteStudent(username, classCode)
+					classKickUser(username, classCode)
 				}
 			}
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
+	}
+
+	function logout(socket) {
+		const username = socket.request.session.username
+		const userId = socket.request.session.userId
+		const classCode = socket.request.session.class
+		const className = cD[classCode].className
+
+		socket.request.session.destroy((err) => {
+			try {
+				if (err) throw err
+
+				delete userSockets[username]
+				delete cD[classCode].students[username]
+				socket.leave(className)
+				socket.emit('reload')
+				cpUpdate(classCode)
+				vbUpdate(classCode)
+
+				db.get(
+					'SELECT * FROM classroom WHERE owner=? AND key=?',
+					[userId, classCode],
+					(err, classroom) => {
+						if (err) logger.log('error', err.stack)
+						if (classroom) endClass(classroom.key)
+					}
+				)
+			} catch (err) {
+				logger.log('error', err.stack)
+			}
+		})
 	}
 
 	function endPoll() {
@@ -2059,7 +2207,7 @@ io.on('connection', (socket) => {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
-				deleteStudent(username, classCode)
+				classKickUser(username, classCode)
 			}
 			delete cD[classCode]
 
@@ -2128,8 +2276,129 @@ io.on('connection', (socket) => {
 		}
 	}
 
+	async function deleteCustomPolls(userId) {
+		try {
+			const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner = ?', userId)
+
+			if (customPolls.length == 0) return
+
+			await runQuery('DELETE FROM custom_polls WHERE userId = ?', customPolls[0].userId)
+
+			for (let customPoll of customPolls) {
+				await runQuery('DELETE FROM shared_polls WHERE pollId = ?', customPoll.pollId)
+			}
+		} catch (err) {
+			throw err
+		}
+	}
+
+	async function deleteClassrooms(userId) {
+		try {
+			const classrooms = await getAll('SELECT * FROM classroom WHERE owner = ?', userId)
+
+			if (classrooms.length == 0) return
+
+			await runQuery('DELETE FROM classroom WHERE owner = ?', classrooms[0].owner)
+
+			for (let classroom of classrooms) {
+				if (cD[classroom.key]) endClass(classroom.key)
+
+				await Promise.all([
+					runQuery('DELETE FROM classusers WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM class_polls WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM plugins WHERE classId = ?', classroom.id),
+					runQuery('DELETE FROM lessons WHERE class = ?', classroom.id)
+				])
+			}
+		} catch (err) {
+			throw err
+		}
+	}
+
+	function ipUpdate(type, username) {
+		try {
+			logger.log('info', `[ipUpdate] username=(${username})`)
+
+			let ipList = {}
+			if (type == 'whitelist') ipList = whitelistedIps
+			else if (type == 'blacklist') ipList = blacklistedIps
+
+			if (type) {
+				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
+			} else {
+				ipUpdate('whitelist', username)
+				ipUpdate('blacklist', username)
+			}
+		} catch (err) {
+			logger.log('error', err.stack);
+		}
+	}
+
+	async function reloadPageByIp(include, ip) {
+		for (let userSocket of await io.fetchSockets()) {
+			let userIp = userSocket.handshake.address
+
+			if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
+
+			if (
+				(include &&
+					userIp.startsWith(ip)
+				) ||
+				(
+					!include &&
+					!userIp.startsWith(ip)
+				)
+			) {
+				userSocket.emit('reload')
+			}
+		}
+	}
+
+	// authentication for sockets
+	socket.use(([event, ...args], next) => {
+		try {
+			let { api } = socket.request.headers
+
+			logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+
+			if (socket.request.session.username) {
+				next()
+			} else if (api) {
+				db.get(
+					'SELECT id, username, permissions FROM users WHERE API = ?',
+					[api],
+					(err, userData) => {
+						try {
+							if (err) throw err
+							if (!userData) {
+								logger.log('verbose', '[socket authentication] not a valid API Key')
+								next(new Error('Not a valid API key'))
+								return
+							}
+
+							socket.request.session.api = api
+							socket.request.session.class = 'noClass'
+
+							next()
+						} catch (err) {
+							logger.log('error', err.stack)
+						}
+					}
+				)
+			} else if (event == 'reload') {
+				next()
+			} else {
+				logger.log('info', '[socket authentication] Missing username or api')
+				next(new Error('Missing API key'))
+			}
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
 	//rate limiter
-	socket.use((packet, next) => {
+	socket.use(([event, ...args], next) => {
 		try {
 			const username = socket.request.session.username
 			const currentTime = Date.now()
@@ -2146,29 +2415,28 @@ io.on('connection', (socket) => {
 
 			const userRequests = rateLimits[username]
 
-			const requestType = packet[0]
-			if (!limitedRequests.includes(requestType)) {
+			if (!limitedRequests.includes(event)) {
 				next()
 				return
 			}
 
-			userRequests[requestType] = userRequests[requestType] || []
+			userRequests[event] = userRequests[event] || []
 
-			userRequests[requestType] = userRequests[requestType].filter((timestamp) => currentTime - timestamp < timeFrame)
+			userRequests[event] = userRequests[event].filter((timestamp) => currentTime - timestamp < timeFrame)
 
 			logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
 
-			if (userRequests[requestType].length >= limit) {
+			if (userRequests[event].length >= limit) {
 				socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
 				setTimeout(() => {
 					try {
-						userRequests[requestType].shift()
+						userRequests[event].shift()
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
 				}, blockTime)
 			} else {
-				userRequests[requestType].push(currentTime)
+				userRequests[event].push(currentTime)
 				next()
 			}
 		} catch (err) {
@@ -2177,31 +2445,30 @@ io.on('connection', (socket) => {
 	})
 
 	//permission check
-	socket.use((packet, next) => {
+	socket.use(([event, ...args], next) => {
 		try {
-			const username = socket.request.session.username
-			const classCode = socket.request.session.class
-			const socketType = packet[0]
+			let username = socket.request.session.username
+			let classCode = socket.request.session.class
 
 			if (
-				GLOBAL_SOCKET_PERMISSIONS[socketType] &&
-				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[socketType]
+				GLOBAL_SOCKET_PERMISSIONS[event] &&
+				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
 			) {
 				next()
 			} else if (
-				CLASS_SOCKET_PERMISSIONS[socketType] &&
-				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[socketType]
+				CLASS_SOCKET_PERMISSIONS[event] &&
+				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
 			) {
 				next()
 			} else if (
-				CLASS_SOCKET_PERMISSION_SETTINGS[socketType] &&
-				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]] &&
-				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[socketType]]
+				CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
+				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
+				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
 			) {
 				next()
 			} else {
-				if (!PASSIVE_SOCKETS.includes(socketType))
-					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(socketType)}.`)
+				if (!PASSIVE_SOCKETS.includes(event))
+					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(event)}.`)
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -2255,8 +2522,6 @@ io.on('connection', (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		try {
-			newPerm = Number(newPerm)
-
 			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
 
@@ -2284,8 +2549,15 @@ io.on('connection', (socket) => {
 			logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[permChange] user=(${user}) newPerm=(${newPerm})`)
 
-			cD[socket.request.session.class].students[user].permissions = newPerm
-			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
+			let classCode = getUserClass(user)
+			if (classCode instanceof Error) throw classCode
+
+			if (classCode)
+				cD[classCode].students[user].permissions = newPerm
+
+			io.to(user).emit('reload')
+
+			db.run('UPDATE users SET permissions = ? WHERE id = ?', [newPerm, user])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2374,7 +2646,6 @@ io.on('connection', (socket) => {
 			logger.log('error', err.stack);
 		}
 	})
-
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -2515,38 +2786,18 @@ io.on('connection', (socket) => {
 						return
 					}
 
-					db.run('BEGIN TRANSACTION')
+					await runQuery('BEGIN TRANSACTION')
 
 					await Promise.all([
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM custom_polls WHERE i = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						}),
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM shared_polls WHERE pollId = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						}),
-						new Promise((resolve, reject) => {
-							db.run('DELETE FROM class_polls WHERE pollId = ?', pollId, (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						})
+						runQuery('DELETE FROM custom_polls WHERE id = ?', pollId),
+						runQuery('DELETE FROM shared_polls WHERE pollId = ?', pollId),
+						runQuery('DELETE FROM class_polls WHERE pollId = ?', pollId),
 					]).catch(async (err) => {
-						await new Promise((resolve, reject) => {
-							db.run('ROLLBACK', (err) => {
-								if (err) reject(err)
-								else resolve()
-							})
-						})
+						await runQuery('ROLLBACK')
 						throw err
 					})
 
-					db.run('COMMIT')
+					await runQuery('COMMIT')
 
 					for (let classroom of Object.values(cD)) {
 						let updatePolls = false
@@ -2970,13 +3221,13 @@ io.on('connection', (socket) => {
 	})
 
 	// Deletes a user from the class
-	socket.on('deleteStudent', (username) => {
+	socket.on('classKickUser', (username) => {
 		try {
-			logger.log('info', `[deleteStudent] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[deleteStudent] username=(${username})`)
+			logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickUser] username=(${username})`)
 
 			const classCode = socket.request.session.class
-			deleteStudent(username, classCode)
+			classKickUser(username, classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -2985,12 +3236,12 @@ io.on('connection', (socket) => {
 	})
 
 	// Deletes all students from the class
-	socket.on('deleteStudents', () => {
+	socket.on('classKickStudents', () => {
 		try {
-			logger.log('info', `[deleteStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			const classCode = socket.request.session.class
-			deleteStudents(classCode)
+			classKickStudents(classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3005,7 +3256,7 @@ io.on('connection', (socket) => {
 			const userId = socket.request.session.userId
 			const username = socket.request.session.username
 			const classCode = socket.request.session.class
-			deleteStudent(username, classCode)
+			classKickUser(username, classCode)
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 
@@ -3026,33 +3277,7 @@ io.on('connection', (socket) => {
 		try {
 			logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-			const username = socket.request.session.username
-			const userId = socket.request.session.userId
-			const classCode = socket.request.session.class
-			const className = cD[classCode].className
-
-			socket.request.session.destroy((err) => {
-				try {
-					if (err) throw err
-
-					delete userSockets[username]
-					delete cD[classCode].students[username]
-					socket.leave(className)
-					cpUpdate(classCode)
-					vbUpdate(classCode)
-
-					db.get(
-						'SELECT * FROM classroom WHERE owner=? AND key=?',
-						[userId, classCode],
-						(err, classroom) => {
-							if (err) logger.log('error', err.stack)
-							if (classroom) endClass(classroom.key)
-						}
-					)
-				} catch (err) {
-					logger.log('error', err.stack)
-				}
-			})
+			logout(socket)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3130,6 +3355,10 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
+	})
+
+	socket.on('managerUpdate', () => {
+		managerUpdate()
 	})
 
 	// Updates and stores poll history
@@ -3401,11 +3630,11 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('bannedStudentsUpdate', () => {
-		bannedStudentsUpdate()
+	socket.on('classBannedUsersUpdate', () => {
+		classBannedUsersUpdate()
 	})
 
-	socket.on('banStudent', (user) => {
+	socket.on('classBanUser', (user) => {
 		try {
 			logger.log('info', `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[ban] user=(${user})`)
@@ -3435,8 +3664,8 @@ io.on('connection', (socket) => {
 					if (cD[socket.request.session.class].students[user])
 						cD[socket.request.session.class].students[user].classPermissions = 0
 
-					deleteStudent(user)
-					bannedStudentsUpdate()
+					classKickUser(user)
+					classBannedUsersUpdate()
 					cpUpdate()
 					socket.emit('message', `Banned ${user}`)
 				} catch (err) {
@@ -3450,7 +3679,7 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('unbanStudent', (user) => {
+	socket.on('classUnbanUser', (user) => {
 		try {
 			logger.log('info', `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[unban] user=(${user})`)
@@ -3480,7 +3709,7 @@ io.on('connection', (socket) => {
 					if (cD[socket.request.session.class].students[user])
 						cD[socket.request.session.class].students[user].permissions = 1
 
-					bannedStudentsUpdate()
+					classBannedUsersUpdate()
 					socket.emit('message', `Unbanned ${user}`)
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -3514,6 +3743,207 @@ io.on('connection', (socket) => {
 			logger.log('error', err.stack)
 		}
 	});
+
+	socket.on('deleteUser', async (userId) => {
+		try {
+			logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteUser] userId=(${userId})`)
+
+			const user = await new Promise((resolve, reject) => {
+				db.get('SELECT * FROM users WHERE id = ?', userId, (err, user) => {
+					if (err) reject(err)
+					resolve(user)
+				})
+			})
+			if (!user) {
+				socket.emit('message', 'User not found')
+				return
+			}
+
+			if (userSockets[user.username])
+				logout(userSockets[user.username])
+
+			try {
+				await runQuery('BEGIN TRANSACTION')
+
+				await Promise.all([
+					runQuery('DELETE FROM users WHERE id = ?', userId),
+					runQuery('DELETE FROM classusers WHERE studentId = ?', userId),
+					runQuery('DELETE FROM shared_polls WHERE userId = ?', userId),
+				])
+
+				await deleteCustomPolls(userId)
+				await deleteClassrooms(userId)
+
+				await runQuery('COMMIT')
+				await managerUpdate()
+				socket.emit('message', 'User deleted successfully')
+			} catch (err) {
+				await runQuery('ROLLBACK')
+				throw err
+			}
+		} catch (err) {
+			logger.log('error', err.stack)
+			socket.emit('message', 'There was a server error try again.')
+		}
+	})
+
+	socket.on('ipUpdate', () => {
+		ipUpdate(null, socket.request.session.username)
+	})
+
+	socket.on('changeIp', (type, id, ip) => {
+		try {
+			logger.log('info', `[changeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[changeIp] type=(${type}) id=(${id}) ip=(${ip})`)
+
+			if (type != 'whitelist' && type != 'blacklist') {
+				logger.log('critical', 'invalid type')
+				socket.emit('message', 'Invalid Ip type')
+				return
+			}
+
+			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+				if (err) {
+					logger.log('error', err.stack)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				if (!dbIp) {
+					socket.emit('message', 'Ip not found')
+					return
+				}
+
+
+				db.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
+					if (err) logger.log('error', err)
+					else {
+						if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
+						else if (type == 'blacklist') blacklistedIps[dbIp.id].ip = ip
+
+
+						reloadPageByIp(type == 'whitelist', ip)
+						reloadPageByIp(type == 'whitelist', dbIp.ip)
+						ipUpdate(type)
+					}
+				})
+			})
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('addIp', (type, ip) => {
+		logger.log('info', `[addIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[addIp] type=(${type}) ip=(${ip})`)
+
+		if (type != 'whitelist' && type != 'blacklist') {
+			logger.log('critical', 'invalid type')
+			socket.emit('message', 'Invalid Ip type')
+			return
+		}
+
+		db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+			if (err) {
+				logger.log('error', err.stack)
+				socket.emit('message', 'There was a server error try again.')
+				return
+			}
+
+			if (dbIp) {
+				socket.emit('message', `IP already in ${type}`)
+				return
+			}
+
+			db.run(`INSERT INTO ip_${type} (ip) VALUES (?)`, [ip], (err) => {
+				if (err) {
+					logger.log('error', err.stack)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+					if (err) {
+						logger.log('error', err.stack)
+						socket.emit('message', 'There was a server error try again.')
+						return
+					}
+
+					if (type == 'whitelist') whitelistedIps[dbIp.id] = dbIp
+					else if (type == 'blacklist') blacklistedIps[dbIp.id] = dbIp
+
+					reloadPageByIp(type != 'whitelist', ip)
+					ipUpdate(type)
+					socket.emit('message', `IP added to ${type}`)
+				})
+			})
+		})
+	})
+
+	socket.on('removeIp', (type, id) => {
+		try {
+			logger.log('info', `[removeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeIp] type=(${type}) id=(${id})`)
+
+			if (type != 'whitelist' && type != 'blacklist') {
+				logger.log('critical', 'invalid type')
+				socket.emit('message', 'Invalid Ip type')
+				return
+			}
+
+			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+				if (err) {
+					logger.log('error', err)
+					socket.emit('message', 'There was a server error try again.')
+					return
+				}
+
+				if (!dbIp) {
+					socket.emit('message', 'Ip not found')
+					return
+				}
+
+				db.run(`DELETE FROM ip_${type} WHERE id=?`, [id], (err) => {
+					if (err) {
+						logger.log('error', err)
+						socket.emit('message', 'There was a server error try again.')
+						return
+					}
+
+					reloadPageByIp(type != 'whitelist', dbIp.ip)
+					if (type == 'whitelist') delete whitelistedIps[id]
+					else if (type == 'blacklist') delete blacklistedIps[id]
+					ipUpdate(type)
+				})
+			})
+		} catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('toggleIpList', (type) => {
+		logger.log('info', `[toggleIpList] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[toggleIpList] type=(${type})`)
+
+		if (type != 'whitelist' && type != 'blacklist') {
+			logger.log('critical', 'invalid type')
+			socket.emit('message', 'Invalid Ip type')
+			return
+		}
+
+		settings[`${type}Active`] = !settings[`${type}Active`]
+		fs.writeFileSync('./settings.json', JSON.stringify(settings))
+
+		let ipList
+		if (type == 'whitelist') ipList = whitelistedIps
+		else if (type == 'blacklist') ipList = blacklistedIps
+
+		for (let ip of Object.values(ipList)) {
+			reloadPageByIp(type != 'whitelist', ip.ip)
+		}
+		ipUpdate(type)
+	})
 	socket.on('saveTags',
 		(studentId, tags, username) => {
 			try {
@@ -3545,7 +3975,9 @@ io.on('connection', (socket) => {
 })
 
 
-http.listen(420, () => {
+http.listen(420, async () => {
+	whitelistedIps = await getIpAccess('whitelist')
+	blacklistedIps = await getIpAccess('blacklist')
 	console.log('Running on port: 420')
 	logger.log('info', 'Start')
 })
