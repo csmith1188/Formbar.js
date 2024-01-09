@@ -81,6 +81,12 @@
 							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
 								class="quickButton">
 							<br>
+
+							<label for="changeNames">Specify Tags?</label>
+							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
+								class="quickButton">
+							<br>
+
 							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
 							<button id="resetColors" class="quickButton">Reset Colors</button>
 							<div id="responses"></div>
@@ -904,6 +910,7 @@
 					toggleDialog.addEventListener('click', function () {
 						studentTags.showModal();
 					});
+
 					let studentTags = document.createElement('dialog');
 					studentTags.innerHTML = '<p>' + student + '</p>';
 					let closeButton = document.createElement('button');
@@ -1175,6 +1182,14 @@
 			// Starts a new poll that allows students to submit answers
 			// Check how many possible responses and if the teacher wants to accept text responses
 			function startPoll(customPollId) {
+				var userTags = []
+				for (let tagsSelected of document.getElementsByName("selectedTags")[0]) {
+					//console.log(tagsSelected.value, tagsSelected.checked);
+					if (tagsSelected.checked) {
+						userTags.push(tagsSelected.value)
+					}
+					userTags.sort()
+				}
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
@@ -1316,7 +1331,7 @@
 
 			function sharePoll(type) {
 				if (type == 'user')
-					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value, )
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
 				else alert('Invalid share poll type')
@@ -1325,14 +1340,14 @@
 				sharePollClassInput.value = ''
 			}
 
-			function publicToggle(customPollId) {
-				let customPoll = customPolls[customPollId]
+			function sharePoll(type) {
 
-				if (customPoll.public)
-					socket.emit('setPublicPoll', customPollId, false)
-				else
-					socket.emit('setPublicPoll', customPollId, true)
-			}
+				if (type == 'user')
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
+				else if (type == 'class')
+					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
+				else alert('Invalid share poll type')}
+
 
 			function deletePoll(pollId) {
 				if (!pollId && !editingPollId) {
@@ -1693,7 +1708,40 @@
 					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
 				}
 			})
+      
+			var selectTags = document.createElement('dialog')
+			let closeTags = document.createElement('button');
+			let selectTagForm = document.createElement('form');
+			selectTagForm.setAttribute('name', "selectedTags");
 
+			var tagNames = ["Senior", "Junior", "Sophomore", "Freshman"];
+			for (let i = 0; i < tagNames.length; i++) {
+				let checkbox = document.createElement('input');
+				checkbox.type = 'checkbox';
+				checkbox.name = `tagSelector${tagNames[i]}`;
+				checkbox.value = tagNames[i];
+				// studentData.tags.split(",").forEach(tag => {
+				// 	console.log(tag, tagNames[i]);
+				// 	if (tag == tagNames[i]) {
+				// 		checkbox.checked = true;
+				// 	}
+				// });
+				let label = document.createElement('label');
+				label.textContent = tagNames[i];
+				label.setAttribute('for', `checkbox${i}`);
+
+				selectTagForm.appendChild(checkbox);
+				selectTagForm.appendChild(label);
+				selectTagForm.appendChild(document.createElement('br'));
+			}
+			selectTags.appendChild(selectTagForm);
+			selectTags.appendChild(closeTags);
+			document.body.appendChild(selectTags);
+			closeTags.textContent = 'Save';
+			closeTags.addEventListener('click', function () {
+				selectTags.close();
+			})
+      
 			socket.emit('classBannedUsersUpdate')
 			socket.on('classBannedUsersUpdate', (bannedStudents) => {
 				let bannedDiv = document.querySelector('#bannedMenu.tabContent')
@@ -1716,12 +1764,38 @@
 				}
 			})
 
-			socket.on('startPoll', () => {
-				responsesDiv.style.display = 'none'
-				startPollForm.style.display = 'none'
-				endPoll.style.display = 'block'
-				changeTab('usersMenu', 'mainTabs')
-			})
+			// socket.on('connection', (socket) => {
+			// 	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, pollAnswers, blind, priority, selectedTags) => {
+			// 		polls[pollId] = { resNumber, resTextBox, pollPrompt, pollAnswers, blind, priority, selectedTags };
+			// 	});
+
+			// 	socket.on('savePoll', (customPoll, editingPollId, selectedTags) => {
+			// 		polls[editingPollId] = { ...customPoll, selectedTags };
+			// 	});
+			// });
+
+			// socket.on('savePoll', (customPoll, editingPollId, selectedTags) => {
+			// 	polls[editingPollId] = { ...customPoll, selectedTags };
+			// });
+
+			// app.get('/poll/:pollId', (req, res) => {
+			// 	let poll = polls[req.params.pollId];
+			// 	let student = students[req.user.id]; // Assuming `students` is where you store your students and `req.user.id` is the ID of the current student
+
+			// 	if (poll.selectedTags.some(tag => student.tags.includes(tag))) {
+			// 		// The student has at least one of the selected tags, so they can access the poll
+			// 		res.render('poll', { poll });
+			// 	} else {
+			// 		// The student doesn't have any of the selected tags, so they can't access the poll
+			// 		res.status(403).send('You do not have access to this poll');
+			// 	}
+			// });
+
+			responsesDiv.style.display = 'none'
+			startPollForm.style.display = 'none'
+			endPoll.style.display = 'block'
+			changeTab('usersMenu', 'mainTabs')
+
 
 			socket.on('endPoll', () => {
 				startPollForm.style.display = 'block'
