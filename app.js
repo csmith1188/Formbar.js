@@ -1571,11 +1571,11 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 //Adds user to a selected class, typically from the select class page
 app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
-		let code = req.body.key.toLowerCase()
+		let classCode = req.body.key.toLowerCase()
 
-		logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${code})`)
+		logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`)
 
-		let classJoinStatus = await joinClass(req.session.username, code)
+		let classJoinStatus = await joinClass(req.session.username, classCode)
 
 		if (typeof classJoinStatus == 'string') {
 			res.render('pages/message', {
@@ -1585,7 +1585,23 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		req.session.class = code
+		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
+			try {
+				var pollHistory = rows
+
+				for (let poll of pollHistory) {
+					poll.data = JSON.parse(poll.data)
+				}
+
+				logger.log('verbose', `[cpUpdate] classData=(${JSON.stringify(cD[classCode])}) pollHistory=(${JSON.stringify(pollHistory)})`)
+
+				io.to(classCode).emit('cpUpdate', cD[classCode], pollHistory)
+			} catch (err) {
+				logger.log('error', err.stack);
+			}
+		})
+
+		req.session.class = classCode
 		res.redirect('/')
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -3951,6 +3967,7 @@ io.on('connection', (socket) => {
 		}
 		ipUpdate(type)
 	})
+
 	socket.on('saveTags',
 		(studentId, tags, username) => {
 			try {
