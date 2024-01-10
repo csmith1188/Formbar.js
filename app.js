@@ -279,7 +279,7 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, permissions, sharedPolls = []) {
+	constructor(id, className, key, permissions, sharedPolls, pollHistory) {
 		this.id = id
 		this.className = className
 		this.students = {}
@@ -300,6 +300,7 @@ class Classroom {
 		this.quiz = false
 		this.mode = 'poll'
 		this.permissions = permissions
+		this.pollHistory = pollHistory || []
 	}
 }
 
@@ -941,7 +942,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
-		function makeClass(id, className, key, permissions, sharedPolls = []) {
+		function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
@@ -966,7 +967,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						if (err) logger.log('error', err.stack)
 					})
 				}
-				cD[key] = new Classroom(id, className, key, permissions, sharedPolls)
+				cD[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory)
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
 				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -998,7 +999,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
-					db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, NULLIF(json_group_array(DISTINCT class_polls.pollId), "[null]") as sharedPolls FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.name = ? AND classroom.owner = ?', [className, req.session.userId], (err, classroom) => {
+					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], (err, classroom) => {
 						try {
 							if (err) throw err
 
@@ -1011,12 +1012,14 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								return
 							}
 
+							console.log(classroom);
+
 							let makeClassStatus = makeClass(
 								classroom.id,
 								classroom.name,
 								classroom.key,
 								JSON.parse(classroom.permissions),
-								JSON.parse(classroom.sharedPolls)
+								[]
 							)
 
 							if (makeClassStatus instanceof Error) throw makeClassStatus
@@ -1039,7 +1042,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT id, name, key, permissions FROM classroom WHERE id = ?', [classId], (err, classroom) => {
+			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -1052,11 +1055,21 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						return
 					}
 
+					classroom.permissions = JSON.parse(classroom.permissions)
+					classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
+					classroom.pollHistory = JSON.parse(classroom.pollHistory)
+
+					for (let poll of classroom.pollHistory) {
+						poll.data = JSON.parse(poll.data)
+					}
+
 					let makeClassStatus = makeClass(
 						classroom.id,
 						classroom.name,
 						classroom.key,
-						JSON.parse(classroom.permissions)
+						classroom.permissions,
+						classroom.sharedPolls,
+						classroom.pollHistory
 					)
 
 					if (makeClassStatus instanceof Error) throw makeClassStatus
@@ -1585,21 +1598,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
-			try {
-				var pollHistory = rows
-
-				for (let poll of pollHistory) {
-					poll.data = JSON.parse(poll.data)
-				}
-
-				logger.log('verbose', `[cpUpdate] classData=(${JSON.stringify(cD[classCode])}) pollHistory=(${JSON.stringify(pollHistory)})`)
-
-				io.to(classCode).emit('cpUpdate', cD[classCode], pollHistory)
-			} catch (err) {
-				logger.log('error', err.stack);
-			}
-		})
+		io.to(classCode).emit('cpUpdate', cD[classCode])
 
 		req.session.class = classCode
 		res.redirect('/')
@@ -1808,44 +1807,44 @@ app.use((req, res, next) => {
 
 // Authentication for users and plugins to connect to formbar websockets
 // The user must be logged in order to connect to websockets
-// io.use((socket, next) => {
-// 	try {
-// 		let { api } = socket.request.headers
+io.use((socket, next) => {
+	try {
+		let { api } = socket.request.headers
 
-// 		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
 
-// 		if (socket.request.session.username) {
-// 			next()
-// 		} else if (api) {
-// 			db.get(
-// 				'SELECT id, username, permissions FROM users WHERE API = ?',
-// 				[api],
-// 				(err, userData) => {
-// 					try {
-// 						if (err) throw err
-// 						if (!userData) {
-// 							logger.log('verbose', '[socket authentication] not a valid API Key')
-// 							next(new Error('Not a valid API key'))
-// 							return
-// 						}
+		if (socket.request.session.username) {
+			next()
+		} else if (api) {
+			db.get(
+				'SELECT id, username, permissions FROM users WHERE API = ?',
+				[api],
+				(err, userData) => {
+					try {
+						if (err) throw err
+						if (!userData) {
+							logger.log('verbose', '[socket authentication] not a valid API Key')
+							next(new Error('Not a valid API key'))
+							return
+						}
 
-// 						socket.request.session.api = api
-// 						socket.request.session.class = 'noClass'
+						socket.request.session.api = api
+						socket.request.session.class = 'noClass'
 
-// 						next()
-// 					} catch (err) {
-// 						logger.log('error', err.stack);
-// 					}
-// 				}
-// 			)
-// 		} else {
-// 			logger.log('info', '[socket authentication] Missing username or api')
-// 			next(new Error('Missing API key'))
-// 		}
-// 	} catch (err) {
-// 		logger.log('error', err.stack);
-// 	}
-// })
+						next()
+					} catch (err) {
+						logger.log('error', err.stack);
+					}
+				}
+			)
+		} else {
+			logger.log('info', '[socket authentication] Missing username or api')
+			next(new Error('Missing API key'))
+		}
+	} catch (err) {
+		logger.log('error', err.stack);
+	}
+})
 
 let rateLimits = {}
 let userSockets = {}
@@ -1895,21 +1894,7 @@ io.on('connection', (socket) => {
 		try {
 			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
 
-			db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
-				try {
-					var pollHistory = rows
-
-					for (let poll of pollHistory) {
-						poll.data = JSON.parse(poll.data)
-					}
-
-					logger.log('verbose', `[cpUpdate] classData=(${JSON.stringify(cD[classCode])}) pollHistory=(${JSON.stringify(pollHistory)})`)
-
-					io.to(classCode).emit('cpUpdate', cD[classCode], pollHistory)
-				} catch (err) {
-					logger.log('error', err.stack);
-				}
-			})
+			io.to(classCode).emit('cpUpdate', cD[classCode])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2179,7 +2164,7 @@ io.on('connection', (socket) => {
 		})
 	}
 
-	function endPoll() {
+	async function endPoll() {
 		try {
 			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
@@ -2196,15 +2181,31 @@ io.on('connection', (socket) => {
 				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
 			}
 
-			db.run(
-				'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-				[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
-					if (err) {
-						logger.log('error', err.stack);
-					} else logger.log('verbose', '[clearPoll] saved poll to history')
-				}
-			)
+			await new Promise((resolve, reject) => {
+				db.run(
+					'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
+					[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
+						if (err) {
+							reject(new Error(err))
+						} else {
+							logger.log('verbose', '[clearPoll] saved poll to history')
+							resolve()
+						}
+					}
+				)
+			})
 
+			let latestPoll = await new Promise((resolve, reject) => {
+				db.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
+					cD[socket.request.session.class].id
+				], (err, poll) => {
+					if (err) reject(new Error(err))
+					else resolve(poll)
+				})
+			})
+
+			latestPoll.data = JSON.parse(latestPoll.data)
+			cD[socket.request.session.class].pollHistory.push(latestPoll)
 
 			cD[socket.request.session.class].poll.status = false
 
@@ -2218,8 +2219,9 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	function clearPoll(classCode = socket.request.session.class) {
-		endPoll()
+	async function clearPoll(classCode = socket.request.session.class) {
+		if (cD[classCode].poll.status) endPoll()
+
 		cD[classCode].poll.responses = {}
 		cD[classCode].poll.prompt = ''
 		cD[classCode].poll = {
@@ -2595,12 +2597,12 @@ io.on('connection', (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
+	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
 		try {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
 
-			clearPoll()
+			await clearPoll()
 
 			let generatedColors = generateColors(resNumber)
 			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
@@ -3409,15 +3411,7 @@ io.on('connection', (socket) => {
 			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[previousPollDisplay] pollindex=(${pollindex})`)
 
-			db.get('SELECT data FROM poll_history WHERE id = ?', pollindex, (err, pollData) => {
-				try {
-					if (err) throw err
-
-					io.to(socket.request.session.class).emit('previousPollData', JSON.parse(pollData.data))
-				} catch (err) {
-					logger.log('error', err.stack)
-				}
-			})
+			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollindex].data)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3499,6 +3493,8 @@ io.on('connection', (socket) => {
 			} else {
 				cD[socket.request.session.class].currentStep = 0
 			}
+
+			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3513,6 +3509,8 @@ io.on('connection', (socket) => {
 			cD[socket.request.session.class].students[student].help = ''
 
 			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
+
+			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack)
 		}

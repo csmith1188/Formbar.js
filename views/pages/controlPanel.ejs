@@ -10,7 +10,6 @@
 			<script src="/js/iro.js"></script>
 			<script src="/js/floating-ui-core.js"></script>
 			<script src="/js/floating-ui-dom.js"></script>
-			<script src="/js/tabs.js" defer></script>
 		</head>
 
 		<body onload="load(<%-pollStatus%>)">
@@ -82,8 +81,7 @@
 							<br>
 
 							<label for="changeNames">Specify Tags?</label>
-							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
-								class="quickButton">
+							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
 							<br>
 
 							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
@@ -177,6 +175,7 @@
 		</body>
 
 		</html>
+		<script src="/js/tabs.js"></script>
 		<script>
 			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
 			let userCustomPolls = []
@@ -925,10 +924,11 @@
 						checkbox.value = tagNames[i];
 						if (studentData.tags != null && studentData.tags != undefined) {
 							studentData.tags.split(",").forEach(tag => {
-							if (tag == tagNames[i]) {
-								checkbox.checked = true;
-							}
-						})};
+								if (tag == tagNames[i]) {
+									checkbox.checked = true;
+								}
+							})
+						};
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -1160,7 +1160,6 @@
 
 			function deleteTicket(e) {
 				socket.emit('deleteTicket', e.dataset.studentName)
-				socket.emit('cpUpdate')
 			}
 
 			function doStep(id) {
@@ -1331,7 +1330,7 @@
 
 			function sharePoll(type) {
 				if (type == 'user')
-					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value, )
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value,)
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
 				else alert('Invalid share poll type')
@@ -1346,7 +1345,8 @@
 					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
-				else alert('Invalid share poll type')}
+				else alert('Invalid share poll type')
+			}
 
 
 			function deletePoll(pollId) {
@@ -1468,13 +1468,15 @@
 
 			var allRoom = ""
 			socket.emit('cpUpdate')
-			socket.on('cpUpdate', (room, pollHistory) => {
+			socket.on('cpUpdate', (room) => {
 				classCode.innerText = 'Class Code: ' + room.key
-				buildPreviousPolls(pollHistory)
+				buildPreviousPolls(room.pollHistory)
 				allRoom = room
+
+				console.log(allRoom);
+
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
-					socket.emit('cpUpdate')
 				}
 				filterSortChange()
 
@@ -1711,7 +1713,7 @@
 					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
 				}
 			})
-      
+
 			var selectTags = document.createElement('dialog')
 			let closeTags = document.createElement('button');
 			let selectTagForm = document.createElement('form');
@@ -1744,7 +1746,7 @@
 			closeTags.addEventListener('click', function () {
 				selectTags.close();
 			})
-      
+
 			socket.emit('classBannedUsersUpdate')
 			socket.on('classBannedUsersUpdate', (bannedStudents) => {
 				let bannedDiv = document.querySelector('#bannedMenu.tabContent')
