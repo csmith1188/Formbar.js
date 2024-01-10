@@ -1571,11 +1571,11 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 //Adds user to a selected class, typically from the select class page
 app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
-		let code = req.body.key.toLowerCase()
+		let classCode = req.body.key.toLowerCase()
 
-		logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${code})`)
+		logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`)
 
-		let classJoinStatus = await joinClass(req.session.username, code)
+		let classJoinStatus = await joinClass(req.session.username, classCode)
 
 		if (typeof classJoinStatus == 'string') {
 			res.render('pages/message', {
@@ -1585,7 +1585,23 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		req.session.class = code
+		db.all('SELECT * FROM poll_history WHERE class = ?', cD[classCode].id, async (err, rows) => {
+			try {
+				var pollHistory = rows
+
+				for (let poll of pollHistory) {
+					poll.data = JSON.parse(poll.data)
+				}
+
+				logger.log('verbose', `[cpUpdate] classData=(${JSON.stringify(cD[classCode])}) pollHistory=(${JSON.stringify(pollHistory)})`)
+
+				io.to(classCode).emit('cpUpdate', cD[classCode], pollHistory)
+			} catch (err) {
+				logger.log('error', err.stack);
+			}
+		})
+
+		req.session.class = classCode
 		res.redirect('/')
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -2165,7 +2181,7 @@ io.on('connection', (socket) => {
 
 	function endPoll() {
 		try {
-			logger.log('info', `[clearPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
@@ -2199,6 +2215,21 @@ io.on('connection', (socket) => {
 			cpUpdate()
 		} catch (err) {
 			logger.log('error', err.stack);
+		}
+	}
+
+	function clearPoll(classCode = socket.request.session.class) {
+		endPoll()
+		cD[classCode].poll.responses = {}
+		cD[classCode].poll.prompt = ''
+		cD[classCode].poll = {
+			status: false,
+			responses: {},
+			textRes: false,
+			prompt: '',
+			weight: 1,
+			blind: false,
+
 		}
 	}
 
@@ -2569,6 +2600,8 @@ io.on('connection', (socket) => {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
 
+			clearPoll()
+
 			let generatedColors = generateColors(resNumber)
 			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
@@ -2621,18 +2654,8 @@ io.on('connection', (socket) => {
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
 		try {
-			endPoll()
-			cD[socket.request.session.class].poll.responses = {}
-			cD[socket.request.session.class].poll.prompt = ''
-			cD[socket.request.session.class].poll = {
-				status: false,
-				responses: {},
-				textRes: false,
-				prompt: '',
-				weight: 1,
-				blind: false,
+			clearPoll()
 
-			}
 			vbUpdate()
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -3944,6 +3967,7 @@ io.on('connection', (socket) => {
 		}
 		ipUpdate(type)
 	})
+
 	socket.on('saveTags',
 		(studentId, tags, username) => {
 			try {
