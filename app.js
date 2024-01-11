@@ -1804,62 +1804,19 @@ app.use((req, res, next) => {
 	}
 })
 
-
-// Authentication for users and plugins to connect to formbar websockets
-// The user must be logged in order to connect to websockets
-io.use((socket, next) => {
-	try {
-		let { api } = socket.request.headers
-
-		logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
-
-		if (socket.request.session.username) {
-			next()
-		} else if (api) {
-			db.get(
-				'SELECT id, username, permissions FROM users WHERE API = ?',
-				[api],
-				(err, userData) => {
-					try {
-						if (err) throw err
-						if (!userData) {
-							logger.log('verbose', '[socket authentication] not a valid API Key')
-							next(new Error('Not a valid API key'))
-							return
-						}
-
-						socket.request.session.api = api
-						socket.request.session.class = 'noClass'
-
-						next()
-					} catch (err) {
-						logger.log('error', err.stack);
-					}
-				}
-			)
-		} else {
-			logger.log('info', '[socket authentication] Missing username or api')
-			next(new Error('Missing API key'))
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-	}
-})
-
 let rateLimits = {}
 let userSockets = {}
 
 //Handles the websocket communications
 io.on('connection', (socket) => {
 	try {
-		if (socket.request.session.username) {
+		if (socket.request.session.api) {
+			socket.join(socket.request.session.class)
+		} else if (socket.request.session.username) {
 			socket.join(socket.request.session.class)
 			socket.join(socket.request.session.username)
 
 			userSockets[socket.request.session.username] = socket
-		}
-		if (socket.request.session.api) {
-			socket.join(socket.request.session.class)
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -2388,18 +2345,19 @@ io.on('connection', (socket) => {
 		}
 	}
 
-	// authentication for sockets
+	// Authentication for users and plugins to connect to formbar websockets
+	// The user must be logged in order to connect to websockets
 	socket.use(([event, ...args], next) => {
 		try {
 			let { api } = socket.request.headers
 
-			logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api})`)
+			logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`)
 
 			if (socket.request.session.username) {
 				next()
 			} else if (api) {
 				db.get(
-					'SELECT id, username, permissions FROM users WHERE API = ?',
+					'SELECT id, username FROM users WHERE API = ?',
 					[api],
 					(err, userData) => {
 						try {
@@ -2411,6 +2369,8 @@ io.on('connection', (socket) => {
 							}
 
 							socket.request.session.api = api
+							socket.request.session.userId = userData.id
+							socket.request.session.username = userData.username
 							socket.request.session.class = 'noClass'
 
 							next()
@@ -2477,11 +2437,16 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	//permission check
+	// permission check
 	socket.use(([event, ...args], next) => {
 		try {
 			let username = socket.request.session.username
 			let classCode = socket.request.session.class
+
+			if (!cD[classCode].students[username]) {
+				socket.emit('message', 'User is not logged in')
+				return
+			}
 
 			if (
 				GLOBAL_SOCKET_PERMISSIONS[event] &&
