@@ -1012,8 +1012,6 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								return
 							}
 
-							console.log(classroom);
-
 							let makeClassStatus = makeClass(
 								classroom.id,
 								classroom.name,
@@ -1062,6 +1060,8 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 					for (let poll of classroom.pollHistory) {
 						poll.data = JSON.parse(poll.data)
 					}
+
+					if (classroom.pollHistory[0].id == null) classroom.pollHistory = null
 
 					let makeClassStatus = makeClass(
 						classroom.id,
@@ -3966,34 +3966,32 @@ io.on('connection', (socket) => {
 		ipUpdate(type)
 	})
 
-	socket.on('saveTags',
-		(studentId, tags, username) => {
-			try {
-				logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-				logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-				cD[socket.request.session.class].students[username].tags = tags.toString()
-				db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
-					if (err) {
-						return console.error(err.message);
-					}
-					if (row) {
-						// Row exists, update it
-						db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
-							if (err) {
-								return console.error(err.message);
-							}
-						});
-					} else {
-						console.log(`No row found with id ${studentId}`);
-					}
-				});
-			}
-
-			catch (err) {
-				logger.log('error', err.stack)
-			}
+	socket.on('saveTags', (studentId, tags, username) => {
+		try {
+			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+			cD[socket.request.session.class].students[username].tags = tags.toString()
+			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
+				if (err) {
+					return console.error(err.message);
+				}
+				if (row) {
+					// Row exists, update it
+					db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
+						if (err) {
+							return console.error(err.message);
+						}
+					});
+				} else {
+					console.log(`No row found with id ${studentId}`);
+				}
+			});
 		}
-	);
+
+		catch (err) {
+			logger.log('error', err.stack)
+		}
+	})
 })
 
 

@@ -3,176 +3,178 @@
 		<!DOCTYPE html>
 		<html lang="en">
 
-		<head>
-			<meta charset="UTF-8">
-			<meta http-equiv="X-UA-Compatible" content="IE=edge">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<script src="/js/iro.js"></script>
-			<script src="/js/floating-ui-core.js"></script>
-			<script src="/js/floating-ui-dom.js"></script>
-		</head>
+			<head>
+				<meta charset="UTF-8">
+				<meta http-equiv="X-UA-Compatible" content="IE=edge">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<script src="/js/iro.js"></script>
+				<script src="/js/floating-ui-core.js"></script>
+				<script src="/js/floating-ui-dom.js"></script>
+			</head>
 
-		<body onload="load(<%-pollStatus%>)">
-			<%- include('../partials/formbar_header') %>
-				<header id="quickMenu">
-					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
-					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
-					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
-					<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
-				</header>
+			<body onload="load(<%-pollStatus%>)">
+				<%- include('../partials/formbar_header') %>
+					<header id="quickMenu">
+						<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+						<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
+						<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
+						<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
+						<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
+					</header>
 
-				<p id="classCode">Class Code:</p>
-				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-					<div id="userFilterBoxes" class="options">
-						<h2 class="headerText">Filter</h2>
-						<button type="button" id="help" class="filter">Help tickets</button>
-						<button type="button" id="break" class="filter">Break</button>
-						<button type="button" id="polls" class="filter">Polls</button>
-					</div>
-					<div id="userSortBoxes" class="options">
-						<h2 class="headerText">Sort</h2>
-						<button type="button" id="name" class="sort">Name</button>
-						<button type="button" id="polls" class="sort">Polls</button>
-						<button type="button" id="helpTime" class="sort">Help Time</button>
-						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
-					</div>
-					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
-						Kick All Students
-					</button>
-					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
-						End Class
-					</button>
-					<div id="users">
-					</div>
-				</div>
-				<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
-				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
-					<div id="pollOptions" class="options">
-						<h2 class="headerText">Custom Polls</h2>
-						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public
-							Polls</button>
-						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class
-							Polls</button>
-						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your
-							Polls</button>
-					</div>
-					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
-						<div id="pollActions" class="options">
-							<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
-							<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
-							<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
-							<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
+					<p id="classCode">Class Code:</p>
+					<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+						<div id="userFilterBoxes" class="options">
+							<h2 class="headerText">Filter</h2>
+							<button type="button" id="help" class="filter">Help tickets</button>
+							<button type="button" id="break" class="filter">Break</button>
+							<button type="button" id="polls" class="filter">Polls</button>
 						</div>
-						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
-						<div id="startPollForm">
-							<label for="resNumber">How many possible responses?</label>
-							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
-							<br>
-							<label for="resTextBox">Would like to accept text responses?</label>
-							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
-							<br>
-							<label for="pollBox">Prompt for the poll?</label>
-							<input type="text" id="pollBox" placeholder="Prompt (optional)">
-							<br>
-							<label for="changeNames">Customize the answer options?</label>
-							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
-								class="quickButton">
-							<br>
-
-							<label for="changeNames">Specify Tags?</label>
-							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
-							<br>
-
-							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
-							<button id="resetColors" class="quickButton">Reset Colors</button>
-							<div id="responses"></div>
-							<br>
-							<label for="blind">Blind poll? (Responses won't be visible until everyone has
-								answered)</label>
-							<input type="checkbox" id="blind">
-							<br>
-							<button id="startPoll" onclick="startPoll()">Start Poll</button>
-							<br>
+						<div id="userSortBoxes" class="options">
+							<h2 class="headerText">Sort</h2>
+							<button type="button" id="name" class="sort">Name</button>
+							<button type="button" id="polls" class="sort">Polls</button>
+							<button type="button" id="helpTime" class="sort">Help Time</button>
+							<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 						</div>
-						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-						<br>
-						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
-						<br>
-						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-							Polls</button>
+						<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
+							Kick All Students
+						</button>
+						<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
+							End Class
+						</button>
+						<div id="users">
+						</div>
+					</div>
+					<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
+					<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
+						<div id="pollOptions" class="options">
+							<h2 class="headerText">Custom Polls</h2>
+							<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public
+								Polls</button>
+							<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class
+								Polls</button>
+							<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your
+								Polls</button>
+						</div>
+						<div id="mainPolls" class="tabContent default" data-tab-group="polls">
+							<div id="pollActions" class="options">
+								<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
+								<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
+								<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
+								<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
+							</div>
+							<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
+							<div id="startPollForm">
+								<label for="resNumber">How many possible responses?</label>
+								<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
+									onchange="responseAmountChange()">
+								<br>
+								<label for="resTextBox">Would like to accept text responses?</label>
+								<input type="checkbox" id="resTextBox" onclick="resTextChange()">
+								<br>
+								<label for="pollBox">Prompt for the poll?</label>
+								<input type="text" id="pollBox" placeholder="Prompt (optional)">
+								<br>
+								<label for="changeNames">Customize the answer options?</label>
+								<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
+									class="quickButton">
+								<br>
 
+								<label for="changeNames">Specify Tags?</label>
+								<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
+								<br>
+
+								<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+								<button id="resetColors" class="quickButton">Reset Colors</button>
+								<div id="responses"></div>
+								<br>
+								<label for="blind">Blind poll? (Responses won't be visible until everyone has
+									answered)</label>
+								<input type="checkbox" id="blind">
+								<br>
+								<button id="startPoll" onclick="startPoll()">Start Poll</button>
+								<br>
+							</div>
+							<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
+							<br>
+							<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
+							<br>
+							<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+								Polls</button>
+
+						</div>
+						<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
+						</div>
+						<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
+						</div>
+						<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
+						</div>
+						<div id="previousPolls" class="tabContent" data-tab-group="polls">
+							<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
+								polls</button>
+							<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
+							<div id="previousPollButtons"></div>
+						</div>
 					</div>
-					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
+					<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
+						<form method="post" enctype="multipart/form-data">
+							<input name="spreadsheet" type="file">
+							<input type="submit" class="quickButton">
+						</form>
+						<button type="button" id="nextStep">Next Step</button><br>
+						<br>
+						<form>
+							<label class="form-control" id="pollControl" for="modeP">
+								<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+								Poll Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modeL">
+								<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+								Lesson Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modeQ">
+								<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+								Quiz Mode
+							</label>
+							<label class="form-control" id="pollControl" for="modePT">
+								<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+								Playtime Mode
+							</label>
+						</form>
 					</div>
-					<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
+					<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+						<div class="options">
+							<button id="permissions" class="quickButton tab pressed"
+								data-tab-group="settingsTabs">Permissions</button>
+							<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
+						</div>
+						<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
+							<h2>Permissions</h2>
+							<div id="permissionsList"></div>
+						</div>
+						<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
+						</div>
 					</div>
-					<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
-					</div>
-					<div id="previousPolls" class="tabContent" data-tab-group="polls">
-						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
-							polls</button>
-						<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
-						<div id="previousPollButtons"></div>
-					</div>
-				</div>
-				<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
-					<form method="post" enctype="multipart/form-data">
-						<input name="spreadsheet" type="file">
-						<input type="submit" class="quickButton">
-					</form>
-					<button type="button" id="nextStep">Next Step</button><br>
-					<br>
-					<form>
-						<label class="form-control" id="pollControl" for="modeP">
-							<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-							Poll Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modeL">
-							<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-							Lesson Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modeQ">
-							<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-							Quiz Mode
-						</label>
-						<label class="form-control" id="pollControl" for="modePT">
-							<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-							Playtime Mode
-						</label>
-					</form>
-				</div>
-				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
-					<div class="options">
-						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
-						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
-					</div>
-					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
-						<h2>Permissions</h2>
-						<div id="permissionsList"></div>
-					</div>
-					<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
-					</div>
-				</div>
-				<dialog id="sharePollDialog">
-					<button
-						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
-					<p>
-						<label for="share">Share to User</label>
-						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
-							onkeypress="if(event.key == 'Enter') sharePoll('user')">
-					</p>
-					<div id="userPollShares"></div>
-					<p>
-						<label for="share">Share to Class</label>
-						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
-							onkeypress="if(event.key == 'Enter') sharePoll('class')">
-					</p>
-					<div id="classPollShares"></div>
-				</dialog>
-				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
-				<%- include('../partials/body_content') %>
-		</body>
+					<dialog id="sharePollDialog">
+						<button
+							onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
+						<p>
+							<label for="share">Share to User</label>
+							<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+								onkeypress="if(event.key == 'Enter') sharePoll('user')">
+						</p>
+						<div id="userPollShares"></div>
+						<p>
+							<label for="share">Share to Class</label>
+							<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+								onkeypress="if(event.key == 'Enter') sharePoll('class')">
+						</p>
+						<div id="classPollShares"></div>
+					</dialog>
+					<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+					<%- include('../partials/body_content') %>
+			</body>
 
 		</html>
 		<script src="/js/tabs.js"></script>
@@ -828,7 +830,6 @@
 					permissionSwitch.setAttribute("class", "permSwitch");
 					permissionSwitch.setAttribute("data-userid", student);
 					permissionSwitch.onchange = (event) => {
-						console.log(event);
 						socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
 					};
 					if (studentData.classPermissions == 4) {
@@ -1339,16 +1340,6 @@
 				sharePollClassInput.value = ''
 			}
 
-			function sharePoll(type) {
-
-				if (type == 'user')
-					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
-				else if (type == 'class')
-					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
-				else alert('Invalid share poll type')
-			}
-
-
 			function deletePoll(pollId) {
 				if (!pollId && !editingPollId) {
 					alert('No poll selected')
@@ -1470,10 +1461,9 @@
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', (room) => {
 				classCode.innerText = 'Class Code: ' + room.key
-				buildPreviousPolls(room.pollHistory)
+				console.log(room);
+				// buildPreviousPolls(room.pollHistory)
 				allRoom = room
-
-				console.log(allRoom);
 
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
@@ -1519,8 +1509,6 @@
 						changeTab('plugins', 'settingsTabs')
 					}
 				}
-
-				console.log(allRoom.poll);
 
 				if (allRoom.poll.status) {
 					responsesDiv.style.display = 'none'
@@ -1769,38 +1757,12 @@
 				}
 			})
 
-			// socket.on('connection', (socket) => {
-			// 	socket.on('startPoll', (resNumber, resTextBox, pollPrompt, pollAnswers, blind, priority, selectedTags) => {
-			// 		polls[pollId] = { resNumber, resTextBox, pollPrompt, pollAnswers, blind, priority, selectedTags };
-			// 	});
-
-			// 	socket.on('savePoll', (customPoll, editingPollId, selectedTags) => {
-			// 		polls[editingPollId] = { ...customPoll, selectedTags };
-			// 	});
-			// });
-
-			// socket.on('savePoll', (customPoll, editingPollId, selectedTags) => {
-			// 	polls[editingPollId] = { ...customPoll, selectedTags };
-			// });
-
-			// app.get('/poll/:pollId', (req, res) => {
-			// 	let poll = polls[req.params.pollId];
-			// 	let student = students[req.user.id]; // Assuming `students` is where you store your students and `req.user.id` is the ID of the current student
-
-			// 	if (poll.selectedTags.some(tag => student.tags.includes(tag))) {
-			// 		// The student has at least one of the selected tags, so they can access the poll
-			// 		res.render('poll', { poll });
-			// 	} else {
-			// 		// The student doesn't have any of the selected tags, so they can't access the poll
-			// 		res.status(403).send('You do not have access to this poll');
-			// 	}
-			// });
-
-			responsesDiv.style.display = 'none'
-			startPollForm.style.display = 'none'
-			endPoll.style.display = 'block'
-			changeTab('usersMenu', 'mainTabs')
-
+			socket.on('startPoll', () => {
+				responsesDiv.style.display = 'none'
+				startPollForm.style.display = 'none'
+				endPoll.style.display = 'block'
+				changeTab('usersMenu', 'mainTabs')
+			})
 
 			socket.on('endPoll', () => {
 				startPollForm.style.display = 'block'
