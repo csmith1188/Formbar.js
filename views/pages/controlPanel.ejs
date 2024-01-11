@@ -258,17 +258,10 @@
 			var clearPoll = document.getElementById('clearPoll')
 			var startPollForm = document.getElementById('startPollForm')
 			var pollPrompt = document.getElementById('pollBox')
-			var pollFilter = document.getElementById('pollFilter')
-			var missingPollFilter = document.getElementById('missingPollFilter')
-			var lettFilter = document.getElementById('lettFilter')
-			var textFilter = document.getElementById('textFilter')
 			var permSort = document.getElementById('permSort')
-			var permSortLabel = document.getElementById('permSortLabel')
-			var helpFilter = document.getElementById('helpFilter')
 			var responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			let settingsDiv = document.querySelector('.tabContent#settingsMenu')
 			var pluginsDiv = document.querySelector('.tabContent#plugins')
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
@@ -276,11 +269,7 @@
 			var toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
 			var classCode = document.getElementById('classCode')
-			var menuUsers = document.getElementById('menuUsers')
-			var menuPolls = document.getElementById('menuPolls')
 			var mainPolls = document.getElementById('menuPolls')
-			var menuLesson = document.getElementById('menuLesson')
-			var menuPlugins = document.getElementById('menuPlugins')
 			let unloadPollButton = document.getElementById('unload-poll')
 			let savePollButton = document.getElementById('save-poll')
 			let deletePollButton = document.getElementById('delete-poll')
@@ -288,13 +277,10 @@
 			let sharePollUserInput = document.getElementById('sharePollUserInput')
 			let sharePollClassInput = document.getElementById('sharePollClassInput')
 			let permissionsDiv = document.querySelector('#permissionsList')
-			let usersTabButton = document.querySelector('.tab#userMenu')
 			let bannedTabButton = document.querySelector('.tab#bannedMenu')
 			let pollsTabButton = document.querySelector('.tab#pollsMenu')
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
-			let pluginsTabButton = document.querySelector('.tab#plugins')
-			// let pollOptions = document.getElementById('pollOptions')
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -742,7 +728,6 @@
 				socket.emit('clearPoll')
 				startPollForm.style.display = 'block'
 				clearPoll.style.display = 'none'
-				// pollOptions.style.display = ''
 			}
 
 			function endPollFunc() {
@@ -1513,7 +1498,6 @@
 					responsesDiv.style.display = 'none'
 					startPollForm.style.display = 'none'
 					endPoll.style.display = 'block'
-					// pollOptions.style.display = 'none'
 				} else {
 					responsesDiv.style.display = ''
 					startPollForm.style.display = ''
