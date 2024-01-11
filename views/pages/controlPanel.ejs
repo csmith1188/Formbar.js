@@ -1461,8 +1461,7 @@
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', (room) => {
 				classCode.innerText = 'Class Code: ' + room.key
-				console.log(room);
-				// buildPreviousPolls(room.pollHistory)
+				buildPreviousPolls(room.pollHistory)
 				allRoom = room
 
 				document.getElementById('nextStep').onclick = () => {
