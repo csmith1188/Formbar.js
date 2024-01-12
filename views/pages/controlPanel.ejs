@@ -80,13 +80,10 @@
 							<label for="changeNames">Customize the answer options?</label>
 							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
 								class="quickButton">
-							<br>
-
-							<label for="changeNames">Specify Tags?</label>
+							<br <label for="changeNames">Specify Tags?</label>
 							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
 								class="quickButton">
 							<br>
-
 							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
 							<button id="resetColors" class="quickButton">Reset Colors</button>
 							<div id="responses"></div>
@@ -181,7 +178,7 @@
 		</html>
 		<script>
 			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
-			console.log(currentUser);
+			//console.log(currentUser);
 			let userCustomPolls = []
 			let classroomCustomPolls = []
 			let publicCustomPolls = []
@@ -252,7 +249,6 @@
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
-
 			var usersDiv = document.getElementById('users')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
@@ -296,6 +292,7 @@
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
 			let pluginsTabButton = document.querySelector('.tab#plugins')
+
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -752,9 +749,11 @@
 			function buildStudent(room, student) {
 				var newStudent = document.createElement("div");
 				newStudent.classList.add("student");
+
 				let studentElement = document.createElement("p");
 				studentElement.innerText += student;
 				newStudent.appendChild(studentElement);
+
 				let studentData = room.students[student]
 				if (studentData.break == true) {
 					let breakText = document.createElement("p");
@@ -905,6 +904,7 @@
 						guestOption.innerText = "Guest";
 						permissionSwitch.add(guestOption);
 					}
+
 					let toggleDialog = document.createElement('button');
 					toggleDialog.innerText = "Tags";
 					toggleDialog.addEventListener('click', function () {
@@ -925,10 +925,11 @@
 						checkbox.value = tagNames[i];
 						if (studentData.tags != null && studentData.tags != undefined) {
 							studentData.tags.split(",").forEach(tag => {
-							if (tag == tagNames[i]) {
-								checkbox.checked = true;
-							}
-						})};
+								if (tag == tagNames[i]) {
+									checkbox.checked = true;
+								}
+							})
+						};
 						let label = document.createElement('label');
 						label.textContent = tagNames[i];
 						label.setAttribute('for', `checkbox${i}`);
@@ -960,6 +961,14 @@
 						socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
 						studentTags.close();
 					});
+
+					// Create a checkbox for the student
+					let studentCheckbox = document.createElement("input");
+					studentCheckbox.type = "checkbox";
+					studentCheckbox.id = "checkbox_" + student;
+
+
+					newStudent.appendChild(studentCheckbox);
 					studentTags.appendChild(closeButton);
 					newStudent.appendChild(toggleDialog);
 					newStudent.appendChild(permissionSwitch);
@@ -980,6 +989,8 @@
 					};
 					kickUserButton.innerText = "Kick User"
 					newStudent.appendChild(kickUserButton)
+
+
 				}
 				return newStudent;
 			}
@@ -1331,7 +1342,7 @@
 
 			function sharePoll(type) {
 				if (type == 'user')
-					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value, )
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value,)
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
 				else alert('Invalid share poll type')
@@ -1346,7 +1357,8 @@
 					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
-				else alert('Invalid share poll type')}
+				else alert('Invalid share poll type')
+			}
 
 
 			function deletePoll(pollId) {
@@ -1708,7 +1720,7 @@
 					addPollShare('removeClassPollShare', pollShare.name, pollShare.classId, classPollSharesDiv)
 				}
 			})
-      
+
 			var selectTags = document.createElement('dialog')
 			let closeTags = document.createElement('button');
 			let selectTagForm = document.createElement('form');
@@ -1741,7 +1753,7 @@
 			closeTags.addEventListener('click', function () {
 				selectTags.close();
 			})
-      
+
 			socket.emit('classBannedUsersUpdate')
 			socket.on('classBannedUsersUpdate', (bannedStudents) => {
 				let bannedDiv = document.querySelector('#bannedMenu.tabContent')
@@ -1794,12 +1806,13 @@
 			responsesDiv.style.display = 'none'
 			startPollForm.style.display = 'none'
 			endPoll.style.display = 'block'
-			changeTab('usersMenu', 'mainTabs')
+			//changeTab('usersMenu', 'mainTabs')
 
 
 			socket.on('endPoll', () => {
 				startPollForm.style.display = 'block'
 				endPoll.style.display = 'none'
 			})
+
 		</script>
 		<%- include('../partials/footer_content') %>

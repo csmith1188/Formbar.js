@@ -106,7 +106,8 @@ button,
 	transition-property: transform, box-shadow;
 }
 
-.breakButton {	padding: 3px 6px;
+.breakButton {
+	padding: 3px 6px;
 	border-radius: 8px;
 	font-size: 150%;
 	font-family: inherit;
@@ -187,7 +188,8 @@ dialog {
 }
 
 /*Centers the element horizontally and vertically*/
-.centered, .hCentered.vCentered {
+.centered,
+.hCentered.vCentered {
 	position: absolute;
 	left: 50%;
 	top: 50%;
@@ -246,7 +248,7 @@ dialog {
 	cursor: pointer;
 }
 
-.headerTab:hover ,
+.headerTab:hover,
 .headerTab:focus {
 	background-color: #00000055;
 	color: white;
@@ -331,11 +333,6 @@ input[type="radio"]:checked::before {
 input[type="radio"]:focus {
 	outline: max(2px, 0.15em) solid currentColor;
 	outline-offset: max(2px, 0.15em);
-}
-
-/* --- Manager Panel --- */
-.ipListToggle {
-	margin: 1rem 0;
 }
 
 /* --- LOGIN --- */
@@ -477,20 +474,19 @@ input[type="radio"]:focus {
 	line-height: 2;
 }
 
-#kickStudents {
+#deleteStudents {
 	margin-top: 15px;
 }
 
-.deleteUser,
-#kickStudents,
-#kickStudents,
+#deleteStudents,
 #endClass,
+.deleteStudent,
 #delete-poll,
 .delete-poll,
-.banStudent
-{
+.banStudent {
 	--theme-color: hsl(0, 100%, 12%);
-	background-color: hsl(0, 94%, 74%);;
+	background-color: hsl(0, 94%, 74%);
+	;
 }
 
 #responses {
@@ -525,26 +521,26 @@ input[type="radio"]:focus {
 	gap: 10px;
 }
 
-.colorPicker .colorsDiv{
+.colorPicker .colorsDiv {
 	grid-column: 1;
 	grid-row: 1 / 3;
 }
 
-.colorPicker .IroColorPicker{
+.colorPicker .IroColorPicker {
 	grid-column: 2;
 	grid-row: 1;
 }
 
-.colorPicker .hexLabel{
+.colorPicker .hexLabel {
 	grid-column: 2;
 	grid-row: 2;
 }
 
-.hexInput{
+.hexInput {
 	width: 60px;
 }
 
-.colorPicker .buttonsDiv{
+.colorPicker .buttonsDiv {
 	grid-column: 1 / 3;
 	grid-row: 3;
 	display: flex;
@@ -552,7 +548,8 @@ input[type="radio"]:focus {
 	gap: 10px;
 }
 
-.oldColor, .newColor {
+.oldColor,
+.newColor {
 	height: 50%;
 	width: 70%;
 }
@@ -589,7 +586,7 @@ input[type="radio"]:focus {
 	margin: auto;
 	gap: 1.5rem;
 	/* grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); */
-	grid-template-columns:repeat(auto-fit, minmax(1fr));
+	grid-template-columns: repeat(auto-fit, minmax(1fr));
 }
 
 .customPoll * {
@@ -673,4 +670,29 @@ input[type="radio"]:focus {
 #nowPlaying {
 	text-align: center;
 	color: var(--theme-color);
+}
+
+.studentList {
+
+	/* width */
+	::-webkit-scrollbar {
+		width: 20px;
+	}
+
+	/* Track */
+	::-webkit-scrollbar-track {
+		box-shadow: inset 0 0 5px grey;
+		border-radius: 10px;
+	}
+
+	/* Handle */
+	::-webkit-scrollbar-thumb {
+		background: red;
+		border-radius: 10px;
+	}
+
+	/* Handle on hover */
+	::-webkit-scrollbar-thumb:hover {
+		background: #b30000;
+	}
 }
