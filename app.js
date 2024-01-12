@@ -2143,53 +2143,51 @@ io.on('connection', (socket) => {
 					'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
 					[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
 						if (err) {
-							reject(new Error(err))
+							logger.log('error', err.stack);
+							reject(new Error(err));
 						} else {
-							logger.log('verbose', '[clearPoll] saved poll to history')
-							resolve()
-						}
+							logger.log('verbose', '[endPoll] saved poll to history');
+							resolve();
+						};
 					}
-				)
-			})
+				);
+			});
 
 			let latestPoll = await new Promise((resolve, reject) => {
 				db.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
 					cD[socket.request.session.class].id
 				], (err, poll) => {
-					if (err) reject(new Error(err))
-					else resolve(poll)
-				})
-			})
+					if (err) {
+						logger.log("error", err.stack);
+						reject(new Error(err));
+					} else resolve(poll);
+				});
+			});
 
-			latestPoll.data = JSON.parse(latestPoll.data)
-			cD[socket.request.session.class].pollHistory.push(latestPoll)
+			latestPoll.data = JSON.parse(latestPoll.data);
+			cD[socket.request.session.class].pollHistory.push(latestPoll);
 
 			cD[socket.request.session.class].poll.status = false
 
-			logger.log('verbose', `[clearPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
-
-			pollUpdate()
-			vbUpdate()
-			cpUpdate()
+			logger.log('verbose', `[endPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	}
 
 	async function clearPoll(classCode = socket.request.session.class) {
-		if (cD[classCode].poll.status) endPoll()
+		if (cD[classCode].poll.status) await endPoll()
 
-		cD[classCode].poll.responses = {}
-		cD[classCode].poll.prompt = ''
+		cD[classCode].poll.responses = {};
+		cD[classCode].poll.prompt = "";
 		cD[classCode].poll = {
 			status: false,
 			responses: {},
 			textRes: false,
-			prompt: '',
+			prompt: "",
 			weight: 1,
-			blind: false,
-
-		}
+			blind: false
+		};
 	}
 
 	function endClass(classCode) {
@@ -2621,9 +2619,10 @@ io.on('connection', (socket) => {
 	// End the current poll. Does not take any arguments
 	socket.on('clearPoll', () => {
 		try {
-			clearPoll()
-
-			vbUpdate()
+			clearPoll();
+			pollUpdate();
+			vbUpdate();
+			cpUpdate();
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2631,7 +2630,9 @@ io.on('connection', (socket) => {
 
 	socket.on('endPoll', () => {
 		try {
-			endPoll()
+			endPoll();
+			pollUpdate();
+			cpUpdate();
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
