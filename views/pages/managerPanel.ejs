@@ -3,40 +3,40 @@
 		<!DOCTYPE html>
 		<html lang="en">
 
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="X-UA-Compatible" content="IE=edge">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<script src="/js/tabs.js" defer></script>
-			</head>
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<script src="/js/tabs.js" defer></script>
+		</head>
 
-			<body>
-				<%- include('../partials/formbar_header') %>
-					<header id="quickMenu">
-						<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-						<button id="ipMenu" class="quickButton tab" data-tab-group="mainTabs">IP Addresses</button>
-						<!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
-					</header>
+		<body>
+			<%- include('../partials/formbar_header') %>
+				<header id="quickMenu">
+					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="ipMenu" class="quickButton tab" data-tab-group="mainTabs">IP Addresses</button>
+					<!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
+				</header>
 
-					<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-						<!-- <div id="userFilterBoxes" class="options">
+				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+					<!-- <div id="userFilterBoxes" class="options">
 							<h2 class="headerText">Filter</h2>
 						</div> -->
-						<div id="userSortBoxes" class="options">
-							<h2 class="headerText">Sort</h2>
-							<button type="button" id="name" class="sort">Name</button>
-							<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
-						</div>
-						<div id="users">
-						</div>
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Sort</h2>
+						<button type="button" id="name" class="sort">Name</button>
+						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 					</div>
-					<div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
-						<button id="whitelist" class="quickButton tab" data-tab-group="ipTabs">Whitelist</button>
-						<button id="blacklist" class="quickButton tab pressed" data-tab-group="ipTabs">Blacklist</button>
-						<div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
-						<div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+					<div id="users">
 					</div>
-					<!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+				</div>
+				<div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
+					<button id="whitelist" class="quickButton tab" data-tab-group="ipTabs">Whitelist</button>
+					<button id="blacklist" class="quickButton tab pressed" data-tab-group="ipTabs">Blacklist</button>
+					<div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
+					<div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+				</div>
+				<!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div class="options">
 						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
 						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
@@ -46,9 +46,9 @@
 						<div id="permissionsList"></div>
 					</div>
 				</div> -->
-					<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
-					<%- include('../partials/body_content') %>
-			</body>
+				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+				<%- include('../partials/body_content') %>
+		</body>
 
 		</html>
 		<script>
@@ -184,14 +184,14 @@
 					}
 					newUser.appendChild(permissionSwitch)
 					newUser.append(" ")
-					let banUserButton = document.createElement("button")
-					banUserButton.className = 'banUser quickButton'
-					banUserButton.setAttribute("data-user", userData.id)
-					banUserButton.innerText = "Ban User"
-					banUserButton.onclick = (event) => {
-						socket.emit('banUser', { id: userData.id })
-					}
-					newUser.appendChild(banUserButton)
+					// let banUserButton = document.createElement("button")
+					// banUserButton.className = 'banUser quickButton'
+					// banUserButton.setAttribute("data-user", userData.id)
+					// banUserButton.innerText = "Ban User"
+					// banUserButton.onclick = (event) => {
+					// 	socket.emit('banUser', { id: userData.id })
+					// }
+					// newUser.appendChild(banUserButton)
 					let deleteUserButton = document.createElement("button")
 					deleteUserButton.className = 'deleteUser quickButton'
 					deleteUserButton.setAttribute("data-userid", userData.id)

@@ -559,7 +559,7 @@ input[type="radio"]:focus {
 	margin-top: 8px;
 }
 
-#clearPoll {
+#clearPoll, #endPoll {
 	font-size: 18px;
 	margin: auto;
 }

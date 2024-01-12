@@ -3,7 +3,7 @@ database/database.db
 .vscode/
 uploads/
 
-*.log
 logNumbers.json
 settings.json
-logs/**-audit.json
+
+logs/
