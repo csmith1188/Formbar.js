@@ -902,7 +902,6 @@
 					closeButton.textContent = 'Save';
 					let tagForm = document.createElement('form');
 					tagForm.setAttribute('id', student + "tags");
-					var tagNames = ["Senior", "Junior", "Sophomore", "Freshman", "FormbarJS", "OnlyPogs", "PokePucks", "Fiverr"];
 					for (let i = 0; i < tagNames.length; i++) {
 						let checkbox = document.createElement('input');
 						checkbox.type = 'checkbox';
@@ -1168,13 +1167,14 @@
 			// Check how many possible responses and if the teacher wants to accept text responses
 			function startPoll(customPollId) {
 				var userTags = []
-				for (let tagsSelected of document.getElementsByName("selectedTags")[0]) {
-					//console.log(tagsSelected.value, tagsSelected.checked);
-					if (tagsSelected.checked) {
-						userTags.push(tagsSelected.value)
+				let selectTagForm = document.getElementsByName("selectTagForm")
+				for (let eachTagForm of selectTagForm[0]) {
+					if (eachTagForm.checked) {
+						userTags.push(eachTagForm.value)
 					}
-					userTags.sort()
 				}
+				userTags.sort()
+				console.log(userTags);
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
@@ -1316,7 +1316,7 @@
 
 			function sharePoll(type) {
 				if (type == 'user')
-					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value,)
+					socket.emit('sharePollToUser', currentSharePollId, sharePollUserInput.value)
 				else if (type == 'class')
 					socket.emit('sharePollToClass', currentSharePollId, sharePollClassInput.value)
 				else alert('Invalid share poll type')
@@ -1688,20 +1688,15 @@
 			var selectTags = document.createElement('dialog')
 			let closeTags = document.createElement('button');
 			let selectTagForm = document.createElement('form');
-			selectTagForm.setAttribute('name', "selectedTags");
+			selectTagForm.setAttribute('name', "selectTagForm");
 
-			var tagNames = ["Senior", "Junior", "Sophomore", "Freshman"];
+			var tagNames = ["Senior", "Junior", "Sophomore", "Freshman", "FormbarJS", "OnlyPogs", "PokePucks", "Fiverr"];
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
-				checkbox.name = `tagSelector${tagNames[i]}`;
+				checkbox.name = `tagSelector`;
+				checkbox.id = `tagSelector${tagNames[i]}`
 				checkbox.value = tagNames[i];
-				// studentData.tags.split(",").forEach(tag => {
-				// 	console.log(tag, tagNames[i]);
-				// 	if (tag == tagNames[i]) {
-				// 		checkbox.checked = true;
-				// 	}
-				// });
 				let label = document.createElement('label');
 				label.textContent = tagNames[i];
 				label.setAttribute('for', `checkbox${i}`);
@@ -1710,7 +1705,29 @@
 				selectTagForm.appendChild(label);
 				selectTagForm.appendChild(document.createElement('br'));
 			}
+			let tagsAllSame = document.createElement('input');
+			tagsAllSame.type = 'checkbox';
+			tagsAllSame.value = 0 + ":Exact Same Tags"
+			tagsAllSame.name = 'tagSelector';
+			let tagsHas = document.createElement('input');
+			tagsHas.type = 'checkbox';
+			tagsHas.value = 1 + ":Has The Tags"
+			tagsHas.name = `tagSelector`;
+			let tagsAllSameLabel = document.createElement('label');
+			let tagsHasLabel = document.createElement('label');
+			tagsAllSameLabel.textContent = `Exact Same Tags`;
+			tagsHasLabel.textContent = 'Has The Tags';
+			tagSelectorParagraph = document.createElement('p');
+			tagSelectorParagraph.textContent = 'Pick One Below:';
+			selectTagForm.appendChild(tagSelectorParagraph)
+			selectTagForm.appendChild(tagsAllSame);
+			selectTagForm.appendChild(tagsAllSameLabel);
+			selectTagForm.appendChild(document.createElement('br'));
+			selectTagForm.appendChild(tagsHas);
+			selectTagForm.appendChild(tagsHasLabel);
+			selectTagForm.appendChild(document.createElement('br'));
 			selectTags.appendChild(selectTagForm);
+			selectTags.appendChild(document.createElement('br'));
 			selectTags.appendChild(closeTags);
 			document.body.appendChild(selectTags);
 			closeTags.textContent = 'Save';
