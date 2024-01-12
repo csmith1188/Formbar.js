@@ -2628,9 +2628,9 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('endPoll', () => {
+	socket.on('endPoll', async () => {
 		try {
-			endPoll();
+			await endPoll();
 			pollUpdate();
 			cpUpdate();
 		} catch (err) {
