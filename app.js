@@ -2371,7 +2371,7 @@ io.on('connection', (socket) => {
 							socket.request.session.api = api
 							socket.request.session.userId = userData.id
 							socket.request.session.username = userData.username
-							socket.request.session.class = 'noClass'
+							socket.request.session.class = getUserClass(userData.username) || 'noClass'
 
 							next()
 						} catch (err) {
@@ -2443,8 +2443,12 @@ io.on('connection', (socket) => {
 			let username = socket.request.session.username
 			let classCode = socket.request.session.class
 
+			logger.log('info', `Event=(${event}), Username=(${username}), ClassCod=(${classCode})`)
+
+
 			if (!cD[classCode].students[username]) {
 				socket.emit('message', 'User is not logged in')
+				logger.log('info', 'User is not logged in')
 				return
 			}
 
@@ -2452,21 +2456,26 @@ io.on('connection', (socket) => {
 				GLOBAL_SOCKET_PERMISSIONS[event] &&
 				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
 			) {
+				logger.log('info', 'Global socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSIONS[event] &&
 				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
 			) {
+				logger.log('info', 'Class socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
 				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
 				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
 			) {
+				logger.log('info', 'Class socket permission settings check passed')
 				next()
 			} else {
-				if (!PASSIVE_SOCKETS.includes(event))
+				if (!PASSIVE_SOCKETS.includes(event)) {
 					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(event)}.`)
+					logger.log('info', `User does not have permission to use ${camelCaseToNormal(event)}`)
+				}
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -3595,7 +3604,7 @@ io.on('connection', (socket) => {
 
 						if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
 						else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
-						else socket.emit('getUserClass', className)
+						else socket.emit('getUserClass', classCode)
 					} catch (err) {
 						logger.log('error', err.stack)
 						socket.emit('getUserClass', { error: 'There was a server error try again.' })
