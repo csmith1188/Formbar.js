@@ -2555,7 +2555,7 @@ io.on('connection', (socket) => {
 
 			io.to(user).emit('reload')
 
-			db.run('UPDATE users SET permissions = ? WHERE id = ?', [newPerm, user])
+			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, user])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
