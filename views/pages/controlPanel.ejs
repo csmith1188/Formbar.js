@@ -102,7 +102,6 @@
 							<br>
 							<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
 								Polls</button>
-
 						</div>
 						<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
 						</div>
@@ -250,7 +249,6 @@
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
-
 			var usersDiv = document.getElementById('users')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
@@ -281,6 +279,7 @@
 			let pollsTabButton = document.querySelector('.tab#pollsMenu')
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
+
 
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
@@ -738,9 +737,11 @@
 			function buildStudent(room, student) {
 				var newStudent = document.createElement("div");
 				newStudent.classList.add("student");
+
 				let studentElement = document.createElement("p");
 				studentElement.innerText += student;
 				newStudent.appendChild(studentElement);
+
 				let studentData = room.students[student]
 				if (studentData.break == true) {
 					let breakText = document.createElement("p");
@@ -890,6 +891,7 @@
 						guestOption.innerText = "Guest";
 						permissionSwitch.add(guestOption);
 					}
+
 					let toggleDialog = document.createElement('button');
 					toggleDialog.innerText = "Tags";
 					toggleDialog.addEventListener('click', function () {
@@ -945,6 +947,14 @@
 						socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
 						studentTags.close();
 					});
+
+					// Create a checkbox for the student
+					let studentCheckbox = document.createElement("input");
+					studentCheckbox.type = "checkbox";
+					studentCheckbox.id = "checkbox_" + student;
+
+
+					newStudent.appendChild(studentCheckbox);
 					studentTags.appendChild(closeButton);
 					newStudent.appendChild(toggleDialog);
 					newStudent.appendChild(permissionSwitch);
@@ -965,6 +975,8 @@
 					};
 					kickUserButton.innerText = "Kick User"
 					newStudent.appendChild(kickUserButton)
+
+
 				}
 				return newStudent;
 			}
@@ -1324,7 +1336,7 @@
 				sharePollUserInput.value = ''
 				sharePollClassInput.value = ''
 			}
-
+      
 			function deletePoll(pollId) {
 				if (!pollId && !editingPollId) {
 					alert('No poll selected')
@@ -1768,5 +1780,6 @@
 				startPollForm.style.display = 'block'
 				endPoll.style.display = 'none'
 			})
+
 		</script>
 		<%- include('../partials/footer_content') %>
