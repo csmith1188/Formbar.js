@@ -1855,6 +1855,7 @@ io.on('connection', async (socket) => {
 
 							socket.join(socket.request.session.api)
 							socket.join(socket.request.session.class)
+							socket.emit('setClass', socket.request.session.class)
 
 							resolve()
 						} catch (err) {
