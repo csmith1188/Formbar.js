@@ -523,6 +523,24 @@ function camelCaseToNormal(str) {
 	return result
 }
 
+function runQuery(query, params) {
+	return new Promise((resolve, reject) => {
+		db.run(query, params, (err) => {
+			if (err) reject(new Error(err))
+			else resolve()
+		})
+	})
+}
+
+function getAll(query, params) {
+	return new Promise((resolve, reject) => {
+		db.all(query, params, (err, rows) => {
+			if (err) reject(new Error(err))
+			else resolve(rows)
+		})
+	})
+}
+
 // Express functions
 /*
 Check if user has logged in
@@ -641,24 +659,6 @@ function permCheck(req, res, next) {
 	}
 }
 
-function runQuery(query, params) {
-	return new Promise((resolve, reject) => {
-		db.run(query, params, (err) => {
-			if (err) reject(new Error(err))
-			else resolve()
-		})
-	})
-}
-
-function getAll(query, params) {
-	return new Promise((resolve, reject) => {
-		db.all(query, params, (err, rows) => {
-			if (err) reject(new Error(err))
-			else resolve(rows)
-		})
-	})
-}
-
 /**
  * Sets the class code for all sockets in a specific API.
  * If no class code is provided, the default value is 'noClass'.
@@ -667,7 +667,7 @@ function getAll(query, params) {
  * @param {string} [classCode='noClass'] - The class code to set.
  */
 async function setClassOfApiSockets(api, classCode) {
-	logger.log('verbose', `[setClassOfApiSockets] api = (${api}) classCode = (${classCode})`);
+	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
 	let sockets = await io.in(api).fetchSockets()
 
@@ -685,6 +685,32 @@ async function getIpAccess(type) {
 		ips[ip.id] = ip
 		return ips
 	}, {})
+}
+
+// Socket.io functions
+async function managerUpdate() {
+	let [users, classrooms] = await Promise.all([
+		new Promise((resolve, reject) => {
+			db.all('SELECT id, username, permissions FROM users', (err, users) => {
+				if (err) reject(new Error(err))
+				else {
+					users = users.reduce((tempUsers, tempUser) => {
+						tempUsers[tempUser.username] = tempUser
+						return tempUsers
+					}, {})
+					resolve(users)
+				}
+			})
+		}),
+		new Promise((resolve, reject) => {
+			db.get('SELECT * FROM classroom', (err, classrooms) => {
+				if (err) reject(new Error(err))
+				else resolve(classrooms)
+			})
+		})
+	])
+
+	io.emit('managerUpdate', users, classrooms)
 }
 
 
@@ -733,7 +759,7 @@ app.use((req, res, next) => {
 // It also allows for redirection to any other page if needed
 app.get('/', isAuthenticated, (req, res) => {
 	try {
-		logger.log('info', `[get /] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
@@ -753,7 +779,7 @@ app.get('/', isAuthenticated, (req, res) => {
 //The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
 app.get('/apikey', isLoggedIn, (req, res) => {
 	try {
-		logger.log('info', `[get / apikey] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /apikey] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/apiKey', {
 			title: 'API Key',
@@ -778,7 +804,7 @@ app.get('/apikey', isLoggedIn, (req, res) => {
 // On render it will send all students in that class to the page
 app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / controlPanel] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		let students = cD[req.session.class].students
 		let keys = Object.keys(students)
@@ -819,7 +845,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 		//Initialze a list to push each step to - Riley R., May 22, 2023
 		let steps = []
 
-		logger.log('info', `[post / controlPanel] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[post /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		/*
 		Uses Excel to JSON to read the sent excel spreadsheet.
@@ -957,15 +983,15 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		let className = req.body.name
 		let classId = req.body.id
 
-		logger.log('info', `[post / createClass] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[post / createClass] submittionType = (${submittionType}) className = (${className}) classId = (${classId})`)
+		logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
 		async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
 
-				logger.log('verbose', `[makeClass] id = (${id}) name = (${className}) key = (${key}) sharedPolls = (${JSON.stringify(sharedPolls)})`)
+				logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
 				// Remove teacher from no class
 				delete cD.noClass.students[req.session.username]
 
@@ -1017,7 +1043,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				try {
 					if (err) throw err
 
-					logger.log('verbose', `[post / createClass] Added classroom to database`)
+					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
 					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
 						try {
@@ -1136,7 +1162,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 // This makes sure the lesson can see the students and work with them
 app.get('/login', (req, res) => {
 	try {
-		logger.log('info', `[get / login] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/login', {
 			title: 'Login'
@@ -1164,19 +1190,19 @@ app.post('/login', async (req, res) => {
 		}
 		var passwordCrypt = encrypt(user.password)
 
-		logger.log('info', `[post / login] ip = (${req.ip}) session = (${JSON.stringify(req.session)} `)
-		logger.log('verbose', `[post / login] username = (${user.username}) password = (${Boolean(user.password)}) loginType = (${user.loginType}) userType = (${user.userType})`)
+		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)} `)
+		logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
 		// Check whether user is logging in or signing up
 		if (user.loginType == 'login') {
-			logger.log('verbose', `[post / login] User is logging in `)
+			logger.log('verbose', `[post /login] User is logging in `)
 
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
 				try {
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
-						logger.log('verbose', `[post / login] User does not exist`)
+						logger.log('verbose', `[post /login] User does not exist`)
 						res.render('pages/message', {
 							message: 'No user found with that username.',
 							title: 'Login'
@@ -1187,7 +1213,7 @@ app.post('/login', async (req, res) => {
 					// Decrypt users password
 					let tempPassword = decrypt(JSON.parse(userData.password))
 					if (tempPassword != user.password) {
-						logger.log('verbose', `[post / login] Incorrect password`)
+						logger.log('verbose', `[post /login] Incorrect password`)
 						res.render('pages/message', {
 							message: 'Incorrect password',
 							title: 'Login'
@@ -1212,7 +1238,7 @@ app.post('/login', async (req, res) => {
 					}
 
 					if (loggedIn) {
-						logger.log('verbose', `[post / login] User is already logged in `)
+						logger.log('verbose', `[post /login] User is already logged in `)
 						req.session.class = classKey
 					} else {
 						// Add user to the session
@@ -1232,8 +1258,8 @@ app.post('/login', async (req, res) => {
 					req.session.userId = userData.id
 					req.session.username = userData.username
 
-					logger.log('verbose', `[post / login] session = (${JSON.stringify(req.session)})`)
-					logger.log('verbose', `[post / login] cD = (${JSON.stringify(cD)})`)
+					logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+					logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
 
 					res.redirect('/')
 				} catch (err) {
@@ -1245,7 +1271,7 @@ app.post('/login', async (req, res) => {
 				}
 			})
 		} else if (user.loginType == 'new') {
-			logger.log('verbose', `[post / login] Creating new user`)
+			logger.log('verbose', `[post /login] Creating new user`)
 
 			let permissions = STUDENT_PERMISSIONS
 
@@ -1264,7 +1290,7 @@ app.post('/login', async (req, res) => {
 						existingAPIs.push(dbUser.API)
 						existingSecrets.push(dbUser.secret)
 						if (dbUser.username == user.username) {
-							logger.log('verbose', `[post / login] User already exists`)
+							logger.log('verbose', `[post /login] User already exists`)
 							res.render('pages/message', {
 								message: 'A user with that username already exists.',
 								title: 'Login'
@@ -1293,7 +1319,7 @@ app.post('/login', async (req, res) => {
 							try {
 								if (err) throw err
 
-								logger.log('verbose', `[post / login] Added user to database`)
+								logger.log('verbose', `[post /login] Added user to database`)
 
 								// Find the user in which was just created to get the id of the user
 								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
@@ -1316,8 +1342,10 @@ app.post('/login', async (req, res) => {
 										req.session.username = userData.username
 										req.session.class = 'noClass'
 
-										logger.log('verbose', `[post / login] session = (${JSON.stringify(req.session)})`)
-										logger.log('verbose', `[post / login] cD = (${JSON.stringify(cD)})`)
+										logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+										logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
+
+										managerUpdate()
 
 										res.redirect('/')
 									} catch (err) {
@@ -1346,7 +1374,7 @@ app.post('/login', async (req, res) => {
 				}
 			})
 		} else if (user.loginType == 'guest') {
-			logger.log('verbose', `[post / login] Logging in as guest`)
+			logger.log('verbose', `[post /login] Logging in as guest`)
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1364,8 +1392,8 @@ app.post('/login', async (req, res) => {
 // This also allows the teacher to kick or ban if needed
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / manageClass] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[get / manageClass] currentUser = (${JSON.stringify(cD[req.session.class].students[req.session.username])})`)
+		logger.log('info', `[get /manageClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[get /manageClass] currentUser=(${JSON.stringify(cD[req.session.class].students[req.session.username])})`)
 
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
@@ -1382,7 +1410,7 @@ app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 
 app.get('/managerPanel', isLoggedIn, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / managerPanel] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /managerPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/managerPanel', {
 			title: 'Manager Panel'
@@ -1405,8 +1433,8 @@ app.get('/oauth', (req, res) => {
 	try {
 		let redirectURL = req.query.redirectURL
 
-		logger.log('info', `[get / oauth] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[get / oauth] redirectURL = (${redirectURL})`)
+		logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL})`)
 
 		res.render('pages/oauth.ejs', {
 			title: 'Oauth',
@@ -1431,8 +1459,8 @@ app.post('/oauth', (req, res) => {
 			redirectURL
 		} = req.body
 
-		logger.log('info', `[post / oauth] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[post / oauth] username = (${username}) redirectURL = (${redirectURL})`)
+		logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`)
 
 		// If there is a username and password submitted, then it gets results from the database that match the username.
 		if (username && password) {
@@ -1442,7 +1470,7 @@ app.post('/oauth', (req, res) => {
 
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
-						logger.log('verbose', `[post / oauth] User does not exist`)
+						logger.log('verbose', `[post /oauth] User does not exist`)
 						res.render('pages/message', {
 							message: 'No user found with that username.',
 							title: 'Login'
@@ -1453,7 +1481,7 @@ app.post('/oauth', (req, res) => {
 					// Decrypt users password
 					let databasePassword = decrypt(JSON.parse(userData.password))
 					if (databasePassword != password) {
-						logger.log('verbose', `[post / oauth] Incorrect password`)
+						logger.log('verbose', `[post /oauth] Incorrect password`)
 						res.render('pages/message', {
 							message: 'Incorrect password',
 							title: 'Login'
@@ -1468,7 +1496,7 @@ app.post('/oauth', (req, res) => {
 						permissions: userData.permissions
 					}, userData.secret, { expiresIn: '30m' })
 
-					logger.log('verbose', `[post / oauth] Successfully Logged in with oauth`)
+					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
 
 					res.redirect(`${redirectURL}?token = ${token} `)
 				} catch (err) {
@@ -1494,13 +1522,13 @@ app.post('/oauth', (req, res) => {
 /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
 app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / previousLessons] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /previousLessons] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, lessons) => {
 			try {
 				if (err) throw err
 
-				logger.log('verbose', `[get / previousLessons] rows = (${JSON.stringify(lessons)})`)
+				logger.log('verbose', `[get /previousLessons] rows=(${JSON.stringify(lessons)})`)
 
 				res.render('pages/previousLesson', {
 					rows: lessons,
@@ -1527,7 +1555,7 @@ app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	try {
 		let lesson = JSON.parse(req.body.data)
 
-		logger.log('info', `[post / previousLessons] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[post /previousLessons] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/lesson', {
 			lesson: lesson,
@@ -1544,7 +1572,7 @@ app.post('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 
 app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / plugins] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /plugins] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/plugins.ejs', {
 			title: 'Plugins'
@@ -1568,7 +1596,7 @@ app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
 // S
 app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / selectClass] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		db.all(
 			'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username = ?',
@@ -1577,7 +1605,7 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 				try {
 					if (err) throw err
 
-					logger.log('verbose', `[get / selectClass] joinedClasses = (${JSON.stringify(joinedClasses)})`)
+					logger.log('verbose', `[get /selectClass] joinedClasses=(${JSON.stringify(joinedClasses)})`)
 					res.render('pages/selectClass', {
 						title: 'Select Class',
 						joinedClasses: joinedClasses
@@ -1606,7 +1634,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 	try {
 		let classCode = req.body.key.toLowerCase()
 
-		logger.log('info', `[post / selectClass] ip = (${req.ip}) session = (${JSON.stringify(req.session)}) classCode = (${classCode})`)
+		logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`)
 
 		let classJoinStatus = await joinClass(req.session.username, classCode)
 
@@ -1650,8 +1678,8 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		}
 		let answer = req.query.letter
 
-		logger.log('info', `[get / student] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[get / student] question = (${JSON.stringify(req.query.question)}) answer = (${req.query.letter})`)
+		logger.log('info', `[get /student] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[get /student] question=(${JSON.stringify(req.query.question)}) answer=(${req.query.letter})`)
 
 		if (answer) {
 			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
@@ -1667,14 +1695,14 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		if (req.query.question == 'random') {
 			let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
 
-			logger.log('verbose', `[get / student] quiz = (${JSON.stringify(cD[req.session.class].quiz.questions[random])})`)
+			logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[random])})`)
 
 			res.render('pages/queryquiz', {
 				quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
 				title: 'Quiz'
 			})
 			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
-				logger.log('verbose', `[get / student] quiz = (${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
+				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
 
 				res.render('pages/queryquiz', {
 					quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
@@ -1683,7 +1711,7 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			}
 		} else if (isNaN(req.query.question) == false) {
 			if (typeof cD[req.session.class].quiz.questions[req.query.question] != 'undefined') {
-				logger.log('verbose', `[get / student] quiz = (${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
+				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
 
 				res.render('pages/queryquiz', {
 					quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
@@ -1696,7 +1724,7 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 				})
 			}
 		} else if (typeof req.query.question == 'undefined') {
-			logger.log('verbose', `[get / student] user = (${JSON.stringify(user)}) myRes = (cD[req.session.class].students[req.session.username].pollRes.buttonRes) myTextRes = (cD[req.session.class].students[req.session.username].pollRes.textRes) lesson = (cD[req.session.class].lesson)`)
+			logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (cD[req.session.class].students[req.session.username].pollRes.buttonRes) myTextRes = (cD[req.session.class].students[req.session.username].pollRes.textRes) lesson = (cD[req.session.class].lesson)`)
 
 			res.render('pages/student', {
 				title: 'Student',
@@ -1721,8 +1749,8 @@ If it's a poll it'll save your response to the student object and the database.
 */
 app.post('/student', isAuthenticated, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[post / student] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[post / student] poll = (${JSON.stringify(req.query.poll)}) question = (${JSON.stringify(req.body.question)})`)
+		logger.log('info', `[post /student] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[post /student] poll=(${JSON.stringify(req.query.poll)}) question=(${JSON.stringify(req.body.question)})`)
 
 		if (req.query.poll) {
 			let answer = req.body.poll
@@ -1746,7 +1774,7 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 
 			let user = structuredClone(cD[req.session.class].students[req.session.username])
 			delete user.API
-			logger.log('verbose', `[post / student] user = (${JSON.stringify(user)}) totalScore = (${totalScore})`)
+			logger.log('verbose', `[post /student] user=(${JSON.stringify(user)}) totalScore=(${totalScore})`)
 
 			res.render('pages/results', {
 				totalScore: Math.floor(totalScore),
@@ -1771,8 +1799,8 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 // V
 app.get('/virtualbar', isAuthenticated, permCheck, (req, res) => {
 	try {
-		logger.log('info', `[get / virtualbar] ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[get / virtualbar] className = (${JSON.stringify(cD[req.session.class].className)})`)
+		logger.log('info', `[get /virtualbar] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		logger.log('verbose', `[get /virtualbar] className=(${JSON.stringify(cD[req.session.class].className)})`)
 
 		res.render('pages/virtualbar', {
 			title: 'Virtual Bar',
@@ -1809,7 +1837,7 @@ app.use((req, res, next) => {
 			urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 		}
 
-		logger.log('warning', `[404] urlPath = (${urlPath}) ip = (${req.ip}) session = (${JSON.stringify(req.session)})`)
+		logger.log('warning', `[404] urlPath=(${urlPath}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		if (urlPath.startsWith('api/')) {
 			res.status(404).json(`Error: the page ${urlPath} does not exist`)
 		} else {
@@ -1855,6 +1883,7 @@ io.on('connection', async (socket) => {
 
 							socket.join(socket.request.session.api)
 							socket.join(socket.request.session.class)
+
 							socket.emit('setClass', socket.request.session.class)
 
 							resolve()
@@ -1874,34 +1903,9 @@ io.on('connection', async (socket) => {
 		logger.log('error', err.stack);
 	}
 
-	async function managerUpdate() {
-		let [users, classrooms] = await Promise.all([
-			new Promise((resolve, reject) => {
-				db.all('SELECT id, username, permissions FROM users', (err, users) => {
-					if (err) reject(new Error(err))
-					else {
-						users = users.reduce((tempUsers, tmepUser) => {
-							tempUsers[tmepUser.username] = tmepUser
-							return tempUsers
-						}, {})
-						resolve(users)
-					}
-				})
-			}),
-			new Promise((resolve, reject) => {
-				db.get('SELECT * FROM classroom', (err, classrooms) => {
-					if (err) reject(new Error(err))
-					else resolve(classrooms)
-				})
-			})
-		])
-
-		io.emit('managerUpdate', users, classrooms)
-	}
-
 	function cpUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[cpUpdate] classCode = (${classCode})`)
+			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
 
 			io.to(classCode).emit('cpUpdate', cD[classCode])
 		} catch (err) {
@@ -1911,7 +1915,7 @@ io.on('connection', async (socket) => {
 
 	function vbUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[vbUpdate] classCode = (${classCode})`)
+			logger.log('info', `[vbUpdate] classCode=(${classCode})`)
 
 			if (!classCode) return
 			if (classCode == 'noClass') return
@@ -1940,7 +1944,7 @@ io.on('connection', async (socket) => {
 				}
 			}
 
-			logger.log('verbose', `[vbUpdate] status = (${classData.poll.status}) totalStudents = (${Object.keys(classData.students).length}) polls = (${JSON.stringify(responses)}) textRes = (${classData.poll.textRes}) prompt = (${classData.poll.prompt}) weight = (${classData.poll.weight}) blind = (${classData.poll.blind})`)
+			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
 			io.to(classCode).emit('vbUpdate', {
 				status: classData.poll.status,
@@ -1958,8 +1962,8 @@ io.on('connection', async (socket) => {
 
 	function pollUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[pollUpdate] classCode = (${classCode})`)
-			logger.log('verbose', `[pollUpdate] poll = (${JSON.stringify(cD[classCode].poll)})`)
+			logger.log('info', `[pollUpdate] classCode=(${classCode})`)
+			logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(cD[classCode].poll)})`)
 
 			io.to(classCode).emit('pollUpdate', cD[socket.request.session.class].poll)
 		} catch (err) {
@@ -1969,8 +1973,8 @@ io.on('connection', async (socket) => {
 
 	function modeUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[modeUpdate] classCode = (${classCode})`)
-			logger.log('verbose', `[modeUpdate] mode = (${cD[classCode].mode})`)
+			logger.log('info', `[modeUpdate] classCode=(${classCode})`)
+			logger.log('verbose', `[modeUpdate] mode=(${cD[classCode].mode})`)
 
 			io.to(classCode).emit('modeUpdate', cD[socket.request.session.class].mode)
 		} catch (err) {
@@ -1980,8 +1984,8 @@ io.on('connection', async (socket) => {
 
 	function quizUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[quizUpdate] classCode = (${classCode})`)
-			logger.log('verbose', `[quizUpdate] quiz = (${JSON.stringify(cD[classCode].quiz)})`)
+			logger.log('info', `[quizUpdate] classCode=(${classCode})`)
+			logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(cD[classCode].quiz)})`)
 
 			io.to(classCode).emit('quizUpdate', cD[socket.request.session.class].quiz)
 		} catch (err) {
@@ -1991,8 +1995,8 @@ io.on('connection', async (socket) => {
 
 	function lessonUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[lessonUpdate] classCode = (${classCode})`)
-			logger.log('verbose', `[lessonUpdate] lesson = (${JSON.stringify(cD[classCode].lesson)})`)
+			logger.log('info', `[lessonUpdate] classCode=(${classCode})`)
+			logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(cD[classCode].lesson)})`)
 
 			io.to(classCode).emit('lessonUpdate', cD[socket.request.session.class].lesson)
 		} catch (err) {
@@ -2002,7 +2006,7 @@ io.on('connection', async (socket) => {
 
 	function pluginUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[pluginUpdate] classCode = (${classCode})`)
+			logger.log('info', `[pluginUpdate] classCode=(${classCode})`)
 
 			db.all(
 				'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
@@ -2011,7 +2015,7 @@ io.on('connection', async (socket) => {
 					try {
 						if (err) throw err
 
-						logger.log('verbose', `[pluginUpdate] plugins = (${JSON.stringify(plugins)})`)
+						logger.log('verbose', `[pluginUpdate] plugins=(${JSON.stringify(plugins)})`)
 
 						io.to(classCode).emit('pluginUpdate', plugins)
 					} catch (err) {
@@ -2026,7 +2030,7 @@ io.on('connection', async (socket) => {
 
 	function customPollUpdate(username) {
 		try {
-			logger.log('info', `[customPollUpdate] username = (${username})`)
+			logger.log('info', `[customPollUpdate] username=(${username})`)
 
 			let userSession = userSockets[username].request.session
 
@@ -2037,7 +2041,7 @@ io.on('connection', async (socket) => {
 			let publicPolls = []
 			let customPollIds = userCustomPolls.concat(classroomPolls)
 
-			logger.log('verbose', `[customPollUpdate] userSharedPolls = (${userSharedPolls}) userOwnedPolls = (${userOwnedPolls}) userCustomPolls = (${userCustomPolls}) classroomPolls = (${classroomPolls}) publicPolls = (${publicPolls}) customPollIds = (${customPollIds})`)
+			logger.log('verbose', `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`)
 
 			db.all(
 				`SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ? `,
@@ -2068,7 +2072,7 @@ io.on('connection', async (socket) => {
 							}
 						}
 
-						logger.log('verbose', `[customPollUpdate] publicPolls = (${publicPolls}) classroomPolls = (${classroomPolls}) userCustomPolls = (${userCustomPolls}) customPollsData = (${JSON.stringify(customPollsData)})`)
+						logger.log('verbose', `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`)
 
 						io.to(username).emit(
 							'customPollUpdate',
@@ -2089,8 +2093,8 @@ io.on('connection', async (socket) => {
 
 	function classBannedUsersUpdate(classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[classBannedUsersUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[classBannedUsersUpdate] classCode = (${classCode})`)
+			logger.log('info', `[classBannedUsersUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classBannedUsersUpdate] classCode=(${classCode})`)
 
 			if (!classCode || classCode == 'noClass') return
 
@@ -2111,7 +2115,7 @@ io.on('connection', async (socket) => {
 
 	function classKickUser(username, classCode = socket.request.session.class) {
 		try {
-			logger.log('info', `[classKickUser] username = (${username}) classCode = (${classCode})`)
+			logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
 
 			userSockets[username].leave(cD[classCode].className)
 			cD.noClass.students[username] = cD[classCode].students[username]
@@ -2122,7 +2126,7 @@ io.on('connection', async (socket) => {
 
 			setClassOfApiSockets(cD.noClass.students[username].API, 'noClass')
 
-			logger.log('verbose', `[classKickUser] cD = (${JSON.stringify(cD)})`)
+			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(cD)})`)
 
 			userSockets[username].emit('reload')
 		} catch (err) {
@@ -2132,7 +2136,7 @@ io.on('connection', async (socket) => {
 
 	function classKickStudents(classCode) {
 		try {
-			logger.log('info', `[classKickStudents] classCode = (${classCode})`)
+			logger.log('info', `[classKickStudents] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
@@ -2177,7 +2181,7 @@ io.on('connection', async (socket) => {
 
 	async function endPoll() {
 		try {
-			logger.log('info', `[endPoll] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
@@ -2246,14 +2250,14 @@ io.on('connection', async (socket) => {
 
 	function endClass(classCode) {
 		try {
-			logger.log('info', `[endClass] classCode = (${classCode})`)
+			logger.log('info', `[endClass] classCode=(${classCode})`)
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				classKickUser(username, classCode)
 			}
 			delete cD[classCode]
 
-			logger.log('verbose', `[endClass] cD = (${JSON.stringify(cD)})`)
+			logger.log('verbose', `[endClass] cD=(${JSON.stringify(cD)})`)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2261,14 +2265,14 @@ io.on('connection', async (socket) => {
 
 	function getOwnedClasses(username) {
 		try {
-			logger.log('info', `[getOwnedClasses] username = (${username})`)
+			logger.log('info', `[getOwnedClasses] username=(${username})`)
 
 			db.all('SELECT name, id FROM classroom WHERE owner=?',
 				[userSockets[username].request.session.userId], (err, ownedClasses) => {
 					try {
 						if (err) throw err
 
-						logger.log('info', `[getOwnedClasses] ownedClasses = (${JSON.stringify(ownedClasses)})`)
+						logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
 
 						io.to(username).emit('getOwnedClasses', ownedClasses)
 					} catch (err) {
@@ -2283,7 +2287,7 @@ io.on('connection', async (socket) => {
 
 	function getPollShareIds(pollId) {
 		try {
-			logger.log('info', `[getPollShareIds] pollId = (${pollId})`)
+			logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
 
 			db.all(
 				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
@@ -2299,7 +2303,7 @@ io.on('connection', async (socket) => {
 								try {
 									if (err) throw err
 
-									logger.log('info', `[getPollShareIds] userPollShares = (${JSON.stringify(userPollShares)}) classPollShares = (${JSON.stringify(classPollShares)})`)
+									logger.log('info', `[getPollShareIds] userPollShares=(${JSON.stringify(userPollShares)}) classPollShares=(${JSON.stringify(classPollShares)})`)
 
 									socket.emit('getPollShareIds', userPollShares, classPollShares)
 								} catch (err) {
@@ -2358,7 +2362,7 @@ io.on('connection', async (socket) => {
 
 	function ipUpdate(type, username) {
 		try {
-			logger.log('info', `[ipUpdate] username = (${username})`)
+			logger.log('info', `[ipUpdate] username=(${username})`)
 
 			let ipList = {}
 			if (type == 'whitelist') ipList = whitelistedIps
@@ -2402,7 +2406,7 @@ io.on('connection', async (socket) => {
 		try {
 			let { api } = socket.request.headers
 
-			logger.log('info', `[socket authentication]ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)}) api = (${api}) event = (${event})`)
+			logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`)
 
 			if (socket.request.session.username) {
 				next()
@@ -2427,7 +2431,7 @@ io.on('connection', async (socket) => {
 			const blockTime = 5000
 			const limitedRequests = ['pollResp', 'help', 'break']
 
-			logger.log('info', `[rate limiter]username = (${username}) currentTime = (${currentTime})`)
+			logger.log('info', `[rate limiter] username=(${username}) currentTime=(${currentTime})`)
 
 			if (!rateLimits[username]) {
 				rateLimits[username] = {}
@@ -2444,7 +2448,7 @@ io.on('connection', async (socket) => {
 
 			userRequests[event] = userRequests[event].filter((timestamp) => currentTime - timestamp < timeFrame)
 
-			logger.log('verbose', `[rate limiter]userRequests = (${JSON.stringify(userRequests)})`)
+			logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
 
 			if (userRequests[event].length >= limit) {
 				socket.emit('message', `You are being rate limited.Please try again in a ${blockTime / 1000} seconds.`)
@@ -2470,7 +2474,7 @@ io.on('connection', async (socket) => {
 			let username = socket.request.session.username
 			let classCode = socket.request.session.class
 
-			logger.log('info', `[socket permission check]Event = (${event}), Username = (${username}), ClassCod = (${classCode})`)
+			logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassCod=(${classCode})`)
 
 			if (!cD[classCode]) {
 				logger.log('info', '[socket permission check] Class does not exist')
@@ -2516,8 +2520,8 @@ io.on('connection', async (socket) => {
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
-			logger.log('info', `[pollResp] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[pollResp] res = (${res}) textRes = (${textRes}) resWeight = (${resWeight}) resLength = (${resLength})`)
+			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
@@ -2548,7 +2552,7 @@ io.on('connection', async (socket) => {
 					}
 				}
 			}
-			logger.log('verbose', `[pollResp] user = (${cD[socket.request.session.class].students[socket.request.session.username]})`)
+			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 
 			cpUpdate()
 			vbUpdate()
@@ -2560,8 +2564,8 @@ io.on('connection', async (socket) => {
 	// Changes Permission of user. Takes which user and the new permission level
 	socket.on('classPermChange', (user, newPerm) => {
 		try {
-			logger.log('info', `[classPermChange] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[classPermChange] user = (${user}) newPerm = (${newPerm})`)
+			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
 
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
@@ -2571,7 +2575,7 @@ io.on('connection', async (socket) => {
 				cD[socket.request.session.class].students[user].id
 			])
 
-			logger.log('verbose', `[classPermChange] user = (${JSON.stringify(cD[socket.request.session.class].students[user])})`)
+			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
 			io.to(user).emit('reload')
 
 			cpUpdate()
@@ -2584,8 +2588,8 @@ io.on('connection', async (socket) => {
 		try {
 			newPerm = Number(newPerm)
 
-			logger.log('info', `[permChange] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[permChange] user = (${username}) newPerm = (${newPerm})`)
+			logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[permChange] user=(${username}) newPerm=(${newPerm})`)
 
 			let classCode = getUserClass(username)
 			if (classCode instanceof Error) throw classCode
@@ -2612,13 +2616,13 @@ io.on('connection', async (socket) => {
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
 		try {
-			logger.log('info', `[startPoll] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[startPoll] resNumber = (${resNumber}) resTextBox = (${resTextBox}) pollPrompt = (${pollPrompt}) polls = (${JSON.stringify(polls)}) blind = (${blind}) weight = (${weight})`)
+			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
 
 			await clearPoll()
 
 			let generatedColors = generateColors(resNumber)
-			logger.log('verbose', `[pollResp] user = (${cD[socket.request.session.class].students[socket.request.session.username]})`)
+			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
 
 			cD[socket.request.session.class].mode = 'poll'
@@ -2655,7 +2659,7 @@ io.on('connection', async (socket) => {
 				cD[socket.request.session.class].students[key].pollRes.textRes = ''
 			}
 
-			logger.log('verbose', `[startPoll] classData = (${JSON.stringify(cD[socket.request.session.class])})`)
+			logger.log('verbose', `[startPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
 
 			pollUpdate()
 			vbUpdate()
@@ -2689,46 +2693,46 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('pollUpdate', () => {
-		logger.log('info', `[pollUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		pollUpdate()
 	})
 
 	socket.on('modeUpdate', () => {
-		logger.log('info', `[modeUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[modeUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		modeUpdate()
 	})
 
 	socket.on('quizUpdate', () => {
-		logger.log('info', `[quizUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[quizUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		quizUpdate()
 	})
 
 	socket.on('lessonUpdate', () => {
-		logger.log('info', `[lessonUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[lessonUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		lessonUpdate()
 	})
 
 	// Sends poll and student response data to client side virtual bar
 	socket.on('vbUpdate', () => {
-		logger.log('info', `[vbUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[vbUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		vbUpdate()
 	})
 
 	socket.on('customPollUpdate', () => {
-		logger.log('info', `[customPollUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[customPollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		customPollUpdate(socket.request.session.username)
 	})
 
 	socket.on('savePoll', (poll, id) => {
 		try {
-			logger.log('info', `[savePoll] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[savePoll] poll = (${JSON.stringify(poll)}) id = (${id})`)
+			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
 
 			let userId = socket.request.session.userId
 
@@ -2807,8 +2811,8 @@ io.on('connection', async (socket) => {
 		try {
 			let userId = socket.request.session.userId
 
-			logger.log('info', `[deletePoll] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)}) pollId = (${pollId})`)
-			logger.log('info', `[deletePoll] pollId = (${pollId})`)
+			logger.log('info', `[deletePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) pollId=(${pollId})`)
+			logger.log('info', `[deletePoll] pollId=(${pollId})`)
 
 			if (!pollId) {
 				socket.emit('message', 'No poll is selected.')
@@ -2819,7 +2823,7 @@ io.on('connection', async (socket) => {
 				try {
 					if (err) throw err
 
-					logger.log('info', `[deletePoll] poll = (${JSON.stringify(poll)})`)
+					logger.log('info', `[deletePoll] poll=(${JSON.stringify(poll)})`)
 
 					if (userId != poll.owner) {
 						logger.log('info', '[deletePoll] not owner')
@@ -2879,8 +2883,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('setPublicPoll', (pollId, value) => {
 		try {
-			logger.log('info', `[setPublicPoll] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[setPublicPoll] pollId = (${pollId}) value = (${value})`)
+			logger.log('info', `[setPublicPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[setPublicPoll] pollId=(${pollId}) value=(${value})`)
 
 			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (err) => {
 				try {
@@ -2900,8 +2904,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('sharePollToUser', (pollId, username) => {
 		try {
-			logger.log('info', `[sharePollToUser] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[sharePollToUser] pollId = (${pollId}) username = (${username})`)
+			logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[sharePollToUser] pollId=(${pollId}) username=(${username})`)
 
 			db.get('SELECT * FROM users WHERE username = ?', username, (err, user) => {
 				try {
@@ -2983,8 +2987,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('removeUserPollShare', (pollId, userId) => {
 		try {
-			logger.log('info', `[removeUserPollShare] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[removeUserPollShare] pollId = (${pollId}) userId = (${userId})`)
+			logger.log('info', `[removeUserPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeUserPollShare] pollId=(${pollId}) userId=(${userId})`)
 
 			db.get(
 				'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
@@ -3047,16 +3051,16 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('getPollShareIds', (pollId) => {
-		logger.log('info', `[getPollShareIds] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-		logger.log('info', `[getPollShareIds] pollId = (${pollId})`)
+		logger.log('info', `[getPollShareIds] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
 
 		getPollShareIds(pollId)
 	})
 
 	socket.on('sharePollToClass', (pollId, classCode) => {
 		try {
-			logger.log('info', `[sharePollToClass] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[sharePollToClass] pollId = (${pollId}) classCode = (${classCode})`)
+			logger.log('info', `[sharePollToClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[sharePollToClass] pollId=(${pollId}) classCode=(${classCode})`)
 
 			db.get('SELECT * FROM classroom WHERE key = ?', classCode, (err, classroom) => {
 				try {
@@ -3133,8 +3137,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('removeClassPollShare', (pollId, classId) => {
 		try {
-			logger.log('info', `[removeClassPollShare] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[removeClassPollShare] pollId = (${pollId}) classId = (${classId})`)
+			logger.log('info', `[removeClassPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeClassPollShare] pollId=(${pollId}) classId=(${classId})`)
 
 			db.get(
 				'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
@@ -3195,12 +3199,12 @@ io.on('connection', async (socket) => {
 	// Sends a help ticket
 	socket.on('help', (reason, time) => {
 		try {
-			logger.log('info', `[help] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[help] reason = (${reason}) time = (${time})`)
+			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
 			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
 
-			logger.log('verbose', `[help] user = (${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 		} catch (err) {
@@ -3211,13 +3215,13 @@ io.on('connection', async (socket) => {
 	// Sends a break ticket
 	socket.on('requestBreak', (reason) => {
 		try {
-			logger.log('info', `[requestBreak] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[requestBreak] reason = (${reason})`)
+			logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[requestBreak] reason=(${reason})`)
 
 			let student = cD[socket.request.session.class].students[socket.request.session.username]
 			student.break = reason
 
-			logger.log('verbose', `[requestBreak] user = (${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 		} catch (err) {
@@ -3228,13 +3232,13 @@ io.on('connection', async (socket) => {
 	// Approves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
 		try {
-			logger.log('info', `[approveBreak] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[approveBreak] breakApproval = (${breakApproval}) username = (${username})`)
+			logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) username=(${username})`)
 
 			let student = cD[socket.request.session.class].students[username]
 			student.break = breakApproval
 
-			logger.log('verbose', `[approveBreak] user = (${JSON.stringify(cD[socket.request.session.class].students[username])})`)
+			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[username])})`)
 
 			if (breakApproval) io.to(username).emit('break')
 			cpUpdate()
@@ -3247,12 +3251,12 @@ io.on('connection', async (socket) => {
 	// Ends the break
 	socket.on('endBreak', () => {
 		try {
-			logger.log('info', `[endBreak] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[endBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let student = cD[socket.request.session.class].students[socket.request.session.username]
 			student.break = false
 
-			logger.log('verbose', `[endBreak] user = (${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			logger.log('verbose', `[endBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 			vbUpdate()
@@ -3264,8 +3268,8 @@ io.on('connection', async (socket) => {
 	// Deletes a user from the class
 	socket.on('classKickUser', (username) => {
 		try {
-			logger.log('info', `[classKickUser] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[classKickUser] username = (${username})`)
+			logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickUser] username=(${username})`)
 
 			const classCode = socket.request.session.class
 			classKickUser(username, classCode)
@@ -3279,7 +3283,7 @@ io.on('connection', async (socket) => {
 	// Deletes all students from the class
 	socket.on('classKickStudents', () => {
 		try {
-			logger.log('info', `[classKickStudents] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			const classCode = socket.request.session.class
 			classKickStudents(classCode)
@@ -3292,7 +3296,7 @@ io.on('connection', async (socket) => {
 
 	socket.on('leaveClass', () => {
 		try {
-			logger.log('info', `[leaveClass] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			const userId = socket.request.session.userId
 			const username = socket.request.session.username
@@ -3316,7 +3320,7 @@ io.on('connection', async (socket) => {
 
 	socket.on('logout', () => {
 		try {
-			logger.log('info', `[logout] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			logout(socket)
 		} catch (err) {
@@ -3326,7 +3330,7 @@ io.on('connection', async (socket) => {
 
 	socket.on('endClass', () => {
 		try {
-			logger.log('info', `[endClass] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			const userId = socket.request.session.userId
 			const classCode = socket.request.session.class
@@ -3346,8 +3350,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('deleteClass', (classId) => {
 		try {
-			logger.log('info', `[deleteClass] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[deleteClass] classId = (${classId})`)
+			logger.log('info', `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteClass] classId=(${classId})`)
 
 			db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
 				try {
@@ -3373,8 +3377,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('leaveRoom', (className) => {
 		try {
-			logger.log('info', `[leaveRoom] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[leaveRoom] className = (${className})`)
+			logger.log('info', `[leaveRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[leaveRoom] className=(${className})`)
 
 			socket.leave(className)
 			vbUpdate()
@@ -3389,7 +3393,7 @@ io.on('connection', async (socket) => {
 
 	// Updates and stores poll history
 	socket.on('cpUpdate', () => {
-		logger.log('info', `[cpUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		cpUpdate();
 	})
@@ -3409,8 +3413,8 @@ io.on('connection', async (socket) => {
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollIndex) => {
 		try {
-			logger.log('info', `[previousPollDisplay] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[previousPollDisplay] pollIndex = (${pollIndex})`)
+			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
 
 			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollIndex].data)
 		} catch (err) {
@@ -3421,8 +3425,8 @@ io.on('connection', async (socket) => {
 	// Moves to the next step
 	socket.on('doStep', (index) => {
 		try {
-			logger.log('info', `[doStep] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[doStep] index = (${index})`)
+			logger.log('info', `[doStep] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[doStep] index=(${index})`)
 
 			// send reload to whole class
 			socket.broadcast.to(socket.request.session.class).emit('reload')
@@ -3504,12 +3508,12 @@ io.on('connection', async (socket) => {
 	// Deletes help ticket
 	socket.on('deleteTicket', (student) => {
 		try {
-			logger.log('info', `[deleteTicket] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[deleteTicket] student = (${student})`)
+			logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteTicket] student=(${student})`)
 
 			cD[socket.request.session.class].students[student].help = ''
 
-			logger.log('verbose', `[deleteTicket] user = (${JSON.stringify(cD[socket.request.session.class].students[student])})`)
+			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
 
 			cpUpdate()
 		} catch (err) {
@@ -3520,12 +3524,12 @@ io.on('connection', async (socket) => {
 	// Changes the class mode
 	socket.on('modechange', (mode) => {
 		try {
-			logger.log('info', `[modechange] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[modechange] mode = (${mode})`)
+			logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[modechange] mode=(${mode})`)
 
 			cD[socket.request.session.class].mode = mode
 
-			logger.log('verbose', `[modechange] classData = (${cD[socket.request.session.class]})`)
+			logger.log('verbose', `[modechange] classData=(${cD[socket.request.session.class]})`)
 
 			modeUpdate()
 		} catch (err) {
@@ -3534,15 +3538,15 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('pluginUpdate', () => {
-		logger.log('info', `[pluginUpdate] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[pluginUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 		pluginUpdate()
 	})
 
 	socket.on('changePlugin', (id, name, url) => {
 		try {
-			logger.log('info', `[changePlugin] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[changePlugin] id = (${id}) name = (${name}) url = (${url})`)
+			logger.log('info', `[changePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[changePlugin] id=(${id}) name=(${name}) url=(${url})`)
 
 			if (name) {
 				db.run(
@@ -3566,8 +3570,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('addPlugin', (name, url) => {
 		try {
-			logger.log('info', `[addPlugin] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[addPlugin] name = (${name}) url = (${url})`)
+			logger.log('info', `[addPlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[addPlugin] name=(${name}) url=(${url})`)
 
 			db.get(
 				'SELECT * FROM classroom WHERE key = ?',
@@ -3593,8 +3597,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('removePlugin', (id) => {
 		try {
-			logger.log('info', `[removePlugin] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[removePlugin] id = (${id})`)
+			logger.log('info', `[removePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removePlugin] id=(${id})`)
 
 			db.run('DELETE FROM plugins WHERE id=?', [id])
 			pluginUpdate()
@@ -3604,8 +3608,8 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('getOwnedClasses', (username) => {
-		logger.log('info', `[getOwnedClasses] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-		logger.log('info', `[getOwnedClasses] username = (${username})`)
+		logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[getOwnedClasses] username=(${username})`)
 
 		getOwnedClasses(username)
 	})
@@ -3613,8 +3617,8 @@ io.on('connection', async (socket) => {
 	// sends the class code of the class a user is in
 	socket.on('getUserClass', ({ username, api }) => {
 		try {
-			logger.log('info', `[getUserClass] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[getUserClass] username = (${username}) api = (${api})`)
+			logger.log('info', `[getUserClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[getUserClass] username=(${username}) api=(${api})`)
 
 			if (api) {
 				db.get('SELECT * FROM users WHERE API = ?', [api], (err, userData) => {
@@ -3658,11 +3662,11 @@ io.on('connection', async (socket) => {
 
 	socket.on('classBanUser', (user) => {
 		try {
-			logger.log('info', `[ban] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[ban] user = (${user})`)
+			logger.log('info', `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[ban] user=(${user})`)
 
 			let classCode = socket.request.session.class
-			logger.log('info', `[ban] classCode = (${classCode})`)
+			logger.log('info', `[ban] classCode=(${classCode})`)
 
 			if (!classCode || classCode == 'noClass') {
 				logger.log('info', '[ban] The user is not in a class.')
@@ -3703,11 +3707,11 @@ io.on('connection', async (socket) => {
 
 	socket.on('classUnbanUser', (user) => {
 		try {
-			logger.log('info', `[unban] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[unban] user = (${user})`)
+			logger.log('info', `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[unban] user=(${user})`)
 
 			let classCode = socket.request.session.class
-			logger.log('info', `[unban] classCode = (${classCode})`)
+			logger.log('info', `[unban] classCode=(${classCode})`)
 
 			if (!classCode || classCode == 'noClass') {
 				logger.log('info', '[unban] The user is not in a class.')
@@ -3746,8 +3750,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('setClassPermissionSetting', (permission, level) => {
 		try {
-			logger.log('info', `[setClassPermissionSetting] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[setClassPermissionSetting] permission = (${permission}) level = (${level})`)
+			logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
 
 			let classCode = socket.request.session.class
 			cD[classCode].permissions[permission] = level
@@ -3768,8 +3772,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('deleteUser', async (userId) => {
 		try {
-			logger.log('info', `[deleteUser] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[deleteUser] userId = (${userId})`)
+			logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[deleteUser] userId=(${userId})`)
 
 			const user = await new Promise((resolve, reject) => {
 				db.get('SELECT * FROM users WHERE id = ?', userId, (err, user) => {
@@ -3816,8 +3820,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('changeIp', (type, id, ip) => {
 		try {
-			logger.log('info', `[changeIp] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[changeIp] type = (${type}) id = (${id}) ip = (${ip})`)
+			logger.log('info', `[changeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[changeIp] type=(${type}) id=(${id}) ip=(${ip})`)
 
 			if (type != 'whitelist' && type != 'blacklist') {
 				logger.log('critical', 'invalid type')
@@ -3857,8 +3861,8 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('addIp', (type, ip) => {
-		logger.log('info', `[addIp] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-		logger.log('info', `[addIp] type = (${type}) ip = (${ip})`)
+		logger.log('info', `[addIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[addIp] type=(${type}) ip=(${ip})`)
 
 		if (type != 'whitelist' && type != 'blacklist') {
 			logger.log('critical', 'invalid type')
@@ -3905,8 +3909,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('removeIp', (type, id) => {
 		try {
-			logger.log('info', `[removeIp] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[removeIp] type = (${type}) id = (${id})`)
+			logger.log('info', `[removeIp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[removeIp] type=(${type}) id=(${id})`)
 
 			if (type != 'whitelist' && type != 'blacklist') {
 				logger.log('critical', 'invalid type')
@@ -3945,8 +3949,8 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('toggleIpList', (type) => {
-		logger.log('info', `[toggleIpList] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-		logger.log('info', `[toggleIpList] type = (${type})`)
+		logger.log('info', `[toggleIpList] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+		logger.log('info', `[toggleIpList] type=(${type})`)
 
 		if (type != 'whitelist' && type != 'blacklist') {
 			logger.log('critical', 'invalid type')
@@ -3954,7 +3958,7 @@ io.on('connection', async (socket) => {
 			return
 		}
 
-		settings[`${type} Active`] = !settings[`${type} Active`]
+		settings[`${type}Active`] = !settings[`${type}Active`]
 		fs.writeFileSync('./settings.json', JSON.stringify(settings))
 
 		let ipList
@@ -3969,8 +3973,8 @@ io.on('connection', async (socket) => {
 
 	socket.on('saveTags', (studentId, tags, username) => {
 		try {
-			logger.log('info', `[saveTags] ip = (${socket.handshake.address}) session = (${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[saveTags] studentId = (${studentId}) tags = (${JSON.stringify(tags)})`)
+			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 			cD[socket.request.session.class].students[username].tags = tags.toString()
 			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
 				if (err) {
