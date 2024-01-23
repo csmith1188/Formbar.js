@@ -672,8 +672,12 @@ async function setClassOfApiSockets(api, classCode) {
 	let sockets = await io.in(api).fetchSockets()
 
 	for (let socket of sockets) {
+		socket.leave(socket.request.session.class)
+
 		socket.request.session.class = classCode || 'noClass'
 		socket.request.session.save()
+
+		socket.join(socket.request.session.class)
 
 		socket.emit('setClass', socket.request.session.class)
 	}
