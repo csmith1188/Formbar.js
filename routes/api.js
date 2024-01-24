@@ -147,7 +147,7 @@ function api(cD) {
 		// gets a user's name from api
 		async function getUsername(api) {
 			try {
-				if (!api) return 'missing api'
+				if (!api) return { error: 'missing api' }
 
 				let user = await new Promise((resolve, reject) => {
 					db.get(
@@ -194,7 +194,7 @@ function api(cD) {
 									if (err) throw err
 
 									if (!dbUser) {
-										resolve({ error: 'user does not exist in this class' })
+										resolve({ error: 'user does not exist' })
 									}
 
 									resolve(dbUser)
@@ -232,7 +232,8 @@ function api(cD) {
 					help: null,
 					break: null,
 					quizScore: null,
-					pogMeter: null
+					pogMeter: null,
+					class: classCode
 				}
 
 				if (cD[classCode] && cD[classCode].students && cD[classCode].students[dbUser.username]) {
