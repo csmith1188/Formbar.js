@@ -1466,52 +1466,71 @@ app.post('/oauth', (req, res) => {
 		logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`)
 
-		// If there is a username and password submitted, then it gets results from the database that match the username.
-		if (username && password) {
-			db.get('SELECT * FROM users WHERE username=?', [username], (err, userData) => {
-				try {
-					if (err) throw err
-
-					// Check if a user with that name was not found in the database
-					if (!userData.username) {
-						logger.log('verbose', '[post /oauth] User does not exist')
-						res.render('pages/message', {
-							message: 'No user found with that username.',
-							title: 'Login'
-						})
-						return
-					}
-
-					// Decrypt users password
-					let databasePassword = decrypt(JSON.parse(userData.password))
-					if (databasePassword != password) {
-						logger.log('verbose', '[post /oauth] Incorrect password')
-						res.render('pages/message', {
-							message: 'Incorrect password',
-							title: 'Login'
-						})
-						return
-					}
-
-					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-					var token = jwt.sign({
-						id: userData.id,
-						username: userData.username,
-						permissions: userData.permissions
-					}, userData.secret, { expiresIn: '30m' })
-
-					logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
-					res.redirect(`${redirectURL}?token=${token}`)
-				} catch (err) {
-					logger.log('error', err.stack);
-					res.render('pages/message', {
-						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-						title: 'Error'
-					})
-				}
+		if (!username) {
+			res.render('pages/message', {
+				message: 'Please enter a username',
+				title: 'Login'
 			})
-			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
-		} else res.redirect(`/ oauth ? redirectURL = ${redirectURL}`)
+			return
+		}
+		if (!password) {
+			res.render('pages/message', {
+				message: 'Please enter a password',
+				title: 'Login'
+			})
+			return
+		}
+
+		db.get('SELECT * FROM users WHERE username=?', [username], (err, userData) => {
+			try {
+				if (err) throw err
+
+				// Check if a user with that name was not found in the database
+				if (!userData.username) {
+					logger.log('verbose', '[post /oauth] User does not exist')
+					res.render('pages/message', {
+						message: 'No user found with that username.',
+						title: 'Login'
+					})
+					return
+				}
+
+				// Decrypt users password
+				let databasePassword = decrypt(JSON.parse(userData.password))
+				if (databasePassword != password) {
+					logger.log('verbose', '[post /oauth] Incorrect password')
+					res.render('pages/message', {
+						message: 'Incorrect password',
+						title: 'Login'
+					})
+					return
+				}
+
+				let classCode = getUserClass(userData.username)
+
+				userData.classPermissions = null
+
+				if (cD[classCode] && cD[classCode].students[userData.username])
+					userData.classPermissions = cD[classCode].students[userData.username].classPermissions
+
+				var token = jwt.sign({
+					id: userData.id,
+					username: userData.username,
+					permissions: userData.permissions,
+					classPermissions: userData.classPermissions,
+					class: classCode
+				}, userData.secret, { expiresIn: '30m' })
+
+				logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
+				res.redirect(`${redirectURL}?token=${token}`)
+			} catch (err) {
+				logger.log('error', err.stack);
+				res.render('pages/message', {
+					message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+					title: 'Error'
+				})
+			}
+		})
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
