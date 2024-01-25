@@ -3219,9 +3219,17 @@ io.on('connection', async (socket) => {
 	})
 
 	// Sends a help ticket
-	socket.on('help', (reason, time) => {
+	socket.on('help', (reason) => {
 		try {
 			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+			let time = new Date();
+			time = {
+				hours: time.getHours(),
+				minutes: time.getMinutes(),
+				seconds: time.getSeconds()
+			}
+
 			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
 			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }

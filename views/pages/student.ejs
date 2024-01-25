@@ -12,6 +12,7 @@
 						justify-self: center;
 					}
 				</style>
+				<script src="/js/isObjectEqual.js"></script>
 			</head>
 
 			<body>
@@ -239,35 +240,6 @@
 
 					}
 
-					function isObjectEqual(objectA, objectB) {
-						for (let property in objectA) {
-							switch (typeof (objectA[property])) {
-								case 'object':
-									if (!isObjectEqual(objectA[property], objectB[property])) {
-										return false;
-									}
-									break;
-								case 'function':
-									if (typeof (objectB[property]) === 'undefined' ||
-										(property !== 'isEqual' && objectA[property].toString() !== objectB[property].toString())) {
-										return false;
-									}
-									break;
-								default:
-									if (objectA[property] !== objectB[property]) {
-										return false;
-									}
-							}
-						}
-
-						for (let property in objectB) {
-							if (typeof (objectA[property]) === 'undefined') {
-								return false;
-							}
-						}
-
-						return true;
-					}
 
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {
@@ -293,17 +265,11 @@
 						updatePage()
 					})
 
-					//help ticket/break button
-					let today = new Date()
+					// help ticket/break button
 
 					function help() {
 						let reason = document.getElementById('ticket').value
-						let time = {
-							hours: today.getHours(),
-							minutes: today.getMinutes(),
-							seconds: today.getSeconds()
-						}
-						socket.emit('help', reason, time)
+						socket.emit('help', reason)
 						socket.emit('cpUpdate')
 						alert('Help ticket sent')
 					}
