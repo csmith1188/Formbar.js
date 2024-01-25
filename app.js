@@ -125,7 +125,7 @@ const BANNED_PERMISSIONS = 0
 const PAGE_PERMISSIONS = {
 	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	student: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
 	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
