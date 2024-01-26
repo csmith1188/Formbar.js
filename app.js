@@ -163,7 +163,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	removeIp: MANAGER_PERMISSIONS,
 	changeIp: MANAGER_PERMISSIONS,
 	toggleIpList: MANAGER_PERMISSIONS,
-	saveTags: TEACHER_PERMISSIONS
+	saveTags: TEACHER_PERMISSIONS,
+	newTag: TEACHER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -277,7 +278,7 @@ class Student {
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, permissions, sharedPolls, pollHistory) {
+	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags) {
 		this.id = id
 		this.className = className
 		this.students = {}
@@ -299,6 +300,7 @@ class Classroom {
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
+		this.tagNames = tags || []; 
 	}
 }
 
@@ -818,10 +820,12 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		/* Uses EJS to render the template and display the information for the class.
 		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
 		*/
+		console.log(cD[req.session.class].tagNames);
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
 			settingsPermissions: cD[req.session.class].permissions.manageClass,
+			tagNames: cD[req.session.class].tagNames
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -986,7 +990,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
-		async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = []) {
+		async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
@@ -1011,7 +1015,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						if (err) logger.log('error', err.stack)
 					})
 				}
-				cD[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory)
+				cD[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
 				// Add the teacher to the newly created class
 				cD[key].students[req.session.username] = user
 				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
@@ -1039,13 +1043,13 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 			}
 
 			// Add classroom to the database
-			db.run('INSERT INTO classroom(name, owner, key, permissions) VALUES(?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS)], (err) => {
+			db.run('INSERT INTO classroom(name, owner, key, permissions, tags) VALUES(?, ?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS), null], (err) => {
 				try {
 					if (err) throw err
 
 					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
-					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
+					db.get('SELECT id, name, key, permissions, tags FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
 						try {
 							if (err) throw err
 
@@ -1063,8 +1067,9 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								classroom.name,
 								classroom.key,
 								JSON.parse(classroom.permissions),
-								[]
-							)
+								[],
+								classroom.tags
+							);
 
 							if (makeClassStatus instanceof Error) throw makeClassStatus
 
@@ -1086,7 +1091,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
+			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -1103,6 +1108,9 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 					classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
 					classroom.pollHistory = JSON.parse(classroom.pollHistory)
 
+					classroom.tags = classroom.tags.split(",");
+					console.log(classroom.tags)
+
 					for (let poll of classroom.pollHistory) {
 						poll.data = JSON.parse(poll.data)
 					}
@@ -1115,7 +1123,8 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						classroom.key,
 						classroom.permissions,
 						classroom.sharedPolls,
-						classroom.pollHistory
+						classroom.pollHistory,
+						classroom.tags
 					)
 
 					if (makeClassStatus instanceof Error) throw makeClassStatus
@@ -3995,6 +4004,38 @@ io.on('connection', async (socket) => {
 
 		catch (err) {
 			logger.log('error', err.stack)
+		}
+	})
+
+	socket.on('newTag', (tagName) => {
+		try {
+			cD[socket.request.session.class].tagNames.push(tagName);
+			var newTotalTags = "";
+			for (let i = 0; i < cD[socket.request.session.class].tagNames.length; i++) {
+				newTotalTags += cD[socket.request.session.class].tagNames[i] + ", ";
+			};
+			newTotalTags = newTotalTags.split(", ");
+			newTotalTags.pop();
+			db.get('SELECT * FROM classroom WHERE name = ?', [cD[socket.request.session.class].className], (err, row) => {
+				if (err) {
+					logger.log(err.stack);
+				}
+				if (row) {
+					db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), cD[socket.request.session.class].className], (err) => {
+						if (err) {
+							logger.log(err.stack);
+						};
+						console.log('yes');
+						console.log(newTotalTags);
+						console.log(cD[socket.request.session.class].tagNames);
+					});
+				} else {
+					console.log(`No row found with name ${cD[socket.request.session.class].className}`);
+				};
+			});
+		}
+		catch (err) {
+			logger.log('error', err.stack);
 		}
 	})
 })
