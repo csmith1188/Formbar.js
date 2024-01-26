@@ -3,182 +3,180 @@
 		<!DOCTYPE html>
 		<html lang="en">
 
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="X-UA-Compatible" content="IE=edge">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<script src="/js/iro.js"></script>
-				<script src="/js/floating-ui-core.js"></script>
-				<script src="/js/floating-ui-dom.js"></script>
-			</head>
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<script src="/js/iro.js"></script>
+			<script src="/js/floating-ui-core.js"></script>
+			<script src="/js/floating-ui-dom.js"></script>
 
-			<body onload="load(<%-pollStatus%>)">
-				<%- include('../partials/formbar_header') %>
-					<header id="quickMenu">
-						<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-						<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
-						<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
-						<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
-						<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
-					</header>
+			<script src="/js/isObjectEqual.js"></script>
+		</head>
 
-					<p id="classCode">Class Code:</p>
-					<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-						<div id="userFilterBoxes" class="options">
-							<h2 class="headerText">Filter</h2>
-							<button type="button" id="help" class="filter">Help tickets</button>
-							<button type="button" id="break" class="filter">Break</button>
-							<button type="button" id="polls" class="filter">Polls</button>
-						</div>
-						<div id="userSortBoxes" class="options">
-							<h2 class="headerText">Sort</h2>
-							<button type="button" id="name" class="sort">Name</button>
-							<button type="button" id="polls" class="sort">Polls</button>
-							<button type="button" id="helpTime" class="sort">Help Time</button>
-							<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
-						</div>
-						<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
-							Kick All Students
-						</button>
-						<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
-							End Class
-						</button>
-						<div id="users">
-						</div>
+		<body onload="load(<%-pollStatus%>)">
+			<%- include('../partials/formbar_header') %>
+				<header id="quickMenu">
+					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
+					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
+					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
+					<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
+				</header>
+
+				<p id="classCode">Class Code:</p>
+				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+					<div id="userFilterBoxes" class="options">
+						<h2 class="headerText">Filter</h2>
+						<button type="button" id="help" class="filter">Help tickets</button>
+						<button type="button" id="break" class="filter">Break</button>
+						<button type="button" id="polls" class="filter">Polls</button>
 					</div>
-					<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
-					<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
-						<div id="pollOptions" class="options">
-							<h2 class="headerText">Custom Polls</h2>
-							<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public
-								Polls</button>
-							<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class
-								Polls</button>
-							<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your
-								Polls</button>
-						</div>
-						<div id="mainPolls" class="tabContent default" data-tab-group="polls">
-							<div id="pollActions" class="options">
-								<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
-								<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
-								<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
-								<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
-							</div>
-							<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
-							<div id="startPollForm">
-								<label for="resNumber">How many possible responses?</label>
-								<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
-									onchange="responseAmountChange()">
-								<br>
-								<label for="resTextBox">Would like to accept text responses?</label>
-								<input type="checkbox" id="resTextBox" onclick="resTextChange()">
-								<br>
-								<label for="pollBox">Prompt for the poll?</label>
-								<input type="text" id="pollBox" placeholder="Prompt (optional)">
-								<br>
-								<label for="changeNames">Customize the answer options?</label>
-								<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
-									class="quickButton">
-								<br>
-
-								<label for="changeNames">Specify Tags?</label>
-								<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
-								<br>
-
-								<button id="resetAnswerNames" class="quickButton">Reset Names</button>
-								<button id="resetColors" class="quickButton">Reset Colors</button>
-								<div id="responses"></div>
-								<br>
-								<label for="blind">Blind poll? (Responses won't be visible until everyone has
-									answered)</label>
-								<input type="checkbox" id="blind">
-								<br>
-								<button id="startPoll" onclick="startPoll()">Start Poll</button>
-								<br>
-							</div>
-							<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-							<br>
-							<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
-							<br>
-							<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-								Polls</button>
-						</div>
-						<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
-						</div>
-						<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
-						</div>
-						<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
-						</div>
-						<div id="previousPolls" class="tabContent" data-tab-group="polls">
-							<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
-								polls</button>
-							<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
-							<div id="previousPollButtons"></div>
-						</div>
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Sort</h2>
+						<button type="button" id="name" class="sort">Name</button>
+						<button type="button" id="polls" class="sort">Polls</button>
+						<button type="button" id="helpTime" class="sort">Help Time</button>
+						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 					</div>
-					<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
-						<form method="post" enctype="multipart/form-data">
-							<input name="spreadsheet" type="file">
-							<input type="submit" class="quickButton">
-						</form>
-						<button type="button" id="nextStep">Next Step</button><br>
+					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
+						Kick All Students
+					</button>
+					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
+						End Class
+					</button>
+					<div id="users">
+					</div>
+				</div>
+				<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
+				<div id="pollsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div id="pollOptions" class="options">
+						<h2 class="headerText">Custom Polls</h2>
+						<button id="publicPolls" class="quickButton tab unselectable" data-tab-group="polls">Public
+							Polls</button>
+						<button id="classPolls" class="quickButton tab unselectable" data-tab-group="polls">Class
+							Polls</button>
+						<button id="userPolls" class="quickButton tab unselectable" data-tab-group="polls">Your
+							Polls</button>
+					</div>
+					<div id="mainPolls" class="tabContent default" data-tab-group="polls">
+						<div id="pollActions" class="options">
+							<button id="unload-poll" style="display: none;" onclick="unloadPoll()">Unload Poll</button>
+							<button id="save-poll" style="display: none;" onclick="savePoll()">Save Poll</button>
+							<button id="save-poll-as" onclick="savePollAs()">Save Poll As</button>
+							<button id="delete-poll" style="display: none;" onclick="deletePoll()">Delete Poll</button>
+						</div>
+						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
+						<div id="startPollForm">
+							<label for="resNumber">How many possible responses?</label>
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
+							<br>
+							<label for="resTextBox">Would like to accept text responses?</label>
+							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
+							<br>
+							<label for="pollBox">Prompt for the poll?</label>
+							<input type="text" id="pollBox" placeholder="Prompt (optional)">
+							<br>
+							<label for="changeNames">Customize the answer options?</label>
+							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
+								class="quickButton">
+							<br>
+
+							<label for="changeNames">Specify Tags?</label>
+							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
+							<br>
+
+							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+							<button id="resetColors" class="quickButton">Reset Colors</button>
+							<div id="responses"></div>
+							<br>
+							<label for="blind">Blind poll? (Responses won't be visible until everyone has
+								answered)</label>
+							<input type="checkbox" id="blind">
+							<br>
+							<button id="startPoll" onclick="startPoll()">Start Poll</button>
+							<br>
+						</div>
+						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 						<br>
-						<form>
-							<label class="form-control" id="pollControl" for="modeP">
-								<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
-								Poll Mode
-							</label>
-							<label class="form-control" id="pollControl" for="modeL">
-								<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
-								Lesson Mode
-							</label>
-							<label class="form-control" id="pollControl" for="modeQ">
-								<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
-								Quiz Mode
-							</label>
-							<label class="form-control" id="pollControl" for="modePT">
-								<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
-								Playtime Mode
-							</label>
-						</form>
+						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
+						<br>
+						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+							Polls</button>
 					</div>
-					<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
-						<div class="options">
-							<button id="permissions" class="quickButton tab pressed"
-								data-tab-group="settingsTabs">Permissions</button>
-							<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
-						</div>
-						<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
-							<h2>Permissions</h2>
-							<div id="permissionsList"></div>
-						</div>
-						<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
-						</div>
+					<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
 					</div>
-					<dialog id="sharePollDialog">
-						<button
-							onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
-						<p>
-							<label for="share">Share to User</label>
-							<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
-								onkeypress="if(event.key == 'Enter') sharePoll('user')">
-						</p>
-						<div id="userPollShares"></div>
-						<p>
-							<label for="share">Share to Class</label>
-							<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
-								onkeypress="if(event.key == 'Enter') sharePoll('class')">
-						</p>
-						<div id="classPollShares"></div>
-					</dialog>
-					<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
-					<%- include('../partials/body_content') %>
-			</body>
+					<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
+					</div>
+					<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
+					</div>
+					<div id="previousPolls" class="tabContent" data-tab-group="polls">
+						<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
+							polls</button>
+						<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
+						<div id="previousPollButtons"></div>
+					</div>
+				</div>
+				<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
+					<form method="post" enctype="multipart/form-data">
+						<input name="spreadsheet" type="file">
+						<input type="submit" class="quickButton">
+					</form>
+					<button type="button" id="nextStep">Next Step</button><br>
+					<br>
+					<form>
+						<label class="form-control" id="pollControl" for="modeP">
+							<input type="radio" name="mode" id="modeP" onchange="modeChange()" value="poll">
+							Poll Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modeL">
+							<input type="radio" name="mode" id="modeL" onchange="modeChange()" value="lesson">
+							Lesson Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modeQ">
+							<input type="radio" name="mode" id="modeQ" onchange="modeChange()" value="quiz">
+							Quiz Mode
+						</label>
+						<label class="form-control" id="pollControl" for="modePT">
+							<input type="radio" name="mode" id="modePT" onchange="modeChange()" value="playtime">
+							Playtime Mode
+						</label>
+					</form>
+				</div>
+				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div class="options">
+						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
+						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
+					</div>
+					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
+						<h2>Permissions</h2>
+						<div id="permissionsList"></div>
+					</div>
+					<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
+					</div>
+				</div>
+				<dialog id="sharePollDialog">
+					<button
+						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
+					<p>
+						<label for="share">Share to User</label>
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+							onkeypress="if(event.key == 'Enter') sharePoll('user')">
+					</p>
+					<div id="userPollShares"></div>
+					<p>
+						<label for="share">Share to Class</label>
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+							onkeypress="if(event.key == 'Enter') sharePoll('class')">
+					</p>
+					<div id="classPollShares"></div>
+				</dialog>
+				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+				<%- include('../partials/body_content') %>
+		</body>
 
-		</html>
 		<script src="/js/tabs.js"></script>
 		<script>
-			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
 			let userCustomPolls = []
 			let classroomCustomPolls = []
 			let publicCustomPolls = []
@@ -186,6 +184,7 @@
 			let editingPollId = null
 			let currentSharePollId = null
 			let currentSharePollType = null
+			let allRoom = {}
 
 			const FilterState = {
 				help: [
@@ -245,7 +244,7 @@
 				permissions: 1
 			}
 
-			let letterString = "abcdefghijklmnopqrstuvwxyz"
+			let letterString = 'abcdefghijklmnopqrstuvwxyz'
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
@@ -378,12 +377,12 @@
 			}
 
 			function camelCaseToNormal(str) {
-				let result = str.replace(/([A-Z])/g, " $1")
+				let result = str.replace(/([A-Z])/g, ' $1')
 				result = result.charAt(0).toUpperCase() + result.slice(1)
 				return result
 			}
 
-			//displays the previos polls page
+			//displays the previous polls page
 			function displayPreviousPolls() {
 				toPollHistoryButton.style.display = 'none'
 				changeTab('previousPolls', 'polls')
@@ -396,9 +395,9 @@
 
 				for (let pollIndex = data.length - 1; pollIndex >= 0; pollIndex--) {
 					let pollButton = document.createElement('button')
-					pollButton.type = "button"
+					pollButton.type = 'button'
 					pollButton.className = 'quickButton'
-					pollButton.innerText = data[pollIndex].date + ' ' + data[pollIndex].data.prompt
+					pollButton.textContent = data[pollIndex].date + ' ' + data[pollIndex].data.prompt
 					pollButton.onclick = (event) => {
 						event.preventDefault()
 						displayPoll(data[pollIndex].id)
@@ -414,20 +413,20 @@
 					previousPollDiv.style.display = 'none'
 
 					let previousPollPrompt = document.createElement('p')
-					previousPollPrompt.innerText = `Prompt: ${data[pollIndex].data.prompt}`
+					previousPollPrompt.textContent = `Prompt: ${data[pollIndex].data.prompt}`
 					previousPollDiv.appendChild(previousPollPrompt)
 
 					for (let userIndex = 0; userIndex < data[pollIndex].data.names.length; userIndex++) {
 						let username = document.createElement('p')
-						username.innerText = `Name: ${data[pollIndex].data.names[userIndex]}`
+						username.textContent = `Name: ${data[pollIndex].data.names[userIndex]}`
 						previousPollDiv.appendChild(username)
 
 						let letter = document.createElement('p')
-						letter.innerText = `Letter: ${data[pollIndex].data.letter[userIndex]}`
+						letter.textContent = `Letter: ${data[pollIndex].data.letter[userIndex]}`
 						previousPollDiv.appendChild(letter)
 
 						let text = document.createElement('p')
-						text.innerText = `Text: ${data[pollIndex].data.text[userIndex]}`
+						text.textContent = `Text: ${data[pollIndex].data.text[userIndex]}`
 						previousPollDiv.appendChild(text)
 					}
 					previousPolls.appendChild(previousPollDiv)
@@ -546,7 +545,7 @@
 
 					let saveColorButton = document.createElement('button')
 					saveColorButton.className = 'quickButton'
-					saveColorButton.innerText = 'Save Color'
+					saveColorButton.textContent = 'Save Color'
 					saveColorButton.onclick = () => {
 						saveColor(i)
 					}
@@ -554,7 +553,7 @@
 
 					let resetColor = document.createElement('button')
 					resetColor.className = 'quickButton'
-					resetColor.innerText = 'Reset Color'
+					resetColor.textContent = 'Reset Color'
 					resetColor.onclick = (event) => {
 						event.preventDefault()
 						let responseDiv = document.getElementsByClassName('response')[i]
@@ -585,7 +584,7 @@
 
 					let hexLabel = document.createElement('label')
 					hexLabel.className = 'hexLabel'
-					hexLabel.innerText = 'Hex '
+					hexLabel.textContent = 'Hex '
 					let hexInput = document.createElement('input')
 					hexInput.className = 'hexInput'
 					hexInput.type = 'text'
@@ -734,376 +733,327 @@
 
 			}
 			// makes student elements
-			function buildStudent(room, student) {
-				var newStudent = document.createElement("div");
-				newStudent.classList.add("student");
 
-				let studentElement = document.createElement("p");
-				studentElement.innerText += student;
-				newStudent.appendChild(studentElement);
+			function buildOption(value, text, selected = false) {
+				let option = document.createElement('option')
+				option.value = value
+				option.selected = selected
+				option.textContent = text
+				return option
+			}
 
-				let studentData = room.students[student]
+			function buildStudent(studentData) {
+				var newStudent = document.createElement('div')
+				newStudent.className = 'student'
+				newStudent.id = `student-${studentData.username}`
+
+				let studentElement = document.createElement('p')
+				studentElement.textContent += studentData.username
+				newStudent.appendChild(studentElement)
+
 				if (studentData.break == true) {
-					let breakText = document.createElement("p");
-					breakText.innerText += "taking a break";
-					newStudent.appendChild(breakText);
+					let breakText = document.createElement('p')
+					breakText.textContent += 'taking a break'
+					newStudent.appendChild(breakText)
 				}
 				else if (studentData.break) {
-					let breakDiv = document.createElement("div");
-					breakDiv.setAttribute("id", "break");
-					let breakNeeded = document.createElement("p");
-					breakNeeded.innerText = "Needs a break";
-					breakDiv.appendChild(breakNeeded);
-					let breakReason = document.createElement("p");
-					breakReason.innerText = `Reason: ${studentData.break} `;
-					breakDiv.appendChild(breakReason);
-					let breakApprove = document.createElement("button");
-					breakApprove.classList.add("quickButton");
-					breakApprove.onclick = () => { approveBreak(true, studentData.username) };
-					breakApprove.innerText = "Approve";
-					breakDiv.appendChild(breakApprove);
-					let breakDeny = document.createElement("button");
-					breakDeny.classList.add("quickButton");
-					breakDeny.onclick = () => { approveBreak(false, studentData.username) };
-					breakDeny.innerText = "Deny";
-					breakDiv.appendChild(breakDeny);
-					newStudent.appendChild(breakDiv);
-					let lineBreak = document.createElement("br");
-					newStudent.appendChild(lineBreak);
+					let breakDiv = document.createElement('div')
+					breakDiv.setAttribute('id', 'break')
+					let breakNeeded = document.createElement('p')
+					breakNeeded.textContent = 'Needs a break'
+					breakDiv.appendChild(breakNeeded)
+					let breakReason = document.createElement('p')
+					breakReason.textContent = `Reason: ${studentData.break} `
+					breakDiv.appendChild(breakReason)
+					let breakApprove = document.createElement('button')
+					breakApprove.classList.add('quickButton')
+					breakApprove.onclick = () => { approveBreak(true, studentData.username) }
+					breakApprove.textContent = 'Approve'
+					breakDiv.appendChild(breakApprove)
+					let breakDeny = document.createElement('button')
+					breakDeny.classList.add('quickButton')
+					breakDeny.onclick = () => { approveBreak(false, studentData.username) }
+					breakDeny.textContent = 'Deny'
+					breakDiv.appendChild(breakDeny)
+					newStudent.appendChild(breakDiv)
+					let lineBreak = document.createElement('br')
+					newStudent.appendChild(lineBreak)
 				}
 				if (studentData.help) {
-					let help = document.createElement("p");
-					help.setAttribute("id", "help");
-					help.innerText = "sent help ticket";
+					let help = document.createElement('p')
+					help.setAttribute('id', 'help')
+					help.textContent = 'sent help ticket'
 					if (studentData.help.reason) {
-						let helpReason = document.createElement("p");
-						helpReason.innerText = `reason ${studentData.help.reason} `;
-						help.appendChild(helpReason);
-					};
-					let helpTimeDisplay = document.createElement("p");
-					helpTimeDisplay.innerText = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds} `;
-					help.appendChild(helpTimeDisplay);
-					let deleteTicketButton = document.createElement("button");
-					deleteTicketButton.classList.add("quickButton");
-					deleteTicketButton.dataset.studentName = student;
+						let helpReason = document.createElement('p')
+						helpReason.textContent = `reason ${studentData.help.reason} `
+						help.appendChild(helpReason)
+					}
+					let helpTimeDisplay = document.createElement('p')
+					helpTimeDisplay.textContent = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds} `
+					help.appendChild(helpTimeDisplay)
+					let deleteTicketButton = document.createElement('button')
+					deleteTicketButton.classList.add('quickButton')
+					deleteTicketButton.dataset.studentName = studentData.username
 					deleteTicketButton.onclick = (event) => {
-						deleteTicket(event.target);
-					};
-					deleteTicketButton.innerText = "Delete Ticket";
-					help.appendChild(deleteTicketButton);
-					newStudent.appendChild(help);
-					let lineBreak = document.createElement("br");
-					newStudent.appendChild(lineBreak);
+						deleteTicket(event.target)
+					}
+					deleteTicketButton.textContent = 'Delete Ticket'
+					help.appendChild(deleteTicketButton)
+					newStudent.appendChild(help)
+					let lineBreak = document.createElement('br')
+					newStudent.appendChild(lineBreak)
 				}
 				if (studentData.pollTextRes) {
-					let pollTextResponse = document.createElement("p");
-					pollTextResponse.innerText = `Poll Text: ${studentData.pollRes.textRes} `;
-					newStudent.appendChild(pollTextResponse);
-				};
+					let pollTextResponse = document.createElement('p')
+					pollTextResponse.textContent = `Poll Text: ${studentData.pollRes.textRes} `
+					newStudent.appendChild(pollTextResponse)
+				}
 				if (studentData.pollRes.buttonRes) {
-					let pollResponse = document.createElement("p");
-					pollResponse.innerText = `Poll: ${studentData.pollRes.buttonRes} `;
-					newStudent.appendChild(pollResponse);
-				};
+					let pollResponse = document.createElement('p')
+					pollResponse.textContent = `Poll: ${studentData.pollRes.buttonRes} `
+					newStudent.appendChild(pollResponse)
+				}
 				if (studentData.pollRes.textRes) {
-					let textResponse = document.createElement("p");
-					textResponse.innerText = `Text Response: ${studentData.pollRes.textRes}`;
-					newStudent.appendChild(textResponse);
-				};
+					let textResponse = document.createElement('p')
+					textResponse.textContent = `Text Response: ${studentData.pollRes.textRes}`
+					newStudent.appendChild(textResponse)
+				}
 				if (studentData.classPermissions < currentUser.classPermissions) {
-					let permissionSwitch = document.createElement("select");
-					permissionSwitch.setAttribute("name", "permSwitch");
-					permissionSwitch.setAttribute("class", "permSwitch");
-					permissionSwitch.setAttribute("data-userid", student);
+					let permissionSwitch = document.createElement('select')
+					permissionSwitch.setAttribute('name', 'permSwitch')
+					permissionSwitch.setAttribute('class', 'permSwitch')
+					permissionSwitch.setAttribute('data-userid', studentData.username)
 					permissionSwitch.onchange = (event) => {
-						socket.emit('classPermChange', event.target.dataset.userid, event.target.value)
-					};
-					if (studentData.classPermissions == 4) {
-						let teacherOption = document.createElement("option");
-						teacherOption.setAttribute("value", 4);
-						teacherOption.setAttribute("selected", true);
-						teacherOption.innerText = "Teacher";
-						permissionSwitch.add(teacherOption);
-						let modOption = document.createElement("option");
-						modOption.setAttribute("value", 3);
-						modOption.innerText = "Mod";
-						permissionSwitch.add(modOption);
-						let studentOption = document.createElement("option");
-						studentOption.setAttribute("value", 2);
-						studentOption.innerText = "Student";
-						permissionSwitch.add(studentOption);
-						let guestOption = document.createElement("option");
-						guestOption.setAttribute("value", 1);
-						guestOption.innerText = "Guest";
-						permissionSwitch.add(guestOption);
-					} else if (studentData.classPermissions == 3) {
-						let teacherOption = document.createElement("option");
-						teacherOption.setAttribute("value", 4);
-						teacherOption.innerText = "Teacher";
-						permissionSwitch.add(teacherOption);
-						let modOption = document.createElement("option");
-						modOption.setAttribute("value", 3);
-						modOption.setAttribute("selected", true);
-						modOption.innerText = "Mod";
-						permissionSwitch.add(modOption);
-						let studentOption = document.createElement("option");
-						studentOption.setAttribute("value", 2);
-						studentOption.innerText = "Student";
-						permissionSwitch.add(studentOption);
-						let guestOption = document.createElement("option");
-						guestOption.setAttribute("value", 1);
-						guestOption.innerText = "Guest";
-						permissionSwitch.add(guestOption);
-					} else if (studentData.classPermissions == 2) {
-						let teacherOption = document.createElement("option");
-						teacherOption.setAttribute("value", 4);
-						teacherOption.innerText = "Teacher";
-						permissionSwitch.add(teacherOption);
-						let modOption = document.createElement("option");
-						modOption.setAttribute("value", 3);
-						modOption.innerText = "Mod";
-						permissionSwitch.add(modOption);
-						let studentOption = document.createElement("option");
-						studentOption.setAttribute("value", 2);
-						studentOption.setAttribute("selected", true);
-						studentOption.innerText = "Student";
-						permissionSwitch.add(studentOption);
-						let guestOption = document.createElement("option");
-						guestOption.setAttribute("value", 1);
-						guestOption.innerText = "Guest";
-						permissionSwitch.add(guestOption);
-					} else if (studentData.classPermissions == 1) {
-						let teacherOption = document.createElement("option");
-						teacherOption.setAttribute("value", 4);
-						teacherOption.innerText = "Teacher";
-						permissionSwitch.add(teacherOption);
-						let modOption = document.createElement("option");
-						modOption.setAttribute("value", 3);
-						modOption.innerText = "Mod";
-						permissionSwitch.add(modOption);
-						let studentOption = document.createElement("option");
-						studentOption.setAttribute("value", 2);
-						studentOption.innerText = "Student";
-						permissionSwitch.add(studentOption);
-						let guestOption = document.createElement("option");
-						guestOption.setAttribute("value", 1);
-						guestOption.setAttribute("selected", true);
-						guestOption.innerText = "Guest";
-						permissionSwitch.add(guestOption);
+						socket.emit('classPermChange', event.target.dataset.userid, Number(event.target.value))
 					}
 
-					let toggleDialog = document.createElement('button');
-					toggleDialog.innerText = "Tags";
-					toggleDialog.addEventListener('click', function () {
-						studentTags.showModal();
-					});
+					permissionSwitch.add(buildOption(
+						TEACHER_PERMISSIONS,
+						'Teacher',
+						studentData.classPermissions == TEACHER_PERMISSIONS
+					))
+					permissionSwitch.add(buildOption(
+						MOD_PERMISSIONS,
+						'Mod',
+						studentData.classPermissions == MOD_PERMISSIONS
+					))
+					permissionSwitch.add(buildOption(
+						STUDENT_PERMISSIONS,
+						'Student',
+						studentData.classPermissions == STUDENT_PERMISSIONS
+					))
+					permissionSwitch.add(buildOption(
+						GUEST_PERMISSIONS,
+						'Guest',
+						studentData.classPermissions == GUEST_PERMISSIONS
+					))
 
-					let studentTags = document.createElement('dialog');
-					studentTags.innerHTML = '<p>' + student + '</p>';
-					let closeButton = document.createElement('button');
-					closeButton.textContent = 'Save';
-					let tagForm = document.createElement('form');
-					tagForm.setAttribute('id', student + "tags");
+					let toggleDialog = document.createElement('button')
+					toggleDialog.textContent = 'Tags'
+					toggleDialog.addEventListener('click', function () {
+						studentTags.showModal()
+					})
+
+					let studentTags = document.createElement('dialog')
+					studentTags.innerHTML = '<p>' + studentData.username + '</p>'
+					let closeButton = document.createElement('button')
+					closeButton.textContent = 'Save'
+					let tagForm = document.createElement('form')
+					tagForm.setAttribute('id', studentData.username + 'tags')
 					for (let i = 0; i < tagNames.length; i++) {
-						let checkbox = document.createElement('input');
-						checkbox.type = 'checkbox';
-						checkbox.name = `checkbox${tagNames[i]}`;
-						checkbox.value = tagNames[i];
+						let checkbox = document.createElement('input')
+						checkbox.type = 'checkbox'
+						checkbox.name = `checkbox${tagNames[i]}`
+						checkbox.value = tagNames[i]
 						if (studentData.tags != null && studentData.tags != undefined) {
-							studentData.tags.split(",").forEach(tag => {
+							studentData.tags.split(',').forEach(tag => {
 								if (tag == tagNames[i]) {
-									checkbox.checked = true;
+									checkbox.checked = true
 								}
 							})
-						};
-						let label = document.createElement('label');
-						label.textContent = tagNames[i];
-						label.setAttribute('for', `checkbox${i}`);
+						}
+						let label = document.createElement('label')
+						label.textContent = tagNames[i]
+						label.setAttribute('for', `checkbox${i}`)
 
-						tagForm.appendChild(checkbox);
-						tagForm.appendChild(label);
-						tagForm.appendChild(document.createElement('br'));
+						tagForm.appendChild(checkbox)
+						tagForm.appendChild(label)
+						tagForm.appendChild(document.createElement('br'))
 					}
 					studentTags.appendChild(tagForm)
-					document.body.appendChild(studentTags);
+					document.body.appendChild(studentTags)
 					closeButton.addEventListener('click', function () {
-						studentData.tags = ""
-						var allTags = ""
-						let checkboxForm = document.getElementById(student + "tags");
-						let checkboxes = checkboxForm.getElementsByTagName("input");
+						studentData.tags = ''
+						var allTags = ''
+						let checkboxForm = document.getElementById(studentData.username + 'tags')
+						let checkboxes = checkboxForm.getElementsByTagName('input')
 						for (let i = 0; i < checkboxes.length; i++) {
-							let checkbox = checkboxes[i];
+							let checkbox = checkboxes[i]
 							// Check if the checkbox is checked
-							if (checkbox.type === "checkbox") {
+							if (checkbox.type === 'checkbox') {
 								if (checkbox.checked) {
 									// Add the checkbox value to the studentData.tags array
-									allTags += checkbox.value + ", "
+									allTags += checkbox.value + ', '
 								}
 							}
 						}
-						studentData.tags = allTags.split(", ")
+						studentData.tags = allTags.split(', ')
 						studentData.tags.pop()
 						studentData.tags.sort()
 						socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
-						studentTags.close();
-					});
+						studentTags.close()
+					})
 
-					// Create a checkbox for the student
-					let studentCheckbox = document.createElement("input");
-					studentCheckbox.type = "checkbox";
-					studentCheckbox.id = "checkbox_" + student;
+					// Create a checkbox for the studentData.username
+					let studentCheckbox = document.createElement('input')
+					studentCheckbox.type = 'checkbox'
+					studentCheckbox.id = 'checkbox_' + studentData.username
 
 
-					newStudent.appendChild(studentCheckbox);
-					studentTags.appendChild(closeButton);
-					newStudent.appendChild(toggleDialog);
-					newStudent.appendChild(permissionSwitch);
-					newStudent.append(" ");
-					let banStudentButton = document.createElement("button")
+					newStudent.appendChild(studentCheckbox)
+					studentTags.appendChild(closeButton)
+					newStudent.appendChild(toggleDialog)
+					newStudent.appendChild(permissionSwitch)
+					newStudent.append(' ')
+					let banStudentButton = document.createElement('button')
 					banStudentButton.className = 'banStudent quickButton'
-					banStudentButton.setAttribute("data-user", student)
-					banStudentButton.innerText = "Ban User"
+					banStudentButton.setAttribute('data-user', studentData.username)
+					banStudentButton.textContent = 'Ban User'
 					banStudentButton.onclick = (event) => {
-						socket.emit('classBanUser', student)
+						socket.emit('classBanUser', studentData.username)
 					}
 					newStudent.appendChild(banStudentButton)
-					let kickUserButton = document.createElement("button")
+					let kickUserButton = document.createElement('button')
 					kickUserButton.className = 'kickUser quickButton'
-					kickUserButton.setAttribute("data-userid", student)
+					kickUserButton.setAttribute('data-userid', studentData.username)
 					kickUserButton.onclick = (event) => {
-						socket.emit('classKickUser', student)
-					};
-					kickUserButton.innerText = "Kick User"
+						socket.emit('classKickUser', studentData.username)
+					}
+					kickUserButton.textContent = 'Kick User'
 					newStudent.appendChild(kickUserButton)
-
-
 				}
-				return newStudent;
+
+				return newStudent
 			}
 
 			// filters and sorts students
 			function filterSortChange() {
-				usersDiv.innerHTML = ''
-				let newStudent = ''
-				let newRoom = allRoom
+				let userOrder = Object.keys(allRoom.students)
 
-				let helpButton = document.getElementById("help");
-				let breakButton = document.getElementById("break");
-				let pollsButton = document.getElementById("polls");
+				for (let username of userOrder) {
+					document.getElementById(`student-${username}`).style.display = ''
+				}
 
-				//filter by help
-				if (filter.help == 1) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (!student.help) {
-							delete newRoom.students[username]
-						}
-					}
-				} else if (filter.help == 2) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (student.help) {
-							delete newRoom.students[username]
-						}
+				// filter by help
+				for (let username of userOrder) {
+					let studentElement = document.getElementById(`student-${username}`);
+					if (
+						(filter.help == 1 && !allRoom.students[username].help) ||
+						(filter.help == 2 && allRoom.students[username].help)
+					) {
+						studentElement.style.display = 'none'
+						userOrder.pop(username)
 					}
 				}
 
-				//filter by break
-				if (filter.break == 1) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (!student.break) {
-							delete newRoom.students[username]
-						}
-					}
-				} else if (filter.break == 2) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (student.break) {
-							delete newRoom.students[username]
-						}
+				// filter by break
+				for (let username of userOrder) {
+					let studentElement = document.getElementById(`student-${username}`);
+					if (
+						(filter.break == 1 && !allRoom.students[username].break) ||
+						(filter.break == 2 && allRoom.students[username].break)
+					) {
+						studentElement.style.display = 'none'
+						userOrder.pop(username)
 					}
 				}
 
-				//filter by poll
-				if (filter.polls == 1) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (!student.pollRes.buttonRes && !student.pollRes.textRes) {
-							delete newRoom.students[username]
-						}
-					}
-				} else if (filter.polls == 2) {
-					for (let [username, student] of Object.entries(newRoom.students)) {
-						if (student.pollRes.buttonRes || student.pollRes.textRes) {
-							delete newRoom.students[username]
-						}
+				// filter by poll
+				for (let username of userOrder) {
+					let studentElement = document.getElementById(`student-${username}`);
+					if (
+						(filter.polls == 1 && (
+							!allRoom.students[username].pollRes.buttonRes && !allRoom.students[username].pollRes.textRes)
+						) ||
+						(filter.polls == 2 &&
+							(allRoom.students[username].pollRes.buttonRes || allRoom.students[username].pollRes.textRes)
+						)
+					) {
+						studentElement.style.display = 'none'
+						userOrder.pop(username)
 					}
 				}
 
-				//sort by name
+				// sort by name
 				if (sort.name == 1) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort())
+					userOrder.students = userOrder.sort()
 				} else if (sort.name == 2) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort().reverse())
+					userOrder.students = userOrder.sort().reverse()
 				}
 
-				//sort by help time
+				// sort by help time
 				if (sort.helpTime == 1) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
-						objectA = entireA[1]
-						objectB = entireB[1]
+					userOrder.sort((a, b) => {
+						let studentA = allRoom.students[a]
+						let studentB = allRoom.students[b]
 
-						if (objectA.help && objectB.help) {
+						if (studentA.help && studentB.help) {
 							const dateA = new Date()
-							dateA.setHours(objectA.help.time.hours)
-							dateA.setMinutes(objectA.help.time.minutes)
-							dateA.setSeconds(objectA.help.time.seconds)
+							dateA.setHours(studentA.help.time.hours)
+							dateA.setMinutes(studentA.help.time.minutes)
+							dateA.setSeconds(studentA.help.time.seconds)
 							const dateB = new Date()
-							dateB.setHours(objectB.help.time.hours)
-							dateB.setMinutes(objectB.help.time.minutes)
-							dateB.setSeconds(objectB.help.time.seconds)
+							dateB.setHours(studentB.help.time.hours)
+							dateB.setMinutes(studentB.help.time.minutes)
+							dateB.setSeconds(studentB.help.time.seconds)
 							if (dateA < dateB) {
 								return -1
 							}
 						}
-						else if (objectA.help) return -1
-					}))
+						else if (studentA.help) return -1
+					})
 				}
 
-				//sort by poll
+				// sort by poll
 				if (sort.polls == 1) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
-						objectA = entireA[1]
-						objectB = entireB[1]
-						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
-							return objectA.pollRes.textRes.localeCompare(objectB.pollRes.textRes)
-						} else if (objectA.pollRes.textRes) return -1
-						else if (objectB.pollRes.textRes) return 1
-						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
-							return objectA.pollRes.buttonRes.localeCompare(objectB.pollRes.buttonRes)
-						} else if (objectA.pollRes.buttonRes) return -1
-						else if (objectB.pollRes.buttonRes) return 1
-					}))
+					userOrder.sort((a, b) => {
+						let studentA = allRoom.students[a]
+						let studentB = allRoom.students[b]
+
+						if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
+							return studentA.pollRes.textRes.localeCompare(studentB.pollRes.textRes)
+						} else if (studentA.pollRes.textRes) return -1
+						else if (studentB.pollRes.textRes) return 1
+						if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
+							return studentA.pollRes.buttonRes.localeCompare(studentB.pollRes.buttonRes)
+						} else if (studentA.pollRes.buttonRes) return -1
+						else if (studentB.pollRes.buttonRes) return 1
+					})
 				} else if (sort.polls == 2) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((entireA, entireB) => {
-						objectA = entireA[1]
-						objectB = entireB[1]
-						if (objectA.pollRes.textRes && objectB.pollRes.textRes) {
-							return objectB.pollRes.textRes.localeCompare(objectA.pollRes.textRes)
-						} else if (objectA.pollRes.textRes) return 1
-						else if (objectB.pollRes.textRes) return -1
-						if (objectA.pollRes.buttonRes && objectB.pollRes.buttonRes) {
-							return objectB.pollRes.buttonRes.localeCompare(objectA.pollRes.buttonRes)
-						} else if (objectA.pollRes.buttonRes) return 1
-						else if (objectB.pollRes.buttonRes) return -1
-					}))
+					userOrder.sort((a, b) => {
+						let studentA = allRoom.students[a]
+						let studentB = allRoom.students[b]
+
+						if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
+							return studentB.pollRes.textRes.localeCompare(studentA.pollRes.textRes)
+						} else if (studentA.pollRes.textRes) return 1
+						else if (studentB.pollRes.textRes) return -1
+						if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
+							return studentB.pollRes.buttonRes.localeCompare(studentA.pollRes.buttonRes)
+						} else if (studentA.pollRes.buttonRes) return 1
+						else if (studentB.pollRes.buttonRes) return -1
+					})
 				}
 
-				//sort by permissions
+				// //sort by permissions
 				if (sort.permissions == 1) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => b[1].permissions - a[1].permissions))
+					userOrder.sort((a, b) => allRoom.students[b].classPermissions - allRoom.students[a].classPermissions)
 				} else if (sort.permissions == 2) {
-					newRoom.students = Object.fromEntries(Object.entries(newRoom.students).sort((a, b) => a[1].permissions - b[1].permissions))
+					userOrder.sort((a, b) => allRoom.students[a].classPermissions - allRoom.students[b].classPermissions)
 				}
 
-				for (const student of Object.keys(newRoom.students)) {
-					usersDiv.appendChild(buildStudent(newRoom, student))
+				for (let i = 0; i < userOrder.length; i++) {
+					document.getElementById(`student-${userOrder[i]}`).style.order = i
 				}
 			}
 
@@ -1116,28 +1066,32 @@
 
 			// sets filters
 			for (let filterElement of document.getElementsByClassName('filter')) {
-				filterElement.onclick = () => {
+				filterElement.onclick = (event) => {
+					let filterElement = event.target
+
 					filter[filterElement.id] += 1
 					if (filter[filterElement.id] > 2) {
 						filter[filterElement.id] = 0
 					}
 					if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
 					else filterElement.classList.add('pressed')
-					filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
+					filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
 					filterSortChange()
 				}
 			}
 
 			// sets sorts
 			for (let sortElement of document.getElementsByClassName('sort')) {
-				sortElement.onclick = () => {
+				sortElement.onclick = (event) => {
+					let sortElement = event.target
+
 					for (let sortType of Object.keys(sort)) {
 						if (sortType != sortElement.id) {
 							sort[sortType] = 0
 							let otherSortElements = document.querySelector('.sort#' + sortType)
 							if (otherSortElements) {
 								otherSortElements.classList.remove('pressed')
-								otherSortElements.innerText = SortState[sortType][sort[sortType]]
+								otherSortElements.textContent = SortState[sortType][sort[sortType]]
 							}
 						}
 					}
@@ -1150,7 +1104,7 @@
 					}
 					if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
 					else sortElement.classList.add('pressed')
-					sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
+					sortElement.textContent = SortState[sortElement.id][sort[sortElement.id]]
 					filterSortChange()
 				}
 			}
@@ -1179,7 +1133,7 @@
 			// Check how many possible responses and if the teacher wants to accept text responses
 			function startPoll(customPollId) {
 				var userTags = []
-				let selectTagForm = document.getElementsByName("selectTagForm")
+				let selectTagForm = document.getElementsByName('selectTagForm')
 				for (let eachTagForm of selectTagForm[0]) {
 					if (eachTagForm.checked) {
 						userTags.push(eachTagForm.value)
@@ -1335,7 +1289,7 @@
 				sharePollUserInput.value = ''
 				sharePollClassInput.value = ''
 			}
-      
+
 			function deletePoll(pollId) {
 				if (!pollId && !editingPollId) {
 					alert('No poll selected')
@@ -1355,7 +1309,7 @@
 
 				if (customPollsList.length == 0) {
 					let noPolls = document.createElement('p')
-					noPolls.innerText = emptyText
+					noPolls.textContent = emptyText
 					customPollsDiv.appendChild(noPolls)
 				}
 
@@ -1371,19 +1325,19 @@
 					customPollName.className = 'custom-poll-name'
 					customPollName.style.gridColumn = 1
 					if (customPoll.name)
-						customPollName.innerText = customPoll.name
+						customPollName.textContent = customPoll.name
 					else if (customPoll.prompt)
-						customPollName.innerText = customPoll.prompt
+						customPollName.textContent = customPoll.prompt
 					else {
 						unnamedPolls++
-						customPollName.innerText = 'Unnamed Poll'
+						customPollName.textContent = 'Unnamed Poll'
 					}
 					customPollDiv.appendChild(customPollName)
 
 					let editButton = document.createElement('button')
 					editButton.className = 'edit-custom-poll'
 					editButton.style.gridColumn = 2
-					editButton.innerText = 'Edit'
+					editButton.textContent = 'Edit'
 					editButton.onclick = () => {
 						editCustomPoll(customPollId)
 					}
@@ -1392,7 +1346,7 @@
 					let startButton = document.createElement('button')
 					startButton.className = 'start-custom-poll'
 					startButton.style.gridColumn = 3
-					startButton.innerText = 'Start'
+					startButton.textContent = 'Start'
 					startButton.onclick = () => {
 						startPoll(customPollId)
 					}
@@ -1402,7 +1356,7 @@
 						let shareButton = document.createElement('button')
 						shareButton.className = 'share-button'
 						shareButton.style.gridColumn = 4
-						shareButton.innerText = 'Share'
+						shareButton.textContent = 'Share'
 						shareButton.onclick = () => { openSharePoll(customPollId) }
 						customPollDiv.appendChild(shareButton)
 
@@ -1410,16 +1364,16 @@
 						publicButton.className = 'public-button'
 						publicButton.style.gridColumn = 5
 						if (customPoll.public)
-							publicButton.innerText = 'Make Private'
+							publicButton.textContent = 'Make Private'
 						else
-							publicButton.innerText = 'Make Public'
+							publicButton.textContent = 'Make Public'
 						publicButton.onclick = () => { publicToggle(customPollId) }
 						customPollDiv.appendChild(publicButton)
 
 						let deleteButton = document.createElement('button')
 						deleteButton.className = 'delete-poll'
 						deleteButton.style.gridColumn = 6
-						deleteButton.innerText = 'Delete'
+						deleteButton.textContent = 'Delete'
 						deleteButton.onclick = () => { deletePoll(customPollId) }
 						customPollDiv.appendChild(deleteButton)
 					}
@@ -1453,17 +1407,45 @@
 				}
 			})
 
-			var allRoom = ""
 			socket.emit('cpUpdate')
-			socket.on('cpUpdate', (room) => {
-				classCode.innerText = 'Class Code: ' + room.key
-				buildPreviousPolls(room.pollHistory)
-				allRoom = room
+			socket.on('cpUpdate', (newRoom) => {
+				classCode.textContent = 'Class Code: ' + newRoom.key
+				buildPreviousPolls(newRoom.pollHistory)
 
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
 				}
-				filterSortChange()
+
+				for (const username of Object.keys(newRoom.students)) {
+					let studentElement = document.getElementById(`student-${username}`)
+					let oldStudentData = null
+					let newStudentData = newRoom.students[username]
+
+					if (allRoom.students && allRoom.students[username])
+						oldStudentData = allRoom.students[username]
+
+					if (!studentElement) {
+						usersDiv.appendChild(buildStudent(newStudentData))
+						continue
+					}
+					continue
+
+					// if (isObjectEqual(oldStudentData, newStudentData)) {
+					// 	continue
+					// }
+
+					// studentElement.replaceWith(buildStudent(newStudentData))
+				}
+
+				for (let studentElement of document.getElementsByClassName('student')) {
+					if (!newRoom.students[studentElement.id.replace('student-', '')]) {
+						studentElement.remove()
+					}
+				}
+
+				allRoom = newRoom
+
+				filterSortChange(newRoom)
 
 				if (currentUser.classPermissions >= allRoom.permissions.manageStudents) {
 					bannedTabButton.style.display = ''
@@ -1518,7 +1500,7 @@
 				permissionsDiv.innerHTML = ''
 				for (let [permission, level] of Object.entries(allRoom.permissions)) {
 					let permissionLabel = document.createElement('label')
-					permissionLabel.innerText = camelCaseToNormal(permission)
+					permissionLabel.textContent = camelCaseToNormal(permission)
 					let permissionSelect = document.createElement('select')
 					permissionSelect.className = 'permissionSelect'
 					permissionSelect.id = permission
@@ -1529,27 +1511,27 @@
 					let ownerOption = document.createElement('option')
 					ownerOption.value = 5
 					ownerOption.selected = level == 5
-					ownerOption.innerText = 'Owner'
+					ownerOption.textContent = 'Owner'
 					permissionSelect.appendChild(ownerOption)
 					let teacherOption = document.createElement('option')
 					teacherOption.value = 4
 					teacherOption.selected = level == 4
-					teacherOption.innerText = 'Teacher'
+					teacherOption.textContent = 'Teacher'
 					permissionSelect.appendChild(teacherOption)
 					let modOption = document.createElement('option')
 					modOption.value = 3
 					modOption.selected = level == 3
-					modOption.innerText = 'Mod'
+					modOption.textContent = 'Mod'
 					permissionSelect.appendChild(modOption)
 					let studentOption = document.createElement('option')
 					studentOption.value = 2
 					studentOption.selected = level == 2
-					studentOption.innerText = 'Student'
+					studentOption.textContent = 'Student'
 					permissionSelect.appendChild(studentOption)
 					let guestOption = document.createElement('option')
 					guestOption.value = 1
 					guestOption.selected = level == 1
-					guestOption.innerText = 'Guest'
+					guestOption.textContent = 'Guest'
 					permissionSelect.appendChild(guestOption)
 					permissionLabel.appendChild(permissionSelect)
 					permissionsDiv.appendChild(permissionLabel)
@@ -1598,7 +1580,7 @@
 					pluginDiv.appendChild(pluginURL)
 					let removePlugin = document.createElement('button')
 					removePlugin.className = 'quickButton'
-					removePlugin.innerText = 'Remove Plugin'
+					removePlugin.textContent = 'Remove Plugin'
 					removePlugin.onclick = (event) => {
 						socket.emit(
 							'removePlugin',
@@ -1623,7 +1605,7 @@
 				addPluginForm.append(newPluginURL)
 				let submitPlugin = document.createElement('button')
 				submitPlugin.className = 'quickButton'
-				submitPlugin.innerText = 'Add Plug-in'
+				submitPlugin.textContent = 'Add Plug-in'
 				submitPlugin.onclick = () => {
 					let newPluginName = document.getElementById('newPluginName')
 					let newPluginURL = document.getElementById('newPluginURL')
@@ -1672,11 +1654,11 @@
 					pollShareDiv.style.display = 'flex'
 
 					let name = document.createElement('p')
-					name.innerText = pollName
+					name.textContent = pollName
 					pollShareDiv.appendChild(name)
 
 					let remove = document.createElement('button')
-					remove.innerText = 'remove'
+					remove.textContent = 'remove'
 					remove.className = 'quickButton'
 					remove.onclick = () => {
 						socketName, currentSharePollId, id
@@ -1699,9 +1681,9 @@
 			var selectTags = document.createElement('dialog')
 			let closeTags = document.createElement('button');
 			let selectTagForm = document.createElement('form');
-			selectTagForm.setAttribute('name', "selectTagForm");
+			selectTagForm.setAttribute('name', 'selectTagForm');
 
-			var tagNames = ["Senior", "Junior", "Sophomore", "Freshman", "FormbarJS", "OnlyPogs", "PokePucks", "Fiverr"];
+			var tagNames = ['Senior', 'Junior', 'Sophomore', 'Freshman', 'FormbarJS', 'OnlyPogs', 'PokePucks', 'Fiverr'];
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
@@ -1718,11 +1700,11 @@
 			}
 			let tagsAllSame = document.createElement('input');
 			tagsAllSame.type = 'checkbox';
-			tagsAllSame.value = 0 + ":Exact Same Tags"
+			tagsAllSame.value = 0 + ':Exact Same Tags'
 			tagsAllSame.name = 'tagSelector';
 			let tagsHas = document.createElement('input');
 			tagsHas.type = 'checkbox';
-			tagsHas.value = 1 + ":Has The Tags"
+			tagsHas.value = 1 + ':Has The Tags'
 			tagsHas.name = `tagSelector`;
 			let tagsAllSameLabel = document.createElement('label');
 			let tagsHasLabel = document.createElement('label');
@@ -1755,10 +1737,10 @@
 					let bannedStudentDiv = document.createElement('div')
 					bannedStudentDiv.className = 'bannedStudent'
 					bannedStudentName = document.createElement('p')
-					bannedStudentName.innerText = bannedStudent
+					bannedStudentName.textContent = bannedStudent
 					bannedStudentDiv.appendChild(bannedStudentName)
 					unban = document.createElement('button')
-					unban.innerText = 'unban'
+					unban.textContent = 'unban'
 					unban.className = 'quickButton'
 					unban.onclick = () => {
 						socket.emit('classUnbanUser', bannedStudent)
@@ -1779,6 +1761,8 @@
 				startPollForm.style.display = 'block'
 				endPoll.style.display = 'none'
 			})
-
 		</script>
+
 		<%- include('../partials/footer_content') %>
+
+		</html>

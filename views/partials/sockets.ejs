@@ -10,7 +10,6 @@
 
 	socket.on('break', () => {
 		document.getElementById('breakDialog').showModal()
-		console.log("BreakSocket")
 	})
 
 	socket.on('message', (message) => {
@@ -18,7 +17,6 @@
 	})
 
 	socket.on('reload', () => {
-		console.log('reload');
 		location.reload()
 	})
 </script>

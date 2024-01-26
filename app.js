@@ -125,7 +125,7 @@ const BANNED_PERMISSIONS = 0
 const PAGE_PERMISSIONS = {
 	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	student: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
 	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
@@ -446,7 +446,7 @@ function joinClass(username, code) {
 							}
 
 							// Add the two id's to the junction table to link the user and class
-							db.get('SELECT * FROM classusers WHERE classId = ? AND studentId = ?',
+							db.get('SELECT * FROM classusers WHERE classId=? AND studentId=?',
 								[classroom.id, user.id],
 								(err, classUser) => {
 									try {
@@ -686,7 +686,7 @@ async function setClassOfApiSockets(api, classCode) {
 }
 
 async function getIpAccess(type) {
-	let ipList = await getAll(`SELECT id, ip FROM ip_${type} `)
+	let ipList = await getAll(`SELECT id, ip FROM ip_${type}`)
 	return ipList.reduce((ips, ip) => {
 		ips[ip.id] = ip
 		return ips
@@ -961,7 +961,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 					let dateConfig = new Date()
 
 					step.type = 'lesson'
-					step.date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()} `
+					step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 					step.lesson = lessonArr
 					steps.push(step)
 				}
@@ -1013,7 +1013,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 							permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
 						}
 					}
-					db.run('UPDATE classroom SET permissions = ? WHERE key = ?', [JSON.stringify(permissions), key], (err) => {
+					db.run('UPDATE classroom SET permissions=? WHERE key=?', [JSON.stringify(permissions), key], (err) => {
 						if (err) logger.log('error', err.stack)
 					})
 				}
@@ -1049,14 +1049,14 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				try {
 					if (err) throw err
 
-					logger.log('verbose', `[post /createClass] Added classroom to database`)
+					logger.log('verbose', '[post /createClass] Added classroom to database')
 
-					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
+					db.get('SELECT id, name, key, permissions FROM classroom WHERE name=? AND owner=?', [className, req.session.userId], async (err, classroom) => {
 						try {
 							if (err) throw err
 
 							if (!classroom.id) {
-								logger.log('critical', `Class does not exist`)
+								logger.log('critical', 'Class does not exist')
 								res.render('pages/message', {
 									message: 'Class does not exist (Please contact the programmer)',
 									title: 'Login'
@@ -1092,12 +1092,12 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
+			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id=?', [classId], async (err, classroom) => {
 				try {
 					if (err) throw err
 
 					if (!classroom) {
-						logger.log('critical', `Class does not exist`)
+						logger.log('critical', 'Class does not exist')
 						res.render('pages/message', {
 							message: 'Class does not exist (Please contact the programmer)',
 							title: 'Login'
@@ -1196,19 +1196,19 @@ app.post('/login', async (req, res) => {
 		}
 		var passwordCrypt = encrypt(user.password)
 
-		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)} `)
+		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
 		logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
 		// Check whether user is logging in or signing up
 		if (user.loginType == 'login') {
-			logger.log('verbose', `[post /login] User is logging in `)
+			logger.log('verbose', '[post /login] User is logging in')
 
 			// Get the users login in data to verify password
-			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
+			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username=?', [user.username], async (err, userData) => {
 				try {
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
-						logger.log('verbose', `[post /login] User does not exist`)
+						logger.log('verbose', '[post /login] User does not exist')
 						res.render('pages/message', {
 							message: 'No user found with that username.',
 							title: 'Login'
@@ -1219,7 +1219,7 @@ app.post('/login', async (req, res) => {
 					// Decrypt users password
 					let tempPassword = decrypt(JSON.parse(userData.password))
 					if (tempPassword != user.password) {
-						logger.log('verbose', `[post /login] Incorrect password`)
+						logger.log('verbose', '[post /login] Incorrect password')
 						res.render('pages/message', {
 							message: 'Incorrect password',
 							title: 'Login'
@@ -1244,7 +1244,7 @@ app.post('/login', async (req, res) => {
 					}
 
 					if (loggedIn) {
-						logger.log('verbose', `[post /login] User is already logged in `)
+						logger.log('verbose', '[post /login] User is already logged in')
 						req.session.class = classKey
 					} else {
 						// Add user to the session
@@ -1278,7 +1278,7 @@ app.post('/login', async (req, res) => {
 				}
 			})
 		} else if (user.loginType == 'new') {
-			logger.log('verbose', `[post /login] Creating new user`)
+			logger.log('verbose', '[post /login] Creating new user')
 
 			let permissions = STUDENT_PERMISSIONS
 
@@ -1297,7 +1297,7 @@ app.post('/login', async (req, res) => {
 						existingAPIs.push(dbUser.API)
 						existingSecrets.push(dbUser.secret)
 						if (dbUser.username == user.username) {
-							logger.log('verbose', `[post /login] User already exists`)
+							logger.log('verbose', '[post /login] User already exists')
 							res.render('pages/message', {
 								message: 'A user with that username already exists.',
 								title: 'Login'
@@ -1326,7 +1326,7 @@ app.post('/login', async (req, res) => {
 							try {
 								if (err) throw err
 
-								logger.log('verbose', `[post /login] Added user to database`)
+								logger.log('verbose', '[post /login] Added user to database')
 
 								// Find the user in which was just created to get the id of the user
 								db.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
@@ -1381,7 +1381,7 @@ app.post('/login', async (req, res) => {
 				}
 			})
 		} else if (user.loginType == 'guest') {
-			logger.log('verbose', `[post /login] Logging in as guest`)
+			logger.log('verbose', '[post /login] Logging in as guest')
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1469,53 +1469,71 @@ app.post('/oauth', (req, res) => {
 		logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`)
 
-		// If there is a username and password submitted, then it gets results from the database that match the username.
-		if (username && password) {
-			db.get('SELECT * FROM users WHERE username = ?', [username], (err, userData) => {
-				try {
-					if (err) throw err
-
-					// Check if a user with that name was not found in the database
-					if (!userData.username) {
-						logger.log('verbose', `[post /oauth] User does not exist`)
-						res.render('pages/message', {
-							message: 'No user found with that username.',
-							title: 'Login'
-						})
-						return
-					}
-
-					// Decrypt users password
-					let databasePassword = decrypt(JSON.parse(userData.password))
-					if (databasePassword != password) {
-						logger.log('verbose', `[post /oauth] Incorrect password`)
-						res.render('pages/message', {
-							message: 'Incorrect password',
-							title: 'Login'
-						})
-						return
-					}
-
-					// If it matches, a token is generated, and the page redirects to the specified redirectURL using the token as a query parameter.
-					var token = jwt.sign({
-						id: userData.id,
-						username: userData.username,
-						permissions: userData.permissions
-					}, userData.secret, { expiresIn: '30m' })
-
-					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
-
-					res.redirect(`${redirectURL}?token = ${token} `)
-				} catch (err) {
-					logger.log('error', err.stack);
-					res.render('pages/message', {
-						message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-						title: 'Error'
-					})
-				}
+		if (!username) {
+			res.render('pages/message', {
+				message: 'Please enter a username',
+				title: 'Login'
 			})
-			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
-		} else res.redirect(`/ oauth ? redirectURL = ${redirectURL} `)
+			return
+		}
+		if (!password) {
+			res.render('pages/message', {
+				message: 'Please enter a password',
+				title: 'Login'
+			})
+			return
+		}
+
+		db.get('SELECT * FROM users WHERE username=?', [username], (err, userData) => {
+			try {
+				if (err) throw err
+
+				// Check if a user with that name was not found in the database
+				if (!userData.username) {
+					logger.log('verbose', '[post /oauth] User does not exist')
+					res.render('pages/message', {
+						message: 'No user found with that username.',
+						title: 'Login'
+					})
+					return
+				}
+
+				// Decrypt users password
+				let databasePassword = decrypt(JSON.parse(userData.password))
+				if (databasePassword != password) {
+					logger.log('verbose', '[post /oauth] Incorrect password')
+					res.render('pages/message', {
+						message: 'Incorrect password',
+						title: 'Login'
+					})
+					return
+				}
+
+				let classCode = getUserClass(userData.username)
+
+				userData.classPermissions = null
+
+				if (cD[classCode] && cD[classCode].students[userData.username])
+					userData.classPermissions = cD[classCode].students[userData.username].classPermissions
+
+				var token = jwt.sign({
+					id: userData.id,
+					username: userData.username,
+					permissions: userData.permissions,
+					classPermissions: userData.classPermissions,
+					class: classCode
+				}, userData.secret, { expiresIn: '30m' })
+
+				logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
+				res.redirect(`${redirectURL}?token=${token}`)
+			} catch (err) {
+				logger.log('error', err.stack);
+				res.render('pages/message', {
+					message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+					title: 'Error'
+				})
+			}
+		})
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -1606,7 +1624,7 @@ app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
 		logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		db.all(
-			'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username = ?',
+			'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username=?',
 			[req.session.username],
 			(err, joinedClasses) => {
 				try {
@@ -1647,7 +1665,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 
 		if (typeof classJoinStatus == 'string') {
 			res.render('pages/message', {
-				message: `Error: ${classJoinStatus} `,
+				message: `Error: ${classJoinStatus}`,
 				title: 'Error'
 			})
 			return
@@ -1874,7 +1892,7 @@ io.on('connection', async (socket) => {
 		if (api) {
 			await new Promise((resolve, reject) => {
 				db.get(
-					'SELECT id, username FROM users WHERE API = ?',
+					'SELECT id, username FROM users WHERE API=?',
 					[api],
 					(err, userData) => {
 						try {
@@ -2046,7 +2064,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[pluginUpdate] classCode=(${classCode})`)
 
 			db.all(
-				'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key = ?',
+				'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.key=?',
 				[classCode],
 				(err, plugins) => {
 					try {
@@ -2081,7 +2099,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`)
 
 			db.all(
-				`SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ? `,
+				`SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner=?`,
 				[
 					...customPollIds,
 					userSession.userId
@@ -2135,7 +2153,7 @@ io.on('connection', async (socket) => {
 
 			if (!classCode || classCode == 'noClass') return
 
-			db.all('SELECT users.username FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId = ?', cD[socket.request.session.class].id, (err, bannedStudents) => {
+			db.all('SELECT users.username FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', cD[socket.request.session.class].id, (err, bannedStudents) => {
 				try {
 					if (err) throw err
 
@@ -2223,7 +2241,7 @@ io.on('connection', async (socket) => {
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
 			let dateConfig = new Date()
-			let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()} `
+			let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
 			data.prompt = cD[socket.request.session.class].poll.prompt
 
@@ -2328,14 +2346,14 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
 
 			db.all(
-				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId = ?',
+				'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
 				pollId,
 				(err, userPollShares) => {
 					try {
 						if (err) throw err
 
 						db.all(
-							'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId = ?',
+							'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId=?',
 							pollId,
 							(err, classPollShares) => {
 								try {
@@ -2361,14 +2379,14 @@ io.on('connection', async (socket) => {
 
 	async function deleteCustomPolls(userId) {
 		try {
-			const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner = ?', userId)
+			const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner=?', userId)
 
 			if (customPolls.length == 0) return
 
-			await runQuery('DELETE FROM custom_polls WHERE userId = ?', customPolls[0].userId)
+			await runQuery('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
 
 			for (let customPoll of customPolls) {
-				await runQuery('DELETE FROM shared_polls WHERE pollId = ?', customPoll.pollId)
+				await runQuery('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
 			}
 		} catch (err) {
 			throw err
@@ -2377,20 +2395,20 @@ io.on('connection', async (socket) => {
 
 	async function deleteClassrooms(userId) {
 		try {
-			const classrooms = await getAll('SELECT * FROM classroom WHERE owner = ?', userId)
+			const classrooms = await getAll('SELECT * FROM classroom WHERE owner=?', userId)
 
 			if (classrooms.length == 0) return
 
-			await runQuery('DELETE FROM classroom WHERE owner = ?', classrooms[0].owner)
+			await runQuery('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
 
 			for (let classroom of classrooms) {
 				if (cD[classroom.key]) endClass(classroom.key)
 
 				await Promise.all([
-					runQuery('DELETE FROM classusers WHERE classId = ?', classroom.id),
-					runQuery('DELETE FROM class_polls WHERE classId = ?', classroom.id),
-					runQuery('DELETE FROM plugins WHERE classId = ?', classroom.id),
-					runQuery('DELETE FROM lessons WHERE class = ?', classroom.id)
+					runQuery('DELETE FROM classusers WHERE classId=?', classroom.id),
+					runQuery('DELETE FROM class_polls WHERE classId=?', classroom.id),
+					runQuery('DELETE FROM plugins WHERE classId=?', classroom.id),
+					runQuery('DELETE FROM lessons WHERE class=?', classroom.id)
 				])
 			}
 		} catch (err) {
@@ -2407,8 +2425,8 @@ io.on('connection', async (socket) => {
 			else if (type == 'blacklist') ipList = blacklistedIps
 
 			if (type) {
-				if (username) io.to(username).emit('ipUpdate', type, settings[`${type} Active`], ipList)
-				else io.emit('ipUpdate', type, settings[`${type} Active`], ipList)
+				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
 			} else {
 				ipUpdate('whitelist', username)
 				ipUpdate('blacklist', username)
@@ -2513,7 +2531,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
 
 			if (userRequests[event].length >= limit) {
-				socket.emit('message', `You are being rate limited.Please try again in a ${blockTime / 1000} seconds.`)
+				socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
 				setTimeout(() => {
 					try {
 						userRequests[event].shift()
@@ -2570,7 +2588,7 @@ io.on('connection', async (socket) => {
 				next()
 			} else {
 				if (!PASSIVE_SOCKETS.includes(event)) {
-					logger.log('info', `[socket permission check] User does not have permission to use ${camelCaseToNormal(event)} `)
+					logger.log('info', `[socket permission check] User does not have permission to use ${camelCaseToNormal(event)}`)
 					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(event)}.`)
 				}
 			}
@@ -2593,15 +2611,15 @@ io.on('connection', async (socket) => {
 					let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
 					cD[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
 					if (cD[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
-						db.get('SELECT digipogs FROM classusers WHERE studentId = ?', [cD[socket.request.session.class].students[socket.request.session.username].id], (err, data) => {
+						db.get('SELECT digipogs FROM classusers WHERE studentId=?', [cD[socket.request.session.class].students[socket.request.session.username].id], (err, data) => {
 							try {
 								if (err) throw err
 
-								db.run('UPDATE classusers SET digiPogs = ? WHERE studentId = ?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id], (err) => {
+								db.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id], (err) => {
 									try {
 										if (err) throw err
 
-										logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username} `)
+										logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username}`)
 									} catch (err) {
 										logger.log('error', err.stack);
 									}
@@ -2631,7 +2649,7 @@ io.on('connection', async (socket) => {
 
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
-			db.run('UPDATE classusers SET permissions = ? WHERE classId = ? AND studentId = ?', [
+			db.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
 				newPerm,
 				cD[socket.request.session.class].id,
 				cD[socket.request.session.class].students[user].id
@@ -2669,7 +2687,7 @@ io.on('connection', async (socket) => {
 				io.to(username).emit('reload')
 			}
 
-			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, username])
+			db.run('UPDATE users SET permissions=? WHERE username=?', [newPerm, username])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2806,7 +2824,7 @@ io.on('connection', async (socket) => {
 			let userId = socket.request.session.userId
 
 			if (id) {
-				db.get(`SELECT * FROM custom_polls WHERE id = ? `, [id], (err, poll) => {
+				db.get('SELECT * FROM custom_polls WHERE id=?', [id], (err, poll) => {
 					try {
 						if (err) throw err
 
@@ -2815,7 +2833,7 @@ io.on('connection', async (socket) => {
 							return
 						}
 
-						db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ? `, [
+						db.run('UPDATE custom_polls SET name=?, prompt=?, answers=?, textRes=?, blind=?, weight=?, public=? WHERE id=?', [
 							poll.name,
 							poll.prompt,
 							JSON.stringify(poll.answers),
@@ -2888,7 +2906,7 @@ io.on('connection', async (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM custom_polls WHERE id = ? `, pollId, async (err, poll) => {
+			db.get('SELECT * FROM custom_polls WHERE id=?', pollId, async (err, poll) => {
 				try {
 					if (err) throw err
 
@@ -2903,9 +2921,9 @@ io.on('connection', async (socket) => {
 					await runQuery('BEGIN TRANSACTION')
 
 					await Promise.all([
-						runQuery('DELETE FROM custom_polls WHERE id = ?', pollId),
-						runQuery('DELETE FROM shared_polls WHERE pollId = ?', pollId),
-						runQuery('DELETE FROM class_polls WHERE pollId = ?', pollId),
+						runQuery('DELETE FROM custom_polls WHERE id=?', pollId),
+						runQuery('DELETE FROM shared_polls WHERE pollId=?', pollId),
+						runQuery('DELETE FROM class_polls WHERE pollId=?', pollId),
 					]).catch(async (err) => {
 						await runQuery('ROLLBACK')
 						throw err
@@ -2955,7 +2973,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[setPublicPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[setPublicPoll] pollId=(${pollId}) value=(${value})`)
 
-			db.run('UPDATE custom_polls set public = ? WHERE id = ?', [value, pollId], (err) => {
+			db.run('UPDATE custom_polls set public=? WHERE id=?', [value, pollId], (err) => {
 				try {
 					if (err) throw err
 
@@ -2976,7 +2994,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[sharePollToUser] pollId=(${pollId}) username=(${username})`)
 
-			db.get('SELECT * FROM users WHERE username = ?', username, (err, user) => {
+			db.get('SELECT * FROM users WHERE username=?', username, (err, user) => {
 				try {
 					if (err) throw err
 
@@ -2986,7 +3004,7 @@ io.on('connection', async (socket) => {
 						return
 					}
 
-					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (err, poll) => {
+					db.get('SELECT * FROM custom_polls WHERE id=?', pollId, (err, poll) => {
 						try {
 							if (err) throw err
 
@@ -3001,14 +3019,14 @@ io.on('connection', async (socket) => {
 							else if (poll.prompt) name = poll.prompt
 
 							db.get(
-								'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
+								'SELECT * FROM shared_polls WHERE pollId=? AND userId=?',
 								[pollId, user.id],
 								(err, sharePoll) => {
 									try {
 										if (err) throw err
 
 										if (sharePoll) {
-											socket.emit('message', `${name} is Already Shared with ${username} `)
+											socket.emit('message', `${name} is Already Shared with ${username}`)
 											return
 										}
 
@@ -3019,7 +3037,7 @@ io.on('connection', async (socket) => {
 												try {
 													if (err) throw err
 
-													socket.emit('message', `Shared ${name} with ${username} `)
+													socket.emit('message', `Shared ${name} with ${username}`)
 
 													getPollShareIds(pollId)
 
@@ -3060,7 +3078,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[removeUserPollShare] pollId=(${pollId}) userId=(${userId})`)
 
 			db.get(
-				'SELECT * FROM shared_polls WHERE pollId = ? AND userId = ?',
+				'SELECT * FROM shared_polls WHERE pollId=? AND userId=?',
 				[pollId, userId],
 				(err, pollShare) => {
 					try {
@@ -3073,7 +3091,7 @@ io.on('connection', async (socket) => {
 						}
 
 						db.run(
-							'DELETE FROM shared_polls WHERE pollId = ? AND userId = ?',
+							'DELETE FROM shared_polls WHERE pollId=? AND userId=?',
 							[pollId, userId],
 							(err) => {
 								try {
@@ -3082,7 +3100,7 @@ io.on('connection', async (socket) => {
 									socket.emit('message', 'Successfully unshared user')
 									getPollShareIds(pollId)
 
-									db.get('SELECT * FROM users WHERE id = ?', userId, async (err, user) => {
+									db.get('SELECT * FROM users WHERE id=?', userId, async (err, user) => {
 										try {
 											if (err) throw err
 
@@ -3131,7 +3149,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[sharePollToClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[sharePollToClass] pollId=(${pollId}) classCode=(${classCode})`)
 
-			db.get('SELECT * FROM classroom WHERE key = ?', classCode, (err, classroom) => {
+			db.get('SELECT * FROM classroom WHERE key=?', classCode, (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -3140,7 +3158,7 @@ io.on('connection', async (socket) => {
 						return
 					}
 
-					db.get('SELECT * FROM custom_polls WHERE id = ?', pollId, (err, poll) => {
+					db.get('SELECT * FROM custom_polls WHERE id=?', pollId, (err, poll) => {
 						try {
 							if (err) throw err
 
@@ -3155,7 +3173,7 @@ io.on('connection', async (socket) => {
 							else if (poll.prompt) name = poll.prompt
 
 							db.get(
-								'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+								'SELECT * FROM class_polls WHERE pollId=? AND classId=?',
 								[pollId, classroom.id],
 								(err, sharePoll) => {
 									try {
@@ -3210,7 +3228,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[removeClassPollShare] pollId=(${pollId}) classId=(${classId})`)
 
 			db.get(
-				'SELECT * FROM class_polls WHERE pollId = ? AND classId = ?',
+				'SELECT * FROM class_polls WHERE pollId=? AND classId=?',
 				[pollId, classId],
 				(err, pollShare) => {
 					try {
@@ -3222,7 +3240,7 @@ io.on('connection', async (socket) => {
 						}
 
 						db.run(
-							'DELETE FROM class_polls WHERE pollId = ? AND classId = ?',
+							'DELETE FROM class_polls WHERE pollId=? AND classId=?',
 							[pollId, classId],
 							(err) => {
 								try {
@@ -3231,7 +3249,7 @@ io.on('connection', async (socket) => {
 									socket.emit('message', 'Successfully unshared class')
 									getPollShareIds(pollId)
 
-									db.get('SELECT * FROM classroom WHERE id = ?', classId, async (err, classroom) => {
+									db.get('SELECT * FROM classroom WHERE id=?', classId, async (err, classroom) => {
 										try {
 											if (err) throw err
 
@@ -3266,9 +3284,17 @@ io.on('connection', async (socket) => {
 	})
 
 	// Sends a help ticket
-	socket.on('help', (reason, time) => {
+	socket.on('help', (reason) => {
 		try {
 			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+			let time = new Date();
+			time = {
+				hours: time.getHours(),
+				minutes: time.getMinutes(),
+				seconds: time.getSeconds()
+			}
+
 			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
 			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
@@ -3422,16 +3448,16 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[deleteClass] classId=(${classId})`)
 
-			db.get('SELECT * FROM classroom WHERE id = ?', classId, (err, classroom) => {
+			db.get('SELECT * FROM classroom WHERE id=?', classId, (err, classroom) => {
 				try {
 					if (err) throw err
 
 					if (classroom) {
 						if (cD[classroom.key]) endClass(classroom.key)
 
-						db.run('DELETE FROM classroom WHERE id = ?', classroom.id)
-						db.run('DELETE FROM classusers WHERE classId = ?', classroom.id)
-						db.run('DELETE FROM poll_history WHERE class = ?', classroom.id)
+						db.run('DELETE FROM classroom WHERE id=?', classroom.id)
+						db.run('DELETE FROM classusers WHERE classId=?', classroom.id)
+						db.run('DELETE FROM poll_history WHERE class=?', classroom.id)
 					}
 
 					getOwnedClasses(socket.request.session.username)
@@ -3643,7 +3669,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[addPlugin] name=(${name}) url=(${url})`)
 
 			db.get(
-				'SELECT * FROM classroom WHERE key = ?',
+				'SELECT * FROM classroom WHERE key=?',
 				[socket.request.session.class],
 				(err, classData) => {
 					try {
@@ -3690,7 +3716,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[getUserClass] username=(${username}) api=(${api})`)
 
 			if (api) {
-				db.get('SELECT * FROM users WHERE API = ?', [api], (err, userData) => {
+				db.get('SELECT * FROM users WHERE API=?', [api], (err, userData) => {
 					try {
 						if (err) throw err
 						if (!userData) {
@@ -3749,7 +3775,7 @@ io.on('connection', async (socket) => {
 				return
 			}
 
-			db.run('UPDATE classusers SET permissions = 0 WHERE classId = (SELECT id FROM classroom WHERE key = ?) AND studentId = (SELECT id FROM users WHERE username = ?)', [
+			db.run('UPDATE classusers SET permissions = 0 WHERE classId = (SELECT id FROM classroom WHERE key=?) AND studentId = (SELECT id FROM users WHERE username=?)', [
 				socket.request.session.class,
 				user
 			], (err) => {
@@ -3762,7 +3788,7 @@ io.on('connection', async (socket) => {
 					classKickUser(user)
 					classBannedUsersUpdate()
 					cpUpdate()
-					socket.emit('message', `Banned ${user} `)
+					socket.emit('message', `Banned ${user}`)
 				} catch (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3794,7 +3820,7 @@ io.on('connection', async (socket) => {
 				return
 			}
 
-			db.run('UPDATE classusers SET permissions = 1 WHERE classId = (SELECT id FROM classroom WHERE key = ?) AND studentId = (SELECT id FROM users WHERE username = ?)', [
+			db.run('UPDATE classusers SET permissions = 1 WHERE classId = (SELECT id FROM classroom WHERE key=?) AND studentId = (SELECT id FROM users WHERE username=?)', [
 				socket.request.session.class,
 				user
 			], (err) => {
@@ -3805,7 +3831,7 @@ io.on('connection', async (socket) => {
 						cD[socket.request.session.class].students[user].permissions = 1
 
 					classBannedUsersUpdate()
-					socket.emit('message', `Unbanned ${user} `)
+					socket.emit('message', `Unbanned ${user}`)
 				} catch (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3824,11 +3850,11 @@ io.on('connection', async (socket) => {
 
 			let classCode = socket.request.session.class
 			cD[classCode].permissions[permission] = level
-			db.run('UPDATE classroom SET permissions = ? WHERE id = ?', [JSON.stringify(cD[classCode].permissions), cD[classCode].id], (err) => {
+			db.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(cD[classCode].permissions), cD[classCode].id], (err) => {
 				try {
 					if (err) throw err
 
-					logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level} `)
+					logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
 					cpUpdate()
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -3845,7 +3871,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[deleteUser] userId=(${userId})`)
 
 			const user = await new Promise((resolve, reject) => {
-				db.get('SELECT * FROM users WHERE id = ?', userId, (err, user) => {
+				db.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
 					if (err) reject(err)
 					resolve(user)
 				})
@@ -3862,9 +3888,9 @@ io.on('connection', async (socket) => {
 				await runQuery('BEGIN TRANSACTION')
 
 				await Promise.all([
-					runQuery('DELETE FROM users WHERE id = ?', userId),
-					runQuery('DELETE FROM classusers WHERE studentId = ?', userId),
-					runQuery('DELETE FROM shared_polls WHERE userId = ?', userId),
+					runQuery('DELETE FROM users WHERE id=?', userId),
+					runQuery('DELETE FROM classusers WHERE studentId=?', userId),
+					runQuery('DELETE FROM shared_polls WHERE userId=?', userId),
 				])
 
 				await deleteCustomPolls(userId)
@@ -3898,7 +3924,7 @@ io.on('connection', async (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM ip_${type} WHERE id = ? `, id, (err, dbIp) => {
+			db.get(`SELECT * FROM ip_${type} WHERE id=?`, id, (err, dbIp) => {
 				if (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3911,7 +3937,7 @@ io.on('connection', async (socket) => {
 				}
 
 
-				db.run(`UPDATE ip_${type} set ip =? WHERE id =? `, [ip, id], (err) => {
+				db.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
 					if (err) logger.log('error', err)
 					else {
 						if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
@@ -3939,7 +3965,7 @@ io.on('connection', async (socket) => {
 			return
 		}
 
-		db.get(`SELECT * FROM ip_${type} WHERE ip = ? `, ip, (err, dbIp) => {
+		db.get(`SELECT * FROM ip_${type} WHERE ip=?`, ip, (err, dbIp) => {
 			if (err) {
 				logger.log('error', err.stack)
 				socket.emit('message', 'There was a server error try again.')
@@ -3947,7 +3973,7 @@ io.on('connection', async (socket) => {
 			}
 
 			if (dbIp) {
-				socket.emit('message', `IP already in ${type} `)
+				socket.emit('message', `IP already in ${type}`)
 				return
 			}
 
@@ -3958,7 +3984,7 @@ io.on('connection', async (socket) => {
 					return
 				}
 
-				db.get(`SELECT * FROM ip_${type} WHERE ip = ? `, ip, (err, dbIp) => {
+				db.get(`SELECT * FROM ip_${type} WHERE ip=?`, ip, (err, dbIp) => {
 					if (err) {
 						logger.log('error', err.stack)
 						socket.emit('message', 'There was a server error try again.')
@@ -3970,7 +3996,7 @@ io.on('connection', async (socket) => {
 
 					reloadPageByIp(type != 'whitelist', ip)
 					ipUpdate(type)
-					socket.emit('message', `IP added to ${type} `)
+					socket.emit('message', `IP added to ${type}`)
 				})
 			})
 		})
@@ -3987,7 +4013,7 @@ io.on('connection', async (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM ip_${type} WHERE id = ? `, id, (err, dbIp) => {
+			db.get(`SELECT * FROM ip_${type} WHERE id=?`, id, (err, dbIp) => {
 				if (err) {
 					logger.log('error', err)
 					socket.emit('message', 'There was a server error try again.')
@@ -3999,7 +4025,7 @@ io.on('connection', async (socket) => {
 					return
 				}
 
-				db.run(`DELETE FROM ip_${type} WHERE id =? `, [id], (err) => {
+				db.run(`DELETE FROM ip_${type} WHERE id=?`, [id], (err) => {
 					if (err) {
 						logger.log('error', err)
 						socket.emit('message', 'There was a server error try again.')
@@ -4045,19 +4071,19 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 			cD[socket.request.session.class].students[username].tags = tags.toString()
-			db.get('SELECT * FROM users WHERE id = ?', [studentId], (err, row) => {
+			db.get('SELECT * FROM users WHERE id=?', [studentId], (err, row) => {
 				if (err) {
 					return console.error(err.message);
 				}
 				if (row) {
 					// Row exists, update it
-					db.run('UPDATE users SET tags = ? WHERE id = ?', [tags.toString(), studentId], (err) => {
+					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
 						if (err) {
 							return console.error(err.message);
 						}
 					});
 				} else {
-					console.log(`No row found with id ${studentId} `);
+					console.log(`No row found with id ${studentId}`);
 				}
 			});
 		}

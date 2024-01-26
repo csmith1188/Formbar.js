@@ -52,7 +52,6 @@
 
 		</html>
 		<script>
-			let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
 			let users = {}
 
 			const FilterState = {
@@ -283,8 +282,6 @@
 				else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
 
 				ipListDiv.innerHTML = ''
-
-				console.log(type, active, ips);
 
 				let ipListToggle = document.createElement('button')
 				ipListToggle.className = 'quickButton ipListToggle'
