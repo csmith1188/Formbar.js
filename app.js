@@ -288,7 +288,8 @@ class Classroom {
 			textRes: false,
 			prompt: '',
 			weight: 1,
-			blind: false
+			blind: false,
+			requiredTags: [],
 		}
 		this.key = key
 		this.lesson = {}
@@ -463,6 +464,7 @@ function joinClass(username, code) {
 												return
 											}
 
+											//console.log(user);
 											user.classPermissions = classUser.permissions
 
 											// Remove student from old class
@@ -1261,6 +1263,7 @@ app.post('/login', async (req, res) => {
 					// Add a cookie to transfer user credentials across site
 					req.session.userId = userData.id
 					req.session.username = userData.username
+					req.session.tags = userData.tags
 
 					logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 					logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
@@ -1678,7 +1681,8 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		//Poll Setup
 		let user = {
 			name: req.session.username,
-			class: req.session.class
+			class: req.session.class,
+			tags: req.session.tags
 		}
 		let answer = req.query.letter
 
@@ -1950,9 +1954,38 @@ io.on('connection', async (socket) => {
 
 			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
+
+			let totalStudents = 0;
+
+			for (let student of Object.values(classData.students)) {
+				if (classData.poll.requiredTags.length > 0) {
+					if (classData.poll.requiredTags[0][0] == "0") {
+						if (classData.poll.requiredTags.slice(1).join() == student.tags) {
+							totalStudents++
+						}
+					}
+					else if (classData.poll.requiredTags[0][0] == "1") {
+						let correctTags = 0
+						let requiredCorrectTags = classData.poll.requiredTags.length - 1;
+						for (let i = 0; i < classData.poll.requiredTags.length; i++) {
+							for (let u = 0; u < student.tags.split(",").length; u++) {
+								if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
+									correctTags++;
+								}
+							}
+						}
+						if (correctTags == requiredCorrectTags) {
+							totalStudents++
+						}
+					}
+				}
+				else totalStudents = Object.keys(classData.students).length
+			}
+
+
 			io.to(classCode).emit('vbUpdate', {
 				status: classData.poll.status,
-				totalStudents: Object.keys(classData.students).length,
+				totalStudents: totalStudents,
 				polls: responses,
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
@@ -2248,7 +2281,8 @@ io.on('connection', async (socket) => {
 			textRes: false,
 			prompt: "",
 			weight: 1,
-			blind: false
+			blind: false,
+			requiredTags: [],
 		};
 	}
 
@@ -2414,6 +2448,30 @@ io.on('connection', async (socket) => {
 
 			if (socket.request.session.username) {
 				next()
+			} else if (api) {
+				db.get(
+					'SELECT id, username FROM users WHERE API = ?',
+					[api],
+					(err, userData) => {
+						try {
+							if (err) throw err
+							if (!userData) {
+								logger.log('verbose', '[socket authentication] not a valid API Key')
+								next(new Error('Not a valid API key'))
+								return
+							}
+
+							socket.request.session.api = api
+							socket.request.session.userId = userData.id
+							socket.request.session.username = userData.username
+							socket.request.session.class = 'noClass'
+
+							next()
+						} catch (err) {
+							logger.log('error', err.stack)
+						}
+					}
+				)
 			} else if (event == 'reload') {
 				next()
 			} else {
@@ -2618,10 +2676,10 @@ io.on('connection', async (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight) => {
+	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags) => {
 		try {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight})`)
+			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
 			await clearPoll()
 
@@ -2632,6 +2690,13 @@ io.on('connection', async (socket) => {
 			cD[socket.request.session.class].mode = 'poll'
 			cD[socket.request.session.class].poll.blind = blind
 			cD[socket.request.session.class].poll.status = true
+			if (tags) {
+				cD[socket.request.session.class].poll.requiredTags = tags
+			}
+			else {
+				cD[socket.request.session.class].poll.requiredTags = []
+			}
+
 
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
@@ -3639,7 +3704,7 @@ io.on('connection', async (socket) => {
 
 						if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
 						else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
-						else socket.emit('getUserClass', classCode)
+						else socket.emit('getUserClass', className)
 					} catch (err) {
 						logger.log('error', err.stack)
 						socket.emit('getUserClass', { error: 'There was a server error try again.' })

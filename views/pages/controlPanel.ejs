@@ -1186,13 +1186,12 @@
 					}
 				}
 				userTags.sort()
-				console.log(userTags);
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
 					changeTab('mainPolls', 'polls')
 
-					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight)
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags)
 				} else {
 					let blind = blindCheck.checked
 
@@ -1208,7 +1207,7 @@
 						pollAnswers.push(pollAnswer)
 					}
 
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1)
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags)
 				}
 				responsesDiv.style.display = 'none'
 				startPollForm.style.display = 'none'

@@ -67,7 +67,8 @@
 					<%- include('../partials/formbar_header') %>
 						<h1>Need Help?</h1>
 						<form id="eventForm">
-							<textarea id="ticket" cols="30" rows="5" maxlength="150" placeholder="Reason (optional)"></textarea>
+							<textarea id="ticket" cols="30" rows="5" maxlength="150"
+								placeholder="Reason (optional)"></textarea>
 							<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
 						</form>
 						<button onclick="help()" class="quickButton">Send Ticket</button>
@@ -124,8 +125,7 @@
 				let poll = {}
 				let mode = ''
 				let quiz = {}
-
-				function updatePage() {
+				function updatePageLoop() {
 					if (mode == 'poll') {
 						pollContent.style.display = 'block'
 						quizContent.style.display = 'none'
@@ -162,7 +162,7 @@
 							pollDiv.style.display = 'none'
 						}
 
-						if (oldLettRes && document.getElementById (oldLettRes)) {
+						if (oldLettRes && document.getElementById(oldLettRes)) {
 							document.getElementById(oldLettRes).checked = true
 						}
 					} else if (mode == 'quiz') {
@@ -186,6 +186,41 @@
 						lessonContent.style.display = 'block'
 					}
 					pollContent.style.display = 'block'
+				}
+				function updatePage() {
+					var userTags = JSON.parse('<%- user %>')
+					userTags = userTags.tags.split(',')
+					if (poll.requiredTags.length > 0) {
+						if (poll.requiredTags[0][0] == "0") {
+							if (poll.requiredTags.slice(1).join() == userTags.join()) {
+								//console.log("Same tags");
+								updatePageLoop()
+							}
+							//else console.log("Not the exact same tags");
+						}
+						else if (poll.requiredTags[0][0] == "1") {
+							let correctTags = 0
+							let requiredCorrectTags = poll.requiredTags.length - 1;
+							for (let i = 0; i < poll.requiredTags.length; i++) {
+								for (let u = 0; u < userTags.length; u++) {
+									//console.log(poll.requiredTags[i], userTags[u]);
+									if (poll.requiredTags[i] == userTags[u]) {
+										//console.log("Correct tag");
+										correctTags++;
+									}
+								}
+							}
+							if (correctTags == requiredCorrectTags) {
+								//console.log("Correct tags");
+								updatePageLoop()
+							}
+							//else console.log("Not enough tags");
+						}
+					}
+					else {
+						//console.log("No tags required for this poll");
+						updatePageLoop()
+					}
 				}
 
 				// Submits the users answer to the poll
@@ -266,7 +301,6 @@
 				socket.emit('pollUpdate')
 				socket.on('pollUpdate', (newPoll) => {
 					if (isObjectEqual(poll, newPoll)) return
-
 					poll = newPoll
 					updatePage()
 				})
@@ -326,9 +360,9 @@
 				// Calls for data
 				socket.emit('vbUpdate')
 				// Gets data from server and send it the function
-				socket.on('vbUpdate', (pollsData) => { 
+				socket.on('vbUpdate', (pollsData) => {
 					console.log(pollsData)
-					if (!pollsData.status && Object.keys(pollsData.polls).length==0 ) {
+					if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
 						noPoll.style.display = ''
 						virtualBar.style.display = "none";
 						return
