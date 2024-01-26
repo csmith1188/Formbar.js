@@ -144,7 +144,6 @@ const PASSIVE_SOCKETS = [
 	'ipUpdate',
 	'vbUpdate',
 	'cpUpdate',
-	'joinRoom',
 	'leaveRoom',
 	'pluginUpdate',
 	'customPollUpdate',
@@ -178,7 +177,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	lessonUpdate: STUDENT_PERMISSIONS,
 	vbUpdate: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
-	joinRoom: GUEST_PERMISSIONS,
 	leaveRoom: GUEST_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
@@ -324,7 +322,7 @@ class Lesson {
 }
 
 // Functions
-// Global functions
+// General functions
 function convertHSLToHex(hue, saturation, lightness) {
 	try {
 		logger.log('info', `[convertHSLToHex] hue=${hue}, saturation=${saturation}, lightness=${lightness}`)
@@ -527,6 +525,24 @@ function camelCaseToNormal(str) {
 	return result
 }
 
+function runQuery(query, params) {
+	return new Promise((resolve, reject) => {
+		db.run(query, params, (err) => {
+			if (err) reject(new Error(err))
+			else resolve()
+		})
+	})
+}
+
+function getAll(query, params) {
+	return new Promise((resolve, reject) => {
+		db.all(query, params, (err, rows) => {
+			if (err) reject(new Error(err))
+			else resolve(rows)
+		})
+	})
+}
+
 // Express functions
 /*
 Check if user has logged in
@@ -645,30 +661,62 @@ function permCheck(req, res, next) {
 	}
 }
 
-function runQuery(query, params) {
-	return new Promise((resolve, reject) => {
-		db.run(query, params, (err) => {
-			if (err) reject(new Error(err))
-			else resolve()
-		})
-	})
-}
+/**
+ * Sets the class code for all sockets in a specific API.
+ * If no class code is provided, the default value is 'noClass'.
+ *
+ * @param {string} api - The API identifier.
+ * @param {string} [classCode='noClass'] - The class code to set.
+ */
+async function setClassOfApiSockets(api, classCode) {
+	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-function getAll(query, params) {
-	return new Promise((resolve, reject) => {
-		db.all(query, params, (err, rows) => {
-			if (err) reject(new Error(err))
-			else resolve(rows)
-		})
-	})
+	let sockets = await io.in(api).fetchSockets()
+
+	for (let socket of sockets) {
+		socket.leave(socket.request.session.class)
+
+		socket.request.session.class = classCode || 'noClass'
+		socket.request.session.save()
+
+		socket.join(socket.request.session.class)
+
+		socket.emit('setClass', socket.request.session.class)
+	}
 }
 
 async function getIpAccess(type) {
-	let ipList = await getAll(`SELECT id, ip FROM ip_${type}`)
+	let ipList = await getAll(`SELECT id, ip FROM ip_${type} `)
 	return ipList.reduce((ips, ip) => {
 		ips[ip.id] = ip
 		return ips
 	}, {})
+}
+
+// Socket.io functions
+async function managerUpdate() {
+	let [users, classrooms] = await Promise.all([
+		new Promise((resolve, reject) => {
+			db.all('SELECT id, username, permissions FROM users', (err, users) => {
+				if (err) reject(new Error(err))
+				else {
+					users = users.reduce((tempUsers, tempUser) => {
+						tempUsers[tempUser.username] = tempUser
+						return tempUsers
+					}, {})
+					resolve(users)
+				}
+			})
+		}),
+		new Promise((resolve, reject) => {
+			db.get('SELECT * FROM classroom', (err, classrooms) => {
+				if (err) reject(new Error(err))
+				else resolve(classrooms)
+			})
+		})
+	])
+
+	io.emit('managerUpdate', users, classrooms)
 }
 
 
@@ -913,7 +961,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 					let dateConfig = new Date()
 
 					step.type = 'lesson'
-					step.date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+					step.date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()} `
 					step.lesson = lessonArr
 					steps.push(step)
 				}
@@ -944,7 +992,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
-		function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = []) {
+		async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = []) {
 			try {
 				// Get the teachers session data ready to transport into new class
 				var user = cD.noClass.students[req.session.username]
@@ -977,6 +1025,8 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				// Add class into the session data
 				req.session.class = key
 
+				await setClassOfApiSockets(user.API, key)
+
 				return true
 			} catch (err) {
 				return err
@@ -1001,7 +1051,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 					logger.log('verbose', `[post /createClass] Added classroom to database`)
 
-					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], (err, classroom) => {
+					db.get('SELECT id, name, key, permissions FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
 						try {
 							if (err) throw err
 
@@ -1014,7 +1064,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 								return
 							}
 
-							let makeClassStatus = makeClass(
+							let makeClassStatus = await makeClass(
 								classroom.id,
 								classroom.name,
 								classroom.key,
@@ -1042,7 +1092,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], (err, classroom) => {
+			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -1065,7 +1115,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 
 					if (classroom.pollHistory[0].id == null) classroom.pollHistory = null
 
-					let makeClassStatus = makeClass(
+					let makeClassStatus = await makeClass(
 						classroom.id,
 						classroom.name,
 						classroom.key,
@@ -1146,12 +1196,12 @@ app.post('/login', async (req, res) => {
 		}
 		var passwordCrypt = encrypt(user.password)
 
-		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
+		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)} `)
 		logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
 		// Check whether user is logging in or signing up
 		if (user.loginType == 'login') {
-			logger.log('verbose', `[post /login] User is logging in`)
+			logger.log('verbose', `[post /login] User is logging in `)
 
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username = ?', [user.username], async (err, userData) => {
@@ -1194,7 +1244,7 @@ app.post('/login', async (req, res) => {
 					}
 
 					if (loggedIn) {
-						logger.log('verbose', `[post /login] User is already logged in`)
+						logger.log('verbose', `[post /login] User is already logged in `)
 						req.session.class = classKey
 					} else {
 						// Add user to the session
@@ -1301,6 +1351,8 @@ app.post('/login', async (req, res) => {
 
 										logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 										logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
+
+										managerUpdate()
 
 										res.redirect('/')
 									} catch (err) {
@@ -1453,7 +1505,7 @@ app.post('/oauth', (req, res) => {
 
 					logger.log('verbose', `[post /oauth] Successfully Logged in with oauth`)
 
-					res.redirect(`${redirectURL}?token=${token}`)
+					res.redirect(`${redirectURL}?token = ${token} `)
 				} catch (err) {
 					logger.log('error', err.stack);
 					res.render('pages/message', {
@@ -1463,7 +1515,7 @@ app.post('/oauth', (req, res) => {
 				}
 			})
 			// If either a username, password, or both is not returned, then it redirects back to the oauth page.
-		} else res.redirect(`/oauth?redirectURL=${redirectURL}`)
+		} else res.redirect(`/ oauth ? redirectURL = ${redirectURL} `)
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -1595,7 +1647,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 
 		if (typeof classJoinStatus == 'string') {
 			res.render('pages/message', {
-				message: `Error: ${classJoinStatus}`,
+				message: `Error: ${classJoinStatus} `,
 				title: 'Error'
 			})
 			return
@@ -1604,6 +1656,9 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 		io.to(classCode).emit('cpUpdate', cD[classCode])
 
 		req.session.class = classCode
+
+		setClassOfApiSockets(cD[classCode].students[req.session.username].API, classCode)
+
 		res.redirect('/')
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1677,7 +1732,7 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 				})
 			}
 		} else if (typeof req.query.question == 'undefined') {
-			logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes=(cD[req.session.class].students[req.session.username].pollRes.buttonRes) myTextRes=(cD[req.session.class].students[req.session.username].pollRes.textRes) lesson=(cD[req.session.class].lesson)`)
+			logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (cD[req.session.class].students[req.session.username].pollRes.buttonRes) myTextRes = (cD[req.session.class].students[req.session.username].pollRes.textRes) lesson = (cD[req.session.class].lesson)`)
 
 			res.render('pages/student', {
 				title: 'Student',
@@ -1812,10 +1867,40 @@ let rateLimits = {}
 let userSockets = {}
 
 //Handles the websocket communications
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
 	try {
-		if (socket.request.session.api) {
-			socket.join(socket.request.session.class)
+		const { api } = socket.request.headers
+
+		if (api) {
+			await new Promise((resolve, reject) => {
+				db.get(
+					'SELECT id, username FROM users WHERE API = ?',
+					[api],
+					(err, userData) => {
+						try {
+							if (err) throw err
+							if (!userData) {
+								logger.log('verbose', '[socket authentication] not a valid API Key')
+								throw 'Not a valid API key'
+							}
+
+							socket.request.session.api = api
+							socket.request.session.userId = userData.id
+							socket.request.session.username = userData.username
+							socket.request.session.class = getUserClass(userData.username) || 'noClass'
+
+							socket.join(socket.request.session.api)
+							socket.join(socket.request.session.class)
+
+							socket.emit('setClass', socket.request.session.class)
+
+							resolve()
+						} catch (err) {
+							reject(err)
+						}
+					}
+				)
+			})
 		} else if (socket.request.session.username) {
 			socket.join(socket.request.session.class)
 			socket.join(socket.request.session.username)
@@ -1824,31 +1909,6 @@ io.on('connection', (socket) => {
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
-	}
-
-	async function managerUpdate() {
-		let [users, classrooms] = await Promise.all([
-			new Promise((resolve, reject) => {
-				db.all('SELECT id, username, permissions FROM users', (err, users) => {
-					if (err) reject(new Error(err))
-					else {
-						users = users.reduce((tempUsers, tmepUser) => {
-							tempUsers[tmepUser.username] = tmepUser
-							return tempUsers
-						}, {})
-						resolve(users)
-					}
-				})
-			}),
-			new Promise((resolve, reject) => {
-				db.get('SELECT * FROM classroom', (err, classrooms) => {
-					if (err) reject(new Error(err))
-					else resolve(classrooms)
-				})
-			})
-		])
-
-		io.emit('managerUpdate', users, classrooms)
 	}
 
 	function cpUpdate(classCode = socket.request.session.class) {
@@ -2021,7 +2081,7 @@ io.on('connection', (socket) => {
 			logger.log('verbose', `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`)
 
 			db.all(
-				`SELECT * FROM custom_polls WHERE id IN (${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ?`,
+				`SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner = ? `,
 				[
 					...customPollIds,
 					userSession.userId
@@ -2101,9 +2161,11 @@ io.on('connection', (socket) => {
 			userSockets[username].request.session.save()
 			delete cD[classCode].students[username]
 
+			setClassOfApiSockets(cD.noClass.students[username].API, 'noClass')
+
 			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(cD)})`)
 
-			io.to(username).emit('reload')
+			userSockets[username].emit('reload')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2161,7 +2223,7 @@ io.on('connection', (socket) => {
 			let data = { prompt: '', names: [], letter: [], text: [] }
 
 			let dateConfig = new Date()
-			let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+			let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()} `
 
 			data.prompt = cD[socket.request.session.class].poll.prompt
 
@@ -2234,7 +2296,6 @@ io.on('connection', (socket) => {
 			delete cD[classCode]
 
 			logger.log('verbose', `[endClass] cD=(${JSON.stringify(cD)})`)
-			socket.broadcast.to(classCode).emit('classEnded')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2346,8 +2407,8 @@ io.on('connection', (socket) => {
 			else if (type == 'blacklist') ipList = blacklistedIps
 
 			if (type) {
-				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
-				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				if (username) io.to(username).emit('ipUpdate', type, settings[`${type} Active`], ipList)
+				else io.emit('ipUpdate', type, settings[`${type} Active`], ipList)
 			} else {
 				ipUpdate('whitelist', username)
 				ipUpdate('blacklist', username)
@@ -2452,7 +2513,7 @@ io.on('connection', (socket) => {
 			logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
 
 			if (userRequests[event].length >= limit) {
-				socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
+				socket.emit('message', `You are being rate limited.Please try again in a ${blockTime / 1000} seconds.`)
 				setTimeout(() => {
 					try {
 						userRequests[event].shift()
@@ -2470,12 +2531,20 @@ io.on('connection', (socket) => {
 	})
 
 	// permission check
-	socket.use(([event, ...args], next) => {
+	socket.use(async ([event, ...args], next) => {
 		try {
 			let username = socket.request.session.username
 			let classCode = socket.request.session.class
 
+			logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassCod=(${classCode})`)
+
+			if (!cD[classCode]) {
+				logger.log('info', '[socket permission check] Class does not exist')
+				socket.emit('message', 'Class does not exist')
+				return
+			}
 			if (!cD[classCode].students[username]) {
+				logger.log('info', '[socket permission check] User is not logged in')
 				socket.emit('message', 'User is not logged in')
 				return
 			}
@@ -2484,21 +2553,26 @@ io.on('connection', (socket) => {
 				GLOBAL_SOCKET_PERMISSIONS[event] &&
 				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
 			) {
+				logger.log('info', '[socket permission check] Global socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSIONS[event] &&
 				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
 			) {
+				logger.log('info', '[socket permission check] Class socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
 				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
 				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
 			) {
+				logger.log('info', '[socket permission check] Class socket permission settings check passed')
 				next()
 			} else {
-				if (!PASSIVE_SOCKETS.includes(event))
+				if (!PASSIVE_SOCKETS.includes(event)) {
+					logger.log('info', `[socket permission check] User does not have permission to use ${camelCaseToNormal(event)} `)
 					socket.emit('message', `You do not have permission to use ${camelCaseToNormal(event)}.`)
+				}
 			}
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -2527,7 +2601,7 @@ io.on('connection', (socket) => {
 									try {
 										if (err) throw err
 
-										logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username}`)
+										logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username} `)
 									} catch (err) {
 										logger.log('error', err.stack);
 									}
@@ -2572,22 +2646,30 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	socket.on('permChange', (user, newPerm) => {
+	socket.on('permChange', async (username, newPerm) => {
 		try {
 			newPerm = Number(newPerm)
 
 			logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[permChange] user=(${user}) newPerm=(${newPerm})`)
+			logger.log('info', `[permChange] user=(${username}) newPerm=(${newPerm})`)
 
-			let classCode = getUserClass(user)
+			let classCode = getUserClass(username)
 			if (classCode instanceof Error) throw classCode
 
-			if (classCode)
-				cD[classCode].students[user].permissions = newPerm
+			if (classCode) {
+				cD[classCode].students[username].permissions = newPerm
 
-			io.to(user).emit('reload')
+				if (
+					cD[classCode].students[username].permissions < TEACHER_PERMISSIONS &&
+					Object.keys(cD[classCode].students)[0] == username
+				) {
+					endClass(classCode)
+				}
 
-			db.run('UPDATE users SET permissions = ? WHERE id = ?', [newPerm, user])
+				io.to(username).emit('reload')
+			}
+
+			db.run('UPDATE users SET permissions = ? WHERE username = ?', [newPerm, username])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2724,7 +2806,7 @@ io.on('connection', (socket) => {
 			let userId = socket.request.session.userId
 
 			if (id) {
-				db.get(`SELECT * FROM custom_polls WHERE id = ?`, [id], (err, poll) => {
+				db.get(`SELECT * FROM custom_polls WHERE id = ? `, [id], (err, poll) => {
 					try {
 						if (err) throw err
 
@@ -2733,7 +2815,7 @@ io.on('connection', (socket) => {
 							return
 						}
 
-						db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ?`, [
+						db.run(`UPDATE custom_polls SET name = ?, prompt = ?, answers = ?, textRes = ?, blind = ?, weight = ?, public = ? WHERE id = ? `, [
 							poll.name,
 							poll.prompt,
 							JSON.stringify(poll.answers),
@@ -2806,7 +2888,7 @@ io.on('connection', (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM custom_polls WHERE id = ?`, pollId, async (err, poll) => {
+			db.get(`SELECT * FROM custom_polls WHERE id = ? `, pollId, async (err, poll) => {
 				try {
 					if (err) throw err
 
@@ -2926,7 +3008,7 @@ io.on('connection', (socket) => {
 										if (err) throw err
 
 										if (sharePoll) {
-											socket.emit('message', `${name} is Already Shared with ${username}`)
+											socket.emit('message', `${name} is Already Shared with ${username} `)
 											return
 										}
 
@@ -2937,7 +3019,7 @@ io.on('connection', (socket) => {
 												try {
 													if (err) throw err
 
-													socket.emit('message', `Shared ${name} with ${username}`)
+													socket.emit('message', `Shared ${name} with ${username} `)
 
 													getPollShareIds(pollId)
 
@@ -3216,7 +3298,7 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	// Aproves the break ticket request
+	// Approves the break ticket request
 	socket.on('approveBreak', (breakApproval, username) => {
 		try {
 			logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3362,21 +3444,6 @@ io.on('connection', (socket) => {
 		}
 	})
 
-	// Joins a classroom for websocket usage
-	socket.on('joinRoom', (className) => {
-		try {
-			logger.log('info', `[joinRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[joinRoom] className=(${className})`)
-
-			socket.join(className)
-			socket.request.session.class = className
-			socket.emit('joinRoom', socket.request.session.class)
-			vbUpdate()
-		} catch (err) {
-			logger.log('error', err.stack)
-		}
-	})
-
 	socket.on('leaveRoom', (className) => {
 		try {
 			logger.log('info', `[leaveRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3413,12 +3480,12 @@ io.on('connection', (socket) => {
 	// })
 
 	// Displays previous polls
-	socket.on('previousPollDisplay', (pollindex) => {
+	socket.on('previousPollDisplay', (pollIndex) => {
 		try {
 			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[previousPollDisplay] pollindex=(${pollindex})`)
+			logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
 
-			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollindex].data)
+			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollIndex].data)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3695,7 +3762,7 @@ io.on('connection', (socket) => {
 					classKickUser(user)
 					classBannedUsersUpdate()
 					cpUpdate()
-					socket.emit('message', `Banned ${user}`)
+					socket.emit('message', `Banned ${user} `)
 				} catch (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3738,7 +3805,7 @@ io.on('connection', (socket) => {
 						cD[socket.request.session.class].students[user].permissions = 1
 
 					classBannedUsersUpdate()
-					socket.emit('message', `Unbanned ${user}`)
+					socket.emit('message', `Unbanned ${user} `)
 				} catch (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3761,7 +3828,7 @@ io.on('connection', (socket) => {
 				try {
 					if (err) throw err
 
-					logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
+					logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level} `)
 					cpUpdate()
 				} catch (err) {
 					logger.log('error', err.stack)
@@ -3770,7 +3837,7 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
-	});
+	})
 
 	socket.on('deleteUser', async (userId) => {
 		try {
@@ -3831,7 +3898,7 @@ io.on('connection', (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+			db.get(`SELECT * FROM ip_${type} WHERE id = ? `, id, (err, dbIp) => {
 				if (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
@@ -3844,7 +3911,7 @@ io.on('connection', (socket) => {
 				}
 
 
-				db.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
+				db.run(`UPDATE ip_${type} set ip =? WHERE id =? `, [ip, id], (err) => {
 					if (err) logger.log('error', err)
 					else {
 						if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
@@ -3872,7 +3939,7 @@ io.on('connection', (socket) => {
 			return
 		}
 
-		db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+		db.get(`SELECT * FROM ip_${type} WHERE ip = ? `, ip, (err, dbIp) => {
 			if (err) {
 				logger.log('error', err.stack)
 				socket.emit('message', 'There was a server error try again.')
@@ -3880,18 +3947,18 @@ io.on('connection', (socket) => {
 			}
 
 			if (dbIp) {
-				socket.emit('message', `IP already in ${type}`)
+				socket.emit('message', `IP already in ${type} `)
 				return
 			}
 
-			db.run(`INSERT INTO ip_${type} (ip) VALUES (?)`, [ip], (err) => {
+			db.run(`INSERT INTO ip_${type} (ip) VALUES(?)`, [ip], (err) => {
 				if (err) {
 					logger.log('error', err.stack)
 					socket.emit('message', 'There was a server error try again.')
 					return
 				}
 
-				db.get(`SELECT * FROM ip_${type} WHERE ip = ?`, ip, (err, dbIp) => {
+				db.get(`SELECT * FROM ip_${type} WHERE ip = ? `, ip, (err, dbIp) => {
 					if (err) {
 						logger.log('error', err.stack)
 						socket.emit('message', 'There was a server error try again.')
@@ -3903,7 +3970,7 @@ io.on('connection', (socket) => {
 
 					reloadPageByIp(type != 'whitelist', ip)
 					ipUpdate(type)
-					socket.emit('message', `IP added to ${type}`)
+					socket.emit('message', `IP added to ${type} `)
 				})
 			})
 		})
@@ -3920,7 +3987,7 @@ io.on('connection', (socket) => {
 				return
 			}
 
-			db.get(`SELECT * FROM ip_${type} WHERE id = ?`, id, (err, dbIp) => {
+			db.get(`SELECT * FROM ip_${type} WHERE id = ? `, id, (err, dbIp) => {
 				if (err) {
 					logger.log('error', err)
 					socket.emit('message', 'There was a server error try again.')
@@ -3932,7 +3999,7 @@ io.on('connection', (socket) => {
 					return
 				}
 
-				db.run(`DELETE FROM ip_${type} WHERE id=?`, [id], (err) => {
+				db.run(`DELETE FROM ip_${type} WHERE id =? `, [id], (err) => {
 					if (err) {
 						logger.log('error', err)
 						socket.emit('message', 'There was a server error try again.')
@@ -3990,7 +4057,7 @@ io.on('connection', (socket) => {
 						}
 					});
 				} else {
-					console.log(`No row found with id ${studentId}`);
+					console.log(`No row found with id ${studentId} `);
 				}
 			});
 		}
