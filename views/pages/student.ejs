@@ -36,88 +36,11 @@
 										<% } %>
 											<br>
 											<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-						 <% } else { %>
-								<h1 id="headerText" class="textColorContent">No active lesson</h1>
-								<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-						<% } %>
-
-				</div>
-				<div id="pollContent">
-					<h1 id="noPoll" class="textColorContent">No active poll</h1>
-					<div id="poll">
-						<u>
-							<h2 id="pollPrompt">
-
-							</h2>
-						</u>
-						<form id="pollForm"></form>
-						<br>
-						<button onclick="submitPoll()" class="quickButton">Submit</button>
+											<% } else { %>
+												<h1 id="headerText" class="textColorContent">No active lesson</h1>
+												<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
+												<% } %>
 					</div>
-				</div>
-				<div id="quizContent">
-					<form id="quizForm" method="post" action="/student">
-					</form>
-				</div>
-				<!-- Virtual Bar -->
-				<div id="vbContainer">
-					<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
-				</div>
-				<br>
-				<div>
-					<%- include('../partials/formbar_header') %>
-						<h1>Need Help?</h1>
-						<form id="eventForm">
-							<textarea id="ticket" cols="30" rows="5" maxlength="150"
-								placeholder="Reason (optional)"></textarea>
-							<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
-						</form>
-						<button onclick="help()" class="quickButton">Send Ticket</button>
-
-				</div>
-				<br>
-
-				<div>
-					<h1>Need a Break?</h1>
-					<button class="breakButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
-						Take Break
-					</button>
-				</div>
-				<%- include('../partials/body_content') %>
-			</body>
-
-					</div>
-					<div id="takeBreak" class="hCentered">
-						<button class="quickButton" id="cancel" type="button"
-							onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
-						<button class="quickButton" type="submit">Take Break</button>
-					</div>
-				</form>
-			</dialog>
-
-			<script type="text/javascript">
-				//variable creation
-				var resTextBox = document.getElementById('resTextBox')
-				var pollForm = document.getElementById('pollForm')
-				var pollContent = document.getElementById('pollContent')
-				var quizContent = document.getElementById('quizContent')
-				var lessonContent = document.getElementById('lessonContent')
-				var noPoll = document.getElementById('noPoll')
-				var pollDiv = document.getElementById('poll')
-				let pollPromptDisplay = document.getElementById('pollPrompt')
-
-				var oldLettRes = '<%- myRes %>'
-				var oldTextRes = '<%- myTextRes %>'
-
-				let poll = {}
-				let mode = ''
-				let quiz = {}
-				function updatePageLoop() {
-					if (mode == 'poll') {
-						pollContent.style.display = 'block'
-						quizContent.style.display = 'none'
-						lessonContent.style.display = 'none'
-
 					<div id="pollContent">
 						<h1 id="noPoll" class="textColorContent">No active poll</h1>
 						<div id="poll">
@@ -136,10 +59,12 @@
 						</form>
 					</div>
 					<% } %>
+
 						<!-- Virtual Bar -->
 						<div id="vbContainer">
 							<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
 						</div>
+
 						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 							<br>
 							<div>
@@ -190,7 +115,7 @@
 
 			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 				<script type="text/javascript">
-					//variable creation
+					//letiable creation
 					let resTextBox = document.getElementById('resTextBox')
 					let pollForm = document.getElementById('pollForm')
 					let pollContent = document.getElementById('pollContent')
@@ -206,8 +131,7 @@
 					let poll = {}
 					let mode = ''
 					let quiz = {}
-
-					function updatePage() {
+					function updatePageLoop() {
 						if (mode == 'poll') {
 							pollContent.style.display = 'block'
 							quizContent.style.display = 'none'
@@ -244,129 +168,21 @@
 								pollDiv.style.display = 'none'
 							}
 
-						if (oldLettRes && document.getElementById(oldLettRes)) {
-							document.getElementById(oldLettRes).checked = true
-						}
-					} else if (mode == 'quiz') {
-						pollContent.style.display = 'none'
-						quizContent.style.display = 'block'
-						lessonContent.style.display = 'none'
-						let correctAnswerIndex = []
-						let quizForm = document.getElementById('quizForm')
-
-						for (let i = 0; i < quiz.questions.length; i++) {
-							quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
-							correctAnswerIndex.push(quiz.questions[i][1])
-							for (let u = 2; u < quiz.questions[i].length; u++) {
-								quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u - 1}"> ${quiz.questions[i][u]}`
+							if (oldLettRes && document.getElementById(oldLettRes)) {
+								document.getElementById(oldLettRes).checked = true
 							}
-						}
-						quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
-					} else if (mode == 'lesson') {
-						pollContent.style.display = 'none'
-						quizContent.style.display = 'none'
-						lessonContent.style.display = 'block'
-					}
-					pollContent.style.display = 'block'
-				}
-				function updatePage() {
-					var userTags = JSON.parse('<%- user %>')
-					userTags = userTags.tags.split(',')
-					if (poll.requiredTags.length > 0) {
-						if (poll.requiredTags[0][0] == "0") {
-							if (poll.requiredTags.slice(1).join() == userTags.join()) {
-								//console.log("Same tags");
-								updatePageLoop()
-							}
-							//else console.log("Not the exact same tags");
-						}
-						else if (poll.requiredTags[0][0] == "1") {
-							let correctTags = 0
-							let requiredCorrectTags = poll.requiredTags.length - 1;
-							for (let i = 0; i < poll.requiredTags.length; i++) {
-								for (let u = 0; u < userTags.length; u++) {
-									//console.log(poll.requiredTags[i], userTags[u]);
-									if (poll.requiredTags[i] == userTags[u]) {
-										//console.log("Correct tag");
-										correctTags++;
-									}
-								}
-							}
-							if (correctTags == requiredCorrectTags) {
-								//console.log("Correct tags");
-								updatePageLoop()
-							}
-							//else console.log("Not enough tags");
-						}
-					}
-					else {
-						//console.log("No tags required for this poll");
-						updatePageLoop()
-					}
-				}
+						} else if (mode == 'quiz') {
+							pollContent.style.display = 'none'
+							quizContent.style.display = 'block'
+							lessonContent.style.display = 'none'
+							let correctAnswerIndex = []
+							let quizForm = document.getElementById('quizForm')
 
-				// Submits the users answer to the poll
-				// Takes the pollResponses value which defines the number of possible answers
-				function submitPoll() {
-					var radios = document.getElementsByName('poll')
-					var textarea = document.getElementById("resTextBox")
-					var lettRes = ''
-					var textRes = ''
-					//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
-					for (var i = 0; i < radios.length; i++) {
-						if (radios[i].type === 'radio' && radios[i].checked) {
-							// Defines the letter response of the user
-							lettRes = radios[i].value
-						}
-					}
-
-
-					if (textarea)
-						textRes = textarea.value
-
-					// Sends user input to the server
-					socket.emit('pollResp', lettRes, textRes)
-
-					let alertText = ''
-					setTimeout(() => {
-						if (lettRes)
-							alertText += 'Response submitted: ' + lettRes
-						else if (oldLettRes)
-							alertText += 'Response removed'
-						else if (document.getElementById('remove').checked)
-							alertText += 'No poll response to remove'
-						if (textRes) {
-							if (alertText) alertText += '\n'
-							alertText += 'Text response submitted: ' + textRes
-						} else if (oldTextRes) {
-							if (alertText) alertText += '\n'
-							alertText += 'Text response removed'
-						}
-						if (alertText) alert(alertText)
-
-						oldLettRes = lettRes
-						oldTextRes = textRes
-					}, 100)
-
-				}
-
-				function isObjectEqual(objectA, objectB) {
-					for (let property in objectA) {
-						switch (typeof (objectA[property])) {
-							case 'object':
-								if (!isObjectEqual(objectA[property], objectB[property])) {
-									return false;
-								}
-								break;
-							case 'function':
-								if (typeof (objectB[property]) === 'undefined' ||
-									(property !== 'isEqual' && objectA[property].toString() !== objectB[property].toString())) {
-									return false;
-								}
-								break;
-							default:
-								if (objectA[property] !== objectB[property]) {
-									return false;
+							for (let i = 0; i < quiz.questions.length; i++) {
+								quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
+								correctAnswerIndex.push(quiz.questions[i][1])
+								for (let u = 2; u < quiz.questions[i].length; u++) {
+									quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u - 1}"> ${quiz.questions[i][u]}`
 								}
 							}
 							quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
@@ -376,6 +192,41 @@
 							lessonContent.style.display = 'block'
 						}
 						pollContent.style.display = 'block'
+					}
+					function updatePage() {
+						let userTags = JSON.parse('<%- user %>')
+						userTags = userTags.tags.split(',')
+						if (poll.requiredTags.length > 0) {
+							if (poll.requiredTags[0][0] == "0") {
+								if (poll.requiredTags.slice(1).join() == userTags.join()) {
+									//console.log("Same tags");
+									updatePageLoop()
+								}
+								//else console.log("Not the exact same tags");
+							}
+							else if (poll.requiredTags[0][0] == "1") {
+								let correctTags = 0
+								let requiredCorrectTags = poll.requiredTags.length - 1;
+								for (let i = 0; i < poll.requiredTags.length; i++) {
+									for (let u = 0; u < userTags.length; u++) {
+										//console.log(poll.requiredTags[i], userTags[u]);
+										if (poll.requiredTags[i] == userTags[u]) {
+											//console.log("Correct tag");
+											correctTags++;
+										}
+									}
+								}
+								if (correctTags == requiredCorrectTags) {
+									//console.log("Correct tags");
+									updatePageLoop()
+								}
+								//else console.log("Not enough tags");
+							}
+						}
+						else {
+							//console.log("No tags required for this poll");
+							updatePageLoop()
+						}
 					}
 
 					// Submits the users answer to the poll
@@ -423,7 +274,6 @@
 
 					}
 
-
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {
 						if (isObjectEqual(poll, newPoll)) return
@@ -435,27 +285,10 @@
 					socket.emit('modeUpdate')
 					socket.on('modeUpdate', (newMode) => {
 						if (mode == newMode) return
- 
+
 						mode = newMode
 						updatePage()
 					})
-							}
-						}
-					}
-				})
-
-				// let noPoll = document.getElementById('noPoll')
-
-				// Calls for data
-				socket.emit('vbUpdate')
-				// Gets data from server and send it the function
-				socket.on('vbUpdate', (pollsData) => {
-					console.log(pollsData)
-					if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-						noPoll.style.display = ''
-						virtualBar.style.display = "none";
-						return
-					}
 
 					socket.emit('quizUpdate')
 					socket.on('quizUpdate', (newQuiz) => {
@@ -465,12 +298,11 @@
 						updatePage()
 					})
 
-					// help ticket/break button
+					//help ticket/break button
 
 					function help() {
 						let reason = document.getElementById('ticket').value
 						socket.emit('help', reason)
-						socket.emit('cpUpdate')
 						alert('Help ticket sent')
 					}
 
@@ -505,7 +337,7 @@
 				<% } %>
 
 					<script src="js/chart.js"></script>
-					<script type="text/javascript">
+					<script>
 						let virtualBar = document.getElementById("virtualbar");
 						let mychart = virtualBar.getContext("2d");
 						let doughnutChart = new Chart(mychart, {
@@ -539,7 +371,6 @@
 						socket.emit('vbUpdate')
 						// Gets data from server and send it the function
 						socket.on('vbUpdate', (pollsData) => {
-
 							if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
 								if (noPoll)
 									noPoll.style.display = ''
@@ -573,7 +404,7 @@
 
 							let studResponses = {}
 							// Loops through object to get each label of the possible answers
-							// Also, create a new variable for each possible answer
+							// Also, create a new letiable for each possible answer
 							if (pollsData.blindPoll) {
 								labelsArray.push('Responses')
 								studResponses.responses = 0
@@ -586,7 +417,7 @@
 							labelsArray.push('No Response')
 							studResponses.noResponse = 0
 
-							// Loops through all possible answers and generates a new color variant for each answer
+							// Loops through all possible answers and generates a new color letiant for each answer
 							// All possible answers should have a different color
 							if (pollsData.blindPoll) {
 								doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
@@ -614,6 +445,7 @@
 							doughnutChart.update()
 						})
 					</script>
+
 					<%- include('../partials/footer_content') %>
 
 </html>
