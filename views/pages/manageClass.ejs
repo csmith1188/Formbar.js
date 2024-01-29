@@ -28,18 +28,15 @@
                 </div>
         </body>
         <script>
-            let currentUser = JSON.parse('<%- JSON.stringify(currentUser) %>')
             let startClassForm = document.getElementById("selectClassForm")
             let deleteClassForm = document.getElementById("deleteClassForm")
             let startClassSelect = document.getElementById("startClassSelect")
             let deleteClassSelect = document.getElementById("deleteClassSelect")
 
             function deleteClass() {
-                console.log('hi');
                 let classId = deleteClassSelect.value
                 let className = deleteClassSelect.options[deleteClassSelect.selectedIndex].text
 
-                console.log(className);
                 let confirmation = confirm(`are you sure you want to delete the class ${className}`)
                 if (!confirmation) return
 

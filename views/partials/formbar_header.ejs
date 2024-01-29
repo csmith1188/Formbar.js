@@ -20,12 +20,14 @@
                   <% } %>
                     <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
                       <a href="/plugins" class="headerTab">Plugins</a>
-                      <a href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
-                        Class</a>
                       <% } %>
-                        <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
-                        <% } %>
-                          <button onclick="changeTheme()">LM/DM</button>
+                        <% if (currentUser.classPermissions) { %>
+                          <button href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
+                            Class</button>
+                          <% } %>
+                            <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
+                            <% } %>
+                              <button onclick="changeTheme()">LM/DM</button>
 </header>
 <script>
   document.body.style.backgroundColor = getCookie("theme")

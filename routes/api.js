@@ -37,6 +37,24 @@ const STUDENT_PERMISSIONS = 2
 const GUEST_PERMISSIONS = 1
 const BANNED_PERMISSIONS = 0
 
+function getUserClass(username) {
+	try {
+		logger.log('info', `[getUserClass] username=(${username})`)
+
+		for (let classCode of Object.keys(cD)) {
+			if (cD[classCode].students[username]) {
+				logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
+				return classCode
+			}
+		}
+
+		logger.log('verbose', `[getUserClass] classCode=(${null})`)
+		return null
+	} catch (err) {
+		return err
+	}
+}
+
 function api(cD) {
 	try {
 		// checks to see if the user is authenticated
@@ -147,7 +165,7 @@ function api(cD) {
 		// gets a user's name from api
 		async function getUsername(api) {
 			try {
-				if (!api) return 'missing api'
+				if (!api) return { error: 'missing api' }
 
 				let user = await new Promise((resolve, reject) => {
 					db.get(
@@ -194,7 +212,7 @@ function api(cD) {
 									if (err) throw err
 
 									if (!dbUser) {
-										resolve({ error: 'user does not exist in this class' })
+										resolve({ error: 'user does not exist' })
 									}
 
 									resolve(dbUser)
@@ -232,7 +250,8 @@ function api(cD) {
 					help: null,
 					break: null,
 					quizScore: null,
-					pogMeter: null
+					pogMeter: null,
+					class: classCode
 				}
 
 				if (cD[classCode] && cD[classCode].students && cD[classCode].students[dbUser.username]) {
@@ -565,6 +584,34 @@ function api(cD) {
 				res.json(classData.poll)
 			} catch (err) {
 				logger.log('error', err.stack)
+			}
+		})
+
+		router.get('/class/:key/permissions', async (req, res) => {
+			try {
+				let key = req.params.key
+
+				logger.log('info', `[get api/class/${key}/permissions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+
+				let classData = structuredClone(cD[key])
+				if (!classData) {
+					res.json({ error: 'Class not started' })
+					return
+				}
+
+				let user = req.session.user
+
+				if (!classData.students[user.username]) {
+					logger.log('verbose', `[get api/class/${key}/permissions] user is not logged in`)
+					res.json({ error: 'User is not logged into the selected class' })
+					return
+				}
+
+				logger.log('verbose', `[get api/class/${key}/permissions] response=(${JSON.stringify(classData.permissions)})`)
+				res.json(classData.permissions)
+			} catch (err) {
+				logger.log('error', err.stack)
+				res.json({ error: 'There was a server error try again.' })
 			}
 		})
 
