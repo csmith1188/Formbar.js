@@ -854,31 +854,44 @@
 						studentTags.showModal()
 					})
 
-					let studentTags = document.createElement('dialog')
-					studentTags.innerHTML = '<p>' + studentData.username + '</p>'
-					let closeButton = document.createElement('button')
-					closeButton.textContent = 'Save'
-					let tagForm = document.createElement('form')
-					tagForm.setAttribute('id', studentData.username + 'tags')
-					for (let i = 0; i < tagNames.length; i++) {
-						let checkbox = document.createElement('input')
-						checkbox.type = 'checkbox'
-						checkbox.name = `checkbox${tagNames[i]}`
-						checkbox.value = tagNames[i]
+					let studentTags = document.createElement('dialog');
+					studentTags.innerHTML = '<p>' + student + '</p>';
+					let closeButton = document.createElement('button');
+					closeButton.textContent = 'Save';
+					let newTagButton = document.createElement('button');
+					newTagButton.textContent = 'New Tag';
+					let newTagForm = document.createElement('form');
+					newTagForm.setAttribute('hidden', true);
+					//newTagButton.appendChild(newTagForm);
+					let newTagTextBox = document.createElement('input');
+					newTagTextBox.setAttribute('type', 'text');
+					newTagTextBox.setAttribute('hidden', true);
+					newTagForm.appendChild(newTagTextBox);
+					let newTagSaveButton = document.createElement('button');
+					newTagSaveButton.textContent = 'Save Tag';
+					newTagSaveButton.setAttribute('hidden', true);
+					newTagForm.appendChild(newTagSaveButton);
+					let tagForm = document.createElement('form');
+					tagForm.setAttribute('id', student + "tags");
+					for (let i = 0; i < room.tagNames.length; i++) {
+						let checkbox = document.createElement('input');
+						checkbox.type = 'checkbox';
+						checkbox.name = `checkbox${room.tagNames[i]}`;
+						checkbox.value = room.tagNames[i];
 						if (studentData.tags != null && studentData.tags != undefined) {
-							studentData.tags.split(',').forEach(tag => {
-								if (tag == tagNames[i]) {
-									checkbox.checked = true
+							studentData.tags.split(",").forEach(tag => {
+								if (tag == room.tagNames[i]) {
+									checkbox.checked = true;
 								}
 							})
-						}
-						let label = document.createElement('label')
-						label.textContent = tagNames[i]
-						label.setAttribute('for', `checkbox${i}`)
+						};
+						let label = document.createElement('label');
+						label.textContent = room.tagNames[i];
+						label.setAttribute('for', `checkbox${i}`);
 
-						tagForm.appendChild(checkbox)
-						tagForm.appendChild(label)
-						tagForm.appendChild(document.createElement('br'))
+						tagForm.appendChild(checkbox);
+						tagForm.appendChild(label);
+						tagForm.appendChild(document.createElement('br'));
 					}
 					studentTags.appendChild(tagForm)
 					document.body.appendChild(studentTags)
@@ -904,10 +917,25 @@
 						studentTags.close()
 					})
 
-					// Create a checkbox for the studentData.username
-					let studentCheckbox = document.createElement('input')
-					studentCheckbox.type = 'checkbox'
-					studentCheckbox.id = 'checkbox_' + studentData.username
+					newTagButton.addEventListener('click', function () {
+						newTagForm.removeAttribute('hidden');
+						newTagTextBox.removeAttribute('hidden');
+						newTagSaveButton.removeAttribute('hidden');
+						newTagButton.setAttribute('hidden', true);
+					});
+
+					newTagSaveButton.addEventListener('click', function() {
+						newTagButton.removeAttribute('hidden');
+						socket.emit('newTag', newTagTextBox.value);
+					})
+
+					studentTags.appendChild(newTagButton);
+					studentTags.appendChild(newTagForm);
+
+					// Create a checkbox for the student
+					let studentCheckbox = document.createElement("input");
+					studentCheckbox.type = "checkbox";
+					studentCheckbox.id = "checkbox_" + student;
 
 
 					newStudent.appendChild(studentCheckbox)
@@ -1683,7 +1711,9 @@
 			let selectTagForm = document.createElement('form');
 			selectTagForm.setAttribute('name', 'selectTagForm');
 
-			var tagNames = ['Senior', 'Junior', 'Sophomore', 'Freshman', 'FormbarJS', 'OnlyPogs', 'PokePucks', 'Fiverr'];
+			var tagNames = "<%=tagNames%>";
+			tagNames = tagNames.split(",");
+			console.log(tagNames);
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
