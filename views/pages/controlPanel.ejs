@@ -160,14 +160,14 @@
 						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
 					<p>
 						<label for="share">Share to User</label>
-						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
-							onkeypress="if(event.key == 'Enter') sharePoll('user')">
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+"
+							placeholder="Username" onkeypress="if(event.key == 'Enter') sharePoll('user')">
 					</p>
 					<div id="userPollShares"></div>
 					<p>
 						<label for="share">Share to Class</label>
-						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
-							onkeypress="if(event.key == 'Enter') sharePoll('class')">
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+"
+							placeholder="Class Code" onkeypress="if(event.key == 'Enter') sharePoll('class')">
 					</p>
 					<div id="classPollShares"></div>
 				</dialog>
@@ -175,6 +175,7 @@
 				<%- include('../partials/body_content') %>
 		</body>
 
+		</html>
 		<script src="/js/tabs.js"></script>
 		<script>
 			let userCustomPolls = []
@@ -742,15 +743,17 @@
 				return option
 			}
 
-			function buildStudent(studentData) {
-				var newStudent = document.createElement('div')
-				newStudent.className = 'student'
-				newStudent.id = `student-${studentData.username}`
+			function buildStudent(room, student) {
+				let studentData = room.students[student]
+				if (studentData.classPermissions < currentUser.classPermissions) newStudent = document.createElement("details");
+				else {
+					newStudent = document.createElement("div");
+					let studentElement = document.createElement("p");
+					studentElement.innerText = student;
+					newStudent.appendChild(studentElement)
 
-				let studentElement = document.createElement('p')
-				studentElement.textContent += studentData.username
-				newStudent.appendChild(studentElement)
-
+				}
+				newStudent.classList.add("student");
 				if (studentData.break == true) {
 					let breakText = document.createElement('p')
 					breakText.textContent += 'taking a break'
@@ -819,10 +822,13 @@
 					newStudent.appendChild(textResponse)
 				}
 				if (studentData.classPermissions < currentUser.classPermissions) {
-					let permissionSwitch = document.createElement('select')
-					permissionSwitch.setAttribute('name', 'permSwitch')
-					permissionSwitch.setAttribute('class', 'permSwitch')
-					permissionSwitch.setAttribute('data-userid', studentData.username)
+					let studentElement = document.createElement("summary");
+					studentElement.innerText = student;
+					newStudent.appendChild(studentElement);
+					let permissionSwitch = document.createElement("select");
+					permissionSwitch.setAttribute("name", "permSwitch");
+					permissionSwitch.setAttribute("class", "permSwitch");
+					permissionSwitch.setAttribute("data-userid", student);
 					permissionSwitch.onchange = (event) => {
 						socket.emit('classPermChange', event.target.dataset.userid, Number(event.target.value))
 					}
