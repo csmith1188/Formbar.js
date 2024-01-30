@@ -1457,17 +1457,17 @@
 					if (allRoom.students && allRoom.students[username])
 						oldStudentData = allRoom.students[username]
 
+
 					if (!studentElement) {
 						usersDiv.appendChild(buildStudent(newRoom, newStudentData))
 						continue
 					}
-					continue
 
 					if (isObjectEqual(oldStudentData, newStudentData)) {
 						continue
 					}
 
-					studentElement.replaceWith(buildStudent(newStudentData))
+					studentElement.replaceWith(buildStudent(newRoom, newStudentData))
 				}
 
 				for (let studentElement of document.getElementsByClassName('student')) {
@@ -1718,7 +1718,6 @@
 
 			var tagNames = "<%=tagNames%>";
 			tagNames = tagNames.split(",");
-			console.log(tagNames);
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
