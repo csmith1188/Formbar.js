@@ -301,7 +301,7 @@ class Classroom {
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || []; 
+		this.tagNames = tags || [];
 	}
 }
 
@@ -1114,8 +1114,8 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 					classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
 					classroom.pollHistory = JSON.parse(classroom.pollHistory)
 
-					classroom.tags = classroom.tags.split(",");
-					console.log(classroom.tags)
+					if (classroom.tags) classroom.tags = classroom.tags.split(",");
+					else classroom.tags = [];
 
 					for (let poll of classroom.pollHistory) {
 						poll.data = JSON.parse(poll.data)
@@ -3311,6 +3311,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
+			socket.emit('help')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}

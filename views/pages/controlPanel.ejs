@@ -745,14 +745,17 @@
 
 			function buildStudent(room, student) {
 				let studentData = room.students[student]
-				if (studentData.classPermissions < currentUser.classPermissions) newStudent = document.createElement("details");
-				else {
-					newStudent = document.createElement("div");
-					let studentElement = document.createElement("p");
-					studentElement.innerText = student;
-					newStudent.appendChild(studentElement)
+				let newStudent
 
-				}
+				if (studentData.classPermissions < currentUser.classPermissions) newStudent = document.createElement("details");
+				else newStudent = document.createElement("div");
+
+				newStudent.id = `student-${student}`
+
+				let studentElement = document.createElement("p");
+				studentElement.innerText = student;
+				newStudent.appendChild(studentElement)
+
 				newStudent.classList.add("student");
 				if (studentData.break == true) {
 					let breakText = document.createElement('p')
@@ -975,6 +978,7 @@
 				let userOrder = Object.keys(allRoom.students)
 
 				for (let username of userOrder) {
+					console.log(username);
 					document.getElementById(`student-${username}`).style.display = ''
 				}
 
@@ -1459,7 +1463,7 @@
 						oldStudentData = allRoom.students[username]
 
 					if (!studentElement) {
-						usersDiv.appendChild(buildStudent(newStudentData))
+						usersDiv.appendChild(buildStudent(newRoom, username))
 						continue
 					}
 					continue
@@ -1468,7 +1472,7 @@
 						continue
 					}
 
-					studentElement.replaceWith(buildStudent(newStudentData))
+					studentElement.replaceWith(buildStudent(newRoom, username))
 				}
 
 				for (let studentElement of document.getElementsByClassName('student')) {
