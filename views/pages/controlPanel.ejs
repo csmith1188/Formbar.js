@@ -160,14 +160,14 @@
 						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
 					<p>
 						<label for="share">Share to User</label>
-						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+"
-							placeholder="Username" onkeypress="if(event.key == 'Enter') sharePoll('user')">
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+							onkeypress="if(event.key == 'Enter') sharePoll('user')">
 					</p>
 					<div id="userPollShares"></div>
 					<p>
 						<label for="share">Share to Class</label>
-						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+"
-							placeholder="Class Code" onkeypress="if(event.key == 'Enter') sharePoll('class')">
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+							onkeypress="if(event.key == 'Enter') sharePoll('class')">
 					</p>
 					<div id="classPollShares"></div>
 				</dialog>
@@ -929,7 +929,7 @@
 						newTagButton.setAttribute('hidden', true);
 					});
 
-					newTagSaveButton.addEventListener('click', function() {
+					newTagSaveButton.addEventListener('click', function () {
 						newTagButton.removeAttribute('hidden');
 						socket.emit('newTag', newTagTextBox.value);
 					})
@@ -1463,11 +1463,11 @@
 					}
 					continue
 
-					// if (isObjectEqual(oldStudentData, newStudentData)) {
-					// 	continue
-					// }
+					if (isObjectEqual(oldStudentData, newStudentData)) {
+						continue
+					}
 
-					// studentElement.replaceWith(buildStudent(newStudentData))
+					studentElement.replaceWith(buildStudent(newStudentData))
 				}
 
 				for (let studentElement of document.getElementsByClassName('student')) {
@@ -1800,4 +1800,4 @@
 
 		<%- include('../partials/footer_content') %>
 
-		</html>
+			</html>
