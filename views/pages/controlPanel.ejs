@@ -743,17 +743,16 @@
 				return option
 			}
 
-			function buildStudent(room, student) {
-				let studentData = room.students[student]
+			function buildStudent(room, studentData) {
 				if (studentData.classPermissions < currentUser.classPermissions) newStudent = document.createElement("details");
 				else {
 					newStudent = document.createElement("div");
 					let studentElement = document.createElement("p");
-					studentElement.innerText = student;
-					newStudent.appendChild(studentElement)
-
+					studentElement.innerText = studentData.username;
+					newStudent.appendChild(studentElement);
 				}
-				newStudent.classList.add("student");
+				newStudent.setAttribute('id', `student-${studentData.username}`);
+
 				if (studentData.break == true) {
 					let breakText = document.createElement('p')
 					breakText.textContent += 'taking a break'
@@ -823,12 +822,12 @@
 				}
 				if (studentData.classPermissions < currentUser.classPermissions) {
 					let studentElement = document.createElement("summary");
-					studentElement.innerText = student;
+					studentElement.innerText = studentData.username;
 					newStudent.appendChild(studentElement);
 					let permissionSwitch = document.createElement("select");
 					permissionSwitch.setAttribute("name", "permSwitch");
 					permissionSwitch.setAttribute("class", "permSwitch");
-					permissionSwitch.setAttribute("data-userid", student);
+					permissionSwitch.setAttribute("data-userid", studentData.id);
 					permissionSwitch.onchange = (event) => {
 						socket.emit('classPermChange', event.target.dataset.userid, Number(event.target.value))
 					}
@@ -861,7 +860,7 @@
 					})
 
 					let studentTags = document.createElement('dialog');
-					studentTags.innerHTML = '<p>' + student + '</p>';
+					studentTags.innerHTML = '<p>' + studentData + '</p>';
 					let closeButton = document.createElement('button');
 					closeButton.textContent = 'Save';
 					let newTagButton = document.createElement('button');
@@ -878,7 +877,7 @@
 					newTagSaveButton.setAttribute('hidden', true);
 					newTagForm.appendChild(newTagSaveButton);
 					let tagForm = document.createElement('form');
-					tagForm.setAttribute('id', student + "tags");
+					tagForm.setAttribute('id', studentData + "tags");
 					for (let i = 0; i < room.tagNames.length; i++) {
 						let checkbox = document.createElement('input');
 						checkbox.type = 'checkbox';
@@ -941,7 +940,7 @@
 					// Create a checkbox for the student
 					let studentCheckbox = document.createElement("input");
 					studentCheckbox.type = "checkbox";
-					studentCheckbox.id = "checkbox_" + student;
+					studentCheckbox.id = "checkbox_" + studentData;
 
 
 					newStudent.appendChild(studentCheckbox)
@@ -1459,7 +1458,7 @@
 						oldStudentData = allRoom.students[username]
 
 					if (!studentElement) {
-						usersDiv.appendChild(buildStudent(newStudentData))
+						usersDiv.appendChild(buildStudent(newRoom, newStudentData))
 						continue
 					}
 					continue
