@@ -978,7 +978,6 @@
 				let userOrder = Object.keys(allRoom.students)
 
 				for (let username of userOrder) {
-					console.log(username);
 					document.getElementById(`student-${username}`).style.display = ''
 				}
 
@@ -1462,11 +1461,11 @@
 					if (allRoom.students && allRoom.students[username])
 						oldStudentData = allRoom.students[username]
 
+
 					if (!studentElement) {
 						usersDiv.appendChild(buildStudent(newRoom, username))
 						continue
 					}
-					continue
 
 					if (isObjectEqual(oldStudentData, newStudentData)) {
 						continue
@@ -1723,7 +1722,6 @@
 
 			var tagNames = "<%=tagNames%>";
 			tagNames = tagNames.split(",");
-			console.log(tagNames);
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
