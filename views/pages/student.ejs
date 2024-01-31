@@ -194,8 +194,10 @@
 						pollContent.style.display = 'block'
 					}
 					function updatePage() {
-						let userTags = JSON.parse('<%- user %>')
-						userTags = userTags.tags.split(',')
+						let userTags = currentUser.tags
+						if (currentUser.tags) userTags = currentUser.tags.split(',')
+						else userTags = []
+
 						if (poll.requiredTags.length > 0) {
 							if (poll.requiredTags[0][0] == "0") {
 								if (poll.requiredTags.slice(1).join() == userTags.join()) {
