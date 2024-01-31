@@ -45,6 +45,7 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
 						End Class
 					</button>
+					<p id="totalUsers"></p>
 					<div id="users">
 					</div>
 				</div>
@@ -279,6 +280,7 @@
 			let pollsTabButton = document.querySelector('.tab#pollsMenu')
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
+			let totalUsers = document.getElementById('totalUsers')
 
 
 			// Function runs on page load
@@ -1448,6 +1450,8 @@
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
 				}
+
+				totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length}`
 
 				for (const username of Object.keys(newRoom.students)) {
 					let studentElement = document.getElementById(`student-${username}`)

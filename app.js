@@ -448,64 +448,63 @@ function joinClass(username, code) {
 							}
 
 							// Add the two id's to the junction table to link the user and class
-							db.get('SELECT * FROM classusers WHERE classId=? AND studentId=?',
-								[classroom.id, user.id],
-								(err, classUser) => {
-									try {
-										if (err) {
-											reject(err)
+							db.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
+								try {
+									if (err) {
+										reject(err)
+										return
+									}
+
+									if (classUser) {
+										// Get the student's session data ready to transport into new class
+										let user = cD.noClass.students[username]
+										if (classUser.permissions <= BANNED_PERMISSIONS) {
+											logger.log('info', '[joinClass] User is banned')
+											resolve('you are banned from that class')
 											return
 										}
 
-										if (classUser) {
-											// Get the student's session data ready to transport into new class
-											let user = cD.noClass.students[username]
-											if (classUser.permissions <= BANNED_PERMISSIONS) {
-												logger.log('info', '[joinClass] User is banned')
-												resolve('you are banned from that class')
-												return
-											}
+										user.classPermissions = classUser.permissions
 
-											//console.log(user);
-											user.classPermissions = classUser.permissions
+										// Remove student from old class
+										delete cD.noClass.students[username]
+										// Add the student to the newly created class
+										cD[code].students[username] = user
 
-											// Remove student from old class
-											delete cD.noClass.students[username]
-											// Add the student to the newly created class
-											cD[code].students[username] = user
-											logger.log('verbose', `[joinClass] cD=(${cD})`)
-											resolve(true)
-										} else {
-											db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-												[classroom.id, user.id, GUEST_PERMISSIONS, 0], (err) => {
-													try {
-														if (err) {
-															reject(err)
-															return
-														}
+										io.to(code).emit('joinSound')
 
-														logger.log('info', '[joinClass] Added user to classusers')
-
-														let user = cD.noClass.students[username]
-														user.classPermissions = GUEST_PERMISSIONS
-
-														// Remove student from old class
-														delete cD.noClass.students[username]
-														// Add the student to the newly created class
-														cD[code].students[username] = user
-														logger.log('verbose', `[joinClass] cD=(${cD})`)
-														resolve(true)
-													} catch (err) {
+										logger.log('verbose', `[joinClass] cD=(${cD})`)
+										resolve(true)
+									} else {
+										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
+											[classroom.id, user.id, GUEST_PERMISSIONS, 0], (err) => {
+												try {
+													if (err) {
 														reject(err)
+														return
 													}
+
+													logger.log('info', '[joinClass] Added user to classusers')
+
+													let user = cD.noClass.students[username]
+													user.classPermissions = GUEST_PERMISSIONS
+
+													// Remove student from old class
+													delete cD.noClass.students[username]
+													// Add the student to the newly created class
+													cD[code].students[username] = user
+													logger.log('verbose', `[joinClass] cD=(${cD})`)
+													resolve(true)
+												} catch (err) {
+													reject(err)
 												}
-											)
-										}
-									} catch (err) {
-										reject(err)
+											}
+										)
 									}
+								} catch (err) {
+									reject(err)
 								}
-							)
+							})
 						} catch (err) {
 							reject(err)
 						}
@@ -826,7 +825,6 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		/* Uses EJS to render the template and display the information for the class.
 		This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
 		*/
-		console.log(cD[req.session.class].tagNames);
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
 			pollStatus: cD[req.session.class].poll.status,
@@ -2645,6 +2643,7 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
+			socket.to(socket.request.session.class).emit('pollSound')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -3311,7 +3310,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-			socket.emit('help')
+			io.to(socket.request.session.class).emit('helpSound')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3329,6 +3328,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
+			io.to(socket.request.session.class).emit('breakSound')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -4121,9 +4121,6 @@ io.on('connection', async (socket) => {
 						if (err) {
 							logger.log(err.stack);
 						};
-						console.log('yes');
-						console.log(newTotalTags);
-						console.log(cD[socket.request.session.class].tagNames);
 					});
 				} else {
 					console.log(`No row found with name ${cD[socket.request.session.class].className}`);
