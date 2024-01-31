@@ -1932,6 +1932,8 @@ io.on('connection', async (socket) => {
 						}
 					}
 				)
+			}).catch((err) => {
+				if (err instanceof Error) throw err
 			})
 		} else if (socket.request.session.username) {
 			socket.join(socket.request.session.class)
