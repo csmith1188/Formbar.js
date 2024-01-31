@@ -2652,7 +2652,7 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
-			socket.to(socket.request.session.class).emit('pollSound')
+			io.to(socket.request.session.class).emit('pollSound')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
