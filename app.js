@@ -69,6 +69,13 @@ function createLoggerTransport(level) {
 		logNumbers.error = 0;
 		logNumbersString = JSON.stringify(logNumbers);
 		fs.writeFileSync("logNumbers.json", logNumbersString);
+		fs.unlink(oldFilename, (err) => {
+			if (err) {
+				console.log(err);
+			} else {
+				console.log("Log file deleted");
+			};
+		});
 	});
 
 	return transport;
