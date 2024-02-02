@@ -2775,9 +2775,10 @@ io.on('connection', async (socket) => {
 	})
 
 	// End the current poll. Does not take any arguments
-	socket.on('clearPoll', () => {
+	socket.on('clearPoll', async () => {
 		try {
-			clearPoll();
+			await clearPoll();
+
 			pollUpdate();
 			vbUpdate();
 			cpUpdate();
