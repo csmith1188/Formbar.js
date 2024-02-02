@@ -1992,12 +1992,13 @@ io.on('connection', async (socket) => {
 
 
 			let totalStudents = 0;
+			let totalStudentsArray = []
 
 			for (let student of Object.values(classData.students)) {
 				if (classData.poll.requiredTags.length > 0) {
 					if (classData.poll.requiredTags[0][0] == "0") {
 						if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-							totalStudents++
+							totalStudentsArray.push(student.username)
 						}
 					}
 					else if (classData.poll.requiredTags[0][0] == "1") {
@@ -2011,14 +2012,14 @@ io.on('connection', async (socket) => {
 							}
 						}
 						if (correctTags == requiredCorrectTags) {
-							totalStudents++
+							totalStudentsArray.push(student.username)
 						}
 					}
 				}
 				if (classData.poll.studentBoxes.length > 0) {
 					for (let studentName of classData.poll.studentBoxes) {
 						if (studentName == student.username) {
-							totalStudents++
+							totalStudentsArray.push(student.username)
 						}
 					}
 				}
@@ -2026,10 +2027,15 @@ io.on('connection', async (socket) => {
 					if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
 					for (let studentName of classData.poll.studentIndeterminate) {
 						if (studentName == student.username) {
-							totalStudents--
+							for (let studentName of totalStudentsArray) {
+								if (studentName == student.username) {
+									totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
+								}
+							}
 						}
 					}
 				}
+				totalStudents = totalStudentsArray.length
 				if (classData.poll.studentBoxes.length == 0 && classData.poll.requiredTags.length == 0 && classData.poll.studentIndeterminate.length == 0) totalStudents = Object.keys(classData.students).length
 			}
 
