@@ -910,7 +910,7 @@
 					newTagSaveButton.setAttribute('hidden', true);
 					newTagForm.appendChild(newTagSaveButton);
 					let tagForm = document.createElement('form');
-					tagForm.setAttribute('id', studentData + "tags");
+					tagForm.setAttribute('id', studentData.username + "tags");
 					for (let i = 0; i < room.tagNames.length; i++) {
 						let checkbox = document.createElement('input');
 						checkbox.type = 'checkbox';
@@ -973,7 +973,13 @@
 					// Create a checkbox for the student
 					let studentCheckbox = document.createElement("input");
 					studentCheckbox.type = "checkbox";
-					studentCheckbox.id = "checkbox_" + studentData;
+					studentCheckbox.id = "checkbox_" + studentData.username;
+					studentCheckbox.name = "studentCheckbox";
+					studentCheckbox.addEventListener("contextmenu", function () {
+						event.preventDefault();
+						studentCheckbox.indeterminate = !studentCheckbox.indeterminate
+					})
+
 
 
 					newStudent.appendChild(studentCheckbox)
@@ -1206,7 +1212,10 @@
 			// Check how many possible responses and if the teacher wants to accept text responses
 			function startPoll(customPollId) {
 				var userTags = []
+				var userBoxesChecked = []
+				var userIndeterminate = []
 				let selectTagForm = document.getElementsByName('selectTagForm')
+				let allCheckboxes = document.getElementsByName('studentCheckbox')
 				for (let eachTagForm of selectTagForm[0]) {
 					if (eachTagForm.checked) {
 						userTags.push(eachTagForm.value)
@@ -1214,21 +1223,27 @@
 				}
 				userTags.sort()
 
-
-
-
-
-
-
-
-
+				for (let eachBox of allCheckboxes) {
+					if (eachBox.checked && !eachBox.indeterminate) {
+						let boxId = eachBox.id.split('_')[1]
+						userBoxesChecked.push(boxId)
+					}
+					if (eachBox.indeterminate) {
+						let boxId = eachBox.id.split('_')[1]
+						userIndeterminate.push(boxId)
+					}
+				}
+				userBoxesChecked.sort()
+				console.log(userTags);
+				console.log(userBoxesChecked);
+				console.log(userIndeterminate);
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
 					changeTab('mainPolls', 'polls')
 
 					var generatedColors = generateColors(customPoll.answers.length)
-					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags)
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate)
 				} else {
 					let blind = blindCheck.checked
 
@@ -1244,7 +1259,8 @@
 						pollAnswers.push(pollAnswer)
 					}
 					var generatedColors = generateColors(resNumber.value)
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags)
+
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate)
 				}
 				responsesDiv.style.display = 'none'
 				startPollForm.style.display = 'none'

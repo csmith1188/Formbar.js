@@ -298,6 +298,8 @@ class Classroom {
 			weight: 1,
 			blind: false,
 			requiredTags: [],
+			studentBoxes: [],
+			studentIndeterminate: []
 		}
 		this.key = key
 		this.lesson = {}
@@ -1932,6 +1934,8 @@ io.on('connection', async (socket) => {
 						}
 					}
 				)
+			}).catch((err) => {
+				if (err instanceof Error) throw err
 			})
 		} else if (socket.request.session.username) {
 			socket.join(socket.request.session.class)
@@ -2011,10 +2015,25 @@ io.on('connection', async (socket) => {
 						}
 					}
 				}
-				else totalStudents = Object.keys(classData.students).length
+				if (classData.poll.studentBoxes.length > 0) {
+					for (let studentName of classData.poll.studentBoxes) {
+						if (studentName == student.username) {
+							totalStudents++
+						}
+					}
+				}
+				if (classData.poll.studentIndeterminate.length > 0) {
+					if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
+					for (let studentName of classData.poll.studentIndeterminate) {
+						if (studentName == student.username) {
+							totalStudents--
+						}
+					}
+				}
+				if (classData.poll.studentBoxes.length == 0 && classData.poll.requiredTags.length == 0 && classData.poll.studentIndeterminate.length == 0) totalStudents = Object.keys(classData.students).length
 			}
 
-
+			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			io.to(classCode).emit('vbUpdate', {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
@@ -2315,6 +2334,8 @@ io.on('connection', async (socket) => {
 			weight: 1,
 			blind: false,
 			requiredTags: [],
+			studentBoxes: [],
+			studentIndeterminate: []
 		};
 	}
 
@@ -2650,7 +2671,7 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
-			socket.to(socket.request.session.class).emit('pollSound')
+			io.to(socket.request.session.class).emit('pollSound')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2709,7 +2730,7 @@ io.on('connection', async (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags) => {
+	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate) => {
 		try {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
@@ -2729,7 +2750,18 @@ io.on('connection', async (socket) => {
 			else {
 				cD[socket.request.session.class].poll.requiredTags = []
 			}
-
+			if (boxes) {
+				cD[socket.request.session.class].poll.studentBoxes = boxes
+			}
+			else {
+				cD[socket.request.session.class].poll.studentBoxes = []
+			}
+			if (indeterminate) {
+				cD[socket.request.session.class].poll.studentIndeterminate = indeterminate
+			}
+			else {
+				cD[socket.request.session.class].poll.studentIndeterminate = []
+			}
 
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
