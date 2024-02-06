@@ -480,7 +480,7 @@ function joinClass(username, code) {
 										// Add the student to the newly created class
 										cD[code].students[username] = user
 
-										io.to(code).emit('joinSound')
+										io.to(`class-${code}`).emit('joinSound')
 
 										logger.log('verbose', `[joinClass] cD=(${cD})`)
 										resolve(true)
@@ -1687,7 +1687,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		io.to(classCode).emit('cpUpdate', cD[classCode])
+		io.to(`class-${classCode}`).emit('cpUpdate', cD[classCode])
 
 		req.session.class = classCode
 
@@ -1925,6 +1925,8 @@ io.on('connection', async (socket) => {
 
 							socket.join(socket.request.session.api)
 							socket.join(socket.request.session.class)
+							socket.join(`api-${socket.request.session.api}`)
+							socket.join(`class-${socket.request.session.class}`)
 
 							socket.emit('setClass', socket.request.session.class)
 
@@ -1940,6 +1942,8 @@ io.on('connection', async (socket) => {
 		} else if (socket.request.session.username) {
 			socket.join(socket.request.session.class)
 			socket.join(socket.request.session.username)
+			socket.join(`class-${socket.request.session.class}`)
+			socket.join(`user-${socket.request.session.username}`)
 
 			userSockets[socket.request.session.username] = socket
 		}
@@ -1951,7 +1955,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
 
-			io.to(classCode).emit('cpUpdate', cD[classCode])
+			io.to(`class-${classCode}`).emit('cpUpdate', cD[classCode])
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2034,7 +2038,7 @@ io.on('connection', async (socket) => {
 			}
 
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
-			io.to(classCode).emit('vbUpdate', {
+			io.to(`class-${classCode}`).emit('vbUpdate', {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
 				polls: responses,
@@ -2053,7 +2057,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[pollUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(cD[classCode].poll)})`)
 
-			io.to(classCode).emit('pollUpdate', cD[socket.request.session.class].poll)
+			io.to(`class-${classCode}`).emit('pollUpdate', cD[socket.request.session.class].poll)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2064,7 +2068,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[modeUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[modeUpdate] mode=(${cD[classCode].mode})`)
 
-			io.to(classCode).emit('modeUpdate', cD[socket.request.session.class].mode)
+			io.to(`class-${classCode}`).emit('modeUpdate', cD[socket.request.session.class].mode)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2075,7 +2079,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[quizUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(cD[classCode].quiz)})`)
 
-			io.to(classCode).emit('quizUpdate', cD[socket.request.session.class].quiz)
+			io.to(`class-${classCode}`).emit('quizUpdate', cD[socket.request.session.class].quiz)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2086,7 +2090,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[lessonUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(cD[classCode].lesson)})`)
 
-			io.to(classCode).emit('lessonUpdate', cD[socket.request.session.class].lesson)
+			io.to(`class-${classCode}`).emit('lessonUpdate', cD[socket.request.session.class].lesson)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2105,7 +2109,7 @@ io.on('connection', async (socket) => {
 
 						logger.log('verbose', `[pluginUpdate] plugins=(${JSON.stringify(plugins)})`)
 
-						io.to(classCode).emit('pluginUpdate', plugins)
+						io.to(`class-${classCode}`).emit('pluginUpdate', plugins)
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
@@ -2162,7 +2166,7 @@ io.on('connection', async (socket) => {
 
 						logger.log('verbose', `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`)
 
-						io.to(username).emit(
+						io.to(`user-${username}`).emit(
 							'customPollUpdate',
 							publicPolls,
 							classroomPolls,
@@ -2191,7 +2195,7 @@ io.on('connection', async (socket) => {
 					if (err) throw err
 
 					bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.username)
-					io.to(classCode).emit('classBannedUsersUpdate', bannedStudents)
+					io.to(`class-${classCode}`).emit('classBannedUsersUpdate', bannedStudents)
 				} catch (err) {
 					logger.log('error', err.stack)
 				}
@@ -2365,7 +2369,7 @@ io.on('connection', async (socket) => {
 
 						logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
 
-						io.to(username).emit('getOwnedClasses', ownedClasses)
+						io.to(`user-${username}`).emit('getOwnedClasses', ownedClasses)
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
@@ -2460,7 +2464,7 @@ io.on('connection', async (socket) => {
 			else if (type == 'blacklist') ipList = blacklistedIps
 
 			if (type) {
-				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				if (username) io.to(`user-${username}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
 				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
 			} else {
 				ipUpdate('whitelist', username)
@@ -2671,7 +2675,7 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
-			io.to(socket.request.session.class).emit('pollSound')
+			io.to(`class-${socket.request.session.class}`).emit('pollSound')
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2692,7 +2696,7 @@ io.on('connection', async (socket) => {
 			])
 
 			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
-			io.to(user).emit('reload')
+			io.to(`user-${user}`).emit('reload')
 
 			cpUpdate()
 		} catch (err) {
@@ -2720,7 +2724,7 @@ io.on('connection', async (socket) => {
 					endClass(classCode)
 				}
 
-				io.to(username).emit('reload')
+				io.to(`user-${username}`).emit('reload')
 			}
 
 			db.run('UPDATE users SET permissions=? WHERE username=?', [newPerm, username])
@@ -3350,7 +3354,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-			io.to(socket.request.session.class).emit('helpSound')
+			io.to(`class-${socket.request.session.class}`).emit('helpSound')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3368,7 +3372,7 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-			io.to(socket.request.session.class).emit('breakSound')
+			io.to(`class-${socket.request.session.class}`).emit('breakSound')
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3385,7 +3389,7 @@ io.on('connection', async (socket) => {
 
 			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[username])})`)
 
-			if (breakApproval) io.to(username).emit('break')
+			if (breakApproval) io.to(`user-${username}`).emit('break')
 			cpUpdate()
 			vbUpdate()
 		} catch (err) {
@@ -3542,26 +3546,13 @@ io.on('connection', async (socket) => {
 
 		cpUpdate();
 	})
-
-	// socket.on('sfxGet', function () {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxGet')
-	// })
-
-	// socket.on('sfxLoad', function (sfxFiles) {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
-	// })
-
-	// socket.on('sfxPlay', function (music) {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
-	// })
-
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollIndex) => {
 		try {
 			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
 
-			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollIndex].data)
+			io.to(`class-${socket.request.session.class}`).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollIndex].data)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
