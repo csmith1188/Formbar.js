@@ -689,7 +689,7 @@ async function setClassOfApiSockets(api, classCode) {
 		socket.request.session.class = classCode || 'noClass'
 		socket.request.session.save()
 
-		socket.join(socket.request.session.class)
+		socket.join(`class-${socket.request.session.class}`)
 
 		socket.emit('setClass', socket.request.session.class)
 	}
@@ -1923,8 +1923,6 @@ io.on('connection', async (socket) => {
 							socket.request.session.username = userData.username
 							socket.request.session.class = getUserClass(userData.username) || 'noClass'
 
-							socket.join(socket.request.session.api)
-							socket.join(socket.request.session.class)
 							socket.join(`api-${socket.request.session.api}`)
 							socket.join(`class-${socket.request.session.class}`)
 
@@ -1940,8 +1938,6 @@ io.on('connection', async (socket) => {
 				if (err instanceof Error) throw err
 			})
 		} else if (socket.request.session.username) {
-			socket.join(socket.request.session.class)
-			socket.join(socket.request.session.username)
 			socket.join(`class-${socket.request.session.class}`)
 			socket.join(`user-${socket.request.session.username}`)
 
