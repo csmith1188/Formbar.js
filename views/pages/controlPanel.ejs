@@ -45,6 +45,7 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
 						End Class
 					</button>
+					<p><b id="totalUsers"></b></p>
 					<div id="users">
 					</div>
 				</div>
@@ -283,7 +284,7 @@
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
 
-
+			let totalUsers = document.getElementById('totalUsers')
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
 			function load(pollStatus) {
@@ -745,8 +746,12 @@
 				option.textContent = text
 				return option
 			}
-
+			var userBreak = []
 			function buildStudent(room, studentData) {
+				if (studentData.break === true) {
+					userBreak.push(studentData.username)
+				}
+
 				if (studentData.classPermissions < currentUser.classPermissions) {
 					newStudent = document.createElement("details");
 					newStudent.classList.add('quickButton');
@@ -1221,8 +1226,7 @@
 						userTags.push(eachTagForm.value)
 					}
 				}
-				userTags.sort()
-
+				
 				for (let eachBox of allCheckboxes) {
 					if (eachBox.checked && !eachBox.indeterminate) {
 						let boxId = eachBox.id.split('_')[1]
@@ -1233,17 +1237,23 @@
 						userIndeterminate.push(boxId)
 					}
 				}
+
+
+				userTags.sort()
 				userBoxesChecked.sort()
-				console.log(userTags);
-				console.log(userBoxesChecked);
-				console.log(userIndeterminate);
+				userIndeterminate.sort()
+				userBreak.sort()
+				console.log(userTags, "userTags");
+				console.log(userBoxesChecked, "userBoxesChecked");
+				console.log(userIndeterminate, "userIndeterminate");
+				console.log(userBreak, "userBreak");
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
 					changeTab('mainPolls', 'polls')
 
 					var generatedColors = generateColors(customPoll.answers.length)
-					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate)
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, userBreak)
 				} else {
 					let blind = blindCheck.checked
 
@@ -1260,7 +1270,7 @@
 					}
 					var generatedColors = generateColors(resNumber.value)
 
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate)
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, userBreak)
 				}
 				responsesDiv.style.display = 'none'
 				startPollForm.style.display = 'none'
@@ -1514,6 +1524,7 @@
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
 				}
+				totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length - 1}`
 
 				for (const username of Object.keys(newRoom.students)) {
 					let studentElement = document.getElementById(`student-${username}`)
