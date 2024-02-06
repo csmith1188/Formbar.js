@@ -701,3 +701,8 @@ input[type="radio"]:focus {
 		background: #b30000;
 	}
 }
+
+.studentButton {
+	border: 1px solid black;
+}
+
