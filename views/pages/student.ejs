@@ -204,6 +204,10 @@
 						if (currentUser.tags) userTags = currentUser.tags.split(',')
 						else userTags = []
 						console.log(poll);
+						if (currentUser.break === true) {
+							runUpdatePageLoop = false
+							return
+						}
 						if (poll.requiredTags.length > 0) {
 							if (poll.requiredTags[0][0] == "0") {
 								if (poll.requiredTags.slice(1).join() == userTags.join()) {
