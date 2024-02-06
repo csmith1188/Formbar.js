@@ -71,7 +71,7 @@ function createLoggerTransport(level) {
 		fs.writeFileSync("logNumbers.json", logNumbersString);
 		fs.unlink(oldFilename, (err) => {
 			if (err) {
-				console.log(err);
+				logger.log('error', err.stack);
 			} else {
 				console.log("Log file deleted");
 			};
@@ -151,7 +151,6 @@ const PASSIVE_SOCKETS = [
 	'ipUpdate',
 	'vbUpdate',
 	'cpUpdate',
-	'leaveRoom',
 	'pluginUpdate',
 	'customPollUpdate',
 	'classBannedUsersUpdate'
@@ -185,7 +184,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	lessonUpdate: STUDENT_PERMISSIONS,
 	vbUpdate: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
-	leaveRoom: GUEST_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
 	pluginUpdate: STUDENT_PERMISSIONS,
@@ -480,7 +478,8 @@ function joinClass(username, code) {
 										// Add the student to the newly created class
 										cD[code].students[username] = user
 
-										io.to(code).emit('joinSound')
+
+										advancedEmitToClass('joinSound', code, { api: true })
 
 										logger.log('verbose', `[joinClass] cD=(${cD})`)
 										resolve(true)
@@ -527,7 +526,6 @@ function joinClass(username, code) {
 		}
 	})
 }
-
 
 function camelCaseToNormal(str) {
 	let result = str.replace(/([A-Z])/g, " $1")
@@ -684,12 +682,12 @@ async function setClassOfApiSockets(api, classCode) {
 	let sockets = await io.in(api).fetchSockets()
 
 	for (let socket of sockets) {
-		socket.leave(socket.request.session.class)
+		socket.leave(`class-${socket.request.session.class}`)
 
 		socket.request.session.class = classCode || 'noClass'
 		socket.request.session.save()
 
-		socket.join(socket.request.session.class)
+		socket.join(`class-${socket.request.session.class}`)
 
 		socket.emit('setClass', socket.request.session.class)
 	}
@@ -727,6 +725,38 @@ async function managerUpdate() {
 	])
 
 	io.emit('managerUpdate', users, classrooms)
+}
+
+/**
+	 * Emits an event to sockets based on user permissions
+	 * @param {string} event - The event to emit
+	 * @param {string} classCode - The code of the class
+	 * @param {{permissions?: number, classPermissions?: number, api?: boolean}} options - The options object
+	 * @param  {...any} data - Additional data to emit with the event
+	 */
+async function advancedEmitToClass(event, classCode, options, ...data) {
+	let classData = cD[classCode]
+
+	let sockets = await io.in(`class-${classCode}`).fetchSockets()
+
+	for (let socket of sockets) {
+		let user = classData.students[socket.request.session.username]
+		let hasAPI = false
+
+		if (options.permissions && user.permissions < options.permissions) continue
+		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
+
+		for (let room of socket.rooms) {
+			if (room.startsWith('api-')) {
+				hasAPI = true
+				break
+			}
+		}
+		if (options.api == true && !hasAPI) continue
+		if (options.api == false && hasAPI) continue
+
+		socket.emit(event, ...data)
+	}
 }
 
 
@@ -1687,7 +1717,15 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		io.to(classCode).emit('cpUpdate', cD[classCode])
+		let classData = cD[classCode]
+
+		let cpPermissions = Math.min(
+			classData.permissions.controlPolls,
+			classData.permissions.manageStudents,
+			classData.permissions.manageClass
+		)
+
+		advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, cD[classCode])
 
 		req.session.class = classCode
 
@@ -1923,8 +1961,8 @@ io.on('connection', async (socket) => {
 							socket.request.session.username = userData.username
 							socket.request.session.class = getUserClass(userData.username) || 'noClass'
 
-							socket.join(socket.request.session.api)
-							socket.join(socket.request.session.class)
+							socket.join(`api-${socket.request.session.api}`)
+							socket.join(`class-${socket.request.session.class}`)
 
 							socket.emit('setClass', socket.request.session.class)
 
@@ -1938,8 +1976,8 @@ io.on('connection', async (socket) => {
 				if (err instanceof Error) throw err
 			})
 		} else if (socket.request.session.username) {
-			socket.join(socket.request.session.class)
-			socket.join(socket.request.session.username)
+			socket.join(`class-${socket.request.session.class}`)
+			socket.join(`user-${socket.request.session.username}`)
 
 			userSockets[socket.request.session.username] = socket
 		}
@@ -1951,7 +1989,14 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
 
-			io.to(classCode).emit('cpUpdate', cD[classCode])
+			let classData = cD[classCode]
+			let cpPermissions = Math.min(
+				classData.permissions.controlPolls,
+				classData.permissions.manageStudents,
+				classData.permissions.manageClass
+			)
+
+			advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classData)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2039,8 +2084,7 @@ io.on('connection', async (socket) => {
 				if (classData.poll.studentBoxes.length == 0 && classData.poll.requiredTags.length == 0 && classData.poll.studentIndeterminate.length == 0) totalStudents = Object.keys(classData.students).length
 			}
 
-			console.log(totalStudents + ' is the number of students that can respond to the poll');
-			io.to(classCode).emit('vbUpdate', {
+			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
 				polls: responses,
@@ -2059,7 +2103,12 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[pollUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(cD[classCode].poll)})`)
 
-			io.to(classCode).emit('pollUpdate', cD[socket.request.session.class].poll)
+			advancedEmitToClass(
+				'pollUpdate',
+				classCode,
+				{ classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
+				cD[socket.request.session.class].poll
+			)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2070,7 +2119,12 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[modeUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[modeUpdate] mode=(${cD[classCode].mode})`)
 
-			io.to(classCode).emit('modeUpdate', cD[socket.request.session.class].mode)
+			advancedEmitToClass(
+				'modeUpdate',
+				classCode,
+				{ classPermissions: CLASS_SOCKET_PERMISSIONS.modeUpdate },
+				cD[socket.request.session.class].mode
+			)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2081,7 +2135,12 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[quizUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(cD[classCode].quiz)})`)
 
-			io.to(classCode).emit('quizUpdate', cD[socket.request.session.class].quiz)
+			advancedEmitToClass(
+				'quizUpdate',
+				classCode,
+				{ classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
+				cD[socket.request.session.class].quiz
+			)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2092,7 +2151,12 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[lessonUpdate] classCode=(${classCode})`)
 			logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(cD[classCode].lesson)})`)
 
-			io.to(classCode).emit('lessonUpdate', cD[socket.request.session.class].lesson)
+			advancedEmitToClass(
+				'lessonUpdate',
+				classCode,
+				{ classPermissions: CLASS_SOCKET_PERMISSIONS.lessonUpdate },
+				cD[socket.request.session.class].lesson
+			)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2111,7 +2175,12 @@ io.on('connection', async (socket) => {
 
 						logger.log('verbose', `[pluginUpdate] plugins=(${JSON.stringify(plugins)})`)
 
-						io.to(classCode).emit('pluginUpdate', plugins)
+						advancedEmitToClass(
+							'pluginUpdate',
+							classCode,
+							{ classPermissions: CLASS_SOCKET_PERMISSIONS.pluginUpdate },
+							plugins
+						)
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
@@ -2168,7 +2237,7 @@ io.on('connection', async (socket) => {
 
 						logger.log('verbose', `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`)
 
-						io.to(username).emit(
+						io.to(`user-${username}`).emit(
 							'customPollUpdate',
 							publicPolls,
 							classroomPolls,
@@ -2197,7 +2266,13 @@ io.on('connection', async (socket) => {
 					if (err) throw err
 
 					bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.username)
-					io.to(classCode).emit('classBannedUsersUpdate', bannedStudents)
+
+					advancedEmitToClass(
+						'classBannedUsersUpdate',
+						classCode,
+						{ classPermissions: cD[classCode].permissions.manageStudents },
+						bannedStudents
+					)
 				} catch (err) {
 					logger.log('error', err.stack)
 				}
@@ -2211,7 +2286,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
 
-			userSockets[username].leave(cD[classCode].className)
+			userSockets[username].leave(`class-${classCode}`)
 			cD.noClass.students[username] = cD[classCode].students[username]
 			cD.noClass.students[username].classPermissions = null
 			userSockets[username].request.session.class = 'noClass'
@@ -2254,7 +2329,7 @@ io.on('connection', async (socket) => {
 
 				delete userSockets[username]
 				delete cD[classCode].students[username]
-				socket.leave(className)
+				socket.leave(`class-${classCode}`)
 				socket.emit('reload')
 				cpUpdate(classCode)
 				vbUpdate(classCode)
@@ -2371,7 +2446,7 @@ io.on('connection', async (socket) => {
 
 						logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
 
-						io.to(username).emit('getOwnedClasses', ownedClasses)
+						io.to(`user-${username}`).emit('getOwnedClasses', ownedClasses)
 					} catch (err) {
 						logger.log('error', err.stack);
 					}
@@ -2466,7 +2541,7 @@ io.on('connection', async (socket) => {
 			else if (type == 'blacklist') ipList = blacklistedIps
 
 			if (type) {
-				if (username) io.to(username).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+				if (username) io.to(`user-${username}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
 				else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
 			} else {
 				ipUpdate('whitelist', username)
@@ -2677,7 +2752,8 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
-			io.to(socket.request.session.class).emit('pollSound')
+
+			advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2698,7 +2774,7 @@ io.on('connection', async (socket) => {
 			])
 
 			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
-			io.to(user).emit('reload')
+			io.to(`user-${user}`).emit('reload')
 
 			cpUpdate()
 		} catch (err) {
@@ -2726,7 +2802,7 @@ io.on('connection', async (socket) => {
 					endClass(classCode)
 				}
 
-				io.to(username).emit('reload')
+				io.to(`user-${username}`).emit('reload')
 			}
 
 			db.run('UPDATE users SET permissions=? WHERE username=?', [newPerm, username])
@@ -2811,9 +2887,10 @@ io.on('connection', async (socket) => {
 	})
 
 	// End the current poll. Does not take any arguments
-	socket.on('clearPoll', () => {
+	socket.on('clearPoll', async () => {
 		try {
-			clearPoll();
+			await clearPoll();
+
 			pollUpdate();
 			vbUpdate();
 			cpUpdate();
@@ -3355,7 +3432,8 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-			io.to(socket.request.session.class).emit('helpSound')
+
+			advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3373,7 +3451,8 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-			io.to(socket.request.session.class).emit('breakSound')
+
+			advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3390,7 +3469,7 @@ io.on('connection', async (socket) => {
 
 			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[username])})`)
 
-			if (breakApproval) io.to(username).emit('break')
+			if (breakApproval) io.to(`user-${username}`).emit('break')
 			cpUpdate()
 			vbUpdate()
 		} catch (err) {
@@ -3525,18 +3604,6 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-	socket.on('leaveRoom', (className) => {
-		try {
-			logger.log('info', `[leaveRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-			logger.log('info', `[leaveRoom] className=(${className})`)
-
-			socket.leave(className)
-			vbUpdate()
-		} catch (err) {
-			logger.log('error', err.stack)
-		}
-	})
-
 	socket.on('managerUpdate', () => {
 		managerUpdate()
 	})
@@ -3547,26 +3614,18 @@ io.on('connection', async (socket) => {
 
 		cpUpdate();
 	})
-
-	// socket.on('sfxGet', function () {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxGet')
-	// })
-
-	// socket.on('sfxLoad', function (sfxFiles) {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxLoadUpdate', sfxFiles.files, sfxFiles.playing)
-	// })
-
-	// socket.on('sfxPlay', function (music) {
-	//     io.to(cD[socket.request.session.class].className).emit('sfxPlay', music)
-	// })
-
 	// Displays previous polls
 	socket.on('previousPollDisplay', (pollIndex) => {
 		try {
 			logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
 
-			io.to(socket.request.session.class).emit('previousPollData', cD[socket.request.session.class].pollHistory[pollIndex].data)
+			advancedEmitToClass(
+				'previousPollData',
+				socket.request.session.class,
+				{ classPermissions: cD[socket.request.session.class].permissions.controlPolls },
+				cD[socket.request.session.class].pollHistory[pollIndex].data
+			)
 		} catch (err) {
 			logger.log('error', err.stack)
 		}

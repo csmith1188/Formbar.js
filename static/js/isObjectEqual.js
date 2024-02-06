@@ -1,5 +1,8 @@
 function isObjectEqual(objectA, objectB) {
 	for (let property in objectA) {
+		if (objectB[property] === undefined) {
+			return false;
+		}
 		switch (typeof (objectA[property])) {
 			case 'object':
 				if (!isObjectEqual(objectA[property], objectB[property])) {
