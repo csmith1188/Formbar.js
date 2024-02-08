@@ -299,7 +299,8 @@ class Classroom {
 			blind: false,
 			requiredTags: [],
 			studentBoxes: [],
-			studentIndeterminate: []
+			studentIndeterminate: [],
+			lastResponse: []
 		}
 		this.key = key
 		this.lesson = {}
@@ -1994,68 +1995,77 @@ io.on('connection', async (socket) => {
 			let totalStudents = 0;
 			let totalStudentsArray = []
 			let antitotalStudentArray = []
-
-			for (let student of Object.values(classData.students)) {
-				if (student.break == true) {
-					antitotalStudentArray.push(student.username)
-					continue
-				}
-				if (classData.poll.requiredTags.length > 0) {
-					if (classData.poll.requiredTags[0][0] == "0") {
-						if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-							totalStudentsArray.push(student.username)
-						}
-						else antitotalStudentArray.push(student.username)
+			let totalLastResponses = classData.poll.lastResponse
+			if (totalLastResponses.length > 0) {
+				totalStudentsArray = totalLastResponses
+				//console.log("ran if", totalStudentsArray);
+			}
+			else {
+				//console.log("ran else");
+				for (let student of Object.values(classData.students)) {
+					if (student.break == true) {
+						antitotalStudentArray.push(student.username)
+						continue
 					}
-					else if (classData.poll.requiredTags[0][0] == "1") {
-						let correctTags = 0
-						let requiredCorrectTags = classData.poll.requiredTags.length - 1;
-						for (let i = 0; i < classData.poll.requiredTags.length; i++) {
-							for (let u = 0; u < student.tags.split(",").length; u++) {
-								if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
-									correctTags++;
+					else {
+						if (classData.poll.requiredTags.length > 0) {
+							if (classData.poll.requiredTags[0][0] == "0") {
+								if (classData.poll.requiredTags.slice(1).join() == student.tags) {
+									totalStudentsArray.push(student.username)
+								}
+								else antitotalStudentArray.push(student.username)
+							}
+							else if (classData.poll.requiredTags[0][0] == "1") {
+								let correctTags = 0
+								let requiredCorrectTags = classData.poll.requiredTags.length - 1;
+								for (let i = 0; i < classData.poll.requiredTags.length; i++) {
+									for (let u = 0; u < student.tags.split(",").length; u++) {
+										if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
+											correctTags++;
+										}
+									}
+								}
+								if (correctTags == requiredCorrectTags) {
+									totalStudentsArray.push(student.username)
+								}
+								else antitotalStudentArray.push(student.username)
+							}
+						}
+						if (classData.poll.studentBoxes.length > 0) {
+							for (let studentName of classData.poll.studentBoxes) {
+								if (studentName == student.username) {
+									totalStudentsArray.push(student.username)
 								}
 							}
 						}
-						if (correctTags == requiredCorrectTags) {
-							totalStudentsArray.push(student.username)
-						}
-						else antitotalStudentArray.push(student.username)
-					}
-				}
-				if (classData.poll.studentBoxes.length > 0) {
-					for (let studentName of classData.poll.studentBoxes) {
-						if (studentName == student.username) {
-							totalStudentsArray.push(student.username)
-						}
-					}
-				}
-				if (classData.poll.studentIndeterminate.length > 0) {
-					if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
-					for (let studentName of classData.poll.studentIndeterminate) {
-						if (studentName == student.username) {
-							for (let studentName of totalStudentsArray) {
+						if (classData.poll.studentIndeterminate.length > 0) {
+							if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
+							for (let studentName of classData.poll.studentIndeterminate) {
 								if (studentName == student.username) {
+									for (let studentName of totalStudentsArray) {
+										if (studentName == student.username) {
+											totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
+										}
+									}
+								}
+							}
+						}
+						for (eachAntiStudent of antitotalStudentArray) {
+							for (let studentName of totalStudentsArray) {
+								if (studentName == eachAntiStudent) {
 									totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
 								}
 							}
 						}
 					}
+					totalStudents = totalStudentsArray.length
+					//console.log(classData.poll.studentBoxes, classData.poll.requiredTags, classData.poll.studentIndeterminate, classData.poll.lastResponse);
 				}
-				for (eachAntiStudent of antitotalStudentArray) {
-					for (let studentName of totalStudentsArray) {
-						if (studentName == eachAntiStudent) {
-							totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
-						}
-					}
-				}
-				// console.log(totalStudentsArray);
-				// console.log(antitotalStudentArray);
-				totalStudents = totalStudentsArray.length
-				if (classData.poll.studentBoxes.length == 0 && classData.poll.requiredTags.length == 0 && classData.poll.studentIndeterminate.length == 0) totalStudents = Object.keys(classData.students).length
 			}
-
+			totalStudents = totalStudentsArray.length
+			if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
+			console.log(totalStudentsArray + ' is the array of students that can respond to the poll');
 			io.to(classCode).emit('vbUpdate', {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
@@ -2357,7 +2367,8 @@ io.on('connection', async (socket) => {
 			blind: false,
 			requiredTags: [],
 			studentBoxes: [],
-			studentIndeterminate: []
+			studentIndeterminate: [],
+			lastResponse: [],
 		};
 	}
 
@@ -2752,7 +2763,7 @@ io.on('connection', async (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate) => {
+	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse) => {
 		try {
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
@@ -2784,6 +2795,14 @@ io.on('connection', async (socket) => {
 			else {
 				cD[socket.request.session.class].poll.studentIndeterminate = []
 			}
+			if (lastResponse) {
+				cD[socket.request.session.class].poll.lastResponse = lastResponse
+			}
+			else {
+				cD[socket.request.session.class].poll.lastResponse = []
+			}
+
+
 
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
