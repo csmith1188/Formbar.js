@@ -97,6 +97,10 @@
 								answered)</label>
 							<input type="checkbox" id="blind">
 							<br>
+							<label for="lastResponse">Send Poll To Students With Same Response</label>
+							<input type="checkbox" id="lastResponse">
+							<select name="basedOnResponse" id="basedOnResponse"></select>
+							<br>
 							<button id="startPoll" onclick="startPoll()">Start Poll</button>
 							<br>
 						</div>
@@ -747,14 +751,15 @@
 				return option
 			}
 			var userBreak = []
+			var rooms;
 			function buildStudent(room, studentData) {
+				rooms = room
 				if (studentData.break === true) {
 					userBreak.push(studentData.username)
 				}
 
 				if (studentData.classPermissions < currentUser.classPermissions) {
 					newStudent = document.createElement("details");
-					newStudent.classList.add('quickButton');
 				}
 				else {
 					newStudent = document.createElement("div");
@@ -813,7 +818,7 @@
 					help.appendChild(deleteTicketButton)
 					newStudent.appendChild(help)
 					let lineBreak = document.createElement('br')
-					newStudent.appendChild(lineBreak)
+					//newStudent.appendChild(lineBreak)
 				}
 				if (studentData.pollTextRes) {
 					let pollTextResponse = document.createElement('p')
@@ -1214,63 +1219,96 @@
 
 
 			// Starts a new poll that allows students to submit answers
-			// Check how many possible responses and if the teacher wants to accept text responses
+			// Check how many possible responses and if the teacher wants to accept text responses\
 			function startPoll(customPollId) {
+				socket.emit('cpUpdate')
+				//console.log(rooms.students, "room");
 				var userTags = []
 				var userBoxesChecked = []
 				var userIndeterminate = []
-				let selectTagForm = document.getElementsByName('selectTagForm')
-				let allCheckboxes = document.getElementsByName('studentCheckbox')
-				for (let eachTagForm of selectTagForm[0]) {
-					if (eachTagForm.checked) {
-						userTags.push(eachTagForm.value)
+				var pollAnswers = []
+				for (let i = 0; i < resNumber.value; i++) {
+					let pollResponse = pollResponses[i]
+					let pollAnswer = {
+						answer: (pollResponse.answer) ? pollResponse.answer : pollResponse.defaultAnswer,
+						weight: pollResponse.weight,
+						color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 					}
+
+					pollAnswers.push(pollAnswer)
 				}
-				
-				for (let eachBox of allCheckboxes) {
-					if (eachBox.checked && !eachBox.indeterminate) {
-						let boxId = eachBox.id.split('_')[1]
-						userBoxesChecked.push(boxId)
-					}
-					if (eachBox.indeterminate) {
-						let boxId = eachBox.id.split('_')[1]
-						userIndeterminate.push(boxId)
-					}
+				var lastResponses = document.getElementById('lastResponse')
+				var basedOnResponse = document.getElementById('basedOnResponse')
+				var lastResponseToUse = []
+				var defaultValue = basedOnResponse.value
+				for (let i = basedOnResponse.length; i >= 0; i--) {
+					basedOnResponse.remove(i)
 				}
+				for (let [key, value] of Object.entries(pollAnswers)) {
+					let eachOption = document.createElement('option')
+					eachOption.innerText = value.answer
+					eachOption.value = value.answer
+					basedOnResponse.appendChild(eachOption)
+				}
+				basedOnResponse.value = defaultValue
+				// These are only ran to prove that the last response works (works on Luke Thompson's end). They are required because the classroomData is not being updated 24/7
+				// rooms.students["notluke"].pollRes.buttonRes = "a"
+				// rooms.students["isluke"].pollRes.buttonRes = "b"
+				if (lastResponses.checked) {
+					for (let [key, value] of Object.entries(rooms.students)) {
+						if (basedOnResponse.value == value.pollRes.buttonRes) {
+							lastResponseToUse.push(value.username)
+						}
+						console.log(value.pollRes);
+						//lastResponseToUse.push()
+						console.log(value.pollRes.buttonRes, "answer submitted");
+					}
+					console.log(lastResponseToUse.sort());
+				}
+				else {
+					let selectTagForm = document.getElementsByName('selectTagForm')
+					let allCheckboxes = document.getElementsByName('studentCheckbox')
+					for (let eachTagForm of selectTagForm[0]) {
+						if (eachTagForm.checked) {
+							userTags.push(eachTagForm.value)
+						}
+					}
+
+					for (let eachBox of allCheckboxes) {
+						if (eachBox.checked && !eachBox.indeterminate) {
+							let boxId = eachBox.id.split('_')[1]
+							userBoxesChecked.push(boxId)
+						}
+						if (eachBox.indeterminate) {
+							let boxId = eachBox.id.split('_')[1]
+							userIndeterminate.push(boxId)
+						}
+					}
 
 
-				userTags.sort()
-				userBoxesChecked.sort()
-				userIndeterminate.sort()
-				userBreak.sort()
-				console.log(userTags, "userTags");
-				console.log(userBoxesChecked, "userBoxesChecked");
-				console.log(userIndeterminate, "userIndeterminate");
-				console.log(userBreak, "userBreak");
+					userTags.sort()
+					userBoxesChecked.sort()
+					userIndeterminate.sort()
+					userBreak.sort()
+					console.log(userTags, "userTags");
+					console.log(userBoxesChecked, "userBoxesChecked");
+					console.log(userIndeterminate, "userIndeterminate");
+					console.log(userBreak, "userBreak");
+				}
 				if (customPollId) {
 					let customPoll = customPolls[customPollId]
 
 					changeTab('mainPolls', 'polls')
 
 					var generatedColors = generateColors(customPoll.answers.length)
-					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, userBreak)
+					socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
 				} else {
 					let blind = blindCheck.checked
 
-					var pollAnswers = []
-					for (let i = 0; i < resNumber.value; i++) {
-						let pollResponse = pollResponses[i]
-						let pollAnswer = {
-							answer: pollResponse.answer,
-							weight: pollResponse.weight,
-							color: pollResponse.color
-						}
 
-						pollAnswers.push(pollAnswer)
-					}
 					var generatedColors = generateColors(resNumber.value)
 
-					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, userBreak)
+					socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
 				}
 				responsesDiv.style.display = 'none'
 				startPollForm.style.display = 'none'
