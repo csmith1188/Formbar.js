@@ -171,7 +171,10 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	changeIp: MANAGER_PERMISSIONS,
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
-	newTag: TEACHER_PERMISSIONS
+	newTag: TEACHER_PERMISSIONS,
+	passwordRequest: STUDENT_PERMISSIONS,
+	approvePasswordChange: MANAGER_PERMISSIONS,
+	passwordUpdate: MANAGER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -729,6 +732,12 @@ async function managerUpdate() {
 	io.emit('managerUpdate', users, classrooms)
 }
 
+async function passwordRequest(newPassword, username) {
+	if (newPassword && username) {
+		let passwordChange = true;
+		io.emit("passwordUpdate", passwordChange, username, newPassword);
+	};
+};
 
 //import routes
 const apiRoutes = require('./routes/api.js')(cD)
@@ -814,6 +823,31 @@ app.get('/apikey', isLoggedIn, (req, res) => {
 
 // C
 
+app.get('/changepassword', (req, res) => {
+	try {
+		res.render("pages/changepassword", {
+			title: "Change Password"
+		})
+	} catch(err) {
+		logger.log("error", err.stack);
+	}
+});
+
+app.post("/changepassword", (req, res) => {
+	try {
+		if (req.body.newPassword != req.body.confirmPassword) {
+			res.render("pages/message", {
+				message: "Passwords do not match",
+				title: "Error"
+			});
+		} else {
+			passwordRequest(req.body.newPassword, req.body.username);
+			res.redirect("/login");
+		}
+	} catch(err) {
+		logger.log("error", err.stack);
+	};
+});
 
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
@@ -4175,6 +4209,22 @@ io.on('connection', async (socket) => {
 		catch (err) {
 			logger.log('error', err.stack);
 		}
+	})
+
+	socket.on("approvePasswordChange", (changeApproval, username, newPassword) => {
+		try {
+			if (changeApproval) {
+				let passwordCrypt = encrypt(newPassword);
+				let passwordCryptString = JSON.stringify(passwordCrypt);
+				db.run("UPDATE users SET password = ? WHERE username = ?", [passwordCryptString, username], (err) => {
+					if (err) {
+						logger.log("error", err.stack);
+					};
+				});
+			};
+		} catch(err) {
+			logger.log("error", err.stack);
+		};
 	})
 })
 

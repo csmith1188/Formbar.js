@@ -14,7 +14,8 @@
             <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
               autocomplete="off" pattern="[a-z0-9]+" required>
             <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password" value=""
-              pattern="[a-z0-9]+" required>
+              pattern="[a-z0-9A-Z!@#$%^&]+" required>
+            <p style="font-size:small;font-weight:bold" id="passwordInfo">*passwords may not contain *,(, or )</p>
             <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
             <input type="hidden" id="loginTypeBox" name="loginType" value="login">
             <input type="hidden" id="userTypeBox" name="userType" value="user">
@@ -34,6 +35,7 @@
         let gButton = document.getElementById("guestButton")
         let ub = document.getElementById("usernameBox")
         let pb = document.getElementById("passwordBox")
+        let pi = document.getElementById("passwordInfo");
         let fp = document.getElementById("forgotPassword")
         let ut = document.getElementById("loginTypeBox")
         let sb = document.getElementById("submitButton")
@@ -44,6 +46,7 @@
             case liButton:
               pb.classList.remove("hidden")
               pb.required = true
+              pi.classList.remove("hidden");
               fp.classList.remove("hidden")
               sb.value = "Log in"
               ut.value = "login"
@@ -51,6 +54,7 @@
             case naButton:
               pb.classList.remove("hidden")
               pb.required = true
+              pi.classList.remove("hidden");
               fp.classList.add("hidden")
               sb.value = "Create account"
               ut.value = "new"
@@ -59,6 +63,7 @@
               pb.value = null
               pb.classList.add("hidden")
               pb.required = false
+              pi.classList.add("hidden");
               fp.classList.add("hidden")
               sb.value = "Go"
               ut.value = "guest"
