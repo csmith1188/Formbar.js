@@ -47,6 +47,8 @@
 					</button>
 					<p><b id="totalUsers"></b></p>
 					<div id="users">
+						<p><b id="pollCounter"></b></p>
+						<p id="responsesCounter"></p>
 					</div>
 				</div>
 				<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
@@ -1559,9 +1561,46 @@
 				classCode.textContent = 'Class Code: ' + newRoom.key
 				buildPreviousPolls(newRoom.pollHistory)
 
+
 				document.getElementById('nextStep').onclick = () => {
 					doStep(allRoom.currentStep)
 				}
+
+				totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length - 1}`
+				pollCounter.innerText = `Poll Prompt:'${newRoom.poll.prompt}'`
+
+				let responseCount = 0;
+				for (let [key, value] of Object.entries(newRoom.students)) {
+					if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+						responseCount++;
+					}
+				}
+				const responsesCounter = document.getElementById('responsesCounter');
+				responsesCounter.innerText = `Total Responses: ${responseCount} out of ${Object.keys(newRoom.students).length - 1}`;
+
+
+				for (const username of Object.keys(newRoom.students)) {
+					let studentElement = document.getElementById(`student-${username}`)
+					let oldStudentData = null
+					let newStudentData = newRoom.students[username]
+
+					if (allRoom.students && allRoom.students[username])
+						oldStudentData = allRoom.students[username]
+
+					if (!studentElement) {
+						usersDiv.appendChild(buildStudent(newRoom, newStudentData))
+						continue
+					}
+					continue
+
+					if (isObjectEqual(oldStudentData, newStudentData)) {
+						continue
+					}
+
+					studentElement.replaceWith(buildStudent(newStudentData))
+				}
+
+
 				totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length - 1}`
 
 				for (const username of Object.keys(newRoom.students)) {
