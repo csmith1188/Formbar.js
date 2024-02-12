@@ -1023,13 +1023,12 @@
 			// filters and sorts students
 			function filterSortChange() {
 				let userOrder = Object.keys(allRoom.students)
-
 				for (let username of userOrder) {
 					document.getElementById(`student-${username}`).style.display = ''
 				}
 
 				// filter by help
-				for (let username of userOrder) {
+				for (let username of userOrder.slice()) {
 					let studentElement = document.getElementById(`student-${username}`);
 					if (
 						(filter.help == 1 && !allRoom.students[username].help) ||
@@ -1041,7 +1040,7 @@
 				}
 
 				// filter by break
-				for (let username of userOrder) {
+				for (let username of userOrder.slice()) {
 					let studentElement = document.getElementById(`student-${username}`);
 					if (
 						(filter.break == 1 && !allRoom.students[username].break) ||
@@ -1051,9 +1050,8 @@
 						userOrder.pop(username)
 					}
 				}
-
 				// filter by poll
-				for (let username of userOrder) {
+				for (let username of userOrder.slice()) {
 					let studentElement = document.getElementById(`student-${username}`);
 					if (
 						(filter.polls == 1 && (
@@ -1067,7 +1065,6 @@
 						userOrder.pop(username)
 					}
 				}
-
 				// sort by name
 				if (sort.name == 1) {
 					userOrder.students = userOrder.sort()
@@ -1151,8 +1148,7 @@
 			// sets filters
 			for (let filterElement of document.getElementsByClassName('filter')) {
 				filterElement.onclick = (event) => {
-					let filterElement = event.target
-
+					let filterElement = event.target;
 					filter[filterElement.id] += 1
 					if (filter[filterElement.id] > 2) {
 						filter[filterElement.id] = 0
@@ -1836,7 +1832,6 @@
 
 			var tagNames = "<%=tagNames%>";
 			tagNames = tagNames.split(",");
-			console.log(tagNames);
 			for (let i = 0; i < tagNames.length; i++) {
 				let checkbox = document.createElement('input');
 				checkbox.type = 'checkbox';
