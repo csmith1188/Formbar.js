@@ -45,6 +45,9 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
 						End Class
 					</button>
+					<!-- <br>
+					<button onclick="socket.emit('cpUpdate'), console.log('updated data');">Update Room Data</button>
+					<button onclick="console.log(rooms.students['notluke'].pollRes, rooms.students['isluke'].pollRes,'student response');">Room Data</button> -->
 					<p><b id="totalUsers"></b></p>
 					<div id="users">
 					</div>
@@ -753,7 +756,6 @@
 			var userBreak = []
 			var rooms;
 			function buildStudent(room, studentData) {
-				rooms = room
 				if (studentData.break === true) {
 					userBreak.push(studentData.username)
 				}
@@ -1553,9 +1555,10 @@
 					}
 				}
 			})
-
+			var rooms;
 			socket.emit('cpUpdate')
 			socket.on('cpUpdate', (newRoom) => {
+				rooms = newRoom
 				classCode.textContent = 'Class Code: ' + newRoom.key
 				buildPreviousPolls(newRoom.pollHistory)
 
