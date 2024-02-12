@@ -872,9 +872,9 @@
 					let permissionSwitch = document.createElement("select");
 					permissionSwitch.setAttribute("name", "permSwitch");
 					permissionSwitch.setAttribute("class", "permSwitch");
-					permissionSwitch.setAttribute("data-userid", studentData.id);
+					permissionSwitch.setAttribute("data-username", studentData.username);
 					permissionSwitch.onchange = (event) => {
-						socket.emit('classPermChange', event.target.dataset.userid, Number(event.target.value))
+						socket.emit('classPermChange', event.target.dataset.username, Number(event.target.value))
 					}
 
 					permissionSwitch.add(buildOption(

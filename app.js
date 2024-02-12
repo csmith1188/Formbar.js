@@ -2826,7 +2826,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-
+			
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
 			db.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
