@@ -2145,7 +2145,7 @@ io.on('connection', async (socket) => {
 			if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			console.log(totalStudentsArray + ' is the array of students that can respond to the poll');
-			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, 
+			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
 				polls: responses,
