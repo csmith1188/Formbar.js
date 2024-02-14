@@ -171,7 +171,6 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
 	newTag: TEACHER_PERMISSIONS,
-	passwordRequest: STUDENT_PERMISSIONS,
 	approvePasswordChange: MANAGER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS
 }
@@ -680,12 +679,14 @@ function permCheck(req, res, next) {
  * @param {string} api - The API identifier.
  * @param {string} [classCode='noClass'] - The class code to set.
  */
-async function setClassOfApiSockets(api, classCode) {
+async function setClassOfApiSockets(api, classCode = 'noClass') {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-	let sockets = await io.in(api).fetchSockets()
+	const sockets = await io.fetchSockets()
 
-	for (let socket of sockets) {
+	for (const socket of sockets) {
+		if (socket.request.session.api != api) continue
+
 		socket.leave(`class-${socket.request.session.class}`)
 
 		socket.request.session.class = classCode || 'noClass'
@@ -737,6 +738,7 @@ async function passwordRequest(newPassword, username) {
 		io.emit("passwordUpdate", passwordChange, username, newPassword);
 	};
 };
+
 /**
 	 * Emits an event to sockets based on user permissions
 	 * @param {string} event - The event to emit
@@ -752,6 +754,8 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 	for (let socket of sockets) {
 		let user = classData.students[socket.request.session.username]
 		let hasAPI = false
+
+		if (!user) continue
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
@@ -859,7 +863,7 @@ app.get('/changepassword', (req, res) => {
 		res.render("pages/changepassword", {
 			title: "Change Password"
 		})
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err.stack);
 	}
 });
@@ -875,7 +879,7 @@ app.post("/changepassword", (req, res) => {
 			passwordRequest(req.body.newPassword, req.body.username);
 			res.redirect("/login");
 		}
-	} catch(err) {
+	} catch (err) {
 		logger.log("error", err.stack);
 	};
 });
@@ -2482,9 +2486,11 @@ io.on('connection', async (socket) => {
 		};
 	}
 
-	function endClass(classCode) {
+	async function endClass(classCode) {
 		try {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
+
+			await advancedEmitToClass('endClassSound', classCode, { api: true })
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				classKickUser(username, classCode)
@@ -2815,7 +2821,10 @@ io.on('connection', async (socket) => {
 			cpUpdate()
 			vbUpdate()
 
-			advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
+			if (res == 'remove')
+				advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
+			else
+				advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -3563,7 +3572,7 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-	// Deletes a user from the class
+	// Kicks a user from the class
 	socket.on('classKickUser', (username) => {
 		try {
 			logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3571,6 +3580,7 @@ io.on('connection', async (socket) => {
 
 			const classCode = socket.request.session.class
 			classKickUser(username, classCode)
+			advancedEmitToClass('leaveSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3585,6 +3595,7 @@ io.on('connection', async (socket) => {
 
 			const classCode = socket.request.session.class
 			classKickStudents(classCode)
+			advancedEmitToClass('kickStudentsSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3600,6 +3611,7 @@ io.on('connection', async (socket) => {
 			const username = socket.request.session.username
 			const classCode = socket.request.session.class
 			classKickUser(username, classCode)
+			advancedEmitToClass('leaveSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 
@@ -3969,6 +3981,7 @@ io.on('connection', async (socket) => {
 						cD[socket.request.session.class].students[user].classPermissions = 0
 
 					classKickUser(user)
+					advancedEmitToClass('leaveSound', classCode, { api: true })
 					classBannedUsersUpdate()
 					cpUpdate()
 					socket.emit('message', `Banned ${user}`)
@@ -4316,7 +4329,7 @@ io.on('connection', async (socket) => {
 					};
 				});
 			};
-		} catch(err) {
+		} catch (err) {
 			logger.log("error", err.stack);
 		};
 	})
