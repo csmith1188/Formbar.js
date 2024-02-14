@@ -170,7 +170,10 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	changeIp: MANAGER_PERMISSIONS,
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
-	newTag: TEACHER_PERMISSIONS
+	newTag: TEACHER_PERMISSIONS,
+	passwordRequest: STUDENT_PERMISSIONS,
+	approvePasswordChange: MANAGER_PERMISSIONS,
+	passwordUpdate: MANAGER_PERMISSIONS
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -728,6 +731,12 @@ async function managerUpdate() {
 	io.emit('managerUpdate', users, classrooms)
 }
 
+async function passwordRequest(newPassword, username) {
+	if (newPassword && username) {
+		let passwordChange = true;
+		io.emit("passwordUpdate", passwordChange, username, newPassword);
+	};
+};
 /**
 	 * Emits an event to sockets based on user permissions
 	 * @param {string} event - The event to emit
@@ -845,6 +854,31 @@ app.get('/apikey', isLoggedIn, (req, res) => {
 
 // C
 
+app.get('/changepassword', (req, res) => {
+	try {
+		res.render("pages/changepassword", {
+			title: "Change Password"
+		})
+	} catch(err) {
+		logger.log("error", err.stack);
+	}
+});
+
+app.post("/changepassword", (req, res) => {
+	try {
+		if (req.body.newPassword != req.body.confirmPassword) {
+			res.render("pages/message", {
+				message: "Passwords do not match",
+				title: "Error"
+			});
+		} else {
+			passwordRequest(req.body.newPassword, req.body.username);
+			res.redirect("/login");
+		}
+	} catch(err) {
+		logger.log("error", err.stack);
+	};
+});
 
 // An endpoint for the teacher to control the formbar
 // Used to update students permissions, handle polls and their corresponsing responses
@@ -2792,7 +2826,6 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-
 			cD[socket.request.session.class].students[user].classPermissions = newPerm
 
 			db.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
@@ -4272,12 +4305,27 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-
-
-	
+	socket.on("approvePasswordChange", (changeApproval, username, newPassword) => {
+		try {
+			if (changeApproval) {
+				let passwordCrypt = encrypt(newPassword);
+				let passwordCryptString = JSON.stringify(passwordCrypt);
+				db.run("UPDATE users SET password = ? WHERE username = ?", [passwordCryptString, username], (err) => {
+					if (err) {
+						logger.log("error", err.stack);
+					};
+				});
+			};
+		} catch(err) {
+			logger.log("error", err.stack);
+		};
 	})
-	http.listen(420, async () => {
-		whitelistedIps = await getIpAccess('whitelist')
-		blacklistedIps = await getIpAccess('blacklist')
-		console.log('Running on port: 420')
-		logger.log('info', 'Start')})
+})
+
+
+http.listen(420, async () => {
+	whitelistedIps = await getIpAccess('whitelist')
+	blacklistedIps = await getIpAccess('blacklist')
+	console.log('Running on port: 420')
+	logger.log('info', 'Start')
+})
