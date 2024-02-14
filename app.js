@@ -301,7 +301,8 @@ class Classroom {
 			requiredTags: [],
 			studentBoxes: [],
 			studentIndeterminate: [],
-			lastResponse: []
+			lastResponse: [],
+			allowedResponses: []
 		}
 		this.key = key
 		this.lesson = {}
@@ -2080,6 +2081,7 @@ io.on('connection', async (socket) => {
 			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
 				totalStudents = totalLastResponses.length
+				totalStudentsIncluded = totalLastResponses
 				console.log("Last poll was checked");
 			}
 			else {
@@ -2203,6 +2205,7 @@ io.on('connection', async (socket) => {
 			}
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			console.log(totalStudentsIncluded + ' is the array of students that can respond to the poll');
+			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
@@ -2537,6 +2540,7 @@ io.on('connection', async (socket) => {
 			studentBoxes: [],
 			studentIndeterminate: [],
 			lastResponse: [],
+			allowedResponses: [],
 		};
 	}
 
