@@ -2051,9 +2051,13 @@ io.on('connection', async (socket) => {
 			let classData = structuredClone(cD[classCode])
 			let responses = {}
 
-			for (let [username, student] of Object.entries(classData.students)) {
-				if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
-			}
+			// for (let [username, student] of Object.entries(classData.students)) {
+			// 	if (
+			// 		student.break == true ||
+			// 		student.classPermissions <= STUDENT_PERMISSIONS ||
+			// 		student.classPermissions >= TEACHER_PERMISSIONS
+			// 	) delete classData.students[username]
+			// }
 
 			if (Object.keys(classData.poll.responses).length > 0) {
 				for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
@@ -2076,7 +2080,7 @@ io.on('connection', async (socket) => {
 
 
 			let totalStudents = 0;
-			let totalStudentsArray = []
+			let totalStudentsArray = Object.keys(classData.students)
 			let antitotalStudentArray = []
 			let totalLastResponses = classData.poll.lastResponse
 			if (totalLastResponses.length > 0) {
@@ -2086,11 +2090,20 @@ io.on('connection', async (socket) => {
 			else {
 				//console.log("ran else");
 				for (let student of Object.values(classData.students)) {
-					if (student.break == true) {
+					console.log('remove student from poll', student.username, student.break == true,
+						student.classPermissions <= GUEST_PERMISSIONS,
+						student.classPermissions >= TEACHER_PERMISSIONS, '=',
+						student.break == true ||
+						student.classPermissions <= GUEST_PERMISSIONS ||
+						student.classPermissions >= TEACHER_PERMISSIONS);
+					if (
+						student.break == true ||
+						student.classPermissions <= GUEST_PERMISSIONS ||
+						student.classPermissions >= TEACHER_PERMISSIONS
+					) {
 						antitotalStudentArray.push(student.username)
 						continue
-					}
-					else {
+					} else {
 						if (classData.poll.requiredTags.length > 0) {
 							if (classData.poll.requiredTags[0][0] == "0") {
 								if (classData.poll.requiredTags.slice(1).join() == student.tags) {
@@ -2133,20 +2146,26 @@ io.on('connection', async (socket) => {
 								}
 							}
 						}
-						for (eachAntiStudent of antitotalStudentArray) {
-							for (let studentName of totalStudentsArray) {
-								if (studentName == eachAntiStudent) {
-									totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
-								}
-							}
-						}
+
 					}
-					totalStudents = totalStudentsArray.length
+
 					//console.log(classData.poll.studentBoxes, classData.poll.requiredTags, classData.poll.studentIndeterminate, classData.poll.lastResponse);
 				}
 			}
+			for (eachAntiStudent of antitotalStudentArray) {
+				// for (let studentName of totalStudentsArray) {
+				// 	if (studentName == eachAntiStudent) {
+				totalStudentsArray.splice(totalStudentsArray.indexOf(eachAntiStudent), 1)
+				// 	}
+				// }
+			}
+
 			totalStudents = totalStudentsArray.length
-			if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
+
+			console.log('antitotalStudentArray', antitotalStudentArray);
+			console.log('totalStudentsArray', totalStudentsArray);
+
+			totalStudents = totalStudentsArray.length
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			console.log(totalStudentsArray + ' is the array of students that can respond to the poll');
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {

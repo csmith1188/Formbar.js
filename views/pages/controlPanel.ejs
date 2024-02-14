@@ -489,28 +489,28 @@
 				}
 			}
 
-			function responseAmountChange() {
+			function responseAmountChange(amount = resNumber.value) {
 				if (resTextBox.checked) {
-					if (resNumber.value < 0) resNumber.value = 0
+					if (amount < 0) amount = 0
 				}
 				else {
-					if (resNumber.value < 1) resNumber.value = 1
+					if (amount < 1) amount = 1
 				}
-				if (resNumber.value > 26) resNumber.value = 26
+				if (amount > 26) amount = 26
 
-				generatedColors = generateColors(resNumber.value)
-				if (pollResponses.length > resNumber.value) {
+				generatedColors = generateColors(amount)
+				if (pollResponses.length > amount) {
 
 					let responseDivs = document.getElementsByClassName('response')
-					for (let i = resNumber.value; i < pollResponses.length; i++) {
+					for (let i = amount; i < pollResponses.length; i++) {
 						document.getElementById(`response${i}`).remove()
 					}
 
-					pollResponses.splice(resNumber.value)
-					colorPickers.splice(resNumber.value)
+					pollResponses.splice(amount)
+					colorPickers.splice(amount)
 				}
 
-				for (let i = pollResponses.length; i < resNumber.value; i++) {
+				for (let i = pollResponses.length; i < amount; i++) {
 					pollResponses.push({
 						answer: '',
 						defaultAnswer: letterString[i],
@@ -1331,6 +1331,7 @@
 				resTextBox.checked = customPoll.textRes
 
 				responseAmountChange(customPoll.answers.length)
+				resNumber.value = customPoll.answers.length
 
 				let answerInputs = document.getElementsByClassName('answerName')
 				for (let pollIndex = 0; pollIndex < customPoll.answers.length; pollIndex++) {
