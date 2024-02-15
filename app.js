@@ -300,7 +300,8 @@ class Classroom {
 			requiredTags: [],
 			studentBoxes: [],
 			studentIndeterminate: [],
-			lastResponse: []
+			lastResponse: [],
+			allowedResponses: []
 		}
 		this.key = key
 		this.lesson = {}
@@ -2082,92 +2083,139 @@ io.on('connection', async (socket) => {
 			let totalStudents = 0;
 			let totalStudentsArray = Object.keys(classData.students)
 			let antitotalStudentArray = []
+			let totalStudentsIncluded = []
+			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
+
+			console.log("Starting to check if students are included or excluded");
+			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
-				totalStudentsArray = totalLastResponses
-				//console.log("ran if", totalStudentsArray);
+				totalStudents = totalLastResponses.length
+				totalStudentsIncluded = totalLastResponses
+				console.log("Last poll was checked");
 			}
 			else {
-				//console.log("ran else");
 				for (let student of Object.values(classData.students)) {
-					console.log('remove student from poll', student.username, student.break == true,
-						student.classPermissions <= GUEST_PERMISSIONS,
-						student.classPermissions >= TEACHER_PERMISSIONS, '=',
-						student.break == true ||
-						student.classPermissions <= GUEST_PERMISSIONS ||
-						student.classPermissions >= TEACHER_PERMISSIONS);
-					if (
-						student.break == true ||
-						student.classPermissions <= GUEST_PERMISSIONS ||
-						student.classPermissions >= TEACHER_PERMISSIONS
-					) {
-						antitotalStudentArray.push(student.username)
-						continue
-					} else {
-						if (classData.poll.requiredTags.length > 0) {
-							if (classData.poll.requiredTags[0][0] == "0") {
-								if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-									totalStudentsArray.push(student.username)
-								}
-								else antitotalStudentArray.push(student.username)
+					//Check if the student passes the tags test
+					if (classData.poll.requiredTags.length > 0) {
+						if (classData.poll.requiredTags[0][0] == "0") {
+							if (classData.poll.requiredTags.slice(1).join() == student.tags) {
+								totalStudentsIncluded.push(student.username)
+								console.log(student.username + ' was included because of exact same tags');
 							}
-							else if (classData.poll.requiredTags[0][0] == "1") {
-								let correctTags = 0
-								let requiredCorrectTags = classData.poll.requiredTags.length - 1;
-								for (let i = 0; i < classData.poll.requiredTags.length; i++) {
-									for (let u = 0; u < student.tags.split(",").length; u++) {
-										if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
-											correctTags++;
-										}
-									}
-								}
-								if (correctTags == requiredCorrectTags) {
-									totalStudentsArray.push(student.username)
-								}
-								else antitotalStudentArray.push(student.username)
+							else {
+								totalStudentsExcluded.push(student.username)
+								console.log(student.username + ' was excluded because of different tags');
 							}
 						}
-						if (classData.poll.studentBoxes.length > 0) {
-							for (let studentName of classData.poll.studentBoxes) {
-								if (studentName == student.username) {
-									totalStudentsArray.push(student.username)
-								}
-							}
-						}
-						if (classData.poll.studentIndeterminate.length > 0) {
-							if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
-							for (let studentName of classData.poll.studentIndeterminate) {
-								if (studentName == student.username) {
-									for (let studentName of totalStudentsArray) {
-										if (studentName == student.username) {
-											totalStudentsArray.splice(totalStudentsArray.indexOf(studentName), 1)
-										}
+						else if (classData.poll.requiredTags[0][0] == "1") {
+							let correctTags = 0
+							let requiredCorrectTags = classData.poll.requiredTags.length - 1;
+							for (let i = 0; i < classData.poll.requiredTags.length; i++) {
+								for (let u = 0; u < student.tags.split(",").length; u++) {
+									if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
+										correctTags++;
 									}
 								}
 							}
+							if (correctTags == requiredCorrectTags) {
+								totalStudentsIncluded.push(student.username)
+								console.log(student.username + ' was included because of having the tags');
+							}
+							else {
+								totalStudentsExcluded.push(student.username)
+								console.log(student.username + ' was excluded because of not having the tags');
+							}
 						}
-
+					}
+					//Check if the student's checkbox was checked
+					var studentBoxWasTrue = false
+					if (classData.poll.studentBoxes.length > 0) {
+						for (let studentName of classData.poll.studentBoxes) {
+							if (studentName == student.username) {
+								totalStudentsIncluded.push(student.username)
+								console.log(student.username + ' was included because of being checked');
+								studentBoxWasTrue = true
+							}
+						}
+						if (studentBoxWasTrue != true) {
+							totalStudentsExcluded.push(student.username)
+							console.log(student.username + ' was excluded because of not being checked');
+						}
 					}
 
-					//console.log(classData.poll.studentBoxes, classData.poll.requiredTags, classData.poll.studentIndeterminate, classData.poll.lastResponse);
+
+
+
+					//Now check if they should be in the excluded array
+					if (student.break == true) {
+						totalStudentsExcluded.push(student.username)
+						console.log(student.username + ' was excluded because of being on break');
+					}
+
+					if (classData.poll.studentIndeterminate.length > 0) {
+						if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
+						for (let studentName of classData.poll.studentIndeterminate) {
+							if (studentName == student.username) {
+								for (let studentName of totalStudentsIncluded) {
+									if (studentName == student.username) {
+										totalStudentsIncluded.splice(totalStudentsIncluded.indexOf(studentName), 1)
+									}
+								}
+							}
+						}
+					}
+
+
+					//Get rid of duplicates in each arrays
+					totalStudentsIncluded = totalStudentsIncluded.sort()
+					totalStudentsExcluded = totalStudentsExcluded.sort()
+					let tempIncluded = totalStudentsIncluded.slice()
+					let tempExcluded = totalStudentsExcluded.slice()
+					for (let i = 0; i < tempIncluded.length; i++) {
+						if (tempIncluded[i] == tempIncluded[i + 1]) {
+							tempIncluded.splice(i, 1)
+							i--
+						}
+					}
+					for (let i = 0; i < tempExcluded.length; i++) {
+						if (tempExcluded[i] == tempExcluded[i + 1]) {
+							tempExcluded.splice(i, 1)
+							i--
+						}
+					}
+					totalStudentsIncluded = tempIncluded
+					totalStudentsExcluded = tempExcluded
+					for (let i = 0; i < totalStudentsIncluded.length; i++) {
+						for (let u = 0; u < totalStudentsExcluded.length; u++) {
+							if (totalStudentsIncluded[i] == totalStudentsExcluded[u]) {
+								totalStudentsIncluded.splice(i, 1)
+								totalStudentsExcluded.splice(u, 1)
+								i--
+								u--
+							}
+						}
+					}
+					console.log("Array of those who passed in a perm check", totalStudentsIncluded);
+					console.log("Array of those who failed in a perm check", totalStudentsExcluded);
 				}
 			}
-			for (eachAntiStudent of antitotalStudentArray) {
-				// for (let studentName of totalStudentsArray) {
-				// 	if (studentName == eachAntiStudent) {
-				totalStudentsArray.splice(totalStudentsArray.indexOf(eachAntiStudent), 1)
-				// 	}
-				// }
+
+
+
+
+
+
+
+
+			totalStudents = totalStudentsIncluded.length
+			if (totalStudents == 0) {
+				totalStudents = Object.keys(classData.students).length
+				console.log("Either no permissions were checked, or no one passed the perm check and all are allowed to respond");
 			}
-
-			totalStudents = totalStudentsArray.length
-
-			console.log('antitotalStudentArray', antitotalStudentArray);
-			console.log('totalStudentsArray', totalStudentsArray);
-
-			totalStudents = totalStudentsArray.length
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
-			console.log(totalStudentsArray + ' is the array of students that can respond to the poll');
+			console.log(totalStudentsIncluded + ' is the array of students that can respond to the poll');
+			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
@@ -2502,6 +2550,7 @@ io.on('connection', async (socket) => {
 			studentBoxes: [],
 			studentIndeterminate: [],
 			lastResponse: [],
+			allowedResponses: [],
 		};
 	}
 
