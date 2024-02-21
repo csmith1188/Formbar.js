@@ -9,7 +9,13 @@ function buildOption(value, text, selected = false) {
 }
 var userBreak = []
 var rooms;
+
 function buildStudent(room, studentData) {
+    console.log(
+        'studentData', studentData,
+        'currentUser', currentUser
+    );
+
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
         let studentElement = document.createElement("summary");

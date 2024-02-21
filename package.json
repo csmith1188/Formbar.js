@@ -20,7 +20,8 @@
 	"nodemonConfig": {
 		"ignore": [
 			"settings.json",
-			"logNumbers.json"
+			"logNumbers.json",
+			"static/**"
 		]
 	},
 	"dependencies": {

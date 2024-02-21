@@ -2551,7 +2551,7 @@ io.on('connection', async (socket) => {
 		};
 	}
 
-	function endClass(classCode) {
+	async function endClass(classCode) {
 		try {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
 
