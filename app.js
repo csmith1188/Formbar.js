@@ -171,6 +171,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
 	newTag: TEACHER_PERMISSIONS,
+	passwordRequest: STUDENT_PERMISSIONS,
 	approvePasswordChange: MANAGER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS
 }
@@ -680,14 +681,12 @@ function permCheck(req, res, next) {
  * @param {string} api - The API identifier.
  * @param {string} [classCode='noClass'] - The class code to set.
  */
-async function setClassOfApiSockets(api, classCode = 'noClass') {
+async function setClassOfApiSockets(api, classCode) {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-	const sockets = await io.fetchSockets()
+	let sockets = await io.in(api).fetchSockets()
 
-	for (const socket of sockets) {
-		if (socket.request.session.api != api) continue
-
+	for (let socket of sockets) {
 		socket.leave(`class-${socket.request.session.class}`)
 
 		socket.request.session.class = classCode || 'noClass'
@@ -2081,8 +2080,6 @@ io.on('connection', async (socket) => {
 
 
 			let totalStudents = 0;
-			let totalStudentsArray = Object.keys(classData.students)
-			let antitotalStudentArray = []
 			let totalStudentsIncluded = []
 			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
@@ -2554,7 +2551,7 @@ io.on('connection', async (socket) => {
 		};
 	}
 
-	async function endClass(classCode) {
+	function endClass(classCode) {
 		try {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
 
