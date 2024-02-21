@@ -738,6 +738,7 @@ async function passwordRequest(newPassword, username) {
 		io.emit("passwordUpdate", passwordChange, username, newPassword);
 	};
 };
+
 /**
 	 * Emits an event to sockets based on user permissions
 	 * @param {string} event - The event to emit
@@ -753,6 +754,8 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 	for (let socket of sockets) {
 		let user = classData.students[socket.request.session.username]
 		let hasAPI = false
+
+		if (!user) continue
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
@@ -2048,9 +2051,13 @@ io.on('connection', async (socket) => {
 			let classData = structuredClone(cD[classCode])
 			let responses = {}
 
-			for (let [username, student] of Object.entries(classData.students)) {
-				if (student.break == true || student.classPermissions >= TEACHER_PERMISSIONS) delete classData.students[username]
-			}
+			// for (let [username, student] of Object.entries(classData.students)) {
+			// 	if (
+			// 		student.break == true ||
+			// 		student.classPermissions <= STUDENT_PERMISSIONS ||
+			// 		student.classPermissions >= TEACHER_PERMISSIONS
+			// 	) delete classData.students[username]
+			// }
 
 			if (Object.keys(classData.poll.responses).length > 0) {
 				for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
@@ -2544,9 +2551,11 @@ io.on('connection', async (socket) => {
 		};
 	}
 
-	function endClass(classCode) {
+	async function endClass(classCode) {
 		try {
 			logger.log('info', `[endClass] classCode=(${classCode})`)
+
+			await advancedEmitToClass('endClassSound', classCode, { api: true })
 
 			for (let username of Object.keys(cD[classCode].students)) {
 				classKickUser(username, classCode)
@@ -2877,7 +2886,10 @@ io.on('connection', async (socket) => {
 			cpUpdate()
 			vbUpdate()
 
-			advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
+			if (res == 'remove')
+				advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
+			else
+				advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -3625,7 +3637,7 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-	// Deletes a user from the class
+	// Kicks a user from the class
 	socket.on('classKickUser', (username) => {
 		try {
 			logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -3633,6 +3645,7 @@ io.on('connection', async (socket) => {
 
 			const classCode = socket.request.session.class
 			classKickUser(username, classCode)
+			advancedEmitToClass('leaveSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3647,6 +3660,7 @@ io.on('connection', async (socket) => {
 
 			const classCode = socket.request.session.class
 			classKickStudents(classCode)
+			advancedEmitToClass('kickStudentsSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 		} catch (err) {
@@ -3662,6 +3676,7 @@ io.on('connection', async (socket) => {
 			const username = socket.request.session.username
 			const classCode = socket.request.session.class
 			classKickUser(username, classCode)
+			advancedEmitToClass('leaveSound', classCode, { api: true })
 			cpUpdate(classCode)
 			vbUpdate(classCode)
 
@@ -4031,6 +4046,7 @@ io.on('connection', async (socket) => {
 						cD[socket.request.session.class].students[user].classPermissions = 0
 
 					classKickUser(user)
+					advancedEmitToClass('leaveSound', classCode, { api: true })
 					classBannedUsersUpdate()
 					cpUpdate()
 					socket.emit('message', `Banned ${user}`)

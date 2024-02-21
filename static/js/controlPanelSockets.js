@@ -4,7 +4,6 @@ socket.on('cpUpdate', (newRoom) => {
     classCode.textContent = 'Class Code: ' + newRoom.key
     buildPreviousPolls(newRoom.pollHistory)
 
-
     document.getElementById('nextStep').onclick = () => {
         doStep(allRoom.currentStep)
     }
@@ -18,9 +17,9 @@ socket.on('cpUpdate', (newRoom) => {
             responseCount++;
         }
     }
+
     const responsesCounter = document.getElementById('responsesCounter');
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${Object.keys(newRoom.students).length - 1}`;
-
 
     for (const username of Object.keys(newRoom.students)) {
         let studentElement = document.getElementById(`student-${username}`)
@@ -34,13 +33,12 @@ socket.on('cpUpdate', (newRoom) => {
             usersDiv.appendChild(buildStudent(newRoom, newStudentData))
             continue
         }
-        continue
 
         if (isObjectEqual(oldStudentData, newStudentData)) {
             continue
         }
 
-        studentElement.replaceWith(buildStudent(newStudentData))
+        studentElement.replaceWith(buildStudent(newRoom, newStudentData))
     }
 
 
