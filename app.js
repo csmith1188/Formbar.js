@@ -2764,6 +2764,7 @@ io.on('connection', async (socket) => {
 
 			if (userRequests[event].length >= limit) {
 				socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
+				next(new Error('Rate limited'))
 				setTimeout(() => {
 					try {
 						userRequests[event].shift()
@@ -2835,6 +2836,16 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
+			if (
+				cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes != res ||
+				cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes != textRes
+			) {
+				if (res == 'remove')
+					advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
+				else
+					advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
+			}
+
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
 
@@ -2868,11 +2879,6 @@ io.on('connection', async (socket) => {
 
 			cpUpdate()
 			vbUpdate()
-
-			if (res == 'remove')
-				advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
-			else
-				advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -3553,13 +3559,17 @@ io.on('connection', async (socket) => {
 
 			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
-			cD[socket.request.session.class].students[socket.request.session.username].help = { reason: reason, time: time }
+			let student = cD[socket.request.session.class].students[socket.request.session.username]
 
-			logger.log('verbose', `[help] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			if (student.help.reason != reason) {
+				advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
+			}
+
+			student.help = { reason: reason, time: time }
+
+			logger.log('verbose', `[help] user=(${JSON.stringify(student)}`)
 
 			cpUpdate()
-
-			advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -3572,13 +3582,15 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[requestBreak] reason=(${reason})`)
 
 			let student = cD[socket.request.session.class].students[socket.request.session.username]
+
+			if (!student.break != reason)
+				advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
+
 			student.break = reason
 
 			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
-
-			advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
 		} catch (err) {
 			logger.log('error', err.stack)
 		}
