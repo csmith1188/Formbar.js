@@ -41,29 +41,7 @@ socket.on('cpUpdate', (newRoom) => {
         studentElement.replaceWith(buildStudent(newRoom, newStudentData))
     }
 
-
     totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length - 1}`
-
-    for (const username of Object.keys(newRoom.students)) {
-        let studentElement = document.getElementById(`student-${username}`)
-        let oldStudentData = null
-        let newStudentData = newRoom.students[username]
-
-        if (allRoom.students && allRoom.students[username])
-            oldStudentData = allRoom.students[username]
-
-        if (!studentElement) {
-            usersDiv.appendChild(buildStudent(newRoom, newStudentData))
-            continue
-        }
-        continue
-
-        if (isObjectEqual(oldStudentData, newStudentData)) {
-            continue
-        }
-
-        studentElement.replaceWith(buildStudent(newStudentData))
-    }
 
     for (let studentElement of document.getElementsByClassName('student')) {
         if (!newRoom.students[studentElement.id.replace('student-', '')]) {
