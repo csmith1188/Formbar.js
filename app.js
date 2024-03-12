@@ -57,27 +57,42 @@ let settings = JSON.parse(fs.readFileSync("settings.json"))
 // Establishes the connection to the database file
 let db = new sqlite3.Database('database/database.db')
 
+/**
+ * Creates a new logger transport with a daily rotation.
+ *
+ * @param {string} level - The level of logs to record.
+ * @returns {winston.transports.DailyRotateFile} The created transport.
+ */
 function createLoggerTransport(level) {
+	// Create a new daily rotate file transport for Winston
 	let transport = new winston.transports.DailyRotateFile({
-		filename: `logs/application-${level}-%DATE%.log`,
-		datePattern: "YYYY-MM-DD-HH",
-		maxFiles: "30d",
-		level: level
+		filename: `logs/application-${level}-%DATE%.log`, // The filename pattern to use
+		datePattern: "YYYY-MM-DD-HH", // The date pattern to use in the filename
+		maxFiles: "30d", // The maximum number of log files to keep
+		level: level // The level of logs to record
 	});
 
+	// When the log file is rotated
 	transport.on("rotate", function (oldFilename, newFilename) {
+		// Reset the error log count
 		logNumbers.error = 0;
+		// Convert the log numbers to a string
 		logNumbersString = JSON.stringify(logNumbers);
+		// Write the log numbers to a file
 		fs.writeFileSync("logNumbers.json", logNumbersString);
+		// Delete the old log file
 		fs.unlink(oldFilename, (err) => {
 			if (err) {
+				// If an error occurred, log it
 				logger.log('error', err.stack);
 			} else {
+				// Otherwise, log that the file was deleted
 				console.log("Log file deleted");
 			};
 		});
 	});
 
+	// Return the created transport
 	return transport;
 };
 
