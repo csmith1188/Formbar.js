@@ -2092,109 +2092,62 @@ io.on('connection', async (socket) => {
 			}
 			else {
 				for (let student of Object.values(classData.students)) {
-					//Check if the student passes the tags test
+					if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS) continue;
+					let included = false;
+					let excluded = false;
+					// Check if the student passes the tags test
 					if (classData.poll.requiredTags.length > 0) {
+						let studentTags = student.tags.split(",");
 						if (classData.poll.requiredTags[0][0] == "0") {
 							if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-								totalStudentsIncluded.push(student.username)
-								console.log(student.username + ' was included because of exact same tags');
+								included = true;
+								console.log(`${student.username} was included because of exact same tags`);
+							} else {
+								excluded = true;
+								console.log(`${student.username} was excluded because of different tags`);
 							}
-							else {
-								totalStudentsExcluded.push(student.username)
-								console.log(student.username + ' was excluded because of different tags');
-							}
-						}
-						else if (classData.poll.requiredTags[0][0] == "1") {
-							let correctTags = 0
-							let requiredCorrectTags = classData.poll.requiredTags.length - 1;
-							for (let i = 0; i < classData.poll.requiredTags.length; i++) {
-								for (let u = 0; u < student.tags.split(",").length; u++) {
-									if (classData.poll.requiredTags[i] == student.tags.split(",")[u]) {
-										correctTags++;
-									}
-								}
-							}
-							if (correctTags == requiredCorrectTags) {
-								totalStudentsIncluded.push(student.username)
-								console.log(student.username + ' was included because of having the tags');
-							}
-							else {
-								totalStudentsExcluded.push(student.username)
-								console.log(student.username + ' was excluded because of not having the tags');
-							}
-						}
-					}
-					//Check if the student's checkbox was checked
-					var studentBoxWasTrue = false
-					if (classData.poll.studentBoxes.length > 0) {
-						for (let studentName of classData.poll.studentBoxes) {
-							if (studentName == student.username) {
-								totalStudentsIncluded.push(student.username)
-								console.log(student.username + ' was included because of being checked');
-								studentBoxWasTrue = true
-							}
-						}
-						if (studentBoxWasTrue != true) {
-							totalStudentsExcluded.push(student.username)
-							console.log(student.username + ' was excluded because of not being checked');
-						}
-					}
-
-
-
-
-					//Now check if they should be in the excluded array
-					if (student.break == true) {
-						totalStudentsExcluded.push(student.username)
-						console.log(student.username + ' was excluded because of being on break');
-					}
-
-					if (classData.poll.studentIndeterminate.length > 0) {
-						if (totalStudents == 0) totalStudents = Object.keys(classData.students).length
-						for (let studentName of classData.poll.studentIndeterminate) {
-							if (studentName == student.username) {
-								for (let studentName of totalStudentsIncluded) {
-									if (studentName == student.username) {
-										totalStudentsIncluded.splice(totalStudentsIncluded.indexOf(studentName), 1)
-									}
-								}
+						} else if (classData.poll.requiredTags[0][0] == "1") {
+							let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
+							if (correctTags == classData.poll.requiredTags.length - 1) {
+								included = true;
+								console.log(`${student.username} was included because of having the tags`);
+							} else {
+								excluded = true;
+								console.log(`${student.username} was excluded because of not having the tags`);
 							}
 						}
 					}
 
+					// Check if the student's checkbox was checked
+					if (classData.poll.studentBoxes.includes(student.username)) {
+						included = true;
+						console.log(`${student.username} was included because of being checked`);
+					} else if (classData.poll.studentBoxes.length > 0) {
+						excluded = true;
+						console.log(`${student.username} was excluded because of not being checked`);
+					}
 
-					//Get rid of duplicates in each arrays
-					totalStudentsIncluded = totalStudentsIncluded.sort()
-					totalStudentsExcluded = totalStudentsExcluded.sort()
-					let tempIncluded = totalStudentsIncluded.slice()
-					let tempExcluded = totalStudentsExcluded.slice()
-					for (let i = 0; i < tempIncluded.length; i++) {
-						if (tempIncluded[i] == tempIncluded[i + 1]) {
-							tempIncluded.splice(i, 1)
-							i--
-						}
+					// Check if they should be in the excluded array
+					if (student.break) {
+						excluded = true;
+						console.log(`${student.username} was excluded because of being on break`);
 					}
-					for (let i = 0; i < tempExcluded.length; i++) {
-						if (tempExcluded[i] == tempExcluded[i + 1]) {
-							tempExcluded.splice(i, 1)
-							i--
-						}
+
+					if (classData.poll.studentIndeterminate.includes(student.username)) {
+						excluded = true;
+						console.log(`${student.username} was excluded because of being indeterminate`);
 					}
-					totalStudentsIncluded = tempIncluded
-					totalStudentsExcluded = tempExcluded
-					for (let i = 0; i < totalStudentsIncluded.length; i++) {
-						for (let u = 0; u < totalStudentsExcluded.length; u++) {
-							if (totalStudentsIncluded[i] == totalStudentsExcluded[u]) {
-								totalStudentsIncluded.splice(i, 1)
-								totalStudentsExcluded.splice(u, 1)
-								i--
-								u--
-							}
-						}
-					}
-					console.log("Array of those who passed in a perm check", totalStudentsIncluded);
-					console.log("Array of those who failed in a perm check", totalStudentsExcluded);
+
+					// Update the included and excluded lists
+					if (excluded) totalStudentsExcluded.push(student.username);
+					if (included) totalStudentsIncluded.push(student.username);
 				}
+				totalStudentsIncluded = new Set(totalStudentsIncluded)
+				totalStudentsIncluded = Array.from(totalStudentsIncluded)
+				totalStudentsExcluded = new Set(totalStudentsExcluded)
+				totalStudentsExcluded = Array.from(totalStudentsExcluded)
+				console.log("Array of those who passed in a perm check", totalStudentsIncluded);
+				console.log("Array of those who failed in a perm check", totalStudentsExcluded);
 			}
 
 
@@ -2205,13 +2158,19 @@ io.on('connection', async (socket) => {
 
 
 			totalStudents = totalStudentsIncluded.length
-			if (totalStudents == 0) {
+			if (totalStudents == 0 && totalStudentsExcluded.length != 0) {
+				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
+				totalStudents = Object.keys(classData.students).length - totalStudentsExcluded.length
+				console.log("Only those who failed the perm check are not allowed to respond to the poll");
+			}
+			else if (totalStudents == 0) {
 				totalStudents = Object.keys(classData.students).length
 				console.log("Either no permissions were checked, or no one passed the perm check and all are allowed to respond");
 			}
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			console.log(totalStudentsIncluded + ' is the array of students that can respond to the poll');
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
+			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
