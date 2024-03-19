@@ -25,19 +25,43 @@
 				</header>
 
 				<p id="classCode">Class Code:</p>
-				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+				<p><b id="totalUsers"></b></p>
+				<div id="vbContainer">
+					<canvas id='vbar'></canvas>
+				</div>
+				<div id="usersMenu" class="tabContent controlPanel default" data-tab-group="mainTabs">
 					<div id="userFilterBoxes" class="options">
 						<h2 class="headerText">Filter</h2>
-						<button type="button" id="help" class="filter">Help tickets</button>
-						<button type="button" id="break" class="filter">Break</button>
-						<button type="button" id="polls" class="filter">Polls</button>
+						<div>
+							<button type="button" id="help" class="filter">Help tickets</button>
+							<button type="button" id="break" class="filter">Break</button>
+							<button type="button" id="polls" class="filter">Polls</button>
+						</div>
 					</div>
 					<div id="userSortBoxes" class="options">
 						<h2 class="headerText">Sort</h2>
-						<button type="button" id="name" class="sort">Name</button>
-						<button type="button" id="polls" class="sort">Polls</button>
-						<button type="button" id="helpTime" class="sort">Help Time</button>
-						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+						<div>
+							<button type="button" id="name" class="sort">Name</button>
+							<button type="button" id="polls" class="sort">Polls</button>
+							<button type="button" id="helpTime" class="sort">Help Time</button>
+							<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+						</div>
+					</div>
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Select</h2>
+						<div>
+							<button type="button">nothin</button>
+							<button type="button">nothin</button>
+							<button type="button">nothin</button>
+						</div>
+					</div>
+					<div id="userSortBoxes" class="options">
+						<h2 class="headerText">Fast Poll</h2>
+						<div>
+							<button type="button">nothin</button>
+							<button type="button">nothin</button>
+							<button type="button">nothin</button>
+						</div>
 					</div>
 					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
 						Kick All Students
@@ -48,7 +72,6 @@
 					<!-- <br>
 					<button onclick="socket.emit('cpUpdate'), console.log('updated data');">Update Room Data</button>
 					<button onclick="console.log(rooms.students['notluke'].pollRes, rooms.students['isluke'].pollRes,'student response');">Room Data</button> -->
-					<p><b id="totalUsers"></b></p>
 					<div id="users">
 						<p><b id="pollCounter"></b></p>
 						<p id="responsesCounter"></p>
@@ -297,6 +320,38 @@
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
 			var rooms;
+
+			let canvas = document.getElementById('vbar')
+			let ctx = canvas.getContext('2d')
+
+			canvas.width = 200;
+			canvas.height = 200;
+
+			ctx.beginPath();
+			ctx.arc(100, 100, 80, 0, Math.PI * 2, false); // face
+			ctx.fillStyle = "yellow";
+			ctx.fill();
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = "black";
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.arc(75, 80, 10, 0, Math.PI * 2, false); // left eye
+			ctx.fillStyle = "black";
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.arc(125, 80, 10, 0, Math.PI * 2, false); // right eye
+			ctx.fillStyle = "black";
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.arc(100, 110, 40, 0, Math.PI, false); // mouth
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = "black";
+			ctx.stroke();
+
+
 
 		</script>
 		<script src="/js/controlPanelPolls.js"></script>

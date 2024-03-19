@@ -444,6 +444,49 @@ input[type="radio"]:focus {
 	font-size: 16px;
 }
 
+
+
+
+
+#usersMenu.controlPanel .options,
+#usersMenu .quickButton {
+	display: flex;
+	justify-content: start;
+	padding: .3vi;
+	padding-left: 16px;
+	background-color: var(--bg-light-blue);
+	border: 3px var(--theme-color) solid;
+	border-radius: 10px;
+	margin-left: 45%;
+}
+
+#vbContainer,
+#usersMenu.controlPanel .quickButton {
+	position: fixed;
+	background-color: var(--bg-light-blue);
+	width: 40vi;
+	height: 40vi;
+}
+#vbContainer #vbar,
+#usersMenu.controlPanel .quickButton {
+	width: 100%;
+	height: 100%;
+}
+
+#usersMenu.controlPanel .options div{
+	display: flex;
+	position: fixed;
+	justify-content: space-evenly;
+	width: 80%;
+	padding-left: 16px;
+}
+
+
+
+
+
+
+
 #users {
 	display: flex;
 	flex-direction: column;
