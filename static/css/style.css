@@ -440,51 +440,72 @@ input[type="radio"]:focus {
 }
 
 #usersMenu button,
-#usersMenu .quickButton {
+#usersMenu .quickbutton {
 	font-size: 16px;
 }
 
+#usersMenu #users {
+	display: grid;
+	width: 100%;
+	gap: 1rem;
+	grid-template-columns: auto auto;
+}
 
+#usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
+	border: 3px var(--theme-color) solid;
+	background-color: var(--bg-light-blue);
+	border-radius: 10px;
+	margin-bottom: 1vi;
+	height: fit-content;
+}
 
+#usersMenu #users details[id^="student"] summary {
+	cursor: pointer;
+}
 
+#usersMenu #users details[id^="student"][open] summary {
+	border-bottom: 3px var(--theme-color) solid;
+}
 
-#usersMenu.controlPanel .options,
-#usersMenu .quickButton {
+#usersMenu #users div[id^="student"] p {
+	margin: 0;
+}
+
+#usersMenu div .options {
 	display: flex;
 	justify-content: start;
 	padding: .3vi;
 	padding-left: 16px;
-	background-color: var(--bg-light-blue);
 	border: 3px var(--theme-color) solid;
 	border-radius: 10px;
 	margin-left: 45%;
 }
 
-#vbContainer,
-#usersMenu.controlPanel .quickButton {
-	position: fixed;
-	background-color: var(--bg-light-blue);
-	width: 40vi;
-	height: 40vi;
-}
-#vbContainer #vbar,
-#usersMenu.controlPanel .quickButton {
-	width: 100%;
-	height: 100%;
-}
-
-#usersMenu.controlPanel .options div{
+#usersMenu .options div {
 	display: flex;
-	position: fixed;
 	justify-content: space-evenly;
+	font-size: 5vi;
 	width: 80%;
 	padding-left: 16px;
 }
 
+#usersMenu #vbContainer {
+	position: absolute;
+	width: 25vi;
+	height: 25vi;
+	margin-left: 10vi;
+}
 
+#usersMenu #vbContainer p {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 0;
+}
 
-
-
+#usersMenu #vbContainer #vbar {
+	width: 100%;
+	height: 100%;
+}
 
 
 #users {
