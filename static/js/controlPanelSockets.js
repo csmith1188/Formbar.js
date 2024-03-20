@@ -98,7 +98,7 @@ socket.on('cpUpdate', (newRoom) => {
         startPollForm.style.display = 'none'
         endPoll.style.display = 'block'
     } else {
-        responsesDiv.style.display = ''
+        if (Object.keys(allRoom.poll.responses).length > 0) responsesDiv.style.display = ''
         startPollForm.style.display = ''
         endPoll.style.display = 'none'
     }
