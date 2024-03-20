@@ -9,7 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
-const fs = require("fs");
+const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
@@ -243,7 +243,9 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	controlPolls: MOD_PERMISSIONS,
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS,
-	manageClass: TEACHER_PERMISSIONS
+	manageClass: TEACHER_PERMISSIONS,
+	lights: MOD_PERMISSIONS,
+	sounds: MOD_PERMISSIONS
 }
 
 // Add currentUser and permission constants to all pages
@@ -3877,7 +3879,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[deleteTicket] student=(${student})`)
 
-			cD[socket.request.session.class].students[student].help = ''
+			cD[socket.request.session.class].students[student].help = false
 
 			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
 

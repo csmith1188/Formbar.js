@@ -2,9 +2,12 @@ const express = require('express')
 const router = express.Router()
 const sqlite3 = require('sqlite3').verbose()
 const winston = require('winston');
+const fs = require("fs");
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
 
 /**
  * Creates a new logger transport with a daily rotation.
@@ -135,7 +138,8 @@ function api(cD) {
 				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
 				// Get the current user
-				let user = await getCurrentUser(req)
+				let user = await getUser(req.headers.api)
+
 				// If the user is an instance of Error
 				if (user instanceof Error) {
 					// Respond with a server error message
@@ -297,13 +301,13 @@ function api(cD) {
 		 * @param {Object} req - The request object.
 		 * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
 		 */
-		async function getCurrentUser(req) {
+		async function getUser(api) {
 			try {
 				// Log the request details
-				logger.log('info', `[getCurrentUser] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+				logger.log('info', `[getUser]`)
 
 				// Get the username associated with the API key in the request headers
-				let username = await getUsername(req.headers.api)
+				let username = await getUsername(api)
 				// If the username is an instance of Error, throw the error
 				if (username instanceof Error) throw username
 				// If an error occurs, return the error
@@ -397,7 +401,7 @@ function api(cD) {
 				}
 
 				// Log the user's data
-				logger.log('verbose', `[getCurrentUser] userData=(${JSON.stringify(userData)})`)
+				logger.log('verbose', `[getUser] userData=(${JSON.stringify(userData)})`)
 
 				// Return the user's data
 				return userData
@@ -767,6 +771,58 @@ function api(cD) {
 				res.status(200).json(classData.permissions)
 			} catch (err) {
 				// If an error occurs, log the error and send an error message as a JSON response
+				logger.log('error', err.stack)
+				res.status(500).json({ error: 'There was a server error try again.' })
+			}
+		})
+
+		router.get('/apiPermissionCheck', async (req, res) => {
+			try {
+				let { api, permissionType } = req.query
+
+				let permissionTypes = {
+					games: null,
+					lights: null,
+					sounds: null
+				}
+
+				if (!api) {
+					res.status(400).json({ error: 'No API provided.' })
+					return
+				}
+				if (!permissionType) {
+					res.status(400).json({ error: 'No permissionType provided.' })
+					return
+				}
+				if (!Object.keys(permissionTypes).includes(permissionType)) {
+					res.status(400).json({ error: 'Invalid permissionType.' })
+					return
+				}
+
+				let user = await getUser(api)
+
+				if (!user.loggedIn) {
+					res.status(403).json({ reason: 'User is not logged in.' })
+					return
+				}
+				if (!user.class) {
+					res.status(403).json({ reason: 'User is not in a class.' })
+					return
+				}
+
+				let classroom = cD[user.class]
+
+				permissionTypes.games = classroom.permissions.games
+				permissionTypes.lights = classroom.permissions.lights
+				permissionTypes.sounds = classroom.permissions.sounds
+
+				if (user.classPermissions < permissionTypes[permissionType]) {
+					res.status(403).json({ reason: 'User does not have enough permissions.' })
+					return
+				}
+
+				res.status(200).json({ allowed: true })
+			} catch (err) {
 				logger.log('error', err.stack)
 				res.status(500).json({ error: 'There was a server error try again.' })
 			}
