@@ -446,9 +446,10 @@ input[type="radio"]:focus {
 
 #usersMenu #users {
 	display: grid;
-	width: 100%;
+	grid-template-columns: repeat(2, minmax(200px, 1fr));
+	cursor: pointer;
+	user-select: none;
 	gap: 1rem;
-	grid-template-columns: auto auto;
 }
 
 #usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
