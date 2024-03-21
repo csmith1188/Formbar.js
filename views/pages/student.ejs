@@ -12,7 +12,7 @@
 						justify-self: center;
 					}
 				</style>
-				<script src="/js/isObjectEqual.js"></script>
+				<script src="/js/deepObjectEqual.js"></script>
 			</head>
 
 			<body>
@@ -328,7 +328,7 @@
 
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {
-						if (isObjectEqual(poll, newPoll)) return
+						if (deepObjectEqual(poll, newPoll)) return
 
 						poll = newPoll
 						updatePage()
@@ -344,7 +344,7 @@
 
 					socket.emit('quizUpdate')
 					socket.on('quizUpdate', (newQuiz) => {
-						if (isObjectEqual(quiz, newQuiz)) return
+						if (deepObjectEqual(quiz, newQuiz)) return
 
 						quiz = newQuiz
 						updatePage()

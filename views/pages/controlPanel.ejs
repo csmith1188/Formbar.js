@@ -11,7 +11,7 @@
 			<script src="/js/floating-ui-core.js"></script>
 			<script src="/js/floating-ui-dom.js"></script>
 
-			<script src="/js/isObjectEqual.js"></script>
+			<script src="/js/deepObjectEqual.js"></script>
 		</head>
 
 		<body onload="load(<%-pollStatus%>)">
@@ -192,7 +192,7 @@
 			let editingPollId = null
 			let currentSharePollId = null
 			let currentSharePollType = null
-			let allRoom = {}
+			let classroom = {}
 
 			const FilterState = {
 				help: [
