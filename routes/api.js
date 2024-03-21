@@ -425,7 +425,7 @@ function api(cD) {
 
 
 		// Checks to see if the user is authenticated
-		router.use((req, res, next) => {
+		router.use(async (req, res, next) => {
 			try {
 				// Log the IP and session of the request
 				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
