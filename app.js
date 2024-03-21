@@ -1,7 +1,7 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
+const { encrypt, decrypt } = require('./crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
