@@ -1956,7 +1956,7 @@ app.use((req, res, next) => {
 
 		logger.log('warning', `[404] urlPath=(${urlPath}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (urlPath.startsWith('api')) {
+		if (urlPath.startsWith('api/')) {
 			res.status(404).json({ error: `The page ${urlPath} does not exist` })
 		} else {
 			res.status(404).render('pages/message', {
