@@ -289,7 +289,7 @@ let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
 
-var tagNames = "<%=tagNames%>";
+var tagNames = "<%= tagNames %>";
 tagNames = tagNames.split(",");
 for (let i = 0; i < tagNames.length; i++) {
     let checkbox = document.createElement('input');
@@ -305,6 +305,7 @@ for (let i = 0; i < tagNames.length; i++) {
     selectTagForm.appendChild(label);
     selectTagForm.appendChild(document.createElement('br'));
 }
+
 let tagsAllSame = document.createElement('input');
 tagsAllSame.type = 'checkbox';
 tagsAllSame.value = 0 + ':Exact Same Tags'
