@@ -6,6 +6,8 @@ const winston = require('winston');
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
 
+let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
+
 /**
  * Creates a new logger transport with a daily rotation.
  *
