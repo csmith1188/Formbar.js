@@ -101,7 +101,7 @@ function buildStudent(room, studentData) {
         })
 
         let studentTags = document.createElement('dialog');
-        studentTags.innerHTML = '<p>' + studentData + '</p>';
+        studentTags.innerHTML = '<p>' + studentData.username + '</p>';
         let closeButton = document.createElement('button');
         closeButton.textContent = 'Save';
         let newTagButton = document.createElement('button');

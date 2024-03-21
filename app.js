@@ -2164,9 +2164,16 @@ io.on('connection', async (socket) => {
 				console.log("Only those who failed the perm check are not allowed to respond to the poll");
 			}
 			else if (totalStudents == 0) {
-				totalStudents = Object.keys(classData.students).length
+				totalStudentsIncluded = Object.keys(classData.students)
+				for (let student of totalStudentsIncluded) {
+					if (classData.students[student].classPermissions >= TEACHER_PERMISSIONS || classData.students[student].classPermissions == GUEST_PERMISSIONS) {
+						totalStudentsIncluded.splice(totalStudentsIncluded.indexOf(student), 1);
+					}
+				}
+				totalStudents = totalStudentsIncluded.length
 				console.log("Either no permissions were checked, or no one passed the perm check and all are allowed to respond");
 			}
+			//Get rid of students whos permissions are teacher or above or guest
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
 			console.log(totalStudentsIncluded + ' is the array of students that can respond to the poll');
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded

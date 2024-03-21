@@ -1,6 +1,5 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newRoom) => {
-    rooms = newRoom
     classCode.textContent = 'Class Code: ' + newRoom.key
     buildPreviousPolls(newRoom.pollHistory)
 
@@ -288,9 +287,9 @@ var selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-
 var tagNames = "<%=tagNames%>";
 tagNames = tagNames.split(",");
+console.log(tagNames);
 for (let i = 0; i < tagNames.length; i++) {
     let checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
