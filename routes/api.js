@@ -434,7 +434,7 @@ function api(cD) {
 				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
 				// Get the current user
-				let user = await getCurrentUser(req)
+				let user = await getUser(req.headers.api)
 				// If the user is an instance of Error
 				if (user instanceof Error) {
 					// Respond with a server error message
