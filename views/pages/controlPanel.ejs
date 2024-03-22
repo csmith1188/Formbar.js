@@ -193,6 +193,8 @@
 						<div id="permissionsList"></div>
 					</div>
 					<div id="plugins" class="tabContent" data-tab-group="settingsTabs">
+						<div id="pluginsForm"></div>
+						<div id="installedPlugins"></div>
 					</div>
 				</div>
 				<dialog id="sharePollDialog">
@@ -300,7 +302,9 @@
 			var responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			var pluginsDiv = document.querySelector('.tabContent#plugins')
+			var pluginsDiv = document.getElementById("installedPlugins");
+			var pluginsMenu = document.querySelector(".tabContent#plugins");
+			var pluginsForm = document.getElementById("pluginsForm");
 			var previousPolls = document.getElementById('previousPolls')
 			var previousPollButtons = document.getElementById('previousPollButtons')
 			var toPollsButton = document.getElementById('toPolls')
