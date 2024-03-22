@@ -618,28 +618,31 @@ function savePoll() {
 function savePollAs() {
 	let customPoll = {}
 
-	customPoll.name = prompt('What do you want to call this poll')
-
-	customPoll.blind = blindCheck.checked
-	customPoll.prompt = pollPrompt.value
-	customPoll.textRes = resTextBox.checked
-	customPoll.public = false
-	customPoll.weight = 1
-
-	var pollAnswers = []
-	for (let i = 0; i < resNumber.value; i++) {
-		let pollResponse = pollResponses[i]
-		let pollAnswer = {
-			answer: pollResponse.answer,
-			weight: pollResponse.weight,
-			color: pollResponse.color
-		}
-
-		pollAnswers.push(pollAnswer)
-	}
-	customPoll.answers = pollAnswers
-
-	socket.emit('savePoll', customPoll)
+    customPoll.name = prompt('What do you want to call this poll')
+    if (!customPoll.name) {
+        return;
+    } else {
+            customPoll.blind = blindCheck.checked
+            customPoll.prompt = pollPrompt.value
+            customPoll.textRes = resTextBox.checked
+            customPoll.public = false
+            customPoll.weight = 1
+        
+            var pollAnswers = []
+            for (let i = 0; i < resNumber.value; i++) {
+                let pollResponse = pollResponses[i]
+                let pollAnswer = {
+                    answer: pollResponse.answer,
+                    weight: pollResponse.weight,
+                    color: pollResponse.color
+                }
+        
+                pollAnswers.push(pollAnswer)
+            }
+            customPoll.answers = pollAnswers
+        
+            socket.emit('savePoll', customPoll)
+    };
 }
 
 function openSharePoll(customPollId) {
