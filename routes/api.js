@@ -121,7 +121,7 @@ function api(cD) {
 				return err
 			}
 		}
-
+    
 		// checks to see if the user is authenticated
 		/**
 		 * Middleware function to check if a user is authenticated.
@@ -248,7 +248,6 @@ function api(cD) {
 			// If all checks pass, proceed to the next middleware
 			next()
 		}
-
 		/**
 		 * Asynchronous function to get the username associated with a given API key.
 		 * @param {string} api - The API key.
@@ -554,11 +553,117 @@ function api(cD) {
 		}
 
 
-		// Use the isAuthenticated middleware to check if the user is authenticated
-		router.use(isAuthenticated)
+		// Checks to see if the user is authenticated
+		router.use(async (req, res, next) => {
+			try {
+				// Log the IP and session of the request
+				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
-		// Use the apiPermCheck middleware to check the API permissions of the user
-		router.use(apiPermCheck)
+				// Get the current user
+				let user = await getCurrentUser(req)
+				// If the user is an instance of Error
+				if (user instanceof Error) {
+					// Respond with a server error message
+					res.status(500).json({ error: 'There was a server error try again.' })
+					// Throw the error
+					throw user
+				}
+				// If the user has an error property
+				if (user.error) {
+					// Log the error
+					logger.log('info', user)
+					// Respond with the error
+					res.status(401).json({ error: user.error })
+					// End the function
+					return
+				}
+
+				// If the user exists
+				// Set the user in the session
+				if (user)
+					req.session.user = user
+
+				// Log the authenticated user
+				logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
+
+				// Call the next middleware function
+				next()
+			} catch (err) {
+				// Log any errors
+				logger.log('error', err.stack)
+			}
+		})
+
+		// Middleware function to check API permissions.
+		router.use((req, res, next) => {
+			// Extract user details from the session
+			let username = req.session.user.username
+			let permissions = req.session.user.permissions
+			let classPermissions = req.session.user.classPermissions
+			let classCode = req.session.user.class
+
+			// Log the request details
+			logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
+
+			// If no URL is provided, return
+			if (!req.url) return
+
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+
+			// If the URL starts with 'class/', extract the class code
+			if (urlPath.startsWith('class/')) {
+				classCode = urlPath.split('/')[1]
+			}
+
+			// If the URL is 'me', proceed to the next middleware
+			if (urlPath == 'me') {
+				next()
+				return
+			}
+
+			if (!classCode || classCode == 'noClass') {
+				res.status(404).json({ error: 'You are not in a class' })
+				return
+			}
+
+			// If the class does not exist, return an error
+			if (!cD[classCode]) {
+				res.status(404).json({ error: 'Class not started' })
+				return
+			}
+
+			// If the user is not in the class, return an error
+			if (!cD[classCode].students[username]) {
+				res.status(404).json({ error: 'You are not in this class.' })
+				return
+			}
+
+			// If the URL ends with '/polls', proceed to the next middleware
+			if (urlPath.endsWith('/polls')) {
+				next()
+				return
+			}
+
+			// If the user does not have sufficient permissions, return an error
+			if (
+				permissions <= GUEST_PERMISSIONS ||
+				classPermissions <= GUEST_PERMISSIONS
+			) {
+				res.status(403).json({ error: 'You do not have permission to access this page.' })
+				return
+			}
+
+			// If all checks pass, proceed to the next middleware
+			next()
+		})
 
 		// Gets the current user
 		router.get('/me', async (req, res) => {

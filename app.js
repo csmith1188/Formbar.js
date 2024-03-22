@@ -1,7 +1,7 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
+const { encrypt, decrypt } = require('./crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
@@ -1958,7 +1958,7 @@ app.use((req, res, next) => {
 
 		logger.log('warning', `[404] urlPath=(${urlPath}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (urlPath.startsWith('api')) {
+		if (urlPath.startsWith('api/')) {
 			res.status(404).json({ error: `The page ${urlPath} does not exist` })
 		} else {
 			res.status(404).render('pages/message', {

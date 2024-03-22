@@ -12,7 +12,7 @@
 						justify-self: center;
 					}
 				</style>
-				<script src="/js/isObjectEqual.js"></script>
+				<script src="/js/deepObjectEqual.js"></script>
 			</head>
 
 			<body>
@@ -199,22 +199,18 @@
 						pollContent.style.display = 'block'
 					}
 					function updatePage() {
-						console.log(poll.allowedResponses, "allowedResponses");
 						if (poll.allowedResponses.length > 0) {
 							for (let eachAllowedResponse of poll.allowedResponses) {
 								if (eachAllowedResponse == currentUser.username) {
-									console.log("allowed to respond");
 									updatePageLoop()
 									return
 								}
 							}
 						}
 						else if (poll.allowedResponses.length == 0) {
-							console.log("All can respond");
 							updatePageLoop()
 							return
 						}
-						console.log("not allowed to respond");
 						// var runUpdatePageLoop = true
 						// let userTags = currentUser.tags
 						// if (currentUser.tags) userTags = currentUser.tags.split(',')
@@ -332,7 +328,7 @@
 
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {
-						if (isObjectEqual(poll, newPoll)) return
+						if (deepObjectEqual(poll, newPoll)) return
 
 						poll = newPoll
 						updatePage()
@@ -348,7 +344,7 @@
 
 					socket.emit('quizUpdate')
 					socket.on('quizUpdate', (newQuiz) => {
-						if (isObjectEqual(quiz, newQuiz)) return
+						if (deepObjectEqual(quiz, newQuiz)) return
 
 						quiz = newQuiz
 						updatePage()
@@ -427,8 +423,6 @@
 						socket.emit('vbUpdate')
 						// Gets data from server and send it the function
 						socket.on('vbUpdate', (pollsData) => {
-							//console.log(pollsData);
-
 							if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
 								if (noPoll)
 									noPoll.style.display = ''
