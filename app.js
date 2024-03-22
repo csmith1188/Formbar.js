@@ -2205,8 +2205,16 @@ io.on('connection', async (socket) => {
 
 
 			totalStudents = totalStudentsIncluded.length
+
+			let studentsInClass = 0;
+			for (let student of Object.values(classData.students)) {
+				if (student.classPermissions < 4) {
+					studentsInClass++;
+				};
+			};
+
 			if (totalStudents == 0) {
-				totalStudents = Object.keys(classData.students).length
+				totalStudents = studentsInClass;
 				console.log("Either no permissions were checked, or no one passed the perm check and all are allowed to respond");
 			}
 			console.log(totalStudents + ' is the number of students that can respond to the poll');
