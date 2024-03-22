@@ -227,7 +227,11 @@ socket.on('pluginUpdate', (plugins) => {
 		socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
 	}
 	addPluginForm.append(submitPlugin)
-	pluginsDiv.append(addPluginForm)
+	if (!pluginsMenu.querySelector('#addPluginForm')) {
+		pluginsMenu.append(addPluginForm)
+	} else {
+		return;
+	};
 })
 
 
