@@ -241,6 +241,11 @@ dialog {
 	user-select: none;
 }
 
+#version {
+	color: var(--light-gray);
+	padding-left: 10px;
+}
+
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;

@@ -18,6 +18,7 @@ function buildStudent(room, studentData) {
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
+        newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.username;
         let space = document.createElement('span')
