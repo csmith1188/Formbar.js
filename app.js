@@ -186,6 +186,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
 	newTag: TEACHER_PERMISSIONS,
+	removeTag: TEACHER_PERMISSIONS,
 	passwordRequest: STUDENT_PERMISSIONS,
 	approvePasswordChange: MANAGER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS
@@ -4333,6 +4334,7 @@ io.on('connection', async (socket) => {
 
 	socket.on('newTag', (tagName) => {
 		try {
+			if (tagName == '') return;
 			cD[socket.request.session.class].tagNames.push(tagName);
 			var newTotalTags = "";
 			for (let i = 0; i < cD[socket.request.session.class].tagNames.length; i++) {
@@ -4359,7 +4361,73 @@ io.on('connection', async (socket) => {
 			logger.log('error', err.stack);
 		}
 	})
-
+	socket.on('removeTag', (tagName) => {
+		try {
+			//Find the tagName in the array of tagnames from the database
+			//If the tagname is not there, console.log("Tag not found") and return
+			//If the tagname is there, remove it from the array and update the database
+			var index = cD[socket.request.session.class].tagNames.indexOf(tagName);
+			if (index > -1) {
+				cD[socket.request.session.class].tagNames.splice(index, 1);
+			} else {
+				console.log("Tag not found");
+				return;
+			}
+			//Now remove all instances of the tag from the students' tags
+			for (let student of Object.values(cD[socket.request.session.class].students)) {
+				if (student.classPermissions == 0 || student.classPermissions >= 5) continue;
+				var studentTags = student.tags.split(",");
+				console.log(studentTags);
+				var studentIndex = studentTags.indexOf(tagName);
+				if (studentIndex > -1) {
+					studentTags.splice(studentIndex, 1);
+				}
+				student.tags = studentTags.toString();
+				console.log(student.tags);
+				db.get('SELECT * FROM users WHERE username = ?', [student.username], (err, row) => {
+					if (err) {
+						logger.log(err.stack);
+					}
+					if (row) {
+						db.run('UPDATE users SET tags = ? WHERE username = ?', [studentTags.toString(), student.username], (err) => {
+							console.log(student.username, studentTags.toString());
+							if (err) {
+								logger.log(err.stack);
+							};
+						});
+					} else {
+						console.log(`No row found with username ${student.username}`);
+					};
+				});
+				db.get('SELECT tags FROM classroom WHERE name = ?', [cD[socket.request.session.class].className], (err, row) => {
+					if (err) {
+						logger.log(err.stack);
+					}
+					//Set the tags in the database to a variable
+					//Remove the tag from the variable
+					//Update the database with the new variable
+					if (row) {
+						var newTotalTags = row.tags;
+						newTotalTags = newTotalTags.split(",");
+						var tagIndex = newTotalTags.indexOf(tagName);
+						if (tagIndex > -1) {
+							newTotalTags.splice(tagIndex, 1);
+						}
+						db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), cD[socket.request.session.class].className], (err) => {
+							if (err) {
+								logger.log(err.stack);
+							};
+						});
+					} else {
+						console.log(`No row found with name ${cD[socket.request.session.class].className}`);
+					};
+				})
+			};
+		}
+		catch (err) {
+			logger.log('error', err.stack);
+		}
+	});
 	socket.on("approvePasswordChange", (changeApproval, username, newPassword) => {
 		try {
 			if (changeApproval) {

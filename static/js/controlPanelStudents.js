@@ -116,7 +116,11 @@ function buildStudent(room, studentData) {
         let newTagSaveButton = document.createElement('button');
         newTagSaveButton.textContent = 'Save Tag';
         newTagSaveButton.setAttribute('hidden', true);
+        let removeTagButton = document.createElement('button');
+        removeTagButton.textContent = 'Remove Tag';
+        removeTagButton.setAttribute('hidden', true);
         newTagForm.appendChild(newTagSaveButton);
+        newTagForm.appendChild(removeTagButton);
         let tagForm = document.createElement('form');
         tagForm.setAttribute('id', studentData.username + "tags");
         for (let i = 0; i < room.tagNames.length; i++) {
@@ -167,6 +171,7 @@ function buildStudent(room, studentData) {
             newTagForm.removeAttribute('hidden');
             newTagTextBox.removeAttribute('hidden');
             newTagSaveButton.removeAttribute('hidden');
+            removeTagButton.removeAttribute('hidden');
             newTagButton.setAttribute('hidden', true);
         });
 
@@ -174,7 +179,10 @@ function buildStudent(room, studentData) {
             newTagButton.removeAttribute('hidden');
             socket.emit('newTag', newTagTextBox.value);
         })
-
+        removeTagButton.addEventListener('click', function () {
+            newTagButton.removeAttribute('hidden');
+            socket.emit('removeTag', newTagTextBox.value);
+        })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
 
