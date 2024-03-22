@@ -11,7 +11,7 @@
 			<script src="/js/floating-ui-core.js"></script>
 			<script src="/js/floating-ui-dom.js"></script>
 
-			<script src="/js/isObjectEqual.js"></script>
+			<script src="/js/deepObjectEqual.js"></script>
 		</head>
 
 		<body onload="load(<%-pollStatus%>)">
@@ -45,12 +45,9 @@
 					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
 						End Class
 					</button>
-					<!-- <br>
-					<button onclick="socket.emit('cpUpdate'), console.log('updated data');">Update Room Data</button>
-					<button onclick="console.log(rooms.students['notluke'].pollRes, rooms.students['isluke'].pollRes,'student response');">Room Data</button> -->
-					<p><b id="totalUsers"></b></p>
+					<p id="totalUsers"></p>
 					<div id="users">
-						<p><b id="pollCounter"></b></p>
+						<p id="pollCounter"></p>
 						<p id="responsesCounter"></p>
 					</div>
 				</div>
@@ -75,8 +72,7 @@
 						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 						<div id="startPollForm">
 							<label for="resNumber">How many possible responses?</label>
-							<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
-								onchange="responseAmountChange()">
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" onchange="responseAmountChange()">
 							<br>
 							<label for="resTextBox">Would like to accept text responses?</label>
 							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
@@ -90,8 +86,7 @@
 							<br>
 
 							<label for="changeNames">Specify Tags?</label>
-							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
-								class="quickButton">
+							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()" class="quickButton">
 							<br>
 
 							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
@@ -157,8 +152,7 @@
 				</div>
 				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
 					<div class="options">
-						<button id="permissions" class="quickButton tab pressed"
-							data-tab-group="settingsTabs">Permissions</button>
+						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
 						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
 					</div>
 					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
@@ -173,14 +167,14 @@
 						onclick="(()=>{currentSharePollId = null; document.getElementById('sharePollDialog').close()})()">Close</button>
 					<p>
 						<label for="share">Share to User</label>
-						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+"
-							placeholder="Username" onkeypress="if(event.key == 'Enter') sharePoll('user')">
+						<input type="text" name="share" id="sharePollUserInput" pattern="[a-z0-9]+" placeholder="Username"
+							onkeypress="if(event.key == 'Enter') sharePoll('user')">
 					</p>
 					<div id="userPollShares"></div>
 					<p>
 						<label for="share">Share to Class</label>
-						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+"
-							placeholder="Class Code" onkeypress="if(event.key == 'Enter') sharePoll('class')">
+						<input type="text" name="share" id="sharePollClassInput" pattern="[a-z0-9]+" placeholder="Class Code"
+							onkeypress="if(event.key == 'Enter') sharePoll('class')">
 					</p>
 					<div id="classPollShares"></div>
 				</dialog>
@@ -198,7 +192,7 @@
 			let editingPollId = null
 			let currentSharePollId = null
 			let currentSharePollType = null
-			let allRoom = {}
+			let classroom = {}
 
 			const FilterState = {
 				help: [
@@ -294,10 +288,7 @@
 			let permissionsTabButton = document.querySelector('.tab#permissions')
 
 			let totalUsers = document.getElementById('totalUsers')
-			// Function runs on page load
-			// Checks if poll is active or not and displays correct output
-			var rooms;
-
+			var rooms
 		</script>
 		<script src="/js/controlPanelPolls.js"></script>
 		<script src="/js/controlPanelStudents.js"></script>
