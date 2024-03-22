@@ -1,7 +1,7 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const { encrypt, decrypt } = require('./static/js/crypto.js') //For encrypting passwords
+const { encrypt, decrypt } = require('./crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
@@ -9,7 +9,7 @@ const multer = require('multer')//Used to upload files
 const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
 const winston = require('winston')
-const fs = require("fs");
+const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
 
 var app = express()
@@ -244,7 +244,9 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	controlPolls: MOD_PERMISSIONS,
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS,
-	manageClass: TEACHER_PERMISSIONS
+	manageClass: TEACHER_PERMISSIONS,
+	lights: MOD_PERMISSIONS,
+	sounds: MOD_PERMISSIONS
 }
 
 // Add currentUser and permission constants to all pages
@@ -1957,7 +1959,7 @@ app.use((req, res, next) => {
 
 		logger.log('warning', `[404] urlPath=(${urlPath}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (urlPath.startsWith('api')) {
+		if (urlPath.startsWith('api/')) {
 			res.status(404).json({ error: `The page ${urlPath} does not exist` })
 		} else {
 			res.status(404).render('pages/message', {
@@ -3844,7 +3846,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[deleteTicket] student=(${student})`)
 
-			cD[socket.request.session.class].students[student].help = ''
+			cD[socket.request.session.class].students[student].help = false
 
 			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
 
