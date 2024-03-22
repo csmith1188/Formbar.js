@@ -289,7 +289,7 @@ let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
 
-var tagNames = "<%= tagNames %>";
+
 tagNames = tagNames.split(",");
 for (let i = 0; i < tagNames.length; i++) {
     let checkbox = document.createElement('input');
