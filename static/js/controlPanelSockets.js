@@ -7,8 +7,12 @@ socket.on('cpUpdate', (newClassroom) => {
 		doStep(classroom.currentStep)
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
-	pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+    totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+    if (newClassroom.poll.prompt != "") {
+        pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+    } 
+    else {
+        pollCounter.innerText = `Poll Prompt:`}
 
 	let responseCount = 0;
 	for (let [key, value] of Object.entries(newClassroom.students)) {
