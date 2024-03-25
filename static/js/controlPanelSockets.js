@@ -9,7 +9,11 @@ socket.on('cpUpdate', (newRoom) => {
     }
 
     totalUsers.innerText = `Total Users: ${Object.keys(newRoom.students).length - 1}`
-    pollCounter.innerText = `Poll Prompt:'${newRoom.poll.prompt}'`
+    if (newRoom.poll.prompt != "") {
+        pollCounter.innerText = `Poll Prompt:'${newRoom.poll.prompt}'`
+    } 
+    else {
+        pollCounter.innerText = `Poll Prompt:`}
 
     let responseCount = 0;
     for (let [key, value] of Object.entries(newRoom.students)) {
