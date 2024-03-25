@@ -1,11 +1,11 @@
 // makes student elements
 
 function buildOption(value, text, selected = false) {
-    let option = document.createElement('option')
-    option.value = value
-    option.selected = selected
-    option.textContent = text
-    return option
+	let option = document.createElement('option')
+	option.value = value
+	option.selected = selected
+	option.textContent = text
+	return option
 }
 var userBreak = []
 var rooms;
@@ -18,6 +18,7 @@ function buildStudent(room, studentData) {
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
+        newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.username;
         studentElement.style.textShadow = "2px 2px 2px #000000";
@@ -104,7 +105,7 @@ function buildStudent(room, studentData) {
         })
 
         let studentTags = document.createElement('dialog');
-        studentTags.innerHTML = '<p>' + studentData + '</p>';
+        studentTags.innerHTML = '<p>' + studentData.username + '</p>';
         let closeButton = document.createElement('button');
         closeButton.textContent = 'Save';
         let newTagButton = document.createElement('button');
@@ -119,7 +120,11 @@ function buildStudent(room, studentData) {
         let newTagSaveButton = document.createElement('button');
         newTagSaveButton.textContent = 'Save Tag';
         newTagSaveButton.setAttribute('hidden', true);
+        let removeTagButton = document.createElement('button');
+        removeTagButton.textContent = 'Remove Tag';
+        removeTagButton.setAttribute('hidden', true);
         newTagForm.appendChild(newTagSaveButton);
+        newTagForm.appendChild(removeTagButton);
         let tagForm = document.createElement('form');
         tagForm.setAttribute('id', studentData.username + "tags");
         for (let i = 0; i < room.tagNames.length; i++) {
@@ -170,6 +175,7 @@ function buildStudent(room, studentData) {
             newTagForm.removeAttribute('hidden');
             newTagTextBox.removeAttribute('hidden');
             newTagSaveButton.removeAttribute('hidden');
+            removeTagButton.removeAttribute('hidden');
             newTagButton.setAttribute('hidden', true);
         });
 
@@ -177,7 +183,10 @@ function buildStudent(room, studentData) {
             newTagButton.removeAttribute('hidden');
             socket.emit('newTag', newTagTextBox.value);
         })
-
+        removeTagButton.addEventListener('click', function () {
+            newTagButton.removeAttribute('hidden');
+            socket.emit('removeTag', newTagTextBox.value);
+        })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
 
@@ -278,189 +287,191 @@ function buildStudent(room, studentData) {
 
 // filters and sorts students
 function filterSortChange() {
-    let userOrder = Object.keys(allRoom.students)
-    for (let username of userOrder) {
-        document.getElementById(`student-${username}`).style.display = ''
-    }
+	if (!classroom.students) return
 
-    // filter by help
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.help == 1 && !allRoom.students[username].help) ||
-            (filter.help == 2 && allRoom.students[username].help)
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
-        }
-    }
+	let userOrder = Object.keys(classroom.students)
+	for (let username of userOrder) {
+		document.getElementById(`student-${username}`).style.display = ''
+	}
 
-    // filter by break
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.break == 1 && !allRoom.students[username].break) ||
-            (filter.break == 2 && allRoom.students[username].break)
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
-        }
-    }
-    // filter by poll
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.polls == 1 && (
-                !allRoom.students[username].pollRes.buttonRes && !allRoom.students[username].pollRes.textRes)
-            ) ||
-            (filter.polls == 2 &&
-                (allRoom.students[username].pollRes.buttonRes || allRoom.students[username].pollRes.textRes)
-            )
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
-        }
-    }
-    // sort by name
-    if (sort.name == 1) {
-        userOrder.students = userOrder.sort()
-    } else if (sort.name == 2) {
-        userOrder.students = userOrder.sort().reverse()
-    }
+	// filter by help
+	for (let username of userOrder.slice()) {
+		let studentElement = document.getElementById(`student-${username}`);
+		if (
+			(filter.help == 1 && !classroom.students[username].help) ||
+			(filter.help == 2 && classroom.students[username].help)
+		) {
+			studentElement.style.display = 'none'
+			userOrder.pop(username)
+		}
+	}
 
-    // sort by help time
-    if (sort.helpTime == 1) {
-        userOrder.sort((a, b) => {
-            let studentA = allRoom.students[a]
-            let studentB = allRoom.students[b]
+	// filter by break
+	for (let username of userOrder.slice()) {
+		let studentElement = document.getElementById(`student-${username}`);
+		if (
+			(filter.break == 1 && !classroom.students[username].break) ||
+			(filter.break == 2 && classroom.students[username].break)
+		) {
+			studentElement.style.display = 'none'
+			userOrder.pop(username)
+		}
+	}
+	// filter by poll
+	for (let username of userOrder.slice()) {
+		let studentElement = document.getElementById(`student-${username}`);
+		if (
+			(filter.polls == 1 && (
+				!classroom.students[username].pollRes.buttonRes && !classroom.students[username].pollRes.textRes)
+			) ||
+			(filter.polls == 2 &&
+				(classroom.students[username].pollRes.buttonRes || classroom.students[username].pollRes.textRes)
+			)
+		) {
+			studentElement.style.display = 'none'
+			userOrder.pop(username)
+		}
+	}
+	// sort by name
+	if (sort.name == 1) {
+		userOrder.students = userOrder.sort()
+	} else if (sort.name == 2) {
+		userOrder.students = userOrder.sort().reverse()
+	}
 
-            if (studentA.help && studentB.help) {
-                const dateA = new Date()
-                dateA.setHours(studentA.help.time.hours)
-                dateA.setMinutes(studentA.help.time.minutes)
-                dateA.setSeconds(studentA.help.time.seconds)
-                const dateB = new Date()
-                dateB.setHours(studentB.help.time.hours)
-                dateB.setMinutes(studentB.help.time.minutes)
-                dateB.setSeconds(studentB.help.time.seconds)
-                if (dateA < dateB) {
-                    return -1
-                }
-            }
-            else if (studentA.help) return -1
-        })
-    }
+	// sort by help time
+	if (sort.helpTime == 1) {
+		userOrder.sort((a, b) => {
+			let studentA = classroom.students[a]
+			let studentB = classroom.students[b]
 
-    // sort by poll
-    if (sort.polls == 1) {
-        userOrder.sort((a, b) => {
-            let studentA = allRoom.students[a]
-            let studentB = allRoom.students[b]
+			if (studentA.help && studentB.help) {
+				const dateA = new Date()
+				dateA.setHours(studentA.help.time.hours)
+				dateA.setMinutes(studentA.help.time.minutes)
+				dateA.setSeconds(studentA.help.time.seconds)
+				const dateB = new Date()
+				dateB.setHours(studentB.help.time.hours)
+				dateB.setMinutes(studentB.help.time.minutes)
+				dateB.setSeconds(studentB.help.time.seconds)
+				if (dateA < dateB) {
+					return -1
+				}
+			}
+			else if (studentA.help) return -1
+		})
+	}
 
-            if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
-                return studentA.pollRes.textRes.localeCompare(studentB.pollRes.textRes)
-            } else if (studentA.pollRes.textRes) return -1
-            else if (studentB.pollRes.textRes) return 1
-            if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
-                return studentA.pollRes.buttonRes.localeCompare(studentB.pollRes.buttonRes)
-            } else if (studentA.pollRes.buttonRes) return -1
-            else if (studentB.pollRes.buttonRes) return 1
-        })
-    } else if (sort.polls == 2) {
-        userOrder.sort((a, b) => {
-            let studentA = allRoom.students[a]
-            let studentB = allRoom.students[b]
+	// sort by poll
+	if (sort.polls == 1) {
+		userOrder.sort((a, b) => {
+			let studentA = classroom.students[a]
+			let studentB = classroom.students[b]
 
-            if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
-                return studentB.pollRes.textRes.localeCompare(studentA.pollRes.textRes)
-            } else if (studentA.pollRes.textRes) return 1
-            else if (studentB.pollRes.textRes) return -1
-            if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
-                return studentB.pollRes.buttonRes.localeCompare(studentA.pollRes.buttonRes)
-            } else if (studentA.pollRes.buttonRes) return 1
-            else if (studentB.pollRes.buttonRes) return -1
-        })
-    }
+			if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
+				return studentA.pollRes.textRes.localeCompare(studentB.pollRes.textRes)
+			} else if (studentA.pollRes.textRes) return -1
+			else if (studentB.pollRes.textRes) return 1
+			if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
+				return studentA.pollRes.buttonRes.localeCompare(studentB.pollRes.buttonRes)
+			} else if (studentA.pollRes.buttonRes) return -1
+			else if (studentB.pollRes.buttonRes) return 1
+		})
+	} else if (sort.polls == 2) {
+		userOrder.sort((a, b) => {
+			let studentA = classroom.students[a]
+			let studentB = classroom.students[b]
 
-    // //sort by permissions
-    if (sort.permissions == 1) {
-        userOrder.sort((a, b) => allRoom.students[b].classPermissions - allRoom.students[a].classPermissions)
-    } else if (sort.permissions == 2) {
-        userOrder.sort((a, b) => allRoom.students[a].classPermissions - allRoom.students[b].classPermissions)
-    }
+			if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
+				return studentB.pollRes.textRes.localeCompare(studentA.pollRes.textRes)
+			} else if (studentA.pollRes.textRes) return 1
+			else if (studentB.pollRes.textRes) return -1
+			if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
+				return studentB.pollRes.buttonRes.localeCompare(studentA.pollRes.buttonRes)
+			} else if (studentA.pollRes.buttonRes) return 1
+			else if (studentB.pollRes.buttonRes) return -1
+		})
+	}
 
-    for (let i = 0; i < userOrder.length; i++) {
-        document.getElementById(`student-${userOrder[i]}`).style.order = i
-    }
+	// //sort by permissions
+	if (sort.permissions == 1) {
+		userOrder.sort((a, b) => classroom.students[b].classPermissions - classroom.students[a].classPermissions)
+	} else if (sort.permissions == 2) {
+		userOrder.sort((a, b) => classroom.students[a].classPermissions - classroom.students[b].classPermissions)
+	}
+
+	for (let i = 0; i < userOrder.length; i++) {
+		document.getElementById(`student-${userOrder[i]}`).style.order = i
+	}
 }
 
 function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    let dueAssigns = document.getElementById('dueAssigns')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
+	let learningObj = document.getElementById('learningObj')
+	let dueAssigns = document.getElementById('dueAssigns')
+	socket.emit('lessonStart', learningObj.value)
+	alert('Lesson Created')
 }
 
 // sets filters
 for (let filterElement of document.getElementsByClassName('filter')) {
-    filterElement.onclick = (event) => {
-        let filterElement = event.target;
-        filter[filterElement.id] += 1
-        if (filter[filterElement.id] > 2) {
-            filter[filterElement.id] = 0
-        }
-        if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
-        else filterElement.classList.add('pressed')
-        filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
-        filterSortChange()
-    }
+	filterElement.onclick = (event) => {
+		let filterElement = event.target;
+		filter[filterElement.id] += 1
+		if (filter[filterElement.id] > 2) {
+			filter[filterElement.id] = 0
+		}
+		if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
+		else filterElement.classList.add('pressed')
+		filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
+		filterSortChange()
+	}
 }
 
 // sets sorts
 for (let sortElement of document.getElementsByClassName('sort')) {
-    sortElement.onclick = (event) => {
-        let sortElement = event.target
+	sortElement.onclick = (event) => {
+		let sortElement = event.target
 
-        for (let sortType of Object.keys(sort)) {
-            if (sortType != sortElement.id) {
-                sort[sortType] = 0
-                let otherSortElements = document.querySelector('.sort#' + sortType)
-                if (otherSortElements) {
-                    otherSortElements.classList.remove('pressed')
-                    otherSortElements.textContent = SortState[sortType][sort[sortType]]
-                }
-            }
-        }
-        sort[sortElement.id] += 1
-        if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
-            sort[sortElement.id] = 0
-        }
-        else if (sort[sortElement.id] > 2) {
-            sort[sortElement.id] = 0
-        }
-        if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
-        else sortElement.classList.add('pressed')
-        sortElement.textContent = SortState[sortElement.id][sort[sortElement.id]]
-        filterSortChange()
-    }
+		for (let sortType of Object.keys(sort)) {
+			if (sortType != sortElement.id) {
+				sort[sortType] = 0
+				let otherSortElements = document.querySelector('.sort#' + sortType)
+				if (otherSortElements) {
+					otherSortElements.classList.remove('pressed')
+					otherSortElements.textContent = SortState[sortType][sort[sortType]]
+				}
+			}
+		}
+		sort[sortElement.id] += 1
+		if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
+			sort[sortElement.id] = 0
+		}
+		else if (sort[sortElement.id] > 2) {
+			sort[sortElement.id] = 0
+		}
+		if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
+		else sortElement.classList.add('pressed')
+		sortElement.textContent = SortState[sortElement.id][sort[sortElement.id]]
+		filterSortChange()
+	}
 }
 
 function deleteTicket(e) {
-    socket.emit('deleteTicket', e.dataset.studentName)
+	socket.emit('deleteTicket', e.dataset.studentName)
 }
 
 function doStep(id) {
-    alert('Step ' + id + ' activated')
-    socket.emit('doStep', id)
+	alert('Step ' + id + ' activated')
+	socket.emit('doStep', id)
 }
 
 function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    let dueAssigns = document.getElementById('dueAssigns')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
+	let learningObj = document.getElementById('learningObj')
+	let dueAssigns = document.getElementById('dueAssigns')
+	socket.emit('lessonStart', learningObj.value)
+	alert('Lesson Created')
 }
 
 function approveBreak(breakApproval, username) {
-    socket.emit('approveBreak', breakApproval, username)
+	socket.emit('approveBreak', breakApproval, username)
 }

@@ -1,4 +1,4 @@
-function isObjectEqual(objectA, objectB) {
+function deepObjectEqual(objectA, objectB) {
 	if (objectA === objectB) return true;
 
 	if (Array.isArray(objectA) && Array.isArray(objectB)) {
@@ -6,7 +6,7 @@ function isObjectEqual(objectA, objectB) {
 		if (objectA.length !== objectB.length) return false;
 
 		return objectA.every((elem, index) => {
-			return isObjectEqual(elem, objectB[index]);
+			return deepObjectEqual(elem, objectB[index]);
 		})
 
 
@@ -21,8 +21,7 @@ function isObjectEqual(objectA, objectB) {
 		if (keys1.length !== keys2.length || !keys1.every(key => keys2.includes(key))) return false;
 
 		for (let key in objectA) {
-			console.log(objectA[key], objectB[key])
-			let isEqual = isObjectEqual(objectA[key], objectB[key])
+			let isEqual = deepObjectEqual(objectA[key], objectB[key])
 			if (!isEqual) { return false; }
 		}
 

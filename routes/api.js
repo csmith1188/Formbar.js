@@ -2,9 +2,12 @@ const express = require('express')
 const router = express.Router()
 const sqlite3 = require('sqlite3').verbose()
 const winston = require('winston');
+const fs = require("fs");
 
 // Establishes the connection to the database file
 var db = new sqlite3.Database('database/database.db')
+
+let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
 
 /**
  * Creates a new logger transport with a daily rotation.
@@ -119,132 +122,6 @@ function api(cD) {
 			}
 		}
 
-		// checks to see if the user is authenticated
-		/**
-		 * Middleware function to check if a user is authenticated.
-		 *
-		 * @async
-		 * @param {Object} req - The request object.
-		 * @param {Object} res - The response object.
-		 * @param {Function} next - The next middleware function.
-		 * @throws {Error} If an error occurs during authentication check.
-		 */
-		async function isAuthenticated(req, res, next) {
-			try {
-				// Log the IP and session of the request
-				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
-
-				// Get the current user
-				let user = await getCurrentUser(req)
-				// If the user is an instance of Error
-				if (user instanceof Error) {
-					// Respond with a server error message
-					res.status(500).json({ error: 'There was a server error try again.' })
-					// Throw the error
-					throw user
-				}
-				// If the user has an error property
-				if (user.error) {
-					// Log the error
-					logger.log('info', user)
-					// Respond with the error
-					res.status(401).json({ error: user.error })
-					// End the function
-					return
-				}
-
-				// If the user exists
-				// Set the user in the session
-				if (user)
-					req.session.user = user
-
-				// Log the authenticated user
-				logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
-
-				// Call the next middleware function
-				next()
-			} catch (err) {
-				// Log any errors
-				logger.log('error', err.stack)
-			}
-		}
-
-		/**
-		 * Middleware function to check API permissions.
-		 * @param {Object} req - The request object.
-		 * @param {Object} res - The response object.
-		 * @param {Function} next - The next middleware function.
-		 */
-		function apiPermCheck(req, res, next) {
-			// Extract user details from the session
-			let username = req.session.user.username
-			let permissions = req.session.user.permissions
-			let classPermissions = req.session.user.classPermissions
-			let classCode = req.session.user.class
-
-			// Log the request details
-			logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
-
-			// If no URL is provided, return
-			if (!req.url) return
-
-			let urlPath = req.url
-			// Checks if url has a / in it and removes it from the string
-			if (urlPath.indexOf('/') != -1) {
-				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-			}
-			// Check for ?(urlParams) and removes it from the string
-			if (urlPath.indexOf('?') != -1) {
-				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-			}
-
-			// If the URL starts with 'class/', extract the class code
-			if (urlPath.startsWith('class/')) {
-				classCode = urlPath.split('/')[1]
-			}
-
-			// If the URL is 'me', proceed to the next middleware
-			if (urlPath == 'me') {
-				next()
-				return
-			}
-
-			if (!classCode || classCode == 'noClass') {
-				res.status(404).json({ error: 'You are not in a class' })
-				return
-			}
-
-			// If the class does not exist, return an error
-			if (!cD[classCode]) {
-				res.status(404).json({ error: 'Class not started' })
-				return
-			}
-
-			// If the user is not in the class, return an error
-			if (!cD[classCode].students[username]) {
-				res.status(404).json({ error: 'You are not in this class.' })
-				return
-			}
-
-			// If the URL ends with '/polls', proceed to the next middleware
-			if (urlPath.endsWith('/polls')) {
-				next()
-				return
-			}
-
-			// If the user does not have sufficient permissions, return an error
-			if (
-				permissions <= GUEST_PERMISSIONS ||
-				classPermissions <= GUEST_PERMISSIONS
-			) {
-				res.status(403).json({ error: 'You do not have permission to access this page.' })
-				return
-			}
-
-			// If all checks pass, proceed to the next middleware
-			next()
-		}
-
 		/**
 		 * Asynchronous function to get the username associated with a given API key.
 		 * @param {string} api - The API key.
@@ -297,13 +174,13 @@ function api(cD) {
 		 * @param {Object} req - The request object.
 		 * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
 		 */
-		async function getCurrentUser(req) {
+		async function getUser(api) {
 			try {
 				// Log the request details
-				logger.log('info', `[getCurrentUser] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+				logger.log('info', `[getUser]`)
 
 				// Get the username associated with the API key in the request headers
-				let username = await getUsername(req.headers.api)
+				let username = await getUsername(api)
 				// If the username is an instance of Error, throw the error
 				if (username instanceof Error) throw username
 				// If an error occurs, return the error
@@ -397,7 +274,7 @@ function api(cD) {
 				}
 
 				// Log the user's data
-				logger.log('verbose', `[getCurrentUser] userData=(${JSON.stringify(userData)})`)
+				logger.log('verbose', `[getUser] userData=(${JSON.stringify(userData)})`)
 
 				// Return the user's data
 				return userData
@@ -550,11 +427,131 @@ function api(cD) {
 		}
 
 
-		// Use the isAuthenticated middleware to check if the user is authenticated
-		router.use(isAuthenticated)
+		// Checks to see if the user is authenticated
+		router.use(async (req, res, next) => {
+			try {
+				// Log the IP and session of the request
+				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
-		// Use the apiPermCheck middleware to check the API permissions of the user
-		router.use(apiPermCheck)
+				// Get the current user
+				let user = await getUser(req.headers.api)
+				// If the user is an instance of Error
+				if (user instanceof Error) {
+					// Respond with a server error message
+					res.status(500).json({ error: 'There was a server error try again.' })
+					// Throw the error
+					throw user
+				}
+				// If the user has an error property
+				if (user.error) {
+					// Log the error
+					logger.log('info', user)
+					// Respond with the error
+					res.status(401).json({ error: user.error })
+					// End the function
+					return
+				}
+
+				// If the user exists
+				// Set the user in the session
+				if (user)
+					req.session.user = user
+
+				// Log the authenticated user
+				logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
+
+				// Call the next middleware function
+				next()
+			} catch (err) {
+				// Log any errors
+				logger.log('error', err.stack)
+			}
+		})
+
+		// Middleware function to check API permissions.
+		router.use((req, res, next) => {
+			// Extract user details from the session
+			let username = req.session.user.username
+			let permissions = req.session.user.permissions
+			let classPermissions = req.session.user.classPermissions
+			let classCode = req.session.user.class
+
+			// Log the request details
+			logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
+
+			// If no URL is provided, return
+			if (!req.url) return
+
+			let urlPath = req.url
+			// Checks if url has a / in it and removes it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+			}
+			// Check for ?(urlParams) and removes it from the string
+			if (urlPath.indexOf('?') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+
+			// If the URL starts with 'class/', extract the class code
+			if (urlPath.startsWith('class/')) {
+				classCode = urlPath.split('/')[1]
+			}
+
+			// If the URL is 'me', proceed to the next middleware
+			if (urlPath == 'me') {
+				next()
+				return
+			}
+
+			if (!classCode || classCode == 'noClass') {
+				res.status(404).json({ error: 'You are not in a class' })
+				return
+			}
+
+			// If the class does not exist, return an error
+			if (!cD[classCode]) {
+				res.status(404).json({ error: 'Class not started' })
+				return
+			}
+
+			// If the user is not in the class, return an error
+			if (!cD[classCode].students[username]) {
+				res.status(404).json({ error: 'You are not in this class.' })
+				return
+			}
+
+			// If the URL ends with '/polls', proceed to the next middleware
+			if (urlPath.endsWith('/polls')) {
+				next()
+				return
+			}
+
+			// If the user does not have sufficient permissions, return an error
+			if (
+				permissions <= GUEST_PERMISSIONS ||
+				classPermissions <= GUEST_PERMISSIONS
+			) {
+				res.status(403).json({ error: 'You do not have permission to access this page.' })
+				return
+			}
+
+			// If all checks pass, proceed to the next middleware
+			next()
+		})
+
+		// check for multiple of the same query parameter
+		router.use((req, res, next) => {
+			let query = req.query
+
+			for (let key in query) {
+				if (Array.isArray(query[key])) {
+					res.status(400).json({ error: `You can only have one ${key} parameter` })
+					return
+				}
+			}
+
+			next()
+		})
 
 		// Gets the current user
 		router.get('/me', async (req, res) => {
@@ -767,6 +764,58 @@ function api(cD) {
 				res.status(200).json(classData.permissions)
 			} catch (err) {
 				// If an error occurs, log the error and send an error message as a JSON response
+				logger.log('error', err.stack)
+				res.status(500).json({ error: 'There was a server error try again.' })
+			}
+		})
+
+		router.get('/apiPermissionCheck', async (req, res) => {
+			try {
+				let { api, permissionType } = req.query
+
+				let permissionTypes = {
+					games: null,
+					lights: null,
+					sounds: null
+				}
+
+				if (!api) {
+					res.status(400).json({ error: 'No API provided.' })
+					return
+				}
+				if (!permissionType) {
+					res.status(400).json({ error: 'No permissionType provided.' })
+					return
+				}
+				if (!Object.keys(permissionTypes).includes(permissionType)) {
+					res.status(400).json({ error: 'Invalid permissionType.' })
+					return
+				}
+
+				let user = await getUser(api)
+
+				if (!user.loggedIn) {
+					res.status(403).json({ reason: 'User is not logged in.' })
+					return
+				}
+				if (!user.class) {
+					res.status(403).json({ reason: 'User is not in a class.' })
+					return
+				}
+
+				let classroom = cD[user.class]
+
+				permissionTypes.games = classroom.permissions.games
+				permissionTypes.lights = classroom.permissions.lights
+				permissionTypes.sounds = classroom.permissions.sounds
+
+				if (user.classPermissions < permissionTypes[permissionType]) {
+					res.status(403).json({ reason: 'User does not have enough permissions.' })
+					return
+				}
+
+				res.status(200).json({ allowed: true })
+			} catch (err) {
 				logger.log('error', err.stack)
 				res.status(500).json({ error: 'There was a server error try again.' })
 			}
