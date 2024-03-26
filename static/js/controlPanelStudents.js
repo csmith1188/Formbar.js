@@ -32,7 +32,7 @@ function buildStudent(room, studentData) {
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
-            helpDisplay.style.textShadow = "2px 2px 2px #000000";
+            newStudent.setAttribute("class", "help")
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
             help.setAttribute('id', 'help')
@@ -59,6 +59,7 @@ function buildStudent(room, studentData) {
         if (studentData.break) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `⏱`
+            newStudent.setAttribute("class", "break")
             studentElement.appendChild(helpDisplay)
         }
         // if (studentData.pollRes) {
