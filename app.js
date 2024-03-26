@@ -4349,7 +4349,6 @@ io.on('connection', async (socket) => {
 				}
 				if (row) {
 					// Row exists, update it
-					console.log(row)
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
 						if (err) {
 							return console.error(err.message);
@@ -4385,7 +4384,6 @@ io.on('connection', async (socket) => {
 							logger.log(err.stack);
 						};
 					});
-					console.log(newTotalTags)
 				} else {
 					console.log(`No row found with name ${cD[socket.request.session.class].className}`);
 				};
