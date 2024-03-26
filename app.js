@@ -3535,6 +3535,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
+			document.getElementById(`student-${studentData.username}`).style.border = "10px solid red"
 			let time = new Date();
 			time = {
 				hours: time.getHours(),
