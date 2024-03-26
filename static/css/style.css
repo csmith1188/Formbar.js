@@ -44,6 +44,7 @@ body {
 	padding: 8px;
 	text-align: center;
 	--theme-color: var(--color-blue);
+	transition: background-color 0.5s, color 0.5s;
 }
 
 h1 {
@@ -241,6 +242,7 @@ dialog {
 	animation: gradient 5s ease infinite;
 	background: linear-gradient(-30deg, var(--color-blue), var(--color-purple));
 	background-size: 400% 400%;
+	transition: filter 0.5s;
 }
 
 @keyframes gradient {

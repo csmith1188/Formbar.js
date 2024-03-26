@@ -11,11 +11,9 @@ var userBreak = []
 var rooms;
 
 function buildStudent(room, studentData) {
-    console.log(
-        'studentData', studentData,
-        'currentUser', currentUser
-    );
 
+    console.log('studentData.classPermissions', studentData.classPermissions);
+    if (studentData.classPermissions > 4) return
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
         newStudent.classList.add("student");
