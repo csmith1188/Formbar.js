@@ -33,7 +33,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			oldStudentData = classroom.students[username]
 
 		if (!studentElement) {
-			usersDiv.appendChild(buildStudent(newClassroom, newStudentData))
+			let builtstudent = buildStudent(newClassroom, newStudentData)
+			if (builtstudent) usersDiv.appendChild(builtstudent)
 			continue
 		}
 
@@ -299,8 +300,6 @@ var selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-console.log(allRoom);
-var tagNames = "<%=tagNames%>";
 tagNames = tagNames.split(",");
 console.log(tagNames);
 for (let i = 0; i < tagNames.length; i++) {
