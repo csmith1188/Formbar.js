@@ -487,6 +487,7 @@ input[type="radio"]:focus {
 .break {
 	--theme-color: yellow;
 }
+
 #usersMenu #users details[id^="student"] summary {
 	cursor: pointer;
 }
