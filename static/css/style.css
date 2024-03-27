@@ -262,6 +262,14 @@ dialog {
 	padding-left: 10px;
 }
 
+a.headerTab {
+	padding: 12px 16px;
+	font-size: 21px;
+	color: white;
+	cursor: pointer;
+
+}
+
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;

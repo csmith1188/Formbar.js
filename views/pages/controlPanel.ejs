@@ -36,8 +36,7 @@
 						<div id="userFilterBoxes" class="options">
 							<h2 class="headerText">Filter</h2>
 							<div>
-								<button type="button" id="help" class="filter">Help tickets</button>
-								<button type="button" id="break" class="filter">Break</button>
+								<button type="button" id="alert" class="filter">Alert Tickets</button>
 								<button type="button" id="polls" class="filter">Polls</button>
 							</div>
 						</div>
@@ -230,15 +229,10 @@
 			let classroom = {}
 
 			const FilterState = {
-				help: [
-					'Help tickets',
-					'Help ticket in',
-					'No help ticket'
-				],
-				break: [
-					'Break',
-					'Taking a break',
-					'Not taking a break'
+				alert: [
+					'Alert tickets',
+					'Alert ticket in',
+					'No alert ticket'
 				],
 				polls: [
 					'Polls',
@@ -273,7 +267,7 @@
 			// 1 = only
 			// 2 = except
 			let filter = {
-				help: 0,
+				alert: 0,
 				break: 0,
 				polls: 0
 			}
