@@ -19,7 +19,6 @@ function buildStudent(room, studentData) {
         newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.username;
-        studentElement.style.textShadow = "2px 2px 2px #000000";
         let space = document.createElement('span')
         space.textContent = ' '
         studentElement.appendChild(space)
@@ -32,7 +31,6 @@ function buildStudent(room, studentData) {
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
-            helpDisplay.style.textShadow = "2px 2px 2px #000000";
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
             help.setAttribute('id', 'help')
@@ -229,6 +227,7 @@ function buildStudent(room, studentData) {
         newStudent.appendChild(studentElement);
     }
     newStudent.setAttribute('id', `student-${studentData.username}`);
+    newStudent.setAttribute('style', "color: black");
     if (studentData.break == true) {
         userBreak.push(studentData.username)
         let breakText = document.createElement('p')
@@ -266,7 +265,6 @@ function buildStudent(room, studentData) {
     if (studentData.pollRes.buttonRes) {
         let pollResponse = document.createElement('p')
         pollResponse.textContent = `Poll: ${studentData.pollRes.buttonRes} `
-        pollResponse.style.textShadow = "2px 2px 2px #000000";
         for (let eachResponse in room.poll.responses) {
             if (eachResponse == studentData.pollRes.buttonRes) {
                 pollResponse.style.color = room.poll.responses[eachResponse].color
