@@ -2087,12 +2087,10 @@ io.on('connection', async (socket) => {
 			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
 
-			console.log("Starting to check if students are included or excluded");
 			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
 				totalStudents = totalLastResponses.length
 				totalStudentsIncluded = totalLastResponses
-				console.log("Last poll was checked");
 			}
 			else {
 				for (let student of Object.values(classData.students)) {
@@ -2105,19 +2103,15 @@ io.on('connection', async (socket) => {
 						if (classData.poll.requiredTags[0][0] == "0") {
 							if (classData.poll.requiredTags.slice(1).join() == student.tags) {
 								included = true;
-								console.log(`${student.username} was included because of exact same tags`);
 							} else {
 								excluded = true;
-								console.log(`${student.username} was excluded because of different tags`);
 							}
 						} else if (classData.poll.requiredTags[0][0] == "1") {
 							let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
 							if (correctTags == classData.poll.requiredTags.length - 1) {
 								included = true;
-								console.log(`${student.username} was included because of having the tags`);
 							} else {
 								excluded = true;
-								console.log(`${student.username} was excluded because of not having the tags`);
 							}
 						}
 					}
@@ -2125,21 +2119,17 @@ io.on('connection', async (socket) => {
 					// Check if the student's checkbox was checked
 					if (classData.poll.studentBoxes.includes(student.username)) {
 						included = true;
-						console.log(`${student.username} was included because of being checked`);
 					} else if (classData.poll.studentBoxes.length > 0) {
 						excluded = true;
-						console.log(`${student.username} was excluded because of not being checked`);
 					}
 
 					// Check if they should be in the excluded array
 					if (student.break) {
 						excluded = true;
-						console.log(`${student.username} was excluded because of being on break`);
 					}
 
 					if (classData.poll.studentIndeterminate.includes(student.username)) {
 						excluded = true;
-						console.log(`${student.username} was excluded because of being indeterminate`);
 					}
 
 					// Update the included and excluded lists
@@ -2150,22 +2140,13 @@ io.on('connection', async (socket) => {
 				totalStudentsIncluded = Array.from(totalStudentsIncluded)
 				totalStudentsExcluded = new Set(totalStudentsExcluded)
 				totalStudentsExcluded = Array.from(totalStudentsExcluded)
-				console.log("Array of those who passed in a perm check", totalStudentsIncluded);
-				console.log("Array of those who failed in a perm check", totalStudentsExcluded);
 			}
-
-
-
-
-
-
 
 
 			totalStudents = totalStudentsIncluded.length
 			if (totalStudents == 0 && totalStudentsExcluded.length != 0) {
 				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
 				totalStudents = Object.keys(classData.students).length - totalStudentsExcluded.length
-				console.log("Only those who failed the perm check are not allowed to respond to the poll");
 			}
 			else if (totalStudents == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
@@ -2175,11 +2156,8 @@ io.on('connection', async (socket) => {
 					}
 				}
 				totalStudents = totalStudentsIncluded.length
-				console.log("Either no permissions were checked, or no one passed the perm check and all are allowed to respond");
 			}
 			//Get rid of students whos permissions are teacher or above or guest
-			console.log(totalStudents + ' is the number of students that can respond to the poll');
-			console.log(totalStudentsIncluded + ' is the array of students that can respond to the poll');
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
@@ -4313,23 +4291,23 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 			cD[socket.request.session.class].students[username].tags = tags.toString()
-			db.get('SELECT * FROM users WHERE id=?', [studentId], (err, row) => {
+			db.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
 				if (err) {
 					return console.error(err.message);
 				}
 				if (row) {
 					// Row exists, update it
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
+						console.log("ran update", tags.toString(), studentId)
 						if (err) {
 							return console.error(err.message);
 						}
 					});
 				} else {
-					console.log(`No row found with id ${studentId}`);
+					socket.send('message', 'User not found')
 				}
 			});
 		}
-
 		catch (err) {
 			logger.log('error', err.stack)
 		}
@@ -4356,7 +4334,7 @@ io.on('connection', async (socket) => {
 						};
 					});
 				} else {
-					console.log(`No row found with name ${cD[socket.request.session.class].className}`);
+					socket.send('message', 'Class not found')
 				};
 			});
 		}
@@ -4367,39 +4345,36 @@ io.on('connection', async (socket) => {
 	socket.on('removeTag', (tagName) => {
 		try {
 			//Find the tagName in the array of tagnames from the database
-			//If the tagname is not there, console.log("Tag not found") and return
+			//If the tagname is not there, socket.send('message', 'Tag not found') and return
 			//If the tagname is there, remove it from the array and update the database
 			var index = cD[socket.request.session.class].tagNames.indexOf(tagName);
 			if (index > -1) {
 				cD[socket.request.session.class].tagNames.splice(index, 1);
 			} else {
-				console.log("Tag not found");
+				socket.send('message', 'Tag not found')
 				return;
 			}
 			//Now remove all instances of the tag from the students' tags
 			for (let student of Object.values(cD[socket.request.session.class].students)) {
 				if (student.classPermissions == 0 || student.classPermissions >= 5) continue;
 				var studentTags = student.tags.split(",");
-				console.log(studentTags);
 				var studentIndex = studentTags.indexOf(tagName);
 				if (studentIndex > -1) {
 					studentTags.splice(studentIndex, 1);
 				}
 				student.tags = studentTags.toString();
-				console.log(student.tags);
 				db.get('SELECT * FROM users WHERE username = ?', [student.username], (err, row) => {
 					if (err) {
 						logger.log(err.stack);
 					}
 					if (row) {
 						db.run('UPDATE users SET tags = ? WHERE username = ?', [studentTags.toString(), student.username], (err) => {
-							console.log(student.username, studentTags.toString());
 							if (err) {
 								logger.log(err.stack);
 							};
 						});
 					} else {
-						console.log(`No row found with username ${student.username}`);
+						socket.send('message', 'User not found')
 					};
 				});
 				db.get('SELECT tags FROM classroom WHERE name = ?', [cD[socket.request.session.class].className], (err, row) => {
@@ -4422,7 +4397,7 @@ io.on('connection', async (socket) => {
 							};
 						});
 					} else {
-						console.log(`No row found with name ${cD[socket.request.session.class].className}`);
+						socket.send('message', 'Class not found')
 					};
 				})
 			};
