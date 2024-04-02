@@ -11,27 +11,28 @@ var userBreak = []
 var rooms;
 
 function buildStudent(room, studentData) {
-    console.log(
-        'studentData', studentData,
-        'currentUser', currentUser
-    );
 
+    console.log('studentData.classPermissions', studentData.classPermissions);
+    if (studentData.classPermissions > 4) return
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
         newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.username;
+        studentElement.style.textShadow = "2px 2px 2px #000000";
         let space = document.createElement('span')
         space.textContent = ' '
         studentElement.appendChild(space)
         for (let eachResponse in room.poll.responses) {
             if (eachResponse == studentData.pollRes.buttonRes) {
                 studentElement.style.color = room.poll.responses[eachResponse].color
+                
             }
         }
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
+            newStudent.setAttribute("class", "help")
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
             help.setAttribute('id', 'help')
@@ -58,6 +59,7 @@ function buildStudent(room, studentData) {
         if (studentData.break) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `⏱`
+            newStudent.setAttribute("class", "break")
             studentElement.appendChild(helpDisplay)
         }
         // if (studentData.pollRes) {
@@ -265,6 +267,7 @@ function buildStudent(room, studentData) {
     if (studentData.pollRes.buttonRes) {
         let pollResponse = document.createElement('p')
         pollResponse.textContent = `Poll: ${studentData.pollRes.buttonRes} `
+        pollResponse.style.textShadow = "2px 2px 2px #000000";
         for (let eachResponse in room.poll.responses) {
             if (eachResponse == studentData.pollRes.buttonRes) {
                 pollResponse.style.color = room.poll.responses[eachResponse].color

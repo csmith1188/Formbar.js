@@ -110,7 +110,7 @@
 							<label for="resTextBox">Would like to accept text responses?</label>
 							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
 							<br>
-							<label for="pollBox">Prompt for the poll?</label>
+							<label for="pollBox" >Prompt for the poll?</label>
 							<input type="text" id="pollBox" placeholder="Prompt (optional)">
 							<br>
 							<label for="changeNames">Customize the answer options?</label>
@@ -358,10 +358,11 @@
 			ctx.lineWidth = 5;
 			ctx.strokeStyle = "black";
 			ctx.stroke();
+			var tagNames = "<%=tagNames%>";
 		</script>
-		<script src="/js/controlPanelPolls.js"></script>
 		<script src="/js/controlPanelStudents.js"></script>
 		<script src="/js/controlPanelSockets.js"></script>
+		<script src="/js/controlPanelPolls.js"></script>
 
 		<%- include('../partials/footer_content') %>
 

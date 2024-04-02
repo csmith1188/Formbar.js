@@ -7,8 +7,12 @@ socket.on('cpUpdate', (newClassroom) => {
 		doStep(classroom.currentStep)
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
-	pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+    totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+    if (newClassroom.poll.prompt != "") {
+        pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+    } 
+    else {
+        pollCounter.innerText = `Poll Prompt:`}
 
 	let responseCount = 0;
 	for (let [key, value] of Object.entries(newClassroom.students)) {
@@ -29,7 +33,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			oldStudentData = classroom.students[username]
 
 		if (!studentElement) {
-			usersDiv.appendChild(buildStudent(newClassroom, newStudentData))
+			let builtstudent = buildStudent(newClassroom, newStudentData)
+			if (builtstudent) usersDiv.appendChild(builtstudent)
 			continue
 		}
 
@@ -295,7 +300,6 @@ var selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-var tagNames = "<%=tagNames%>";
 tagNames = tagNames.split(",");
 console.log(tagNames);
 for (let i = 0; i < tagNames.length; i++) {

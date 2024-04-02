@@ -44,6 +44,7 @@ body {
 	padding: 8px;
 	text-align: center;
 	--theme-color: var(--color-blue);
+	transition: background-color 0.5s, color 0.5s;
 }
 
 h1 {
@@ -236,9 +237,24 @@ dialog {
 	left: -5%;
 	display: flex;
 	justify-content: center;
-	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
 	box-shadow: 0 3px 10px black;
 	user-select: none;
+	animation: gradient 5s ease infinite;
+	background: linear-gradient(-30deg, var(--color-blue), var(--color-purple));
+	background-size: 400% 400%;
+	transition: filter 0.5s;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
 }
 
 #version {
@@ -249,7 +265,7 @@ dialog {
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;
-	color: var(--light-gray);
+	color: inverted;
 	cursor: pointer;
 }
 
@@ -457,12 +473,21 @@ input[type="radio"]:focus {
 	gap: 1rem;
 }
 
+
 #usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
 	border: 3px var(--theme-color) solid;
 	background-color: var(--bg-light-blue);
 	border-radius: 10px;
 	margin-bottom: 1vi;
 	height: fit-content;
+}
+
+.help {
+	--theme-color: red;
+}
+
+.break {
+	--theme-color: yellow;
 }
 
 #usersMenu #users details[id^="student"] summary {
@@ -774,5 +799,25 @@ input[type="radio"]:focus {
 
 .studentButton {
 	border: 1px solid black;
+}
+
+.helpBox {
+	background-color: white;
+}
+
+#pollBox {
+	background-color: white;
+}
+
+#resNumber {
+	background-color: white;
+}
+
+.permissionselect {
+	background-color: white;
+}
+
+#ticket{
+	background-color: white;
 }
 
