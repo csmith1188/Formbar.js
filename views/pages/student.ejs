@@ -303,27 +303,6 @@
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
 
-						let alertText = ''
-						setTimeout(() => {
-							if (lettRes)
-								alertText += 'Response submitted: ' + lettRes
-							else if (oldLettRes)
-								alertText += 'Response removed'
-							else if (document.getElementById('remove').checked)
-								alertText += 'No poll response to remove'
-							if (textRes) {
-								if (alertText) alertText += '\n'
-								alertText += 'Text response submitted: ' + textRes
-							} else if (oldTextRes) {
-								if (alertText) alertText += '\n'
-								alertText += 'Text response removed'
-							}
-							if (alertText) alert(alertText)
-
-							oldLettRes = lettRes
-							oldTextRes = textRes
-						}, 100)
-
 					}
 
 					socket.emit('pollUpdate')

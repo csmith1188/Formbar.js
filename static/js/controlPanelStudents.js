@@ -12,8 +12,6 @@ var rooms;
 
 function buildStudent(room, studentData) {
 
-    console.log('studentData.classPermissions', studentData.classPermissions);
-    if (studentData.classPermissions > 4) return
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
         newStudent.classList.add("student");
@@ -31,13 +29,14 @@ function buildStudent(room, studentData) {
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
+            newStudent.setAttribute("class", "help")
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
             help.setAttribute('id', 'help')
-            help.textContent = 'sent help ticket'
+            help.textContent = 'Needs Help'
             if (studentData.help.reason) {
                 let helpReason = document.createElement('p')
-                helpReason.textContent = `reason ${studentData.help.reason} `
+                helpReason.textContent = `Reason: ${studentData.help.reason} `
                 help.appendChild(helpReason)
             }
             let helpTimeDisplay = document.createElement('p')
@@ -57,6 +56,7 @@ function buildStudent(room, studentData) {
         if (studentData.break) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `⏱`
+            newStudent.setAttribute("class", "break")
             studentElement.appendChild(helpDisplay)
         }
         // if (studentData.pollRes) {
@@ -243,7 +243,7 @@ function buildStudent(room, studentData) {
         let breakDiv = document.createElement('div')
         breakDiv.setAttribute('id', 'break')
         let breakNeeded = document.createElement('p')
-        breakNeeded.textContent = 'Needs a break'
+        breakNeeded.textContent = 'Needs a Break'
         breakDiv.appendChild(breakNeeded)
         let breakReason = document.createElement('p')
         breakReason.textContent = `Reason: ${studentData.break} `

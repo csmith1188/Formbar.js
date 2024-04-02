@@ -262,6 +262,14 @@ dialog {
 	padding-left: 10px;
 }
 
+a.headerTab {
+	padding: 12px 16px;
+	font-size: 21px;
+	color: white;
+	cursor: pointer;
+
+}
+
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;
@@ -473,12 +481,21 @@ input[type="radio"]:focus {
 	gap: 1rem;
 }
 
+
 #usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
 	border: 3px var(--theme-color) solid;
 	background-color: var(--bg-light-blue);
 	border-radius: 10px;
 	margin-bottom: 1vi;
 	height: fit-content;
+}
+
+.help {
+	--theme-color: red;
+}
+
+.break {
+	--theme-color: yellow;
 }
 
 #usersMenu #users details[id^="student"] summary {
@@ -811,3 +828,4 @@ input[type="radio"]:focus {
 #ticket{
 	background-color: white;
 }
+
