@@ -1,5 +1,9 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
+	for (let student of Object.values(newClassroom.students)) {
+		student.help.time = new Date(student.help.time)
+	}
+
 	classCode.textContent = 'Class Code: ' + newClassroom.key
 	buildPreviousPolls(newClassroom.pollHistory)
 
@@ -7,12 +11,12 @@ socket.on('cpUpdate', (newClassroom) => {
 		doStep(classroom.currentStep)
 	}
 
-    totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
-    if (newClassroom.poll.prompt != "") {
-        pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
-    } 
-    else {
-        pollCounter.innerText = `Poll Prompt:`}
+	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	if (newClassroom.poll.prompt != "") {
+		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+	} else {
+		pollCounter.innerText = `Poll Prompt:`
+	}
 
 	let responseCount = 0;
 	for (let [key, value] of Object.entries(newClassroom.students)) {

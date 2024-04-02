@@ -348,20 +348,7 @@ function filterSortChange() {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
 
-            if (studentA.help && studentB.help) {
-                const dateA = new Date()
-                dateA.setHours(studentA.help.time.hours)
-                dateA.setMinutes(studentA.help.time.minutes)
-                dateA.setSeconds(studentA.help.time.seconds)
-                const dateB = new Date()
-                dateB.setHours(studentB.help.time.hours)
-                dateB.setMinutes(studentB.help.time.minutes)
-                dateB.setSeconds(studentB.help.time.seconds)
-                if (dateA < dateB) {
-                    return -1
-                }
-            }
-            else if (studentA.help) return -1
+            return studentA.help.time - studentB.help.time
         })
     }
 

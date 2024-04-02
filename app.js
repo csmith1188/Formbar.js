@@ -3515,11 +3515,6 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let time = new Date();
-			time = {
-				hours: time.getHours(),
-				minutes: time.getMinutes(),
-				seconds: time.getSeconds()
-			}
 
 			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
