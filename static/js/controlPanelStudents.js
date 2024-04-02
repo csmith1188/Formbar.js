@@ -12,8 +12,6 @@ var rooms;
 
 function buildStudent(room, studentData) {
 
-    console.log('studentData.classPermissions', studentData.classPermissions);
-    if (studentData.classPermissions > 4) return
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
         newStudent.classList.add("student");
@@ -36,10 +34,10 @@ function buildStudent(room, studentData) {
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
             help.setAttribute('id', 'help')
-            help.textContent = 'sent help ticket'
+            help.textContent = 'Needs Help'
             if (studentData.help.reason) {
                 let helpReason = document.createElement('p')
-                helpReason.textContent = `reason ${studentData.help.reason} `
+                helpReason.textContent = `Reason: ${studentData.help.reason} `
                 help.appendChild(helpReason)
             }
             let helpTimeDisplay = document.createElement('p')
@@ -240,7 +238,7 @@ function buildStudent(room, studentData) {
         let breakDiv = document.createElement('div')
         breakDiv.setAttribute('id', 'break')
         let breakNeeded = document.createElement('p')
-        breakNeeded.textContent = 'Needs a break'
+        breakNeeded.textContent = 'Needs a Break'
         breakDiv.appendChild(breakNeeded)
         let breakReason = document.createElement('p')
         breakReason.textContent = `Reason: ${studentData.break} `
@@ -294,29 +292,20 @@ function filterSortChange() {
 	}
 
 	// filter by help
+    console.log('userOrder', userOrder)
 	for (let username of userOrder.slice()) {
+        console.log('username', username)
 		let studentElement = document.getElementById(`student-${username}`);
 		if (
-			(filter.help == 1 && !classroom.students[username].help) ||
-			(filter.help == 2 && classroom.students[username].help)
-		) {
+        ((filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) || (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break)))
+        ) {
 			studentElement.style.display = 'none'
 			userOrder.pop(username)
+            console.log("Popped", username)
 		}
 	}
 
-	// filter by break
-	for (let username of userOrder.slice()) {
-		let studentElement = document.getElementById(`student-${username}`);
-		if (
-			(filter.break == 1 && !classroom.students[username].break) ||
-			(filter.break == 2 && classroom.students[username].break)
-		) {
-			studentElement.style.display = 'none'
-			userOrder.pop(username)
-		}
-	}
-	// filter by poll
+
 	for (let username of userOrder.slice()) {
 		let studentElement = document.getElementById(`student-${username}`);
 		if (
