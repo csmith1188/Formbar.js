@@ -4290,13 +4290,14 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 			cD[socket.request.session.class].students[username].tags = tags.toString()
-			db.get('SELECT * FROM users WHERE id=?', [studentId], (err, row) => {
+			db.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
 				if (err) {
 					return console.error(err.message);
 				}
 				if (row) {
 					// Row exists, update it
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
+						console.log("ran update", tags.toString(), studentId)
 						if (err) {
 							return console.error(err.message);
 						}
