@@ -206,7 +206,8 @@ const CLASS_SOCKET_PERMISSIONS = {
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
 	pluginUpdate: STUDENT_PERMISSIONS,
-	setClassPermissionSetting: MANAGER_PERMISSIONS
+	setClassPermissionSetting: MANAGER_PERMISSIONS,
+	classPoll: MOD_PERMISSIONS
 }
 
 // make a better name for this
@@ -236,7 +237,7 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	modechange: 'manageClass',
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
-	classUnbanUser: 'manageStudents'
+	classUnbanUser: 'manageStudents',
 }
 
 const DEFAULT_CLASS_PERMISSIONS = {
@@ -2291,7 +2292,6 @@ io.on('connection', async (socket) => {
 	function customPollUpdate(username) {
 		try {
 			logger.log('info', `[customPollUpdate] username=(${username})`)
-
 			let userSession = userSockets[username].request.session
 
 			let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
@@ -3068,6 +3068,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
 
+			console.log(socket.request.session);
 			let userId = socket.request.session.userId
 
 			if (id) {
@@ -4444,6 +4445,23 @@ io.on('connection', async (socket) => {
 		} catch (err) {
 			logger.log("error", err.stack);
 		};
+	});
+
+	socket.on("classPoll", (poll) => {
+		try {
+			console.log(poll.name, poll.prompt, JSON.stringify(poll.answers));
+			db.get(`SELECT * FROM custom_polls WHERE name=? AND prompt=? AND answers=?`, [poll.name, poll.prompt, JSON.stringify(poll.answers)], (err, classPollData) => {
+				try {
+					if (err) throw err;
+					console.log(classPollData);
+					socket.emit("classPollSave", classPollData);
+				} catch (err) {
+					logger.log("error", err.stack);
+				}
+			})
+		} catch (err) {
+			logger.log("error", err.stack);
+		}
 	})
 })
 
