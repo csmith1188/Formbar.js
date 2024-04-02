@@ -296,6 +296,13 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 	}
 })
 
+//socket.emit("classPollEmit");
+socket.on("classPollSave", (classPollData) => {
+	console.log(classPollData);
+	let classCodeText = classCode.textContent.split(": ")
+	socket.emit("sharePollToClass", classPollData.id, classCodeText[1]);
+})
+
 var selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');

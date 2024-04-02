@@ -615,7 +615,7 @@ function savePoll() {
 	socket.emit('savePoll', customPoll, editingPollId)
 }
 
-function savePollAs() {
+function savePollAs(pollType) {
 	let customPoll = {}
 
     customPoll.name = prompt('What do you want to call this poll')
@@ -641,7 +641,13 @@ function savePollAs() {
             }
             customPoll.answers = pollAnswers
         
-            socket.emit('savePoll', customPoll)
+			if (pollType == "user") {
+				socket.emit('savePoll', customPoll);
+			} else if (pollType == "class") {
+				console.log(customPoll);
+				socket.emit("savePoll", customPoll);
+				shareClassPoll(customPoll);
+			};
     };
 }
 
@@ -661,6 +667,13 @@ function sharePoll(type) {
 
 	sharePollUserInput.value = ''
 	sharePollClassInput.value = ''
+}
+
+function shareClassPoll(poll) {
+	let classCodeText = classCode.textContent.split(": ");
+	console.log(classCodeText[1]);
+	console.log(poll);
+	socket.emit("classPoll", poll);
 }
 
 function deletePoll(pollId) {
