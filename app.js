@@ -290,7 +290,8 @@ class Student {
 		this.sharedPolls = sharedPolls || []
 		this.pollRes = {
 			buttonRes: '',
-			textRes: ''
+			textRes: '',
+			time: null
 		}
 		this.help = false
 		this.break = false
@@ -2811,6 +2812,7 @@ io.on('connection', async (socket) => {
 
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
+			cD[socket.request.session.class].students[socket.request.session.username].pollRes.time = new Date()
 
 			for (let i = 0; i < resLength; i++) {
 				if (res) {

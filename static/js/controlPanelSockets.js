@@ -2,6 +2,7 @@ socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
+		student.pollRes.time = new Date(student.pollRes.time)
 	}
 
 	classCode.textContent = 'Class Code: ' + newClassroom.key
@@ -57,8 +58,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	filterSortChange(newClassroom)
-
 	if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
 		bannedTabButton.style.display = ''
 	} else {
@@ -111,6 +110,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
+
 	if (!deepObjectEqual(classroom?.permissions, newClassroom.permissions)) {
 		permissionsDiv.innerHTML = ''
 		for (let [permission, level] of Object.entries(newClassroom.permissions)) {
@@ -152,6 +152,10 @@ socket.on('cpUpdate', (newClassroom) => {
 			permissionsDiv.appendChild(permissionLabel)
 		}
 	}
+
+	console.log('hi');
+
+	filterSortChange(newClassroom)
 
 	classroom = newClassroom
 })

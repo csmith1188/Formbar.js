@@ -44,7 +44,8 @@
 							<h2 class="headerText">Sort</h2>
 							<div>
 								<button type="button" id="name" class="sort">Name</button>
-								<button type="button" id="polls" class="sort">Polls</button>
+								<button type="button" id="pollName" class="sort">Poll Name</button>
+								<button type="button" id="pollTime" class="sort">Poll Time</button>
 								<button type="button" id="helpTime" class="sort">Help Time</button>
 								<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
 							</div>
@@ -110,7 +111,7 @@
 							<label for="resTextBox">Would like to accept text responses?</label>
 							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
 							<br>
-							<label for="pollBox" >Prompt for the poll?</label>
+							<label for="pollBox">Prompt for the poll?</label>
 							<input type="text" id="pollBox" placeholder="Prompt (optional)">
 							<br>
 							<label for="changeNames">Customize the answer options?</label>
@@ -248,10 +249,15 @@
 					'Name 🡇',
 					'Name 🡅'
 				],
-				polls: [
-					'Polls',
-					'Polls 🡇',
-					'Polls 🡅'
+				pollName: [
+					'Poll Name',
+					'Poll Name 🡇',
+					'Poll Name 🡅'
+				],
+				pollTime: [
+					'Poll time',
+					'Poll time 🡇',
+					'Poll time 🡅'
 				],
 				helpTime: [
 					'Help time',
@@ -277,7 +283,8 @@
 			// 2 = ascending
 			let sort = {
 				name: 0,
-				polls: 0,
+				pollName: 0,
+				pollTime: 0,
 				helpTime: 0,
 				permissions: 1
 			}
