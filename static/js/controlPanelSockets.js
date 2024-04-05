@@ -299,7 +299,6 @@ var selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-console.log(allRoom);
 var tagNames = "<%=tagNames%>";
 tagNames = tagNames.split(",");
 console.log(tagNames);

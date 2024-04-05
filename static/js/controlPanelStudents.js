@@ -21,7 +21,6 @@ function buildStudent(room, studentData) {
         newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.username;
-        studentElement.style.textShadow = "2px 2px 2px #000000";
         let space = document.createElement('span')
         space.textContent = ' '
         studentElement.appendChild(space)

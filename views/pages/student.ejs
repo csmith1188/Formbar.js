@@ -10,7 +10,7 @@
 						top: 75px;
 						height: 85%;
 						justify-self: center;
-						}
+					}
 				</style>
 				<script src="/js/deepObjectEqual.js"></script>
 			</head>
@@ -42,81 +42,73 @@
 													Lesson</a>
 												<% } %>
 					</div>
-					<div id="pollContent">
-						<h1 id="noPoll" class="textColorContent">No active poll</h1>
-						<div id="poll">
-							<u>
-								<h2 id="pollPrompt">
-
-								</h2>
-							</u>
-							<form id="pollForm"></form>
-							<br>
-							<button onclick="submitPoll()" class="quickButton">Submit</button>
-						</div>
-					</div>
-					<div id="quizContent">
-						<form id="quizForm" method="post" action="/student">
-						</form>
-					</div>
 					<% } %>
-
-						<!-- Virtual Bar -->
-						<div id="vbContainer">
-							<canvas id='virtualbar' style="height:900px; width:969px;"></canvas>
-						</div>
-
+					
+					<div id="studentVBar">
+						<%- include("../partials/virtual_bar.ejs") %>
 						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+							
 							<br>
-							<div>
+							<div id="helpBreak">
 								<h1>Need Help?</h1>
 								<form id="eventForm">
 									<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
-										placeholder="Reason (optional)"></textarea>
+									placeholder="Reason (optional)"></textarea>
 									<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
 								</form>
 								<button onclick="help()" class="quickButton">Send Ticket</button>
-							</div>
-							<br>
-							<div>
+								<br>
 								<h1>Need a Break?</h1>
 								<button class="breakButton"
-									onclick="{document.getElementById('requestBreakDialog').showModal()}">
-									Take Break
-								</button>
+								onclick="{document.getElementById('requestBreakDialog').showModal()}">
+								Take Break
+							</button>
+							<div id="pollContent">
+								<h1 id="noPoll" class="textColorContent">No active poll</h1>
+								<div id="poll">
+									<u>
+										<h2 id="pollPrompt">
+		
+										</h2>
+									</u>
+									<form id="pollForm"></form>
+									<br>
+									<button onclick="submitPoll()" class="quickButton">Submit</button>
+								</div>
 							</div>
-							<%- include('../partials/body_content') %>
+							<div id="quizContent">
+								<form id="quizForm" method="post" action="/student">
+								</form>
+							</div>
+						</div>
+						</div>
+						<%- include('../partials/body_content') %>
 
-								<dialog id="requestBreakDialog" class="contentBox">
-									<form
-										onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
-										<h3 style="margin-top: 0;">Take a break</h3>
-										<div id="breakInputs" class="centered">
-											<label class="form-control" id="pollControl" for="bathroom">
-												<input type="radio" name="option" id="bathroom" value="Bathroom"
-													required>
-												Bathroom
-											</label>
-											<label class="form-control" id="pollControl" for="other">
-												<input type="radio" name="option" id="other" value="other">
-												Other
-											</label>
-											<textarea class="hidden" id="otherText" cols="25" rows="3"
-												maxlength="150"></textarea>
-										</div>
-										<div id="takeBreak" class="hCentered">
-											<button class="quickButton" id="cancel" type="button"
-												onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
-											<button class="quickButton" type="submit">Take Break</button>
-										</div>
-									</form>
-								</dialog>
-								<% } %>
+							<dialog id="requestBreakDialog" class="contentBox">
+								<form
+									onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
+									<h3 style="margin-top: 0;">Take a break</h3>
+									<div id="breakInputs" class="centered">
+										<label class="form-control" id="pollControl" for="bathroom">
+											<input type="radio" name="option" id="bathroom" value="Bathroom" required>
+											Bathroom
+										</label>
+										<label class="form-control" id="pollControl" for="other">
+											<input type="radio" name="option" id="other" value="other">
+											Other
+										</label>
+										<textarea class="hidden" id="otherText" cols="25" rows="3"
+											maxlength="150"></textarea>
+									</div>
+									<div id="takeBreak" class="hCentered">
+										<button class="quickButton" id="cancel" type="button"
+											onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
+										<button class="quickButton" type="submit">Take Break</button>
+									</div>
+								</form>
+							</dialog>
+							<% } %>
 			</body>
-
-			<script>
-				let noPoll = null
-			</script>
 
 			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 				<script type="text/javascript">
@@ -388,115 +380,7 @@
 				</script>
 				<% } %>
 
-					<script src="js/chart.js"></script>
-					<script>
-						let virtualBar = document.getElementById("virtualbar");
-						let mychart = virtualBar.getContext("2d");
-						let doughnutChart = new Chart(mychart, {
 
-							type: 'doughnut',
-							data: {
-								labels: [],
-								datasets: [{
-									backgroundColor: [],
-									data: []
-								}]
-							},
-							options: {
-								responsive: true,
-								maintainAspectRatio: false,
-								plugins: {
-									legend: {
-										labels: {
-											font: {
-												size: 20
-											},
-											color: 'grey'
-										}
-
-									}
-								}
-							}
-						})
-
-						// Calls for data
-						socket.emit('vbUpdate')
-						// Gets data from server and send it the function
-						socket.on('vbUpdate', (pollsData) => {
-							if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-								if (noPoll)
-									noPoll.style.display = ''
-								virtualBar.style.display = "none";
-								return
-							}
-
-							if (noPoll)
-								noPoll.style.display = 'none'
-							virtualBar.style.display = "block";
-
-							//reset virtual bar
-							doughnutChart.data.datasets[0].backgroundColor = []
-							doughnutChart.data.datasets[0].data = []
-
-							let totalStudents = pollsData.totalStudents
-							let totalResponses = 0
-
-							// add up all poll responses
-							for (const poll of Object.values(pollsData.polls)) {
-								totalResponses += poll.responses
-							}
-
-							// make the polls blind unless all students answered
-							if (totalStudents == totalResponses) {
-								pollsData.blindPoll = false
-							}
-
-							let labelsArray = []
-							let pollArray = []
-
-							let studResponses = {}
-							// Loops through object to get each label of the possible answers
-							// Also, create a new letiable for each possible answer
-							if (pollsData.blindPoll) {
-								labelsArray.push('Responses')
-								studResponses.responses = 0
-							} else {
-								for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-									labelsArray.push(pollData.answer)
-									studResponses[poll] = 0
-								}
-							}
-							labelsArray.push('No Response')
-							studResponses.noResponse = 0
-
-							// Loops through all possible answers and generates a new color letiant for each answer
-							// All possible answers should have a different color
-							if (pollsData.blindPoll) {
-								doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
-							} else {
-								for (let poll of Object.values(pollsData.polls)) {
-									doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
-								}
-							}
-							doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-							// Loops through all student answers and adds them to a total tally
-							// Student response corresponds with a property name in studResponses
-							studResponses.noResponse += totalStudents - totalResponses
-							for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-								if (pollsData.blindPoll)
-									studResponses.responses += pollData.responses
-								else studResponses[poll] += pollData.responses
-							}
-
-							for (const responses of Object.keys(studResponses)) {
-								pollArray.push(studResponses[responses])
-							}
-
-							doughnutChart.data.labels = labelsArray
-							doughnutChart.data.datasets[0].data = pollArray
-							doughnutChart.update()
-						})
-					</script>
 
 					<%- include('../partials/footer_content') %>
 
