@@ -32,7 +32,7 @@ function buildStudent(room, studentData) {
             newStudent.setAttribute("class", "help")
             studentElement.appendChild(helpDisplay)
             let help = document.createElement('p')
-            help.setAttribute('id', 'help')
+            help.classList.add('help')
             help.textContent = 'Needs Help'
             if (studentData.help.reason) {
                 let helpReason = document.createElement('p')
@@ -40,7 +40,7 @@ function buildStudent(room, studentData) {
                 help.appendChild(helpReason)
             }
             let helpTimeDisplay = document.createElement('p')
-            helpTimeDisplay.textContent = `at ${studentData.help.time.hours}:${studentData.help.time.minutes}:${studentData.help.time.seconds} `
+            helpTimeDisplay.textContent = `at ${studentData.help.time.toLocaleTimeString()} `
             help.appendChild(helpTimeDisplay)
             let deleteTicketButton = document.createElement('button')
             deleteTicketButton.classList.add('quickButton')
@@ -287,54 +287,61 @@ function buildStudent(room, studentData) {
 }
 
 // filters and sorts students
-function filterSortChange() {
+function filterSortChange(classroom) {
     if (!classroom.students) return
 
     let userOrder = Object.keys(classroom.students)
-    //Get rid of the first element in the array
-    userOrder.shift()
+
     for (let username of userOrder) {
         document.getElementById(`student-${username}`).style.display = ''
     }
 
     // filter by help
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.help == 1 && !classroom.students[username].help) ||
-            (filter.help == 2 && classroom.students[username].help)
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
+    if (filter.help) {
+        for (let username of userOrder) {
+            let studentElement = document.getElementById(`student-${username}`);
+            if (
+                (filter.help == 1 && !classroom.students[username].help) ||
+                (filter.help == 2 && classroom.students[username].help)
+            ) {
+                studentElement.style.display = 'none'
+                userOrder.pop(username)
+            }
         }
     }
 
     // filter by break
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.break == 1 && !classroom.students[username].break) ||
-            (filter.break == 2 && classroom.students[username].break)
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
+    if (filter.break) {
+        for (let username of userOrder) {
+            let studentElement = document.getElementById(`student-${username}`);
+            if (
+                (filter.break == 1 && !classroom.students[username].break) ||
+                (filter.break == 2 && classroom.students[username].break)
+            ) {
+                studentElement.style.display = 'none'
+                userOrder.pop(username)
+            }
         }
     }
+
     // filter by poll
-    for (let username of userOrder.slice()) {
-        let studentElement = document.getElementById(`student-${username}`);
-        if (
-            (filter.polls == 1 && (
-                !classroom.students[username].pollRes.buttonRes && !classroom.students[username].pollRes.textRes)
-            ) ||
-            (filter.polls == 2 &&
-                (classroom.students[username].pollRes.buttonRes || classroom.students[username].pollRes.textRes)
-            )
-        ) {
-            studentElement.style.display = 'none'
-            userOrder.pop(username)
+    if (filter.polls) {
+        for (let username of userOrder) {
+            let studentElement = document.getElementById(`student-${username}`);
+            if (
+                (filter.polls == 1 && (
+                    !classroom.students[username].pollRes.buttonRes && !classroom.students[username].pollRes.textRes)
+                ) ||
+                (filter.polls == 2 &&
+                    (classroom.students[username].pollRes.buttonRes || classroom.students[username].pollRes.textRes)
+                )
+            ) {
+                studentElement.style.display = 'none'
+                userOrder.pop(username)
+            }
         }
     }
+
     // sort by name
     if (sort.name == 1) {
         userOrder.students = userOrder.sort()
@@ -342,31 +349,8 @@ function filterSortChange() {
         userOrder.students = userOrder.sort().reverse()
     }
 
-    // sort by help time
-    if (sort.helpTime == 1) {
-        userOrder.sort((a, b) => {
-            let studentA = classroom.students[a]
-            let studentB = classroom.students[b]
-
-            if (studentA.help && studentB.help) {
-                const dateA = new Date()
-                dateA.setHours(studentA.help.time.hours)
-                dateA.setMinutes(studentA.help.time.minutes)
-                dateA.setSeconds(studentA.help.time.seconds)
-                const dateB = new Date()
-                dateB.setHours(studentB.help.time.hours)
-                dateB.setMinutes(studentB.help.time.minutes)
-                dateB.setSeconds(studentB.help.time.seconds)
-                if (dateA < dateB) {
-                    return -1
-                }
-            }
-            else if (studentA.help) return -1
-        })
-    }
-
-    // sort by poll
-    if (sort.polls == 1) {
+    // sort by poll name
+    if (sort.pollName == 1) {
         userOrder.sort((a, b) => {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
@@ -380,7 +364,7 @@ function filterSortChange() {
             } else if (studentA.pollRes.buttonRes) return -1
             else if (studentB.pollRes.buttonRes) return 1
         })
-    } else if (sort.polls == 2) {
+    } else if (sort.pollName == 2) {
         userOrder.sort((a, b) => {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
@@ -396,7 +380,34 @@ function filterSortChange() {
         })
     }
 
-    // //sort by permissions
+    // sort by poll time
+    if (sort.pollTime == 1) {
+        userOrder.sort((a, b) => {
+            let studentA = classroom.students[a]
+            let studentB = classroom.students[b]
+
+            return studentA.pollRes.time - studentB.pollRes.time
+        })
+    } else if (sort.pollTime == 2) {
+        userOrder.sort((a, b) => {
+            let studentA = classroom.students[a]
+            let studentB = classroom.students[b]
+
+            return studentB.pollRes.time - studentA.pollRes.time
+        })
+    }
+
+    // sort by help time
+    if (sort.helpTime == 1) {
+        userOrder.sort((a, b) => {
+            let studentA = classroom.students[a]
+            let studentB = classroom.students[b]
+
+            return studentA.help.time - studentB.help.time
+        })
+    }
+
+    // sort by permissions
     if (sort.permissions == 1) {
         userOrder.sort((a, b) => classroom.students[b].classPermissions - classroom.students[a].classPermissions)
     } else if (sort.permissions == 2) {
@@ -404,6 +415,8 @@ function filterSortChange() {
     }
 
     for (let i = 0; i < userOrder.length; i++) {
+        console.log('\n', userOrder[i], i);
+
         document.getElementById(`student-${userOrder[i]}`).style.order = i
     }
 }
