@@ -150,11 +150,9 @@ function buildStudent(room, studentData) {
             let allTags = []
             let checkboxForm = document.getElementById(studentData.username + 'tags')
             let checkboxes = checkboxForm.getElementsByTagName('input')
-            console.log(checkboxes);
             for (let i = 0; i < checkboxes.length; i++) {
                 let checkbox = checkboxes[i]
                 // Check if the checkbox is checked
-                console.log(checkbox.checked);
                 if (checkbox.type === 'checkbox') {
                     if (checkbox.checked) {
                         // Add the checkbox value to the studentData.tags array
@@ -162,11 +160,8 @@ function buildStudent(room, studentData) {
                     }
                 }
             }
-            console.log(allTags);
-            console.log(studentData.tags);
             studentData.tags = allTags;
             studentData.tags.sort()
-            console.log(studentData.tags);
 
             socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
             studentTags.close()
@@ -415,8 +410,6 @@ function filterSortChange(classroom) {
     }
 
     for (let i = 0; i < userOrder.length; i++) {
-        console.log('\n', userOrder[i], i);
-
         document.getElementById(`student-${userOrder[i]}`).style.order = i
     }
 }
