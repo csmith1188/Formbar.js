@@ -11,6 +11,7 @@ var userBreak = []
 var rooms;
 
 function buildStudent(room, studentData) {
+    let newStudent
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
@@ -219,13 +220,15 @@ function buildStudent(room, studentData) {
         }
         kickUserButton.textContent = 'Kick User'
         newStudent.appendChild(kickUserButton)
-    }
-    else {
+    } else if (studentData.id != currentUser.id) {
         newStudent = document.createElement("div");
         let studentElement = document.createElement("p");
         studentElement.innerText = studentData.username;
         newStudent.appendChild(studentElement);
     }
+
+    if (!newStudent) return
+
     newStudent.setAttribute('id', `student-${studentData.username}`);
     newStudent.setAttribute('style', "color: black");
     if (studentData.break == true) {
@@ -286,6 +289,8 @@ function filterSortChange(classroom) {
     if (!classroom.students) return
 
     let userOrder = Object.keys(classroom.students)
+
+    userOrder = userOrder.filter(username => username != currentUser.username)
 
     for (let username of userOrder) {
         document.getElementById(`student-${username}`).style.display = ''
