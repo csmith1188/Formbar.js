@@ -4421,14 +4421,37 @@ io.on('connection', async (socket) => {
 
 	socket.on("classPoll", (poll) => {
 		try {
-			console.log(poll.name, poll.prompt, JSON.stringify(poll.answers));
-			db.get(`SELECT * FROM custom_polls WHERE name=? AND prompt=? AND answers=?`, [poll.name, poll.prompt, JSON.stringify(poll.answers)], (err, classPollData) => {
+			let userId = socket.request.session.userId
+			db.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
 				try {
-					if (err) throw err;
-					console.log(classPollData);
-					socket.emit("classPollSave", classPollData);
+					if (err) throw err
+					if (!nextPollId) logger.log('critical', '[savePoll] nextPollId not found')
+
+					nextPollId = nextPollId.nextPollId + 1
+
+					db.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+						userId,
+						poll.name,
+						poll.prompt,
+						JSON.stringify(poll.answers),
+						poll.textRes,
+						poll.blind,
+						poll.weight,
+						poll.public
+					], (err) => {
+						try {
+							if (err) throw err
+
+							cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+							socket.emit('message', 'Poll saved successfully!')
+							customPollUpdate(socket.request.session.username)
+							socket.emit("classPollSave", nextPollId);
+						} catch (err) {
+							logger.log('error', err.stack);
+						}
+					})
 				} catch (err) {
-					logger.log("error", err.stack);
+					logger.log('error', err.stack);
 				}
 			})
 		} catch (err) {
