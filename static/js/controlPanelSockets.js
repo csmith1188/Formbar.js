@@ -1,5 +1,10 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
+	for (let student of Object.values(newClassroom.students)) {
+		student.help.time = new Date(student.help.time)
+		student.pollRes.time = new Date(student.pollRes.time)
+	}
+
 	classCode.textContent = 'Class Code: ' + newClassroom.key
 	buildPreviousPolls(newClassroom.pollHistory)
 
@@ -7,12 +12,12 @@ socket.on('cpUpdate', (newClassroom) => {
 		doStep(classroom.currentStep)
 	}
 
-    totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
-    if (newClassroom.poll.prompt != "") {
-        pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
-    } 
-    else {
-        pollCounter.innerText = `Poll Prompt:`}
+	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	if (newClassroom.poll.prompt != "") {
+		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+	} else {
+		pollCounter.innerText = `Poll Prompt:`
+	}
 
 	let responseCount = 0;
 	for (let [key, value] of Object.entries(newClassroom.students)) {
@@ -52,8 +57,6 @@ socket.on('cpUpdate', (newClassroom) => {
 			studentElement.remove()
 		}
 	}
-
-	filterSortChange(newClassroom)
 
 	if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
 		bannedTabButton.style.display = ''
@@ -107,6 +110,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
+
 	if (!deepObjectEqual(classroom?.permissions, newClassroom.permissions)) {
 		permissionsDiv.innerHTML = ''
 		for (let [permission, level] of Object.entries(newClassroom.permissions)) {
@@ -148,6 +152,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			permissionsDiv.appendChild(permissionLabel)
 		}
 	}
+
+	filterSortChange(newClassroom)
 
 	classroom = newClassroom
 })

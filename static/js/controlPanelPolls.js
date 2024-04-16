@@ -627,7 +627,7 @@ function savePollAs(pollType) {
             customPoll.textRes = resTextBox.checked
             customPoll.public = false
             customPoll.weight = 1
-        
+
             var pollAnswers = []
             for (let i = 0; i < resNumber.value; i++) {
                 let pollResponse = pollResponses[i]
@@ -636,11 +636,11 @@ function savePollAs(pollType) {
                     weight: pollResponse.weight,
                     color: pollResponse.color
                 }
-        
+
                 pollAnswers.push(pollAnswer)
             }
             customPoll.answers = pollAnswers
-        
+
 			if (pollType == "user") {
 				socket.emit('savePoll', customPoll);
 			} else if (pollType == "class") {

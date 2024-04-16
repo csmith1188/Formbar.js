@@ -237,6 +237,7 @@ dialog {
 	left: -5%;
 	display: flex;
 	justify-content: center;
+	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
 	box-shadow: 0 3px 10px black;
 	user-select: none;
 	animation: gradient 5s ease infinite;
@@ -273,7 +274,7 @@ a.headerTab {
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;
-	color: inverted;
+	color: var(--light-gray);
 	cursor: pointer;
 }
 
@@ -447,6 +448,7 @@ input[type="radio"]:focus {
 	user-select: none;
 }
 
+
 /* --- CONTROL PANEL --- */
 
 #quickmenu {
@@ -483,6 +485,7 @@ input[type="radio"]:focus {
 
 
 #usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
+	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	background-color: var(--bg-light-blue);
 	border-radius: 10px;
@@ -500,6 +503,7 @@ input[type="radio"]:focus {
 
 #usersMenu #users details[id^="student"] summary {
 	cursor: pointer;
+
 }
 
 #usersMenu #users details[id^="student"][open] summary {
@@ -510,29 +514,45 @@ input[type="radio"]:focus {
 	margin: 0;
 }
 
-#usersMenu div .options {
+#usersMenu #VBDiv {
 	display: flex;
-	justify-content: start;
-	padding: .3vi;
-	padding-left: 16px;
-	border: 3px var(--theme-color) solid;
-	border-radius: 10px;
-	margin-left: 45%;
+	flex-direction: row;
+	width: 100%;
 }
 
-#usersMenu .options div {
+#usersMenu #VBOptions {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+#usersMenu #VBOptions .options {
+	display: flex;
+	justify-content: start;
+	border: 3px var(--theme-color) solid;
+	padding: .7vi;
+	border-radius: 10px;
+	width: 100%;
+}
+
+#usersMenu #VBOptions .options .headBox {
 	display: flex;
 	justify-content: space-evenly;
-	font-size: 5vi;
 	width: 80%;
-	padding-left: 16px;
+}
+
+#usersMenu #VBOptions #userFilterBoxes .options{
+	position: absolute;
+	left: 10vi;
 }
 
 #usersMenu #vbContainer {
-	position: absolute;
+	min-width: 250px;
+	min-height: 250px;
 	width: 25vi;
 	height: 25vi;
-	margin-left: 10vi;
+	margin-left: 8vw;
+	margin-right: 8vw;
 }
 
 #usersMenu #vbContainer p {
@@ -540,12 +560,6 @@ input[type="radio"]:focus {
 	justify-content: center;
 	margin-bottom: 0;
 }
-
-#usersMenu #vbContainer #vbar {
-	width: 100%;
-	height: 100%;
-}
-
 
 #users {
 	display: flex;
@@ -740,8 +754,22 @@ input[type="radio"]:focus {
 
 /* --- VIRTUAL BAR --- */
 
-#virtualBar {
-	width: calc(100% - 32px);
+#studentVBar {
+	display: flex;
+}
+
+#vbContainer {
+	width: 50vi;
+}
+
+#studentVBar:has(#vbContainer[style*="display: none"]), #VBOptions {
+	justify-content: center;
+}
+
+#studentVBar #helpBreak {
+	margin-top: 5vi;
+	width: 50%;
+	align-items: center;
 }
 
 #pixBox {
@@ -828,4 +856,3 @@ input[type="radio"]:focus {
 #ticket{
 	background-color: white;
 }
-
