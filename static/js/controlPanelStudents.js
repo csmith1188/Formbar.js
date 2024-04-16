@@ -285,7 +285,7 @@ function buildStudent(room, studentData) {
 }
 
 // filters and sorts students
-function filterSortChange(classroom) {
+function filterSortChange() {
     if (!classroom.students) return
 
     let userOrder = Object.keys(classroom.students)
@@ -297,32 +297,20 @@ function filterSortChange(classroom) {
     }
 
     // filter by help
-    if (filter.help) {
-        for (let username of userOrder) {
+    if (filter.alert) {
+        for (let username of userOrder.slice()) {
+            console.log('username', username)
             let studentElement = document.getElementById(`student-${username}`);
             if (
-                (filter.help == 1 && !classroom.students[username].help) ||
-                (filter.help == 2 && classroom.students[username].help)
+                ((filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) || (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break)))
             ) {
                 studentElement.style.display = 'none'
                 userOrder.pop(username)
+                console.log("Popped", username)
             }
         }
     }
 
-    // filter by break
-    if (filter.break) {
-        for (let username of userOrder) {
-            let studentElement = document.getElementById(`student-${username}`);
-            if (
-                (filter.break == 1 && !classroom.students[username].break) ||
-                (filter.break == 2 && classroom.students[username].break)
-            ) {
-                studentElement.style.display = 'none'
-                userOrder.pop(username)
-            }
-        }
-    }
 
     // filter by poll
     if (filter.polls) {
