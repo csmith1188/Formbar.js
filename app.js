@@ -2151,9 +2151,12 @@ io.on('connection', async (socket) => {
 			}
 			else if (totalStudents == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
-				for (let student of totalStudentsIncluded) {
+				for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
+					let student = totalStudentsIncluded[i];
+					console.log(classData.students[student].classPermissions, student);
 					if (classData.students[student].classPermissions >= TEACHER_PERMISSIONS || classData.students[student].classPermissions == GUEST_PERMISSIONS) {
-						totalStudentsIncluded.splice(totalStudentsIncluded.indexOf(student), 1);
+						console.log(student + " has been removed from the poll");
+						totalStudentsIncluded.splice(i, 1);
 					}
 				}
 				totalStudents = totalStudentsIncluded.length
@@ -2865,7 +2868,8 @@ io.on('connection', async (socket) => {
 			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
 			io.to(`user-${user}`).emit('reload')
 
-			cpUpdate()
+			//cpUpdate()
+			//Commented Out to fix Issue #231 checkbox 14, tags not updating when permissions are changed and page is not refreashed
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
