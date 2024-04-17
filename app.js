@@ -704,7 +704,7 @@ function permCheck(req, res, next) {
 async function setClassOfApiSockets(api, classCode) {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-	let sockets = await io.in(api).fetchSockets()
+	let sockets = await io.in(`api-${api}`).fetchSockets()
 
 	for (let socket of sockets) {
 		socket.leave(`class-${socket.request.session.class}`)
