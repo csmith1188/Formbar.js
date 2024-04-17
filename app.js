@@ -2903,6 +2903,7 @@ io.on('connection', async (socket) => {
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
 	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse) => {
 		try {
+			console.log(cD)
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 

@@ -464,9 +464,11 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-
+		
 		pollAnswers.push(pollAnswer)
 	}
+	console.log("These are the poll answers")
+	console.log(pollAnswers)
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
 	var lastResponseToUse = []
