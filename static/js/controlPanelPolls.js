@@ -469,6 +469,7 @@ function startPoll(customPollId) {
 	}
 	console.log("These are the poll answers")
 	console.log(pollAnswers)
+	var multiRes = document.getElementById("multiRes")
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
 	var lastResponseToUse = []
@@ -526,14 +527,14 @@ function startPoll(customPollId) {
 		changeTab('mainPolls', 'polls')
 
 		var generatedColors = generateColors(customPoll.answers.length)
-		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
+		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	} else {
 		let blind = blindCheck.checked
 
 
 		var generatedColors = generateColors(resNumber.value)
 
-		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
+		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	}
 	responsesDiv.style.display = 'none'
 	startPollForm.style.display = 'none'

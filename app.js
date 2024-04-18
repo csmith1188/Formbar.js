@@ -11,6 +11,8 @@ const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
+const e = require('express')
+const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -2072,12 +2074,26 @@ io.on('connection', async (socket) => {
 				}
 
 				for (let studentData of Object.values(classData.students)) {
-					if (
+					if (Array.isArray(studentData.pollRes.buttonRes)) {
+						for (let response of studentData.pollRes.buttonRes){
+							if (
+								studentData &&
+								Object.keys(responses).includes(response)
+							) {
+								console.log(responses)
+								responses[response].responses++
+							}
+						}
+
+					} else if (
 						studentData &&
 						Object.keys(responses).includes(studentData.pollRes.buttonRes)
-					)
+					) {
 						responses[studentData.pollRes.buttonRes].responses++
+					}
+					
 				}
+				console.log(responses)
 			}
 
 			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
@@ -2157,6 +2173,13 @@ io.on('connection', async (socket) => {
 					}
 				}
 				totalStudents = totalStudentsIncluded.length
+			}
+			if(cD[classCode].poll.multiRes){
+				for(let student of Object.values(classData.students)){
+					if (student.pollRes.buttonRes.length > 1){
+						totalStudents += student.pollRes.buttonRes.length - 1
+					}
+				}
 			}
 			//Get rid of students whos permissions are teacher or above or guest
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
@@ -2797,6 +2820,7 @@ io.on('connection', async (socket) => {
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
+			console.log(res, textRes, resWeight, resLength);
 			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
@@ -2901,9 +2925,8 @@ io.on('connection', async (socket) => {
 	})
 
 	// Starts a new poll. Takes the number of responses and whether or not their are text responses
-	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse) => {
+	socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
 		try {
-			console.log(cD)
 			logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
@@ -2943,6 +2966,9 @@ io.on('connection', async (socket) => {
 
 
 
+
+
+
 			// Creates an object for every answer possible the teacher is allowing
 			for (let i = 0; i < resNumber; i++) {
 				let letterString = 'abcdefghijklmnopqrstuvwxyz'
@@ -2967,6 +2993,7 @@ io.on('connection', async (socket) => {
 			cD[socket.request.session.class].poll.weight = weight
 			cD[socket.request.session.class].poll.textRes = resTextBox
 			cD[socket.request.session.class].poll.prompt = pollPrompt
+			cD[socket.request.session.class].poll.multiRes = multiRes
 
 			for (var key in cD[socket.request.session.class].students) {
 				cD[socket.request.session.class].students[key].pollRes.buttonRes = ''
