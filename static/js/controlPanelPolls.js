@@ -647,8 +647,7 @@ function savePollAs(pollType) {
 			if (pollType == "user") {
 				socket.emit('savePoll', customPoll);
 			} else if (pollType == "class") {
-				socket.emit("savePoll", customPoll);
-				shareClassPoll(customPoll);
+				socket.emit("classPoll", customPoll);
 			};
     };
 }
@@ -669,11 +668,6 @@ function sharePoll(type) {
 
 	sharePollUserInput.value = ''
 	sharePollClassInput.value = ''
-}
-
-function shareClassPoll(poll) {
-	let classCodeText = classCode.textContent.split(": ");
-	socket.emit("classPoll", poll);
 }
 
 function deletePoll(pollId) {

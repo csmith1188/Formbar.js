@@ -28,7 +28,8 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	const responsesCounter = document.getElementById('responsesCounter');
-	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${Object.keys(newClassroom.students).length - 1}`;
+	console.log();
+	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
 		let studentElement = document.getElementById(`student-${username}`)
@@ -304,9 +305,9 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 })
 
 //socket.emit("classPollEmit");
-socket.on("classPollSave", (classPollData) => {
+socket.on("classPollSave", (pollId) => {
 	let classCodeText = classCode.textContent.split(": ")
-	socket.emit("sharePollToClass", classPollData.id, classCodeText[1]);
+	socket.emit("sharePollToClass", pollId, classCodeText[1]);
 })
 
 var selectTags = document.createElement('dialog')
