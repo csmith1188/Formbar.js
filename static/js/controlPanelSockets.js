@@ -1,5 +1,6 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
+	console.log(newClassroom)
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
