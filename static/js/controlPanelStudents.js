@@ -177,12 +177,50 @@ function buildStudent(room, studentData) {
         });
 
         newTagSaveButton.addEventListener('click', function () {
+            event.preventDefault();
             newTagButton.removeAttribute('hidden');
             socket.emit('newTag', newTagTextBox.value);
+            //update tagform to show new tag
+            let checkboxForm = document.getElementById(studentData.username + 'tags')
+            let checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = `checkbox${newTagTextBox.value}`;
+            checkbox.value = newTagTextBox.value;
+            checkbox.checked = false;
+            let label = document.createElement('label');
+            label.textContent = newTagTextBox.value;
+            label.setAttribute('for', `checkbox${newTagTextBox.value}`);
+            checkboxForm.appendChild(checkbox);
+            checkboxForm.appendChild(label);
+            checkboxForm.appendChild(document.createElement('br'));
+            newTagTextBox.value = '';
         })
         removeTagButton.addEventListener('click', function () {
+            event.preventDefault();
             newTagButton.removeAttribute('hidden');
             socket.emit('removeTag', newTagTextBox.value);
+            //update tagform to remove tag
+            let checkboxForm = document.getElementById(studentData.username + 'tags')
+            let checkboxes = checkboxForm.getElementsByTagName('input')
+            for (let i = 0; i < checkboxes.length; i++) {
+                let checkbox = checkboxes[i]
+                if (checkbox.type === 'checkbox') {
+                    if (checkbox.value == newTagTextBox.value) {
+                        checkboxForm.removeChild(checkbox.nextSibling)
+                        checkboxForm.removeChild(checkbox)
+                        //checkboxForm.removeChild(checkbox.nextSibling)
+                    }
+                }
+            }
+            //Remove broken line break
+            //for all elements in the form, if there are 2 line breaks in a row, remove the first one
+            for (let i = 0; i < checkboxForm.children.length; i++) {
+                if (checkboxForm.children[i].nodeName == 'BR' && checkboxForm.children[i + 1].nodeName == 'BR') {
+                    checkboxForm.removeChild(checkboxForm.children[i])
+                    i--;
+                }
+            }
+            newTagTextBox.value = '';
         })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
