@@ -2153,9 +2153,7 @@ io.on('connection', async (socket) => {
 				totalStudentsIncluded = Object.keys(classData.students)
 				for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
 					let student = totalStudentsIncluded[i];
-					console.log(classData.students[student].classPermissions, student);
 					if (classData.students[student].classPermissions >= TEACHER_PERMISSIONS || classData.students[student].classPermissions == GUEST_PERMISSIONS) {
-						console.log(student + " has been removed from the poll");
 						totalStudentsIncluded.splice(i, 1);
 					}
 				}
@@ -4299,7 +4297,6 @@ io.on('connection', async (socket) => {
 				if (row) {
 					// Row exists, update it
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
-						console.log("ran update", tags.toString(), studentId)
 						if (err) {
 							return console.error(err.message);
 						}
@@ -4311,6 +4308,7 @@ io.on('connection', async (socket) => {
 		}
 		catch (err) {
 			logger.log('error', err.stack)
+			console.log(err.stack)
 		}
 	})
 
