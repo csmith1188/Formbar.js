@@ -99,7 +99,7 @@
 				newUser.classList.add("user")
 				newUser.setAttribute("id", userData.username);
 				let userElement = document.createElement("p")
-				userElement.innerText += userData.username
+				userElement.innerText += userData.displayName
 				newUser.appendChild(userElement)
 				if (userData.permissions < currentUser.permissions) {
 					let permissionSwitch = document.createElement("select")

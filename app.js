@@ -279,7 +279,8 @@ class Student {
 		API,
 		ownedPolls = [],
 		sharedPolls = [],
-		tags
+		tags,
+		displayName
 	) {
 		this.username = username
 		this.id = id
@@ -297,7 +298,8 @@ class Student {
 		this.break = false
 		this.quizScore = ''
 		this.API = API
-		this.pogMeter = 0
+		this.pogMeter = 0,
+		this.displayName = displayName
 	}
 }
 
@@ -730,7 +732,7 @@ async function getIpAccess(type) {
 async function managerUpdate() {
 	let [users, classrooms] = await Promise.all([
 		new Promise((resolve, reject) => {
-			db.all('SELECT id, username, permissions FROM users', (err, users) => {
+			db.all('SELECT id, username, permissions, displayName FROM users', (err, users) => {
 				if (err) reject(new Error(err))
 				else {
 					users = users.reduce((tempUsers, tempUser) => {
@@ -1297,7 +1299,8 @@ app.post('/login', async (req, res) => {
 			username: req.body.username,
 			password: req.body.password,
 			loginType: req.body.loginType,
-			userType: req.body.userType
+			userType: req.body.userType,
+			displayName: req.body.displayName
 		}
 		var passwordCrypt = encrypt(user.password)
 
@@ -1311,6 +1314,7 @@ app.post('/login', async (req, res) => {
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username=?', [user.username], async (err, userData) => {
 				try {
+					console.log(userData);
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
 						logger.log('verbose', '[post /login] User does not exist')
@@ -1320,6 +1324,21 @@ app.post('/login', async (req, res) => {
 						})
 						return
 					}
+
+					if (!userData.displayName) {
+						db.run("UPDATE users SET displayName = ? WHERE username = ?", [userData.username, userData.username]), (err) => {
+							try {
+								if (err) throw err;
+								logger.log('verbose', '[post /login] Added displayName to database');
+							} catch (err) {
+								logger.log('error', err.stack);
+								res.render('pages/message', {
+									message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+									title: 'Error'
+								});
+							};
+						};
+					};
 
 					// Decrypt users password
 					let tempPassword = decrypt(JSON.parse(userData.password))
@@ -1360,7 +1379,8 @@ app.post('/login', async (req, res) => {
 							userData.API,
 							JSON.parse(userData.ownedPolls),
 							JSON.parse(userData.sharedPolls),
-							userData.tags
+							userData.tags,
+							userData.displayName
 
 						)
 						req.session.class = 'noClass'
@@ -1369,6 +1389,7 @@ app.post('/login', async (req, res) => {
 					req.session.userId = userData.id
 					req.session.username = userData.username
 					req.session.tags = userData.tags
+					req.session.displayName = userData.displayName
 
 					logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 					logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
@@ -1420,13 +1441,14 @@ app.post('/login', async (req, res) => {
 
 					// Add the new user to the database
 					db.run(
-						'INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+						'INSERT INTO users(username, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?)',
 						[
 							user.username,
 							JSON.stringify(passwordCrypt),
 							permissions,
 							newAPI,
-							newSecret
+							newSecret,
+							user.displayName
 						], (err) => {
 							try {
 								if (err) throw err
@@ -1446,13 +1468,15 @@ app.post('/login', async (req, res) => {
 											userData.API,
 											[],
 											[],
-											userData.tags
+											userData.tags,
+											userData.displayName
 										)
 
 										// Add the user to the session in order to transfer data between each page
 										req.session.userId = userData.id
 										req.session.username = userData.username
 										req.session.class = 'noClass'
+										req.session.displayName = userData.displayName;
 
 										logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 										logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
