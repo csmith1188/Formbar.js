@@ -453,6 +453,9 @@ function endPollFunc() {
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
 	socket.emit('cpUpdate')
+	socket.on('cpUpdate', (newClassroom) => {
+		rooms = newClassroom
+	})
 	var userTags = []
 	var userBoxesChecked = []
 	var userIndeterminate = []
@@ -464,9 +467,12 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-
+		
 		pollAnswers.push(pollAnswer)
 	}
+	console.log("These are the poll answers")
+	console.log(pollAnswers)
+	var multiRes = document.getElementById("multiRes")
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
 	var lastResponseToUse = []
@@ -486,6 +492,9 @@ function startPoll(customPollId) {
 	// rooms.students["isluke"].pollRes.buttonRes = "b"
 	if (lastResponses.checked) {
 		for (let [key, value] of Object.entries(rooms.students)) {
+			if (value.classPermissions >= 5 || value.classPermissions <= 1) {
+				continue
+			}
 			if (basedOnResponse.value == value.pollRes.buttonRes) {
 				lastResponseToUse.push(value.username)
 			}
@@ -524,14 +533,14 @@ function startPoll(customPollId) {
 		changeTab('mainPolls', 'polls')
 
 		var generatedColors = generateColors(customPoll.answers.length)
-		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
+		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	} else {
 		let blind = blindCheck.checked
 
 
 		var generatedColors = generateColors(resNumber.value)
 
-		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse)
+		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	}
 	responsesDiv.style.display = 'none'
 	startPollForm.style.display = 'none'
@@ -618,35 +627,35 @@ function savePoll() {
 function savePollAs(pollType) {
 	let customPoll = {}
 
-    customPoll.name = prompt('What do you want to call this poll')
-    if (!customPoll.name) {
-        return;
-    } else {
-            customPoll.blind = blindCheck.checked
-            customPoll.prompt = pollPrompt.value
-            customPoll.textRes = resTextBox.checked
-            customPoll.public = false
-            customPoll.weight = 1
+	customPoll.name = prompt('What do you want to call this poll')
+	if (!customPoll.name) {
+		return;
+	} else {
+		customPoll.blind = blindCheck.checked
+		customPoll.prompt = pollPrompt.value
+		customPoll.textRes = resTextBox.checked
+		customPoll.public = false
+		customPoll.weight = 1
 
-            var pollAnswers = []
-            for (let i = 0; i < resNumber.value; i++) {
-                let pollResponse = pollResponses[i]
-                let pollAnswer = {
-                    answer: pollResponse.answer,
-                    weight: pollResponse.weight,
-                    color: pollResponse.color
-                }
+		var pollAnswers = []
+		for (let i = 0; i < resNumber.value; i++) {
+			let pollResponse = pollResponses[i]
+			let pollAnswer = {
+				answer: pollResponse.answer,
+				weight: pollResponse.weight,
+				color: pollResponse.color
+			}
 
-                pollAnswers.push(pollAnswer)
-            }
-            customPoll.answers = pollAnswers
+			pollAnswers.push(pollAnswer)
+		}
+		customPoll.answers = pollAnswers
 
-			if (pollType == "user") {
-				socket.emit('savePoll', customPoll);
-			} else if (pollType == "class") {
-				socket.emit("classPoll", customPoll);
-			};
-    };
+		if (pollType == "user") {
+			socket.emit('savePoll', customPoll);
+		} else if (pollType == "class") {
+			socket.emit("classPoll", customPoll);
+		};
+	};
 }
 
 function openSharePoll(customPollId) {

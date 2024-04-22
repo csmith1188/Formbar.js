@@ -8,7 +8,6 @@ function buildOption(value, text, selected = false) {
     return option
 }
 var userBreak = []
-var rooms;
 
 function buildStudent(room, studentData) {
     let newStudent
@@ -212,15 +211,21 @@ function buildStudent(room, studentData) {
                     }
                 }
             }
+            newTagTextBox.value = '';
             //Remove broken line break
             //for all elements in the form, if there are 2 line breaks in a row, remove the first one
             for (let i = 0; i < checkboxForm.children.length; i++) {
+                if (checkboxForm.children[0].nodeName == 'BR') {
+                    checkboxForm.removeChild(checkboxForm.children[0])
+                    i--;
+                    continue
+                }
                 if (checkboxForm.children[i].nodeName == 'BR' && checkboxForm.children[i + 1].nodeName == 'BR') {
                     checkboxForm.removeChild(checkboxForm.children[i])
                     i--;
+                    continue
                 }
             }
-            newTagTextBox.value = '';
         })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
