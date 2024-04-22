@@ -62,8 +62,8 @@
         }
 
         // make the polls blind unless all students answered
-        if (totalStudents == totalResponses) {
-            pollsData.blindPoll = false
+        if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
+            pollsData.blind = false
         }
 
         let labelsArray = []
@@ -72,7 +72,7 @@
         let studResponses = {}
         // Loops through object to get each label of the possible answers
         // Also, create a new letiable for each possible answer
-        if (pollsData.blindPoll) {
+        if (pollsData.blind) {
             labelsArray.push('Responses')
             studResponses.responses = 0
         } else {
@@ -86,7 +86,7 @@
 
         // Loops through all possible answers and generates a new color letiant for each answer
         // All possible answers should have a different color
-        if (pollsData.blindPoll) {
+        if (pollsData.blind) {
             doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
         } else {
             for (let poll of Object.values(pollsData.polls)) {
@@ -98,7 +98,7 @@
         // Student response corresponds with a property name in studResponses
         studResponses.noResponse += totalStudents - totalResponses
         for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-            if (pollsData.blindPoll)
+            if (pollsData.blind)
                 studResponses.responses += pollData.responses
             else studResponses[poll] += pollData.responses
         }

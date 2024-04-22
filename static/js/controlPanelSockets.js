@@ -1,5 +1,6 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
+	console.log(newClassroom)
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
@@ -27,7 +28,8 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	const responsesCounter = document.getElementById('responsesCounter');
-	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${Object.keys(newClassroom.students).length - 1}`;
+	console.log();
+	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
 		let studentElement = document.getElementById(`student-${username}`)
