@@ -240,6 +240,8 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	classUnbanUser: 'manageStudents',
 }
 
+
+
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS,
 	controlPolls: MOD_PERMISSIONS,
@@ -247,7 +249,8 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	breakAndHelp: MOD_PERMISSIONS,
 	manageClass: TEACHER_PERMISSIONS,
 	lights: MOD_PERMISSIONS,
-	sounds: MOD_PERMISSIONS
+	sounds: MOD_PERMISSIONS,
+	userDefaults: GUEST_PERMISSIONS
 }
 
 // Add currentUser and permission constants to all pages
@@ -511,8 +514,9 @@ function joinClass(username, code) {
 										logger.log('verbose', `[joinClass] cD=(${cD})`)
 										resolve(true)
 									} else {
+										console.log(cD[code].permissions.userDefaults)
 										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-											[classroom.id, user.id, GUEST_PERMISSIONS, 0], (err) => {
+											[classroom.id, user.id, cD[code].permissions.userDefaults, 0], (err) => {
 												try {
 													if (err) {
 														reject(err)
@@ -522,7 +526,7 @@ function joinClass(username, code) {
 													logger.log('info', '[joinClass] Added user to classusers')
 
 													let user = cD.noClass.students[username]
-													user.classPermissions = GUEST_PERMISSIONS
+													user.classPermissions = cD[code].permissions.userDefaults
 
 													// Remove student from old class
 													delete cD.noClass.students[username]
@@ -4090,6 +4094,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
+			console.log('permission', permission, level)
 
 			let classCode = socket.request.session.class
 			cD[classCode].permissions[permission] = level
