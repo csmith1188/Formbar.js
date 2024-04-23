@@ -17,7 +17,6 @@
                 data: []
             },
             {
-                //weight: 0.5,
                 data: [],
                 backgroundColor: ["blue", "white"],
                 type: "pie"
@@ -39,7 +38,7 @@
             },
             cutout: '0%',
         }
-    })    
+    })
     // Calls for data
     socket.emit('vbUpdate')
     // Gets data from server and send it the function
@@ -50,7 +49,6 @@
             virtualBar.parentElement.style.display = "none";
             return
         }
-
         if (noPoll)
             noPoll.style.display = 'none'
         virtualBar.parentElement.style.display = "block";
@@ -115,6 +113,49 @@
 
         doughnutChart.data.labels = labelsArray
         doughnutChart.data.datasets[0].data = pollArray
+
+
+
         doughnutChart.update()
     })
+    var timer = null
+    socket.on('timerUpdate', (pollsData) => {
+        if (pollsData.active == false) {
+            clearInterval(timer)
+            timer = null
+            return
+        }
+        if (timer != null) {
+            return
+        }
+        console.log(pollsData.time, "Time in seconds");
+        //Use the vbUpdate to make a similar updating timer, but for the timer
+
+        //reset virtual bar
+        doughnutChart.data.datasets[1].backgroundColor = ["blue", "white"]
+        doughnutChart.data.datasets[1].data = []
+
+        let timeArray = []
+        timeArray.push(pollsData.time * 60)
+        timeArray.push(0)
+        doughnutChart.data.datasets[1].data = timeArray
+        //create if statement to prevent multiple timers
+        timer = setInterval(timerUpdate, 1000)
+    })
+
+    function timerUpdate() {
+        console.log("Timer update");
+        doughnutChart.data.datasets[1].data[0] -= 1
+        doughnutChart.data.datasets[1].data[1] += 1
+        if (doughnutChart.data.datasets[1].data[0] <= 0) {
+            doughnutChart.data.datasets[1].data[0] = doughnutChart.data.datasets[1].data[1]
+            //get rid of first element
+            doughnutChart.data.datasets[1].data.shift()
+            //make the only background color red
+            doughnutChart.data.datasets[1].backgroundColor = ["red"]
+            //Play sound
+        }
+        doughnutChart.update()
+
+    }
 </script>
