@@ -834,5 +834,5 @@ timerStopButton.addEventListener('click', function () {
 	time.hidden = false
 	sound.hidden = false
 	timerStopButton.hidden = true
-	socket.emit("timer", { active: false })
+	socket.emit("timer", { turnedOn: false })
 })

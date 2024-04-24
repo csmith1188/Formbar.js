@@ -118,44 +118,32 @@
 
         doughnutChart.update()
     })
-    var timer = null
-    socket.on('timerUpdate', (pollsData) => {
-        if (pollsData.active == false) {
-            clearInterval(timer)
-            timer = null
-            return
-        }
-        if (timer != null) {
-            return
-        }
-        console.log(pollsData.time, "Time in seconds");
-        //Use the vbUpdate to make a similar updating timer, but for the timer
 
-        //reset virtual bar
-        doughnutChart.data.datasets[1].backgroundColor = ["blue", "white"]
-        doughnutChart.data.datasets[1].data = []
+    socket.on('timerVB', (timeData) => {
+        let pieChart = doughnutChart.data.datasets[1]
+        let time = timeData.time
+        let timePassed = timeData.timePassed
+        let sound = timeData.sound
+        let active = timeData.active
 
-        let timeArray = []
-        timeArray.push(pollsData.time * 60)
-        timeArray.push(0)
-        doughnutChart.data.datasets[1].data = timeArray
-        //create if statement to prevent multiple timers
-        timer = setInterval(timerUpdate, 1000)
+        if (active) {
+            virtualBar.parentElement.style.display = "block";
+            if (time != 0) {
+                pieChart.data = [time, timePassed]
+                pieChart.backgroundColor = ["blue", "white"]
+            }
+            else {
+                pieChart.data = [timePassed]
+                pieChart.backgroundColor = ["red"]
+            }
+        }
+        else {
+            virtualBar.parentElement.style.display = "none";
+            pieChart.data = []
+        }
+        // Ensure that the doughnut chart always has some data
+        doughnutChart.update()
     })
 
-    function timerUpdate() {
-        console.log("Timer update");
-        doughnutChart.data.datasets[1].data[0] -= 1
-        doughnutChart.data.datasets[1].data[1] += 1
-        if (doughnutChart.data.datasets[1].data[0] <= 0) {
-            doughnutChart.data.datasets[1].data[0] = doughnutChart.data.datasets[1].data[1]
-            //get rid of first element
-            doughnutChart.data.datasets[1].data.shift()
-            //make the only background color red
-            doughnutChart.data.datasets[1].backgroundColor = ["red"]
-            //Play sound
-        }
-        doughnutChart.update()
 
-    }
 </script>

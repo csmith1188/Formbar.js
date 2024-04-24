@@ -344,7 +344,8 @@ class Classroom {
 		this.timer = {
 			time: 0,
 			sound: false,
-			active: false
+			active: false,
+			timePassed: 0
 		}
 	}
 }
@@ -2197,7 +2198,6 @@ io.on('connection', async (socket) => {
 			//Get rid of students whos permissions are teacher or above or guest
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
-			console.log(classData.timer.time);
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalStudents: totalStudents,
@@ -2206,14 +2206,9 @@ io.on('connection', async (socket) => {
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
 				blind: classData.poll.blind,
-				time: classData.timer.time,
-				sound: classData.timer.sound,
-				active: classData.timer.active,
-			})
-			advancedEmitToClass('timerUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.timerUpdate }, {
-				time: classData.timer.time,
-				sound: classData.timer.sound,
-				active: classData.timer.active,
+				// time: classData.timer.time,
+				// sound: classData.timer.sound,
+				// active: classData.timer.active,
 			})
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -4505,25 +4500,53 @@ io.on('connection', async (socket) => {
 			logger.log("error", err.stack);
 		}
 	})
+	let runningTimer;
 	socket.on("timer", (startingtime, sound, turnedOn) => {
+		cD[socket.request.session.class].timer.time = parseInt(startingtime * 60).toFixed(0)
+		cD[socket.request.session.class].timer.sound = sound
+		cD[socket.request.session.class].timer.active = turnedOn
+		cD[socket.request.session.class].timer.timePassed = 0
+		cpUpdate(socket.request.session.class)
 		try {
 			if (turnedOn) {
-				console.log(startingtime, sound, turnedOn, "timer on");
-				let classCode = socket.request.session.class
-				cD[classCode].timer.time = startingtime
-				cD[classCode].timer.sound = sound
-				cD[classCode].timer.active = turnedOn
-				vbUpdate(classCode)
+				runningTimer = setInterval(() => timer(true, sound, turnedOn), 1000);
+				//run the function once instantly
+				timer(false, sound, turnedOn)
 			}
 			else {
-				let classCode = socket.request.session.class
-				cD[classCode].timer.active = turnedOn
-				vbUpdate(classCode)
+				clearInterval(runningTimer);
+				timer(false, sound, turnedOn)
 			}
 		} catch (err) {
 			logger.log("error", err.stack);
 		}
 	})
+	function timer(repeated, sound, on) {
+		let classData = cD[socket.request.session.class];
+		if (!repeated) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time == 0) {
+			clearInterval(runningTimer);
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time > 0 && on) {
+			classData.timer.time--;
+			classData.timer.timePassed++
+		}
+		if (classData.timer.time == 0 && on) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			if (sound) {
+				advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			}
+		}
+
+
+		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+	}
+
 })
 
 
