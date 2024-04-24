@@ -28,7 +28,6 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	const responsesCounter = document.getElementById('responsesCounter');
-	console.log();
 	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
@@ -40,8 +39,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			oldStudentData = classroom.students[username]
 
 		if (!studentElement) {
-			let builtstudent = buildStudent(newClassroom, newStudentData)
-			if (builtstudent) usersDiv.appendChild(builtstudent)
+			let builtStudent = buildStudent(newClassroom, newStudentData)
+			if (builtStudent) usersDiv.appendChild(builtStudent)
 			continue
 		}
 

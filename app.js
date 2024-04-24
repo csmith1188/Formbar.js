@@ -11,8 +11,7 @@ const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
-const e = require('express')
-const { log } = require('console')
+
 
 var app = express()
 const http = require('http').createServer(app)
@@ -303,7 +302,7 @@ class Student {
 		this.break = false
 		this.quizScore = ''
 		this.API = API
-		this.pogMeter = 0,
+		this.pogMeter = 0
 		this.displayName = displayName
 	}
 }
@@ -516,7 +515,6 @@ function joinClass(username, code) {
 										logger.log('verbose', `[joinClass] cD=(${cD})`)
 										resolve(true)
 									} else {
-										console.log(cD[code].permissions.userDefaults)
 										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 											[classroom.id, user.id, cD[code].permissions.userDefaults, 0], (err) => {
 												try {
@@ -1320,7 +1318,6 @@ app.post('/login', async (req, res) => {
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username=?', [user.username], async (err, userData) => {
 				try {
-					console.log(userData);
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
 						logger.log('verbose', '[post /login] User does not exist')
@@ -2103,12 +2100,11 @@ io.on('connection', async (socket) => {
 
 				for (let studentData of Object.values(classData.students)) {
 					if (Array.isArray(studentData.pollRes.buttonRes)) {
-						for (let response of studentData.pollRes.buttonRes){
+						for (let response of studentData.pollRes.buttonRes) {
 							if (
 								studentData &&
 								Object.keys(responses).includes(response)
 							) {
-								console.log(responses)
 								responses[response].responses++
 							}
 						}
@@ -2119,9 +2115,7 @@ io.on('connection', async (socket) => {
 					) {
 						responses[studentData.pollRes.buttonRes].responses++
 					}
-					
 				}
-				console.log(responses)
 			}
 
 			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
@@ -2203,9 +2197,9 @@ io.on('connection', async (socket) => {
 				}
 				totalStudents = totalStudentsIncluded.length
 			}
-			if(cD[classCode].poll.multiRes){
-				for(let student of Object.values(classData.students)){
-					if (student.pollRes.buttonRes.length > 1){
+			if (cD[classCode].poll.multiRes) {
+				for (let student of Object.values(classData.students)) {
+					if (student.pollRes.buttonRes.length > 1) {
 						totalStudents += student.pollRes.buttonRes.length - 1
 					}
 				}
@@ -2849,7 +2843,6 @@ io.on('connection', async (socket) => {
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
-			console.log(res, textRes, resWeight, resLength);
 			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
@@ -3106,7 +3099,6 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
 
-			console.log(socket.request.session);
 			let userId = socket.request.session.userId
 
 			if (id) {
@@ -4122,7 +4114,6 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
-			console.log('permission', permission, level)
 
 			let classCode = socket.request.session.class
 			cD[classCode].permissions[permission] = level
@@ -4365,7 +4356,6 @@ io.on('connection', async (socket) => {
 		}
 		catch (err) {
 			logger.log('error', err.stack)
-			console.log(err.stack)
 		}
 	})
 
