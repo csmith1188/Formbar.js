@@ -126,6 +126,15 @@
         let sound = timeData.sound
         let active = timeData.active
 
+        //turn the time into minutes and seconds
+        let minutes = Math.floor(time / 60)
+        let seconds = time % 60
+        if (seconds < 10) {
+            seconds = "0" + seconds
+        }
+        let timeString = minutes + ":" + seconds
+        console.log(timeString);
+
         if (active) {
             virtualBar.parentElement.style.display = "block";
             if (time != 0) {
