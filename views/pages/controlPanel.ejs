@@ -19,7 +19,6 @@
 				<header id="quickMenu">
 					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
 					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
-					<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
 					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
 					<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
 				</header>
@@ -58,14 +57,16 @@
 								</div>
 								<div id="userFastPollBoxes" class="options">
 									<h2 class="headerText">Fast Poll</h2>
-									<div class="headBox">
-										<button type="button">nothin</button>
-										<button type="button">nothin</button>
-										<button type="button">nothin</button>
+									<div class="headBox" id="quickPoll">
 									</div>
+									<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Custom</button>
 								</div>
 							</div>
 					</div>
+					<div>
+						<button onclick="clearPollFunc()">Clear Poll</button>
+						<button onclick="endPollFunc()">End Poll</button>
+					</div></br>
 					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
 						Kick All Students
 					</button>
@@ -235,6 +236,7 @@
 			let currentSharePollId = null
 			let currentSharePollType = null
 			let classroom = {}
+			let quickPoll = false
 
 			const FilterState = {
 				alert: [
@@ -342,6 +344,24 @@
 				rooms = newClassroom
 			})
 			var tagNames = "<%=tagNames%>";
+
+			function quickPollTF() {
+				quickPoll = 'tf';
+				quickPollStart(quickPoll);
+			}
+
+			function quickPollTUTD() {
+				
+			}
+
+			function quickPollMultiple() {
+				
+			}
+
+			function quickPollTFCustom() {
+				
+			}
+
 		</script>
 		<script src="/js/controlPanelStudents.js"></script>
 		<script src="/js/controlPanelSockets.js"></script>
