@@ -1199,7 +1199,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
+			db.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -2118,17 +2118,18 @@ io.on('connection', async (socket) => {
 				}
 			}
 
-			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
 
-			let totalStudents = 0;
+			let totalResponses = 0;
+			let totalResponders = 0
 			let totalStudentsIncluded = []
 			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
 
 			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
-				totalStudents = totalLastResponses.length
+				totalResponses = totalLastResponses.length
 				totalStudentsIncluded = totalLastResponses
 			}
 			else {
@@ -2182,12 +2183,13 @@ io.on('connection', async (socket) => {
 			}
 
 
-			totalStudents = totalStudentsIncluded.length
-			if (totalStudents == 0 && totalStudentsExcluded.length != 0) {
+			totalResponses = totalStudentsIncluded.length
+			console.log('totalStudentsIncluded.length', totalStudentsIncluded.length);
+			if (totalResponses == 0 && totalStudentsExcluded.length != 0) {
 				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-				totalStudents = Object.keys(classData.students).length - totalStudentsExcluded.length
+				totalResponses = Object.keys(classData.students).length - totalStudentsExcluded.length
 			}
-			else if (totalStudents == 0) {
+			else if (totalResponses == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
 				for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
 					let student = totalStudentsIncluded[i];
@@ -2195,12 +2197,12 @@ io.on('connection', async (socket) => {
 						totalStudentsIncluded.splice(i, 1);
 					}
 				}
-				totalStudents = totalStudentsIncluded.length
+				totalResponders = totalStudentsIncluded.length
 			}
 			if (cD[classCode].poll.multiRes) {
 				for (let student of Object.values(classData.students)) {
 					if (student.pollRes.buttonRes.length > 1) {
-						totalStudents += student.pollRes.buttonRes.length - 1
+						totalResponses += student.pollRes.buttonRes.length - 1
 					}
 				}
 			}
@@ -2209,7 +2211,8 @@ io.on('connection', async (socket) => {
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
-				totalStudents: totalStudents,
+				totalResponders: totalResponders,
+				totalResponses: totalResponses,
 				polls: responses,
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
