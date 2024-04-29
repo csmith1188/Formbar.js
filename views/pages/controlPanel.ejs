@@ -105,44 +105,41 @@
 						</div>
 						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 						<div id="startPollForm">
-							<label for="resNumber">How many possible responses?</label>
-							<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
-								onchange="responseAmountChange()">
-							<br>
-							<label for="multiRes">Multiple answer poll?</label>
-							<input type="checkbox" id="multiRes">
-							<br>
-							<label for="resTextBox">Would like to accept text responses?</label>
-							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
-							<br>
 							<label for="pollBox">Prompt for the poll?</label>
 							<input type="text" id="pollBox" placeholder="Prompt (optional)">
+							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" hidden>
 							<br>
-							<label for="changeNames">Customize the answer options?</label>
-							<input type="button" id="changeNames" value="Edit Responses" onclick="showResponses()"
-								class="quickButton">
-							<br>
-
-							<label for="changeNames">Specify Tags?</label>
-							<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
-								class="quickButton">
-							<br>
-
-							<button id="resetAnswerNames" class="quickButton">Reset Names</button>
-							<button id="resetColors" class="quickButton">Reset Colors</button>
 							<div id="responses"></div>
+							<button class="quickButton" onclick="addAnswer()">+</button>
 							<br>
-							<label for="blind">Blind poll? (Responses won't be visible until everyone has
-								answered)</label>
-							<input type="checkbox" id="blind">
 							<br>
-							<label for="lastResponse">Send Poll To Students With Same Response</label>
-							<input type="checkbox" id="lastResponse">
-							<select name="basedOnResponse" id="basedOnResponse"></select>
-							<br>
-							<button id="startPoll" onclick="startPoll()">Start Poll</button>
-							<br>
+							<button id="generalOptionsButton" onclick="showGeneralOptions()">General Options</button>
+							<div id="generalOptions" hidden>
+								<label for="multiRes">Multiple answer poll?</label>
+								<input type="checkbox" id="multiRes">
+								<br>
+								<label for="resTextBox">Would like to accept text responses?</label>
+								<input type="checkbox" id="resTextBox" onclick="resTextChange()">
+								<br>
+								<button id="resetAnswerNames" class="quickButton">Reset Names</button>
+								<button id="resetColors" class="quickButton">Reset Colors</button>	
+								<label for="changeNames">Specify Tags?</label>
+								<input type="button" id="changeNames" value="Tags" onclick="selectTags.showModal()"
+									class="quickButton">
+								<br>
+								<label for="blind">Blind poll? (Responses won't be visible until everyone has
+									answered)</label>
+								<input type="checkbox" id="blind">
+								<br>
+								<label for="lastResponse">Send Poll To Students With Same Response</label>
+								<input type="checkbox" id="lastResponse">
+								<select name="basedOnResponse" id="basedOnResponse"></select>
+								<br>
+							</div>
 						</div>
+						<br>
+						<button id="startPoll" onclick="startPoll()">Start Poll</button>
+						<br>
 						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 						<br>
 						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
@@ -332,8 +329,10 @@
 			let pollsTabButton = document.querySelector('.tab#pollsMenu')
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
 			let permissionsTabButton = document.querySelector('.tab#permissions')
+			let generalOptionsDiv = document.getElementById("generalOptions");
 
 			let totalUsers = document.getElementById('totalUsers')
+			var responseDivs = document.getElementsByClassName('response');
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
 			var rooms;
