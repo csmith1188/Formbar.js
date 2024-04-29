@@ -292,7 +292,7 @@ function buildStudent(room, studentData) {
     if (!newStudent) return
 
     newStudent.setAttribute('id', `student-${studentData.username}`);
-    newStudent.setAttribute('style', "color: black");
+    //newStudent.setAttribute('style', "color: black");
     if (studentData.pollTextRes) {
         let pollTextResponse = document.createElement('p')
         pollTextResponse.textContent = `Poll Text: ${studentData.pollRes.textRes} `
