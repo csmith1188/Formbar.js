@@ -131,6 +131,17 @@ let cD = {
 	noClass: { students: {} }
 }
 
+var currentPoll = 0
+
+db.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
+	if (err) {
+		logger.log('error', err.stack)
+	} else {
+		currentPoll = pollHistory['MAX(id)'] - 1
+	}
+})
+
+
 let whitelistedIps = {}
 let blacklistedIps = {}
 
@@ -2340,7 +2351,6 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[customPollUpdate] username=(${username})`)
 			let userSession = userSockets[username].request.session
-
 			let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
 			let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
 			let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
@@ -2497,6 +2507,7 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[endPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
 			let data = { prompt: '', names: [], letter: [], text: [] }
+			currentPoll += 1
 
 			let dateConfig = new Date()
 			let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()}`
@@ -2881,6 +2892,7 @@ io.on('connection', async (socket) => {
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
 			cD[socket.request.session.class].students[socket.request.session.username].pollRes.time = new Date()
+		
 
 			for (let i = 0; i < resLength; i++) {
 				if (res) {
@@ -2976,7 +2988,6 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
 			await clearPoll()
-
 			let generatedColors = generateColors(resNumber)
 			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
@@ -3060,6 +3071,27 @@ io.on('connection', async (socket) => {
 	socket.on('clearPoll', async () => {
 		try {
 			await clearPoll();
+			for (var student of Object.values(cD[socket.request.session.class].students)) {
+				if (student.classPermissions != 5) {
+					var currentPollId = cD[socket.request.session.class].pollHistory[currentPoll].id
+					for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
+						var studentRes = student.pollRes.buttonRes[i]
+						var studentId = student.id
+						db.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
+							if (err) {
+								logger.log('error', err.stack)
+							}
+						})
+					}
+					var studentTextRes = student.pollRes.textRes 
+					var studentId = student.id
+					db.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
+						if (err) {
+							logger.log('error', err.stack)
+						}
+					})
+				}
+			}
 
 			pollUpdate();
 			vbUpdate();
@@ -3081,7 +3113,6 @@ io.on('connection', async (socket) => {
 
 	socket.on('pollUpdate', () => {
 		logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
 		pollUpdate()
 	})
 
