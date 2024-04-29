@@ -453,6 +453,14 @@ function removeAnswer(event) {
 	let elementId = element.id.split('response')[1];
 	element.remove();
 	pollResponses.splice(elementId, 1);
+	responseDivs = document.getElementsByClassName('response');
+	answerNames = document.getElementsByClassName('answerName');
+	for (let i = 0; i < responseDivs.length; i++) {
+		responseDivs[i].id = `response${i}`;
+		answerNames[i].placeholder = `Answer ${letterString[i]}`;
+		console.log(responseDivs[i].answerName);
+		console.log(letterString[i]);
+	};
 	resNumber.value = parseInt(resNumber.value) - 1;
 };
 
