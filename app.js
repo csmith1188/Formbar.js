@@ -1223,7 +1223,10 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						poll.data = JSON.parse(poll.data)
 					}
 
-					if (classroom.pollHistory[0].id == null) classroom.pollHistory = null
+					if(classroom.pollHistory[0]) {
+						if (classroom.pollHistory[0].id == null)
+							classroom.pollHistory = null
+					}
 
 					let makeClassStatus = await makeClass(
 						classroom.id,
@@ -2184,10 +2187,9 @@ io.on('connection', async (socket) => {
 
 
 			totalResponses = totalStudentsIncluded.length
-			console.log('totalStudentsIncluded.length', totalStudentsIncluded.length);
-			if (totalResponses == 0 && totalStudentsExcluded.length != 0) {
+			if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
 				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-				totalResponses = Object.keys(classData.students).length - totalStudentsExcluded.length
+				totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length
 			}
 			else if (totalResponses == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
@@ -2205,10 +2207,18 @@ io.on('connection', async (socket) => {
 						totalResponses += student.pollRes.buttonRes.length - 1
 					}
 				}
+			} else {
+				for (let value of Object.values(classData.students)) {
+					if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+						totalResponses++;
+					}
+				}
 			}
+
 			//Get rid of students whos permissions are teacher or above or guest
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
+
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
 				totalResponders: totalResponders,
