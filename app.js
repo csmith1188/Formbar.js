@@ -3031,28 +3031,24 @@ io.on('connection', async (socket) => {
 		try {
 			await clearPoll();
 			for (var student of Object.values(cD[socket.request.session.class].students)) {
-				if(student.pollRes.textRes){
-					var studentTextRes = student.pollRes.textRes
-				} else {
-					var studentTextRes = ''
-				}
-				for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
-					var studentRes = student.pollRes.buttonRes[i]
-					var studentId = student.id
+				if (student.classPermissions != 5) {
 					var currentPollId = cD[socket.request.session.class].pollHistory[currentPoll].id
-					if (i == 0) {
-						db.run('INSERT INTO poll_answers(pollId, userId, buttonResponse, textResponse) VALUES(?, ?, ?, ?)', [currentPollId, studentId, studentRes, studentTextRes], (err) => {
+					for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
+						var studentRes = student.pollRes.buttonRes[i]
+						var studentId = student.id
+						db.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
 							if (err) {
 								logger.log('error', err.stack)
 							}
-						})}
-					// } else {
-					// 	db.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
-					// 		if (err) {
-					// 			logger.log('error', err.stack)
-					// 		}
-					// 	})
-					// }
+						})
+					}
+					var studentTextRes = student.pollRes.textRes 
+					var studentId = student.id
+					db.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
+						if (err) {
+							logger.log('error', err.stack)
+						}
+					})
 				}
 			}
 
