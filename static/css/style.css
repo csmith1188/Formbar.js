@@ -276,7 +276,6 @@ a.headerTab {
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;
-	color: var(--light-gray);
 	cursor: pointer;
 }
 
@@ -308,9 +307,10 @@ a.headerTab {
 }
 
 #pollControl {
-	display: grid;
+	display: inline-flex;
 	place-content: center;
 	min-height: 20px;
+
 }
 
 .form-control {
@@ -442,9 +442,14 @@ input[type="radio"]:focus {
 }
 
 /* --- STUDENT PANEL --- */
+#pollForm {
+	display: flex;
+	flex-wrap: wrap;
+	margin: auto;
+	align-items: flex-start;
+}
 
 #pollForm label {
-	width: fit-content;
 	margin: 1em auto 0;
 	filter: brightness(75%);
 	user-select: none;
@@ -485,7 +490,12 @@ input[type="radio"]:focus {
 }
 
 
+<<<<<<< Updated upstream
 #usersMenu #users details[id^="student"] {
+=======
+#usersMenu #users details[id^="student"],
+#usersMenu #users div[id^="student"] {
+>>>>>>> Stashed changes
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 10px;
