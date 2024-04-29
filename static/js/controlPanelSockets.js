@@ -1,6 +1,5 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
-	console.log(newClassroom)
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
@@ -262,13 +261,11 @@ socket.on('customPollUpdate', (
 	let userPollsDiv = document.querySelector('div#userPolls')
 	let fastPollDiv = document.querySelector('div#quickPoll')
 
-	console.log(publicCustomPolls)
 	for (let i = 1; i <= 4; i++) {
 		let customPoll = customPolls[i]
 		let startButton = document.createElement('button')
 		startButton.className = 'start-custom-poll'
 		startButton.style.gridColumn = 3
-		console.log(customPolls)
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
 			startPoll(i)

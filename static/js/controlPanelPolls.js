@@ -216,13 +216,12 @@ function responseAmountChange() {
 		colorPickers.splice(resNumber.value)
 	}
 
-	for (let rD of responseDivs) {
-		let i = rD.id.split('response')[1];
+	for (let responseDiv of responseDivs) {
+		let i = responseDiv.id.split('response')[1];
 		pollResponses[i].defaultAnswer = letterString[i];
-		if (rD) {
-			rD.placeholder = `Answer ${letterString[i]}`;
+		if (responseDiv) {
+			responseDiv.placeholder = `Answer ${letterString[i]}`;
 		};
-		console.log("string", rD);
 	};
 
 	for (let i = pollResponses.length; i < resNumber.value; i++) {
@@ -236,8 +235,8 @@ function responseAmountChange() {
 		})
 
 		//if (!document.getElementById(`response${i}`)) {
-			//let nextResponse = document.getElementById(`response${i + 1}`);
-			//nextResponse.id = `response${i}`;
+		//let nextResponse = document.getElementById(`response${i + 1}`);
+		//nextResponse.id = `response${i}`;
 		//};
 
 		let responseDiv = document.createElement('div')
@@ -393,10 +392,8 @@ function responseAmountChange() {
 	}
 
 	responseDivs = document.getElementsByClassName('response')
-	console.log(responseDivs);
 	for (let i = 0; i < responseDivs.length; i++) {
 		let responseDiv = responseDivs[i]
-		console.log(responseDiv);
 		let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
 		let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
 
@@ -453,7 +450,7 @@ function addAnswer() {
 
 function removeAnswer(event) {
 	let element = event.target.parentElement;
-	let elementId = element.id.split('response')[1]; 
+	let elementId = element.id.split('response')[1];
 	element.remove();
 	pollResponses.splice(elementId, 1);
 	resNumber.value = parseInt(resNumber.value) - 1;
@@ -505,11 +502,9 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-		
+
 		pollAnswers.push(pollAnswer)
 	}
-	console.log("These are the poll answers")
-	console.log(pollAnswers)
 	var multiRes = document.getElementById("multiRes")
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
@@ -858,7 +853,7 @@ document.addEventListener('click', (event) => {
 // })
 
 
-//Make the code above work 
+//Make the code above work
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
 	var time = document.getElementById('inputtedTime')

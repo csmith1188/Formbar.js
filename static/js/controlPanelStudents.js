@@ -332,14 +332,12 @@ function filterSortChange() {
     // filter by help
     if (filter.alert) {
         for (let username of userOrder.slice()) {
-            console.log('username', username)
             let studentElement = document.getElementById(`student-${username}`);
             if (
                 ((filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) || (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break)))
             ) {
                 studentElement.style.display = 'none'
                 userOrder.pop(username)
-                console.log("Popped", username)
             }
         }
     }
