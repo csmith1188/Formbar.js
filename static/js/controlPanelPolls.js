@@ -195,6 +195,7 @@ function resTextChange() {
 }
 
 function responseAmountChange() {
+	responseDivs = document.getElementsByClassName('response')
 	if (resTextBox.checked) {
 		if (resNumber.value < 0) resNumber.value = 0
 	}
@@ -206,7 +207,7 @@ function responseAmountChange() {
 	generatedColors = generateColors(resNumber.value)
 	if (pollResponses.length > resNumber.value) {
 
-		let responseDivs = document.getElementsByClassName('response')
+		responseDivs = document.getElementsByClassName('response')
 		for (let i = resNumber.value; i < pollResponses.length; i++) {
 			document.getElementById(`response${i}`).remove()
 		}
@@ -214,6 +215,15 @@ function responseAmountChange() {
 		pollResponses.splice(resNumber.value)
 		colorPickers.splice(resNumber.value)
 	}
+
+	for (let rD of responseDivs) {
+		let i = rD.id.split('response')[1];
+		pollResponses[i].defaultAnswer = letterString[i];
+		if (rD) {
+			rD.placeholder = `Answer ${letterString[i]}`;
+		};
+		console.log("string", rD);
+	};
 
 	for (let i = pollResponses.length; i < resNumber.value; i++) {
 		pollResponses.push({
@@ -224,6 +234,11 @@ function responseAmountChange() {
 			weight: 1,
 			defaultWeight: 1
 		})
+
+		//if (!document.getElementById(`response${i}`)) {
+			//let nextResponse = document.getElementById(`response${i + 1}`);
+			//nextResponse.id = `response${i}`;
+		//};
 
 		let responseDiv = document.createElement('div')
 		responseDiv.className = 'response'
@@ -326,6 +341,12 @@ function responseAmountChange() {
 		}
 		responseDiv.appendChild(answerName)
 
+		let removeAnswerButton = document.createElement("button");
+		removeAnswerButton.className = "quickButton";
+		removeAnswerButton.textContent = "-";
+		removeAnswerButton.onclick = removeAnswer;
+		responseDiv.appendChild(removeAnswerButton);
+
 		responsesDiv.appendChild(responseDiv)
 
 		FloatingUIDOM.autoUpdate(
@@ -371,9 +392,11 @@ function responseAmountChange() {
 		})
 	}
 
-	let responseDivs = document.getElementsByClassName('response')
-	for (let i = 0; i < pollResponses.length; i++) {
+	responseDivs = document.getElementsByClassName('response')
+	console.log(responseDivs);
+	for (let i = 0; i < responseDivs.length; i++) {
 		let responseDiv = responseDivs[i]
+		console.log(responseDiv);
 		let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
 		let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
 
@@ -415,11 +438,26 @@ function resetColors() {
 }
 resetColorsButton.onclick = resetColors
 
-function showResponses() {
-	if (responsesDiv.style.display == 'grid')
-		responsesDiv.style.display = 'none'
-	else responsesDiv.style.display = 'grid'
-}
+function showGeneralOptions() {
+	if (generalOptionsDiv.hidden) {
+		generalOptionsDiv.hidden = false;
+	} else {
+		generalOptionsDiv.hidden = true;
+	};
+};
+
+function addAnswer() {
+	resNumber.value = parseInt(resNumber.value) + 1;
+	responseAmountChange();
+};
+
+function removeAnswer(event) {
+	let element = event.target.parentElement;
+	let elementId = element.id.split('response')[1]; 
+	element.remove();
+	pollResponses.splice(elementId, 1);
+	resNumber.value = parseInt(resNumber.value) - 1;
+};
 
 function modeChange() {
 	let modeP = document.getElementById('modeP')
@@ -785,6 +823,9 @@ document.addEventListener('click', (event) => {
 	) {
 		let colorPickersDiv = document.getElementsByClassName('colorPicker')
 		for (let i = 0; i < colorPickers.length; i++) {
+			if (!colorPickersDiv[i]) {
+				return;
+			};
 			colorPickers[i].color.set(pollResponses[i].color)
 			colorPickersDiv[i].style.display = 'none'
 		}
