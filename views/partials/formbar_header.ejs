@@ -32,8 +32,18 @@
 </header>
 <script>
   document.body.style.backgroundColor = getCookie("theme")
-  if (getCookie("theme") == "white") document.body.style.color = "black";
-  else if (getCookie("theme") == "rgb(50, 50, 50)") document.body.style.color = "white";
+  if (getCookie("theme") == "white") {
+    document.body.style.color = "black";
+    document.querySelectorAll('input').forEach(input => {
+      input.style.color = "black";
+    });
+  }
+  else if (getCookie("theme") == "rgb(50, 50, 50)") {
+    document.body.style.color = "white";
+    document.querySelectorAll('input').forEach(input => {
+      input.style.color = "white";
+    });
+  }
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -42,16 +52,25 @@
   }
 
   function changeTheme() {
+    let inputs = document.querySelectorAll('input');
     if (getCookie("theme") == "white") {
-      document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC"
-      document.body.style.backgroundColor = getCookie("theme")
-      document.body.style.color = "white"
+      document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC";
+      document.body.style.backgroundColor = getCookie("theme");
+      document.body.style.color = "white";
+      inputs.forEach(input => {
+        input.style.backgroundColor = getCookie("theme");
+        input.style.color = "white";
+      });
     } else if (getCookie("theme") == "rgb(50, 50, 50)") {
-      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"
-      document.body.style.backgroundColor = getCookie("theme")
-      document.body.style.color = "black"
+      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
+      document.body.style.backgroundColor = getCookie("theme");
+      document.body.style.color = "black";
+      inputs.forEach(input => {
+        input.style.backgroundColor = getCookie("theme");
+        input.style.color = "black";
+      });
     } else {
-      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC"
+      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
     }
   }
 </script>

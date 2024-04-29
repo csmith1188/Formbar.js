@@ -12,7 +12,6 @@ const winston = require('winston')
 const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
 
-
 var app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
@@ -190,7 +189,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	removeTag: TEACHER_PERMISSIONS,
 	passwordRequest: STUDENT_PERMISSIONS,
 	approvePasswordChange: MANAGER_PERMISSIONS,
-	passwordUpdate: MANAGER_PERMISSIONS
+	passwordUpdate: MANAGER_PERMISSIONS,
+	timer: TEACHER_PERMISSIONS,
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -340,6 +340,12 @@ class Classroom {
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
 		this.tagNames = tags || [];
+		this.timer = {
+			time: 0,
+			sound: false,
+			active: false,
+			timePassed: 0
+		}
 	}
 }
 
@@ -2227,7 +2233,10 @@ io.on('connection', async (socket) => {
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
-				blind: classData.poll.blind
+				blind: classData.poll.blind,
+				// time: classData.timer.time,
+				// sound: classData.timer.sound,
+				// active: classData.timer.active,
 			})
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -4520,6 +4529,53 @@ io.on('connection', async (socket) => {
 			logger.log("error", err.stack);
 		}
 	})
+	let runningTimer;
+	socket.on("timer", (startingtime, sound, turnedOn) => {
+		cD[socket.request.session.class].timer.time = parseInt(startingtime * 60).toFixed(0)
+		cD[socket.request.session.class].timer.sound = sound
+		cD[socket.request.session.class].timer.active = turnedOn
+		cD[socket.request.session.class].timer.timePassed = 0
+		cpUpdate(socket.request.session.class)
+		try {
+			if (turnedOn) {
+				runningTimer = setInterval(() => timer(true, sound, turnedOn), 1000);
+				//run the function once instantly
+				timer(false, sound, turnedOn)
+			}
+			else {
+				clearInterval(runningTimer);
+				timer(false, sound, turnedOn)
+			}
+		} catch (err) {
+			logger.log("error", err.stack);
+		}
+	})
+	function timer(repeated, sound, on) {
+		let classData = cD[socket.request.session.class];
+		if (!repeated) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time == 0) {
+			clearInterval(runningTimer);
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time > 0 && on) {
+			classData.timer.time--;
+			classData.timer.timePassed++
+		}
+		if (classData.timer.time == 0 && on) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			if (sound) {
+				advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			}
+		}
+
+
+		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+	}
+
 })
 
 
