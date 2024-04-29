@@ -75,7 +75,7 @@
 
         let studResponses = {}
         // Loops through object to get each label of the possible answers
-        // Also, create a new letiable for each possible answer
+        // Also, create a new label for each possible answer
         if (pollsData.blind) {
             labelsArray.push('Responses')
             studResponses.responses = 0
@@ -100,7 +100,7 @@
         doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
         // Loops through all student answers and adds them to a total tally
         // Student response corresponds with a property name in studResponses
-        studResponses.noResponse += totalStudents - totalResponses
+        studResponses.noResponse += pollsData.totalResponders - pollsData.totalResponses
         for (const [poll, pollData] of Object.entries(pollsData.polls)) {
             if (pollsData.blind)
                 studResponses.responses += pollData.responses

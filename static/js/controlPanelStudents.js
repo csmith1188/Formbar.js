@@ -29,9 +29,9 @@ function buildStudent(room, studentData) {
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
-            newStudent.setAttribute("class", "help")
+            newStudent.classList.add('help')
             studentElement.appendChild(helpDisplay)
-            let help = document.createElement('p')
+            let help = document.createElement('div')
             help.classList.add('help')
             help.textContent = 'Needs Help'
             if (studentData.help.reason) {
@@ -51,19 +51,40 @@ function buildStudent(room, studentData) {
             deleteTicketButton.textContent = 'Delete Ticket'
             help.appendChild(deleteTicketButton)
             newStudent.appendChild(help)
-            let lineBreak = document.createElement('br')
+        }
+        if (studentData.break == true) {
+            userBreak.push(studentData.username)
+            let breakText = document.createElement('p')
+            breakText.textContent += 'taking a break'
+            newStudent.appendChild(breakText)
+        }
+        else if (studentData.break) {
+            let breakDiv = document.createElement('div')
+            breakDiv.classList.add('break')
+            let breakNeeded = document.createElement('p')
+            breakNeeded.textContent = 'Needs a Break'
+            breakDiv.appendChild(breakNeeded)
+            let breakReason = document.createElement('p')
+            breakReason.textContent = `Reason: ${studentData.break} `
+            breakDiv.appendChild(breakReason)
+            let breakApprove = document.createElement('button')
+            breakApprove.classList.add('quickButton')
+            breakApprove.onclick = () => { approveBreak(true, studentData.username) }
+            breakApprove.textContent = 'Approve'
+            breakDiv.appendChild(breakApprove)
+            let breakDeny = document.createElement('button')
+            breakDeny.classList.add('quickButton')
+            breakDeny.onclick = () => { approveBreak(false, studentData.username) }
+            breakDeny.textContent = 'Deny'
+            breakDiv.appendChild(breakDeny)
+            newStudent.appendChild(breakDiv)
         }
         if (studentData.break) {
-            let helpDisplay = document.createElement('span')
-            helpDisplay.textContent = `⏱`
-            newStudent.setAttribute("class", "break")
-            studentElement.appendChild(helpDisplay)
+            let breakDisplay = document.createElement('span')
+            breakDisplay.textContent = `⏱`
+            newStudent.classList.add('break')
+            studentElement.appendChild(breakDisplay)
         }
-        // if (studentData.pollRes) {
-        // 	let pollDisplay = document.createElement('span')
-        // 	pollDisplay.textContent = (studentData.pollRes.buttonRes || studentData.pollRes.textRes || studentData.pollRes.pollTextRes)
-        // 	studentElement.appendChild(pollDisplay)
-        // }
         newStudent.appendChild(studentElement);
         let permissionSwitch = document.createElement("select");
         permissionSwitch.setAttribute("name", "permSwitch");
@@ -240,8 +261,6 @@ function buildStudent(room, studentData) {
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
         })
 
-
-
         newStudent.appendChild(studentCheckbox)
         studentTags.appendChild(closeButton)
         newStudent.appendChild(toggleDialog)
@@ -274,35 +293,6 @@ function buildStudent(room, studentData) {
 
     newStudent.setAttribute('id', `student-${studentData.username}`);
     newStudent.setAttribute('style', "color: black");
-    if (studentData.break == true) {
-        userBreak.push(studentData.username)
-        let breakText = document.createElement('p')
-        breakText.textContent += 'taking a break'
-        newStudent.appendChild(breakText)
-    }
-    else if (studentData.break) {
-        let breakDiv = document.createElement('div')
-        breakDiv.setAttribute('id', 'break')
-        let breakNeeded = document.createElement('p')
-        breakNeeded.textContent = 'Needs a Break'
-        breakDiv.appendChild(breakNeeded)
-        let breakReason = document.createElement('p')
-        breakReason.textContent = `Reason: ${studentData.break} `
-        breakDiv.appendChild(breakReason)
-        let breakApprove = document.createElement('button')
-        breakApprove.classList.add('quickButton')
-        breakApprove.onclick = () => { approveBreak(true, studentData.username) }
-        breakApprove.textContent = 'Approve'
-        breakDiv.appendChild(breakApprove)
-        let breakDeny = document.createElement('button')
-        breakDeny.classList.add('quickButton')
-        breakDeny.onclick = () => { approveBreak(false, studentData.username) }
-        breakDeny.textContent = 'Deny'
-        breakDiv.appendChild(breakDeny)
-        newStudent.appendChild(breakDiv)
-        let lineBreak = document.createElement('br')
-        newStudent.appendChild(lineBreak)
-    }
     if (studentData.pollTextRes) {
         let pollTextResponse = document.createElement('p')
         pollTextResponse.textContent = `Poll Text: ${studentData.pollRes.textRes} `

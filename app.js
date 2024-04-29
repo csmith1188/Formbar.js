@@ -302,8 +302,8 @@ class Student {
 		this.break = false
 		this.quizScore = ''
 		this.API = API
-		this.pogMeter = 0,
-			this.displayName = displayName
+		this.pogMeter = 0
+		this.displayName = displayName
 	}
 }
 
@@ -521,7 +521,6 @@ function joinClass(username, code) {
 										logger.log('verbose', `[joinClass] cD=(${cD})`)
 										resolve(true)
 									} else {
-										console.log(cD[code].permissions.userDefaults)
 										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
 											[classroom.id, user.id, cD[code].permissions.userDefaults, 0], (err) => {
 												try {
@@ -717,7 +716,7 @@ function permCheck(req, res, next) {
 async function setClassOfApiSockets(api, classCode) {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-	let sockets = await io.in(api).fetchSockets()
+	let sockets = await io.in(`api-${api}`).fetchSockets()
 
 	for (let socket of sockets) {
 		socket.leave(`class-${socket.request.session.class}`)
@@ -1206,7 +1205,7 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 				}
 			})
 		} else {
-			db.get('SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, json_group_array(json_object(\'id\', poll_history.id, \'class\', poll_history.class, \'data\', poll_history.data, \'date\', poll_history.date)) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id LEFT JOIN poll_history ON poll_history.class = classroom.id WHERE classroom.id = ?', [classId], async (err, classroom) => {
+			db.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
 				try {
 					if (err) throw err
 
@@ -1230,7 +1229,10 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						poll.data = JSON.parse(poll.data)
 					}
 
-					if (classroom.pollHistory[0].id == null) classroom.pollHistory = null
+					if(classroom.pollHistory[0]) {
+						if (classroom.pollHistory[0].id == null)
+							classroom.pollHistory = null
+					}
 
 					let makeClassStatus = await makeClass(
 						classroom.id,
@@ -1325,7 +1327,6 @@ app.post('/login', async (req, res) => {
 			// Get the users login in data to verify password
 			db.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username=?', [user.username], async (err, userData) => {
 				try {
-					//console.log(userData);
 					// Check if a user with that name was not found in the database
 					if (!userData.username) {
 						logger.log('verbose', '[post /login] User does not exist')
@@ -2108,12 +2109,11 @@ io.on('connection', async (socket) => {
 
 				for (let studentData of Object.values(classData.students)) {
 					if (Array.isArray(studentData.pollRes.buttonRes)) {
-						for (let response of studentData.pollRes.buttonRes){
+						for (let response of studentData.pollRes.buttonRes) {
 							if (
 								studentData &&
 								Object.keys(responses).includes(response)
 							) {
-								console.log(responses)
 								responses[response].responses++
 							}
 						}
@@ -2124,22 +2124,21 @@ io.on('connection', async (socket) => {
 					) {
 						responses[studentData.pollRes.buttonRes].responses++
 					}
-					
 				}
-				console.log(responses)
 			}
 
-			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
 
-			let totalStudents = 0;
+			let totalResponses = 0;
+			let totalResponders = 0
 			let totalStudentsIncluded = []
 			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
 
 			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
-				totalStudents = totalLastResponses.length
+				totalResponses = totalLastResponses.length
 				totalStudentsIncluded = totalLastResponses
 			}
 			else {
@@ -2193,12 +2192,12 @@ io.on('connection', async (socket) => {
 			}
 
 
-			totalStudents = totalStudentsIncluded.length
-			if (totalStudents == 0 && totalStudentsExcluded.length != 0) {
+			totalResponses = totalStudentsIncluded.length
+			if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
 				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-				totalStudents = Object.keys(classData.students).length - totalStudentsExcluded.length
+				totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length
 			}
-			else if (totalStudents == 0) {
+			else if (totalResponses == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
 				for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
 					let student = totalStudentsIncluded[i];
@@ -2206,21 +2205,30 @@ io.on('connection', async (socket) => {
 						totalStudentsIncluded.splice(i, 1);
 					}
 				}
-				totalStudents = totalStudentsIncluded.length
+				totalResponders = totalStudentsIncluded.length
 			}
-			if(cD[classCode].poll.multiRes){
-				for(let student of Object.values(classData.students)){
-					if (student.pollRes.buttonRes.length > 1){
-						totalStudents += student.pollRes.buttonRes.length - 1
+			if (cD[classCode].poll.multiRes) {
+				for (let student of Object.values(classData.students)) {
+					if (student.pollRes.buttonRes.length > 1) {
+						totalResponses += student.pollRes.buttonRes.length - 1
+					}
+				}
+			} else {
+				for (let value of Object.values(classData.students)) {
+					if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+						totalResponses++;
 					}
 				}
 			}
+
 			//Get rid of students whos permissions are teacher or above or guest
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
+
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
-				totalStudents: totalStudents,
+				totalResponders: totalResponders,
+				totalResponses: totalResponses,
 				polls: responses,
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
@@ -2857,7 +2865,6 @@ io.on('connection', async (socket) => {
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
-			console.log(res, textRes, resWeight, resLength);
 			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
@@ -3114,7 +3121,6 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
 
-			console.log(socket.request.session);
 			let userId = socket.request.session.userId
 
 			if (id) {
@@ -4130,7 +4136,6 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
-			console.log('permission', permission, level)
 
 			let classCode = socket.request.session.class
 			cD[classCode].permissions[permission] = level
@@ -4373,7 +4378,6 @@ io.on('connection', async (socket) => {
 		}
 		catch (err) {
 			logger.log('error', err.stack)
-			console.log(err.stack)
 		}
 	})
 
