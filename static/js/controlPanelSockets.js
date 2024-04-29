@@ -260,6 +260,21 @@ socket.on('customPollUpdate', (
 	let publicPollsDiv = document.querySelector('div#publicPolls')
 	let classPollsDiv = document.querySelector('div#classPolls')
 	let userPollsDiv = document.querySelector('div#userPolls')
+	let fastPollDiv = document.querySelector('div#quickPoll')
+
+	console.log(publicCustomPolls)
+	for (let i = 1; i <= 4; i++) {
+		let customPoll = customPolls[i]
+		let startButton = document.createElement('button')
+		startButton.className = 'start-custom-poll'
+		startButton.style.gridColumn = 3
+		console.log(customPolls)
+		startButton.textContent = customPoll.name
+		startButton.onclick = () => {
+			startPoll(i)
+		}
+		fastPollDiv.appendChild(startButton)
+	}
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')

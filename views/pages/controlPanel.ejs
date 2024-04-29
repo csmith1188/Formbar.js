@@ -14,15 +14,14 @@
 				<script src="/js/deepObjectEqual.js"></script>
 			</head>
 
-			<body onload="load(<%-pollStatus%>)">
-				<%- include('../partials/formbar_header') %>
-					<header id="quickMenu">
-						<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-						<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
-						<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Poll </button>
-						<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
-						<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
-					</header>
+		<body onload="load(<%-pollStatus%>)">
+			<%- include('../partials/formbar_header') %>
+				<header id="quickMenu">
+					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+					<button id="bannedMenu" class="quickButton tab" data-tab-group="mainTabs">Banned Users</button>
+					<!-- <button id="lessonMenu" class="quickButton tab" data-tab-group="mainTabs">Make a Lesson</button> -->
+					<button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button>
+				</header>
 
 					<p id="classCode">Class Code:</p>
 					<p><b id="totalUsers"></b></p>
@@ -56,23 +55,26 @@
 											<button type="button">nothin</button>
 										</div>
 									</div>
-									<div id="userFastPollBoxes" class="options">
-										<h2 class="headerText">Fast Poll</h2>
-										<div class="headBox">
-											<button type="button">nothin</button>
-											<button type="button">nothin</button>
-											<button type="button">nothin</button>
-										</div>
-									</div>
 								</div>
-						</div>
-						<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
-							Kick All Students
-						</button>
-						<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
-							End Class
-						</button>
-						<!-- <br>
+								<div id="userFastPollBoxes" class="options">
+									<h2 class="headerText">Fast Poll</h2>
+									<div class="headBox" id="quickPoll">
+									</div>
+									<button id="pollsMenu" class="quickButton tab" data-tab-group="mainTabs">Custom</button>
+								</div>
+							</div>
+					</div>
+					<div>
+						<button onclick="clearPollFunc()">Clear Poll</button>
+						<button onclick="endPollFunc()">End Poll</button>
+					</div></br>
+					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
+						Kick All Students
+					</button>
+					<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
+						End Class
+					</button>
+					<!-- <br>
 					<button onclick="socket.emit('cpUpdate'), console.log('updated data');">Update Room Data</button>
 					<button onclick="console.log(rooms.students['notluke'].pollRes, rooms.students['isluke'].pollRes,'student response');">Room Data</button> -->
 
@@ -234,6 +236,7 @@
 			let currentSharePollId = null
 			let currentSharePollType = null
 			let classroom = {}
+			let quickPoll = false
 
 			const FilterState = {
 				alert: [
@@ -342,6 +345,24 @@
 				rooms = newClassroom
 			})
 			var tagNames = "<%=tagNames%>";
+
+			function quickPollTF() {
+				quickPoll = 'tf';
+				quickPollStart(quickPoll);
+			}
+
+			function quickPollTUTD() {
+				
+			}
+
+			function quickPollMultiple() {
+				
+			}
+
+			function quickPollTFCustom() {
+				
+			}
+
 		</script>
 		<script src="/js/controlPanelStudents.js"></script>
 		<script src="/js/controlPanelSockets.js"></script>
