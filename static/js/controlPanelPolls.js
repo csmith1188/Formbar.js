@@ -833,3 +833,50 @@ document.addEventListener('click', (event) => {
 		}
 	}
 })
+
+
+// var timerButton = document.getElementById('timerButton')
+// timerButton.addEventListener('click', function () {
+// 	var time = document.getElementById('inputtedTime')
+// 	var sound = document.getElementById('playSound')
+// 	timerButton.hidden = true
+// 	time.hidden = true
+// 	sound.hidden = true
+// 	timerStopButton.hidden = false
+// 	socket.emit("timer", (time.value, sound.checked, true))
+// })
+
+// var timerStopButton = document.getElementById('timerStopButton')
+// timerStopButton.addEventListener('click', function () {
+// 	var time = document.getElementById('inputtedTime')
+// 	var sound = document.getElementById('playSound')
+// 	timerButton.hidden = false
+// 	time.hidden = false
+// 	sound.hidden = false
+// 	timerStopButton.hidden = true
+// 	socket.emit("timerStop", { active: false })
+// })
+
+
+//Make the code above work 
+var timerButton = document.getElementById('timerButton')
+timerButton.addEventListener('click', function () {
+	var time = document.getElementById('inputtedTime')
+	var sound = document.getElementById('playSound')
+	timerButton.hidden = true
+	time.hidden = true
+	sound.hidden = true
+	timerStopButton.hidden = false
+	socket.emit("timer", time.value, sound.checked, true)
+})
+
+var timerStopButton = document.getElementById('timerStopButton')
+timerStopButton.addEventListener('click', function () {
+	var time = document.getElementById('inputtedTime')
+	var sound = document.getElementById('playSound')
+	timerButton.hidden = false
+	time.hidden = false
+	sound.hidden = false
+	timerStopButton.hidden = true
+	socket.emit("timer", { turnedOn: false })
+})

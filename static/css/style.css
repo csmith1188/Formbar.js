@@ -250,9 +250,11 @@ dialog {
 	0% {
 		background-position: 0% 50%;
 	}
+
 	50% {
 		background-position: 100% 50%;
 	}
+
 	100% {
 		background-position: 0% 50%;
 	}
@@ -478,36 +480,44 @@ input[type="radio"]:focus {
 #usersMenu #users {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(200px, 1fr));
-	cursor: pointer;
 	user-select: none;
 	gap: 1rem;
 }
 
 
-#usersMenu #users details[id^="student"], #usersMenu #users div[id^="student"] {
+#usersMenu #users details[id^="student"] {
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
-	background-color: var(--bg-light-blue);
 	border-radius: 10px;
 	margin-bottom: 1vi;
 	height: fit-content;
 }
 
-.help {
-	--theme-color: red;
+div.break {
+	margin-bottom: 3%;
 }
 
-.break {
-	--theme-color: yellow;
+.break,
+.break summary {
+	border-color: #ffff00 !important;
+}
+
+.help,
+.help summary {
+	border-color: #ff0000 !important;
+}
+
+#usersMenu #users details[id^="student"][open] {
+	padding-bottom: 2.5%;
 }
 
 #usersMenu #users details[id^="student"] summary {
 	cursor: pointer;
-
 }
 
 #usersMenu #users details[id^="student"][open] summary {
 	border-bottom: 3px var(--theme-color) solid;
+	margin-bottom: 2.5%;
 }
 
 #usersMenu #users div[id^="student"] p {
@@ -541,7 +551,7 @@ input[type="radio"]:focus {
 	width: 80%;
 }
 
-#usersMenu #VBOptions #userFilterBoxes .options{
+#usersMenu #VBOptions #userFilterBoxes .options {
 	position: absolute;
 	left: 10vi;
 }
@@ -680,7 +690,8 @@ input[type="radio"]:focus {
 	margin-top: 8px;
 }
 
-#clearPoll, #endPoll {
+#clearPoll,
+#endPoll {
 	font-size: 18px;
 	margin: auto;
 }
@@ -761,7 +772,8 @@ input[type="radio"]:focus {
 	width: 50vi;
 }
 
-#studentVBar:has(#vbContainer[style*="display: none"]), #VBOptions {
+#studentVBar:has(#vbContainer[style*="display: none"]),
+#VBOptions {
 	justify-content: center;
 }
 
@@ -852,6 +864,6 @@ input[type="radio"]:focus {
 	background-color: white;
 }
 
-#ticket{
+#ticket {
 	background-color: white;
 }
