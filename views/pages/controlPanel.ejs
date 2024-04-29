@@ -109,6 +109,9 @@
 							<input type="number" id="resNumber" min="1" max="26" step="1" value="1"
 								onchange="responseAmountChange()">
 							<br>
+							<label for="multiRes">Multiple answer poll?</label>
+							<input type="checkbox" id="multiRes">
+							<br>
 							<label for="resTextBox">Would like to accept text responses?</label>
 							<input type="checkbox" id="resTextBox" onclick="resTextChange()">
 							<br>
@@ -300,6 +303,7 @@
 			let generatedColors = []
 			let pollResponses = []
 			let colorPickers = []
+			var multiRes = document.getElementById("multiRes")
 			var usersDiv = document.getElementById('users')
 			var resNumber = document.getElementById('resNumber')
 			var resTextBox = document.getElementById('resTextBox')
