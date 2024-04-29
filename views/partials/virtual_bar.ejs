@@ -17,7 +17,6 @@
                 data: []
             },
             {
-                //weight: 0.5,
                 data: [],
                 backgroundColor: ["blue", "white"],
                 type: "pie"
@@ -39,7 +38,7 @@
             },
             cutout: '0%',
         }
-    })    
+    })
     // Calls for data
     socket.emit('vbUpdate')
     // Gets data from server and send it the function
@@ -50,7 +49,6 @@
             virtualBar.parentElement.style.display = "none";
             return
         }
-
         if (noPoll)
             noPoll.style.display = 'none'
         virtualBar.parentElement.style.display = "block";
@@ -115,6 +113,45 @@
 
         doughnutChart.data.labels = labelsArray
         doughnutChart.data.datasets[0].data = pollArray
+
+
+
         doughnutChart.update()
     })
+
+    socket.on('timerVB', (timeData) => {
+        let pieChart = doughnutChart.data.datasets[1]
+        let time = timeData.time
+        let timePassed = timeData.timePassed
+        let sound = timeData.sound
+        let active = timeData.active
+
+        //turn the time into minutes and seconds
+        let minutes = Math.floor(time / 60)
+        let seconds = time % 60
+        if (seconds < 10) {
+            seconds = "0" + seconds
+        }
+        let timeString = minutes + ":" + seconds
+
+        if (active) {
+            virtualBar.parentElement.style.display = "block";
+            if (time != 0) {
+                pieChart.data = [time, timePassed]
+                pieChart.backgroundColor = ["blue", "white"]
+            }
+            else {
+                pieChart.data = [timePassed]
+                pieChart.backgroundColor = ["red"]
+            }
+        }
+        else {
+            virtualBar.parentElement.style.display = "none";
+            pieChart.data = []
+        }
+        // Ensure that the doughnut chart always has some data
+        doughnutChart.update()
+    })
+
+
 </script>
