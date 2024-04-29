@@ -467,11 +467,9 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-		
+
 		pollAnswers.push(pollAnswer)
 	}
-	console.log("These are the poll answers")
-	console.log(pollAnswers)
 	var multiRes = document.getElementById("multiRes")
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
