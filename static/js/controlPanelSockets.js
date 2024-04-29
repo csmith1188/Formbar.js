@@ -1,6 +1,5 @@
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
-	console.log(newClassroom)
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
@@ -27,8 +26,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	const responsesCounter = document.getElementById('responsesCounter');
-	console.log();
 	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
@@ -40,8 +37,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			oldStudentData = classroom.students[username]
 
 		if (!studentElement) {
-			let builtstudent = buildStudent(newClassroom, newStudentData)
-			if (builtstudent) usersDiv.appendChild(builtstudent)
+			let builtStudent = buildStudent(newClassroom, newStudentData)
+			if (builtStudent) usersDiv.appendChild(builtStudent)
 			continue
 		}
 
@@ -262,6 +259,19 @@ socket.on('customPollUpdate', (
 	let publicPollsDiv = document.querySelector('div#publicPolls')
 	let classPollsDiv = document.querySelector('div#classPolls')
 	let userPollsDiv = document.querySelector('div#userPolls')
+	let fastPollDiv = document.querySelector('div#quickPoll')
+
+	for (let i = 1; i <= 4; i++) {
+		let customPoll = customPolls[i]
+		let startButton = document.createElement('button')
+		startButton.className = 'start-custom-poll'
+		startButton.style.gridColumn = 3
+		startButton.textContent = customPoll.name
+		startButton.onclick = () => {
+			startPoll(i)
+		}
+		fastPollDiv.appendChild(startButton)
+	}
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')

@@ -11,8 +11,6 @@ const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
-const e = require('express')
-const { log } = require('console')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -202,7 +200,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	removeTag: TEACHER_PERMISSIONS,
 	passwordRequest: STUDENT_PERMISSIONS,
 	approvePasswordChange: MANAGER_PERMISSIONS,
-	passwordUpdate: MANAGER_PERMISSIONS
+	passwordUpdate: MANAGER_PERMISSIONS,
+	timer: TEACHER_PERMISSIONS,
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -253,6 +252,8 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	classUnbanUser: 'manageStudents',
 }
 
+
+
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS,
 	controlPolls: MOD_PERMISSIONS,
@@ -260,7 +261,8 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	breakAndHelp: MOD_PERMISSIONS,
 	manageClass: TEACHER_PERMISSIONS,
 	lights: MOD_PERMISSIONS,
-	sounds: MOD_PERMISSIONS
+	sounds: MOD_PERMISSIONS,
+	userDefaults: GUEST_PERMISSIONS
 }
 
 // Add currentUser and permission constants to all pages
@@ -292,7 +294,8 @@ class Student {
 		API,
 		ownedPolls = [],
 		sharedPolls = [],
-		tags
+		tags,
+		displayName
 	) {
 		this.username = username
 		this.id = id
@@ -311,6 +314,7 @@ class Student {
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
+		this.displayName = displayName
 	}
 }
 
@@ -347,6 +351,12 @@ class Classroom {
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
 		this.tagNames = tags || [];
+		this.timer = {
+			time: 0,
+			sound: false,
+			active: false,
+			timePassed: 0
+		}
 	}
 }
 
@@ -523,7 +533,7 @@ function joinClass(username, code) {
 										resolve(true)
 									} else {
 										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-											[classroom.id, user.id, GUEST_PERMISSIONS, 0], (err) => {
+											[classroom.id, user.id, cD[code].permissions.userDefaults, 0], (err) => {
 												try {
 													if (err) {
 														reject(err)
@@ -533,7 +543,7 @@ function joinClass(username, code) {
 													logger.log('info', '[joinClass] Added user to classusers')
 
 													let user = cD.noClass.students[username]
-													user.classPermissions = GUEST_PERMISSIONS
+													user.classPermissions = cD[code].permissions.userDefaults
 
 													// Remove student from old class
 													delete cD.noClass.students[username]
@@ -717,7 +727,7 @@ function permCheck(req, res, next) {
 async function setClassOfApiSockets(api, classCode) {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
 
-	let sockets = await io.in(api).fetchSockets()
+	let sockets = await io.in(`api-${api}`).fetchSockets()
 
 	for (let socket of sockets) {
 		socket.leave(`class-${socket.request.session.class}`)
@@ -743,7 +753,7 @@ async function getIpAccess(type) {
 async function managerUpdate() {
 	let [users, classrooms] = await Promise.all([
 		new Promise((resolve, reject) => {
-			db.all('SELECT id, username, permissions FROM users', (err, users) => {
+			db.all('SELECT id, username, permissions, displayName FROM users', (err, users) => {
 				if (err) reject(new Error(err))
 				else {
 					users = users.reduce((tempUsers, tempUser) => {
@@ -1230,7 +1240,10 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						poll.data = JSON.parse(poll.data)
 					}
 
-					if (classroom.pollHistory[0].id == null) classroom.pollHistory = null
+					if(classroom.pollHistory[0]) {
+						if (classroom.pollHistory[0].id == null)
+							classroom.pollHistory = null
+					}
 
 					let makeClassStatus = await makeClass(
 						classroom.id,
@@ -1310,7 +1323,8 @@ app.post('/login', async (req, res) => {
 			username: req.body.username,
 			password: req.body.password,
 			loginType: req.body.loginType,
-			userType: req.body.userType
+			userType: req.body.userType,
+			displayName: req.body.displayName
 		}
 		var passwordCrypt = encrypt(user.password)
 
@@ -1333,6 +1347,21 @@ app.post('/login', async (req, res) => {
 						})
 						return
 					}
+
+					if (!userData.displayName) {
+						db.run("UPDATE users SET displayName = ? WHERE username = ?", [userData.username, userData.username]), (err) => {
+							try {
+								if (err) throw err;
+								logger.log('verbose', '[post /login] Added displayName to database');
+							} catch (err) {
+								logger.log('error', err.stack);
+								res.render('pages/message', {
+									message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+									title: 'Error'
+								});
+							};
+						};
+					};
 
 					// Decrypt users password
 					let tempPassword = decrypt(JSON.parse(userData.password))
@@ -1373,7 +1402,8 @@ app.post('/login', async (req, res) => {
 							userData.API,
 							JSON.parse(userData.ownedPolls),
 							JSON.parse(userData.sharedPolls),
-							userData.tags
+							userData.tags,
+							userData.displayName
 
 						)
 						req.session.class = 'noClass'
@@ -1382,6 +1412,7 @@ app.post('/login', async (req, res) => {
 					req.session.userId = userData.id
 					req.session.username = userData.username
 					req.session.tags = userData.tags
+					req.session.displayName = userData.displayName
 
 					logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 					logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
@@ -1433,13 +1464,14 @@ app.post('/login', async (req, res) => {
 
 					// Add the new user to the database
 					db.run(
-						'INSERT INTO users(username, password, permissions, API, secret) VALUES(?, ?, ?, ?, ?)',
+						'INSERT INTO users(username, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?)',
 						[
 							user.username,
 							JSON.stringify(passwordCrypt),
 							permissions,
 							newAPI,
-							newSecret
+							newSecret,
+							user.displayName
 						], (err) => {
 							try {
 								if (err) throw err
@@ -1459,13 +1491,15 @@ app.post('/login', async (req, res) => {
 											userData.API,
 											[],
 											[],
-											userData.tags
+											userData.tags,
+											userData.displayName
 										)
 
 										// Add the user to the session in order to transfer data between each page
 										req.session.userId = userData.id
 										req.session.username = userData.username
 										req.session.class = 'noClass'
+										req.session.displayName = userData.displayName;
 
 										logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
 										logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
@@ -2086,12 +2120,11 @@ io.on('connection', async (socket) => {
 
 				for (let studentData of Object.values(classData.students)) {
 					if (Array.isArray(studentData.pollRes.buttonRes)) {
-						for (let response of studentData.pollRes.buttonRes){
+						for (let response of studentData.pollRes.buttonRes) {
 							if (
 								studentData &&
 								Object.keys(responses).includes(response)
 							) {
-								console.log(responses)
 								responses[response].responses++
 							}
 						}
@@ -2102,22 +2135,21 @@ io.on('connection', async (socket) => {
 					) {
 						responses[studentData.pollRes.buttonRes].responses++
 					}
-					
 				}
-				console.log(responses)
 			}
 
-			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalStudents=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+			logger.log('verbose', `[vbUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
 
-			let totalStudents = 0;
+			let totalResponses = 0;
+			let totalResponders = 0
 			let totalStudentsIncluded = []
 			let totalStudentsExcluded = []
 			let totalLastResponses = classData.poll.lastResponse
 
 			//Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
 			if (totalLastResponses.length > 0) {
-				totalStudents = totalLastResponses.length
+				totalResponses = totalLastResponses.length
 				totalStudentsIncluded = totalLastResponses
 			}
 			else {
@@ -2171,41 +2203,51 @@ io.on('connection', async (socket) => {
 			}
 
 
-			totalStudents = totalStudentsIncluded.length
-			if (totalStudents == 0 && totalStudentsExcluded.length != 0) {
+			totalResponses = totalStudentsIncluded.length
+			if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
 				//Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-				totalStudents = Object.keys(classData.students).length - totalStudentsExcluded.length
+				totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length
 			}
-			else if (totalStudents == 0) {
+			else if (totalResponses == 0) {
 				totalStudentsIncluded = Object.keys(classData.students)
 				for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
 					let student = totalStudentsIncluded[i];
-					console.log(classData.students[student].classPermissions, student);
 					if (classData.students[student].classPermissions >= TEACHER_PERMISSIONS || classData.students[student].classPermissions == GUEST_PERMISSIONS) {
-						console.log(student + " has been removed from the poll");
 						totalStudentsIncluded.splice(i, 1);
 					}
 				}
-				totalStudents = totalStudentsIncluded.length
+				totalResponders = totalStudentsIncluded.length
 			}
-			if(cD[classCode].poll.multiRes){
-				for(let student of Object.values(classData.students)){
-					if (student.pollRes.buttonRes.length > 1){
-						totalStudents += student.pollRes.buttonRes.length - 1
+			if (cD[classCode].poll.multiRes) {
+				for (let student of Object.values(classData.students)) {
+					if (student.pollRes.buttonRes.length > 1) {
+						totalResponses += student.pollRes.buttonRes.length - 1
+					}
+				}
+			} else {
+				for (let value of Object.values(classData.students)) {
+					if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+						totalResponses++;
 					}
 				}
 			}
+
 			//Get rid of students whos permissions are teacher or above or guest
 			cD[classCode].poll.allowedResponses = totalStudentsIncluded
 			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
+
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
-				totalStudents: totalStudents,
+				totalResponders: totalResponders,
+				totalResponses: totalResponses,
 				polls: responses,
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
-				blind: classData.poll.blind
+				blind: classData.poll.blind,
+				// time: classData.timer.time,
+				// sound: classData.timer.sound,
+				// active: classData.timer.active,
 			})
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2834,7 +2876,6 @@ io.on('connection', async (socket) => {
 	// /poll websockets for updating the database
 	socket.on('pollResp', (res, textRes, resWeight, resLength) => {
 		try {
-			console.log(res, textRes, resWeight, resLength);
 			logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
@@ -3111,7 +3152,6 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
 
-			console.log(socket.request.session);
 			let userId = socket.request.session.userId
 
 			if (id) {
@@ -4358,7 +4398,6 @@ io.on('connection', async (socket) => {
 				if (row) {
 					// Row exists, update it
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
-						console.log("ran update", tags.toString(), studentId)
 						if (err) {
 							return console.error(err.message);
 						}
@@ -4521,6 +4560,53 @@ io.on('connection', async (socket) => {
 			logger.log("error", err.stack);
 		}
 	})
+	let runningTimer;
+	socket.on("timer", (startingtime, sound, turnedOn) => {
+		cD[socket.request.session.class].timer.time = parseInt(startingtime * 60).toFixed(0)
+		cD[socket.request.session.class].timer.sound = sound
+		cD[socket.request.session.class].timer.active = turnedOn
+		cD[socket.request.session.class].timer.timePassed = 0
+		cpUpdate(socket.request.session.class)
+		try {
+			if (turnedOn) {
+				runningTimer = setInterval(() => timer(true, sound, turnedOn), 1000);
+				//run the function once instantly
+				timer(false, sound, turnedOn)
+			}
+			else {
+				clearInterval(runningTimer);
+				timer(false, sound, turnedOn)
+			}
+		} catch (err) {
+			logger.log("error", err.stack);
+		}
+	})
+	function timer(repeated, sound, on) {
+		let classData = cD[socket.request.session.class];
+		if (!repeated) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time == 0) {
+			clearInterval(runningTimer);
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time > 0 && on) {
+			classData.timer.time--;
+			classData.timer.timePassed++
+		}
+		if (classData.timer.time == 0 && on) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			if (sound) {
+				advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			}
+		}
+
+
+		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+	}
+
 })
 
 

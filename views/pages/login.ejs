@@ -14,8 +14,9 @@
             <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
               autocomplete="off" pattern="[a-z0-9]+" required>
             <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password" value=""
-              pattern="[a-z0-9A-Z!@#$%^&]+" required>
-            <p style="font-size:small;font-weight:bold" id="passwordInfo">*passwords may not contain *,(, or )</p>
+              pattern="[a-z0-9A-Z!@#$%^&*_?]+" required>
+            <input type="text" id="displayNameBox" name="displayName" class="loginBox" placeholder="Display Name" value="" pattern="[a-zA-Z0-9]+" required>
+            <p style="font-size:small;font-weight:bold;color: black;" id="passwordInfo">*passwords may only contain: a-z, A-Z, 0-9, !, @, #, $, ^, %, &, *, _, and ?.</p>
             <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
             <input type="hidden" id="loginTypeBox" name="loginType" value="login">
             <input type="hidden" id="userTypeBox" name="userType" value="user">
@@ -39,6 +40,7 @@
         let fp = document.getElementById("forgotPassword")
         let ut = document.getElementById("loginTypeBox")
         let sb = document.getElementById("submitButton")
+        let dn = document.getElementById("displayNameBox");
 
         function changeloginType(el) {
           [liButton, naButton, gButton].forEach(button => (button == el) ? button.classList.add("pressed") : button.classList.remove("pressed"))
@@ -48,6 +50,9 @@
               pb.required = true
               pi.classList.remove("hidden");
               fp.classList.remove("hidden")
+              dn.classList.add("hidden");
+              ub.classList.remove("hidden");
+              dn.required = false;
               sb.value = "Log in"
               ut.value = "login"
               break
@@ -56,15 +61,22 @@
               pb.required = true
               pi.classList.remove("hidden");
               fp.classList.add("hidden")
+              dn.classList.remove("hidden");
+              ub.classList.remove("hidden");
+              dn.required = true;
               sb.value = "Create account"
               ut.value = "new"
               break
             case gButton:
+              ub.value = null;
+              ub.classList.add("hidden");
               pb.value = null
               pb.classList.add("hidden")
               pb.required = false
               pi.classList.add("hidden");
               fp.classList.add("hidden")
+              dn.classList.remove("hidden");
+              dn.required = true;
               sb.value = "Go"
               ut.value = "guest"
           }
@@ -75,7 +87,7 @@
         }
 
         function checkIfBlank() {
-          if (ub.value && (pb.value || ut.value == "guest")) {
+          if ((ub.value || ut.value == "guest") && (pb.value || ut.value == "guest") && (dn.value || ut.value == "login")) {
             sb.classList.remove("unselectable")
             sb.onsubmit = () => true
           } else {
@@ -86,6 +98,7 @@
 
         ub.oninput = checkIfBlank
         pb.oninput = checkIfBlank
+        dn.oninput = checkIfBlank
 
         changeloginType(liButton);
       </script>

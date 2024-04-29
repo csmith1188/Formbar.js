@@ -8,7 +8,6 @@ function buildOption(value, text, selected = false) {
     return option
 }
 var userBreak = []
-var rooms;
 
 function buildStudent(room, studentData) {
     let newStudent
@@ -17,7 +16,7 @@ function buildStudent(room, studentData) {
         newStudent = document.createElement("details");
         newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
-        studentElement.innerText = studentData.username;
+        studentElement.innerText = studentData.displayName;
         let space = document.createElement('span')
         space.textContent = ' '
         studentElement.appendChild(space)
@@ -30,9 +29,9 @@ function buildStudent(room, studentData) {
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
-            newStudent.setAttribute("class", "help")
+            newStudent.classList.add('help')
             studentElement.appendChild(helpDisplay)
-            let help = document.createElement('p')
+            let help = document.createElement('div')
             help.classList.add('help')
             help.textContent = 'Needs Help'
             if (studentData.help.reason) {
@@ -52,19 +51,40 @@ function buildStudent(room, studentData) {
             deleteTicketButton.textContent = 'Delete Ticket'
             help.appendChild(deleteTicketButton)
             newStudent.appendChild(help)
-            let lineBreak = document.createElement('br')
+        }
+        if (studentData.break == true) {
+            userBreak.push(studentData.username)
+            let breakText = document.createElement('p')
+            breakText.textContent += 'taking a break'
+            newStudent.appendChild(breakText)
+        }
+        else if (studentData.break) {
+            let breakDiv = document.createElement('div')
+            breakDiv.classList.add('break')
+            let breakNeeded = document.createElement('p')
+            breakNeeded.textContent = 'Needs a Break'
+            breakDiv.appendChild(breakNeeded)
+            let breakReason = document.createElement('p')
+            breakReason.textContent = `Reason: ${studentData.break} `
+            breakDiv.appendChild(breakReason)
+            let breakApprove = document.createElement('button')
+            breakApprove.classList.add('quickButton')
+            breakApprove.onclick = () => { approveBreak(true, studentData.username) }
+            breakApprove.textContent = 'Approve'
+            breakDiv.appendChild(breakApprove)
+            let breakDeny = document.createElement('button')
+            breakDeny.classList.add('quickButton')
+            breakDeny.onclick = () => { approveBreak(false, studentData.username) }
+            breakDeny.textContent = 'Deny'
+            breakDiv.appendChild(breakDeny)
+            newStudent.appendChild(breakDiv)
         }
         if (studentData.break) {
-            let helpDisplay = document.createElement('span')
-            helpDisplay.textContent = `⏱`
-            newStudent.setAttribute("class", "break")
-            studentElement.appendChild(helpDisplay)
+            let breakDisplay = document.createElement('span')
+            breakDisplay.textContent = `⏱`
+            newStudent.classList.add('break')
+            studentElement.appendChild(breakDisplay)
         }
-        // if (studentData.pollRes) {
-        // 	let pollDisplay = document.createElement('span')
-        // 	pollDisplay.textContent = (studentData.pollRes.buttonRes || studentData.pollRes.textRes || studentData.pollRes.pollTextRes)
-        // 	studentElement.appendChild(pollDisplay)
-        // }
         newStudent.appendChild(studentElement);
         let permissionSwitch = document.createElement("select");
         permissionSwitch.setAttribute("name", "permSwitch");
@@ -177,12 +197,56 @@ function buildStudent(room, studentData) {
         });
 
         newTagSaveButton.addEventListener('click', function () {
+            event.preventDefault();
             newTagButton.removeAttribute('hidden');
             socket.emit('newTag', newTagTextBox.value);
+            //update tagform to show new tag
+            let checkboxForm = document.getElementById(studentData.username + 'tags')
+            let checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = `checkbox${newTagTextBox.value}`;
+            checkbox.value = newTagTextBox.value;
+            checkbox.checked = false;
+            let label = document.createElement('label');
+            label.textContent = newTagTextBox.value;
+            label.setAttribute('for', `checkbox${newTagTextBox.value}`);
+            checkboxForm.appendChild(checkbox);
+            checkboxForm.appendChild(label);
+            checkboxForm.appendChild(document.createElement('br'));
+            newTagTextBox.value = '';
         })
         removeTagButton.addEventListener('click', function () {
+            event.preventDefault();
             newTagButton.removeAttribute('hidden');
             socket.emit('removeTag', newTagTextBox.value);
+            //update tagform to remove tag
+            let checkboxForm = document.getElementById(studentData.username + 'tags')
+            let checkboxes = checkboxForm.getElementsByTagName('input')
+            for (let i = 0; i < checkboxes.length; i++) {
+                let checkbox = checkboxes[i]
+                if (checkbox.type === 'checkbox') {
+                    if (checkbox.value == newTagTextBox.value) {
+                        checkboxForm.removeChild(checkbox.nextSibling)
+                        checkboxForm.removeChild(checkbox)
+                        //checkboxForm.removeChild(checkbox.nextSibling)
+                    }
+                }
+            }
+            newTagTextBox.value = '';
+            //Remove broken line break
+            //for all elements in the form, if there are 2 line breaks in a row, remove the first one
+            for (let i = 0; i < checkboxForm.children.length; i++) {
+                if (checkboxForm.children[0].nodeName == 'BR') {
+                    checkboxForm.removeChild(checkboxForm.children[0])
+                    i--;
+                    continue
+                }
+                if (checkboxForm.children[i].nodeName == 'BR' && checkboxForm.children[i + 1].nodeName == 'BR') {
+                    checkboxForm.removeChild(checkboxForm.children[i])
+                    i--;
+                    continue
+                }
+            }
         })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
@@ -196,8 +260,6 @@ function buildStudent(room, studentData) {
             event.preventDefault();
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
         })
-
-
 
         newStudent.appendChild(studentCheckbox)
         studentTags.appendChild(closeButton)
@@ -231,35 +293,6 @@ function buildStudent(room, studentData) {
 
     newStudent.setAttribute('id', `student-${studentData.username}`);
     newStudent.setAttribute('style', "color: black");
-    if (studentData.break == true) {
-        userBreak.push(studentData.username)
-        let breakText = document.createElement('p')
-        breakText.textContent += 'taking a break'
-        newStudent.appendChild(breakText)
-    }
-    else if (studentData.break) {
-        let breakDiv = document.createElement('div')
-        breakDiv.setAttribute('id', 'break')
-        let breakNeeded = document.createElement('p')
-        breakNeeded.textContent = 'Needs a Break'
-        breakDiv.appendChild(breakNeeded)
-        let breakReason = document.createElement('p')
-        breakReason.textContent = `Reason: ${studentData.break} `
-        breakDiv.appendChild(breakReason)
-        let breakApprove = document.createElement('button')
-        breakApprove.classList.add('quickButton')
-        breakApprove.onclick = () => { approveBreak(true, studentData.username) }
-        breakApprove.textContent = 'Approve'
-        breakDiv.appendChild(breakApprove)
-        let breakDeny = document.createElement('button')
-        breakDeny.classList.add('quickButton')
-        breakDeny.onclick = () => { approveBreak(false, studentData.username) }
-        breakDeny.textContent = 'Deny'
-        breakDiv.appendChild(breakDeny)
-        newStudent.appendChild(breakDiv)
-        let lineBreak = document.createElement('br')
-        newStudent.appendChild(lineBreak)
-    }
     if (studentData.pollTextRes) {
         let pollTextResponse = document.createElement('p')
         pollTextResponse.textContent = `Poll Text: ${studentData.pollRes.textRes} `
@@ -299,14 +332,12 @@ function filterSortChange() {
     // filter by help
     if (filter.alert) {
         for (let username of userOrder.slice()) {
-            console.log('username', username)
             let studentElement = document.getElementById(`student-${username}`);
             if (
                 ((filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) || (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break)))
             ) {
                 studentElement.style.display = 'none'
                 userOrder.pop(username)
-                console.log("Popped", username)
             }
         }
     }

@@ -195,6 +195,7 @@ function resTextChange() {
 }
 
 function responseAmountChange() {
+	responseDivs = document.getElementsByClassName('response')
 	if (resTextBox.checked) {
 		if (resNumber.value < 0) resNumber.value = 0
 	}
@@ -206,7 +207,7 @@ function responseAmountChange() {
 	generatedColors = generateColors(resNumber.value)
 	if (pollResponses.length > resNumber.value) {
 
-		let responseDivs = document.getElementsByClassName('response')
+		responseDivs = document.getElementsByClassName('response')
 		for (let i = resNumber.value; i < pollResponses.length; i++) {
 			document.getElementById(`response${i}`).remove()
 		}
@@ -214,6 +215,14 @@ function responseAmountChange() {
 		pollResponses.splice(resNumber.value)
 		colorPickers.splice(resNumber.value)
 	}
+
+	for (let responseDiv of responseDivs) {
+		let i = responseDiv.id.split('response')[1];
+		pollResponses[i].defaultAnswer = letterString[i];
+		if (responseDiv) {
+			responseDiv.placeholder = `Answer ${letterString[i]}`;
+		};
+	};
 
 	for (let i = pollResponses.length; i < resNumber.value; i++) {
 		pollResponses.push({
@@ -224,6 +233,11 @@ function responseAmountChange() {
 			weight: 1,
 			defaultWeight: 1
 		})
+
+		//if (!document.getElementById(`response${i}`)) {
+		//let nextResponse = document.getElementById(`response${i + 1}`);
+		//nextResponse.id = `response${i}`;
+		//};
 
 		let responseDiv = document.createElement('div')
 		responseDiv.className = 'response'
@@ -326,6 +340,12 @@ function responseAmountChange() {
 		}
 		responseDiv.appendChild(answerName)
 
+		let removeAnswerButton = document.createElement("button");
+		removeAnswerButton.className = "quickButton";
+		removeAnswerButton.textContent = "-";
+		removeAnswerButton.onclick = removeAnswer;
+		responseDiv.appendChild(removeAnswerButton);
+
 		responsesDiv.appendChild(responseDiv)
 
 		FloatingUIDOM.autoUpdate(
@@ -371,8 +391,8 @@ function responseAmountChange() {
 		})
 	}
 
-	let responseDivs = document.getElementsByClassName('response')
-	for (let i = 0; i < pollResponses.length; i++) {
+	responseDivs = document.getElementsByClassName('response')
+	for (let i = 0; i < responseDivs.length; i++) {
 		let responseDiv = responseDivs[i]
 		let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
 		let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
@@ -415,11 +435,34 @@ function resetColors() {
 }
 resetColorsButton.onclick = resetColors
 
-function showResponses() {
-	if (responsesDiv.style.display == 'grid')
-		responsesDiv.style.display = 'none'
-	else responsesDiv.style.display = 'grid'
-}
+function showGeneralOptions() {
+	if (generalOptionsDiv.hidden) {
+		generalOptionsDiv.hidden = false;
+	} else {
+		generalOptionsDiv.hidden = true;
+	};
+};
+
+function addAnswer() {
+	resNumber.value = parseInt(resNumber.value) + 1;
+	responseAmountChange();
+};
+
+function removeAnswer(event) {
+	let element = event.target.parentElement;
+	let elementId = element.id.split('response')[1];
+	element.remove();
+	pollResponses.splice(elementId, 1);
+	responseDivs = document.getElementsByClassName('response');
+	answerNames = document.getElementsByClassName('answerName');
+	for (let i = 0; i < responseDivs.length; i++) {
+		responseDivs[i].id = `response${i}`;
+		answerNames[i].placeholder = `Answer ${letterString[i]}`;
+		console.log(responseDivs[i].answerName);
+		console.log(letterString[i]);
+	};
+	resNumber.value = parseInt(resNumber.value) - 1;
+};
 
 function modeChange() {
 	let modeP = document.getElementById('modeP')
@@ -453,6 +496,9 @@ function endPollFunc() {
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
 	socket.emit('cpUpdate')
+	socket.on('cpUpdate', (newClassroom) => {
+		rooms = newClassroom
+	})
 	var userTags = []
 	var userBoxesChecked = []
 	var userIndeterminate = []
@@ -464,11 +510,9 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-		
+
 		pollAnswers.push(pollAnswer)
 	}
-	console.log("These are the poll answers")
-	console.log(pollAnswers)
 	var multiRes = document.getElementById("multiRes")
 	var lastResponses = document.getElementById('lastResponse')
 	var basedOnResponse = document.getElementById('basedOnResponse')
@@ -489,6 +533,9 @@ function startPoll(customPollId) {
 	// rooms.students["isluke"].pollRes.buttonRes = "b"
 	if (lastResponses.checked) {
 		for (let [key, value] of Object.entries(rooms.students)) {
+			if (value.classPermissions >= 5 || value.classPermissions <= 1) {
+				continue
+			}
 			if (basedOnResponse.value == value.pollRes.buttonRes) {
 				lastResponseToUse.push(value.username)
 			}
@@ -621,35 +668,35 @@ function savePoll() {
 function savePollAs(pollType) {
 	let customPoll = {}
 
-    customPoll.name = prompt('What do you want to call this poll')
-    if (!customPoll.name) {
-        return;
-    } else {
-            customPoll.blind = blindCheck.checked
-            customPoll.prompt = pollPrompt.value
-            customPoll.textRes = resTextBox.checked
-            customPoll.public = false
-            customPoll.weight = 1
+	customPoll.name = prompt('What do you want to call this poll')
+	if (!customPoll.name) {
+		return;
+	} else {
+		customPoll.blind = blindCheck.checked
+		customPoll.prompt = pollPrompt.value
+		customPoll.textRes = resTextBox.checked
+		customPoll.public = false
+		customPoll.weight = 1
 
-            var pollAnswers = []
-            for (let i = 0; i < resNumber.value; i++) {
-                let pollResponse = pollResponses[i]
-                let pollAnswer = {
-                    answer: pollResponse.answer,
-                    weight: pollResponse.weight,
-                    color: pollResponse.color
-                }
+		var pollAnswers = []
+		for (let i = 0; i < resNumber.value; i++) {
+			let pollResponse = pollResponses[i]
+			let pollAnswer = {
+				answer: pollResponse.answer,
+				weight: pollResponse.weight,
+				color: pollResponse.color
+			}
 
-                pollAnswers.push(pollAnswer)
-            }
-            customPoll.answers = pollAnswers
+			pollAnswers.push(pollAnswer)
+		}
+		customPoll.answers = pollAnswers
 
-			if (pollType == "user") {
-				socket.emit('savePoll', customPoll);
-			} else if (pollType == "class") {
-				socket.emit("classPoll", customPoll);
-			};
-    };
+		if (pollType == "user") {
+			socket.emit('savePoll', customPoll);
+		} else if (pollType == "class") {
+			socket.emit("classPoll", customPoll);
+		};
+	};
 }
 
 function openSharePoll(customPollId) {
@@ -781,8 +828,58 @@ document.addEventListener('click', (event) => {
 	) {
 		let colorPickersDiv = document.getElementsByClassName('colorPicker')
 		for (let i = 0; i < colorPickers.length; i++) {
+			if (!colorPickersDiv[i]) {
+				return;
+			};
 			colorPickers[i].color.set(pollResponses[i].color)
 			colorPickersDiv[i].style.display = 'none'
 		}
 	}
+})
+
+
+// var timerButton = document.getElementById('timerButton')
+// timerButton.addEventListener('click', function () {
+// 	var time = document.getElementById('inputtedTime')
+// 	var sound = document.getElementById('playSound')
+// 	timerButton.hidden = true
+// 	time.hidden = true
+// 	sound.hidden = true
+// 	timerStopButton.hidden = false
+// 	socket.emit("timer", (time.value, sound.checked, true))
+// })
+
+// var timerStopButton = document.getElementById('timerStopButton')
+// timerStopButton.addEventListener('click', function () {
+// 	var time = document.getElementById('inputtedTime')
+// 	var sound = document.getElementById('playSound')
+// 	timerButton.hidden = false
+// 	time.hidden = false
+// 	sound.hidden = false
+// 	timerStopButton.hidden = true
+// 	socket.emit("timerStop", { active: false })
+// })
+
+
+//Make the code above work
+var timerButton = document.getElementById('timerButton')
+timerButton.addEventListener('click', function () {
+	var time = document.getElementById('inputtedTime')
+	var sound = document.getElementById('playSound')
+	timerButton.hidden = true
+	time.hidden = true
+	sound.hidden = true
+	timerStopButton.hidden = false
+	socket.emit("timer", time.value, sound.checked, true)
+})
+
+var timerStopButton = document.getElementById('timerStopButton')
+timerStopButton.addEventListener('click', function () {
+	var time = document.getElementById('inputtedTime')
+	var sound = document.getElementById('playSound')
+	timerButton.hidden = false
+	time.hidden = false
+	sound.hidden = false
+	timerStopButton.hidden = true
+	socket.emit("timer", { turnedOn: false })
 })
