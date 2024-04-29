@@ -3071,6 +3071,7 @@ io.on('connection', async (socket) => {
 	socket.on('clearPoll', async () => {
 		try {
 			await clearPoll();
+			//adds data to the previous poll answers table upon clearing the poll
 			for (var student of Object.values(cD[socket.request.session.class].students)) {
 				if (student.classPermissions != 5) {
 					var currentPollId = cD[socket.request.session.class].pollHistory[currentPoll].id
