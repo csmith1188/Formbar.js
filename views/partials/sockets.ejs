@@ -1,0 +1,22 @@
+<script src="/socket.io/socket.io.js"></script>
+
+<script defer>
+	let socket = io()
+
+	function endBreak() {
+		socket.emit('endBreak')
+		document.getElementById('breakDialog').close()
+	}
+
+	socket.on('break', () => {
+		document.getElementById('breakDialog').showModal()
+	})
+
+	socket.on('message', (message) => {
+		alert(message)
+	})
+
+	socket.on('reload', () => {
+		location.reload()
+	})
+</script>

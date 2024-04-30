@@ -1,0 +1,76 @@
+<style>
+  body {
+    padding-top: 72px;
+  }
+</style>
+<header id="formbarHeader">
+  <a href="/" id="headerLogo">Formbar</a>
+  <% if (locals.currentUser) { %>
+    <% if (currentUser.classPermissions) { %>
+      <a href="/" class="headerTab">Panel</a>
+      <% } %>
+        <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
+          <a href="/managerPanel" class="headerTab">Manager</a>
+          <% } %>
+            <% if (!currentUser.classPermissions) { %>
+              <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                <a href="/manageClass" class="headerTab">Manage Class</a>
+                <% } %>
+                  <a href="/selectClass" class="headerTab">Join Class</a>
+                  <% } %>
+                    <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+                      <a href="/plugins" class="headerTab">Plugins</a>
+                      <% } %>
+                        <% if (currentUser.classPermissions) { %>
+                          <button href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
+                            Class</button>
+                          <% } %>
+                            <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
+                            <% } %>
+                              <button onclick="changeTheme()" class="headerTab">LM/DM</button>
+                              <p id="version">v 1.0.0</p>
+</header>
+<script>
+  document.body.style.backgroundColor = getCookie("theme")
+  if (getCookie("theme") == "white") {
+    document.body.style.color = "black";
+    document.querySelectorAll('input').forEach(input => {
+      input.style.color = "black";
+    });
+  }
+  else if (getCookie("theme") == "rgb(50, 50, 50)") {
+    document.body.style.color = "white";
+    document.querySelectorAll('input').forEach(input => {
+      input.style.color = "white";
+    });
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  function changeTheme() {
+    let inputs = document.querySelectorAll('input');
+    if (getCookie("theme") == "white") {
+      document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC";
+      document.body.style.backgroundColor = getCookie("theme");
+      document.body.style.color = "white";
+      inputs.forEach(input => {
+        input.style.backgroundColor = getCookie("theme");
+        input.style.color = "white";
+      });
+    } else if (getCookie("theme") == "rgb(50, 50, 50)") {
+      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
+      document.body.style.backgroundColor = getCookie("theme");
+      document.body.style.color = "black";
+      inputs.forEach(input => {
+        input.style.backgroundColor = getCookie("theme");
+        input.style.color = "black";
+      });
+    } else {
+      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
+    }
+  }
+</script>

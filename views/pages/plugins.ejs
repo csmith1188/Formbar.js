@@ -1,0 +1,53 @@
+<%- include('../partials/header_content') %>
+    <%- include('../partials/sockets') %>
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                #otherText {
+                    margin-top: 1rem;
+                    margin-bottom: 1rem;
+                }
+            </style>
+        </head>
+
+        <body>
+            <%- include('../partials/formbar_header') %>
+                <h1 class="headerText">Plugins</h1>
+                <div id="plugins">
+                </div>
+
+                <%- include('../partials/body_content') %>
+        </body>
+
+        </html>
+
+        <script type="text/javascript">
+            let pluginsDiv = document.getElementById('plugins')
+
+            socket.emit('pluginUpdate')
+            socket.on('pluginUpdate', (plugins) => {
+                let br = document.createElement('br')
+                pluginsDiv.innerHTML = ''
+
+                if (plugins.length == 0) {
+                    pluginsDiv.innerHTML = '<p style="font-size: 18px;">No plugins installed</p>'
+                    return
+                }
+
+                for (let plugin of plugins) {
+                    let pluginLink = document.createElement('a')
+                    pluginLink.className = 'quickButton'
+                    pluginLink.href = plugin.url
+                    pluginLink.target = '_blank'
+                    pluginLink.innerText = plugin.name
+                    pluginsDiv.append(pluginLink)
+                    pluginsDiv.append(br.cloneNode(true))
+                }
+            })
+        </script>
+        <%- include('../partials/footer_content') %>

@@ -1,4 +1,10 @@
 node_modules/
 database/database.db
-.vscode/settings.json
+.vscode/
 uploads/
+
+logNumbers.json
+settings.json
+
+logs/
+logNumbers.json
