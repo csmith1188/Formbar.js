@@ -153,16 +153,10 @@
 								for (let response of Object.values(poll.responses)) {
 									pollForm.innerHTML += `
 										<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
-<<<<<<< Updated upstream
 											<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}">
 											${response.answer}
-=======
-											<input type="radio" name="poll" id="${response.answer}" value="${response.answer}">
-											${response.answer} &nbsp
->>>>>>> Stashed changes
 										</label>
 									`;
-
 								}
 								pollForm.innerHTML += `
 										<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">

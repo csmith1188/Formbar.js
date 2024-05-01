@@ -490,12 +490,8 @@ input[type="radio"]:focus {
 }
 
 
-<<<<<<< Updated upstream
-#usersMenu #users details[id^="student"] {
-=======
 #usersMenu #users details[id^="student"],
 #usersMenu #users div[id^="student"] {
->>>>>>> Stashed changes
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 10px;
