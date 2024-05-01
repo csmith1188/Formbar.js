@@ -458,8 +458,6 @@ function removeAnswer(event) {
 	for (let i = 0; i < responseDivs.length; i++) {
 		responseDivs[i].id = `response${i}`;
 		answerNames[i].placeholder = `Answer ${letterString[i]}`;
-		console.log(responseDivs[i].answerName);
-		console.log(letterString[i]);
 	};
 	resNumber.value = parseInt(resNumber.value) - 1;
 };
@@ -838,29 +836,6 @@ document.addEventListener('click', (event) => {
 })
 
 
-// var timerButton = document.getElementById('timerButton')
-// timerButton.addEventListener('click', function () {
-// 	var time = document.getElementById('inputtedTime')
-// 	var sound = document.getElementById('playSound')
-// 	timerButton.hidden = true
-// 	time.hidden = true
-// 	sound.hidden = true
-// 	timerStopButton.hidden = false
-// 	socket.emit("timer", (time.value, sound.checked, true))
-// })
-
-// var timerStopButton = document.getElementById('timerStopButton')
-// timerStopButton.addEventListener('click', function () {
-// 	var time = document.getElementById('inputtedTime')
-// 	var sound = document.getElementById('playSound')
-// 	timerButton.hidden = false
-// 	time.hidden = false
-// 	sound.hidden = false
-// 	timerStopButton.hidden = true
-// 	socket.emit("timerStop", { active: false })
-// })
-
-
 //Make the code above work
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
@@ -870,7 +845,7 @@ timerButton.addEventListener('click', function () {
 	time.hidden = true
 	sound.hidden = true
 	timerStopButton.hidden = false
-	socket.emit("timer", time.value, sound.checked, true)
+	socket.emit("timer", time.value, true, sound.checked)
 })
 
 var timerStopButton = document.getElementById('timerStopButton')
@@ -881,5 +856,5 @@ timerStopButton.addEventListener('click', function () {
 	time.hidden = false
 	sound.hidden = false
 	timerStopButton.hidden = true
-	socket.emit("timer", { turnedOn: false })
+	socket.emit("timer", 0, false, false)
 })

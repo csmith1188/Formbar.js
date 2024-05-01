@@ -122,8 +122,8 @@
     socket.emit('vbTimer')
     socket.on('vbTimer', (timeData) => {
         let pieChart = doughnutChart.data.datasets[1]
-        let time = timeData.currentTime
-        let timePassed = timeData.startTime - timeData.currentTime
+        let time = timeData.timeLeft
+        let timePassed = timeData.startTime - timeData.timeLeft
         let sound = timeData.sound
         let active = timeData.active
 
