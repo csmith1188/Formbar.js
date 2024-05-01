@@ -59,7 +59,8 @@
 										<button onclick="help()" class="quickButton">Send Ticket</button>
 										<br>
 										<h1>Need a Break?</h1>
-										<button class="breakButton" onclick="{document.getElementById('requestBreakDialog').showModal()}">
+										<button class="breakButton"
+											onclick="{document.getElementById('requestBreakDialog').showModal()}">
 											Take Break
 										</button>
 										<div id="pollContent">
@@ -72,7 +73,6 @@
 												</u>
 												<form id="pollForm"></form>
 												<br>
-												<button onclick="submitPoll()" class="quickButton">Submit</button>
 											</div>
 										</div>
 										<div id="quizContent">
@@ -96,7 +96,8 @@
 											<input type="radio" name="option" id="other" value="other">
 											Other
 										</label>
-										<textarea class="hidden" id="otherText" cols="25" rows="3" maxlength="150"></textarea>
+										<textarea class="hidden" id="otherText" cols="25" rows="3"
+											maxlength="150"></textarea>
 									</div>
 									<div id="takeBreak" class="hCentered">
 										<button class="quickButton" id="cancel" type="button"
@@ -130,6 +131,12 @@
 					let poll = {}
 					let mode = ''
 					let quiz = {}
+
+					function unselectRemove(event) {
+						event.preventDefault();
+						document.getElementById('remove').checked = false;
+					}
+
 					function updatePageLoop() {
 						if (poll.multiRes) {
 							multiAnswer = "checkbox"
@@ -153,17 +160,25 @@
 								for (let response of Object.values(poll.responses)) {
 									pollForm.innerHTML += `
 										<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
-											<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}">
+											<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
 											${response.answer}
 										</label>
 									`;
 								}
 								pollForm.innerHTML += `
-										<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
-											<input type="radio" name="poll" id="remove" value="remove">
+										<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
+											<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
 											remove
 										</label>
 									`
+
+								// let remove = document.querySelector('label:has(#remove)')
+								// console.log(remove)
+								// remove.addEventListener('contextmenu', function (event) {
+								// 	event.preventDefault();
+								// 	document.getElementById('remove').checked = false;
+								// });
+
 								if (poll.textRes) {
 									pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
 								}
@@ -287,11 +302,6 @@
 						let textarea = document.getElementById("resTextBox")
 						let lettRes = []
 						let textRes = ''
-						let remove = document.getElementById("remove")
-						remove.addEventListener('contextmenu', function (event) {
-							event.preventDefault();
-							this.checked = false;
-						});
 						//make something
 
 						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
