@@ -205,6 +205,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	quizUpdate: STUDENT_PERMISSIONS,
 	lessonUpdate: STUDENT_PERMISSIONS,
 	vbUpdate: GUEST_PERMISSIONS,
+	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
@@ -242,8 +243,6 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
 }
-
-
 
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS,
@@ -789,7 +788,7 @@ async function passwordRequest(newPassword, username) {
 	 * Emits an event to sockets based on user permissions
 	 * @param {string} event - The event to emit
 	 * @param {string} classCode - The code of the class
-	 * @param {{permissions?: number, classPermissions?: number, api?: boolean}} options - The options object
+	 * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
 	 * @param  {...any} data - Additional data to emit with the event
 	 */
 async function advancedEmitToClass(event, classCode, options, ...data) {
@@ -805,6 +804,7 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
+		if (options.username && socket.request.session.username != options.username) continue
 
 		for (let room of socket.rooms) {
 			if (room.startsWith('api-')) {
@@ -2248,7 +2248,7 @@ io.on('connection', async (socket) => {
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
 				blind: classData.poll.blind,
-				// time: classData.timer.time,
+				// time: classData.timer.currentTime,
 				// sound: classData.timer.sound,
 				// active: classData.timer.active,
 			})
@@ -2734,30 +2734,33 @@ io.on('connection', async (socket) => {
 		}
 	}
 
-	function timer(repeated, sound, on) {
+	function timer(sound, active, username) {
 		let classData = cD[socket.request.session.class];
-		if (!repeated) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time == 0) {
+
+		if (classData.timer.currentTime <= 0) {
 			clearInterval(runningTimers[socket.request.session.class]);
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time > 0 && on) {
-			classData.timer.time--;
-			classData.timer.timePassed++
-		}
-		if (classData.timer.time == 0 && on) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			if (sound) {
-				advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			}
+			runningTimers[socket.request.session.class] = null;
 		}
 
 
-		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
+		if (classData.timer.currentTime > 0 && active) classData.timer.currentTime--;
+
+		if (classData.timer.currentTime == 0 && active && sound) {
+			advancedEmitToClass('timerSound', socket.request.session.class, {
+				classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cd[socket.request.session.class].permissions.sounds)
+			});
+		}
+
+		if (username) {
+			advancedEmitToClass('vbTimer', socket.request.session.class, {
+				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
+				username
+			}, classData.timer);
+		} else {
+			advancedEmitToClass('vbTimer', socket.request.session.class, {
+				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer
+			}, classData.timer);
+		}
 	}
 
 	// Authentication for users and plugins to connect to formbar websockets
@@ -4594,21 +4597,33 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-	socket.on("timer", (startingtime, sound, turnedOn) => {
-		cD[socket.request.session.class].timer.time = parseInt(startingtime * 60).toFixed(0)
-		cD[socket.request.session.class].timer.sound = sound
-		cD[socket.request.session.class].timer.active = turnedOn
-		cD[socket.request.session.class].timer.timePassed = 0
-		cpUpdate(socket.request.session.class)
+	socket.on('vbTimer', () => {
+		let classData = cD[socket.request.session.class];
+
+		timer(classData.timer.sound, classData.timer.active, socket.request.session.username)
+	})
+
+	socket.on("timer", (startTime, sound, active) => {
 		try {
-			if (turnedOn) {
-				runningTimers[socket.request.session.class] = setInterval(() => timer(true, sound, turnedOn), 1000);
+			let classData = cD[socket.request.session.class];
+
+			classData.timer.startTime = parseInt(startTime * 60)
+			classData.timer.currentTime = parseInt(startTime * 60)
+			classData.timer.active = active
+			classData.timer.sound = sound
+
+			cpUpdate(socket.request.session.class)
+
+			if (active) {
 				//run the function once instantly
-				timer(false, sound, turnedOn)
-			}
-			else {
+				timer(sound, active)
+
+				runningTimers[socket.request.session.class] = setInterval(() => timer(sound, active), 1000);
+			} else {
 				clearInterval(runningTimers[socket.request.session.class]);
-				timer(false, sound, turnedOn)
+				runningTimers[socket.request.session.class] = null;
+
+				timer(sound, active)
 			}
 		} catch (err) {
 			logger.log("error", err.stack);
