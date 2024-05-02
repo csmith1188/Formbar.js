@@ -78,7 +78,7 @@
 						<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 						<div id="startPollForm">
 							<label for="pollBox">Prompt for the poll?</label>
-							<input type="text" id="pollBox" placeholder="Prompt (optional)">
+							<input type="text" id="pollBox" placeholder="Prompt">
 							<input type="number" id="resNumber" min="1" max="26" step="1" value="1" hidden>
 							<br>
 							<div id="responses"></div>
@@ -110,7 +110,7 @@
 							</div>
 						</div>
 						<br>
-						<button id="startPoll" onclick="startPoll()">Start Poll</button>
+						<button id="startPoll" onclick="pollCheck()">Start Poll</button>
 						<br>
 						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
 						<br>
@@ -260,7 +260,6 @@
 			let currentSharePollId = null
 			let currentSharePollType = null
 			let classroom = {}
-			let quickPoll = false
 
 			const FilterState = {
 				alert: [
@@ -372,21 +371,16 @@
 			})
 			var tagNames = "<%=tagNames%>";
 
-			function quickPollTF() {
-				quickPoll = 'tf';
-				quickPollStart(quickPoll);
-			}
-
-			function quickPollTUTD() {
-
-			}
-
-			function quickPollMultiple() {
-
-			}
-
-			function quickPollTFCustom() {
-
+			function pollCheck() {
+				if (pollPrompt.value == "" && responsesDiv.children.length == 0) {
+					alert("Please enter a prompt for the poll and add responses")
+				} else if (pollPrompt.value == "") {
+					alert("Please enter a prompt for the poll")
+				} else if(responsesDiv.children.length == 0) {
+					alert("Please add responses to the poll")
+				} else {
+					startPoll()
+				}
 			}
 
 		</script>
