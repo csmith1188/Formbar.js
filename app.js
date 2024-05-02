@@ -11,6 +11,7 @@ const crypto = require('crypto')
 const winston = require('winston')
 const fs = require("fs")
 const dailyFile = require("winston-daily-rotate-file");
+const { start } = require('repl')
 
 var app = express()
 const http = require('http').createServer(app)
@@ -205,6 +206,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	quizUpdate: STUDENT_PERMISSIONS,
 	lessonUpdate: STUDENT_PERMISSIONS,
 	vbUpdate: GUEST_PERMISSIONS,
+	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
@@ -242,8 +244,6 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
 }
-
-
 
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS,
@@ -355,10 +355,10 @@ class Classroom {
 		this.pollHistory = pollHistory || []
 		this.tagNames = tags || [];
 		this.timer = {
-			time: 0,
-			sound: false,
+			startTime: 0,
+			timeLeft: 0,
 			active: false,
-			timePassed: 0
+			sound: false
 		}
 	}
 }
@@ -789,7 +789,7 @@ async function passwordRequest(newPassword, username) {
 	 * Emits an event to sockets based on user permissions
 	 * @param {string} event - The event to emit
 	 * @param {string} classCode - The code of the class
-	 * @param {{permissions?: number, classPermissions?: number, api?: boolean}} options - The options object
+	 * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
 	 * @param  {...any} data - Additional data to emit with the event
 	 */
 async function advancedEmitToClass(event, classCode, options, ...data) {
@@ -805,6 +805,7 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
+		if (options.username && user.username != options.username) continue
 
 		for (let room of socket.rooms) {
 			if (room.startsWith('api-')) {
@@ -2247,10 +2248,7 @@ io.on('connection', async (socket) => {
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
-				blind: classData.poll.blind,
-				// time: classData.timer.time,
-				// sound: classData.timer.sound,
-				// active: classData.timer.active,
+				blind: classData.poll.blind
 			})
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2734,30 +2732,33 @@ io.on('connection', async (socket) => {
 		}
 	}
 
-	function timer(repeated, sound, on) {
+	function timer(sound, active, username) {
 		let classData = cD[socket.request.session.class];
-		if (!repeated) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time == 0) {
+
+		if (classData.timer.timeLeft <= 0) {
 			clearInterval(runningTimers[socket.request.session.class]);
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time > 0 && on) {
-			classData.timer.time--;
-			classData.timer.timePassed++
-		}
-		if (classData.timer.time == 0 && on) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			if (sound) {
-				advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			}
+			runningTimers[socket.request.session.class] = null;
 		}
 
+		if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
 
-		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
+		if (classData.timer.timeLeft <= 0 && active && sound) {
+			advancedEmitToClass('timerSound', socket.request.session.class, {
+				classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cD[socket.request.session.class].permissions.sounds),
+				api: true
+			});
+		}
+
+		if (username) {
+			advancedEmitToClass('vbTimer', socket.request.session.class, {
+				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
+				username
+			}, classData.timer);
+		} else {
+			advancedEmitToClass('vbTimer', socket.request.session.class, {
+				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer
+			}, classData.timer);
+		}
 	}
 
 	// Authentication for users and plugins to connect to formbar websockets
@@ -4424,13 +4425,17 @@ io.on('connection', async (socket) => {
 			cD[socket.request.session.class].students[username].tags = tags.toString()
 			db.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
 				if (err) {
-					return console.error(err.message);
+					logger.log('error', err)
+					socket.emit('message', 'There was a server error try again.')
+					return
 				}
 				if (row) {
 					// Row exists, update it
 					db.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
 						if (err) {
-							return console.error(err.message);
+							logger.log('error', err)
+							socket.emit('message', 'There was a server error try again.')
+							return
 						}
 					});
 				} else {
@@ -4594,21 +4599,35 @@ io.on('connection', async (socket) => {
 		}
 	})
 
-	socket.on("timer", (startingtime, sound, turnedOn) => {
-		cD[socket.request.session.class].timer.time = parseInt(startingtime * 60).toFixed(0)
-		cD[socket.request.session.class].timer.sound = sound
-		cD[socket.request.session.class].timer.active = turnedOn
-		cD[socket.request.session.class].timer.timePassed = 0
-		cpUpdate(socket.request.session.class)
+	socket.on('vbTimer', () => {
+		let classData = cD[socket.request.session.class];
+
+		timer(classData.timer.sound, classData.timer.active, socket.request.session.username)
+	})
+
+	socket.on("timer", (startTime, active, sound) => {
 		try {
-			if (turnedOn) {
-				runningTimers[socket.request.session.class] = setInterval(() => timer(true, sound, turnedOn), 1000);
+			let classData = cD[socket.request.session.class];
+
+			startTime = Math.round(startTime * 60)
+
+			classData.timer.startTime = startTime
+			classData.timer.timeLeft = startTime + 1
+			classData.timer.active = active
+			classData.timer.sound = sound
+
+			cpUpdate(socket.request.session.class)
+
+			if (active) {
 				//run the function once instantly
-				timer(false, sound, turnedOn)
-			}
-			else {
+				timer(sound, active)
+
+				runningTimers[socket.request.session.class] = setInterval(() => timer(sound, active), 1000);
+			} else {
 				clearInterval(runningTimers[socket.request.session.class]);
-				timer(false, sound, turnedOn)
+				runningTimers[socket.request.session.class] = null;
+
+				timer(sound, active)
 			}
 		} catch (err) {
 			logger.log("error", err.stack);
