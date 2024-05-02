@@ -2744,7 +2744,8 @@ io.on('connection', async (socket) => {
 
 		if (classData.timer.timeLeft <= 0 && active && sound) {
 			advancedEmitToClass('timerSound', socket.request.session.class, {
-				classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cd[socket.request.session.class].permissions.sounds)
+				classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cD[socket.request.session.class].permissions.sounds),
+				api: true
 			});
 		}
 
