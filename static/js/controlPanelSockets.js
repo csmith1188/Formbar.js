@@ -152,6 +152,8 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
+	console.log('sort');
+
 	filterSortChange(newClassroom)
 
 	classroom = newClassroom
