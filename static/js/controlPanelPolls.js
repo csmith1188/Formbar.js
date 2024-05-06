@@ -835,9 +835,6 @@ document.addEventListener('click', (event) => {
 	}
 })
 
-
-
-
 //Make the code above work
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {

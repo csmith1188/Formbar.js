@@ -397,8 +397,9 @@ function filterSortChange(classroom) {
                 return studentB.pollRes.textRes.localeCompare(studentA.pollRes.textRes)
             } else if (studentA.pollRes.textRes) return 1
             else if (studentB.pollRes.textRes) return -1
+
             if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
-                return studentB.pollRes.buttonRes.localeCompare(studentA.pollRes.buttonRes)
+                return responses.indexOf(studentB.pollRes.buttonRes) - responses.indexOf(studentA.pollRes.buttonRes);
             } else if (studentA.pollRes.buttonRes) return 1
             else if (studentB.pollRes.buttonRes) return -1
         })
