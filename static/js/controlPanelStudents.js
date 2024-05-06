@@ -318,7 +318,7 @@ function buildStudent(room, studentData) {
 }
 
 // filters and sorts students
-function filterSortChange() {
+function filterSortChange(classroom) {
     if (!classroom.students) return
 
     let userOrder = Object.keys(classroom.students)
@@ -462,7 +462,7 @@ for (let filterElement of document.getElementsByClassName('filter')) {
         if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
         else filterElement.classList.add('pressed')
         filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
-        filterSortChange()
+        filterSortChange(classroom)
     }
 }
 
@@ -491,7 +491,7 @@ for (let sortElement of document.getElementsByClassName('sort')) {
         if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
         else sortElement.classList.add('pressed')
         sortElement.textContent = SortState[sortElement.id][sort[sortElement.id]]
-        filterSortChange()
+        filterSortChange(classroom)
     }
 }
 
