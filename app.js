@@ -4611,6 +4611,7 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on("timer", (startTime, active, sound) => {
+		//This handles the server side timer
 		try {
 			let classData = cD[socket.request.session.class];
 
@@ -4622,13 +4623,13 @@ io.on('connection', async (socket) => {
 			classData.timer.sound = sound
 
 			cpUpdate(socket.request.session.class)
-
 			if (active) {
 				//run the function once instantly
 				timer(sound, active)
-
+				//save a clock in the class data, that way it saves when the page is refreshed
 				runningTimers[socket.request.session.class] = setInterval(() => timer(sound, active), 1000);
 			} else {
+				//if the timer is not active, clear the interval
 				clearInterval(runningTimers[socket.request.session.class]);
 				runningTimers[socket.request.session.class] = null;
 
@@ -4639,6 +4640,7 @@ io.on('connection', async (socket) => {
 		}
 	})
 	function timer(repeated, sound, on) {
+		//This function is called every second, counting down the timer
 		let classData = cD[socket.request.session.class];
 		if (!repeated) {
 			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
