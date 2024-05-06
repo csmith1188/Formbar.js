@@ -78,7 +78,7 @@
 							<h2 class="headerText" style="margin-top: 0;">Start/Clear Poll</h2>
 							<div id="startPollForm">
 								<label for="pollBox">Prompt for the poll?</label>
-								<input type="text" id="pollBox" placeholder="Prompt (optional)">
+								<input type="text" id="pollBox" placeholder="Prompt">
 								<input type="number" id="resNumber" min="1" max="26" step="1" value="1" hidden>
 								<br>
 								<div id="responses"></div>
@@ -109,25 +109,59 @@
 									<br>
 								</div>
 							</div>
-							<br>
-							<button id="startPoll" onclick="startPoll()">Start Poll</button>
-							<br>
-							<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
-							<br>
-							<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
-							<br>
-							<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
-								Polls</button>
-
-						</div>
-						<button onclick="clearPollFunc()">Clear Poll</button>
-						<button onclick="endPollFunc()">End Poll</button>
-					</div></br>
-					<input type="number" id="inputtedTime" value="5" min="1" step="1">
-					<span>Minutes</span>
-					<br>
-					<input type="checkbox" id="playSound">
-					<span>Play Sound</span>
+						<br>
+						<button id="startPoll" onclick="pollCheck()">Start Poll</button>
+						<br>
+						<button id="endPoll" onclick="endPollFunc()" hidden class="quickButton">End Poll</button>
+						<br>
+						<button id="clearPoll" onclick="clearPollFunc()" hidden class="quickButton">Clear Poll</button>
+						<br>
+						<button type="button" onclick="displayPreviousPolls()" class="quickButton">View Previous
+							Polls</button>
+	
+					</div>
+					<button onclick="clearPollFunc()">Clear Poll</button>
+					<button onclick="endPollFunc()">End Poll</button>
+				</div></br>
+				<input type="number" id="inputtedTime" value="5"> Minutes <br><input type="checkbox" id="playSound">
+				Play Sound
+				<br>
+				<button type="button" id="timerButton">Start Timer</button>
+				<button type="button" id="timerStopButton" hidden>Stop Timer</button>
+				<br>
+				<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
+					Kick All Students
+				</button>
+				<button id="endClass" onclick="((event) => {socket.emit('endClass')})()">
+					End Class
+				</button>
+				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
+				<p><b id="pollCounter"></b></p>
+				<p id="responsesCounter"></p>
+				<div id="users">
+				</div>
+				</br></br></br></br></br></br></br></br></br></br>
+				</div>
+				<div id="bannedMenu" class="tabContent" data-tab-group="mainTabs"></div>
+				<div id="publicPolls" class="customPolls tabContent" data-tab-group="polls">
+				</div>
+				<div id="classPolls" class="customPolls tabContent" data-tab-group="polls">
+				</div>
+				<div id="userPolls" class="customPolls tabContent" data-tab-group="polls">
+				</div>
+				<div id="previousPolls" class="tabContent" data-tab-group="polls">
+					<button id="toPolls" type="button" onclick="changeTab('mainPolls', 'polls')">Return to
+						polls</button>
+					<button id="toPollHistory" type="button" onclick="displayPoll()">Return To Selection</button>
+					<div id="previousPollButtons"></div>
+				</div>
+				</div>
+				<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
+					<form method="post" enctype="multipart/form-data">
+						<input name="spreadsheet" type="file">
+						<input type="submit" class="quickButton">
+					</form>
+					<button type="button" id="nextStep">Next Step</button><br>
 					<br>
 					<button type="button" id="timerButton">Start Timer</button>
 					<button type="button" id="timerStopButton" hidden>Stop Timer</button>
@@ -263,7 +297,6 @@
 			let currentSharePollId = null
 			let currentSharePollType = null
 			let classroom = {}
-			let quickPoll = false
 
 			const FilterState = {
 				alert: [
@@ -375,21 +408,16 @@
 			})
 			var tagNames = "<%=tagNames%>";
 
-			function quickPollTF() {
-				quickPoll = 'tf';
-				quickPollStart(quickPoll);
-			}
-
-			function quickPollTUTD() {
-
-			}
-
-			function quickPollMultiple() {
-
-			}
-
-			function quickPollTFCustom() {
-
+			function pollCheck() {
+				if (pollPrompt.value == "" && responsesDiv.children.length == 0) {
+					alert("Please enter a prompt for the poll and add responses")
+				} else if (pollPrompt.value == "") {
+					alert("Please enter a prompt for the poll")
+				} else if(responsesDiv.children.length == 0) {
+					alert("Please add responses to the poll")
+				} else {
+					startPoll()
+				}
 			}
 
 		</script>
