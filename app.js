@@ -194,6 +194,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	approvePasswordChange: MANAGER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS,
 	timer: TEACHER_PERMISSIONS,
+	timerOn: TEACHER_PERMISSIONS,
 }
 
 const CLASS_SOCKET_PERMISSIONS = {
@@ -2248,7 +2249,11 @@ io.on('connection', async (socket) => {
 				textRes: classData.poll.textRes,
 				prompt: classData.poll.prompt,
 				weight: classData.poll.weight,
-				blind: classData.poll.blind
+				blind: classData.poll.blind,
+				time: classData.timer.time,
+				sound: classData.timer.sound,
+				active: classData.timer.active,
+				timePassed: classData.timer.timePassed,
 			})
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -4606,6 +4611,7 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on("timer", (startTime, active, sound) => {
+		//This handles the server side timer
 		try {
 			let classData = cD[socket.request.session.class];
 
@@ -4617,13 +4623,13 @@ io.on('connection', async (socket) => {
 			classData.timer.sound = sound
 
 			cpUpdate(socket.request.session.class)
-
 			if (active) {
 				//run the function once instantly
 				timer(sound, active)
-
+				//save a clock in the class data, that way it saves when the page is refreshed
 				runningTimers[socket.request.session.class] = setInterval(() => timer(sound, active), 1000);
 			} else {
+				//if the timer is not active, clear the interval
 				clearInterval(runningTimers[socket.request.session.class]);
 				runningTimers[socket.request.session.class] = null;
 
@@ -4633,6 +4639,36 @@ io.on('connection', async (socket) => {
 			logger.log("error", err.stack);
 		}
 	})
+	function timer(repeated, sound, on) {
+		//This function is called every second, counting down the timer
+		let classData = cD[socket.request.session.class];
+		if (!repeated) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time == 0) {
+			clearInterval(runningTimer);
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			return;
+		}
+		if (classData.timer.time > 0 && on) {
+			classData.timer.time--;
+			classData.timer.timePassed++
+		}
+		if (classData.timer.time == 0 && on) {
+			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			// if (sound) {
+			// 	advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+			// }
+		}
+
+
+		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
+	}
+	socket.on("timerOn", () => {
+		socket.emit("timerOn", cD[socket.request.session.class].timer.active);
+	})
+
 })
 
 

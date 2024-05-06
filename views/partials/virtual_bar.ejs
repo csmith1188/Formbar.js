@@ -17,9 +17,19 @@
                 data: []
             },
             {
-                data: [],
                 backgroundColor: ["blue", "white"],
-                type: "pie"
+                data: [],
+                type: "pie",
+                options: {
+                    //disable the labels appearing on the pie chart's data
+                    plugins: {
+                        legend: {
+                            labels: {
+                                display: false,
+                            }
+                        }
+                    }
+                }
             }]
         },
         options: {
@@ -44,76 +54,84 @@
     // Gets data from server and send it the function
     socket.on('vbUpdate', (pollsData) => {
         if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-            if (noPoll)
+            if (noPoll) {
                 noPoll.style.display = ''
-            virtualBar.parentElement.style.display = "none";
-            return
+                virtualBar.parentElement.style.display = "none";
+                doughnutChart.data.datasets[0].data = []
+            }
         }
-        if (noPoll)
-            noPoll.style.display = 'none'
-        virtualBar.parentElement.style.display = "block";
+        else {
 
-        //reset virtual bar
-        doughnutChart.data.datasets[0].backgroundColor = []
-        doughnutChart.data.datasets[0].data = []
+            if (noPoll)
+                noPoll.style.display = 'none'
+            virtualBar.parentElement.style.display = "block";
 
-        let totalStudents = pollsData.totalStudents
-        let totalResponses = 0
+            //reset virtual bar
+            doughnutChart.data.datasets[0].backgroundColor = []
+            doughnutChart.data.datasets[0].data = []
 
-        // add up all poll responses
-        for (const poll of Object.values(pollsData.polls)) {
-            totalResponses += poll.responses
-        }
+            let totalStudents = pollsData.totalStudents
+            let totalResponses = 0
 
-        // make the polls blind unless all students answered
-        if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
-            pollsData.blind = false
-        }
+            // add up all poll responses
+            for (const poll of Object.values(pollsData.polls)) {
+                totalResponses += poll.responses
+            }
 
-        let labelsArray = []
-        let pollArray = []
+            // make the polls blind unless all students answered
+            if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
+                pollsData.blind = false
+            }
 
-        let studResponses = {}
-        // Loops through object to get each label of the possible answers
-        // Also, create a new label for each possible answer
-        if (pollsData.blind) {
-            labelsArray.push('Responses')
-            studResponses.responses = 0
-        } else {
+            let labelsArray = []
+            let pollArray = []
+
+            let studResponses = {}
+            // Loops through object to get each label of the possible answers
+            // Also, create a new label for each possible answer
+            if (pollsData.blind) {
+                labelsArray.push('Responses')
+                studResponses.responses = 0
+            } else {
+                for (const [poll, pollData] of Object.entries(pollsData.polls)) {
+                    labelsArray.push(pollData.answer)
+                    studResponses[poll] = 0
+                }
+            }
+            labelsArray.push('No Response')
+            studResponses.noResponse = 0
+
+            // Loops through all possible answers and generates a new color letiant for each answer
+            // All possible answers should have a different color
+            if (pollsData.blind) {
+                doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
+            } else {
+                for (let poll of Object.values(pollsData.polls)) {
+                    doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+                }
+            }
+            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
+            // Loops through all student answers and adds them to a total tally
+            // Student response corresponds with a property name in studResponses
+            studResponses.noResponse += pollsData.totalResponders - pollsData.totalResponses
             for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-                labelsArray.push(pollData.answer)
-                studResponses[poll] = 0
+                if (pollsData.blind)
+                    studResponses.responses += pollData.responses
+                else studResponses[poll] += pollData.responses
             }
-        }
-        labelsArray.push('No Response')
-        studResponses.noResponse = 0
 
-        // Loops through all possible answers and generates a new color letiant for each answer
-        // All possible answers should have a different color
-        if (pollsData.blind) {
-            doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
-        } else {
-            for (let poll of Object.values(pollsData.polls)) {
-                doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+            for (const responses of Object.keys(studResponses)) {
+                pollArray.push(studResponses[responses])
             }
-        }
-        doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-        // Loops through all student answers and adds them to a total tally
-        // Student response corresponds with a property name in studResponses
-        studResponses.noResponse += pollsData.totalResponders - pollsData.totalResponses
-        for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-            if (pollsData.blind)
-                studResponses.responses += pollData.responses
-            else studResponses[poll] += pollData.responses
-        }
 
-        for (const responses of Object.keys(studResponses)) {
-            pollArray.push(studResponses[responses])
+            doughnutChart.data.labels = labelsArray
+            doughnutChart.data.datasets[0].data = pollArray
         }
-
-        doughnutChart.data.labels = labelsArray
-        doughnutChart.data.datasets[0].data = pollArray
-
+        if (pollsData.active) {
+            doughnutChart.data.datasets[1].data = [pollsData.time, pollsData.timePassed]
+            doughnutChart.data.datasets[1].backgroundColor = ["blue", "white"]
+            doughnutChart.data.datasets[1].label = Math.floor(doughnutChart.data.datasets[1].data[0] / 60) + ':' + (doughnutChart.data.datasets[1].data[0] % 60)
+        }
 
 
         doughnutChart.update()
@@ -126,23 +144,25 @@
         let timePassed = timeData.startTime - timeData.timeLeft
         let sound = timeData.sound
         let active = timeData.active
-
+        console.log(timeData);
         //turn the time into minutes and seconds
         let minutes = Math.floor(time / 60)
         let seconds = time % 60
         if (seconds < 10) {
             seconds = "0" + seconds
         }
-        let timeString = minutes + ":" + seconds
+        let timeString = minutes + ":" + seconds + ' '
 
         if (active) {
             virtualBar.parentElement.style.display = "block";
             if (time != 0) {
                 pieChart.data = [time, timePassed]
+                doughnutChart.data.datasets[1].label = timeString
                 pieChart.backgroundColor = ["blue", "white"]
             }
             else {
                 pieChart.data = [timePassed]
+                doughnutChart.data.datasets[1].label = timeString
                 pieChart.backgroundColor = ["red"]
             }
         }
@@ -151,6 +171,7 @@
             pieChart.data = []
         }
         // Ensure that the doughnut chart always has some data
+
         doughnutChart.update()
     })
 

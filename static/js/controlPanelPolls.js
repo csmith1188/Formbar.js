@@ -836,6 +836,8 @@ document.addEventListener('click', (event) => {
 })
 
 
+
+
 //Make the code above work
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
@@ -856,5 +858,23 @@ timerStopButton.addEventListener('click', function () {
 	time.hidden = false
 	sound.hidden = false
 	timerStopButton.hidden = true
-	socket.emit("timer", 0, false, false)
+	socket.emit("timer", { turnedOn: false })
+})
+
+//If there is an active timer after refreshing the page, show the stop button
+socket.emit('timerOn')
+socket.on('timerOn', function (time) {
+	if (time) {
+		timerButton.hidden = true
+		document.getElementById('inputtedTime').hidden = true
+		document.getElementById('playSound').hidden = true
+		timerStopButton.hidden = false
+	}
+	else {
+		timerButton.hidden = false
+		document.getElementById('inputtedTime').hidden = false
+		document.getElementById('playSound').hidden = false
+		timerStopButton.hidden = true
+	}
+	console.log(time);
 })
