@@ -345,7 +345,6 @@ function filterSortChange(classroom) {
         }
     }
 
-
     // filter by poll
     if (filter.polls) {
         for (let username of userOrder) {
@@ -377,12 +376,15 @@ function filterSortChange(classroom) {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
 
+            const responses = Object.keys(classroom.polls.responses)
+
             if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
                 return studentA.pollRes.textRes.localeCompare(studentB.pollRes.textRes)
             } else if (studentA.pollRes.textRes) return -1
             else if (studentB.pollRes.textRes) return 1
+
             if (studentA.pollRes.buttonRes && studentB.pollRes.buttonRes) {
-                return studentA.pollRes.buttonRes.localeCompare(studentB.pollRes.buttonRes)
+                return responses.indexOf(studentA.pollRes.buttonRes) - responses.indexOf(studentB.pollRes.buttonRes);
             } else if (studentA.pollRes.buttonRes) return -1
             else if (studentB.pollRes.buttonRes) return 1
         })

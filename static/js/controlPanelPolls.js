@@ -876,5 +876,4 @@ socket.on('timerOn', function (time) {
 		document.getElementById('playSound').hidden = false
 		timerStopButton.hidden = true
 	}
-	console.log(time);
 })
