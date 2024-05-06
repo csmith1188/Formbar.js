@@ -334,7 +334,10 @@ function filterSortChange() {
         for (let username of userOrder.slice()) {
             let studentElement = document.getElementById(`student-${username}`);
             if (
-                ((filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) || (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break)))
+                (
+                    (filter.alert == 1 && !classroom.students[username].help && !classroom.students[username].break) ||
+                    (filter.alert == 2 && (classroom.students[username].help || classroom.students[username].break))
+                )
             ) {
                 studentElement.style.display = 'none'
                 userOrder.pop(username)
@@ -421,6 +424,9 @@ function filterSortChange() {
         userOrder.sort((a, b) => {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
+
+            if (!studentA.help.time) return 1
+            if (!studentB.help.time) return -1
 
             return studentA.help.time - studentB.help.time
         })
