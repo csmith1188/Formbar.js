@@ -325,6 +325,7 @@ let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
 tagNames = tagNames.split(",");
+//create the form on the poll's settings page to select tags as requirements
 for (let i = 0; i < tagNames.length; i++) {
 	let checkbox = document.createElement('input');
 	checkbox.type = 'checkbox';
@@ -365,6 +366,7 @@ selectTags.appendChild(document.createElement('br'));
 selectTags.appendChild(closeTags);
 document.body.appendChild(selectTags);
 closeTags.textContent = 'Save';
+//When the close button is clicked, close the dialog
 closeTags.addEventListener('click', function () {
 	selectTags.close();
 })

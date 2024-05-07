@@ -43,14 +43,14 @@
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
-
+  var nextYear = new Date().getFullYear() + 1;
   function changeTheme() {
     let theme = getCookie("theme");
     if (theme == "white") {
-      document.cookie = "theme=dark";
+      document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
       document.getElementById('lmdm').href = 'css/darkmode.css';
     } else {
-      document.cookie = "theme=white";
+      document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
       document.getElementById('lmdm').href = 'css/lightmode.css';
     }
     console.log(document.getElementById('lmdm'))

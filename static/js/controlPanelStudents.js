@@ -114,7 +114,7 @@ function buildStudent(room, studentData) {
             'Guest',
             studentData.classPermissions == GUEST_PERMISSIONS
         ))
-
+        //Create a button for each student box to open their tags' form
         let toggleDialog = document.createElement('button')
         toggleDialog.textContent = 'Tags'
         toggleDialog.addEventListener('click', function () {
@@ -127,9 +127,9 @@ function buildStudent(room, studentData) {
         closeButton.textContent = 'Save';
         let newTagButton = document.createElement('button');
         newTagButton.textContent = 'Edit Tags';
+        //Create a form to add new tags or remove existing tags from the database
         let newTagForm = document.createElement('form');
         newTagForm.setAttribute('hidden', true);
-        //newTagButton.appendChild(newTagForm);
         let newTagTextBox = document.createElement('input');
         newTagTextBox.setAttribute('type', 'text');
         newTagTextBox.setAttribute('hidden', true);
@@ -144,6 +144,7 @@ function buildStudent(room, studentData) {
         newTagForm.appendChild(removeTagButton);
         let tagForm = document.createElement('form');
         tagForm.setAttribute('id', studentData.username + "tags");
+        //Add each tag as a checkbox to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -183,7 +184,7 @@ function buildStudent(room, studentData) {
             }
             studentData.tags = allTags;
             studentData.tags.sort()
-
+            //Update the users tags in the database and class data
             socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
             studentTags.close()
         })
@@ -197,6 +198,7 @@ function buildStudent(room, studentData) {
         });
 
         newTagSaveButton.addEventListener('click', function () {
+            //event.preventDefault prevents the page from refreshing when the form is submitted
             event.preventDefault();
             newTagButton.removeAttribute('hidden');
             socket.emit('newTag', newTagTextBox.value);

@@ -526,9 +526,6 @@ function startPoll(customPollId) {
 		basedOnResponse.appendChild(eachOption)
 	}
 	basedOnResponse.value = defaultValue
-	// These are only ran to prove that the last response works (works on Luke Thompson's end). They are required because the classroomData is not being updated 24/7
-	// rooms.students["notluke"].pollRes.buttonRes = "a"
-	// rooms.students["isluke"].pollRes.buttonRes = "b"
 	if (lastResponses.checked) {
 		for (let [key, value] of Object.entries(rooms.students)) {
 			if (value.classPermissions >= 5 || value.classPermissions <= 1) {
@@ -545,6 +542,7 @@ function startPoll(customPollId) {
 		let allCheckboxes = document.getElementsByName('studentCheckbox')
 		for (let eachTagForm of selectTagForm[0]) {
 			if (eachTagForm.checked) {
+				//for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
 				userTags.push(eachTagForm.value)
 			}
 		}
