@@ -31,18 +31,11 @@
                               <p id="version">v 1.0.0</p>
 </header>
 <script>
-  document.body.style.backgroundColor = getCookie("theme")
+  //document.body.style.backgroundColor = getCookie("theme")
   if (getCookie("theme") == "white") {
-    document.body.style.color = "black";
-    document.querySelectorAll('input').forEach(input => {
-      input.style.color = "black";
-    });
-  }
-  else if (getCookie("theme") == "rgb(50, 50, 50)") {
-    document.body.style.color = "white";
-    document.querySelectorAll('input').forEach(input => {
-      input.style.color = "white";
-    });
+    document.getElementById('lmdm').href = 'css/lightmode.css';
+  } else if (getCookie("theme") == "dark") {
+    document.getElementById('lmdm').href = 'css/darkmode.css';
   }
 
   function getCookie(name) {
@@ -52,25 +45,14 @@
   }
 
   function changeTheme() {
-    let inputs = document.querySelectorAll('input');
-    if (getCookie("theme") == "white") {
-      document.cookie = "theme=rgb(50, 50, 50); expires=Sa, 1 Jun 2024 12:00:00 UTC";
-      document.body.style.backgroundColor = getCookie("theme");
-      document.body.style.color = "white";
-      inputs.forEach(input => {
-        input.style.backgroundColor = getCookie("theme");
-        input.style.color = "white";
-      });
-    } else if (getCookie("theme") == "rgb(50, 50, 50)") {
-      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
-      document.body.style.backgroundColor = getCookie("theme");
-      document.body.style.color = "black";
-      inputs.forEach(input => {
-        input.style.backgroundColor = getCookie("theme");
-        input.style.color = "black";
-      });
+    let theme = getCookie("theme");
+    if (theme == "white") {
+      document.cookie = "theme=dark";
+      document.getElementById('lmdm').href = 'css/darkmode.css';
     } else {
-      document.cookie = "theme=white; expires=Sa, 1 Jun 2024 12:00:00 UTC";
+      document.cookie = "theme=white";
+      document.getElementById('lmdm').href = 'css/lightmode.css';
     }
+    console.log(document.getElementById('lmdm'))
   }
 </script>
