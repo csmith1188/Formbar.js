@@ -222,75 +222,7 @@
 						else if (poll.allowedResponses.length == 0) {
 							updatePageLoop()
 							return
-						}
-						// var runUpdatePageLoop = true
-						// let userTags = currentUser.tags
-						// if (currentUser.tags) userTags = currentUser.tags.split(',')
-						// else userTags = []
-						// if (poll.lastResponse.length > 0) {
-						// 	for (let eachLastResponse of poll.lastResponse) {
-						// 		if (eachLastResponse == currentUser.username) {
-						// 			runUpdatePageLoop = true
-						// 			break
-						// 		}
-						// 		else runUpdatePageLoop = false
-						// 	}
-						// }
-						// else {
-						// 	if (currentUser.break === true) {
-						// 		runUpdatePageLoop = false
-						// 		return
-						// 	}
-						// 	if (poll.requiredTags.length > 0) {
-						// 		if (poll.requiredTags[0][0] == "0") {
-						// 			if (poll.requiredTags.slice(1).join() == userTags.join()) {
-						// 				runUpdatePageLoop = true
-
-						// 			}
-						// 			else runUpdatePageLoop = false
-						// 		}
-						// 		else if (poll.requiredTags[0][0] == "1") {
-						// 			let correctTags = 0
-						// 			let requiredCorrectTags = poll.requiredTags.length - 1;
-						// 			for (let i = 0; i < poll.requiredTags.length; i++) {
-						// 				for (let u = 0; u < userTags.length; u++) {
-						// 					if (poll.requiredTags[i] == userTags[u]) {
-						// 						correctTags++;
-						// 					}
-						// 				}
-						// 			}
-						// 			if (correctTags == requiredCorrectTags) {
-						// 				runUpdatePageLoop = true
-
-						// 			}
-						// 			else runUpdatePageLoop = false
-						// 		}
-						// 	}
-						// 	if (poll.studentBoxes.length > 0) {
-						// 		for (let studentName of poll.studentBoxes) {
-						// 			if (studentName == currentUser.username) {
-						// 				runUpdatePageLoop = true
-						// 				break
-						// 			}
-						// 			else runUpdatePageLoop = false
-						// 		}
-						// 	}
-						// 	if (poll.studentIndeterminate.length > 0) {
-						// 		for (let studentName of poll.studentIndeterminate) {
-						// 			if (studentName == currentUser.username) {
-						// 				runUpdatePageLoop = false
-						// 				break
-						// 			}
-						// 			else runUpdatePageLoop = true
-						// 		}
-						// 	}
-						// 	if (poll.requiredTags.length == 0 && poll.studentBoxes.length == 0 && poll.studentIndeterminate.length == 0) {
-						// 		runUpdatePageLoop = true
-						// 	}
-						// }
-						// if (runUpdatePageLoop) {
-						// 	updatePageLoop()
-						// }
+						}	
 					}
 
 					// Submits the users answer to the poll

@@ -4424,6 +4424,8 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('saveTags', (studentId, tags, username) => {
+		//Save the tags to the students tag element in their object
+		//Then save their tags to the database
 		try {
 			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
@@ -4454,6 +4456,7 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('newTag', (tagName) => {
+		//Add a new tag to the database
 		try {
 			if (tagName == '') return;
 			cD[socket.request.session.class].tagNames.push(tagName);
