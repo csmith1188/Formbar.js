@@ -1,0 +1,95 @@
+/* --- GENERAL --- */
+
+:root {
+	/*All pages can use this set of colors*/
+
+	--color-red: #bf0000;
+	--color-brown: #802000;
+	--color-orange: #ff4000;
+	--color-gold: #fa0;
+	--color-yellow: #ffbf00;
+	--color-green: #00bf00;
+	--color-cyan: #009fbf;
+	--color-blue: #0040bf;
+	--color-purple: #bf00ff;
+	--color-pink: #ff4080;
+	--dark-gray: #555;
+
+	--light-red: #ff6860;
+	--light-brown: #bf6040;
+	--light-orange: #ff8f40;
+	--light-yellow: #ffdf40;
+	--light-green: #80ff80;
+	--light-cyan: #80ffff;
+	--light-blue: #bfcfff;
+	--light-purple: #df80ff;
+	--light-pink: #ff80bfff;
+	--light-gray: #ccc;
+
+	--bg-dark: #333;
+	--bg-darker: #222;
+	--bg-dark-highlight: #444;
+	--bg-dark-red: #400;
+	--bg-dark-yellow: #430;
+	--bg-dark-green: #243;
+	--bg-dark-blue: #000922;
+	--bg-dark-purple: #423;
+
+	--bg-light: #d0c8e0;
+	--bg-light-blue: #def;
+}
+
+body {
+	background-color: #323232;
+	color: #ffffff;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	color: var(--color-white);
+}
+
+h1.headertext, h2.headertext {
+	color: var(--light-cyan);
+}
+
+h1#noPoll.textColorContent {
+	color: var(--light-cyan);
+}
+
+p {
+	color: var(--color-white);
+}
+
+input {
+	background-color: #323232;
+	color: #ffffff;
+}
+
+#select {
+	background-color: #323232;
+	color: #ffffff;
+}
+
+#colorContent {
+	background-color: #323232;
+	color: #ffffff;
+}
+
+#content {
+	background-color: var(#ffffff);
+	color: #000000;
+}
+
+#usernameBox, #passwordBox, #displayNameBox, #joinKey {
+	background-color: #ffffff;
+	color: #000000;
+}
+
+#resTextBox {
+	background-color: #ffffff;
+	color: #000000;
+}
+
+select {
+	color: #ffffff;
+}
