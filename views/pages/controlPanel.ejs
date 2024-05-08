@@ -406,6 +406,7 @@
 			})
 			var tagNames = "<%=tagNames%>";
 
+			// Alerts the user if they try to start a poll without a prompt or responses
 			function pollCheck() {
 				if (pollPrompt.value == "" && responsesDiv.children.length == 0) {
 					alert("Please enter a prompt for the poll and add responses")

@@ -473,16 +473,7 @@ input[type="radio"]:focus {
 	padding: 3px;
 }
 
-#usersMenu {
-	font-size: 18px;
-}
-
-#usersMenu button,
-#usersMenu .quickbutton {
-	font-size: 16px;
-}
-
-#usersMenu #users {
+#users {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(200px, 1fr));
 	user-select: none;
@@ -490,13 +481,16 @@ input[type="radio"]:focus {
 }
 
 
-#usersMenu #users details[id^="student"],
-#usersMenu #users div[id^="student"] {
+#users details[id^="student"],
+#users div[id^="student"] {
+	margin-left: 30%;
+	margin-right: 30%;
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 10px;
 	margin-bottom: 1vi;
 	height: fit-content;
+	background-color: var(--bg-light-blue);
 }
 
 div.break {
@@ -513,36 +507,36 @@ div.break {
 	border-color: #ff0000 !important;
 }
 
-#usersMenu #users details[id^="student"][open] {
+#users details[id^="student"][open] {
 	padding-bottom: 2.5%;
 }
 
-#usersMenu #users details[id^="student"] summary {
+#users details[id^="student"] summary {
 	cursor: pointer;
 }
 
-#usersMenu #users details[id^="student"][open] summary {
+#users details[id^="student"][open] summary {
 	border-bottom: 3px var(--theme-color) solid;
 	margin-bottom: 2.5%;
 }
 
-#usersMenu #users div[id^="student"] p {
+#users div[id^="student"] p {
 	margin: 0;
 }
 
-#usersMenu #VBDiv {
+#VBDiv {
 	display: flex;
 	flex-direction: row;
 	width: 100%;
 }
 
-#usersMenu #VBOptions {
+#VBOptions {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 }
 
-#usersMenu #VBOptions .options {
+#VBOptions .options {
 	display: flex;
 	justify-content: start;
 	border: 3px var(--theme-color) solid;
@@ -551,18 +545,18 @@ div.break {
 	width: 100%;
 }
 
-#usersMenu #VBOptions .options .headBox {
+#VBOptions .options .headBox {
 	display: flex;
 	justify-content: space-evenly;
 	width: 80%;
 }
 
-#usersMenu #VBOptions #userFilterBoxes .options {
+#VBOptions #userFilterBoxes .options {
 	position: absolute;
 	left: 10vi;
 }
 
-#usersMenu #vbContainer {
+#vbContainer {
 	min-width: 250px;
 	min-height: 250px;
 	width: 25vi;
@@ -571,7 +565,7 @@ div.break {
 	margin-right: 8vw;
 }
 
-#usersMenu #vbContainer p {
+#vbContainer p {
 	display: flex;
 	justify-content: center;
 	margin-bottom: 0;
