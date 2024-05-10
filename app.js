@@ -64,16 +64,19 @@ let db = new sqlite3.Database('database/database.db')
  * @param {string} level - The level of logs to record.
  * @returns {winston.transports.DailyRotateFile} The created transport.
  */
+
+//This function creates a new daily rotating file transport for a given log level.
 function createLoggerTransport(level) {
 	// Create a new daily rotate file transport for Winston
 	let transport = new winston.transports.DailyRotateFile({
+		//This sets the filename pattern, date pattern, maximum number of log files to keep, and log level for the transport.
 		filename: `logs/application-${level}-%DATE%.log`, // The filename pattern to use
 		datePattern: "YYYY-MM-DD-HH", // The date pattern to use in the filename
 		maxFiles: "30d", // The maximum number of log files to keep
 		level: level // The level of logs to record
 	});
 
-	// When the log file is rotated
+	// When the log file is rotated, it resets the error count, saves it to a file, and deletes the old log file.
 	transport.on("rotate", function (oldFilename, newFilename) {
 		// Reset the error log count
 		logNumbers.error = 0;
@@ -83,6 +86,7 @@ function createLoggerTransport(level) {
 		fs.writeFileSync("logNumbers.json", logNumbersString);
 		// Delete the old log file
 		fs.unlink(oldFilename, (err) => {
+			//If there's an error deleting the old log file, it logs the error. Otherwise, it logs that the file was deleted.
 			if (err) {
 				// If an error occurred, log it
 				logger.log('error', err.stack);
@@ -93,11 +97,13 @@ function createLoggerTransport(level) {
 		});
 	});
 
-	// Return the created transport
+	//Finall, it returns the created transport.
 	return transport;
 };
 
+//This line creates a new logger instance using the winston library
 const logger = winston.createLogger({
+	//This block defines the logging levels. The lower the number, the higher the serverity. For example, critical is more severe than error.
 	levels: {
 		critical: 0,
 		error: 1,
@@ -105,9 +111,12 @@ const logger = winston.createLogger({
 		info: 3,
 		verbose: 4
 	},
+	//This sets the format of the log messages. It combines a timestamp and a custom print function.
 	format: winston.format.combine(
 		winston.format.timestamp(),
 		winston.format.printf(({ timestamp, level, message }) => {
+			/*If the log level is error, it increments the error count, saves it to a file, and formats the log message to include the error count. 
+			For other log levels, it simply formats the log message with the timestamp, level, and message.*/
 			if (level == "error") {
 				logNumbers.error++;
 				logNumbersString = JSON.stringify(logNumbers);
@@ -118,6 +127,8 @@ const logger = winston.createLogger({
 			}
 		})
 	),
+	/*This sets up the transports, which are the storage mechanisms for the logs. It creates a daily rotating file for each log level and also logs errors
+	to the console.*/
 	transports: [
 		createLoggerTransport("critical"),
 		createLoggerTransport("error"),
@@ -127,28 +138,53 @@ const logger = winston.createLogger({
 	],
 })
 
-
+/*This line is executing a SQL query using the get method from a db object. The get method is typically part of a SQLite database interface in Node.js.
+The SQL query is SELECT MAX(id) FROM poll_history, which retrieves the maximum is value from the poll_history table. This is typically the id of the
+most recently added record. The result of the query is passed to a callback function as the second argument (pollHistory), and any error that occurred
+during the execution of the query is passed as the first argument (err).*/
 db.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
+	/*This is an error handling block. If an error occurred during the execution of the SQL query (i.e., if err is not null), then the error is logged
+	using a logger object's log method. The log method is called with two arguments: a string indicating the severity level of the log ('error'), and 
+	the stack trace of the error (err.stack).*/
 	if (err) {
 		logger.log('error', err.stack)
 	} else {
+		/*If no error occurred during the execution of the SQL query, then the id of the current poll is set to one less than the maximum id value
+		retrieved from the poll_history table. This is because the database starts the ids at 1, and not 0, meaning, in order to access the proper
+		value in the pollHistory array, you must subtract one.*/
 		currentPoll = pollHistory['MAX(id)'] - 1
+		//These lines close the else block and the callback function, respectively.
 	}
 })
 
 
-// Constants
-// permissions levels
+/*This line is defining a constant named MANAGER_PERMISSIONS and assigning it a value of 5. This means that a user with a role of "Manager" has the 
+highest level of permissions in the application.*/
 const MANAGER_PERMISSIONS = 5
+/*This line is defining a constant named TEACHER_PERMISSIONS and assigning it a value of 4. This means that a user with a role of "Teacher" has the
+second highest level of permissions.*/
 const TEACHER_PERMISSIONS = 4
+/*This line is defining a constant named MOD_PERMISSIONS and assigning it a value of 3. "Mod" is short for "Moderator", so this represents the
+permissions level for a Moderator role.*/
 const MOD_PERMISSIONS = 3
+//This line is defining a constant named STUDENT_PERMISSIONS and assigning it a value of 2. This represents the permissions level for a Student role.
 const STUDENT_PERMISSIONS = 2
+/*This line is defining a constant named GUEST_PERMISSIONS and assigning it a value of 1. This represents the permissions level for a Guest role, which
+is the lowest level of access for authenticated users.*/
 const GUEST_PERMISSIONS = 1
+/*This line is defining a constant named BANNED_PERMISSIONS and assigning it a value of 0. This represents the permissions level for a banned user, which
+means they have no access to the application.*/
 const BANNED_PERMISSIONS = 0
 
 // Permission level needed to access each page
+//This line declares a constant object named PAGE_PERMISSIONS. The { symbol indicates the start of the object.
 const PAGE_PERMISSIONS = {
+	/*This line defines a propery of the PAGE_PERMISSIONS object named controlPanel. The value of this property is another object with two properties:
+	permissions and classPage. The permissions property is set to MOD_PERMISSIONS, which is a constant defined earlier that specified the permissions required
+	to access the control panel. The classPage property is set to true, as the control panel is a page relating to classes.*/
 	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
+	/*The next lines follow the same pattern as the controlPanel line. They define properties of the PAGE_PERMISSIONS object for different pages in the
+	application, each with its own permissions and classPage status.*/
 	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
@@ -160,43 +196,79 @@ const PAGE_PERMISSIONS = {
 	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
+/*This line declares a constant array named PASSIVE_SOCKETS. The const keyword means that the variable cannot be reassigned. However, the
+contents of the array can still be modified.*/
 const PASSIVE_SOCKETS = [
+	//An event name for updating a poll.
 	'pollUpdate',
+	//An event name for updating the mode.
 	'modeUpdate',
+	//An event name for updating the quiz mode.
 	'quizUpdate',
+	//An event name for updating the lesson mode.
 	'lessonUpdate',
+	//An event name for updating the manager panel.
 	'managerUpdate',
+	//An event name for updating the ip address list.
 	'ipUpdate',
+	//An event name for updating the virtual bar, shortened to vb.
 	'vbUpdate',
+	//An event name for updating the control panel, shortened to cp.
 	'cpUpdate',
+	//An event name for updating the plugin list.
 	'pluginUpdate',
+	//An event name for updating the custom poll list/data.
 	'customPollUpdate',
+	//An event name for updating the list of banned users in a class.
 	'classBannedUsersUpdate'
 ]
 
+/*This line declares a constant object named GLOBAL_SOCKET_PERMISSIONS. The const keyword mean that the variable cannot be reassigned. However,
+the properties of the object can still be modified.*/
 const GLOBAL_SOCKET_PERMISSIONS = {
+	//This represents an event that changes permissions which requires manager permissions.
 	permChange: MANAGER_PERMISSIONS,
+	//This represents an event that deletes a class which requires teacher permissions.
 	deleteClass: TEACHER_PERMISSIONS,
+	//This represents an event that gets all classes you own which requires teacher permissions.
 	getOwnedClasses: TEACHER_PERMISSIONS,
+	//This represents an event that logs you out which requires guest permissions.
 	logout: GUEST_PERMISSIONS,
+	//This represents an event that gets all classes you are in which requires guest permissions.
 	getUserClass: GUEST_PERMISSIONS,
+	//This represents an event that deletes a user which requires manager permissions.
 	deleteUser: MANAGER_PERMISSIONS,
+	//This represents an event that updates the manager panel which requires manager permissions.
 	managerUpdate: MANAGER_PERMISSIONS,
+	//This represents an event that updates the ip address list which requires manager permissions.
 	ipUpdate: MANAGER_PERMISSIONS,
+	//This represents an event that adds an ip address to the list which requires manager permissions.
 	addIp: MANAGER_PERMISSIONS,
+	//This represents an event that removes an ip address from the list which requires manager permissions.
 	removeIp: MANAGER_PERMISSIONS,
+	//This represents an event that changes an ip address on the list which requires manager permissions.
 	changeIp: MANAGER_PERMISSIONS,
+	//This represents an event that gets the ip address list which requires manager permissions.
 	toggleIpList: MANAGER_PERMISSIONS,
+	//This represents an event that saves the tags list which requires teacher permissions.
 	saveTags: TEACHER_PERMISSIONS,
+	//This represents an event that creates a new tag which requires teacher permissions.
 	newTag: TEACHER_PERMISSIONS,
+	//This represents an event that removes a tag which requires teacher permissions.
 	removeTag: TEACHER_PERMISSIONS,
+	//This represents an event that submits a password change request which requires student permissions.
 	passwordRequest: STUDENT_PERMISSIONS,
+	//This represents an event that approves the password change request which requires manager permissions.
 	approvePasswordChange: MANAGER_PERMISSIONS,
+	//This represents an event that updates the password which requires manager permissions.
 	passwordUpdate: MANAGER_PERMISSIONS
 }
-
+//This line declares a constant object CLASS_SOCKET_PERMISSIONS. The const keyword means that the variable can't be reassigned.
 const CLASS_SOCKET_PERMISSIONS = {
+	//This line defines a property named help that requires student permissions, which was defined earlier in the code. 
 	help: STUDENT_PERMISSIONS,
+	/*These lines define actions like responding to a poll, requesting a break, ending a break, updating a poll, updating the mode, updating a quiz,
+	and updating a lesson. All of these actions require student permissions.*/
 	pollResp: STUDENT_PERMISSIONS,
 	requestBreak: STUDENT_PERMISSIONS,
 	endBreak: STUDENT_PERMISSIONS,
@@ -204,62 +276,110 @@ const CLASS_SOCKET_PERMISSIONS = {
 	modeUpdate: STUDENT_PERMISSIONS,
 	quizUpdate: STUDENT_PERMISSIONS,
 	lessonUpdate: STUDENT_PERMISSIONS,
+	//These lines define actions like updating the virtual bar, the virtual bar timer, and leaving a class. These actions require guest permissions.
 	vbUpdate: GUEST_PERMISSIONS,
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
+	//This line defines an action that updates the control panel, which requires mod permissions.
 	cpUpdate: MOD_PERMISSIONS,
+	//This line defines an action that displays a previous poll, which requires teacher permissions.
 	previousPollDisplay: TEACHER_PERMISSIONS,
+	//This line defines an action of updating the plugin list, which requires student permissions.
 	pluginUpdate: STUDENT_PERMISSIONS,
+	//This line defines an action of setting the class default permission setting, which requires manager permissions.
 	setClassPermissionSetting: MANAGER_PERMISSIONS,
+	//This line defines an action that starts a class poll, which requires mod permissions.
 	classPoll: MOD_PERMISSIONS,
+	//These lines define actions like creating a timer, and turning it on, which require teacher permissions.
 	timer: TEACHER_PERMISSIONS,
 	timerOn: TEACHER_PERMISSIONS
 }
 
 // make a better name for this
 const CLASS_SOCKET_PERMISSION_SETTINGS = {
+	/*This line maps the action startPoll to the permission associated with controlPolls. This means that in order to start a poll, a user must 
+	have the permissions associated with controlPolls.*/
 	startPoll: 'controlPolls',
+	//Similarly, to clear a poll, a user must have the permissions associated with controlPolls.
 	clearPoll: 'controlPolls',
+	//To end a poll, a user must have the permissions associated with controlPolls.
 	endPoll: 'controlPolls',
+	//To update the custom poll list, a user must have the permissions associated with controlPolls.
 	customPollUpdate: 'controlPolls',
+	//To save a poll to the custom poll list, a user must have the permissions associated with controlPolls.
 	savePoll: 'controlPolls',
+	//To delete a poll from the custom poll list, a user must have the permissions associated with controlPolls.
 	deletePoll: 'controlPolls',
+	//To set a poll as public, a user must have the permissions associated with controlPolls.
 	setPublicPoll: 'controlPolls',
+	//To share a poll with a user, a user must have the permissions associated with controlPolls.
 	sharePollToUser: 'controlPolls',
+	//To remove a shared poll with a user, a user must have the permissions associated with controlPolls.
 	removeUserPollShare: 'controlPolls',
+	//To get the ids of shared polls, a user must have the permissions associated with controlPolls.
 	getPollShareIds: 'controlPolls',
+	//To share a poll with a class, a user must have the permissions associated with controlPolls.
 	sharePollToClass: 'controlPolls',
+	//To remove a shared poll from a class, a user must have the permissions associated with controlPolls.
 	removeClassPollShare: 'controlPolls',
+	//To perform the next step in a lesson, a user must have the permissions associated with controlPolls.
 	doStep: 'controlPolls',
+	//To change permissions in a class, a user must have the permissions associated with manageStudents.
 	classPermChange: 'manageStudents',
+	//To kick a user from a class, a user must have the permissions associated with manageStudents.
 	classKickUser: 'manageStudents',
+	//To kick all users from a class, a user must have the permissions associated with manageStudents.
 	classKickStudents: 'manageStudents',
+	//To approve a break, a user must have the permissions associated with breakAndHelp.
 	approveBreak: 'breakAndHelp',
+	//To delete a ticket, a user must have the permissions associated with breakAndHelp.
 	deleteTicket: 'breakAndHelp',
+	//To change a plugin in the plugin list, a user must have the permissions associated with manageClass.
 	changePlugin: 'manageClass',
+	//To add a plugin to the plugin list, a user must have the permissions associated with manageClass.
 	addPlugin: 'manageClass',
+	//To remove a plugin from the plugin list, a user must have the permissions associated with manageClass.
 	removePlugin: 'manageClass',
+	//To end a class, a user must have the permissions associated with manageClass.
 	endClass: 'manageClass',
+	//To change the mode of a class, a user must have the permissions associated with manageClass.
 	modechange: 'manageClass',
+	//To update the list of banned users in a class, a user must have the permissions associated with manageStudents.
 	classBannedUsersUpdate: 'manageStudents',
+	//To ban a user from a class, a user must have the permissions associated with manageStudents.
 	classBanUser: 'manageStudents',
+	//To unban a user from a class, a user must have the permissions associated with manageStudents.
 	classUnbanUser: 'manageStudents',
 }
 
+//This line declares a constant object named DEFAULT_CLASS_PERMISSIONS. The const keywork means that the variable cannot be reassigned.
 const DEFAULT_CLASS_PERMISSIONS = {
+	/*This line defines a property of the object called games. The value of this property MOD_PERMISSIONS, which was defined earlier. This means 
+	that you must have mod permissions to access the games.*/
 	games: MOD_PERMISSIONS,
+	//Similarly, this line defines a property controlPolls with a value of MOD_PERMISSIONS. This mean that you must have mod permissions to control polls.
 	controlPolls: MOD_PERMISSIONS,
+	//This line defines a property manageStudents with a value of TEACHER_PERMISSIONS. This means that you must have teacher permissions to manage students.
 	manageStudents: TEACHER_PERMISSIONS,
+	/*This line defines a property breakAndHelp with a value of MOD_PERMISSIONS. This means that you must have mod permissions to approve break and help
+	related actions.*/
 	breakAndHelp: MOD_PERMISSIONS,
+	//This line defines a property manageClass with a value of TEACHER_PERMISSIONS. This means that you must have teacher permissions to manage the class.
 	manageClass: TEACHER_PERMISSIONS,
+	//This line defines a property lights with a value of MOD_PERMISSIONS. This means that you must have mod permissions to control the FormPix lights.
 	lights: MOD_PERMISSIONS,
+	//This line defines a property sounds with a value of MOD_PERMISSIONS. This means that you must have mod permissions to control the FormPix sounds.
 	sounds: MOD_PERMISSIONS,
+	//This line defines a property userDefaults with a value of GUEST_PERMISSIONS. This means that you must have guest permissions to gain basic user defaults.
 	userDefaults: GUEST_PERMISSIONS
 }
 
 
 // Variables
 //cD is the class dictionary, it stores all of the information on classes and students
+/*This line declares a variable cD and assigns it an object. This object has a single property, named noClass, which is itself an object with a single
+property, named students. The students property is an empty object that gets added to later. This structure is used to store classes and their students
+in a nested manner.*/
 let cD = {
 	noClass: { students: {} }
 }
