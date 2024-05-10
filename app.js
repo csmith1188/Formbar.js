@@ -2737,32 +2737,29 @@ io.on('connection', async (socket) => {
 		}
 	}
 
-	function timer(sound, active, username) {
-		let classData = cD[socket.request.session.class];
+	function timer(sound, active) {
+		try {
+			let classData = cD[socket.request.session.class];
 
-		if (classData.timer.timeLeft <= 0) {
-			clearInterval(runningTimers[socket.request.session.class]);
-			runningTimers[socket.request.session.class] = null;
-		}
+			if (classData.timer.timeLeft <= 0) {
+				clearInterval(runningTimers[socket.request.session.class]);
+				runningTimers[socket.request.session.class] = null;
+			}
 
-		if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
+			if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
 
-		if (classData.timer.timeLeft <= 0 && active && sound) {
-			advancedEmitToClass('timerSound', socket.request.session.class, {
-				classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cD[socket.request.session.class].permissions.sounds),
-				api: true
-			});
-		}
+			if (classData.timer.timeLeft <= 0 && active && sound) {
+				advancedEmitToClass('timerSound', socket.request.session.class, {
+					classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cD[socket.request.session.class].permissions.sounds),
+					api: true
+				});
+			}
 
-		if (username) {
-			advancedEmitToClass('vbTimer', socket.request.session.class, {
-				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
-				username
-			}, classData.timer);
-		} else {
 			advancedEmitToClass('vbTimer', socket.request.session.class, {
 				classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer
 			}, classData.timer);
+		} catch (err) {
+			logger.log('error', err.stack);
 		}
 	}
 
@@ -4609,8 +4606,12 @@ io.on('connection', async (socket) => {
 
 	socket.on('vbTimer', () => {
 		let classData = cD[socket.request.session.class];
+		let username = socket.request.session.username
 
-		timer(classData.timer.sound, classData.timer.active, socket.request.session.username)
+		advancedEmitToClass('vbTimer', socket.request.session.class, {
+			classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
+			username
+		}, classData.timer);
 	})
 
 	socket.on("timer", (startTime, active, sound) => {
@@ -4642,32 +4643,7 @@ io.on('connection', async (socket) => {
 			logger.log("error", err.stack);
 		}
 	})
-	function timer(repeated, sound, on) {
-		//This function is called every second, counting down the timer
-		let classData = cD[socket.request.session.class];
-		if (!repeated) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time == 0) {
-			clearInterval(runningTimer);
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			return;
-		}
-		if (classData.timer.time > 0 && on) {
-			classData.timer.time--;
-			classData.timer.timePassed++
-		}
-		if (classData.timer.time == 0 && on) {
-			advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-			// if (sound) {
-			// 	advancedEmitToClass('timerSound', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed});
-			// }
-		}
 
-
-		advancedEmitToClass('timerVB', socket.request.session.class, {}, { time: classData.timer.time, sound: sound, active: on, timePassed: classData.timer.timePassed });
-	}
 	socket.on("timerOn", () => {
 		socket.emit("timerOn", cD[socket.request.session.class].timer.active);
 	})

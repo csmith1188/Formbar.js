@@ -7,8 +7,9 @@
     let noPoll;
     let virtualBar = document.getElementById("virtualbar");
     let mychart = virtualBar.getContext("2d");
+    let pollsData = {}
+    let timeData = {}
     let doughnutChart = new Chart(mychart, {
-
         type: 'doughnut',
         data: {
             labels: [],
@@ -49,38 +50,43 @@
             cutout: '0%',
         }
     })
+
     // Calls for data
     socket.emit('vbUpdate')
     // Gets data from server and send it the function
-    socket.on('vbUpdate', (pollsData) => {
-        if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-            if (noPoll) {
-                noPoll.style.display = ''
-                virtualBar.parentElement.style.display = "none";
-                doughnutChart.data.datasets[0].data = []
-            }
-        }
-        else {
+    socket.on('vbUpdate', (newPollsData) => {
+        if (deepObjectEqual(newPollsData, pollsData)) return
 
-            if (noPoll)
-                noPoll.style.display = 'none'
+        if (!newPollsData.status && Object.keys(newPollsData.polls).length == 0) {
+            if (!timeData.active) {
+                if (noPoll) noPoll.style.display = ''
+
+                virtualBar.parentElement.style.display = "none";
+            }
+
+            doughnutChart.data.datasets[0].data = []
+            doughnutChart.data.labels = []
+        } else {
+            if (noPoll) noPoll.style.display = 'none'
+
             virtualBar.parentElement.style.display = "block";
 
             //reset virtual bar
             doughnutChart.data.datasets[0].backgroundColor = []
             doughnutChart.data.datasets[0].data = []
+            doughnutChart.data.labels = []
 
-            let totalStudents = pollsData.totalStudents
+            let totalStudents = newPollsData.totalStudents
             let totalResponses = 0
 
             // add up all poll responses
-            for (const poll of Object.values(pollsData.polls)) {
+            for (const poll of Object.values(newPollsData.polls)) {
                 totalResponses += poll.responses
             }
 
             // make the polls blind unless all students answered
             if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
-                pollsData.blind = false
+                newPollsData.blind = false
             }
 
             let labelsArray = []
@@ -89,11 +95,11 @@
             let studResponses = {}
             // Loops through object to get each label of the possible answers
             // Also, create a new label for each possible answer
-            if (pollsData.blind) {
+            if (newPollsData.blind) {
                 labelsArray.push('Responses')
                 studResponses.responses = 0
             } else {
-                for (const [poll, pollData] of Object.entries(pollsData.polls)) {
+                for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
                     labelsArray.push(pollData.answer)
                     studResponses[poll] = 0
                 }
@@ -103,19 +109,19 @@
 
             // Loops through all possible answers and generates a new color letiant for each answer
             // All possible answers should have a different color
-            if (pollsData.blind) {
+            if (newPollsData.blind) {
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (let poll of Object.values(pollsData.polls)) {
+                for (let poll of Object.values(newPollsData.polls)) {
                     doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
                 }
             }
             doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
             // Loops through all student answers and adds them to a total tally
             // Student response corresponds with a property name in studResponses
-            studResponses.noResponse += pollsData.totalResponders - pollsData.totalResponses
-            for (const [poll, pollData] of Object.entries(pollsData.polls)) {
-                if (pollsData.blind)
+            studResponses.noResponse += newPollsData.totalResponders - newPollsData.totalResponses
+            for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
+                if (newPollsData.blind)
                     studResponses.responses += pollData.responses
                 else studResponses[poll] += pollData.responses
             }
@@ -127,52 +133,52 @@
             doughnutChart.data.labels = labelsArray
             doughnutChart.data.datasets[0].data = pollArray
         }
-        if (pollsData.active) {
-            doughnutChart.data.datasets[1].data = [pollsData.time, pollsData.timePassed]
-            doughnutChart.data.datasets[1].backgroundColor = ["blue", "white"]
-            doughnutChart.data.datasets[1].label = Math.floor(doughnutChart.data.datasets[1].data[0] / 60) + ':' + (doughnutChart.data.datasets[1].data[0] % 60)
-        }
+        // if (newPollsData.active) {
+        //     doughnutChart.data.datasets[1].data = [newPollsData.time, newPollsData.timePassed]
+        //     doughnutChart.data.datasets[1].backgroundColor = ["blue", "white"]
+        //     doughnutChart.data.datasets[1].label = Math.floor(doughnutChart.data.datasets[1].data[0] / 60) + ':' + (doughnutChart.data.datasets[1].data[0] % 60)
+        // }
 
-
+        pollsData = newPollsData
         doughnutChart.update()
     })
 
     socket.emit('vbTimer')
-    socket.on('vbTimer', (timeData) => {
+    socket.on('vbTimer', (newTimeData) => {
+        if (deepObjectEqual(newTimeData, timeData)) return
+
         let pieChart = doughnutChart.data.datasets[1]
-        let time = timeData.timeLeft
-        let timePassed = timeData.startTime - timeData.timeLeft
-        let sound = timeData.sound
-        let active = timeData.active
+        let time = newTimeData.timeLeft
+        let timePassed = newTimeData.startTime - newTimeData.timeLeft
+        let sound = newTimeData.sound
+        let active = newTimeData.active
         //turn the time into minutes and seconds
         let minutes = Math.floor(time / 60)
         let seconds = time % 60
         if (seconds < 10) {
             seconds = "0" + seconds
         }
-        let timeString = minutes + ":" + seconds + ' '
+        let timeString = minutes + ":" + seconds
 
         if (active) {
             virtualBar.parentElement.style.display = "block";
-            if (time != 0) {
+            if (time > 0) {
                 pieChart.data = [time, timePassed]
                 doughnutChart.data.datasets[1].label = timeString
                 pieChart.backgroundColor = ["blue", "white"]
-            }
-            else {
+            } else {
                 pieChart.data = [timePassed]
                 doughnutChart.data.datasets[1].label = timeString
                 pieChart.backgroundColor = ["red"]
             }
-        }
-        else {
-            virtualBar.parentElement.style.display = "none";
+        } else {
+            if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
+                virtualBar.parentElement.style.display = "none";
+            }
             pieChart.data = []
         }
-        // Ensure that the doughnut chart always has some data
 
+        timeData = newTimeData
         doughnutChart.update()
     })
-
-
 </script>
