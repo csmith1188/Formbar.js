@@ -378,7 +378,7 @@ function filterSortChange(classroom) {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
 
-            const responses = Object.keys(classroom.polls.responses)
+            const responses = Object.keys(classroom.poll.responses)
 
             if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
                 return studentA.pollRes.textRes.localeCompare(studentB.pollRes.textRes)
@@ -394,6 +394,8 @@ function filterSortChange(classroom) {
         userOrder.sort((a, b) => {
             let studentA = classroom.students[a]
             let studentB = classroom.students[b]
+
+            const responses = Object.keys(classroom.poll.responses)
 
             if (studentA.pollRes.textRes && studentB.pollRes.textRes) {
                 return studentB.pollRes.textRes.localeCompare(studentA.pollRes.textRes)
