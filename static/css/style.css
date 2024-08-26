@@ -246,6 +246,26 @@ dialog {
 	transition: filter 0.5s;
 }
 
+#lmdmBtn {
+	position: fixed;
+	right: 20px;
+	margin-top: 0.75vh;
+	border-radius: 100%;
+	width: 45px;
+	height: 45px;
+}
+#lmdmBtn:hover {
+	
+}
+
+#lmdmIcon {
+	position: absolute;
+	left:20%;
+	top: 22%;
+	width: 25px;
+	height: 25px;
+}
+
 @keyframes gradient {
 	0% {
 		background-position: 0% 50%;

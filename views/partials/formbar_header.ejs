@@ -27,15 +27,19 @@
                           <% } %>
                             <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
                             <% } %>
-                              <button onclick="changeTheme()" class="headerTab">LM/DM</button>
                               <p id="version">v 1.0.0</p>
+                              <button onclick="toggleTheme()" id="lmdmBtn"><img id="lmdmIcon" src="img/sun.svg"></button>
 </header>
 <script>
+  let lmdmIcon = document.getElementById("lmdmIcon");
+
   //document.body.style.backgroundColor = getCookie("theme")
   if (getCookie("theme") == "white") {
     document.getElementById('lmdm').href = 'css/lightmode.css';
+    lmdmIcon.src = "img/moon.svg"
   } else if (getCookie("theme") == "dark") {
     document.getElementById('lmdm').href = 'css/darkmode.css';
+    lmdmIcon.src = "img/sun.svg"
   }
 
   function getCookie(name) {
@@ -43,15 +47,19 @@
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
+
   var nextYear = new Date().getFullYear() + 1;
-  function changeTheme() {
+
+  function toggleTheme() {
     let theme = getCookie("theme");
     if (theme == "white") {
       document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
       document.getElementById('lmdm').href = 'css/darkmode.css';
+      lmdmIcon.src = "img/sun.svg"
     } else {
       document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
       document.getElementById('lmdm').href = 'css/lightmode.css';
+      lmdmIcon.src = "img/moon.svg"
     }
     console.log(document.getElementById('lmdm'))
   }
