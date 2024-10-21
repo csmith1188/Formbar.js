@@ -3,4 +3,8 @@ database/database.db
 .vscode/
 uploads/
 
-*.log
+logNumbers.json
+settings.json
+
+logs/
+logNumbers.json

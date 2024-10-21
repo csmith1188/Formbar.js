@@ -2,44 +2,41 @@
     <%- include('../partials/sockets') %>
 
         <body id="colorContent">
-            <div id="content" class="contentBox">
-                <form action="createClass" method="post" id="selectClassForm" class="hidden">
-                    <h2 class="headerText">Select a class</h2>
-                    <select id="startClassSelect" name="id">
+            <%- include('../partials/formbar_header') %>
+                <div id="content" class="contentBox">
+                    <form action="createClass" method="post" id="selectClassForm" class="hidden">
+                        <h2 class="headerText">Select a class</h2>
+                        <select id="startClassSelect" name="id">
 
-                    </select>
-                    <input type="text" name="submittionType" value="select" hidden>
-                    <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;">
-                </form>
-                <form action="createClass" method="post" id="createClass">
-                    <h2 class="headerText">Create a class</h2>
-                    <input type="text" id="usernameBox" name="name" placeholder="Class Name" value="" autocomplete="off"
-                        required>
-                    <input type="text" name="submittionType" value="create" hidden>
-                    <input type="submit" id="submitButton" class="quickButton" value="Create" onsubmit="return false;">
-                </form>
-                <div id="deleteClassForm" class="hidden">
-                    <h2 class="headerText">Delete a class</h2>
-                    <select id="deleteClassSelect"></select>
-                    <button class="quickButton" onclick="deleteClass()">Delete</button>
+                        </select>
+                        <input type="text" name="submittionType" value="select" hidden>
+                        <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;">
+                    </form>
+                    <form action="createClass" method="post" id="createClass">
+                        <h2 class="headerText">Create a class</h2>
+                        <input type="text" id="usernameBox" name="name" placeholder="Class Name" value=""
+                            autocomplete="off" required>
+                        <input type="text" name="submittionType" value="create" hidden>
+                        <input type="submit" id="submitButton" class="quickButton" value="Create"
+                            onsubmit="return false;">
+                    </form>
+                    <div id="deleteClassForm" class="hidden">
+                        <h2 class="headerText">Delete a class</h2>
+                        <select id="deleteClassSelect"></select>
+                        <button class="quickButton" onclick="deleteClass()">Delete</button>
+                    </div>
                 </div>
-            </div>
         </body>
-
         <script>
-            let currentUser = JSON.parse('<%- currentUser %>')
-
             let startClassForm = document.getElementById("selectClassForm")
             let deleteClassForm = document.getElementById("deleteClassForm")
             let startClassSelect = document.getElementById("startClassSelect")
             let deleteClassSelect = document.getElementById("deleteClassSelect")
 
             function deleteClass() {
-                console.log('hi');
                 let classId = deleteClassSelect.value
                 let className = deleteClassSelect.options[deleteClassSelect.selectedIndex].text
 
-                console.log(className);
                 let confirmation = confirm(`are you sure you want to delete the class ${className}`)
                 if (!confirmation) return
 

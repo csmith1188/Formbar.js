@@ -44,6 +44,7 @@ body {
 	padding: 8px;
 	text-align: center;
 	--theme-color: var(--color-blue);
+	transition: background-color 0.5s, color 0.5s;
 }
 
 h1 {
@@ -104,6 +105,22 @@ button,
 	cursor: pointer;
 	transition-duration: 0.2s;
 	transition-property: transform, box-shadow;
+}
+
+.breakButton {
+	padding: 3px 6px;
+	border-radius: 8px;
+	font-size: 150%;
+	font-family: inherit;
+	background-color: var(--bg-light-blue);
+	color: var(--theme-color);
+	border: 2px solid var(--theme-color);
+	margin: 2px 1px;
+	cursor: pointer;
+	transition-duration: 0.2s;
+	transition-property: transform, box-shadow;
+	width: 200px;
+	height: 100px;
 }
 
 .quickButton {
@@ -172,7 +189,8 @@ dialog {
 }
 
 /*Centers the element horizontally and vertically*/
-.centered, .hCentered.vCentered {
+.centered,
+.hCentered.vCentered {
 	position: absolute;
 	left: 50%;
 	top: 50%;
@@ -222,16 +240,66 @@ dialog {
 	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
 	box-shadow: 0 3px 10px black;
 	user-select: none;
+	animation: gradient 5s ease infinite;
+	background: linear-gradient(-30deg, var(--color-blue), var(--color-purple));
+	background-size: 400% 400%;
+	transition: filter 0.5s;
+}
+
+#lmdmBtn {
+	position: fixed;
+	right: 20px;
+	margin-top: 0.75vh;
+	border-radius: 100%;
+	width: 45px;
+	height: 45px;
+}
+#lmdmBtn:hover {
+	
+}
+
+#lmdmIcon {
+	position: absolute;
+	left:20%;
+	top: 22%;
+	width: 25px;
+	height: 25px;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+
+	50% {
+		background-position: 100% 50%;
+	}
+
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+#version {
+	color: var(--light-gray);
+	padding-left: 10px;
+}
+
+a.headerTab {
+	padding: 12px 16px;
+	font-size: 21px;
+	color: white;
+	cursor: pointer;
+
 }
 
 .headerTab {
 	padding: 12px 16px;
 	font-size: 21px;
-	color: var(--light-gray);
 	cursor: pointer;
 }
 
-.headerTab:hover ,
+.headerTab:hover,
 .headerTab:focus {
 	background-color: #00000055;
 	color: white;
@@ -259,9 +327,10 @@ dialog {
 }
 
 #pollControl {
-	display: grid;
+	display: inline-flex;
 	place-content: center;
 	min-height: 20px;
+
 }
 
 .form-control {
@@ -347,6 +416,14 @@ input[type="radio"]:focus {
 	transition-duration: 0ms;
 }
 
+#indexGrid .breakButton {
+	width: 150%;
+	padding: 20px;
+	font-size: 30px;
+	margin: 0;
+	transition-duration: 0ms;
+}
+
 #indexGrid .quickButton:hover,
 #indexGrid .quickButton:focus-visible {
 	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
@@ -385,13 +462,19 @@ input[type="radio"]:focus {
 }
 
 /* --- STUDENT PANEL --- */
+#pollForm {
+	display: flex;
+	flex-wrap: wrap;
+	margin: auto;
+	align-items: flex-start;
+}
 
 #pollForm label {
-	width: fit-content;
 	margin: 1em auto 0;
 	filter: brightness(75%);
 	user-select: none;
 }
+
 
 /* --- CONTROL PANEL --- */
 
@@ -410,13 +493,127 @@ input[type="radio"]:focus {
 	padding: 3px;
 }
 
-#permChanges {
-	font-size: 18px;
+#users {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(200px, 1fr));
+	user-select: none;
+	gap: 1rem;
 }
 
-#permChanges button,
-#permChanges .quickButton {
-	font-size: 16px;
+
+#users details[id^="student"],
+#users div[id^="student"] {
+	margin-left: 30%;
+	margin-right: 30%;
+	box-shadow: 0 0 0px black;
+	border: 3px var(--theme-color) solid;
+	border-radius: 10px;
+	margin-bottom: 1vi;
+	height: fit-content;
+	background-color: var(--bg-light-blue);
+}
+
+div.break {
+	margin-bottom: 3%;
+}
+
+.break,
+.break summary {
+	border-color: #ffff00 !important;
+}
+
+.help,
+.help summary {
+	border-color: #ff0000 !important;
+}
+
+#users details[id^="student"][open] {
+	padding-bottom: 2.5%;
+}
+
+#users details[id^="student"] summary {
+	cursor: pointer;
+}
+
+#users details[id^="student"][open] summary {
+	border-bottom: 3px var(--theme-color) solid;
+	margin-bottom: 2.5%;
+}
+
+#users div[id^="student"] p {
+	margin: 0;
+}
+
+#VBDiv {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+
+#VBOptions {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+#VBOptions .options {
+	display: flex;
+	justify-content: start;
+	border: 3px var(--theme-color) solid;
+	padding: .7vi;
+	border-radius: 10px;
+	width: 100%;
+}
+
+#VBOptions .options .headBox {
+	display: flex;
+	justify-content: space-evenly;
+	width: 80%;
+}
+
+#VBOptions #userFilterBoxes .options {
+	position: absolute;
+	left: 10vi;
+}
+
+#vbContainer {
+	min-width: 250px;
+	min-height: 250px;
+	width: 25vi;
+	height: 25vi;
+	margin-left: 8vw;
+	margin-right: 8vw;
+}
+
+#vbContainer p {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 0;
+}
+
+#users {
+	display: flex;
+	flex-direction: column;
+}
+
+#bannedMenu.tabContent {
+	display: grid;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+	justify-content: center;
+}
+
+.bannedStudent {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	max-width: 50%;
+}
+
+.bannedStudent button {
+	height: fit-content;
 }
 
 .filter,
@@ -429,7 +626,7 @@ input[type="radio"]:focus {
 	line-height: 2;
 }
 
-#deleteStudents{
+#deleteStudents {
 	margin-top: 15px;
 }
 
@@ -437,18 +634,18 @@ input[type="radio"]:focus {
 #endClass,
 .deleteStudent,
 #delete-poll,
-.delete-poll
-{
+.delete-poll,
+.banStudent {
 	--theme-color: hsl(0, 100%, 12%);
-	background-color: hsl(0, 94%, 74%);;
+	background-color: hsl(0, 94%, 74%);
+	;
 }
 
-#responses{
-	display: none;
+#responses {
+	display: grid;
 	width: 40%;
 	margin-left: 30%;
-	gap: 1rem;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 0.25rem;
 }
 
 .colorPickerButton {
@@ -475,26 +672,26 @@ input[type="radio"]:focus {
 	gap: 10px;
 }
 
-.colorPicker .colorsDiv{
+.colorPicker .colorsDiv {
 	grid-column: 1;
 	grid-row: 1 / 3;
 }
 
-.colorPicker .IroColorPicker{
+.colorPicker .IroColorPicker {
 	grid-column: 2;
 	grid-row: 1;
 }
 
-.colorPicker .hexLabel{
+.colorPicker .hexLabel {
 	grid-column: 2;
 	grid-row: 2;
 }
 
-.hexInput{
+.hexInput {
 	width: 60px;
 }
 
-.colorPicker .buttonsDiv{
+.colorPicker .buttonsDiv {
 	grid-column: 1 / 3;
 	grid-row: 3;
 	display: flex;
@@ -502,7 +699,8 @@ input[type="radio"]:focus {
 	gap: 10px;
 }
 
-.oldColor, .newColor {
+.oldColor,
+.newColor {
 	height: 50%;
 	width: 70%;
 }
@@ -512,6 +710,7 @@ input[type="radio"]:focus {
 	margin-top: 8px;
 }
 
+#clearPoll,
 #endPoll {
 	font-size: 18px;
 	margin: auto;
@@ -539,7 +738,7 @@ input[type="radio"]:focus {
 	margin: auto;
 	gap: 1.5rem;
 	/* grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); */
-	grid-template-columns:repeat(auto-fit, minmax(1fr));
+	grid-template-columns: repeat(auto-fit, minmax(1fr));
 }
 
 .customPoll * {
@@ -571,10 +770,37 @@ input[type="radio"]:focus {
 	width: 110px;
 }
 
+#settingsMenu #permissionsList {
+	display: grid;
+	width: 40%;
+	margin-left: 30%;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.permissionSelect {
+	margin-left: 0.5rem;
+}
+
 /* --- VIRTUAL BAR --- */
 
-#virtualBar {
-	width: calc(100% - 32px);
+#studentVBar {
+	display: flex;
+}
+
+#vbContainer {
+	width: 50vi;
+}
+
+#studentVBar:has(#vbContainer[style*="display: none"]),
+#VBOptions {
+	justify-content: center;
+}
+
+#studentVBar #helpBreak {
+	margin-top: 5vi;
+	width: 50%;
+	align-items: center;
 }
 
 #pixBox {
@@ -611,4 +837,53 @@ input[type="radio"]:focus {
 #nowPlaying {
 	text-align: center;
 	color: var(--theme-color);
+}
+
+.studentList {
+
+	/* width */
+	::-webkit-scrollbar {
+		width: 20px;
+	}
+
+	/* Track */
+	::-webkit-scrollbar-track {
+		box-shadow: inset 0 0 5px grey;
+		border-radius: 10px;
+	}
+
+	/* Handle */
+	::-webkit-scrollbar-thumb {
+		background: red;
+		border-radius: 10px;
+	}
+
+	/* Handle on hover */
+	::-webkit-scrollbar-thumb:hover {
+		background: #b30000;
+	}
+}
+
+.studentButton {
+	border: 1px solid black;
+}
+
+.helpBox {
+	background-color: white;
+}
+
+#pollBox {
+	background-color: white;
+}
+
+#resNumber {
+	background-color: white;
+}
+
+.permissionselect {
+	background-color: white;
+}
+
+#ticket {
+	background-color: white;
 }
