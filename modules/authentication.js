@@ -3,6 +3,9 @@ const { classInformation } = require("./class")
 const { logNumbers } = require("./config")
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS } = require("./permissions")
 
+const whitelistedIps = {}
+const blacklistedIps = {}
+
 /*
 Check if user has logged in
 Place at the start of any page that needs to verify if a user is logged in or not
@@ -120,8 +123,46 @@ function permCheck(req, res, next) {
 	}
 }
 
+function checkIPBanned() {
+	if (settings.whitelistActive && Object.keys(whitelistedIps).length > 0) {
+		const isWhitelisted = Object.values(whitelistedIps).some(value => ip.startsWith(value.ip))
+		if (!isWhitelisted) {
+			return true;
+		}
+	}
+
+	if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
+		const isBlacklisted = Object.values(blacklistedIps).some(value => ip.startsWith(value.ip))
+		if (isBlacklisted) {
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+// @TODO: Put in better place
+function checkIPBannedMiddleware() {
+	// Check if an IP is banned
+	app.use((req, res, next) => {
+		let ip = req.ip
+		if (ip.startsWith('::ffff:')) ip = ip.slice(7)
+
+		const isIPBanned = checkIPBanned()
+		if (isIPBanned) {
+			res.render('pages/message', {
+				message: 'Your IP has been banned',
+				title: 'Banned'
+			});
+		}
+
+		next()
+	})
+}
+
 module.exports = {
     isAuthenticated,
     isLoggedIn,
-    permCheck
+    permCheck,
+	checkIPBanned
 }

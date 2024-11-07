@@ -1,94 +1,13 @@
 const express = require('express')
 const router = express.Router()
 const sqlite3 = require('sqlite3').verbose()
-const winston = require('winston');
-const fs = require("fs");
+const logger = require('../modules/logger');
+const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require('../modules/permissions');
 
 // Establishes the connection to the database file
-var db = new sqlite3.Database('database/database.db')
+const db = new sqlite3.Database('database/database.db')
 
-let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
-
-/**
- * Creates a new logger transport with a daily rotation.
- *
- * @param {string} level - The level of logs to record.
- * @returns {winston.transports.DailyRotateFile} The created transport.
- */
-function createLoggerTransport(level) {
-	// Create a new daily rotate file transport for Winston
-	let transport = new winston.transports.DailyRotateFile({
-		filename: `logs/application-${level}-%DATE%.log`, // The filename pattern to use
-		datePattern: "YYYY-MM-DD-HH", // The date pattern to use in the filename
-		maxFiles: "30d", // The maximum number of log files to keep
-		level: level // The level of logs to record
-	});
-
-	// When the log file is rotated
-	transport.on("rotate", function (oldFilename, newFilename) {
-		// Reset the error log count
-		logNumbers.error = 0;
-		// Convert the log numbers to a string
-		logNumbersString = JSON.stringify(logNumbers);
-		// Write the log numbers to a file
-		fs.writeFileSync("logNumbers.json", logNumbersString);
-		// Delete the old log file
-		fs.unlink(oldFilename, (err) => {
-			if (err) {
-				// If an error occurred, log it
-				logger.log('error', err.stack);
-			} else {
-				// Otherwise, log that the file was deleted
-				console.log("Log file deleted");
-			};
-		});
-	});
-
-	// Return the created transport
-	return transport;
-};
-
-const logger = winston.createLogger({
-	levels: {
-		critical: 0,
-		error: 1,
-		warning: 2,
-		info: 3,
-		verbose: 4
-	},
-	format: winston.format.combine(
-		winston.format.timestamp(),
-		winston.format.printf(({ timestamp, level, message }) => {
-			if (level == "error") {
-				logNumbers.error++;
-				logNumbersString = JSON.stringify(logNumbers);
-				fs.writeFileSync("logNumbers.json", logNumbersString);
-				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
-			} else {
-				return `[${timestamp}] ${level}: ${message}`
-			}
-		})
-	),
-	transports: [
-		createLoggerTransport("critical"),
-		createLoggerTransport("error"),
-		createLoggerTransport("info"),
-		createLoggerTransport("verbose"),
-		new winston.transports.Console({ level: 'error' })
-	],
-})
-
-// Constants
-// permissions levels
-const MANAGER_PERMISSIONS = 5
-const TEACHER_PERMISSIONS = 4
-const MOD_PERMISSIONS = 3
-const STUDENT_PERMISSIONS = 2
-const GUEST_PERMISSIONS = 1
-const BANNED_PERMISSIONS = 0
-
-
-function api(cD) {
+function api(classInformation) {
 	try {
 		/**
 		 * Retrieves the class code for a given user.
@@ -102,9 +21,9 @@ function api(cD) {
 				logger.log('info', `[getUserClass] username=(${username})`)
 
 				// Iterate over the class codes
-				for (let classCode of Object.keys(cD)) {
+				for (let classCode of Object.keys(classInformation)) {
 					// If the user is a student in the current class
-					if (cD[classCode].students[username]) {
+					if (classInformation[classCode].students[username]) {
 						// Log the class code
 						logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
 						// Return the class code
@@ -261,8 +180,8 @@ function api(cD) {
 				}
 
 				// If the user is in a class and is logged in
-				if (cD[classCode] && cD[classCode].students && cD[classCode].students[dbUser.username]) {
-					let cdUser = cD[classCode].students[dbUser.username]
+				if (classInformation[classCode] && classInformation[classCode].students && classInformation[classCode].students[dbUser.username]) {
+					let cdUser = classInformation[classCode].students[dbUser.username]
 					if (cdUser) {
 						// Update the user's data with the data from the class
 						userData.loggedIn = true
@@ -329,8 +248,8 @@ function api(cD) {
 				// Create an object to store the class users
 				let classUsers = {}
 				let cDClassUsers = {}
-				if (cD[key])
-					cDClassUsers = cD[key].students
+				if (classInformation[key])
+					cDClassUsers = classInformation[key].students
 
 				// For each user in the class
 				for (let user of dbClassUsers) {
@@ -509,13 +428,13 @@ function api(cD) {
 			}
 
 			// If the class does not exist, return an error
-			if (!cD[classCode]) {
+			if (!classInformation[classCode]) {
 				res.status(404).json({ error: 'Class not started' })
 				return
 			}
 
 			// If the user is not in the class, return an error
-			if (!cD[classCode].students[username]) {
+			if (!classInformation[classCode].students[username]) {
 				res.status(404).json({ error: 'You are not in this class.' })
 				return
 			}
@@ -584,7 +503,7 @@ function api(cD) {
 				logger.log('info', `[get api/class/${key}] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				// Get a clone of the class data
-				let classData = structuredClone(cD[key])
+				let classData = structuredClone(classInformation[key])
 
 				// If the class does not exist, return an error
 				if (!classData) {
@@ -640,7 +559,7 @@ function api(cD) {
 				logger.log('info', `get api/class/${key}/students ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				// If the class does not exist, return an error
-				if (!cD[key]) {
+				if (!classInformation[key]) {
 					logger.log('verbose', `[get api/class/${key}/students] class not started`)
 					res.status(404).json({ error: 'Class not started' })
 					return
@@ -650,7 +569,7 @@ function api(cD) {
 				let user = req.session.user
 
 				// If the user is not in the class, return an error
-				if (!cD[key].students[user.username]) {
+				if (!classInformation[key].students[user.username]) {
 					logger.log('verbose', `[get api/class/${key}/students] user is not logged in`)
 					res.status(403).json({ error: 'User is not logged into the selected class' })
 					return
@@ -686,7 +605,7 @@ function api(cD) {
 				logger.log('info', `[get api/class/${key}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				// If the class does not exist, return an error
-				if (!cD[key]) {
+				if (!classInformation[key]) {
 					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
 					res.status(404).json({ error: 'Class not started' })
 					return
@@ -696,14 +615,14 @@ function api(cD) {
 				let user = req.session.user
 
 				// If the user is not in the class, return an error
-				if (!cD[key].students[user.username]) {
+				if (!classInformation[key].students[user.username]) {
 					logger.log('verbose', `[get api/class/${key}/polls] user is not logged in`)
 					res.status(403).json({ error: 'User is not logged into the selected class' })
 					return
 				}
 
 				// Get a clone of the class data and the poll responses in the class
-				let classData = structuredClone(cD[key])
+				let classData = structuredClone(classInformation[key])
 				classData.poll.responses = getPollResponses(classData)
 
 				// If the class does not exist, return an error
@@ -741,7 +660,7 @@ function api(cD) {
 				logger.log('info', `[get api/class/${key}/permissions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 				// Get a clone of the class data
-				let classData = structuredClone(cD[key])
+				let classData = structuredClone(classInformation[key])
 				// If the class does not exist, return an error
 				if (!classData) {
 					res.status(404).json({ error: 'Class not started' })
@@ -803,7 +722,7 @@ function api(cD) {
 					return
 				}
 
-				let classroom = cD[user.class]
+				let classroom = classInformation[user.class]
 
 				permissionTypes.games = classroom.permissions.games
 				permissionTypes.lights = classroom.permissions.lights
