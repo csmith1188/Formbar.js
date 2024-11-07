@@ -1,19 +1,21 @@
 // Imported modules
 const express = require('express')
-const session = require('express-session') //For storing client login data
-const { encrypt, decrypt } = require('./crypto.js') //For encrypting passwords
+const session = require('express-session') // For storing client login data
+const { encrypt, decrypt } = require('./crypto.js') // For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
-const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
+const jwt = require('jsonwebtoken') // For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
-const multer = require('multer')//Used to upload files
-const upload = multer({ dest: 'uploads/' }) //Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
+const multer = require('multer') // Used to upload files
+const upload = multer({ dest: 'uploads/' }) // Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const crypto = require('crypto')
-const winston = require('winston')
 const fs = require("fs")
-const dailyFile = require("winston-daily-rotate-file");
-const { start } = require('repl')
+const { isAuthenticated, isLoggedIn, permCheck } = require('./modules/authentication.js')
+const { logger } = require('./modules/logger.js')
+const { logNumbers, settings } = require('./modules/config.js')
+const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require('./modules/permissions.js')
+const { classInformation } = require('./modules/class.js')
 
-var app = express()
+const app = express()
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 
@@ -22,7 +24,7 @@ app.set('view engine', 'ejs')
 
 
 // Create session for user information to be transferred from page to page
-var sessionMiddleware = session({
+const sessionMiddleware = session({
 	secret: crypto.randomBytes(256).toString('hex'), //Used to sign into the session via cookies
 	resave: false, //Used to prevent resaving back to the session store, even if it wasn't modified
 	saveUninitialized: false //Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
@@ -52,91 +54,8 @@ app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 
-let logNumbers = JSON.parse(fs.readFileSync("logNumbers.json"))
-let settings = JSON.parse(fs.readFileSync("settings.json"))
-
 // Establishes the connection to the database file
-let db = new sqlite3.Database('database/database.db')
-
-/**
- * Creates a new logger transport with a daily rotation.
- *
- * @param {string} level - The level of logs to record.
- * @returns {winston.transports.DailyRotateFile} The created transport.
- */
-
-//This function creates a new daily rotating file transport for a given log level.
-function createLoggerTransport(level) {
-	// Create a new daily rotate file transport for Winston
-	let transport = new winston.transports.DailyRotateFile({
-		//This sets the filename pattern, date pattern, maximum number of log files to keep, and log level for the transport.
-		filename: `logs/application-${level}-%DATE%.log`, // The filename pattern to use
-		datePattern: "YYYY-MM-DD-HH", // The date pattern to use in the filename
-		maxFiles: "30d", // The maximum number of log files to keep
-		level: level // The level of logs to record
-	});
-
-	// When the log file is rotated, it resets the error count, saves it to a file, and deletes the old log file.
-	transport.on("rotate", function (oldFilename, newFilename) {
-		// Reset the error log count
-		logNumbers.error = 0;
-		// Convert the log numbers to a string
-		logNumbersString = JSON.stringify(logNumbers);
-		// Write the log numbers to a file
-		fs.writeFileSync("logNumbers.json", logNumbersString);
-		// Delete the old log file
-		fs.unlink(oldFilename, (err) => {
-			//If there's an error deleting the old log file, it logs the error. Otherwise, it logs that the file was deleted.
-			if (err) {
-				// If an error occurred, log it
-				logger.log('error', err.stack);
-			} else {
-				// Otherwise, log that the file was deleted
-				console.log("Log file deleted");
-			};
-		});
-	});
-
-	//Finall, it returns the created transport.
-	return transport;
-};
-
-//This line creates a new logger instance using the winston library
-const logger = winston.createLogger({
-	//This block defines the logging levels. The lower the number, the higher the serverity. For example, critical is more severe than error.
-	levels: {
-		critical: 0,
-		error: 1,
-		warning: 2,
-		info: 3,
-		verbose: 4
-	},
-	//This sets the format of the log messages. It combines a timestamp and a custom print function.
-	format: winston.format.combine(
-		winston.format.timestamp(),
-		winston.format.printf(({ timestamp, level, message }) => {
-			/*If the log level is error, it increments the error count, saves it to a file, and formats the log message to include the error count. 
-			For other log levels, it simply formats the log message with the timestamp, level, and message.*/
-			if (level == "error") {
-				logNumbers.error++;
-				logNumbersString = JSON.stringify(logNumbers);
-				fs.writeFileSync("logNumbers.json", logNumbersString);
-				return `[${timestamp}] ${level} - Error Number ${logNumbers.error}: ${message}`;
-			} else {
-				return `[${timestamp}] ${level}: ${message}`
-			}
-		})
-	),
-	/*This sets up the transports, which are the storage mechanisms for the logs. It creates a daily rotating file for each log level and also logs errors
-	to the console.*/
-	transports: [
-		createLoggerTransport("critical"),
-		createLoggerTransport("error"),
-		createLoggerTransport("info"),
-		createLoggerTransport("verbose"),
-		new winston.transports.Console({ level: 'error' })
-	],
-})
+const db = new sqlite3.Database('database/database.db')
 
 /*This line is executing a SQL query using the get method from a db object. The get method is typically part of a SQLite database interface in Node.js.
 The SQL query is SELECT MAX(id) FROM poll_history, which retrieves the maximum is value from the poll_history table. This is typically the id of the
@@ -156,45 +75,6 @@ db.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 		//These lines close the else block and the callback function, respectively.
 	}
 })
-
-
-/*This line is defining a constant named MANAGER_PERMISSIONS and assigning it a value of 5. This means that a user with a role of "Manager" has the 
-highest level of permissions in the application.*/
-const MANAGER_PERMISSIONS = 5
-/*This line is defining a constant named TEACHER_PERMISSIONS and assigning it a value of 4. This means that a user with a role of "Teacher" has the
-second highest level of permissions.*/
-const TEACHER_PERMISSIONS = 4
-/*This line is defining a constant named MOD_PERMISSIONS and assigning it a value of 3. "Mod" is short for "Moderator", so this represents the
-permissions level for a Moderator role.*/
-const MOD_PERMISSIONS = 3
-//This line is defining a constant named STUDENT_PERMISSIONS and assigning it a value of 2. This represents the permissions level for a Student role.
-const STUDENT_PERMISSIONS = 2
-/*This line is defining a constant named GUEST_PERMISSIONS and assigning it a value of 1. This represents the permissions level for a Guest role, which
-is the lowest level of access for authenticated users.*/
-const GUEST_PERMISSIONS = 1
-/*This line is defining a constant named BANNED_PERMISSIONS and assigning it a value of 0. This represents the permissions level for a banned user, which
-means they have no access to the application.*/
-const BANNED_PERMISSIONS = 0
-
-// Permission level needed to access each page
-//This line declares a constant object named PAGE_PERMISSIONS. The { symbol indicates the start of the object.
-const PAGE_PERMISSIONS = {
-	/*This line defines a propery of the PAGE_PERMISSIONS object named controlPanel. The value of this property is another object with two properties:
-	permissions and classPage. The permissions property is set to MOD_PERMISSIONS, which is a constant defined earlier that specified the permissions required
-	to access the control panel. The classPage property is set to true, as the control panel is a page relating to classes.*/
-	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
-	/*The next lines follow the same pattern as the controlPanel line. They define properties of the PAGE_PERMISSIONS object for different pages in the
-	application, each with its own permissions and classPage status.*/
-	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	student: { permissions: GUEST_PERMISSIONS, classPage: true },
-	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
-	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
-	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
-}
 
 /*This line declares a constant array named PASSIVE_SOCKETS. The const keyword means that the variable cannot be reassigned. However, the
 contents of the array can still be modified.*/
@@ -263,6 +143,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	//This represents an event that updates the password which requires manager permissions.
 	passwordUpdate: MANAGER_PERMISSIONS
 }
+
 //This line declares a constant object CLASS_SOCKET_PERMISSIONS. The const keyword means that the variable can't be reassigned.
 const CLASS_SOCKET_PERMISSIONS = {
 	//This line defines a property named help that requires student permissions, which was defined earlier in the code. 
@@ -352,39 +233,9 @@ const CLASS_SOCKET_PERMISSION_SETTINGS = {
 	classUnbanUser: 'manageStudents',
 }
 
-//This line declares a constant object named DEFAULT_CLASS_PERMISSIONS. The const keywork means that the variable cannot be reassigned.
-const DEFAULT_CLASS_PERMISSIONS = {
-	/*This line defines a property of the object called games. The value of this property MOD_PERMISSIONS, which was defined earlier. This means 
-	that you must have mod permissions to access the games.*/
-	games: MOD_PERMISSIONS,
-	//Similarly, this line defines a property controlPolls with a value of MOD_PERMISSIONS. This mean that you must have mod permissions to control polls.
-	controlPolls: MOD_PERMISSIONS,
-	//This line defines a property manageStudents with a value of TEACHER_PERMISSIONS. This means that you must have teacher permissions to manage students.
-	manageStudents: TEACHER_PERMISSIONS,
-	/*This line defines a property breakAndHelp with a value of MOD_PERMISSIONS. This means that you must have mod permissions to approve break and help
-	related actions.*/
-	breakAndHelp: MOD_PERMISSIONS,
-	//This line defines a property manageClass with a value of TEACHER_PERMISSIONS. This means that you must have teacher permissions to manage the class.
-	manageClass: TEACHER_PERMISSIONS,
-	//This line defines a property lights with a value of MOD_PERMISSIONS. This means that you must have mod permissions to control the FormPix lights.
-	lights: MOD_PERMISSIONS,
-	//This line defines a property sounds with a value of MOD_PERMISSIONS. This means that you must have mod permissions to control the FormPix sounds.
-	sounds: MOD_PERMISSIONS,
-	//This line defines a property userDefaults with a value of GUEST_PERMISSIONS. This means that you must have guest permissions to gain basic user defaults.
-	userDefaults: GUEST_PERMISSIONS
-}
-
-
 // Variables
-//cD is the class dictionary, it stores all of the information on classes and students
-/*This line declares a variable cD and assigns it an object. This object has a single property, named noClass, which is itself an object with a single
-property, named students. The students property is an empty object that gets added to later. This structure is used to store classes and their students
-in a nested manner.*/
-let cD = {
-	noClass: { students: {} }
-}
 let runningTimers = {};
-var currentPoll = 0
+let currentPoll = 0
 let whitelistedIps = {}
 let blacklistedIps = {}
 
@@ -392,7 +243,7 @@ let blacklistedIps = {}
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
 	if (req.session.class)
-		res.locals.currentUser = cD[req.session.class].students[req.session.username]
+		res.locals.currentUser = classInformation[req.session.class].students[req.session.username]
 
 	res.locals = {
 		...res.locals,
@@ -578,8 +429,8 @@ function getUserClass(username) {
 	try {
 		logger.log('info', `[getUserClass] username=(${username})`)
 
-		for (let classCode of Object.keys(cD)) {
-			if (cD[classCode].students[username]) {
+		for (let classCode of Object.keys(classInformation)) {
+			if (classInformation[classCode].students[username]) {
 				logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
 				return classCode
 			}
@@ -606,7 +457,7 @@ function joinClass(username, code) {
 					}
 
 					// Check to make sure there was a class with that code
-					if (!classroom || !cD[code]) {
+					if (!classroom || !classInformation[code]) {
 						logger.log('info', '[joinClass] No open class with that code')
 						resolve('no open class with that code')
 						return
@@ -636,7 +487,7 @@ function joinClass(username, code) {
 
 									if (classUser) {
 										// Get the student's session data ready to transport into new class
-										let user = cD.noClass.students[username]
+										let user = classInformation.noClass.students[username]
 										if (classUser.permissions <= BANNED_PERMISSIONS) {
 											logger.log('info', '[joinClass] User is banned')
 											resolve('you are banned from that class')
@@ -646,18 +497,18 @@ function joinClass(username, code) {
 										user.classPermissions = classUser.permissions
 
 										// Remove student from old class
-										delete cD.noClass.students[username]
+										delete classInformation.noClass.students[username]
 										// Add the student to the newly created class
-										cD[code].students[username] = user
+										classInformation[code].students[username] = user
 
 
 										advancedEmitToClass('joinSound', code, { api: true })
 
-										logger.log('verbose', `[joinClass] cD=(${cD})`)
+										logger.log('verbose', `[joinClass] cD=(${classInformation})`)
 										resolve(true)
 									} else {
 										db.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-											[classroom.id, user.id, cD[code].permissions.userDefaults, 0], (err) => {
+											[classroom.id, user.id, classInformation[code].permissions.userDefaults, 0], (err) => {
 												try {
 													if (err) {
 														reject(err)
@@ -666,14 +517,14 @@ function joinClass(username, code) {
 
 													logger.log('info', '[joinClass] Added user to classusers')
 
-													let user = cD.noClass.students[username]
-													user.classPermissions = cD[code].permissions.userDefaults
+													let user = classInformation.noClass.students[username]
+													user.classPermissions = classInformation[code].permissions.userDefaults
 
 													// Remove student from old class
-													delete cD.noClass.students[username]
+													delete classInformation.noClass.students[username]
 													// Add the student to the newly created class
-													cD[code].students[username] = user
-													logger.log('verbose', `[joinClass] cD=(${cD})`)
+													classInformation[code].students[username] = user
+													logger.log('verbose', `[joinClass] cD=(${classInformation})`)
 													resolve(true)
 												} catch (err) {
 													reject(err)
@@ -721,124 +572,6 @@ function getAll(query, params) {
 			else resolve(rows)
 		})
 	})
-}
-
-// Express functions
-/*
-Check if user has logged in
-Place at the start of any page that needs to verify if a user is logged in or not
-This allows websites to check on their own if the user is logged in
-This also allows for the website to check for permissions
-*/
-function isAuthenticated(req, res, next) {
-	try {
-		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-		if (req.session.username) {
-			if (cD.noClass.students[req.session.username]) {
-				if (cD.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
-					res.redirect('/managerPanel')
-				} else if (cD.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
-					res.redirect('/manageClass')
-				} else {
-					res.redirect('/selectClass')
-				}
-			} else {
-				next()
-			}
-		} else {
-			res.redirect('/login')
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
-}
-
-// Check if user is logged in. Only used for create and select class pages
-// Use isAuthenticated function for any other pages
-// Created for the first page since there is no check before this
-// This allows for a first check in where the user gets checked by the webpage
-function isLoggedIn(req, res, next) {
-	try {
-		logger.log('info', `[isLoggedIn] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		if (req.session.username) {
-			next()
-		} else {
-			res.redirect('/login')
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
-}
-
-// Check if user has the permission levels to enter that page
-function permCheck(req, res, next) {
-	try {
-		let username = req.session.username
-		let classCode = req.session.class
-
-		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
-
-		if (req.url) {
-			// Defines users desired endpoint
-			let urlPath = req.url
-			// Checks if url has a / in it and removes it from the string
-			if (urlPath.indexOf('/') != -1) {
-				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-			}
-			// Check for ?(urlParams) and removes it from the string
-			if (urlPath.indexOf('?') != -1) {
-				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-			}
-
-			if (!cD[classCode].students[username]) {
-				req.session.class = 'noClass'
-				classCode = 'noClass'
-			}
-
-			logger.log('verbose', `[permCheck] urlPath=(${urlPath})`)
-			if (!PAGE_PERMISSIONS[urlPath]) {
-				logger.log('info', `[permCheck] ${urlPath} is not in the page permissions`)
-				res.render('pages/message', {
-					message: `Error: ${urlPath} is not in the page permissions`,
-					title: 'Error'
-				})
-			}
-
-			// Checks if users permissions are high enough
-			if (
-				PAGE_PERMISSIONS[urlPath].classPage &&
-				cD[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
-				next()
-			} else if (
-				!PAGE_PERMISSIONS[urlPath].classPage &&
-				cD[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
-				next()
-			} else {
-				logger.log('info', '[permCheck] Not enough permissions')
-				res.render('pages/message', {
-					message: `Error: you don't have high enough permissions to access ${urlPath}`,
-					title: 'Error'
-				})
-			}
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		})
-	}
 }
 
 /**
@@ -914,7 +647,7 @@ async function passwordRequest(newPassword, username) {
 	 * @param  {...any} data - Additional data to emit with the event
 	 */
 async function advancedEmitToClass(event, classCode, options, ...data) {
-	let classData = cD[classCode]
+	let classData = classInformation[classCode]
 
 	let sockets = await io.in(`class-${classCode}`).fetchSockets()
 
@@ -943,7 +676,7 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 
 
 //import routes
-const apiRoutes = require('./routes/api.js')(cD)
+const apiRoutes = require('./routes/api.js')(classInformation)
 
 //add routes to express
 app.use('/api', apiRoutes)
@@ -988,7 +721,7 @@ app.use((req, res, next) => {
 app.get('/', isAuthenticated, (req, res) => {
 	try {
 		logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		if (cD[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+		if (classInformation[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 			res.redirect('/controlPanel')
 		} else {
 			res.redirect('/student')
@@ -1011,7 +744,7 @@ app.get('/apikey', isLoggedIn, (req, res) => {
 
 		res.render('pages/apiKey', {
 			title: 'API Key',
-			API: cD[req.session.class].students[req.session.username].API
+			API: classInformation[req.session.class].students[req.session.username].API
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1059,7 +792,7 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 	try {
 		logger.log('info', `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		let students = cD[req.session.class].students
+		let students = classInformation[req.session.class].students
 		let keys = Object.keys(students)
 		let allStuds = []
 
@@ -1073,9 +806,9 @@ app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
 		*/
 		res.render('pages/controlPanel', {
 			title: 'Control Panel',
-			pollStatus: cD[req.session.class].poll.status,
-			settingsPermissions: cD[req.session.class].permissions.manageClass,
-			tagNames: cD[req.session.class].tagNames
+			pollStatus: classInformation[req.session.class].poll.status,
+			settingsPermissions: classInformation[req.session.class].permissions.manageClass,
+			tagNames: classInformation[req.session.class].tagNames
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1107,7 +840,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 		It loops through the whole object - Riley R., May 22, 2023
 		*/
 		if (req.file) {
-			cD[req.session.class].currentStep = 0
+			classInformation[req.session.class].currentStep = 0
 			const result = excelToJson({
 				sourceFile: req.file.path,
 				sheets: [{
@@ -1215,7 +948,7 @@ app.post('/controlPanel', upload.single('spreadsheet'), isAuthenticated, permChe
 				}
 			}
 
-			cD[req.session.class].steps = steps
+			classInformation[req.session.class].steps = steps
 			res.redirect('/controlPanel')
 		}
 	} catch (err) {
@@ -1243,11 +976,11 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 		async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags) {
 			try {
 				// Get the teachers session data ready to transport into new class
-				var user = cD.noClass.students[req.session.username]
+				var user = classInformation.noClass.students[req.session.username]
 
 				logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
 				// Remove teacher from no class
-				delete cD.noClass.students[req.session.username]
+				delete classInformation.noClass.students[req.session.username]
 
 				if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
 					for (let permission of Object.keys(permissions)) {
@@ -1265,10 +998,10 @@ app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
 						if (err) logger.log('error', err.stack)
 					})
 				}
-				cD[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+				classInformation[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
 				// Add the teacher to the newly created class
-				cD[key].students[req.session.username] = user
-				cD[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+				classInformation[key].students[req.session.username] = user
+				classInformation[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
 
 				// Add class into the session data
 				req.session.class = key
@@ -1502,7 +1235,7 @@ app.post('/login', async (req, res) => {
 					let loggedIn = false
 					let classKey = ''
 
-					for (let classData of Object.values(cD)) {
+					for (let classData of Object.values(classInformation)) {
 						if (classData.key) {
 							for (let username of Object.keys(classData.students)) {
 								if (username == userData.username) {
@@ -1520,7 +1253,7 @@ app.post('/login', async (req, res) => {
 						req.session.class = classKey
 					} else {
 						// Add user to the session
-						cD.noClass.students[userData.username] = new Student(
+						classInformation.noClass.students[userData.username] = new Student(
 							userData.username,
 							userData.id,
 							userData.permissions,
@@ -1540,7 +1273,7 @@ app.post('/login', async (req, res) => {
 					req.session.displayName = userData.displayName
 
 					logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-					logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
+					logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
 
 					res.redirect('/')
 				} catch (err) {
@@ -1609,7 +1342,7 @@ app.post('/login', async (req, res) => {
 										if (err) throw err
 
 										// Add user to session
-										cD.noClass.students[userData.username] = new Student(
+										classInformation.noClass.students[userData.username] = new Student(
 											userData.username,
 											userData.id,
 											userData.permissions,
@@ -1627,7 +1360,7 @@ app.post('/login', async (req, res) => {
 										req.session.displayName = userData.displayName;
 
 										logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-										logger.log('verbose', `[post /login] cD=(${JSON.stringify(cD)})`)
+										logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
 
 										managerUpdate()
 
@@ -1677,7 +1410,7 @@ app.post('/login', async (req, res) => {
 app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
 	try {
 		logger.log('info', `[get /manageClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		logger.log('verbose', `[get /manageClass] currentUser=(${JSON.stringify(cD[req.session.class].students[req.session.username])})`)
+		logger.log('verbose', `[get /manageClass] currentUser=(${JSON.stringify(classInformation[req.session.class].students[req.session.username])})`)
 
 		// Finds all classes the teacher is the owner of
 		res.render('pages/manageClass', {
@@ -1790,8 +1523,8 @@ app.post('/oauth', (req, res) => {
 
 				userData.classPermissions = null
 
-				if (cD[classCode] && cD[classCode].students[userData.username])
-					userData.classPermissions = cD[classCode].students[userData.username].classPermissions
+				if (classInformation[classCode] && classInformation[classCode].students[userData.username])
+					userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
 
 				var token = jwt.sign({
 					id: userData.id,
@@ -1826,7 +1559,7 @@ app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
 	try {
 		logger.log('info', `[get /previousLessons] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		db.all('SELECT * FROM lessons WHERE class=?', cD[req.session.class].className, async (err, lessons) => {
+		db.all('SELECT * FROM lessons WHERE class=?', classInformation[req.session.class].className, async (err, lessons) => {
 			try {
 				if (err) throw err
 
@@ -1948,7 +1681,7 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			return
 		}
 
-		let classData = cD[classCode]
+		let classData = classInformation[classCode]
 
 		let cpPermissions = Math.min(
 			classData.permissions.controlPolls,
@@ -1956,11 +1689,11 @@ app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
 			classData.permissions.manageClass
 		)
 
-		advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, cD[classCode])
+		advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation[classCode])
 
 		req.session.class = classCode
 
-		setClassOfApiSockets(cD[classCode].students[req.session.username].API, classCode)
+		setClassOfApiSockets(classInformation[classCode].students[req.session.username].API, classCode)
 
 		res.redirect('/')
 	} catch (err) {
@@ -1993,7 +1726,7 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		logger.log('verbose', `[get /student] question=(${JSON.stringify(req.query.question)}) answer=(${req.query.letter})`)
 
 		if (answer) {
-			cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
+			classInformation[req.session.class].students[req.session.username].pollRes.buttonRes = answer
 		}
 
 		//Quiz Setup and Queries
@@ -2004,28 +1737,28 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 		If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
 		*/
 		if (req.query.question == 'random') {
-			let random = Math.floor(Math.random() * cD[req.session.class].quiz.questions.length)
+			let random = Math.floor(Math.random() * classInformation[req.session.class].quiz.questions.length)
 
-			logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[random])})`)
+			logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[random])})`)
 
 			res.render('pages/queryquiz', {
-				quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
+				quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[random]),
 				title: 'Quiz'
 			})
-			if (cD[req.session.class].quiz.questions[req.query.question] != undefined) {
-				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
+			if (classInformation[req.session.class].quiz.questions[req.query.question] != undefined) {
+				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question])})`)
 
 				res.render('pages/queryquiz', {
-					quiz: JSON.stringify(cD[req.session.class].quiz.questions[random]),
+					quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[random]),
 					title: 'Quiz'
 				})
 			}
 		} else if (isNaN(req.query.question) == false) {
-			if (typeof cD[req.session.class].quiz.questions[req.query.question] != 'undefined') {
-				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(cD[req.session.class].quiz.questions[req.query.question])})`)
+			if (typeof classInformation[req.session.class].quiz.questions[req.query.question] != 'undefined') {
+				logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question])})`)
 
 				res.render('pages/queryquiz', {
-					quiz: JSON.stringify(cD[req.session.class].quiz.questions[req.query.question]),
+					quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question]),
 					title: 'Quiz'
 				})
 			} else {
@@ -2040,9 +1773,9 @@ app.get('/student', isAuthenticated, permCheck, (req, res) => {
 			res.render('pages/student', {
 				title: 'Student',
 				user: JSON.stringify(user),
-				myRes: cD[req.session.class].students[req.session.username].pollRes.buttonRes,
-				myTextRes: cD[req.session.class].students[req.session.username].pollRes.textRes,
-				lesson: cD[req.session.class].lesson
+				myRes: classInformation[req.session.class].students[req.session.username].pollRes.buttonRes,
+				myTextRes: classInformation[req.session.class].students[req.session.username].pollRes.textRes,
+				lesson: classInformation[req.session.class].lesson
 			})
 		}
 	} catch (err) {
@@ -2066,30 +1799,30 @@ app.post('/student', isAuthenticated, permCheck, (req, res) => {
 		if (req.query.poll) {
 			let answer = req.body.poll
 			if (answer) {
-				cD[req.session.class].students[req.session.username].pollRes.buttonRes = answer
+				classInformation[req.session.class].students[req.session.username].pollRes.buttonRes = answer
 			}
 			res.redirect('/poll')
 		}
 		if (req.body.question) {
 			let results = req.body.question
 			let totalScore = 0
-			for (let i = 0; i < cD[req.session.class].quiz.questions.length; i++) {
-				if (results[i] == cD[req.session.class].quiz.questions[i][1]) {
-					totalScore += cD[req.session.class].quiz.pointsPerQuestion
+			for (let i = 0; i < classInformation[req.session.class].quiz.questions.length; i++) {
+				if (results[i] == classInformation[req.session.class].quiz.questions[i][1]) {
+					totalScore += classInformation[req.session.class].quiz.pointsPerQuestion
 				} else {
 					continue
 				}
 			}
-			cD[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + cD[req.session.class].quiz.totalScore
+			classInformation[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + classInformation[req.session.class].quiz.totalScore
 
 
-			let user = structuredClone(cD[req.session.class].students[req.session.username])
+			let user = structuredClone(classInformation[req.session.class].students[req.session.username])
 			delete user.API
 			logger.log('verbose', `[post /student] user=(${JSON.stringify(user)}) totalScore=(${totalScore})`)
 
 			res.render('pages/results', {
 				totalScore: Math.floor(totalScore),
-				maxScore: cD[req.session.class].quiz.totalScore,
+				maxScore: classInformation[req.session.class].quiz.totalScore,
 				title: 'Results'
 			})
 		}
@@ -2204,7 +1937,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[cpUpdate] classCode=(${classCode})`)
 
-			let classData = cD[classCode]
+			let classData = classInformation[classCode]
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,
@@ -2224,7 +1957,7 @@ io.on('connection', async (socket) => {
 			if (!classCode) return
 			if (classCode == 'noClass') return
 
-			let classData = structuredClone(cD[classCode])
+			let classData = structuredClone(classInformation[classCode])
 			let responses = {}
 
 			// for (let [username, student] of Object.entries(classData.students)) {
@@ -2343,7 +2076,7 @@ io.on('connection', async (socket) => {
 				}
 				totalResponders = totalStudentsIncluded.length
 			}
-			if (cD[classCode].poll.multiRes) {
+			if (classInformation[classCode].poll.multiRes) {
 				for (let student of Object.values(classData.students)) {
 					if (student.pollRes.buttonRes.length > 1) {
 						totalResponses += student.pollRes.buttonRes.length - 1
@@ -2358,8 +2091,8 @@ io.on('connection', async (socket) => {
 			}
 
 			//Get rid of students whos permissions are teacher or above or guest
-			cD[classCode].poll.allowedResponses = totalStudentsIncluded
-			cD[classCode].poll.unallowedResponses = totalStudentsExcluded
+			classInformation[classCode].poll.allowedResponses = totalStudentsIncluded
+			classInformation[classCode].poll.unallowedResponses = totalStudentsExcluded
 
 			advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
 				status: classData.poll.status,
@@ -2383,13 +2116,13 @@ io.on('connection', async (socket) => {
 	function pollUpdate(classCode = socket.request.session.class) {
 		try {
 			logger.log('info', `[pollUpdate] classCode=(${classCode})`)
-			logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(cD[classCode].poll)})`)
+			logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation[classCode].poll)})`)
 
 			advancedEmitToClass(
 				'pollUpdate',
 				classCode,
 				{ classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
-				cD[socket.request.session.class].poll
+				classInformation[socket.request.session.class].poll
 			)
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2399,13 +2132,13 @@ io.on('connection', async (socket) => {
 	function modeUpdate(classCode = socket.request.session.class) {
 		try {
 			logger.log('info', `[modeUpdate] classCode=(${classCode})`)
-			logger.log('verbose', `[modeUpdate] mode=(${cD[classCode].mode})`)
+			logger.log('verbose', `[modeUpdate] mode=(${classInformation[classCode].mode})`)
 
 			advancedEmitToClass(
 				'modeUpdate',
 				classCode,
 				{ classPermissions: CLASS_SOCKET_PERMISSIONS.modeUpdate },
-				cD[socket.request.session.class].mode
+				classInformation[socket.request.session.class].mode
 			)
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2415,13 +2148,13 @@ io.on('connection', async (socket) => {
 	function quizUpdate(classCode = socket.request.session.class) {
 		try {
 			logger.log('info', `[quizUpdate] classCode=(${classCode})`)
-			logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(cD[classCode].quiz)})`)
+			logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(classInformation[classCode].quiz)})`)
 
 			advancedEmitToClass(
 				'quizUpdate',
 				classCode,
 				{ classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
-				cD[socket.request.session.class].quiz
+				classInformation[socket.request.session.class].quiz
 			)
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2431,13 +2164,13 @@ io.on('connection', async (socket) => {
 	function lessonUpdate(classCode = socket.request.session.class) {
 		try {
 			logger.log('info', `[lessonUpdate] classCode=(${classCode})`)
-			logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(cD[classCode].lesson)})`)
+			logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(classInformation[classCode].lesson)})`)
 
 			advancedEmitToClass(
 				'lessonUpdate',
 				classCode,
 				{ classPermissions: CLASS_SOCKET_PERMISSIONS.lessonUpdate },
-				cD[socket.request.session.class].lesson
+				classInformation[socket.request.session.class].lesson
 			)
 		} catch (err) {
 			logger.log('error', err.stack);
@@ -2477,10 +2210,10 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[customPollUpdate] username=(${username})`)
 			let userSession = userSockets[username].request.session
-			let userSharedPolls = cD[userSession.class].students[userSession.username].sharedPolls
-			let userOwnedPolls = cD[userSession.class].students[userSession.username].ownedPolls
+			let userSharedPolls = classInformation[userSession.class].students[userSession.username].sharedPolls
+			let userOwnedPolls = classInformation[userSession.class].students[userSession.username].ownedPolls
 			let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-			let classroomPolls = structuredClone(cD[userSession.class].sharedPolls)
+			let classroomPolls = structuredClone(classInformation[userSession.class].sharedPolls)
 			let publicPolls = []
 			let customPollIds = userCustomPolls.concat(classroomPolls)
 
@@ -2541,7 +2274,7 @@ io.on('connection', async (socket) => {
 
 			if (!classCode || classCode == 'noClass') return
 
-			db.all('SELECT users.username FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', cD[socket.request.session.class].id, (err, bannedStudents) => {
+			db.all('SELECT users.username FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classInformation[socket.request.session.class].id, (err, bannedStudents) => {
 				try {
 					if (err) throw err
 
@@ -2550,7 +2283,7 @@ io.on('connection', async (socket) => {
 					advancedEmitToClass(
 						'classBannedUsersUpdate',
 						classCode,
-						{ classPermissions: cD[classCode].permissions.manageStudents },
+						{ classPermissions: classInformation[classCode].permissions.manageStudents },
 						bannedStudents
 					)
 				} catch (err) {
@@ -2567,15 +2300,15 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
 
 			userSockets[username].leave(`class-${classCode}`)
-			cD.noClass.students[username] = cD[classCode].students[username]
-			cD.noClass.students[username].classPermissions = null
+			classInformation.noClass.students[username] = classInformation[classCode].students[username]
+			classInformation.noClass.students[username].classPermissions = null
 			userSockets[username].request.session.class = 'noClass'
 			userSockets[username].request.session.save()
-			delete cD[classCode].students[username]
+			delete classInformation[classCode].students[username]
 
-			setClassOfApiSockets(cD.noClass.students[username].API, 'noClass')
+			setClassOfApiSockets(classInformation.noClass.students[username].API, 'noClass')
 
-			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(cD)})`)
+			logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(classInformation)})`)
 
 			userSockets[username].emit('reload')
 		} catch (err) {
@@ -2587,8 +2320,8 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[classKickStudents] classCode=(${classCode})`)
 
-			for (let username of Object.keys(cD[classCode].students)) {
-				if (cD[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
+			for (let username of Object.keys(classInformation[classCode].students)) {
+				if (classInformation[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
 					classKickUser(username, classCode)
 				}
 			}
@@ -2601,14 +2334,14 @@ io.on('connection', async (socket) => {
 		const username = socket.request.session.username
 		const userId = socket.request.session.userId
 		const classCode = socket.request.session.class
-		const className = cD[classCode].className
+		const className = classInformation[classCode].className
 
 		socket.request.session.destroy((err) => {
 			try {
 				if (err) throw err
 
 				delete userSockets[username]
-				delete cD[classCode].students[username]
+				delete classInformation[classCode].students[username]
 				socket.leave(`class-${classCode}`)
 				socket.emit('reload')
 				cpUpdate(classCode)
@@ -2638,18 +2371,18 @@ io.on('connection', async (socket) => {
 			let dateConfig = new Date()
 			let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
-			data.prompt = cD[socket.request.session.class].poll.prompt
+			data.prompt = classInformation[socket.request.session.class].poll.prompt
 
-			for (const key in cD[socket.request.session.class].students) {
-				data.names.push(cD[socket.request.session.class].students[key].username)
-				data.letter.push(cD[socket.request.session.class].students[key].pollRes.buttonRes)
-				data.text.push(cD[socket.request.session.class].students[key].pollRes.textRes)
+			for (const key in classInformation[socket.request.session.class].students) {
+				data.names.push(classInformation[socket.request.session.class].students[key].username)
+				data.letter.push(classInformation[socket.request.session.class].students[key].pollRes.buttonRes)
+				data.text.push(classInformation[socket.request.session.class].students[key].pollRes.textRes)
 			}
 
 			await new Promise((resolve, reject) => {
 				db.run(
 					'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-					[cD[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
+					[classInformation[socket.request.session.class].id, JSON.stringify(data), date], (err) => {
 						if (err) {
 							logger.log('error', err.stack);
 							reject(new Error(err));
@@ -2663,7 +2396,7 @@ io.on('connection', async (socket) => {
 
 			let latestPoll = await new Promise((resolve, reject) => {
 				db.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
-					cD[socket.request.session.class].id
+					classInformation[socket.request.session.class].id
 				], (err, poll) => {
 					if (err) {
 						logger.log("error", err.stack);
@@ -2673,22 +2406,22 @@ io.on('connection', async (socket) => {
 			});
 
 			latestPoll.data = JSON.parse(latestPoll.data);
-			cD[socket.request.session.class].pollHistory.push(latestPoll);
+			classInformation[socket.request.session.class].pollHistory.push(latestPoll);
 
-			cD[socket.request.session.class].poll.status = false
+			classInformation[socket.request.session.class].poll.status = false
 
-			logger.log('verbose', `[endPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+			logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
 	}
 
 	async function clearPoll(classCode = socket.request.session.class) {
-		if (cD[classCode].poll.status) await endPoll()
+		if (classInformation[classCode].poll.status) await endPoll()
 
-		cD[classCode].poll.responses = {};
-		cD[classCode].poll.prompt = "";
-		cD[classCode].poll = {
+		classInformation[classCode].poll.responses = {};
+		classInformation[classCode].poll.prompt = "";
+		classInformation[classCode].poll = {
 			status: false,
 			responses: {},
 			textRes: false,
@@ -2709,12 +2442,12 @@ io.on('connection', async (socket) => {
 
 			await advancedEmitToClass('endClassSound', classCode, { api: true })
 
-			for (let username of Object.keys(cD[classCode].students)) {
+			for (let username of Object.keys(classInformation[classCode].students)) {
 				classKickUser(username, classCode)
 			}
-			delete cD[classCode]
+			delete classInformation[classCode]
 
-			logger.log('verbose', `[endClass] cD=(${JSON.stringify(cD)})`)
+			logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`)
 		} catch (err) {
 			logger.log('error', err.stack);
 		}
@@ -2803,7 +2536,7 @@ io.on('connection', async (socket) => {
 			await runQuery('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
 
 			for (let classroom of classrooms) {
-				if (cD[classroom.key]) endClass(classroom.key)
+				if (classInformation[classroom.key]) endClass(classroom.key)
 
 				await Promise.all([
 					runQuery('DELETE FROM classusers WHERE classId=?', classroom.id),
@@ -2859,7 +2592,7 @@ io.on('connection', async (socket) => {
 
 	function timer(sound, active) {
 		try {
-			let classData = cD[socket.request.session.class];
+			let classData = classInformation[socket.request.session.class];
 
 			if (classData.timer.timeLeft <= 0) {
 				clearInterval(runningTimers[socket.request.session.class]);
@@ -2870,7 +2603,7 @@ io.on('connection', async (socket) => {
 
 			if (classData.timer.timeLeft <= 0 && active && sound) {
 				advancedEmitToClass('timerSound', socket.request.session.class, {
-					classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, cD[socket.request.session.class].permissions.sounds),
+					classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, classInformation[socket.request.session.class].permissions.sounds),
 					api: true
 				});
 			}
@@ -2984,12 +2717,12 @@ io.on('connection', async (socket) => {
 
 			logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassCod=(${classCode})`)
 
-			if (!cD[classCode]) {
+			if (!classInformation[classCode]) {
 				logger.log('info', '[socket permission check] Class does not exist')
 				socket.emit('message', 'Class does not exist')
 				return
 			}
-			if (!cD[classCode].students[username]) {
+			if (!classInformation[classCode].students[username]) {
 				logger.log('info', '[socket permission check] User is not logged in')
 				socket.emit('message', 'User is not logged in')
 				return
@@ -2997,20 +2730,20 @@ io.on('connection', async (socket) => {
 
 			if (
 				GLOBAL_SOCKET_PERMISSIONS[event] &&
-				cD[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
+				classInformation[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]
 			) {
 				logger.log('info', '[socket permission check] Global socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSIONS[event] &&
-				cD[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
+				classInformation[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]
 			) {
 				logger.log('info', '[socket permission check] Class socket permission check passed')
 				next()
 			} else if (
 				CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
-				cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
-				cD[classCode].students[username].classPermissions >= cD[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
+				classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
+				classInformation[classCode].students[username].classPermissions >= classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
 			) {
 				logger.log('info', '[socket permission check] Class socket permission settings check passed')
 				next()
@@ -3032,8 +2765,8 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
 
 			if (
-				cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes != res ||
-				cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes != textRes
+				classInformation[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes != res ||
+				classInformation[socket.request.session.class].students[socket.request.session.username].pollRes.textRes != textRes
 			) {
 				if (res == 'remove')
 					advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
@@ -3041,21 +2774,21 @@ io.on('connection', async (socket) => {
 					advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
 			}
 
-			cD[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
-			cD[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
-			cD[socket.request.session.class].students[socket.request.session.username].pollRes.time = new Date()
+			classInformation[socket.request.session.class].students[socket.request.session.username].pollRes.buttonRes = res
+			classInformation[socket.request.session.class].students[socket.request.session.username].pollRes.textRes = textRes
+			classInformation[socket.request.session.class].students[socket.request.session.username].pollRes.time = new Date()
 
 
 			for (let i = 0; i < resLength; i++) {
 				if (res) {
-					let calcWeight = cD[socket.request.session.class].poll.weight * resWeight
-					cD[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
-					if (cD[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
-						db.get('SELECT digipogs FROM classusers WHERE studentId=?', [cD[socket.request.session.class].students[socket.request.session.username].id], (err, data) => {
+					let calcWeight = classInformation[socket.request.session.class].poll.weight * resWeight
+					classInformation[socket.request.session.class].students[socket.request.session.username].pogMeter += calcWeight
+					if (classInformation[socket.request.session.class].students[socket.request.session.username].pogMeter >= 25) {
+						db.get('SELECT digipogs FROM classusers WHERE studentId=?', [classInformation[socket.request.session.class].students[socket.request.session.username].id], (err, data) => {
 							try {
 								if (err) throw err
 
-								db.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, cD[socket.request.session.class].students[socket.request.session.username].id], (err) => {
+								db.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, classInformation[socket.request.session.class].students[socket.request.session.username].id], (err) => {
 									try {
 										if (err) throw err
 
@@ -3068,11 +2801,11 @@ io.on('connection', async (socket) => {
 								logger.log('error', err.stack);
 							}
 						})
-						cD[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
+						classInformation[socket.request.session.class].students[socket.request.session.username].pogMeter = 0
 					}
 				}
 			}
-			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
+			logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
 
 			cpUpdate()
 			vbUpdate()
@@ -3086,15 +2819,15 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-			cD[socket.request.session.class].students[user].classPermissions = newPerm
+			classInformation[socket.request.session.class].students[user].classPermissions = newPerm
 
 			db.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
 				newPerm,
-				cD[socket.request.session.class].id,
-				cD[socket.request.session.class].students[user].id
+				classInformation[socket.request.session.class].id,
+				classInformation[socket.request.session.class].students[user].id
 			])
 
-			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(cD[socket.request.session.class].students[user])})`)
+			logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation[socket.request.session.class].students[user])})`)
 			io.to(`user-${user}`).emit('reload')
 
 			//cpUpdate()
@@ -3115,11 +2848,11 @@ io.on('connection', async (socket) => {
 			if (classCode instanceof Error) throw classCode
 
 			if (classCode) {
-				cD[classCode].students[username].permissions = newPerm
+				classInformation[classCode].students[username].permissions = newPerm
 
 				if (
-					cD[classCode].students[username].permissions < TEACHER_PERMISSIONS &&
-					Object.keys(cD[classCode].students)[0] == username
+					classInformation[classCode].students[username].permissions < TEACHER_PERMISSIONS &&
+					Object.keys(classInformation[classCode].students)[0] == username
 				) {
 					endClass(classCode)
 				}
@@ -3141,35 +2874,35 @@ io.on('connection', async (socket) => {
 
 			await clearPoll()
 			let generatedColors = generateColors(resNumber)
-			logger.log('verbose', `[pollResp] user=(${cD[socket.request.session.class].students[socket.request.session.username]})`)
+			logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
 			if (generatedColors instanceof Error) throw generatedColors
 
-			cD[socket.request.session.class].mode = 'poll'
-			cD[socket.request.session.class].poll.blind = blind
-			cD[socket.request.session.class].poll.status = true
+			classInformation[socket.request.session.class].mode = 'poll'
+			classInformation[socket.request.session.class].poll.blind = blind
+			classInformation[socket.request.session.class].poll.status = true
 			if (tags) {
-				cD[socket.request.session.class].poll.requiredTags = tags
+				classInformation[socket.request.session.class].poll.requiredTags = tags
 			}
 			else {
-				cD[socket.request.session.class].poll.requiredTags = []
+				classInformation[socket.request.session.class].poll.requiredTags = []
 			}
 			if (boxes) {
-				cD[socket.request.session.class].poll.studentBoxes = boxes
+				classInformation[socket.request.session.class].poll.studentBoxes = boxes
 			}
 			else {
-				cD[socket.request.session.class].poll.studentBoxes = []
+				classInformation[socket.request.session.class].poll.studentBoxes = []
 			}
 			if (indeterminate) {
-				cD[socket.request.session.class].poll.studentIndeterminate = indeterminate
+				classInformation[socket.request.session.class].poll.studentIndeterminate = indeterminate
 			}
 			else {
-				cD[socket.request.session.class].poll.studentIndeterminate = []
+				classInformation[socket.request.session.class].poll.studentIndeterminate = []
 			}
 			if (lastResponse) {
-				cD[socket.request.session.class].poll.lastResponse = lastResponse
+				classInformation[socket.request.session.class].poll.lastResponse = lastResponse
 			}
 			else {
-				cD[socket.request.session.class].poll.lastResponse = []
+				classInformation[socket.request.session.class].poll.lastResponse = []
 			}
 
 
@@ -3191,24 +2924,24 @@ io.on('connection', async (socket) => {
 				if (polls[i].color)
 					color = polls[i].color
 
-				cD[socket.request.session.class].poll.responses[answer] = {
+				classInformation[socket.request.session.class].poll.responses[answer] = {
 					answer: answer,
 					weight: weight,
 					color: color
 				}
 			}
 
-			cD[socket.request.session.class].poll.weight = weight
-			cD[socket.request.session.class].poll.textRes = resTextBox
-			cD[socket.request.session.class].poll.prompt = pollPrompt
-			cD[socket.request.session.class].poll.multiRes = multiRes
+			classInformation[socket.request.session.class].poll.weight = weight
+			classInformation[socket.request.session.class].poll.textRes = resTextBox
+			classInformation[socket.request.session.class].poll.prompt = pollPrompt
+			classInformation[socket.request.session.class].poll.multiRes = multiRes
 
-			for (var key in cD[socket.request.session.class].students) {
-				cD[socket.request.session.class].students[key].pollRes.buttonRes = ''
-				cD[socket.request.session.class].students[key].pollRes.textRes = ''
+			for (var key in classInformation[socket.request.session.class].students) {
+				classInformation[socket.request.session.class].students[key].pollRes.buttonRes = ''
+				classInformation[socket.request.session.class].students[key].pollRes.textRes = ''
 			}
 
-			logger.log('verbose', `[startPoll] classData=(${JSON.stringify(cD[socket.request.session.class])})`)
+			logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
 
 			pollUpdate()
 			vbUpdate()
@@ -3224,9 +2957,9 @@ io.on('connection', async (socket) => {
 		try {
 			await clearPoll();
 			//adds data to the previous poll answers table upon clearing the poll
-			for (var student of Object.values(cD[socket.request.session.class].students)) {
+			for (var student of Object.values(classInformation[socket.request.session.class].students)) {
 				if (student.classPermissions != 5) {
-					var currentPollId = cD[socket.request.session.class].pollHistory[currentPoll].id
+					var currentPollId = classInformation[socket.request.session.class].pollHistory[currentPoll].id
 					for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
 						var studentRes = student.pollRes.buttonRes[i]
 						var studentId = student.id
@@ -3361,7 +3094,7 @@ io.on('connection', async (socket) => {
 							try {
 								if (err) throw err
 
-								cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+								classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
 								socket.emit('message', 'Poll saved successfully!')
 								customPollUpdate(socket.request.session.username)
 							} catch (err) {
@@ -3415,7 +3148,7 @@ io.on('connection', async (socket) => {
 
 					await runQuery('COMMIT')
 
-					for (let classroom of Object.values(cD)) {
+					for (let classroom of Object.values(classInformation)) {
 						let updatePolls = false
 
 						if (classroom.sharedPolls) {
@@ -3530,7 +3263,7 @@ io.on('connection', async (socket) => {
 													if (classCode instanceof Error) throw classCode
 													if (!classCode) return
 
-													cD[classCode].students[user.username].sharedPolls.push(pollId)
+													classInformation[classCode].students[user.username].sharedPolls.push(pollId)
 
 													customPollUpdate(username)
 												} catch (err) {
@@ -3599,7 +3332,7 @@ io.on('connection', async (socket) => {
 											if (classCode instanceof Error) throw classCode
 											if (!classCode) return
 
-											let sharedPolls = cD[classCode].students[user.username].sharedPolls
+											let sharedPolls = classInformation[classCode].students[user.username].sharedPolls
 											sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
 											customPollUpdate(user.username)
 										} catch (err) {
@@ -3679,8 +3412,8 @@ io.on('connection', async (socket) => {
 
 													getPollShareIds(pollId)
 
-													cD[classCode].sharedPolls.push(pollId)
-													for (let username of Object.keys(cD[classCode].students)) {
+													classInformation[classCode].sharedPolls.push(pollId)
+													for (let username of Object.keys(classInformation[classCode].students)) {
 														customPollUpdate(username)
 													}
 												} catch (err) {
@@ -3741,11 +3474,11 @@ io.on('connection', async (socket) => {
 												logger.log('critical', 'Classroom does not exist')
 												return
 											}
-											if (!cD[classroom.key]) return
+											if (!classInformation[classroom.key]) return
 
-											let sharedPolls = cD[classroom.key].sharedPolls
+											let sharedPolls = classInformation[classroom.key].sharedPolls
 											sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-											for (let username of Object.keys(cD[classroom.key].students)) {
+											for (let username of Object.keys(classInformation[classroom.key].students)) {
 												customPollUpdate(username)
 											}
 										} catch (err) {
@@ -3776,7 +3509,7 @@ io.on('connection', async (socket) => {
 
 			logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
-			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			let student = classInformation[socket.request.session.class].students[socket.request.session.username]
 
 			if (student.help.reason != reason) {
 				advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
@@ -3798,14 +3531,14 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[requestBreak] reason=(${reason})`)
 
-			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			let student = classInformation[socket.request.session.class].students[socket.request.session.username]
 
 			if (!student.break != reason)
 				advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
 
 			student.break = reason
 
-			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 		} catch (err) {
@@ -3819,10 +3552,10 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) username=(${username})`)
 
-			let student = cD[socket.request.session.class].students[username]
+			let student = classInformation[socket.request.session.class].students[username]
 			student.break = breakApproval
 
-			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[username])})`)
+			logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[username])})`)
 
 			if (breakApproval) io.to(`user-${username}`).emit('break')
 			cpUpdate()
@@ -3837,10 +3570,10 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[endBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-			let student = cD[socket.request.session.class].students[socket.request.session.username]
+			let student = classInformation[socket.request.session.class].students[socket.request.session.username]
 			student.break = false
 
-			logger.log('verbose', `[endBreak] user=(${JSON.stringify(cD[socket.request.session.class].students[socket.request.session.username])})`)
+			logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
 
 			cpUpdate()
 			vbUpdate()
@@ -3945,7 +3678,7 @@ io.on('connection', async (socket) => {
 					if (err) throw err
 
 					if (classroom) {
-						if (cD[classroom.key]) endClass(classroom.key)
+						if (classInformation[classroom.key]) endClass(classroom.key)
 
 						db.run('DELETE FROM classroom WHERE id=?', classroom.id)
 						db.run('DELETE FROM classusers WHERE classId=?', classroom.id)
@@ -3982,8 +3715,8 @@ io.on('connection', async (socket) => {
 			advancedEmitToClass(
 				'previousPollData',
 				socket.request.session.class,
-				{ classPermissions: cD[socket.request.session.class].permissions.controlPolls },
-				cD[socket.request.session.class].pollHistory[pollIndex].data
+				{ classPermissions: classInformation[socket.request.session.class].permissions.controlPolls },
+				classInformation[socket.request.session.class].pollHistory[pollIndex].data
 			)
 		} catch (err) {
 			logger.log('error', err.stack)
@@ -3998,62 +3731,62 @@ io.on('connection', async (socket) => {
 
 			// send reload to whole class
 			socket.broadcast.to(socket.request.session.class).emit('reload')
-			cD[socket.request.session.class].currentStep++
+			classInformation[socket.request.session.class].currentStep++
 
-			if (cD[socket.request.session.class].steps[index] !== undefined) {
+			if (classInformation[socket.request.session.class].steps[index] !== undefined) {
 				// Creates a poll based on the step data
-				if (cD[socket.request.session.class].steps[index].type == 'poll') {
-					cD[socket.request.session.class].mode = 'poll'
+				if (classInformation[socket.request.session.class].steps[index].type == 'poll') {
+					classInformation[socket.request.session.class].mode = 'poll'
 
-					if (cD[socket.request.session.class].poll.status == true) {
-						cD[socket.request.session.class].poll.responses = {}
-						cD[socket.request.session.class].poll.prompt = ''
-						cD[socket.request.session.class].poll.status = false
+					if (classInformation[socket.request.session.class].poll.status == true) {
+						classInformation[socket.request.session.class].poll.responses = {}
+						classInformation[socket.request.session.class].poll.prompt = ''
+						classInformation[socket.request.session.class].poll.status = false
 					};
 
-					cD[socket.request.session.class].poll.status = true
+					classInformation[socket.request.session.class].poll.status = true
 					// Creates an object for every answer possible the teacher is allowing
-					for (let i = 0; i < cD[socket.request.session.class].steps[index].responses; i++) {
-						if (cD[socket.request.session.class].steps[index].labels[i] == '' || cD[socket.request.session.class].steps[index].labels[i] == null) {
+					for (let i = 0; i < classInformation[socket.request.session.class].steps[index].responses; i++) {
+						if (classInformation[socket.request.session.class].steps[index].labels[i] == '' || classInformation[socket.request.session.class].steps[index].labels[i] == null) {
 							let letterString = 'abcdefghijklmnopqrstuvwxyz'
-							cD[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
+							classInformation[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
 						} else {
-							cD[socket.request.session.class].poll.responses[cD[socket.request.session.class].steps[index].labels[i]] = { answer: cD[socket.request.session.class].steps[index].labels[i], weight: cD[socket.request.session.class].steps[index].weights[i] }
+							classInformation[socket.request.session.class].poll.responses[classInformation[socket.request.session.class].steps[index].labels[i]] = { answer: classInformation[socket.request.session.class].steps[index].labels[i], weight: classInformation[socket.request.session.class].steps[index].weights[i] }
 						}
 					}
-					cD[socket.request.session.class].poll.textRes = false
-					cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
+					classInformation[socket.request.session.class].poll.textRes = false
+					classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
 					// Creates a new quiz based on step data
-				} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
-					cD[socket.request.session.class].mode = 'quiz'
-					questions = cD[socket.request.session.class].steps[index].questions
+				} else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+					classInformation[socket.request.session.class].mode = 'quiz'
+					questions = classInformation[socket.request.session.class].steps[index].questions
 					let quiz = new Quiz(questions.length, 100)
 					quiz.questions = questions
-					cD[socket.request.session.class].quiz = quiz
+					classInformation[socket.request.session.class].quiz = quiz
 					// Creates lesson based on step data
-				} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
-					cD[socket.request.session.class].mode = 'lesson'
-					let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
-					cD[socket.request.session.class].lesson = lesson
+				} else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
+					classInformation[socket.request.session.class].mode = 'lesson'
+					let lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
+					classInformation[socket.request.session.class].lesson = lesson
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+						[classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {
 							if (err) logger.log('error', err.stack)
 						}
 					)
-					cD[socket.request.session.class].poll.textRes = false
-					cD[socket.request.session.class].poll.prompt = cD[socket.request.session.class].steps[index].prompt
+					classInformation[socket.request.session.class].poll.textRes = false
+					classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
 					// Check this later, there's already a quiz if statement
-				} else if (cD[socket.request.session.class].steps[index].type == 'quiz') {
-					questions = cD[socket.request.session.class].steps[index].questions
+				} else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+					questions = classInformation[socket.request.session.class].steps[index].questions
 					quiz = new Quiz(questions.length, 100)
 					quiz.questions = questions
-					cD[socket.request.session.class].quiz = quiz
+					classInformation[socket.request.session.class].quiz = quiz
 					// Check this later, there's already a lesson if statement
-				} else if (cD[socket.request.session.class].steps[index].type == 'lesson') {
-					let lesson = new Lesson(cD[socket.request.session.class].steps[index].date, cD[socket.request.session.class].steps[index].lesson)
-					cD[socket.request.session.class].lesson = lesson
+				} else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
+					let lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
+					classInformation[socket.request.session.class].lesson = lesson
 					db.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-						[cD[socket.request.session.class].className, JSON.stringify(cD[socket.request.session.class].lesson), cD[socket.request.session.class].lesson.date], (err) => {
+						[classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {
 							if (err) logger.log('error', err.stack)
 						}
 					)
@@ -4064,7 +3797,7 @@ io.on('connection', async (socket) => {
 				quizUpdate()
 				lessonUpdate()
 			} else {
-				cD[socket.request.session.class].currentStep = 0
+				classInformation[socket.request.session.class].currentStep = 0
 			}
 
 			cpUpdate()
@@ -4079,9 +3812,9 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[deleteTicket] student=(${student})`)
 
-			cD[socket.request.session.class].students[student].help = false
+			classInformation[socket.request.session.class].students[student].help = false
 
-			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(cD[socket.request.session.class].students[student])})`)
+			logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation[socket.request.session.class].students[student])})`)
 
 			cpUpdate()
 		} catch (err) {
@@ -4095,9 +3828,9 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[modechange] mode=(${mode})`)
 
-			cD[socket.request.session.class].mode = mode
+			classInformation[socket.request.session.class].mode = mode
 
-			logger.log('verbose', `[modechange] classData=(${cD[socket.request.session.class]})`)
+			logger.log('verbose', `[modechange] classData=(${classInformation[socket.request.session.class]})`)
 
 			modeUpdate()
 		} catch (err) {
@@ -4255,8 +3988,8 @@ io.on('connection', async (socket) => {
 				try {
 					if (err) throw err
 
-					if (cD[socket.request.session.class].students[user])
-						cD[socket.request.session.class].students[user].classPermissions = 0
+					if (classInformation[socket.request.session.class].students[user])
+						classInformation[socket.request.session.class].students[user].classPermissions = 0
 
 					classKickUser(user)
 					advancedEmitToClass('leaveSound', classCode, { api: true })
@@ -4301,8 +4034,8 @@ io.on('connection', async (socket) => {
 				try {
 					if (err) throw err
 
-					if (cD[socket.request.session.class].students[user])
-						cD[socket.request.session.class].students[user].permissions = 1
+					if (classInformation[socket.request.session.class].students[user])
+						classInformation[socket.request.session.class].students[user].permissions = 1
 
 					classBannedUsersUpdate()
 					socket.emit('message', `Unbanned ${user}`)
@@ -4323,8 +4056,8 @@ io.on('connection', async (socket) => {
 			logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
 
 			let classCode = socket.request.session.class
-			cD[classCode].permissions[permission] = level
-			db.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(cD[classCode].permissions), cD[classCode].id], (err) => {
+			classInformation[classCode].permissions[permission] = level
+			db.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation[classCode].permissions), classInformation[classCode].id], (err) => {
 				try {
 					if (err) throw err
 
@@ -4546,7 +4279,7 @@ io.on('connection', async (socket) => {
 		try {
 			logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 			logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-			cD[socket.request.session.class].students[username].tags = tags.toString()
+			classInformation[socket.request.session.class].students[username].tags = tags.toString()
 			db.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
 				if (err) {
 					logger.log('error', err)
@@ -4576,19 +4309,19 @@ io.on('connection', async (socket) => {
 		//Add a new tag to the database
 		try {
 			if (tagName == '') return;
-			cD[socket.request.session.class].tagNames.push(tagName);
+			classInformation[socket.request.session.class].tagNames.push(tagName);
 			var newTotalTags = "";
-			for (let i = 0; i < cD[socket.request.session.class].tagNames.length; i++) {
-				newTotalTags += cD[socket.request.session.class].tagNames[i] + ", ";
+			for (let i = 0; i < classInformation[socket.request.session.class].tagNames.length; i++) {
+				newTotalTags += classInformation[socket.request.session.class].tagNames[i] + ", ";
 			};
 			newTotalTags = newTotalTags.split(", ");
 			newTotalTags.pop();
-			db.get('SELECT * FROM classroom WHERE name = ?', [cD[socket.request.session.class].className], (err, row) => {
+			db.get('SELECT * FROM classroom WHERE name = ?', [classInformation[socket.request.session.class].className], (err, row) => {
 				if (err) {
 					logger.log(err.stack);
 				}
 				if (row) {
-					db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), cD[socket.request.session.class].className], (err) => {
+					db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation[socket.request.session.class].className], (err) => {
 						if (err) {
 							logger.log(err.stack);
 						};
@@ -4608,15 +4341,15 @@ io.on('connection', async (socket) => {
 			//Find the tagName in the array of tagnames from the database
 			//If the tagname is not there, socket.send('message', 'Tag not found') and return
 			//If the tagname is there, remove it from the array and update the database
-			var index = cD[socket.request.session.class].tagNames.indexOf(tagName);
+			var index = classInformation[socket.request.session.class].tagNames.indexOf(tagName);
 			if (index > -1) {
-				cD[socket.request.session.class].tagNames.splice(index, 1);
+				classInformation[socket.request.session.class].tagNames.splice(index, 1);
 			} else {
 				socket.send('message', 'Tag not found')
 				return;
 			}
 			//Now remove all instances of the tag from the students' tags
-			for (let student of Object.values(cD[socket.request.session.class].students)) {
+			for (let student of Object.values(classInformation[socket.request.session.class].students)) {
 				if (student.classPermissions == 0 || student.classPermissions >= 5) continue;
 				var studentTags = student.tags.split(",");
 				var studentIndex = studentTags.indexOf(tagName);
@@ -4638,7 +4371,7 @@ io.on('connection', async (socket) => {
 						socket.send('message', 'User not found')
 					};
 				});
-				db.get('SELECT tags FROM classroom WHERE name = ?', [cD[socket.request.session.class].className], (err, row) => {
+				db.get('SELECT tags FROM classroom WHERE name = ?', [classInformation[socket.request.session.class].className], (err, row) => {
 					if (err) {
 						logger.log(err.stack);
 					}
@@ -4652,7 +4385,7 @@ io.on('connection', async (socket) => {
 						if (tagIndex > -1) {
 							newTotalTags.splice(tagIndex, 1);
 						}
-						db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), cD[socket.request.session.class].className], (err) => {
+						db.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation[socket.request.session.class].className], (err) => {
 							if (err) {
 								logger.log(err.stack);
 							};
@@ -4707,7 +4440,7 @@ io.on('connection', async (socket) => {
 						try {
 							if (err) throw err
 
-							cD[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+							classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
 							socket.emit('message', 'Poll saved successfully!')
 							customPollUpdate(socket.request.session.username)
 							socket.emit("classPollSave", nextPollId);
@@ -4725,7 +4458,7 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on('vbTimer', () => {
-		let classData = cD[socket.request.session.class];
+		let classData = classInformation[socket.request.session.class];
 		let username = socket.request.session.username
 
 		advancedEmitToClass('vbTimer', socket.request.session.class, {
@@ -4737,7 +4470,7 @@ io.on('connection', async (socket) => {
 	socket.on("timer", (startTime, active, sound) => {
 		//This handles the server side timer
 		try {
-			let classData = cD[socket.request.session.class];
+			let classData = classInformation[socket.request.session.class];
 
 			startTime = Math.round(startTime * 60)
 
@@ -4765,7 +4498,7 @@ io.on('connection', async (socket) => {
 	})
 
 	socket.on("timerOn", () => {
-		socket.emit("timerOn", cD[socket.request.session.class].timer.active);
+		socket.emit("timerOn", classInformation[socket.request.session.class].timer.active);
 	})
 
 })
