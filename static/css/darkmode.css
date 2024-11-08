@@ -65,6 +65,10 @@ input {
 	color: #ffffff;
 }
 
+#pollbox {
+	color :#000000
+}
+
 #select {
 	background-color: #323232;
 	color: #ffffff;
@@ -91,5 +95,15 @@ input {
 }
 
 select {
-	color: #ffffff;
+	background-color: var(--bg-light-blue);
+	color: #000000;
 }
+
+select option {
+	color: #000000;
+}
+
+#users details{
+	color: #000000;
+}
+
