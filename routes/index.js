@@ -1,14 +1,15 @@
-// This is the root page, it is where the users first get checked by the home page
-// It is used to redirect to the home page
-// This allows it to check if the user is logged in along with the home page
-// It also allows for redirection to any other page if needed
-
 const { isAuthenticated } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
-const logger = require("../modules/logger")
+const { logNumbers } = require("../modules/config")
+const { logger } = require("../modules/logger")
+const { TEACHER_PERMISSIONS } = require("../modules/permissions")
 
 module.exports = {
     run(app) {
+        // This is the root page, it is where the users first get checked by the home page
+        // It is used to redirect to the home page
+        // This allows it to check if the user is logged in along with the home page
+        // It also allows for redirection to any other page if needed
         app.get('/', isAuthenticated, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)

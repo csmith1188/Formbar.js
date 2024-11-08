@@ -1,18 +1,19 @@
 // @TODO: Separate all of these into different routes
 
-import database from "../modules/database"
-
+const { database } = require("../modules/database")
 const { classInformation } = require("../modules/class")
-const logger = require("../modules/logger")
-const { GUEST_PERMISSIONS, TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("../modules/permissions")
+const { logger } = require("../modules/logger")
+const { GUEST_PERMISSIONS, TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GLOBAL_SOCKET_PERMISSIONS } = require("../modules/permissions");
+const { settings } = require("../modules/config");
 
-let runningTimers = {};
-let currentPoll = 0
+const io = createSocketServer()
+const runningTimers = {};
 const rateLimits = {}
 const userSockets = {}
+let currentPoll = 0
 
 // Socket.io functions
-async function managerUpdate(io) {
+async function managerUpdate() {
 	let [users, classrooms] = await Promise.all([
 		new Promise((resolve, reject) => {
 			database.all('SELECT id, username, permissions, displayName FROM users', (err, users) => {
@@ -72,8 +73,12 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 	}
 }
 
+function createSocketServer(http) {
+    return require('socket.io')(http)
+}
+
 // Handles the websocket communications
-function intializeSockets(io) {
+function initSocketRoutes() {
     io.on('connection', async (socket) => {
         try {
             const { api } = socket.request.headers
@@ -2689,4 +2694,11 @@ function intializeSockets(io) {
         })
 
     })
+}
+
+module.exports = {
+    managerUpdate,
+    advancedEmitToClass,
+    initSocketRoutes,
+    io
 }
