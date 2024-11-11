@@ -40,7 +40,26 @@ async function passwordRequest(newPassword, username) {
 	};
 };
 
+function getUserClass(username) {
+	try {
+		logger.log('info', `[getUserClass] username=(${username})`)
+
+		for (let classCode of Object.keys(classInformation)) {
+			if (classInformation[classCode].students[username]) {
+				logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
+				return classCode
+			}
+		}
+
+		logger.log('verbose', `[getUserClass] classCode=(${null})`)
+		return null
+	} catch (err) {
+		return err
+	}
+}
+
 module.exports = {
 	Student,
-    passwordRequest
+    passwordRequest,
+	getUserClass
 }

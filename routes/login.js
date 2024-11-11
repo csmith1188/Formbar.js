@@ -4,6 +4,9 @@ const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
+const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
+const crypto = require('crypto')
+const { managerUpdate } = require("../sockets/init")
 
 module.exports = {
     run(app) {
