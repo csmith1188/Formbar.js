@@ -254,13 +254,12 @@ dialog {
 	width: 45px;
 	height: 45px;
 }
-#lmdmBtn:hover {
-	
-}
+
+#lmdmBtn:hover {}
 
 #lmdmIcon {
 	position: absolute;
-	left:20%;
+	left: 20%;
 	top: 22%;
 	width: 25px;
 	height: 25px;
@@ -303,6 +302,23 @@ a.headerTab {
 .headerTab:focus {
 	background-color: #00000055;
 	color: white;
+}
+
+#logoutButton{
+	position: fixed;
+	right: 70px;
+	margin-top: 0.75vh;
+	border-radius: 100%;
+	width: 45px;
+	height: 45px;
+}
+
+#logoutIcon{
+	position: absolute;
+	left: 20%;
+	top: 22%;
+	width: 25px;
+	height: 25px;
 }
 
 #headerLogo {
