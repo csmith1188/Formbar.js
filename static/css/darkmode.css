@@ -107,3 +107,12 @@ select option {
 	color: #000000;
 }
 
+#newPasswordBox.loginBox {
+	border-color: #000000;
+	color: #000000;
+}
+
+#confirmPasswordBox.loginBox {
+	border-color: #000000; 
+	color: #000000;
+}
