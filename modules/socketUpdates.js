@@ -1,10 +1,17 @@
 // @TODO: Organize all of this
 
+const { settings } = require("./config");
+const { database } = require("./database");
 const { logger } = require("./logger");
+const { io } = require("./webServer");
 
-function updateClassPermissions(classCode = socket.request.session.class) {
+const runningTimers = {};
+const rateLimits = {}
+const userSockets = {}
+
+function classPermissionUpdate(classCode = socket.request.session.class) {
     try {
-        logger.log('info', `[updateClassPermissions] classCode=(${classCode})`)
+        logger.log('info', `[classPermissionUpdate] classCode=(${classCode})`)
 
         let classData = classInformation[classCode]
         let cpPermissions = Math.min(
@@ -19,9 +26,9 @@ function updateClassPermissions(classCode = socket.request.session.class) {
     }
 }
 
-function updateVirtualBar(classCode = socket.request.session.class) {
+function virtualBarUpdate(classCode = socket.request.session.class) {
     try {
-        logger.log('info', `[updateVirtualBar] classCode=(${classCode})`)
+        logger.log('info', `[virtualBarUpdate] classCode=(${classCode})`)
 
         if (!classCode) return
         if (classCode == 'noClass') return
@@ -65,7 +72,7 @@ function updateVirtualBar(classCode = socket.request.session.class) {
             }
         }
 
-        logger.log('verbose', `[updateVirtualBar] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+        logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
         let totalResponses = 0;
         let totalResponders = 0
@@ -412,8 +419,8 @@ function logout(socket) {
             delete classInformation[classCode].students[username]
             socket.leave(`class-${classCode}`)
             socket.emit('reload')
-            updateClassPermissions(classCode)
-            updateVirtualBar(classCode)
+            classPermissionUpdate(classCode)
+            virtualBarUpdate(classCode)
 
             database.get(
                 'SELECT * FROM classroom WHERE owner=? AND key=?',
@@ -685,8 +692,14 @@ function timer(sound, active) {
 }
 
 module.exports = {
-    updateClassPermissions,
-    updateVirtualBar,
+    // Socket information
+    runningTimers,
+    rateLimits,
+    userSockets,
+
+    // Functions
+    classPermissionUpdate,
+    virtualBarUpdate,
     pollUpdate,
     modeUpdate,
     quizUpdate,

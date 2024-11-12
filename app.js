@@ -10,11 +10,7 @@ const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PER
 const { classInformation, Classroom } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
 const { initSocketRoutes, advancedEmitToClass, managerUpdate } = require("./sockets/init.js")
-const { createSocketServer } = require('./modules/socket.js')
-
-const app = express()
-const http = require('http').createServer(app)
-const io = createSocketServer(http)
+const { app, io, http } = require('./modules/webServer.js')
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
