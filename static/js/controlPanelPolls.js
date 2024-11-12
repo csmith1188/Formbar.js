@@ -833,16 +833,21 @@ document.addEventListener('click', (event) => {
 	}
 })
 
+var time = document.getElementById('inputtedTime')
+var sound = document.getElementById('playSound')
 //Make the code above work
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
-	var time = document.getElementById('inputtedTime')
-	var sound = document.getElementById('playSound')
-	timerButton.hidden = true
-	time.hidden = true
-	sound.hidden = true
-	timerStopButton.hidden = false
-	socket.emit("timer", time.value, true, sound.checked)
+	if (time.value <= 0) {
+		alert('Please enter a time greater than 0')
+	} else {
+		socket.emit("timer", time.value, true, sound.checked)
+		timerButton.hidden = true
+		time.hidden = true
+		sound.hidden = true
+		timerStopButton.hidden = false
+		console.log(time.value)
+	}
 })
 
 var timerStopButton = document.getElementById('timerStopButton')
@@ -855,7 +860,6 @@ timerStopButton.addEventListener('click', function () {
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
-
 //If there is an active timer after refreshing the page, show the stop button
 socket.emit('timerOn')
 socket.on('timerOn', function (time) {

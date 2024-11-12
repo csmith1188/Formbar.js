@@ -195,8 +195,9 @@
 					let deleteUserButton = document.createElement("button")
 					deleteUserButton.className = 'deleteUser quickButton'
 					deleteUserButton.setAttribute("data-userid", userData.id)
-					deleteUserButton.onclick = (event) => {
-						socket.emit('deleteUser', userData.id)
+					deleteUserButton.onclick = (event)=>{
+						if (confirm("Are you sure you want to delete this user?")) {
+						socket.emit('deleteUser', { id: userData.id })
 					}
 					deleteUserButton.innerText = "Delete User"
 					newUser.appendChild(deleteUserButton)
