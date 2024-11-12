@@ -75,7 +75,7 @@ function generateColors(amount) {
 }
 
 module.exports = {
-    run(socket) {
+    run(socket, socketUpdates) {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
         socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
             try {
@@ -148,9 +148,9 @@ module.exports = {
 
                 logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
 
-                pollUpdate()
-                updateVirtualBar()
-                updateClassPermissions()
+                socketUpdates.pollUpdate()
+                socketUpdates.updateVirtualBar()
+                socketUpdates.updateClassPermissions()
                 socket.emit('startPoll')
             } catch (err) {
                 logger.log('error', err.stack);

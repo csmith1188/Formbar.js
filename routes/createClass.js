@@ -3,8 +3,8 @@ const { classInformation, Classroom } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { TEACHER_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
-const { setClassOfApiSockets } = require("../sockets/init")
+const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
+const { setClassOfApiSockets } = require("../modules/socketUpdates")
 
 module.exports = {
     run(app) {

@@ -5,7 +5,7 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 
 module.exports = {
-    run(socket) {
+    run(socket, socketUpdates) {
         // Sends a help ticket
         socket.on('help', (reason) => {
             try {
@@ -25,7 +25,7 @@ module.exports = {
 
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`)
 
-                updateClassPermissions()
+                socketUpdates.updateClassPermissions()
             } catch (err) {
                 logger.log('error', err.stack)
             }

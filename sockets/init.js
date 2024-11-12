@@ -5,9 +5,10 @@ const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
 const { GUEST_PERMISSIONS, TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_SETTINGS } = require("../modules/permissions");
 const { settings } = require("../modules/config");
-const { ipUpdate, getOwnedClasses, runningTimers, rateLimits, userSockets, virtualBarUpdate } = require("../modules/socketUpdates");
+const { runningTimers, rateLimits, userSockets, SocketUpdates, advancedEmitToClass, runQuery } = require("../modules/socketUpdates");
 const { io } = require("../modules/webServer");
 const fs = require("fs");
+const { setClassOfApiSockets } = require("../modules/socketUpdates");
 
 let currentPoll = 0
 
@@ -30,15 +31,6 @@ function camelCaseToNormal(str) {
 	let result = str.replace(/([A-Z])/g, " $1")
 	result = result.charAt(0).toUpperCase() + result.slice(1)
 	return result
-}
-
-function runQuery(query, params) {
-	return new Promise((resolve, reject) => {
-		database.run(query, params, (err) => {
-			if (err) reject(new Error(err))
-			else resolve()
-		})
-	})
 }
 
 // Socket.io functions
@@ -67,66 +59,10 @@ async function managerUpdate() {
 	io.emit('managerUpdate', users, classrooms)
 }
 
-/**
-	 * Emits an event to sockets based on user permissions
-	 * @param {string} event - The event to emit
-	 * @param {string} classCode - The code of the class
-	 * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
-	 * @param  {...any} data - Additional data to emit with the event
-	 */
-async function advancedEmitToClass(event, classCode, options, ...data) {
-	let classData = classInformation[classCode]
-
-	let sockets = await io.in(`class-${classCode}`).fetchSockets()
-
-	for (let socket of sockets) {
-		let user = classData.students[socket.request.session.username]
-		let hasAPI = false
-
-		if (!user) continue
-
-		if (options.permissions && user.permissions < options.permissions) continue
-		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
-		if (options.username && user.username != options.username) continue
-
-		for (let room of socket.rooms) {
-			if (room.startsWith('api-')) {
-				hasAPI = true
-				break
-			}
-		}
-		if (options.api == true && !hasAPI) continue
-		if (options.api == false && hasAPI) continue
-
-		socket.emit(event, ...data)
-	}
-}
-
-/**
- * Sets the class code for all sockets in a specific API.
- * If no class code is provided, the default value is 'noClass'.
- *
- * @param {string} api - The API identifier.
- * @param {string} [classCode='noClass'] - The class code to set.
- */
-async function setClassOfApiSockets(api, classCode) {
-	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classCode=(${classCode})`);
-
-	const sockets = await io.in(`api-${api}`).fetchSockets()
-	for (let socket of sockets) {
-		socket.leave(`class-${socket.request.session.class}`)
-
-		socket.request.session.class = classCode || 'noClass'
-		socket.request.session.save()
-
-		socket.join(`class-${socket.request.session.class}`)
-		socket.emit('setClass', socket.request.session.class)
-	}
-}
-
 // Handles the websocket communications
 function initSocketRoutes() {
     io.on('connection', async (socket) => {
+        const socketUpdates = new SocketUpdates(socket);
         try {
             const { api } = socket.request.headers
 
@@ -170,7 +106,7 @@ function initSocketRoutes() {
             }
         } catch (err) {
             logger.log('error', err.stack);
-        }        
+        }
 
         // Authentication for users and plugins to connect to formbar websockets
         // The user must be logged in order to connect to websockets
@@ -322,7 +258,7 @@ function initSocketRoutes() {
             }
 
             const route = require(`./${socketRouteFile}`);
-            route.run(socket);
+            route.run(socket, socketUpdates);
         }
 
         // /poll websockets for updating the database
@@ -373,8 +309,8 @@ function initSocketRoutes() {
                 }
                 logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
 
-                classPermissionUpdate()
-                virtualBarUpdate()
+                socketUpdates.classPermissionUpdate()
+                socketUpdates.virtualBarUpdate()
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -383,7 +319,7 @@ function initSocketRoutes() {
         // End the current poll. Does not take any arguments
         socket.on('clearPoll', async () => {
             try {
-                await clearPoll();
+                await socketUpdates.clearPoll();
                 //adds data to the previous poll answers table upon clearing the poll
                 for (var student of Object.values(classInformation[socket.request.session.class].students)) {
                     if (student.classPermissions != 5) {
@@ -407,9 +343,9 @@ function initSocketRoutes() {
                     }
                 }
 
-                pollUpdate();
-                virtualBarUpdate();
-                classPermissionUpdate();
+                socketUpdates.pollUpdate();
+                socketUpdates.virtualBarUpdate();
+                socketUpdates.classPermissionUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -417,9 +353,9 @@ function initSocketRoutes() {
 
         socket.on('endPoll', async () => {
             try {
-                await endPoll();
-                pollUpdate();
-                classPermissionUpdate();
+                await socketUpdates.endPoll();
+                socketUpdates.pollUpdate();
+                socketUpdates.classPermissionUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -427,38 +363,38 @@ function initSocketRoutes() {
 
         socket.on('pollUpdate', () => {
             logger.log('info', `[pollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-            pollUpdate()
+            socketUpdates.pollUpdate()
         })
 
         socket.on('modeUpdate', () => {
             logger.log('info', `[modeUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            modeUpdate()
+            socketUpdates.modeUpdate()
         })
 
         socket.on('quizUpdate', () => {
             logger.log('info', `[quizUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            quizUpdate()
+            socketUpdates.quizUpdate()
         })
 
         socket.on('lessonUpdate', () => {
             logger.log('info', `[lessonUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            lessonUpdate()
+            socketUpdates.lessonUpdate()
         })
 
         // Sends poll and student response data to client side virtual bar
         socket.on('vbUpdate', () => {
             logger.log('info', `[virtualBarUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            virtualBarUpdate()
+            socketUpdates.virtualBarUpdate()
         })
 
         socket.on('customPollUpdate', () => {
             logger.log('info', `[customPollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            customPollUpdate(socket.request.session.username)
+            socketUpdates.customPollUpdate(socket.request.session.username)
         })
 
         socket.on('savePoll', (poll, id) => {
@@ -492,7 +428,7 @@ function initSocketRoutes() {
                                     if (err) throw err
 
                                     socket.emit('message', 'Poll saved successfully!')
-                                    customPollUpdate(socket.request.session.username)
+                                    socketUpdates.customPollUpdate(socket.request.session.username)
                                 } catch (err) {
                                     logger.log('error', err.stack);
                                 }
@@ -524,7 +460,7 @@ function initSocketRoutes() {
 
                                     classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
                                     socket.emit('message', 'Poll saved successfully!')
-                                    customPollUpdate(socket.request.session.username)
+                                    socketUpdates.customPollUpdate(socket.request.session.username)
                                 } catch (err) {
                                     logger.log('error', err.stack);
                                 }
@@ -597,8 +533,9 @@ function initSocketRoutes() {
                                     updatePolls = true
                                 }
 
-                                if (updatePolls)
-                                    customPollUpdate(user.username)
+                                if (updatePolls) {
+                                    socketUpdates.customPollUpdate(user.username)
+                                }
                             }
                         }
 
@@ -623,7 +560,7 @@ function initSocketRoutes() {
                         if (err) throw err
 
                         for (let userSocket of Object.values(userSockets)) {
-                            customPollUpdate(userSocket.request.session.username)
+                            socketUpdates.customPollUpdate(userSocket.request.session.username)
                         }
                     } catch (err) {
                         logger.log('error', err.stack);
@@ -693,7 +630,7 @@ function initSocketRoutes() {
 
                                                         classInformation[classCode].students[user.username].sharedPolls.push(pollId)
 
-                                                        customPollUpdate(username)
+                                                        socketUpdates.customPollUpdate(username)
                                                     } catch (err) {
                                                         logger.log('error', err.stack);
                                                     }
@@ -762,7 +699,7 @@ function initSocketRoutes() {
 
                                                 let sharedPolls = classInformation[classCode].students[user.username].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-                                                customPollUpdate(user.username)
+                                                socketUpdates.customPollUpdate(user.username)
                                             } catch (err) {
                                                 logger.log('error', err.stack);
                                             }
@@ -842,7 +779,7 @@ function initSocketRoutes() {
 
                                                         classInformation[classCode].sharedPolls.push(pollId)
                                                         for (let username of Object.keys(classInformation[classCode].students)) {
-                                                            customPollUpdate(username)
+                                                            socketUpdates.customPollUpdate(username)
                                                         }
                                                     } catch (err) {
                                                         logger.log('error', err.stack)
@@ -882,7 +819,7 @@ function initSocketRoutes() {
 
                 logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
 
-                classPermissionUpdate()
+                socketUpdates.classPermissionUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -900,8 +837,8 @@ function initSocketRoutes() {
                 logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[username])})`)
 
                 if (breakApproval) io.to(`user-${username}`).emit('break')
-                classPermissionUpdate()
-                virtualBarUpdate()
+                socketUpdates.classPermissionUpdate()
+                socketUpdates.virtualBarUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -917,8 +854,8 @@ function initSocketRoutes() {
 
                 logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
 
-                classPermissionUpdate()
-                virtualBarUpdate()
+                socketUpdates.classPermissionUpdate()
+                socketUpdates.virtualBarUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -931,10 +868,10 @@ function initSocketRoutes() {
                 logger.log('info', `[classKickUser] username=(${username})`)
 
                 const classCode = socket.request.session.class
-                classKickUser(username, classCode)
+                socketUpdates.classKickUser(username, classCode)
+                socketUpdates.classPermissionUpdate(classCode)
+                socketUpdates.virtualBarUpdate(classCode)
                 advancedEmitToClass('leaveSound', classCode, { api: true })
-                classPermissionUpdate(classCode)
-                virtualBarUpdate(classCode)
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -946,10 +883,10 @@ function initSocketRoutes() {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classCode = socket.request.session.class
-                classKickStudents(classCode)
+                socketUpdates.classKickStudents(classCode)
+                socketUpdates.classPermissionUpdate(classCode)
+                socketUpdates.virtualBarUpdate(classCode)
                 advancedEmitToClass('kickStudentsSound', classCode, { api: true })
-                classPermissionUpdate(classCode)
-                virtualBarUpdate(classCode)
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -962,10 +899,10 @@ function initSocketRoutes() {
                 const userId = socket.request.session.userId
                 const username = socket.request.session.username
                 const classCode = socket.request.session.class
-                classKickUser(username, classCode)
-                advancedEmitToClass('leaveSound', classCode, { api: true })
-                classPermissionUpdate(classCode)
-                virtualBarUpdate(classCode)
+                socketUpdates.classKickUser(username, classCode)
+                socketUpdates.advancedEmitToClass('leaveSound', classCode, { api: true })
+                socketUpdates.classPermissionUpdate(classCode)
+                socketUpdates.virtualBarUpdate(classCode)
 
                 database.get(
                     'SELECT * FROM classroom WHERE owner=? AND key=?',
@@ -984,7 +921,7 @@ function initSocketRoutes() {
             try {
                 logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                logout(socket)
+                socketUpdates.logout(socket)
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -1001,8 +938,11 @@ function initSocketRoutes() {
                     'SELECT * FROM classroom WHERE owner=? AND key=?',
                     [userId, classCode],
                     (err, classroom) => {
-                        if (err) logger.log('error', err.stack)
-                        else if (classroom) endClass(classroom.key)
+                        if (err) {
+                            logger.log('error', err.stack)
+                        } else if (classroom) {
+                            socketUpdates.endClass(classroom.key)
+                        }
                     }
                 )
             } catch (err) {
@@ -1027,7 +967,7 @@ function initSocketRoutes() {
                             database.run('DELETE FROM poll_history WHERE class=?', classroom.id)
                         }
 
-                        getOwnedClasses(socket.request.session.username)
+                        socketUpdates.getOwnedClasses(socket.request.session.username)
                     } catch (err) {
                         logger.log('error', err.stack)
                     }
@@ -1045,7 +985,7 @@ function initSocketRoutes() {
         socket.on('cpUpdate', () => {
             logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            classPermissionUpdate();
+            socketUpdates.classPermissionUpdate();
         })
 
         // Displays previous polls
@@ -1134,15 +1074,15 @@ function initSocketRoutes() {
                         )
                     }
 
-                    pollUpdate()
-                    modeUpdate()
-                    quizUpdate()
-                    lessonUpdate()
+                    socketUpdates.pollUpdate()
+                    socketUpdates.modeUpdate()
+                    socketUpdates.quizUpdate()
+                    socketUpdates.lessonUpdate()
                 } else {
                     classInformation[socket.request.session.class].currentStep = 0
                 }
 
-                classPermissionUpdate()
+                socketUpdates.classPermissionUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -1158,7 +1098,7 @@ function initSocketRoutes() {
 
                 logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation[socket.request.session.class].students[student])})`)
 
-                classPermissionUpdate()
+                socketUpdates.classPermissionUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -1174,7 +1114,7 @@ function initSocketRoutes() {
 
                 logger.log('verbose', `[modechange] classData=(${classInformation[socket.request.session.class]})`)
 
-                modeUpdate()
+                socketUpdates.modeUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -1183,7 +1123,7 @@ function initSocketRoutes() {
         socket.on('pluginUpdate', () => {
             logger.log('info', `[pluginUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            pluginUpdate()
+            socketUpdates.pluginUpdate()
         })
 
         socket.on('changePlugin', (id, name, url) => {
@@ -1196,14 +1136,20 @@ function initSocketRoutes() {
                         'UPDATE plugins set name=? WHERE id=?',
                         [name, id],
                         (err) => {
-                            if (err) logger.log('error', err)
-                            else pluginUpdate()
+                            if (err) {
+                                logger.log('error', err)
+                            } else {
+                                socketUpdates.pluginUpdate()
+                            }
                         }
                     )
                 } else if (url) {
                     database.run('UPDATE plugins set url=? WHERE id=?', [url, id], (err) => {
-                        if (err) logger.log('error', err)
-                        else pluginUpdate()
+                        if (err) {
+                            logger.log('error', err)
+                        } else {
+                            socketUpdates.pluginUpdate()
+                        }
                     })
                 } else logger.log('critical', 'changePlugin called without name or url')
             } catch (err) {
@@ -1227,7 +1173,7 @@ function initSocketRoutes() {
                                 'INSERT INTO plugins(name, url, classId) VALUES(?, ?, ?)',
                                 [name, url, classData.id]
                             )
-                            pluginUpdate()
+                            socketUpdates.pluginUpdate()
                         } catch (err) {
                             logger.log('error', err.stack)
                         }
@@ -1244,7 +1190,7 @@ function initSocketRoutes() {
                 logger.log('info', `[removePlugin] id=(${id})`)
 
                 database.run('DELETE FROM plugins WHERE id=?', [id])
-                pluginUpdate()
+                socketUpdates.pluginUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -1254,7 +1200,7 @@ function initSocketRoutes() {
             logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
             logger.log('info', `[getOwnedClasses] username=(${username})`)
 
-            getOwnedClasses(username)
+            socketUpdates.getOwnedClasses(username)
         })
 
         // sends the class code of the class a user is in
@@ -1300,7 +1246,7 @@ function initSocketRoutes() {
         })
 
         socket.on('classBannedUsersUpdate', () => {
-            classBannedUsersUpdate()
+            socketUpdates.classBannedUsersUpdate()
         })
 
         socket.on('classBanUser', (user) => {
@@ -1333,10 +1279,10 @@ function initSocketRoutes() {
                         if (classInformation[socket.request.session.class].students[user])
                             classInformation[socket.request.session.class].students[user].classPermissions = 0
 
-                        classKickUser(user)
+                        socketUpdates.classKickUser(user)
+                        socketUpdates.classBannedUsersUpdate()
+                        socketUpdates.classPermissionUpdate()
                         advancedEmitToClass('leaveSound', classCode, { api: true })
-                        classBannedUsersUpdate()
-                        classPermissionUpdate()
                         socket.emit('message', `Banned ${user}`)
                     } catch (err) {
                         logger.log('error', err.stack)
@@ -1379,7 +1325,7 @@ function initSocketRoutes() {
                         if (classInformation[socket.request.session.class].students[user])
                             classInformation[socket.request.session.class].students[user].permissions = 1
 
-                        classBannedUsersUpdate()
+                        socketUpdates.classBannedUsersUpdate()
                         socket.emit('message', `Unbanned ${user}`)
                     } catch (err) {
                         logger.log('error', err.stack)
@@ -1404,7 +1350,7 @@ function initSocketRoutes() {
                         if (err) throw err
 
                         logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
-                        classPermissionUpdate()
+                        socketUpdates.classPermissionUpdate()
                     } catch (err) {
                         logger.log('error', err.stack)
                     }
@@ -1431,7 +1377,7 @@ function initSocketRoutes() {
                 }
 
                 if (userSockets[user.username]) {
-                    logout(userSockets[user.username])
+                    socketUpdates.logout(userSockets[user.username])
                 }
 
                 try {
@@ -1460,7 +1406,7 @@ function initSocketRoutes() {
         })
 
         socket.on('ipUpdate', () => {
-            ipUpdate(null, socket.request.session.username)
+            socketUpdates.ipUpdate(null, socket.request.session.username)
         })
 
         socket.on('changeIp', (type, id, ip) => {
@@ -1785,7 +1731,7 @@ function initSocketRoutes() {
 
                                 classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
                                 socket.emit('message', 'Poll saved successfully!')
-                                customPollUpdate(socket.request.session.username)
+                                socketUpdates.customPollUpdate(socket.request.session.username)
                                 socket.emit("classPollSave", nextPollId);
                             } catch (err) {
                                 logger.log('error', err.stack);
@@ -1811,7 +1757,7 @@ function initSocketRoutes() {
         })
 
         socket.on("timer", (startTime, active, sound) => {
-            //This handles the server side timer
+            // This handles the server side timer
             try {
                 let classData = classInformation[socket.request.session.class];
 
@@ -1822,18 +1768,19 @@ function initSocketRoutes() {
                 classData.timer.active = active
                 classData.timer.sound = sound
 
-                classPermissionUpdate(socket.request.session.class)
+                socketUpdates.classPermissionUpdate()
                 if (active) {
-                    //run the function once instantly
-                    timer(sound, active)
-                    //save a clock in the class data, that way it saves when the page is refreshed
-                    runningTimers[socket.request.session.class] = setInterval(() => timer(sound, active), 1000);
+                    // Run the function once instantly
+                    socketUpdates.timer(sound, active)
+                    
+                    // Save a clock in the class data, which will saves when the page is refreshed
+                    runningTimers[socket.request.session.class] = setInterval(() => socketUpdates.timer(sound, active), 1000);
                 } else {
-                    //if the timer is not active, clear the interval
+                    // If the timer is not active, clear the interval
                     clearInterval(runningTimers[socket.request.session.class]);
                     runningTimers[socket.request.session.class] = null;
 
-                    timer(sound, active)
+                    socketUpdates.timer(sound, active)
                 }
             } catch (err) {
                 logger.log("error", err.stack);
@@ -1849,8 +1796,5 @@ function initSocketRoutes() {
 
 module.exports = {
     managerUpdate,
-    advancedEmitToClass,
-    setClassOfApiSockets,
-
     initSocketRoutes
 }

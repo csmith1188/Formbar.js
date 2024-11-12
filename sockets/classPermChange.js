@@ -5,7 +5,7 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 
 module.exports = {
-    run(socket) {
+    run(socket, socketUpdates) {
         // Changes permission of user. Takes which user and the new permission level
         socket.on('classPermChange', (user, newPerm) => {
             try {

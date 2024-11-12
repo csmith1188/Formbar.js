@@ -5,7 +5,7 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 
 module.exports = {
-    run(socket) {
+    run(socket, socketUpdates) {
         socket.on('permChange', async (username, newPerm) => {
             try {
                 newPerm = Number(newPerm)
@@ -19,11 +19,8 @@ module.exports = {
                 if (classCode) {
                     classInformation[classCode].students[username].permissions = newPerm
 
-                    if (
-                        classInformation[classCode].students[username].permissions < TEACHER_PERMISSIONS &&
-                        Object.keys(classInformation[classCode].students)[0] == username
-                    ) {
-                        endClass(classCode)
+                    if (classInformation[classCode].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation[classCode].students)[0] == username) {
+                        socketUpdates.endClass(classCode)
                     }
 
                     io.to(`user-${username}`).emit('reload')

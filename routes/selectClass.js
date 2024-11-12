@@ -4,7 +4,7 @@ const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { BANNED_PERMISSIONS } = require("../modules/permissions")
-const { setClassOfApiSockets, advancedEmitToClass } = require("../sockets/init")
+const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socketUpdates")
 
 function joinClass(username, code) {
 	return new Promise((resolve, reject) => {
@@ -176,7 +176,7 @@ module.exports = {
                 )
 
                 advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation[classCode])
-        
+
                 req.session.class = classCode
 
                 setClassOfApiSockets(classInformation[classCode].students[req.session.username].API, classCode)

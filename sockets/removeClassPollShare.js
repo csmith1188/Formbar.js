@@ -6,7 +6,7 @@ const { logger } = require("../modules/logger")
 const { customPollUpdate, getPollShareIds } = require("../modules/socketUpdates")
 
 module.exports = {
-    run(socket) {
+    run(socket, socketUpdates) {
         socket.on('removeClassPollShare', (pollId, classId) => {
             try {
                 logger.log('info', `[removeClassPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -47,7 +47,7 @@ module.exports = {
                                                 let sharedPolls = classInformation[classroom.key].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
                                                 for (let username of Object.keys(classInformation[classroom.key].students)) {
-                                                    customPollUpdate(username)
+                                                    socketUpdates.customPollUpdate(username)
                                                 }
                                             } catch (err) {
                                                 logger.log('error', err.stack);
