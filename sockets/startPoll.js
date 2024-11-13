@@ -1,6 +1,5 @@
 const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
-const { pollUpdate, updateVirtualBar, updateClassPermissions } = require("../modules/socketUpdates")
 
 // Functions
 // General functions
@@ -82,7 +81,7 @@ module.exports = {
                 logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
-                await clearPoll()
+                await socketUpdates.clearPoll()
                 let generatedColors = generateColors(resNumber)
                 logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
                 if (generatedColors instanceof Error) throw generatedColors
@@ -141,7 +140,7 @@ module.exports = {
                 classInformation[socket.request.session.class].poll.prompt = pollPrompt
                 classInformation[socket.request.session.class].poll.multiRes = multiRes
 
-                for (var key in classInformation[socket.request.session.class].students) {
+                for (const key in classInformation[socket.request.session.class].students) {
                     classInformation[socket.request.session.class].students[key].pollRes.buttonRes = ''
                     classInformation[socket.request.session.class].students[key].pollRes.textRes = ''
                 }
@@ -149,8 +148,8 @@ module.exports = {
                 logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
 
                 socketUpdates.pollUpdate()
-                socketUpdates.updateVirtualBar()
-                socketUpdates.updateClassPermissions()
+                socketUpdates.virtualBarUpdate()
+                socketUpdates.classPermissionUpdate()
                 socket.emit('startPoll')
             } catch (err) {
                 logger.log('error', err.stack);

@@ -4,7 +4,7 @@ const { classInformation } = require("./class");
 const { settings } = require("./config");
 const { database } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("./permissions");
+const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
 
 const runningTimers = {};
@@ -565,7 +565,7 @@ class SocketUpdates {
     }
     
     async clearPoll(classCode = this.socket.request.session.class) {
-        if (classInformation[classCode].poll.status) await endPoll()
+        if (classInformation[classCode].poll.status) await this.endPoll()
     
         classInformation[classCode].poll.responses = {};
         classInformation[classCode].poll.prompt = "";
