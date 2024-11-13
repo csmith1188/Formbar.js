@@ -3,6 +3,7 @@ const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { io } = require("../modules/webServer")
 
 module.exports = {
     run(socket, socketUpdates) {
