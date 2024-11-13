@@ -3,13 +3,12 @@ const express = require('express')
 const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
 const fs = require("fs")
-const { isAuthenticated, isLoggedIn, permCheck } = require('./modules/authentication.js')
 const { logger } = require('./modules/logger.js')
-const { logNumbers, settings } = require('./modules/config.js')
+const { logNumbers } = require('./modules/config.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_SETTINGS, GLOBAL_SOCKET_PERMISSIONS } = require('./modules/permissions.js')
-const { classInformation, Classroom } = require('./modules/class.js')
-const { database } = require('./modules/database.js')
-const { initSocketRoutes, advancedEmitToClass, managerUpdate } = require("./sockets/init.js")
+const { classInformation } = require('./modules/class.js')
+const { database, getAll } = require('./modules/database.js')
+const { initSocketRoutes } = require("./sockets/init.js")
 const { app, io, http } = require('./modules/webServer.js')
 
 // Set EJS as our view engine
@@ -64,8 +63,9 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
-	if (req.session.class)
+	if (req.session.class) {
 		res.locals.currentUser = classInformation[req.session.class].students[req.session.username]
+	}
 
 	res.locals = {
 		...res.locals,
@@ -79,16 +79,6 @@ app.use((req, res, next) => {
 
 	next()
 })
-
-function getAll(query, params) {
-	return new Promise((resolve, reject) => {
-		database.all(query, params, (err, rows) => {
-			if (err) reject(new Error(err))
-			else resolve(rows)
-		})
-	})
-}
-
 
 async function getIpAccess(type) {
 	const ipList = await getAll(`SELECT id, ip FROM ip_${type}`)

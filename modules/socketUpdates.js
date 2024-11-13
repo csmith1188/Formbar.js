@@ -2,7 +2,7 @@
 
 const { classInformation } = require("./class");
 const { settings } = require("./config");
-const { database } = require("./database");
+const { database, getAll } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
@@ -10,6 +10,23 @@ const { io } = require("./webServer");
 const runningTimers = {};
 const rateLimits = {}
 const userSockets = {}
+let currentPoll = 0
+
+// Socket update events
+const PASSIVE_SOCKETS = [
+	'pollUpdate',
+	'modeUpdate',
+	'quizUpdate',
+	'lessonUpdate',
+	'managerUpdate',
+	'ipUpdate',
+	'vbUpdate',
+	'cpUpdate',
+	'pluginUpdate',
+	'customPollUpdate',
+	'classBannedUsersUpdate'
+]
+
 
 /**
 	 * Emits an event to sockets based on user permissions
@@ -68,13 +85,29 @@ async function setClassOfApiSockets(api, classCode) {
 	}
 }
 
-function runQuery(query, params) {
-	return new Promise((resolve, reject) => {
-		database.run(query, params, (err) => {
-			if (err) reject(new Error(err))
-			else resolve()
-		})
-	})
+async function managerUpdate() {
+    let [users, classrooms] = await Promise.all([
+        new Promise((resolve, reject) => {
+            database.all('SELECT id, username, permissions, displayName FROM users', (err, users) => {
+                if (err) reject(new Error(err))
+                else {
+                    users = users.reduce((tempUsers, tempUser) => {
+                        tempUsers[tempUser.username] = tempUser
+                        return tempUsers
+                    }, {})
+                    resolve(users)
+                }
+            })
+        }),
+        new Promise((resolve, reject) => {
+            database.get('SELECT * FROM classroom', (err, classrooms) => {
+                if (err) reject(new Error(err))
+                else resolve(classrooms)
+            })
+        })
+    ])
+
+    io.emit('managerUpdate', users, classrooms)
 }
 
 class SocketUpdates {
@@ -658,7 +691,7 @@ class SocketUpdates {
             logger.log('error', err.stack);
         }
     }
-    
+
     async deleteCustomPolls(userId) {
         try {
             const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner=?', userId)
@@ -772,10 +805,12 @@ module.exports = {
     runningTimers,
     rateLimits,
     userSockets,
+    currentPoll,
+    PASSIVE_SOCKETS,
 
     // Socket functions
-    runQuery,
     advancedEmitToClass,
     setClassOfApiSockets,
+    managerUpdate,
     SocketUpdates
 };

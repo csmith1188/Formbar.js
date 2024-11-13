@@ -1,3 +1,5 @@
+const { io } = require("./webServer")
+
 // This class is used to create a student to be stored in the sessions data
 class Student {
 	// Needs username, id from the database, and if permissions established already pass the updated value
