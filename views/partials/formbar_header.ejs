@@ -22,12 +22,12 @@
                       <a href="/plugins" class="headerTab">Plugins</a>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <button href="/" class="headerTab" onclick="if (confirm('Are you sure you want to leave the class?')){socket.emit('leaveClass')}">Leave Class</button>
+                          <button href="/" class="headerTab" title="Leave class" onclick="if (confirm('Are you sure you want to leave the class?')){socket.emit('leaveClass')}">Leave Class</button>
                           <% } %>
-                            <button href="/" id="logoutButton" onclick="if (confirm('Are you sure you want to logout?')){socket.emit('logout')}"><img id="logoutIcon" src="img/logout.svg"></button>
+                            <button href="/" id="logoutButton" onclick="if (confirm('Are you sure you want to logout?')){socket.emit('logout')}"><img id="logoutIcon" src="img/logout.svg" title="Logout"></button>
                             <% } %>
                               <p id="version">v 1.0.0</p>
-                              <button onclick="toggleTheme()" id="lmdmBtn"><img id="lmdmIcon"
+                              <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM"><img id="lmdmIcon"
                                   src="img/sun.svg"></button>
 </header>
 <script>

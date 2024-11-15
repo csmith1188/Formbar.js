@@ -255,7 +255,9 @@ dialog {
 	height: 45px;
 }
 
-#lmdmBtn:hover {}
+#lmdmBtn:hover {
+	
+}
 
 #lmdmIcon {
 	position: absolute;
@@ -312,6 +314,11 @@ a.headerTab {
 	width: 45px;
 	height: 45px;
 }
+
+#logoutButton:hover {
+	
+}
+
 
 #logoutIcon{
 	position: absolute;
