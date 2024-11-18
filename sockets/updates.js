@@ -59,5 +59,21 @@ module.exports = {
         socket.on('managerUpdate', () => {
             managerUpdate()
         })
+
+        // Changes the class mode
+        socket.on('modechange', (mode) => {
+            try {
+                logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[modechange] mode=(${mode})`)
+
+                classInformation[socket.request.session.class].mode = mode
+
+                logger.log('verbose', `[modechange] classData=(${classInformation[socket.request.session.class]})`)
+
+                socketUpdates.modeUpdate()
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
     }
 }

@@ -1,4 +1,5 @@
 const { classInformation } = require("../modules/class")
+const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { generateColors } = require("../modules/util")
 
@@ -158,6 +159,27 @@ module.exports = {
                         }
                     })
                 }
+            } catch (err) {
+                logger.log('error', err.stack);
+            }
+        })
+
+        socket.on('setPublicPoll', (pollId, value) => {
+            try {
+                logger.log('info', `[setPublicPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[setPublicPoll] pollId=(${pollId}) value=(${value})`)
+
+                database.run('UPDATE custom_polls set public=? WHERE id=?', [value, pollId], (err) => {
+                    try {
+                        if (err) throw err
+
+                        for (let userSocket of Object.values(userSockets)) {
+                            socketUpdates.customPollUpdate(userSocket.request.session.username)
+                        }
+                    } catch (err) {
+                        logger.log('error', err.stack);
+                    }
+                })
             } catch (err) {
                 logger.log('error', err.stack);
             }

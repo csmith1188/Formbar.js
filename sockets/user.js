@@ -98,5 +98,15 @@ module.exports = {
                 socket.emit('message', 'There was a server error try again.')
             }
         })
+
+        socket.on('logout', () => {
+            try {
+                logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                socketUpdates.logout(socket)
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
     }
 }
