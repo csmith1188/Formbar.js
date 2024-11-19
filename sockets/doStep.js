@@ -19,7 +19,6 @@ module.exports = {
                     // Creates a poll based on the step data
                     if (classInformation[socket.request.session.class].steps[index].type == 'poll') {
                         classInformation[socket.request.session.class].mode = 'poll'
-
                         if (classInformation[socket.request.session.class].poll.status == true) {
                             classInformation[socket.request.session.class].poll.responses = {}
                             classInformation[socket.request.session.class].poll.prompt = ''
@@ -27,6 +26,7 @@ module.exports = {
                         };
 
                         classInformation[socket.request.session.class].poll.status = true
+                        
                         // Creates an object for every answer possible the teacher is allowing
                         for (let i = 0; i < classInformation[socket.request.session.class].steps[index].responses; i++) {
                             if (classInformation[socket.request.session.class].steps[index].labels[i] == '' || classInformation[socket.request.session.class].steps[index].labels[i] == null) {
@@ -38,17 +38,19 @@ module.exports = {
                         }
                         classInformation[socket.request.session.class].poll.textRes = false
                         classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
-                        // Creates a new quiz based on step data
                     } else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+                        // Creates a new quiz based on step data
                         classInformation[socket.request.session.class].mode = 'quiz'
                         questions = classInformation[socket.request.session.class].steps[index].questions
-                        let quiz = new Quiz(questions.length, 100)
+                        
+                        const quiz = new Quiz(questions.length, 100)
                         quiz.questions = questions
                         classInformation[socket.request.session.class].quiz = quiz
-                        // Creates lesson based on step data
                     } else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
+                        // Creates lesson based on step data
                         classInformation[socket.request.session.class].mode = 'lesson'
-                        let lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
+                        
+                        const lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
                         classInformation[socket.request.session.class].lesson = lesson
                         database.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
                             [classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {
@@ -57,15 +59,17 @@ module.exports = {
                         )
                         classInformation[socket.request.session.class].poll.textRes = false
                         classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
-                        // Check this later, there's already a quiz if statement
                     } else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+                        // Check this later, there's already a quiz if statement
                         questions = classInformation[socket.request.session.class].steps[index].questions
-                        quiz = new Quiz(questions.length, 100)
+                        
+                        const quiz = new Quiz(questions.length, 100)
                         quiz.questions = questions
                         classInformation[socket.request.session.class].quiz = quiz
-                        // Check this later, there's already a lesson if statement
                     } else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
-                        let lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
+                        // Check this later, there's already a lesson if statement
+                        
+                        const lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
                         classInformation[socket.request.session.class].lesson = lesson
                         database.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
                             [classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {

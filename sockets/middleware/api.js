@@ -27,7 +27,6 @@ module.exports = {
 
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.class}`)
-
                                 socket.emit('setClass', socket.request.session.class)
 
                                 resolve()
@@ -37,7 +36,9 @@ module.exports = {
                         }
                     )
                 }).catch((err) => {
-                    if (err instanceof Error) throw err
+                    if (err instanceof Error) {
+                        throw err
+                    }
                 })
             } else if (socket.request.session.username) {
                 socket.join(`class-${socket.request.session.class}`)

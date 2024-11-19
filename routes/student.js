@@ -2,11 +2,11 @@ const { isAuthenticated, permCheck } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
-const { TEACHER_PERMISSIONS } = require("../modules/permissions")
 
 module.exports = {
     run(app) {
-        /* Student page, the layout is controlled by different "modes" to display different information.
+        /* 
+        Student page, the layout is controlled by different "modes" to display different information.
         There are currently 3 working modes
         Poll: For displaying a multiple choice or essay question
         Quiz: Displaying a quiz with questions that can be answered by the student
@@ -29,9 +29,10 @@ module.exports = {
                     classInformation[req.session.class].students[req.session.username].pollRes.buttonRes = answer
                 }
 
-                //Quiz Setup and Queries
-                /* Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
-
+                // Quiz Setup and Queries
+                /* 
+                Sets up the query parameters you can enter when on the student page. These return either a question by it's index or a question by a randomly generated index.
+                
                 formbar.com/students?question=random or formbar.com/students?question=[number] are the params you can enter at the current moment.
 
                 If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
@@ -87,7 +88,8 @@ module.exports = {
             }
         })
 
-        /* This is for when you send poll data via a post command or when you submit a quiz.
+        /* 
+        This is for when you send poll data via a post command or when you submit a quiz.
         If it's a poll it'll save your response to the student object and the database.
         - Riley R., May 24, 2023
         */

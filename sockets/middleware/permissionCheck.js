@@ -1,6 +1,6 @@
 const { classInformation } = require("../../modules/class")
 const { logger } = require("../../modules/logger")
-const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_SETTINGS } = require("../../modules/permissions")
+const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 
 module.exports = {
     order: 20,
@@ -32,9 +32,9 @@ module.exports = {
                     logger.log('info', '[socket permission check] Class socket permission check passed')
                     next()
                 } else if (
-                    CLASS_SOCKET_PERMISSION_SETTINGS[event] &&
-                    classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]] &&
-                    classInformation[classCode].students[username].classPermissions >= classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_SETTINGS[event]]
+                    CLASS_SOCKET_PERMISSION_MAPPER[event] &&
+                    classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
+                    classInformation[classCode].students[username].classPermissions >= classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
                 ) {
                     logger.log('info', '[socket permission check] Class socket permission settings check passed')
                     next()

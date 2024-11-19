@@ -1,4 +1,4 @@
-const { isAuthenticated, isLoggedIn, permCheck } = require("../modules/authentication")
+const { isLoggedIn, permCheck } = require("../modules/authentication")
 const { classInformation, Classroom } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -139,16 +139,18 @@ module.exports = {
                             classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
                             classroom.pollHistory = JSON.parse(classroom.pollHistory)
 
-                            if (classroom.tags) classroom.tags = classroom.tags.split(",");
-                            else classroom.tags = [];
+                            if (classroom.tags) {
+                                classroom.tags = classroom.tags.split(",");
+                            } else {
+                                classroom.tags = [];
+                            }
 
                             for (let poll of classroom.pollHistory) {
                                 poll.data = JSON.parse(poll.data)
                             }
 
-                            if (classroom.pollHistory[0]) {
-                                if (classroom.pollHistory[0].id == null)
-                                    classroom.pollHistory = null
+                            if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
+                                classroom.pollHistory = null
                             }
 
                             let makeClassStatus = await makeClass(
@@ -161,8 +163,9 @@ module.exports = {
                                 classroom.tags
                             )
 
-                            if (makeClassStatus instanceof Error) throw makeClassStatus
-
+                            if (makeClassStatus instanceof Error)  {
+                                throw makeClassStatus
+                            }
                             res.redirect('/')
                         } catch (err) {
                             logger.log('error', err.stack);

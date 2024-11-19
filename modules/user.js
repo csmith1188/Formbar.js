@@ -1,3 +1,8 @@
+const { classInformation } = require("./class")
+const { database } = require("./database")
+const { logger } = require("./logger")
+const { io } = require("./webServer")
+
 /**
  * Asynchronous function to get the current user's data.
  * @param {Object} req - The request object.
@@ -10,8 +15,10 @@ async function getUser(api) {
 
         // Get the username associated with the API key in the request headers
         let username = await getUsername(api)
+
         // If the username is an instance of Error, throw the error
         if (username instanceof Error) throw username
+        
         // If an error occurs, return the error
         if (username.error) return username
 
@@ -147,10 +154,10 @@ function getUserClass(username) {
 }
 
 /**
-		 * Asynchronous function to get the username associated with a given API key.
-		 * @param {string} api - The API key.
-		 * @returns {Promise<string|Object>} A promise that resolves to the username or an error object.
-		 */
+ * Asynchronous function to get the username associated with a given API key.
+ * @param {string} api - The API key.
+ * @returns {Promise<string|Object>} A promise that resolves to the username or an error object.
+ */
 async function getUsername(api) {
     try {
         // If no API key is provided, return an error

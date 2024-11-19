@@ -1,11 +1,9 @@
 // @TODO: Separate all of these into different routes
 
-const { database, runQuery } = require("../modules/database")
+const { database } = require("../modules/database")
 const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
-const { camelCaseToNormal } = require("../modules/util");
-const { CLASS_SOCKET_PERMISSIONS, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_SETTINGS } = require("../modules/permissions");
-const { userSockets, SocketUpdates, advancedEmitToClass, managerUpdate } = require("../modules/socketUpdates");
+const { SocketUpdates, advancedEmitToClass } = require("../modules/socketUpdates");
 const { io } = require("../modules/webServer");
 const fs = require("fs");
 
@@ -15,7 +13,7 @@ function initSocketRoutes() {
         const socketUpdates = new SocketUpdates(socket);
 
         // Import middleware
-        const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter(file => file.endsWith('.js'));
+        const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter(file => file.endsWith(".js"));
         const middlewares = socketMiddlewareFiles.map(file => require(`./middleware/${file}`));
         middlewares.sort((a, b) => a.order - b.order); // Sort the middleware functions by their order
         for (const middleware of middlewares) {

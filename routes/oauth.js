@@ -4,8 +4,10 @@ const { logger } = require("../modules/logger")
 
 module.exports = {
     run(app) {
-        /* This is what happens when the server tries to authenticate a user. It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as
-        a variable. */
+        /* 
+        This is what happens when the server tries to authenticate a user. 
+        It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as a variable. 
+        */
         app.get('/oauth', (req, res) => {
             try {
                 let redirectURL = req.query.redirectURL
@@ -30,11 +32,7 @@ module.exports = {
         app.post('/oauth', (req, res) => {
             try {
                 // It saves the username, password, and the redirectURL that is submitted.
-                const {
-                    username,
-                    password,
-                    redirectURL
-                } = req.body
+                const { username, password, redirectURL } = req.body
 
                 logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`)
@@ -46,6 +44,7 @@ module.exports = {
                     })
                     return
                 }
+
                 if (!password) {
                     res.render('pages/message', {
                         message: 'Please enter a password',
@@ -83,8 +82,9 @@ module.exports = {
 
                         userData.classPermissions = null
 
-                        if (classInformation[classCode] && classInformation[classCode].students[userData.username])
+                        if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
                             userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
+                        }
 
                         const token = jwt.sign({
                             id: userData.id,

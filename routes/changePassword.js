@@ -1,5 +1,3 @@
-// The page displaying the API key used when handling oauth2 requests from outside programs such as formPix
-
 const logger = require("../modules/logger");
 const { passwordRequest } = require("../modules/student");
 

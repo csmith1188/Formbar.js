@@ -149,8 +149,7 @@ module.exports = {
             }
         })
         
-        
-        //Adds user to a selected class, typically from the select class page
+        // Adds user to a selected class, typically from the select class page
         app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
             try {
                 let classCode = req.body.key.toLowerCase()
@@ -168,7 +167,6 @@ module.exports = {
                 }
         
                 let classData = classInformation[classCode]
-        
                 let cpPermissions = Math.min(
                     classData.permissions.controlPolls,
                     classData.permissions.manageStudents,
@@ -176,9 +174,7 @@ module.exports = {
                 )
 
                 advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation[classCode])
-
                 req.session.class = classCode
-
                 setClassOfApiSockets(classInformation[classCode].students[req.session.username].API, classCode)
         
                 res.redirect('/')

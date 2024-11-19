@@ -2,7 +2,6 @@ const { isAuthenticated, permCheck } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
-const { TEACHER_PERMISSIONS } = require("../modules/permissions")
 
 module.exports = {
     run(app) {
