@@ -1,553 +1,158 @@
 const express = require('express')
+const fs = require('fs')
 const router = express.Router()
 const { logger } = require('../modules/logger');
-const { database } = require('../modules/database')
-const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require('../modules/permissions');
-const { getUserClass } = require('../modules/student');
+const { GUEST_PERMISSIONS } = require('../modules/permissions');
+const { classInformation } = require('../modules/class');
+const { getUser } = require('../modules/user');
 
-function api(classInformation) {
-	try {
-		/**
-		 * Asynchronous function to get the users of a class.
-		 * @param {Object} user - The user object.
-		 * @param {string} key - The class key.
-		 * @returns {Promise|Object} A promise that resolves to the class users or an error object.
-		 */
-		async function getClassUsers(user, key) {
-			try {
-				// Get the class permissions of the user
-				let classPermissions = user.classPermissions
-
-				// Log the class code
-				logger.log('info', `[getClassUsers] classCode=(${key})`)
-
-				// Query the database for the users of the class
-				let dbClassUsers = await new Promise((resolve, reject) => {
-					database.all(
-						'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?',
-						[key],
-						(err, dbClassUsers) => {
-							try {
-								// If an error occurs, throw the error
-								if (err) throw err
-
-								// If no users are found, resolve the promise with an error object
-								if (!dbClassUsers) {
-									resolve({ error: 'class does not exist' })
-									return
-								}
-
-								// If users are found, resolve the promise with the users
-								resolve(dbClassUsers)
-							} catch (err) {
-								// If an error occurs, reject the promise with the error
-								reject(err)
-							}
-						}
-					)
-				})
-				// If an error occurs, return the error
-				if (dbClassUsers.error) return dbClassUsers
-
-				// Create an object to store the class users
-				let classUsers = {}
-				let cDClassUsers = {}
-				if (classInformation[key])
-					cDClassUsers = classInformation[key].students
-
-				// For each user in the class
-				for (let user of dbClassUsers) {
-					// Add the user to the class users object
-					classUsers[user.username] = {
-						loggedIn: false,
-						...user,
-						help: null,
-						break: null,
-						quizScore: null,
-						pogMeter: null
+module.exports = {
+	run(app) {
+		try {
+			// Checks to see if the user is authenticated
+			router.use(async (req, res, next) => {
+				try {
+					// Log the IP and session of the request
+					logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
+	
+					// Get the current user
+					let user = await getUser(req.headers.api)
+					// If the user is an instance of Error
+					if (user instanceof Error) {
+						// Respond with a server error message
+						res.status(500).json({ error: 'There was a server error try again.' })
+						
+						// Throw the error
+						throw user
 					}
 
-					// If the user is logged in
-					let cdUser = cDClassUsers[user.username]
-					if (cdUser) {
-						// Update the user's data with the data from the class
-						classUsers[user.username].loggedIn = true
-						classUsers[user.username].help = cdUser.help
-						classUsers[user.username].break = cdUser.break
-						classUsers[user.username].quizScore = cdUser.quizScore
-						classUsers[user.username].pogMeter = cdUser.pogMeter
-					}
+					// If the user has an error property
+					if (user.error) {
+						// Log the error
+						logger.log('info', user)
 
-					// If the user has mod permissions or lower
-					if (classPermissions <= MOD_PERMISSIONS) {
-						// Update the user's help and break data
-						if (classUsers[user.username].help)
-							classUsers[user.username].help = true
-						if (typeof classUsers[user.username].break == 'string')
-							classUsers[user.username].break = false
+						// Respond with the error
+						res.status(401).json({ error: user.error })
+						return
 					}
-
-					// If the user has student permissions or lower
-					if (classPermissions <= STUDENT_PERMISSIONS) {
-						// Remove the user's permissions, class permissions, help, break, quiz score, and pog meter data
-						delete classUsers[user.username].permissions
-						delete classUsers[user.username].classPermissions
-						delete classUsers[user.username].help
-						delete classUsers[user.username].break
-						delete classUsers[user.username].quizScore
-						delete classUsers[user.username].pogMeter
+	
+					// If the user exists
+					// Set the user in the session
+					if (user)
+						req.session.user = user
+	
+					// Log the authenticated user
+					logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
+	
+					// Call the next middleware function
+					next()
+				} catch (err) {
+					// Log any errors
+					logger.log('error', err.stack)
+				}
+			})
+	
+			// Middleware function to check API permissions.
+			router.use((req, res, next) => {
+				// Extract user details from the session
+				const username = req.session.user.username
+				const permissions = req.session.user.permissions
+				const classPermissions = req.session.user.classPermissions
+				const classCode = req.session.user.class
+				const urlPath = req.url
+	
+				// Log the request details
+				logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
+	
+				// If no URL is provided, return
+				if (!urlPath) return
+	
+				// Checks if url has a / in it and removes it from the string
+				if (urlPath.indexOf('/') != -1) {
+					urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
+				}
+	
+				// Check for ?(urlParams) and removes it from the string
+				if (urlPath.indexOf('?') != -1) {
+					urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+				}
+	
+				// If the URL starts with 'class/', extract the class code
+				if (urlPath.startsWith('class/')) {
+					classCode = urlPath.split('/')[1]
+				}
+	
+				// If the URL is 'me', proceed to the next middleware
+				if (urlPath == 'me') {
+					next()
+					return
+				}
+	
+				if (!classCode || classCode == 'noClass') {
+					res.status(404).json({ error: 'You are not in a class' })
+					return
+				}
+	
+				// If the class does not exist, return an error
+				if (!classInformation[classCode]) {
+					res.status(404).json({ error: 'Class not started' })
+					return
+				}
+	
+				// If the user is not in the class, return an error
+				if (!classInformation[classCode].students[username]) {
+					res.status(404).json({ error: 'You are not in this class.' })
+					return
+				}
+	
+				// If the URL ends with '/polls', proceed to the next middleware
+				if (urlPath.endsWith('/polls')) {
+					next()
+					return
+				}
+	
+				// If the user does not have sufficient permissions, return an error
+				if (permissions <= GUEST_PERMISSIONS || classPermissions <= GUEST_PERMISSIONS) {
+					res.status(403).json({ error: 'You do not have permission to access this page.' })
+					return
+				}
+	
+				// If all checks pass, proceed to the next middleware
+				next()
+			})
+	
+			// Check for multiple of the same query parameter
+			router.use((req, res, next) => {
+				let query = req.query
+	
+				for (let key in query) {
+					if (Array.isArray(query[key])) {
+						res.status(400).json({ error: `You can only have one ${key} parameter` })
+						return
 					}
 				}
+	
+				next()
+			})
+	
+			// Import API routes recursively
+			const loadRoutes = (directory) => {
+				const files = fs.readdirSync(`./routes/${directory}`);
+				files.forEach(file => {
+					const fullPath = `${directory}/${file}`;
+					if (fs.statSync(`./routes/${fullPath}`).isDirectory()) {
+						loadRoutes(fullPath);
+					} else if (file.endsWith('.js')) {
+						const route = require(fullPath);
+						route.run(app);
+					}
+				});
+			};
 
-				// Log the class users
-				logger.log('verbose', `[getClassUsers] classUsers=(${JSON.stringify(classUsers)})`)
-
-				// Return the class users
-				return classUsers
-			} catch (err) {
-				// If an error occurs, return the error
-				return err
-			}
+			loadRoutes("./api");
+			app.use("/api", router)
+		} catch (err) {
+			logger.log('error', err.stack)
 		}
-
-		/**
-		 * Function to get the poll responses in a class.
-		 * @param {Object} classData - The data of the class.
-		 * @returns {Object} An object containing the poll responses.
-		 */
-		function getPollResponses(classData) {
-			// Create an empty object to store the poll responses
-			let tempPolls = {}
-
-			// If the poll is not active, return an empty object
-			if (!classData.poll.status) return {}
-
-			// If there are no responses to the poll, return an empty object
-			if (Object.keys(classData.poll.responses).length == 0) return {}
-
-			// For each response in the poll responses
-			for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
-				// Add the response to the tempPolls object and initialize the count of responses to 0
-				tempPolls[resKey] = {
-					...resValue,
-					responses: 0
-				}
-			}
-
-			// For each student in the class
-			for (let student of Object.values(classData.students)) {
-				// If the student exists and has responded to the poll
-				if (
-					student &&
-					Object.keys(tempPolls).includes(student.pollRes.buttonRes)
-				)
-					// Increment the count of responses for the student's response
-					tempPolls[student.pollRes.buttonRes].responses++
-			}
-
-			// Return the tempPolls object
-			return tempPolls
-		}
-
-
-		// Checks to see if the user is authenticated
-		router.use(async (req, res, next) => {
-			try {
-				// Log the IP and session of the request
-				logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
-
-				// Get the current user
-				let user = await getUser(req.headers.api)
-				// If the user is an instance of Error
-				if (user instanceof Error) {
-					// Respond with a server error message
-					res.status(500).json({ error: 'There was a server error try again.' })
-					// Throw the error
-					throw user
-				}
-				// If the user has an error property
-				if (user.error) {
-					// Log the error
-					logger.log('info', user)
-					// Respond with the error
-					res.status(401).json({ error: user.error })
-					// End the function
-					return
-				}
-
-				// If the user exists
-				// Set the user in the session
-				if (user)
-					req.session.user = user
-
-				// Log the authenticated user
-				logger.log('info', `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`)
-
-				// Call the next middleware function
-				next()
-			} catch (err) {
-				// Log any errors
-				logger.log('error', err.stack)
-			}
-		})
-
-		// Middleware function to check API permissions.
-		router.use((req, res, next) => {
-			// Extract user details from the session
-			let username = req.session.user.username
-			let permissions = req.session.user.permissions
-			let classPermissions = req.session.user.classPermissions
-			let classCode = req.session.user.class
-
-			// Log the request details
-			logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
-
-			// If no URL is provided, return
-			if (!req.url) return
-
-			let urlPath = req.url
-			// Checks if url has a / in it and removes it from the string
-			if (urlPath.indexOf('/') != -1) {
-				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
-			}
-			// Check for ?(urlParams) and removes it from the string
-			if (urlPath.indexOf('?') != -1) {
-				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
-			}
-
-			// If the URL starts with 'class/', extract the class code
-			if (urlPath.startsWith('class/')) {
-				classCode = urlPath.split('/')[1]
-			}
-
-			// If the URL is 'me', proceed to the next middleware
-			if (urlPath == 'me') {
-				next()
-				return
-			}
-
-			if (!classCode || classCode == 'noClass') {
-				res.status(404).json({ error: 'You are not in a class' })
-				return
-			}
-
-			// If the class does not exist, return an error
-			if (!classInformation[classCode]) {
-				res.status(404).json({ error: 'Class not started' })
-				return
-			}
-
-			// If the user is not in the class, return an error
-			if (!classInformation[classCode].students[username]) {
-				res.status(404).json({ error: 'You are not in this class.' })
-				return
-			}
-
-			// If the URL ends with '/polls', proceed to the next middleware
-			if (urlPath.endsWith('/polls')) {
-				next()
-				return
-			}
-
-			// If the user does not have sufficient permissions, return an error
-			if (
-				permissions <= GUEST_PERMISSIONS ||
-				classPermissions <= GUEST_PERMISSIONS
-			) {
-				res.status(403).json({ error: 'You do not have permission to access this page.' })
-				return
-			}
-
-			// If all checks pass, proceed to the next middleware
-			next()
-		})
-
-		// check for multiple of the same query parameter
-		router.use((req, res, next) => {
-			let query = req.query
-
-			for (let key in query) {
-				if (Array.isArray(query[key])) {
-					res.status(400).json({ error: `You can only have one ${key} parameter` })
-					return
-				}
-			}
-
-			next()
-		})
-
-		// Gets the current user
-		router.get('/me', async (req, res) => {
-			try {
-				// Log the request details
-				logger.log('info', `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-				// Get the user from the session
-				let user = req.session.user
-
-				// Log the user's data
-				logger.log('verbose', `[get api/me] response=(${JSON.stringify(user)})`)
-
-				// Send the user's data as a JSON response
-				res.status(200).json(user)
-			} catch (err) {
-				// If an error occurs, log the error and send an error message as a JSON response
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		// Gets a class by key
-		router.get('/class/:key', async (req, res) => {
-			try {
-				// Get the class key from the request parameters
-				let key = req.params.key
-
-				// Log the request details
-				logger.log('info', `[get api/class/${key}] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-				// Get a clone of the class data
-				let classData = structuredClone(classInformation[key])
-
-				// If the class does not exist, return an error
-				if (!classData) {
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-
-				// Get the poll responses in the class
-				classData.poll.responses = getPollResponses(classData)
-
-				// Get the user from the session
-				let user = req.session.user
-
-				// If the user is not in the class, return an error
-				if (!classData.students[user.username]) {
-					logger.log('verbose', `[get api/class/${key}] user is not logged in`)
-					res.status(403).json({ error: 'User is not logged into the selected class' })
-					return
-				}
-
-				// Get the users of the class
-				let classUsers = await getClassUsers(user, key)
-
-				// If an error occurs, log the error and return the error
-				if (classUsers.error) {
-					logger.log('info', `[get api/class/${key}] ${classUsers}`)
-					res.status(404).json(classUsers)
-					return
-				}
-
-				// Update the class data with the class users and remove the shared polls
-				classData.students = classUsers
-				delete classData.sharedPolls
-
-				// Log the class data
-				logger.log('verbose', `[get api/class/${key}] response=(${JSON.stringify(classData)})`)
-				// Send the class data as a JSON response
-				res.status(200).json(classData)
-			} catch (err) {
-				// If an error occurs, log the error and send an error message as a JSON response
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		// Gets the students of a class
-		router.get('/class/:key/students', async (req, res) => {
-			try {
-				// Get the class key from the request parameters
-				let key = req.params.key
-
-				// Log the request details
-				logger.log('info', `get api/class/${key}/students ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-				// If the class does not exist, return an error
-				if (!classInformation[key]) {
-					logger.log('verbose', `[get api/class/${key}/students] class not started`)
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-
-				// Get the user from the session
-				let user = req.session.user
-
-				// If the user is not in the class, return an error
-				if (!classInformation[key].students[user.username]) {
-					logger.log('verbose', `[get api/class/${key}/students] user is not logged in`)
-					res.status(403).json({ error: 'User is not logged into the selected class' })
-					return
-				}
-
-				// Get the students of the class
-				let classUsers = await getClassUsers(user, key)
-
-				// If an error occurs, log the error and return the error
-				if (classUsers.error) {
-					logger.log('info', `[get api/class/${key}] ${classUsers}`)
-					res.status(404).json(classUsers)
-				}
-
-				// Log the students of the class
-				logger.log('verbose', `[get api/class/${key}/students] response=(${JSON.stringify(classUsers)})`)
-				// Send the students of the class as a JSON response
-				res.status(200).json(classUsers)
-			} catch (err) {
-				// If an error occurs, log the error and send an error message as a JSON response
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		// Gets the polls of a class
-		router.get('/class/:key/polls', (req, res) => {
-			try {
-				// Get the class key from the request parameters
-				let key = req.params.key
-
-				// Log the request details
-				logger.log('info', `[get api/class/${key}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-				// If the class does not exist, return an error
-				if (!classInformation[key]) {
-					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-
-				// Get the user from the session
-				let user = req.session.user
-
-				// If the user is not in the class, return an error
-				if (!classInformation[key].students[user.username]) {
-					logger.log('verbose', `[get api/class/${key}/polls] user is not logged in`)
-					res.status(403).json({ error: 'User is not logged into the selected class' })
-					return
-				}
-
-				// Get a clone of the class data and the poll responses in the class
-				let classData = structuredClone(classInformation[key])
-				classData.poll.responses = getPollResponses(classData)
-
-				// If the class does not exist, return an error
-				if (!classData) {
-					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-
-				// Update the class data with the poll status, the total number of students, and the poll data
-				classData.poll = {
-					status: classData.status,
-					totalStudents: Object.keys(classData.students).length,
-					...classData.poll
-				}
-
-				// Log the poll data
-				logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify(classData.poll)})`)
-				// Send the poll data as a JSON response
-				res.status(200).json(classData.poll)
-			} catch (err) {
-				// If an error occurs, log the error
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		// Gets the permissions of a class
-		router.get('/class/:key/permissions', async (req, res) => {
-			try {
-				// Get the class key from the request parameters
-				let key = req.params.key
-
-				// Log the request details
-				logger.log('info', `[get api/class/${key}/permissions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-				// Get a clone of the class data
-				let classData = structuredClone(classInformation[key])
-				// If the class does not exist, return an error
-				if (!classData) {
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-
-				// Get the user from the session
-				let user = req.session.user
-
-				// If the user is not in the class, return an error
-				if (!classData.students[user.username]) {
-					logger.log('verbose', `[get api/class/${key}/permissions] user is not logged in`)
-					res.status(403).json({ error: 'User is not logged into the selected class' })
-					return
-				}
-
-				// Log the class permissions
-				logger.log('verbose', `[get api/class/${key}/permissions] response=(${JSON.stringify(classData.permissions)})`)
-				// Send the class permissions as a JSON response
-				res.status(200).json(classData.permissions)
-			} catch (err) {
-				// If an error occurs, log the error and send an error message as a JSON response
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		router.get('/apiPermissionCheck', async (req, res) => {
-			try {
-				let { api, permissionType } = req.query
-
-				let permissionTypes = {
-					games: null,
-					lights: null,
-					sounds: null
-				}
-
-				if (!api) {
-					res.status(400).json({ error: 'No API provided.' })
-					return
-				}
-				if (!permissionType) {
-					res.status(400).json({ error: 'No permissionType provided.' })
-					return
-				}
-				if (!Object.keys(permissionTypes).includes(permissionType)) {
-					res.status(400).json({ error: 'Invalid permissionType.' })
-					return
-				}
-
-				let user = await getUser(api)
-
-				if (!user.loggedIn) {
-					res.status(403).json({ reason: 'User is not logged in.' })
-					return
-				}
-				if (!user.class) {
-					res.status(403).json({ reason: 'User is not in a class.' })
-					return
-				}
-
-				let classroom = classInformation[user.class]
-
-				permissionTypes.games = classroom.permissions.games
-				permissionTypes.lights = classroom.permissions.lights
-				permissionTypes.sounds = classroom.permissions.sounds
-
-				if (user.classPermissions < permissionTypes[permissionType]) {
-					res.status(403).json({ reason: 'User does not have enough permissions.' })
-					return
-				}
-
-				res.status(200).json({ allowed: true })
-			} catch (err) {
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
-			}
-		})
-
-		return router
-	} catch (err) {
-		logger.log('error', err.stack)
 	}
 }
-
-module.exports = api

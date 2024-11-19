@@ -141,25 +141,6 @@ function checkIPBanned() {
 	return false;
 }
 
-// @TODO: Put in better place
-function checkIPBannedMiddleware() {
-	// Check if an IP is banned
-	app.use((req, res, next) => {
-		let ip = req.ip
-		if (ip.startsWith('::ffff:')) ip = ip.slice(7)
-
-		const isIPBanned = checkIPBanned()
-		if (isIPBanned) {
-			res.render('pages/message', {
-				message: 'Your IP has been banned',
-				title: 'Banned'
-			});
-		}
-
-		next()
-	})
-}
-
 module.exports = {
     isAuthenticated,
     isLoggedIn,
