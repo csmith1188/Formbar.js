@@ -59,7 +59,7 @@ module.exports = {
 				const permissions = req.session.user.permissions
 				const classPermissions = req.session.user.classPermissions
 				const classCode = req.session.user.class
-				const urlPath = req.url
+				let urlPath = req.url
 	
 				// Log the request details
 				logger.log('info', `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
@@ -144,7 +144,7 @@ module.exports = {
 						loadRoutes(fullPath);
 					} else if (file.endsWith('.js')) {
 						const route = require(fullPath);
-						route.run(app);
+						route.run(router);
 					}
 				});
 			};
