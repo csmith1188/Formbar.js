@@ -1427,7 +1427,9 @@ app.get('/login', (req, res) => {
 		logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		res.render('pages/login', {
-			title: 'Login'
+			title: 'Login',
+			// Pass the redirect URL as undefined so that the EJS file does error upon setting the value of redirect to redirect URL
+			'redirectURL': undefined
 		})
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -1719,8 +1721,8 @@ app.get('/oauth', (req, res) => {
 
 		logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL})`)
-
-		res.render('pages/oauth.ejs', {
+		// Render the login page and pass the redirectURL
+		res.render('pages/login', {
 			title: 'Oauth',
 			redirectURL: redirectURL
 		})
