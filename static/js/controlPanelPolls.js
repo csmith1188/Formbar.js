@@ -833,27 +833,23 @@ document.addEventListener('click', (event) => {
 	}
 })
 
+//Make the code above work
+
 var time = document.getElementById('inputtedTime')
 var sound = document.getElementById('playSound')
-//Make the code above work
+
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
-	if (time.value <= 0) {
-		alert('Please enter a time greater than 0')
-	} else {
 		socket.emit("timer", time.value, true, sound.checked)
 		timerButton.hidden = true
 		time.hidden = true
 		sound.hidden = true
 		timerStopButton.hidden = false
 		console.log(time.value)
-	}
 })
 
 var timerStopButton = document.getElementById('timerStopButton')
 timerStopButton.addEventListener('click', function () {
-	var time = document.getElementById('inputtedTime')
-	var sound = document.getElementById('playSound')
 	timerButton.hidden = false
 	time.hidden = false
 	sound.hidden = false

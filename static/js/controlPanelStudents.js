@@ -284,10 +284,6 @@ function buildStudent(room, studentData) {
         kickUserButton.setAttribute('data-userid', studentData.username)
         kickUserButton.onclick = (event) => {
             if (confirm(`Are you sure you want to kick ${studentData.username}?`)) {
-                if (users == '') {
-                    alert('There arent any users to kick')
-                    console.log('There arent any users to kick')
-                }
                 socket.emit('classKickUser', studentData.username)
             }
         }
