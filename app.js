@@ -1,7 +1,7 @@
 // Imported modules
 const express = require('express')
 const session = require('express-session') //For storing client login data
-const { encrypt, decrypt } = require('./crypto.js') //For encrypting passwords
+const { hash, compare } = require('./crypto.js') //For encrypting passwords
 const sqlite3 = require('sqlite3').verbose()
 const jwt = require('jsonwebtoken') //For authentication system between Plugins and Formbar
 const excelToJson = require('convert-excel-to-json')
@@ -1331,7 +1331,14 @@ app.post('/login', async (req, res) => {
 			userType: req.body.userType,
 			displayName: req.body.displayName
 		}
-		var passwordCrypt = encrypt(user.password)
+		var passwordCrypt
+		var passwordSalt
+		await hash('password').then((value) => {
+			passwordCrypt = value.hash;
+			passwordSalt = value.salt;
+		}).catch((err) => {
+			console.log('Error hashing password: ' + err);
+		});
 
 		logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
 		logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -1368,9 +1375,8 @@ app.post('/login', async (req, res) => {
 						};
 					};
 
-					// Decrypt users password
-					let tempPassword = decrypt(JSON.parse(userData.password))
-					if (tempPassword != user.password) {
+					// Compare password hashes and check if it is correct
+					if (compare(JSON.parse(userData.password), passwordCrypt)) {
 						logger.log('verbose', '[post /login] Incorrect password')
 						res.render('pages/message', {
 							message: 'Incorrect password',
@@ -1469,10 +1475,11 @@ app.post('/login', async (req, res) => {
 
 					// Add the new user to the database
 					db.run(
-						'INSERT INTO users(username, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?)',
+						'INSERT INTO users(username, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
 						[
 							user.username,
 							JSON.stringify(passwordCrypt),
+							JSON.stringify(passwordSalt),
 							permissions,
 							newAPI,
 							newSecret,
@@ -1656,8 +1663,8 @@ app.post('/oauth', (req, res) => {
 				}
 
 				// Decrypt users password
-				let databasePassword = decrypt(JSON.parse(userData.password))
-				if (databasePassword != password) {
+				let databasePassword = compare(JSON.parse(userData.password), password)
+				if (databasePassword) {
 					logger.log('verbose', '[post /oauth] Incorrect password')
 					res.render('pages/message', {
 						message: 'Incorrect password',
@@ -4551,7 +4558,7 @@ io.on('connection', async (socket) => {
 	socket.on("approvePasswordChange", (changeApproval, username, newPassword) => {
 		try {
 			if (changeApproval) {
-				let passwordCrypt = encrypt(newPassword);
+				let passwordCrypt = hash(newPassword);
 				let passwordCryptString = JSON.stringify(passwordCrypt);
 				db.run("UPDATE users SET password = ? WHERE username = ?", [passwordCryptString, username], (err) => {
 					if (err) {
