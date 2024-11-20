@@ -1,5 +1,5 @@
 const { logger } = require("../modules/logger");
-const { passwordRequest } = require("../modules/student");
+const { passwordRequest } = require("../modules/user");
 
 module.exports = {
     run(app, io) {

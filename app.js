@@ -3,13 +3,13 @@ const express = require('express')
 const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
 const fs = require("fs")
+const authentication = require('./modules/authentication.js')
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
 const { classInformation } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require("./sockets/init.js")
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
-const { checkIPBanned } = require('./modules/authentication.js')
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -56,7 +56,7 @@ app.use((req, res, next) => {
 	let ip = req.ip
 	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
 
-	const isIPBanned = checkIPBanned()
+	const isIPBanned = authentication.checkIPBanned()
 	if (isIPBanned) {
 		res.render('pages/message', {
 			message: 'Your IP has been banned',
@@ -105,8 +105,8 @@ initSocketRoutes();
 require("./routes/404.js").run(app);
 
 http.listen(420, async () => {
-	whitelistedIps = await getIpAccess('whitelist')
-	blacklistedIps = await getIpAccess('blacklist')
+	authentication.whitelistedIps = await getIpAccess('whitelist')
+	authentication.blacklistedIps = await getIpAccess('blacklist')
 	console.log('Running on port: 420')
 	logger.log('info', 'Start')
 })

@@ -1,8 +1,7 @@
-// @TODO: Organize all of this
-
+const { whitelistedIps, blacklistedIps } = require("./authentication");
 const { classInformation } = require("./class");
 const { settings } = require("./config");
-const { database, getAll } = require("./database");
+const { database, getAll, runQuery } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
@@ -27,14 +26,13 @@ const PASSIVE_SOCKETS = [
 	'classBannedUsersUpdate'
 ]
 
-
 /**
-	 * Emits an event to sockets based on user permissions
-	 * @param {string} event - The event to emit
-	 * @param {string} classCode - The code of the class
-	 * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
-	 * @param  {...any} data - Additional data to emit with the event
-	 */
+ * Emits an event to sockets based on user permissions
+ * @param {string} event - The event to emit
+ * @param {string} classCode - The code of the class
+ * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
+ * @param  {...any} data - Additional data to emit with the event
+ */
 async function advancedEmitToClass(event, classCode, options, ...data) {
 	let classData = classInformation[classCode]
 
@@ -503,7 +501,7 @@ class SocketUpdates {
     
             for (let username of Object.keys(classInformation[classCode].students)) {
                 if (classInformation[classCode].students[username].classPermissions < TEACHER_PERMISSIONS) {
-                    classKickUser(username, classCode)
+                    this.classKickUser(username, classCode)
                 }
             }
         } catch (err) {
@@ -516,7 +514,7 @@ class SocketUpdates {
         const userId = socket.request.session.userId
         const classCode = socket.request.session.class
         const className = classInformation[classCode].className
-    
+
         this.socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
@@ -525,8 +523,12 @@ class SocketUpdates {
                 delete classInformation[classCode].students[username]
                 this.socket.leave(`class-${classCode}`)
                 this.socket.emit('reload')
-                this.classPermissionUpdate(classCode)
-                this.virtualBarUpdate(classCode)
+
+                // If the user is in a class, then update the class permissions and virtual bar
+                if (className) {
+                    this.classPermissionUpdate(classCode)
+                    this.virtualBarUpdate(classCode)    
+                }
     
                 database.get(
                     'SELECT * FROM classroom WHERE owner=? AND key=?',
@@ -738,8 +740,11 @@ class SocketUpdates {
             logger.log('info', `[ipUpdate] username=(${username})`)
     
             let ipList = {}
-            if (type == 'whitelist') ipList = whitelistedIps
-            else if (type == 'blacklist') ipList = blacklistedIps
+            if (type == 'whitelist') {
+                ipList = whitelistedIps
+            } else if (type == 'blacklist') {
+                ipList = blacklistedIps
+            }
     
             if (type) {
                 if (username) io.to(`user-${username}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
@@ -758,16 +763,7 @@ class SocketUpdates {
             let userIp = user.socket.handshake.address
     
             if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
-    
-            if (
-                (include &&
-                    userIp.startsWith(ip)
-                ) ||
-                (
-                    !include &&
-                    !userIp.startsWith(ip)
-                )
-            ) {
+            if ((include && userIp.startsWith(ip)) || (!include && !userIp.startsWith(ip))) {
                 user.socket.emit('reload')
             }
         }
@@ -783,7 +779,7 @@ class SocketUpdates {
             }
     
             if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
-    
+
             if (classData.timer.timeLeft <= 0 && active && sound) {
                 advancedEmitToClass('timerSound', this.socket.request.session.class, {
                     classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, classInformation[this.socket.request.session.class].permissions.sounds),

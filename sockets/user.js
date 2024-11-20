@@ -1,4 +1,8 @@
+const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { getUserClass } = require("../modules/user")
+const { runQuery } = require("../modules/database")
+const { userSockets, managerUpdate } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {

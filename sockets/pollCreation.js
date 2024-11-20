@@ -1,6 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { userSockets } = require("../modules/socketUpdates")
 const { generateColors } = require("../modules/util")
 
 module.exports = {

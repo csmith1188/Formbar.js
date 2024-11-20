@@ -58,7 +58,7 @@ module.exports = {
 				const username = req.session.user.username
 				const permissions = req.session.user.permissions
 				const classPermissions = req.session.user.classPermissions
-				const classCode = req.session.user.class
+				let classCode = req.session.user.class
 				let urlPath = req.url
 	
 				// Log the request details

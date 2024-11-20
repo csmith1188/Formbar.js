@@ -1,3 +1,4 @@
+const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
 const { managerUpdate } = require("../modules/socketUpdates")
 

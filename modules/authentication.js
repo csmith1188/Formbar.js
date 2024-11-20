@@ -1,4 +1,4 @@
-const { logger } = require("../modules/logger")
+const { logger } = require("./logger")
 const { classInformation } = require("./class")
 const { logNumbers, settings } = require("./config")
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS } = require("./permissions")
@@ -142,6 +142,11 @@ function checkIPBanned() {
 }
 
 module.exports = {
+	// Whitelisted/Blacklisted IP addresses
+	whitelistedIps,
+	blacklistedIps,
+	
+	// Authentication functions
     isAuthenticated,
     isLoggedIn,
     permCheck,

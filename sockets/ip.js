@@ -1,6 +1,8 @@
+const { whitelistedIps, blacklistedIps } = require("../modules/authentication")
+const { settings } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { io } = require("../modules/webServer")
+const fs = require('fs')
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -128,8 +130,11 @@ module.exports = {
                         }
 
                         socketUpdates.reloadPageByIp(type != 'whitelist', dbIp.ip)
-                        if (type == 'whitelist') delete whitelistedIps[id]
-                        else if (type == 'blacklist') delete blacklistedIps[id]
+                        if (type == 'whitelist') {
+                            delete whitelistedIps[id]
+                        } else if (type == 'blacklist') {
+                            delete blacklistedIps[id]
+                        }
                         socketUpdates.ipUpdate(type)
                     })
                 })

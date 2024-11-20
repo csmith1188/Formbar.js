@@ -1,6 +1,7 @@
 const { isAuthenticated, permCheck } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
+const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { io } = require("./webServer")
+const { STUDENT_PERMISSIONS } = require("./permissions")
 
 // This class is used to create a student to be stored in the sessions data
 class Student {

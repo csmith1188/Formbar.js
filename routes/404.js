@@ -1,3 +1,4 @@
+const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 
 // This is the page shown when a user tries to access a page that does not exist

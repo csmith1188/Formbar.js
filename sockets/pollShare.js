@@ -2,6 +2,7 @@ const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
+const { getUserClass } = require("../modules/user")
 
 module.exports = {
     run(socket, socketUpdates) {

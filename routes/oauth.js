@@ -1,6 +1,10 @@
+const { decrypt } = require("../crypto")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
+const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { getUserClass } = require("../modules/user")
+const jwt = require('jsonwebtoken')
 
 module.exports = {
     run(app) {

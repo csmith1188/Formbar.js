@@ -22,8 +22,11 @@ module.exports = {
                     'SELECT * FROM classroom WHERE owner=? AND key=?',
                     [userId, classCode],
                     (err, classroom) => {
-                        if (err) logger.log('error', err.stack)
-                        else if (classroom) endClass(classroom.key)
+                        if (err) {
+                            logger.log('error', err.stack) 
+                        } else if (classroom) {
+                            socketUpdates.endClass(classroom.key)
+                        } 
                     }
                 )
             } catch (err) {
@@ -64,7 +67,9 @@ module.exports = {
                         if (err) throw err
 
                         if (classroom) {
-                            if (classInformation[classroom.key]) endClass(classroom.key)
+                            if (classInformation[classroom.key]) {
+                                socketUpdates.endClass(classroom.key)
+                            }
 
                             database.run('DELETE FROM classroom WHERE id=?', classroom.id)
                             database.run('DELETE FROM classusers WHERE classId=?', classroom.id)

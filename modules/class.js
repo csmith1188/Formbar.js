@@ -1,3 +1,7 @@
+const { database } = require("./database")
+const { logger } = require("./logger")
+const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("./permissions")
+
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
