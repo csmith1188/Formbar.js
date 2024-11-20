@@ -1,9 +1,27 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { advancedEmitToClass } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {
+        // Displays previous polls
+        socket.on('previousPollDisplay', (pollIndex) => {
+            try {
+                logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
+
+                advancedEmitToClass(
+                    'previousPollData',
+                    socket.request.session.class,
+                    { classPermissions: classInformation[socket.request.session.class].permissions.controlPolls },
+                    classInformation[socket.request.session.class].pollHistory[pollIndex].data
+                )
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
+
         socket.on('sharePollToUser', (pollId, username) => {
             try {
                 logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)

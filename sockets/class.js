@@ -223,5 +223,27 @@ module.exports = {
                 logger.log('error', err.stack);
             }
         })
+
+        socket.on('setClassPermissionSetting', (permission, level) => {
+            try {
+                logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
+
+                let classCode = socket.request.session.class
+                classInformation[classCode].permissions[permission] = level
+                database.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation[classCode].permissions), classInformation[classCode].id], (err) => {
+                    try {
+                        if (err) throw err
+
+                        logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
+                        socketUpdates.classPermissionUpdate()
+                    } catch (err) {
+                        logger.log('error', err.stack)
+                    }
+                })
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
     }
 }
