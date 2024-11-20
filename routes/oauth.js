@@ -15,7 +15,8 @@ module.exports = {
                 logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL})`)
 
-                res.render('pages/oauth.ejs', {
+                // Render the login page and pass the redirectURL
+                res.render('pages/login', {
                     title: 'Oauth',
                     redirectURL: redirectURL
                 })

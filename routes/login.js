@@ -19,7 +19,10 @@ module.exports = {
                 logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
                 res.render('pages/login', {
-                    title: 'Login'
+                    title: 'Login',
+
+                    // Pass the redirect URL as undefined so that the EJS file does error upon setting the value of redirect to redirect URL
+                    redirectURL: undefined
                 })
             } catch (err) {
                 logger.log('error', err.stack);
