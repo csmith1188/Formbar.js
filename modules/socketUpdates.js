@@ -760,7 +760,7 @@ class SocketUpdates {
     
     async reloadPageByIp(include, ip) {
         for (let userSocket of await io.fetchSockets()) {
-            let userIp = user.socket.handshake.address
+            let userIp = userSocket.handshake.address
     
             if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
             if ((include && userIp.startsWith(ip)) || (!include && !userIp.startsWith(ip))) {

@@ -1,6 +1,8 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { TEACHER_PERMISSIONS } = require("../modules/permissions")
+const { getUserClass } = require("../modules/user")
 const { io } = require("../modules/webServer")
 
 module.exports = {
