@@ -1,398 +1,399 @@
 <%- include('../partials/header_content') %>
-	<%- include('../partials/sockets') %>
-		<!DOCTYPE html>
-		<html lang="en">
+<%- include('../partials/sockets') %>
+    <!DOCTYPE html>
+    <html lang="en">
 
-		<head>
-			<meta charset="UTF-8">
-			<meta http-equiv="X-UA-Compatible" content="IE=edge">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<script src="/js/tabs.js" defer></script>
-		</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="/js/tabs.js" defer></script>
+    </head>
 
-		<body>
-			<%- include('../partials/formbar_header') %>
-				<header id="quickMenu">
-					<button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
-					<button id="ipMenu" class="quickButton tab" data-tab-group="mainTabs">IP Addresses</button>
-					<!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
-				</header>
+    <body>
+        <%- include('../partials/formbar_header') %>
+            <header id="quickMenu">
+                <button id="usersMenu" class="quickButton tab pressed" data-tab-group="mainTabs">Users</button>
+                <button id="ipMenu" class="quickButton tab" data-tab-group="mainTabs">IP Addresses</button>
+                <!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
+            </header>
 
-				<div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
-					<!-- <div id="userFilterBoxes" class="options">
-							<h2 class="headerText">Filter</h2>
-						</div> -->
-					<div id="userSortBoxes" class="options">
-						<h2 class="headerText">Sort</h2>
-						<button type="button" id="name" class="sort">Name</button>
-						<button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
-					</div>
-					<div id="users">
-					</div>
-				</div>
-				<div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
-					<button id="whitelist" class="quickButton tab" data-tab-group="ipTabs">Whitelist</button>
-					<button id="blacklist" class="quickButton tab pressed" data-tab-group="ipTabs">Blacklist</button>
-					<div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
-					<div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
-				</div>
-				<!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
-					<div class="options">
-						<button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
-						<button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
-					</div>
-					<div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
-						<h2>Permissions</h2>
-						<div id="permissionsList"></div>
-					</div>
-				</div> -->
-				<!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
-				<%- include('../partials/body_content') %>
-		</body>
+            <div id="usersMenu" class="tabContent default" data-tab-group="mainTabs">
+                <!-- <div id="userFilterBoxes" class="options">
+                        <h2 class="headerText">Filter</h2>
+                    </div> -->
+                <div id="userSortBoxes" class="options">
+                    <h2 class="headerText">Sort</h2>
+                    <button type="button" id="name" class="sort">Name</button>
+                    <button type="button" id="permissions" class="sort pressed">Permissions 🡇</button>
+                </div>
+                <div id="users">
+                </div>
+            </div>
+            <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
+                <button id="whitelist" class="quickButton tab" data-tab-group="ipTabs">Whitelist</button>
+                <button id="blacklist" class="quickButton tab pressed" data-tab-group="ipTabs">Blacklist</button>
+                <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
+                <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+            </div>
+            <!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+                <div class="options">
+                    <button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
+                    <button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
+                </div>
+                <div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
+                    <h2>Permissions</h2>
+                    <div id="permissionsList"></div>
+                </div>
+            </div> -->
+            <!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+            <%- include('../partials/body_content') %>
+    </body>
 
-		</html>
-		<script>
-			let users = {}
+    </html>
+    <script>
+        let users = {}
 
-			const FilterState = {
-			}
+        const FilterState = {
+        }
 
-			const SortState = {
-				name: [
-					'Name',
-					'Name 🡇',
-					'Name 🡅'
-				],
-				permissions: [
-					'Permissions',
-					'Permissions 🡇',
-					'Permissions 🡅'
-				]
-			}
+        const SortState = {
+            name: [
+                'Name',
+                'Name 🡇',
+                'Name 🡅'
+            ],
+            permissions: [
+                'Permissions',
+                'Permissions 🡇',
+                'Permissions 🡅'
+            ]
+        }
 
-			// 0 = off
-			// 1 = only
-			// 2 = except
-			let filter = {
-			}
-			// 0 = off
-			// 1 = descending
-			// 2 = ascending
-			let sort = {
-				name: 0,
-				permissions: 1
-			}
+        // 0 = off
+        // 1 = only
+        // 2 = except
+        let filter = {
+        }
+        // 0 = off
+        // 1 = descending
+        // 2 = ascending
+        let sort = {
+            name: 0,
+            permissions: 1
+        }
 
-			let usersDiv = document.getElementById('users')
-			let whitelistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#whitelist')
-			let blacklistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#blacklist')
+        let usersDiv = document.getElementById('users')
+        let whitelistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#whitelist')
+        let blacklistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#blacklist')
 
-			function camelCaseToNormal(str) {
-				let result = str.replace(/([A-Z])/g, " $1")
-				result = result.charAt(0).toUpperCase() + result.slice(1)
-				return result
-			}
+        function camelCaseToNormal(str) {
+            let result = str.replace(/([A-Z])/g, " $1")
+            result = result.charAt(0).toUpperCase() + result.slice(1)
+            return result
+        }
 
-			// makes user elements
-			function buildUser(userData) {
-				var newUser = document.createElement("div")
-				newUser.classList.add("user")
-				newUser.setAttribute("id", userData.username);
-				let userElement = document.createElement("p")
-				userElement.innerText += userData.displayName
-				newUser.appendChild(userElement)
-				if (userData.permissions < currentUser.permissions) {
-					let permissionSwitch = document.createElement("select")
-					permissionSwitch.setAttribute("name", "permSwitch")
-					permissionSwitch.setAttribute("class", "permSwitch")
-					permissionSwitch.setAttribute("data-userid", userData.username)
-					permissionSwitch.onchange = (event) => {
-						socket.emit('permChange', event.target.dataset.userid, event.target.value)
-					}
-					if (userData.permissions == 4) {
-						let teacherOption = document.createElement("option")
-						teacherOption.setAttribute("value", 4)
-						teacherOption.setAttribute("selected", true)
-						teacherOption.innerText = "Teacher"
-						permissionSwitch.add(teacherOption)
-						let modOption = document.createElement("option")
-						modOption.setAttribute("value", 3)
-						modOption.innerText = "Mod"
-						permissionSwitch.add(modOption)
-						let userOption = document.createElement("option")
-						userOption.setAttribute("value", 2)
-						userOption.innerText = "User"
-						permissionSwitch.add(userOption)
-						let guestOption = document.createElement("option")
-						guestOption.setAttribute("value", 1)
-						guestOption.innerText = "Guest"
-						permissionSwitch.add(guestOption)
-					} else if (userData.permissions == 3) {
-						let teacherOption = document.createElement("option")
-						teacherOption.setAttribute("value", 4)
-						teacherOption.innerText = "Teacher"
-						permissionSwitch.add(teacherOption)
-						let modOption = document.createElement("option")
-						modOption.setAttribute("value", 3)
-						modOption.setAttribute("selected", true)
-						modOption.innerText = "Mod"
-						permissionSwitch.add(modOption)
-						let userOption = document.createElement("option")
-						userOption.setAttribute("value", 2)
-						userOption.innerText = "User"
-						permissionSwitch.add(userOption)
-						let guestOption = document.createElement("option")
-						guestOption.setAttribute("value", 1)
-						guestOption.innerText = "Guest"
-						permissionSwitch.add(guestOption)
-					} else if (userData.permissions == 2) {
-						let teacherOption = document.createElement("option")
-						teacherOption.setAttribute("value", 4)
-						teacherOption.innerText = "Teacher"
-						permissionSwitch.add(teacherOption)
-						let modOption = document.createElement("option")
-						modOption.setAttribute("value", 3)
-						modOption.innerText = "Mod"
-						permissionSwitch.add(modOption)
-						let userOption = document.createElement("option")
-						userOption.setAttribute("value", 2)
-						userOption.setAttribute("selected", true)
-						userOption.innerText = "User"
-						permissionSwitch.add(userOption)
-						let guestOption = document.createElement("option")
-						guestOption.setAttribute("value", 1)
-						guestOption.innerText = "Guest"
-						permissionSwitch.add(guestOption)
-					} else if (userData.permissions == 1) {
-						let teacherOption = document.createElement("option")
-						teacherOption.setAttribute("value", 4)
-						teacherOption.innerText = "Teacher"
-						permissionSwitch.add(teacherOption)
-						let modOption = document.createElement("option")
-						modOption.setAttribute("value", 3)
-						modOption.innerText = "Mod"
-						permissionSwitch.add(modOption)
-						let userOption = document.createElement("option")
-						userOption.setAttribute("value", 2)
-						userOption.innerText = "User"
-						permissionSwitch.add(userOption)
-						let guestOption = document.createElement("option")
-						guestOption.setAttribute("value", 1)
-						guestOption.setAttribute("selected", true)
-						guestOption.innerText = "Guest"
-						permissionSwitch.add(guestOption)
-					}
-					newUser.appendChild(permissionSwitch)
-					newUser.append(" ")
-					// let banUserButton = document.createElement("button")
-					// banUserButton.className = 'banUser quickButton'
-					// banUserButton.setAttribute("data-user", userData.id)
-					// banUserButton.innerText = "Ban User"
-					// banUserButton.onclick = (event) => {
-					// 	socket.emit('banUser', { id: userData.id })
-					// }
-					// newUser.appendChild(banUserButton)
-					let deleteUserButton = document.createElement("button")
-					deleteUserButton.className = 'deleteUser quickButton'
-					deleteUserButton.setAttribute("data-userid", userData.id)
-					deleteUserButton.onclick = (event)=>{
-						if (confirm("Are you sure you want to delete this user?")) {
-						socket.emit('deleteUser', { id: userData.id })
-					}
-					deleteUserButton.innerText = "Delete User"
-					newUser.appendChild(deleteUserButton)
-				}
-				return newUser
-			}
+        // makes user elements
+        function buildUser(userData) {
+            var newUser = document.createElement("div")
+            newUser.classList.add("user")
+            newUser.setAttribute("id", userData.username);
+            let userElement = document.createElement("p")
+            userElement.innerText += userData.displayName
+            newUser.appendChild(userElement)
+            if (userData.permissions < currentUser.permissions) {
+                let permissionSwitch = document.createElement("select")
+                permissionSwitch.setAttribute("name", "permSwitch")
+                permissionSwitch.setAttribute("class", "permSwitch")
+                permissionSwitch.setAttribute("data-userid", userData.username)
+                permissionSwitch.onchange = (event) => {
+                    socket.emit('permChange', event.target.dataset.userid, event.target.value)
+                }
+                if (userData.permissions == 4) {
+                    let teacherOption = document.createElement("option")
+                    teacherOption.setAttribute("value", 4)
+                    teacherOption.setAttribute("selected", true)
+                    teacherOption.innerText = "Teacher"
+                    permissionSwitch.add(teacherOption)
+                    let modOption = document.createElement("option")
+                    modOption.setAttribute("value", 3)
+                    modOption.innerText = "Mod"
+                    permissionSwitch.add(modOption)
+                    let userOption = document.createElement("option")
+                    userOption.setAttribute("value", 2)
+                    userOption.innerText = "User"
+                    permissionSwitch.add(userOption)
+                    let guestOption = document.createElement("option")
+                    guestOption.setAttribute("value", 1)
+                    guestOption.innerText = "Guest"
+                    permissionSwitch.add(guestOption)
+                } else if (userData.permissions == 3) {
+                    let teacherOption = document.createElement("option")
+                    teacherOption.setAttribute("value", 4)
+                    teacherOption.innerText = "Teacher"
+                    permissionSwitch.add(teacherOption)
+                    let modOption = document.createElement("option")
+                    modOption.setAttribute("value", 3)
+                    modOption.setAttribute("selected", true)
+                    modOption.innerText = "Mod"
+                    permissionSwitch.add(modOption)
+                    let userOption = document.createElement("option")
+                    userOption.setAttribute("value", 2)
+                    userOption.innerText = "User"
+                    permissionSwitch.add(userOption)
+                    let guestOption = document.createElement("option")
+                    guestOption.setAttribute("value", 1)
+                    guestOption.innerText = "Guest"
+                    permissionSwitch.add(guestOption)
+                } else if (userData.permissions == 2) {
+                    let teacherOption = document.createElement("option")
+                    teacherOption.setAttribute("value", 4)
+                    teacherOption.innerText = "Teacher"
+                    permissionSwitch.add(teacherOption)
+                    let modOption = document.createElement("option")
+                    modOption.setAttribute("value", 3)
+                    modOption.innerText = "Mod"
+                    permissionSwitch.add(modOption)
+                    let userOption = document.createElement("option")
+                    userOption.setAttribute("value", 2)
+                    userOption.setAttribute("selected", true)
+                    userOption.innerText = "User"
+                    permissionSwitch.add(userOption)
+                    let guestOption = document.createElement("option")
+                    guestOption.setAttribute("value", 1)
+                    guestOption.innerText = "Guest"
+                    permissionSwitch.add(guestOption)
+                } else if (userData.permissions == 1) {
+                    let teacherOption = document.createElement("option")
+                    teacherOption.setAttribute("value", 4)
+                    teacherOption.innerText = "Teacher"
+                    permissionSwitch.add(teacherOption)
+                    let modOption = document.createElement("option")
+                    modOption.setAttribute("value", 3)
+                    modOption.innerText = "Mod"
+                    permissionSwitch.add(modOption)
+                    let userOption = document.createElement("option")
+                    userOption.setAttribute("value", 2)
+                    userOption.innerText = "User"
+                    permissionSwitch.add(userOption)
+                    let guestOption = document.createElement("option")
+                    guestOption.setAttribute("value", 1)
+                    guestOption.setAttribute("selected", true)
+                    guestOption.innerText = "Guest"
+                    permissionSwitch.add(guestOption)
+                }
+                newUser.appendChild(permissionSwitch)
+                newUser.append(" ")
+                // let banUserButton = document.createElement("button")
+                // banUserButton.className = 'banUser quickButton'
+                // banUserButton.setAttribute("data-user", userData.id)
+                // banUserButton.innerText = "Ban User"
+                // banUserButton.onclick = (event) => {
+                //  socket.emit('banUser', { id: userData.id })
+                // }
+                // newUser.appendChild(banUserButton)
+                let deleteUserButton = document.createElement("button")
+                deleteUserButton.className = 'deleteUser quickButton'
+                deleteUserButton.setAttribute("data-userid", userData.id)
+                deleteUserButton.onclick = (event) => {
+                    if (confirm('Are you sure you want to delete this user?')) {
+                        socket.emit('deleteUser', userData.id)
+                    }
+                }
+                deleteUserButton.innerText = "Delete User"
+                newUser.appendChild(deleteUserButton)
+            }
+            return newUser
+        }
 
-			// filters and sorts users
-			function filterSortChange() {
-				usersDiv.innerHTML = ''
-				let newUser = ''
-				let breakButton = document.getElementById("break")
+        // filters and sorts users
+        function filterSortChange() {
+            usersDiv.innerHTML = ''
+            let newUser = ''
+            let breakButton = document.getElementById("break")
 
-				//sort by name
-				if (sort.name == 1) {
-					users = Object.fromEntries(Object.entries(users).sort())
-				} else if (sort.name == 2) {
-					users = Object.fromEntries(Object.entries(users).sort().reverse())
-				}
+            //sort by name
+            if (sort.name == 1) {
+                users = Object.fromEntries(Object.entries(users).sort())
+            } else if (sort.name == 2) {
+                users = Object.fromEntries(Object.entries(users).sort().reverse())
+            }
 
-				//sort by permissions
-				if (sort.permissions == 1) {
-					users = Object.fromEntries(Object.entries(users).sort((a, b) => b[1].permissions - a[1].permissions))
-				} else if (sort.permissions == 2) {
-					users = Object.fromEntries(Object.entries(users).sort((a, b) => a[1].permissions - b[1].permissions))
-				}
+            //sort by permissions
+            if (sort.permissions == 1) {
+                users = Object.fromEntries(Object.entries(users).sort((a, b) => b[1].permissions - a[1].permissions))
+            } else if (sort.permissions == 2) {
+                users = Object.fromEntries(Object.entries(users).sort((a, b) => a[1].permissions - b[1].permissions))
+            }
 
-				for (const user of Object.values(users)) {
-					usersDiv.appendChild(buildUser(user))
-				}
-			}
+            for (const user of Object.values(users)) {
+                usersDiv.appendChild(buildUser(user))
+            }
+        }
 
-			function approvePasswordChange(changeApproval, username, newPassword) {
-				socket.emit("approvePasswordChange", changeApproval, username, newPassword);
-			}
+        function approvePasswordChange(changeApproval, username, newPassword) {
+            socket.emit("approvePasswordChange", changeApproval, username, newPassword);
+        }
 
-			// sets filters
-			for (let filterElement of document.getElementsByClassName('filter')) {
-				filterElement.onclick = () => {
-					filter[filterElement.id] += 1
-					if (filter[filterElement.id] > 2) {
-						filter[filterElement.id] = 0
-					}
-					if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
-					else filterElement.classList.add('pressed')
-					filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
-					filterSortChange()
-				}
-			}
+        // sets filters
+        for (let filterElement of document.getElementsByClassName('filter')) {
+            filterElement.onclick = () => {
+                filter[filterElement.id] += 1
+                if (filter[filterElement.id] > 2) {
+                    filter[filterElement.id] = 0
+                }
+                if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
+                else filterElement.classList.add('pressed')
+                filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
+                filterSortChange()
+            }
+        }
 
-			// sets sorts
-			for (let sortElement of document.getElementsByClassName('sort')) {
-				sortElement.onclick = () => {
-					for (let sortType of Object.keys(sort)) {
-						if (sortType != sortElement.id) {
-							sort[sortType] = 0
-							let otherSortElements = document.querySelector('.sort#' + sortType)
-							if (otherSortElements) {
-								otherSortElements.classList.remove('pressed')
-								otherSortElements.innerText = SortState[sortType][sort[sortType]]
-							}
-						}
-					}
-					sort[sortElement.id] += 1
-					if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
-						sort[sortElement.id] = 0
-					}
-					else if (sort[sortElement.id] > 2) {
-						sort[sortElement.id] = 0
-					}
-					if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
-					else sortElement.classList.add('pressed')
-					sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
-					filterSortChange()
-				}
-			}
+        // sets sorts
+        for (let sortElement of document.getElementsByClassName('sort')) {
+            sortElement.onclick = () => {
+                for (let sortType of Object.keys(sort)) {
+                    if (sortType != sortElement.id) {
+                        sort[sortType] = 0
+                        let otherSortElements = document.querySelector('.sort#' + sortType)
+                        if (otherSortElements) {
+                            otherSortElements.classList.remove('pressed')
+                            otherSortElements.innerText = SortState[sortType][sort[sortType]]
+                        }
+                    }
+                }
+                sort[sortElement.id] += 1
+                if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
+                    sort[sortElement.id] = 0
+                }
+                else if (sort[sortElement.id] > 2) {
+                    sort[sortElement.id] = 0
+                }
+                if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
+                else sortElement.classList.add('pressed')
+                sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
+                filterSortChange()
+            }
+        }
 
-			socket.emit('managerUpdate')
-			socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
-				users = tempUsers
+        socket.emit('managerUpdate')
+        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
+            users = tempUsers
 
-				filterSortChange()
-			})
-			socket.emit('ipUpdate')
-			socket.on('ipUpdate', (type, active, ips) => {
-				let ipListDiv
-				if (type == 'whitelist') ipListDiv = whitelistIpsDiv
-				else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
+            filterSortChange()
+        })
+        socket.emit('ipUpdate')
+        socket.on('ipUpdate', (type, active, ips) => {
+            let ipListDiv
+            if (type == 'whitelist') ipListDiv = whitelistIpsDiv
+            else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
 
-				ipListDiv.innerHTML = ''
+            ipListDiv.innerHTML = ''
 
-				let ipListToggle = document.createElement('button')
-				ipListToggle.className = 'quickButton ipListToggle'
-				if (active)
-					ipListToggle.classList = 'pressed'
-				ipListToggle.innerText = `Toggle ${type}`
-				ipListToggle.onclick = (event) => {
-					socket.emit('toggleIpList', event.target.parentElement.id)
-				}
-				ipListDiv.appendChild(ipListToggle)
+            let ipListToggle = document.createElement('button')
+            ipListToggle.className = 'quickButton ipListToggle'
+            if (active)
+                ipListToggle.classList = 'pressed'
+            ipListToggle.innerText = `Toggle ${type}`
+            ipListToggle.onclick = (event) => {
+                socket.emit('toggleIpList', event.target.parentElement.id)
+            }
+            ipListDiv.appendChild(ipListToggle)
 
-				for (let ip of Object.values(ips)) {
-					let ipDiv = document.createElement('div')
-					ipDiv.id = ip.id
-					ipDiv.className = 'ipDiv'
-					let ipName = document.createElement('input')
-					ipName.type = 'text'
-					ipName.value = ip.ip
-					ipName.placeholder = 'IP Address'
-					ipName.onchange = (event) => {
-						if (!event.target.checkValidity()) {
-							event.target.reportValidity()
-							return
-						}
+            for (let ip of Object.values(ips)) {
+                let ipDiv = document.createElement('div')
+                ipDiv.id = ip.id
+                ipDiv.className = 'ipDiv'
+                let ipName = document.createElement('input')
+                ipName.type = 'text'
+                ipName.value = ip.ip
+                ipName.placeholder = 'IP Address'
+                ipName.onchange = (event) => {
+                    if (!event.target.checkValidity()) {
+                        event.target.reportValidity()
+                        return
+                    }
 
-						socket.emit(
-							'changeIp',
-							event.target.parentElement.parentElement.id,
-							event.target.parentElement.id,
-							event.target.value
-						)
-					}
-					ipDiv.appendChild(ipName)
-					let removeIp = document.createElement('button')
-					removeIp.className = 'quickButton'
-					removeIp.innerText = 'Remove Ip'
-					removeIp.onclick = (event) => {
-						socket.emit(
-							'removeIp',
-							event.target.parentElement.parentElement.id,
-							event.target.parentElement.id
-						)
-					}
-					ipDiv.appendChild(removeIp)
-					ipListDiv.appendChild(ipDiv)
-				}
+                    socket.emit(
+                        'changeIp',
+                        event.target.parentElement.parentElement.id,
+                        event.target.parentElement.id,
+                        event.target.value
+                    )
+                }
+                ipDiv.appendChild(ipName)
+                let removeIp = document.createElement('button')
+                removeIp.className = 'quickButton'
+                removeIp.innerText = 'Remove Ip'
+                removeIp.onclick = (event) => {
+                    socket.emit(
+                        'removeIp',
+                        event.target.parentElement.parentElement.id,
+                        event.target.parentElement.id
+                    )
+                }
+                ipDiv.appendChild(removeIp)
+                ipListDiv.appendChild(ipDiv)
+            }
 
-				let addIpForm = document.createElement('div')
-				addIpForm.id = 'addIpForm'
-				let newIp = document.createElement('input')
-				newIp.id = 'newIp'
-				newIp.type = 'text'
-				newIp.placeholder = 'IP Address'
-				newIp.onchange = (event) => {
-					if (!event.target.checkValidity()) {
-						event.target.reportValidity()
-						return
-					}
-				}
-				addIpForm.append(newIp)
-				let submitIp = document.createElement('button')
-				submitIp.className = 'quickButton'
-				submitIp.innerText = 'Add IP'
-				submitIp.onclick = (event) => {
-					let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`)
+            let addIpForm = document.createElement('div')
+            addIpForm.id = 'addIpForm'
+            let newIp = document.createElement('input')
+            newIp.id = 'newIp'
+            newIp.type = 'text'
+            newIp.placeholder = 'IP Address'
+            newIp.onchange = (event) => {
+                if (!event.target.checkValidity()) {
+                    event.target.reportValidity()
+                    return
+                }
+            }
+            addIpForm.append(newIp)
+            let submitIp = document.createElement('button')
+            submitIp.className = 'quickButton'
+            submitIp.innerText = 'Add IP'
+            submitIp.onclick = (event) => {
+                let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`)
 
-					socket.emit(
-						'addIp',
-						newIp.parentElement.parentElement.id,
-						newIp.value
-					)
-				}
-				addIpForm.append(submitIp)
-				ipListDiv.append(addIpForm)
-			})
+                socket.emit(
+                    'addIp',
+                    newIp.parentElement.parentElement.id,
+                    newIp.value
+                )
+            }
+            addIpForm.append(submitIp)
+            ipListDiv.append(addIpForm)
+        })
 
-			socket.emit("passwordUpdate");
-			socket.on("passwordUpdate", (passwordChange, username, newPassword) => {
-				let userDiv = document.getElementById(username);
-				if (passwordChange) {
-					let passwordChangeDiv = document.createElement("div");
-					passwordChangeDiv.setAttribute("id", "passwordChange");
-					let passwordChangeNeeded = document.createElement("p");
-					passwordChangeNeeded.textContent = "Needs/requested a password change";
-					passwordChangeDiv.appendChild(passwordChangeNeeded);
-					let passwordChangeApprove = document.createElement("button");
-					passwordChangeApprove.classList.add("quickButton");
-					passwordChangeApprove.onclick = () => {
-						approvePasswordChange(true, username, newPassword);
-						passwordChangeDiv.hidden = true;
-					};
-					passwordChangeApprove.textContent = "Approve";
-					passwordChangeDiv.appendChild(passwordChangeApprove);
-					let passwordChangeDeny = document.createElement("button");
-					passwordChangeDeny.classList.add("quickButton");
-					passwordChangeDeny.onclick = () => {
-						approvePasswordChange(false, username, newPassword);
-						passwordChangeDiv.hidden = true;
-					};
-					passwordChangeDeny.textContent = "Deny";
-					passwordChangeDiv.appendChild(passwordChangeDeny);
-					userDiv.appendChild(passwordChangeDiv);
-					let lineBreak = document.createElement("br");
-					userDiv.appendChild(lineBreak);
-				};
-			})
-		</script>
-		<% - include('../partials/footer_content') %>
+        socket.emit("passwordUpdate");
+        socket.on("passwordUpdate", (passwordChange, username, newPassword) => {
+            let userDiv = document.getElementById(username);
+            if (passwordChange) {
+                let passwordChangeDiv = document.createElement("div");
+                passwordChangeDiv.setAttribute("id", "passwordChange");
+                let passwordChangeNeeded = document.createElement("p");
+                passwordChangeNeeded.textContent = "Needs/requested a password change";
+                passwordChangeDiv.appendChild(passwordChangeNeeded);
+                let passwordChangeApprove = document.createElement("button");
+                passwordChangeApprove.classList.add("quickButton");
+                passwordChangeApprove.onclick = () => {
+                    approvePasswordChange(true, username, newPassword);
+                    passwordChangeDiv.hidden = true;
+                };
+                passwordChangeApprove.textContent = "Approve";
+                passwordChangeDiv.appendChild(passwordChangeApprove);
+                let passwordChangeDeny = document.createElement("button");
+                passwordChangeDeny.classList.add("quickButton");
+                passwordChangeDeny.onclick = () => {
+                    approvePasswordChange(false, username, newPassword);
+                    passwordChangeDiv.hidden = true;
+                };
+                passwordChangeDeny.textContent = "Deny";
+                passwordChangeDiv.appendChild(passwordChangeDeny);
+                userDiv.appendChild(passwordChangeDiv);
+                let lineBreak = document.createElement("br");
+                userDiv.appendChild(lineBreak);
+            };
+        })
+    </script>
+    <% - include('../partials/footer_content') %>
