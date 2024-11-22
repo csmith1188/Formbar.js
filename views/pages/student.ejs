@@ -286,6 +286,7 @@
 					function help() {
 						let reason = document.getElementById('ticket').value
 						socket.emit('help', reason)
+						document.getElementById('ticket').value = ''
 						alert('Help ticket sent')
 					}
 

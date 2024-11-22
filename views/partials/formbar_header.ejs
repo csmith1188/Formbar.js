@@ -22,13 +22,16 @@
                       <a href="/plugins" class="headerTab">Plugins</a>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <button href="/" class="headerTab" onclick="(()=>{socket.emit('leaveClass')})()">Leave
+                          <button href="/" class="headerTab" title="Leave class"
+                            onclick="leaveClass()">Leave
                             Class</button>
                           <% } %>
-                            <button href="/" class="headerTab" onclick="(()=>{socket.emit('logout')})()">Logout</button>
+                            <button href="/" id="logoutButton" onclick="logout()"><img id="logoutIcon"
+                                src="img/logout.svg" title="Logout"></button>
                             <% } %>
                               <p id="version">v 1.0.0</p>
-                              <button onclick="toggleTheme()" id="lmdmBtn"><img id="lmdmIcon" src="img/sun.svg"></button>
+                              <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM"><img id="lmdmIcon"
+                                  src="img/sun.svg"></button>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");
@@ -62,5 +65,15 @@
       lmdmIcon.src = "img/moon.svg"
     }
     console.log(document.getElementById('lmdm'))
+  }
+
+  function logout() {
+    if (confirm('Are you sure you want to logout?')) 
+    { socket.emit('logout') }
+  }
+
+  function leaveClass() {
+    if (confirm('Are you sure you want to leave the class?')) 
+    { socket.emit('leaveClass') }
   }
 </script>

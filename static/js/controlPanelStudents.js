@@ -132,6 +132,7 @@ function buildStudent(room, studentData) {
         newTagForm.setAttribute('hidden', true);
         let newTagTextBox = document.createElement('input');
         newTagTextBox.setAttribute('type', 'text');
+        newTagTextBox.setAttribute('id', 'tagBox');
         newTagTextBox.setAttribute('hidden', true);
         newTagForm.appendChild(newTagTextBox);
         let newTagSaveButton = document.createElement('button');
@@ -273,14 +274,18 @@ function buildStudent(room, studentData) {
         banStudentButton.setAttribute('data-user', studentData.username)
         banStudentButton.textContent = 'Ban User'
         banStudentButton.onclick = (event) => {
-            socket.emit('classBanUser', studentData.username)
+            if (confirm(`Are you sure you want to ban ${studentData.username}?`)) {
+                socket.emit('classBanUser', studentData.username)
+            }
         }
         newStudent.appendChild(banStudentButton)
         let kickUserButton = document.createElement('button')
         kickUserButton.className = 'kickUser quickButton'
         kickUserButton.setAttribute('data-userid', studentData.username)
         kickUserButton.onclick = (event) => {
-            socket.emit('classKickUser', studentData.username)
+            if (confirm(`Are you sure you want to kick ${studentData.username}?`)) {
+                socket.emit('classKickUser', studentData.username)
+            }
         }
         kickUserButton.textContent = 'Kick User'
         newStudent.appendChild(kickUserButton)
