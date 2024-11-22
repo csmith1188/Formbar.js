@@ -1,4 +1,4 @@
-const { encrypt, decrypt } = require("../crypto")
+const { hash, compare } = require('../crypto')
 const { database } = require("../modules/database")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
@@ -36,7 +36,7 @@ module.exports = {
         // This lets the user log into the server, it uses each element from the database to allow the server to do so
         // This lets users actually log in instead of not being able to log in at all
         // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
-        // This also encrypts passwords to make sure people's accounts don't get hacked
+        // This also hashes passwords to make sure people's accounts don't get hacked
         app.post('/login', async (req, res) => {
             try {
                 const user = {
@@ -46,7 +46,14 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 }
-                const passwordCrypt = encrypt(user.password)
+                var passwordCrypt
+                var passwordSalt
+                await hash('password').then((value) => {
+                    passwordCrypt = value.hash;
+                    passwordSalt = value.salt;
+                }).catch((err) => {
+                    console.log('Error hashing password: ' + err);
+                });
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -83,9 +90,8 @@ module.exports = {
                                 };
                             };
 
-                            // Decrypt users password
-                            let tempPassword = decrypt(JSON.parse(userData.password))
-                            if (tempPassword != user.password) {
+                            // Compare password hashes and check if it is correct
+                            if (compare(JSON.parse(userData.password), passwordCrypt)) {
                                 logger.log('verbose', '[post /login] Incorrect password')
                                 res.render('pages/message', {
                                     message: 'Incorrect password',
@@ -184,10 +190,11 @@ module.exports = {
 
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
                                     JSON.stringify(passwordCrypt),
+                                    JSON.stringify(passwordSalt),
                                     permissions,
                                     newAPI,
                                     newSecret,

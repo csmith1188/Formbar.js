@@ -6,7 +6,7 @@ module.exports = {
         socket.on("approvePasswordChange", (changeApproval, username, newPassword) => {
             try {
                 if (changeApproval) {
-                    const passwordCrypt = encrypt(newPassword);
+                    const passwordCrypt = hash(newPassword);
                     const passwordCryptString = JSON.stringify(passwordCrypt);
                     database.run("UPDATE users SET password = ? WHERE username = ?", [passwordCryptString, username], (err) => {
                         if (err) {

@@ -1,4 +1,4 @@
-const { decrypt } = require("../crypto")
+const { compare } = require('../crypto')
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -72,9 +72,8 @@ module.exports = {
                             return
                         }
 
-                        // Decrypt users password
-                        let databasePassword = decrypt(JSON.parse(userData.password))
-                        if (databasePassword != password) {
+                        // Hashes users password
+                        if (compare(JSON.parse(userData.password), password)) {
                             logger.log('verbose', '[post /oauth] Incorrect password')
                             res.render('pages/message', {
                                 message: 'Incorrect password',
