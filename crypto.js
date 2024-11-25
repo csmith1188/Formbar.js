@@ -1,30 +1,44 @@
-const crypto = require('crypto');
+//
+// Slow Hashing with salt
+//
+const bcrypt = require('bcrypt');
 
-const algorithm = 'aes-256-ctr';
-const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
+// Increases time to log in/verify
+const saltRounds = 1;
 
-const encrypt = (text) => {
-    const iv = crypto.randomBytes(16);
-
-    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
-
-    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
-
-    return {
-        iv: iv.toString('hex'),
-        content: encrypted.toString('hex')
-    };
+// Returns a promise with the hash and salt
+// Use .then on hash with functions resolve(value) and reject(err) to get values
+// W3Schools taught me how to use promises, likely not the best way to do it
+const hash = (text) => {
+    return new Promise((resolve, reject) => {
+        bcrypt.genSalt(saltRounds, (err, salt) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            bcrypt.hash(text, salt, (err, hash) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve({ hash, salt });
+                return;
+            });
+        });
+    });
 };
 
-const decrypt = (hash) => {
-    const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
-
-    const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
-
-    return decrpyted.toString();
-};
+// Returns true if the two values match, hash is the database value
+const compare = (text, hash) => {
+    bcrypt.compare(text, hash, (err, res) => {
+        if (err) {
+            return;
+        }
+        return res;
+    });
+}
 
 module.exports = {
-    encrypt,
-    decrypt
+    hash,
+    compare
 };
