@@ -1,5 +1,6 @@
 const { classInformation, getClassUsers } = require("../../../modules/class")
 const { getPollResponses } = require("../../../modules/polls")
+const { TEACHER_PERMISSIONS } = require("../../../modules/permissions")
 const { logger } = require("../../../modules/logger")
 
 module.exports = {
@@ -43,6 +44,11 @@ module.exports = {
 					logger.log('info', `[get api/class/${key}] ${classUsers}`)
 					res.status(404).json(classUsers)
 					return
+				}
+
+				// If the user is not a teacher or manager, remove the poll history from the data
+				if (user.classPermissions < TEACHER_PERMISSIONS) {
+					delete classData.pollHistory;
 				}
 
 				// Update the class data with the class users and remove the shared polls
