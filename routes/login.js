@@ -190,9 +190,10 @@ module.exports = {
 
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, email, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
+                                    user.email,
                                     JSON.stringify(passwordCrypt),
                                     JSON.stringify(passwordSalt),
                                     permissions,
@@ -213,6 +214,7 @@ module.exports = {
                                                 // Add user to session
                                                 classInformation.noClass.students[userData.username] = new Student(
                                                     userData.username,
+                                                    userData.email,
                                                     userData.id,
                                                     userData.permissions,
                                                     userData.API,
