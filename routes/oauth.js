@@ -90,13 +90,27 @@ module.exports = {
                             userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
                         }
 
+                        // Generate a refresh token
+                        const refreshToken = jwt.sign({
+                            id: userData.id,
+                            username: userData.username
+                        }, userData.secret, { expiresIn: '14d' })
+
                         const token = jwt.sign({
                             id: userData.id,
                             username: userData.username,
                             permissions: userData.permissions,
                             classPermissions: userData.classPermissions,
-                            class: classCode
+                            class: classCode,
+                            refreshToken
                         }, userData.secret, { expiresIn: '30m' })
+
+                        // Store the refresh token in the database
+                        database.run('UPDATE users SET oauthRefreshToken=? WHERE id=?', [refreshToken, userData.id], (err) => {
+                            if (err) throw err
+
+                            console.log("Refresh token updated")
+                        })
 
                         logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
                         res.redirect(`${redirectURL}?token=${token}`)
@@ -110,6 +124,26 @@ module.exports = {
                 })
             } catch (err) {
                 logger.log('error', err.stack);
+                res.render('pages/message', {
+                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                    title: 'Error'
+                })
+            }
+        })
+
+        app.get('/oauthRefresh', (req, res) => {
+            const refreshToken = req.query.refreshToken
+            try {
+                database.get('SELECT * FROM users WHERE oauthRefreshToken=?', [refreshToken], (err, userData) => {
+                    if (err) throw err
+
+                    if (!userData) {
+                        res.status(401).send('Invalid refresh token')
+                        return
+                    }
+                });
+            } catch (err) {
+                logger.log('error', err.stack)
                 res.render('pages/message', {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: 'Error'
