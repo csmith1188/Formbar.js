@@ -6,24 +6,85 @@ const { logger } = require("../modules/logger")
 const { getUserClass } = require("../modules/user")
 const jwt = require('jsonwebtoken')
 
+function generateAccessToken(userData, classCode, refreshToken) {
+    const token = jwt.sign({
+        id: userData.id,
+        username: userData.username,
+        permissions: userData.permissions,
+        classPermissions: userData.classPermissions,
+        class: classCode,
+        refreshToken
+    }, userData.secret, { expiresIn: '30m' })
+
+    return token
+}
+
+function generateRefreshToken(userData) {
+    const token = jwt.sign({
+        id: userData.id,
+        username: userData.username
+    }, userData.secret, { expiresIn: '14d' })
+
+    return token
+}
+
+function storeRefreshToken(userId, refreshToken) {
+    const decodedRefreshToken = jwt.decode(refreshToken)
+    database.run('INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)', [userId, refreshToken, decodedRefreshToken.exp], (err) => {
+        if (err) throw err
+    })
+}
+
 module.exports = {
     run(app) {
         /* 
         This is what happens when the server tries to authenticate a user. 
-        It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page as a variable. 
+        It saves the redirectURL query parameter to a variable, and sends the redirectURL to the oauth page.
+        If a refresh token is provided, it will find the user associated with the token and generate a new access token.
         */
         app.get('/oauth', (req, res) => {
             try {
-                let redirectURL = req.query.redirectURL
+                const redirectURL = req.query.redirectURL
+                const refreshToken = req.query.refreshToken
 
                 logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL})`)
+                logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL}) refreshToken=(${refreshToken})`)
 
-                // Render the login page and pass the redirectURL
-                res.render('pages/login', {
-                    title: 'Oauth',
-                    redirectURL: redirectURL
-                })
+                if (refreshToken) {
+                    database.get('SELECT * FROM refresh_tokens WHERE refresh_token=?', [refreshToken], (err, refreshTokenData) => {
+                        if (err) throw err
+                        if (!refreshTokenData) {
+                            // Invalid refresh token
+                            res.redirect(`/oauth?redirectURL=${redirectURL}`)
+                            return
+                        }
+
+                        database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
+                            if (err) throw err
+                            if (userData) {
+                                // Get class code and class permissions
+                                const classCode = getUserClass(userData.username)
+                                userData.classPermissions = null
+                                if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
+                                    userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
+                                }
+                                
+                                // Generate new access token
+                                const accessToken = generateAccessToken(userData, classCode, refreshTokenData.refresh_token)
+                                res.redirect(`${redirectURL}?token=${accessToken}`)
+                            } else {
+                                // Invalid user
+                                res.redirect(`/oauth?redirectURL=${redirectURL}`)
+                            }
+                        })
+                    })
+                } else {
+                    // Render the login page and pass the redirectURL
+                    res.render('pages/login', {
+                        title: 'Oauth',
+                        redirectURL: redirectURL
+                    })
+                }                
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
@@ -62,8 +123,8 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        // Check if a user with that name was not found in the database
-                        if (!userData.username) {
+                        // Check if the user exists
+                        if (!userData) {
                             logger.log('verbose', '[post /oauth] User does not exist')
                             res.render('pages/message', {
                                 message: 'No user found with that username.',
@@ -82,38 +143,41 @@ module.exports = {
                             return
                         }
 
-                        let classCode = getUserClass(userData.username)
-
+                        // Get class code and class permissions
+                        const classCode = getUserClass(userData.username)
                         userData.classPermissions = null
-
                         if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
                             userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
                         }
 
-                        // Generate a refresh token
-                        const refreshToken = jwt.sign({
-                            id: userData.id,
-                            username: userData.username
-                        }, userData.secret, { expiresIn: '14d' })
-
-                        const token = jwt.sign({
-                            id: userData.id,
-                            username: userData.username,
-                            permissions: userData.permissions,
-                            classPermissions: userData.classPermissions,
-                            class: classCode,
-                            refreshToken
-                        }, userData.secret, { expiresIn: '30m' })
-
-                        // Store the refresh token in the database
-                        database.run('UPDATE users SET oauthRefreshToken=? WHERE id=?', [refreshToken, userData.id], (err) => {
+                        // Retrieve or generate refresh token
+                        database.get('SELECT * from refresh_tokens WHERE user_id=?', [userData.id], (err, refreshTokenData) => {
                             if (err) throw err
+                            
+                            let refreshToken = null
+                            if (refreshTokenData) {
+                                // Check if refresh token is past expiration date
+                                const decodedRefreshToken = jwt.decode(refreshTokenData.refresh_token)
+                                const currentTime = Math.floor(Date.now() / 1000)
+                                if (decodedRefreshToken.exp < currentTime) {
+                                    // Generate new refresh token
+                                    refreshToken = generateRefreshToken(userData)
+                                    storeRefreshToken(userData.id, refreshToken)
+                                    return
+                                }
 
-                            console.log("Refresh token updated")
-                        })
+                                refreshToken = refreshTokenData.refresh_token
+                            } else {
+                                refreshToken = generateRefreshToken(userData)
+                                storeRefreshToken(userData.id, refreshToken)
+                            }
 
-                        logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
-                        res.redirect(`${redirectURL}?token=${token}`)
+                            // Generate access token
+                            const accessToken = generateAccessToken(userData, classCode, refreshToken)
+                                                
+                            logger.log('verbose', '[post /oauth] Successfully Logged in with oauth')
+                            res.redirect(`${redirectURL}?token=${accessToken}`)
+                        });
                     } catch (err) {
                         logger.log('error', err.stack);
                         res.render('pages/message', {
@@ -124,26 +188,6 @@ module.exports = {
                 })
             } catch (err) {
                 logger.log('error', err.stack);
-                res.render('pages/message', {
-                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                    title: 'Error'
-                })
-            }
-        })
-
-        app.get('/oauthRefresh', (req, res) => {
-            const refreshToken = req.query.refreshToken
-            try {
-                database.get('SELECT * FROM users WHERE oauthRefreshToken=?', [refreshToken], (err, userData) => {
-                    if (err) throw err
-
-                    if (!userData) {
-                        res.status(401).send('Invalid refresh token')
-                        return
-                    }
-                });
-            } catch (err) {
-                logger.log('error', err.stack)
                 res.render('pages/message', {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: 'Error'
