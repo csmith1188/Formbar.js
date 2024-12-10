@@ -131,17 +131,18 @@ module.exports = {
                                     JSON.parse(userData.ownedPolls),
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
-                                    userData.displayName
-
+                                    userData.displayName,
+                                    userData.verified
                                 )
                                 req.session.class = 'noClass'
                             }
                             // Add a cookie to transfer user credentials across site
-                            req.session.userId = userData.id
-                            req.session.username = userData.username
-                            req.session.email = userData.email
-                            req.session.tags = userData.tags
-                            req.session.displayName = userData.displayName
+                            req.session.userId = userData.id;
+                            req.session.username = userData.username;
+                            req.session.email = userData.email;
+                            req.session.tags = userData.tags;
+                            req.session.displayName = userData.displayName;
+                            req.session.verified = userData.verified;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)

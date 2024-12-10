@@ -17,7 +17,7 @@ const sendMail = (recipient, subject, html) => {
         // The email and password to the email the SMTP server will use
         auth: {
             user: 'automailer@yorktechapps.com',
-            pass: emailPassword,
+            pass: emailPassword, // Must be fixed at a later date
         }
     };
 
