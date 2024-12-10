@@ -1,0 +1,31 @@
+<%- include('../partials/header_content') %>
+  <%- include('../partials/sockets') %>
+    <!-- ^^ This means add this file into the contents of the header page -->
+    <!-- This is where the title, top buttons, and stylesheet is located -->
+
+    <body id='colorContent'>
+      <%- include('../partials/formbar_header') %>
+        <div>
+            <h1>Verification</h1>
+            <p hidden>Please check your email for a verification link.</p>
+            <a href='/verification' onclick='sendVerificationEmail();'>Send Verification Email</a>
+        </div>
+    </body>
+
+    <%- include('../partials/footer_content') %>
+
+    <script>
+        let sendVerificationEmail = () => {
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/verification', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({}));
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    console.log('Verification email sent.');
+                    document.querySelector('p').hidden = false;
+                    document.querySelector('a').hidden = true;
+                }
+            }
+        }
+    </script>
