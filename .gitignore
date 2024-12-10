@@ -2,6 +2,7 @@ node_modules/
 database/database.db
 .vscode/
 uploads/
+.env
 
 logNumbers.json
 settings.json

@@ -13,16 +13,16 @@ module.exports = {
             // Set the token to the session token
             const token = req.session.token;
             // Create the HTML content for the email
-            // const html = `
-            // <h1>Verify your email</h1>
-            // <p>Click the link below to verify your email address with Formbar</p>
-            //     <a href="http://localhost:420/verification?code=${token}">Verify Email</a>
-            // `;
             const html = `
-                <h1>Verify your email</h1>
-                <p>Click the link below to verify your email address with Formbar</p>
-                <a href="https://formbar.yorktechapps.com/verification?code=${token}">Verify Email</a>
+            <h1>Verify your email</h1>
+            <p>Click the link below to verify your email address with Formbar</p>
+                <a href="http://localhost:420/verification?code=${token}">Verify Email</a>
             `;
+            // const html = `
+            //     <h1>Verify your email</h1>
+            //     <p>Click the link below to verify your email address with Formbar</p>
+            //     <a href="https://formbar.yorktechapps.com/verification?code=${token}">Verify Email</a>
+            // `;
             // Send the email
             sendMail(req.session.email, 'Formbar Verification', html);
         });
