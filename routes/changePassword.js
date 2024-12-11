@@ -6,6 +6,7 @@ const crypto = require('crypto');
 
 module.exports = {
     run(app) {
+        const location = process.env.LOCATION;
         app.get('/changepassword', (req, res) => {
             try {
                 // If there is no session token, create one
@@ -49,7 +50,7 @@ module.exports = {
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>
-                        <a href='http://localhost:420/changepassword?code=${req.session.token}'>Change Password</a>
+                        <a href='${location}/changepassword?code=${req.session.token}'>Change Password</a>
                         `);
                     // Redirect to /
                     res.redirect('/');

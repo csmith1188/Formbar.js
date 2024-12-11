@@ -38,9 +38,9 @@ const sendMail = (recipient, subject, html) => {
     // Sends the mail through the transporter, catching any errors that may arise
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error("Error sending email: ", error);
+            console.error('Error sending email: ', error);
         } else {
-            console.log("Email sent: ", info.response);
+            console.log('Email sent: ', info.response);
         };
     });
 };
