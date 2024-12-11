@@ -6,6 +6,7 @@ class Student {
 	// These will need to be put into the constructor in order to allow the creation of the object
 	constructor(
 		username,
+		email,
 		id,
 		permissions = STUDENT_PERMISSIONS,
 		API,
@@ -14,27 +15,28 @@ class Student {
 		tags,
 		displayName
 	) {
-		this.username = username
-		this.id = id
-		this.permissions = permissions
-		this.classPermissions = null
-		this.tags = tags
-		this.ownedPolls = ownedPolls || []
-		this.sharedPolls = sharedPolls || []
+		this.username = username;
+		this.email = email;
+		this.id = id;
+		this.permissions = permissions;
+		this.classPermissions = null;
+		this.tags = tags;
+		this.ownedPolls = ownedPolls || [];
+		this.sharedPolls = sharedPolls || [];
 		this.pollRes = {
 			buttonRes: '',
 			textRes: '',
 			time: null
-		}
-		this.help = false
-		this.break = false
-		this.quizScore = ''
-		this.API = API
-		this.pogMeter = 0
-		this.displayName = displayName
-	}
-}
+		};
+		this.help = false;
+		this.break = false;
+		this.quizScore = '';
+		this.API = API;
+		this.pogMeter = 0;
+		this.displayName = displayName;
+	};
+};
 
 module.exports = {
 	Student
-}
+};

@@ -1,6 +1,5 @@
 const sqlite3 = require("sqlite3")
 const fs = require("fs")
-
 const database = getDatabase();
 function getDatabase() {
     // If the database file doesn't exist, copy the template

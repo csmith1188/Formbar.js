@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 // Import the dotenv module
 require('dotenv').config();
 
-// Access the email password from the environmental variable
+// Access your email password from the environment variables
 const emailPassword = process.env.EMAIL_PASSWORD;
 
 // Create a function for sending mail, passing the recipient, subject, and HTML content as arguments
@@ -17,7 +17,7 @@ const sendMail = (recipient, subject, html) => {
         // The email and password to the email the SMTP server will use
         auth: {
             user: 'automailer@yorktechapps.com',
-            pass: emailPassword, // Must be fixed at a later date
+            pass: emailPassword,
         }
     };
 
