@@ -3,11 +3,11 @@ const nodemailer = require('nodemailer');
 // Import the dotenv module
 require('dotenv').config();
 
-// Access your email password from the environment variables
-const emailPassword = process.env.EMAIL_PASSWORD;
 
 // Create a function for sending mail, passing the recipient, subject, and HTML content as arguments
 const sendMail = (recipient, subject, html) => {
+    // Access your email password from the environment variables
+    const emailPassword = process.env.EMAIL_PASSWORD;
     // Configure the SMTP transport
     const smtpConfig = {
         service: 'dreamhost',

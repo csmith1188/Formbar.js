@@ -9,6 +9,9 @@ function buildOption(value, text, selected = false) {
 }
 var userBreak = []
 
+var helpPing = new Audio('/sfx/help.wav')
+
+
 function buildStudent(room, studentData) {
     let newStudent
 

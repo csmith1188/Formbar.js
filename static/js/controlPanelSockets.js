@@ -404,3 +404,8 @@ socket.on('endPoll', () => {
 	startPollForm.style.display = 'block'
 	endPoll.style.display = 'none'
 })
+
+socket.on('PlayHelp', () => {
+	console.log('help ping');
+	helpPing.play();
+});

@@ -2,6 +2,8 @@ const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 
+
+
 module.exports = {
     run(socket, socketUpdates) {
         // Sends a help ticket
@@ -20,6 +22,8 @@ module.exports = {
                 }
 
                 student.help = { reason: reason, time: time }
+
+                socket.emit('PlayHelp')
 
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`)
 
