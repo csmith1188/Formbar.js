@@ -19,8 +19,7 @@ module.exports = {
             // This handles the server side timer
             try {
                 let classData = classInformation[socket.request.session.class];
-
-                startTime = Math.round(startTime * 60)
+                startTime = Math.round(startTime)
 
                 classData.timer.startTime = startTime
                 classData.timer.timeLeft = startTime + 1

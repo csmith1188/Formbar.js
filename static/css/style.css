@@ -255,9 +255,7 @@ dialog {
 	height: 45px;
 }
 
-#lmdmBtn:hover {
-	
-}
+#lmdmBtn:hover {}
 
 #lmdmIcon {
 	position: absolute;
@@ -306,7 +304,7 @@ a.headerTab {
 	color: white;
 }
 
-#logoutButton{
+#logoutButton {
 	position: fixed;
 	right: 70px;
 	margin-top: 0.75vh;
@@ -315,12 +313,10 @@ a.headerTab {
 	height: 45px;
 }
 
-#logoutButton:hover {
-	
-}
+#logoutButton:hover {}
 
 
-#logoutIcon{
+#logoutIcon {
 	position: absolute;
 	left: 25%;
 	top: 20%;
@@ -845,6 +841,12 @@ div.break {
 	font: 32px monospace;
 	text-transform: uppercase;
 	overflow: hidden;
+}
+
+hr {
+	width: 25%;
+	border-bottom: 3px solid var(--theme-color);
+	border-radius: 20%;
 }
 
 /* --- BGM & SFX --- */

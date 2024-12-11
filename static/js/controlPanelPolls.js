@@ -835,23 +835,31 @@ document.addEventListener('click', (event) => {
 
 //Make the code above work
 
-var time = document.getElementById('inputtedTime')
+var time = document.getElementsByClassName('inputtedTime')[0]
+var timeS = document.getElementsByClassName('inputtedTime')[1]
 var sound = document.getElementById('playSound')
 
 var timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
-		socket.emit("timer", time.value, true, sound.checked)
-		timerButton.hidden = true
-		time.hidden = true
-		sound.hidden = true
-		timerStopButton.hidden = false
-		console.log(time.value)
+	if ((timeS.value == '' || timeS.value == 0) && (time.value == 0 || time.value == '')) {
+		alert('Please enter a time')
+		return
+	}
+	socket.emit("timer", time.value * 60 + Number(timeS.value), true, sound.checked)
+	timerButton.hidden = true
+	time.hidden = true
+	timeS.hidden = true
+	sound.hidden = true
+	timerStopButton.hidden = false
 })
 
 var timerStopButton = document.getElementById('timerStopButton')
 timerStopButton.addEventListener('click', function () {
 	timerButton.hidden = false
+	time.value = ''
+	timeS.value = ''
 	time.hidden = false
+	timeS.hidden = false
 	sound.hidden = false
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
@@ -861,13 +869,15 @@ socket.emit('timerOn')
 socket.on('timerOn', function (time) {
 	if (time) {
 		timerButton.hidden = true
-		document.getElementById('inputtedTime').hidden = true
+		document.getElementsByClassName('inputtedTime')[0].hidden = true
+		document.getElementsByClassName('inputtedTime')[1].hidden = true
 		document.getElementById('playSound').hidden = true
 		timerStopButton.hidden = false
 	}
 	else {
 		timerButton.hidden = false
-		document.getElementById('inputtedTime').hidden = false
+		document.getElementsByClassName('inputtedTime')[0].hidden = false
+		document.getElementsByClassName('inputtedTime')[1].hidden = false
 		document.getElementById('playSound').hidden = false
 		timerStopButton.hidden = true
 	}
