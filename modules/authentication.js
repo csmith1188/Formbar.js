@@ -108,7 +108,12 @@ function permCheck(req, res, next) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 			}
 
-			if (!classInformation[classCode].students[username]) {
+			// if (!classInformation[classCode].students[username]) {
+			// 	req.session.class = 'noClass'
+			// 	classCode = 'noClass'
+			// }
+
+			if (!classInformation.users[username]) {
 				req.session.class = 'noClass'
 				classCode = 'noClass'
 			}
@@ -122,21 +127,17 @@ function permCheck(req, res, next) {
 				})
 			}
 
+
 			// Checks if users permissions are high enough
-			if (
-				PAGE_PERMISSIONS[urlPath].classPage &&
-				classInformation[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
+			// console.log("USERCHECK", classInformation.users[username]);
+			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
-			} else if (
-				!PAGE_PERMISSIONS[urlPath].classPage &&
-				classInformation[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
+			} else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
 			} else {
 				logger.log('info', '[permCheck] Not enough permissions')
 				res.render('pages/message', {
-					message: `Error: you don't have high enough permissions to access ${urlPath}`,
+					message: `Error: You don't have high enough permissions to access ${urlPath}`,
 					title: 'Error'
 				})
 			}

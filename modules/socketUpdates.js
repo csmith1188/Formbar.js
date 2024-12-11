@@ -622,14 +622,11 @@ class SocketUpdates {
     async endClass(classCode) {
         try {
             logger.log('info', `[endClass] classCode=(${classCode})`)
-    
             await advancedEmitToClass('endClassSound', classCode, { api: true })
     
-            for (let username of Object.keys(classInformation[classCode].students)) {
-                this.classKickUser(username, classCode)
-            }
-            delete classInformation[classCode]
-    
+            // @TODO: If the class is ended, then clear the poll and do other stuff
+            await this.clearPoll(classCode)
+
             logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`)
         } catch (err) {
             logger.log('error', err.stack);

@@ -5,6 +5,7 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
 const { setClassOfApiSockets } = require("../modules/socketUpdates")
+const { generateKey } = require("../modules/util")
 
 module.exports = {
     run(app) {
@@ -27,6 +28,7 @@ module.exports = {
                         const user = classInformation.noClass.students[req.session.username]
 
                         logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
+
                         // Remove teacher from no class
                         delete classInformation.noClass.students[req.session.username]
 
@@ -42,14 +44,21 @@ module.exports = {
                                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
                                 }
                             }
+
                             database.run('UPDATE classroom SET permissions=? WHERE key=?', [JSON.stringify(permissions), key], (err) => {
                                 if (err) logger.log('error', err.stack)
                             })
                         }
+
                         classInformation[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                        classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+
                         // Add the teacher to the newly created class
-                        classInformation[key].students[req.session.username] = user
-                        classInformation[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+                        // classInformation[key].users[req.session.username] = user
+                        // @TODO: checkout
+
+                        classInformation.users[req.session.username].activeClasses.push(key)
+                        classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
 
                         // Add class into the session data
                         req.session.class = key
@@ -66,12 +75,7 @@ module.exports = {
                 //generates a 4 character key
                 //this is used for students who want to enter a class
                 if (submittionType == 'create') {
-                    let key = ''
-                    for (let i = 0; i < 4; i++) {
-                        let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-                        let letter = keygen[Math.floor(Math.random() * keygen.length)]
-                        key += letter
-                    }
+                    const key = generateKey(4);
 
                     // Add classroom to the database
                     database.run('INSERT INTO classroom(name, owner, key, permissions, tags) VALUES(?, ?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS), null], (err) => {

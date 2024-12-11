@@ -1,4 +1,4 @@
-const { classInformation } = require("../../modules/class")
+const { classInformation, getClassIDFromCode } = require("../../modules/class")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
@@ -20,22 +20,23 @@ module.exports = {
                     return
                 }
 
-                if (!classInformation[classCode].students[username]) {
+                if (!classInformation.users[username]) {
                     logger.log('info', '[socket permission check] User is not logged in')
                     socket.emit('message', 'User is not logged in')
                     return
                 }
 
-                if (GLOBAL_SOCKET_PERMISSIONS[event] && classInformation[classCode].students[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
+                const classId = getClassIDFromCode(classCode)
+                if (GLOBAL_SOCKET_PERMISSIONS[event] && classInformation.users[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Global socket permission check passed')
                     next()
-                } else if (CLASS_SOCKET_PERMISSIONS[event] && classInformation[classCode].students[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
+                } else if (CLASS_SOCKET_PERMISSIONS[event] && classInformation.users[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Class socket permission check passed')
                     next()
                 } else if (
                     CLASS_SOCKET_PERMISSION_MAPPER[event] &&
-                    classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
-                    classInformation[classCode].students[username].classPermissions >= classInformation[classCode].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
+                    classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
+                    classInformation.users[username].classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
                 ) {
                     logger.log('info', '[socket permission check] Class socket permission settings check passed')
                     next()

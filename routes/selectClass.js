@@ -1,5 +1,5 @@
 const { isLoggedIn, permCheck } = require("../modules/authentication")
-const { classInformation } = require("../modules/class")
+const { classInformation, Classroom } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
@@ -12,7 +12,7 @@ function joinClass(username, code) {
 			logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
 
 			// Find the id of the class from the database
-			database.get('SELECT id FROM classroom WHERE key=?', [code], (err, classroom) => {
+			database.get('SELECT * FROM classroom WHERE key=?', [code], (err, classroom) => {
 				try {
 					if (err) {
 						reject(err)
@@ -20,10 +20,15 @@ function joinClass(username, code) {
 					}
 
 					// Check to make sure there was a class with that code
-					if (!classroom || !classInformation[code]) {
-						logger.log('info', '[joinClass] No open class with that code')
-						resolve('no open class with that code')
+					if (!classroom) {
+						logger.log('info', '[joinClass] No class with that code')
+						resolve('No class with that code')
 						return
+					}
+
+					// Load the classroom into the classInformation object if it's not already loaded
+					if (!classInformation.classrooms[classroom.id]) {
+						classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.className, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
 					}
 
 					// Find the id of the user who is trying to join the class
@@ -50,20 +55,20 @@ function joinClass(username, code) {
 
 									if (classUser) {
 										// Get the student's session data ready to transport into new class
-										let user = classInformation.noClass.students[username]
+										let user = classInformation.users[username]
 										if (classUser.permissions <= BANNED_PERMISSIONS) {
 											logger.log('info', '[joinClass] User is banned')
-											resolve('you are banned from that class')
+											resolve('You are banned from that class.')
 											return
 										}
 
 										user.classPermissions = classUser.permissions
-
+										
 										// Remove student from old class
 										delete classInformation.noClass.students[username]
-										// Add the student to the newly created class
-										classInformation[code].students[username] = user
 
+										// Add the student to the newly created class
+										classInformation.classrooms[classroom.id].students[username] = user
 
 										advancedEmitToClass('joinSound', code, { api: true })
 
@@ -80,10 +85,11 @@ function joinClass(username, code) {
 
 													logger.log('info', '[joinClass] Added user to classusers')
 
-													let user = classInformation.noClass.students[username]
+													let user = classInformation.users[username]
 													user.classPermissions = classInformation[code].permissions.userDefaults
 
 													// Remove student from old class
+													// @TODO: fix this
 													delete classInformation.noClass.students[username]
 													// Add the student to the newly created class
 													classInformation[code].students[username] = user
@@ -153,6 +159,27 @@ module.exports = {
         app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
             try {
                 let classCode = req.body.key.toLowerCase()
+
+				// Get class id from class code
+				let classId = await new Promise((resolve, reject) => {
+					database.get('SELECT id FROM classroom WHERE key=?', [classCode], (err, classroom) => {
+						try {
+							if (err) {
+								reject(err)
+								return
+							}
+
+							if (!classroom) {
+								resolve('No class with that code')
+								return
+							}
+
+							resolve(classroom.id)
+						} catch (err) {
+							reject(err)
+						}
+					})
+				})
         
                 logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`)
         
@@ -166,7 +193,7 @@ module.exports = {
                     return
                 }
         
-                let classData = classInformation[classCode]
+                let classData = classInformation.classrooms[classId]
                 let cpPermissions = Math.min(
                     classData.permissions.controlPolls,
                     classData.permissions.manageStudents,
@@ -175,7 +202,8 @@ module.exports = {
 
                 advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation[classCode])
                 req.session.class = classCode
-                setClassOfApiSockets(classInformation[classCode].students[req.session.username].API, classCode)
+				req.session.classId = classId
+                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classCode)
         
                 res.redirect('/')
             } catch (err) {

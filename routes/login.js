@@ -134,6 +134,20 @@ module.exports = {
                                     userData.displayName,
                                     userData.verified
                                 )
+
+                                classInformation.users[userData.username] = new Student(
+                                    userData.username,
+                                    userData.email,
+                                    userData.id,
+                                    userData.permissions,
+                                    userData.API,
+                                    JSON.parse(userData.ownedPolls),
+                                    JSON.parse(userData.sharedPolls),
+                                    userData.tags,
+                                    userData.displayName,
+                                    userData.verified
+                                )
+
                                 req.session.class = 'noClass'
                             }
                             // Add a cookie to transfer user credentials across site
@@ -217,6 +231,18 @@ module.exports = {
 
                                                 // Add user to session
                                                 classInformation.noClass.students[userData.username] = new Student(
+                                                    userData.username,
+                                                    userData.email,
+                                                    userData.id,
+                                                    userData.permissions,
+                                                    userData.API,
+                                                    [],
+                                                    [],
+                                                    userData.tags,
+                                                    userData.displayName
+                                                )
+
+                                                classInformation.users[userData.username] = new Student(
                                                     userData.username,
                                                     userData.email,
                                                     userData.id,

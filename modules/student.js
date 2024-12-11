@@ -33,7 +33,8 @@ class Student {
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
-		this.displayName = displayName
+		this.displayName = displayName,
+		this.activeClasses = []
 	}
 }
 

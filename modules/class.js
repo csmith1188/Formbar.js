@@ -9,6 +9,7 @@ class Classroom {
 	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags) {
 		this.id = id
 		this.className = className
+		this.isActive = false
 		this.students = {}
 		this.sharedPolls = sharedPolls || []
 		this.poll = {
@@ -45,7 +46,9 @@ class Classroom {
 
 function createClassInformation() {
     return {
-        noClass: { students: {} }
+        noClass: { students: {} },
+		users: {},
+		classrooms: {}
     }
 }
 
@@ -94,8 +97,9 @@ async function getClassUsers(user, key) {
 		// Create an object to store the class users
 		let classUsers = {}
 		let cDClassUsers = {}
-		if (classInformation[key])
+		if (classInformation[key]) {
 			cDClassUsers = classInformation[key].students
+		}
 
 		// For each user in the class
 		for (let user of dbClassUsers) {
@@ -152,9 +156,34 @@ async function getClassUsers(user, key) {
 	}
 }
 
+const classCache = {}
+function getClassIDFromCode(code) {
+	if (classCache[code]) {
+		return classCache[code]
+	}
+
+	return new Promise((resolve, reject) => {
+		database.get('SELECT id FROM classroom WHERE key = ?', [code], (err, classroom) => {
+			if (err) {
+				reject(err)
+				return
+			}
+
+			if (!classroom) {
+				resolve(null)
+				return
+			}
+
+			classCache[code] = classroom.id
+			resolve(classroom.id)
+		})
+	})
+}
+
 module.exports = {
     Classroom,
     getClassUsers,
+	getClassIDFromCode,
 
     // classInformation stores all of the information on classes and students
     classInformation: createClassInformation()

@@ -144,8 +144,9 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        if (classInformation[socket.request.session.class].students[user])
+                        if (classInformation[socket.request.session.class].students[user]) {
                             classInformation[socket.request.session.class].students[user].classPermissions = 0
+                        }
 
                         socketUpdates.classKickUser(user)
                         socketUpdates.classBannedUsersUpdate()
@@ -211,7 +212,8 @@ module.exports = {
             try {
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-                classInformation[socket.request.session.class].students[user].classPermissions = newPerm
+                classInformation[socket.request.session.class].students[user].classPermissions = newPerm // @TODO: remove
+                classInformation.users[user].classPermissions = newPerm
 
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,
