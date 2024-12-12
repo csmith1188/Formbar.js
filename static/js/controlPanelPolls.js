@@ -497,10 +497,10 @@ function startPoll(customPollId) {
 	socket.on('cpUpdate', (newClassroom) => {
 		rooms = newClassroom
 	})
-	var userTags = []
-	var userBoxesChecked = []
-	var userIndeterminate = []
-	var pollAnswers = []
+	let userTags = []
+	let userBoxesChecked = []
+	let userIndeterminate = []
+	let pollAnswers = []
 	for (let i = 0; i < resNumber.value; i++) {
 		let pollResponse = pollResponses[i]
 		let pollAnswer = {
@@ -511,11 +511,11 @@ function startPoll(customPollId) {
 
 		pollAnswers.push(pollAnswer)
 	}
-	var multiRes = document.getElementById("multiRes")
-	var lastResponses = document.getElementById('lastResponse')
-	var basedOnResponse = document.getElementById('basedOnResponse')
-	var lastResponseToUse = []
-	var defaultValue = basedOnResponse.value
+	let multiRes = document.getElementById("multiRes")
+	let lastResponses = document.getElementById('lastResponse')
+	let basedOnResponse = document.getElementById('basedOnResponse')
+	let lastResponseToUse = []
+	let defaultValue = basedOnResponse.value
 	for (let i = basedOnResponse.length; i >= 0; i--) {
 		basedOnResponse.remove(i)
 	}
@@ -569,13 +569,13 @@ function startPoll(customPollId) {
 
 		changeTab('mainPolls', 'polls')
 
-		var generatedColors = generateColors(customPoll.answers.length)
+		let generatedColors = generateColors(customPoll.answers.length)
 		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	} else {
 		let blind = blindCheck.checked
 
 
-		var generatedColors = generateColors(resNumber.value)
+		let generatedColors = generateColors(resNumber.value)
 
 		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
 	}
@@ -645,7 +645,7 @@ function savePoll() {
 	customPoll.prompt = pollPrompt.value
 	customPoll.textRes = resTextBox.checked
 
-	var pollAnswers = []
+	let pollAnswers = []
 	for (let i = 0; i < resNumber.value; i++) {
 		let pollResponse = pollResponses[i]
 		let pollAnswer = {
@@ -674,7 +674,7 @@ function savePollAs(pollType) {
 		customPoll.public = false
 		customPoll.weight = 1
 
-		var pollAnswers = []
+		let pollAnswers = []
 		for (let i = 0; i < resNumber.value; i++) {
 			let pollResponse = pollResponses[i]
 			let pollAnswer = {
@@ -835,11 +835,11 @@ document.addEventListener('click', (event) => {
 
 //Make the code above work
 
-var time = document.getElementsByClassName('inputtedTime')[0]
-var timeS = document.getElementsByClassName('inputtedTime')[1]
-var sound = document.getElementById('playSound')
+let time = document.getElementsByClassName('inputtedTime')[0]
+let timeS = document.getElementsByClassName('inputtedTime')[1]
+let sound = document.getElementById('playSound')
 
-var timerButton = document.getElementById('timerButton')
+let timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
 	if ((timeS.value == '' || timeS.value == 0) && (time.value == 0 || time.value == '')) {
 		alert('Please enter a time')
@@ -853,7 +853,7 @@ timerButton.addEventListener('click', function () {
 	timerStopButton.hidden = false
 })
 
-var timerStopButton = document.getElementById('timerStopButton')
+let timerStopButton = document.getElementById('timerStopButton')
 timerStopButton.addEventListener('click', function () {
 	timerButton.hidden = false
 	time.value = ''
