@@ -84,7 +84,7 @@ input {
 	color: #000000;
 }
 
-#usernameBox, #passwordBox, #displayNameBox, #joinKey {
+#usernameBox, #passwordBox, #displayNameBox, #joinKey, #emailBox {
 	background-color: #ffffff;
 	color: #000000;
 }

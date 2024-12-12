@@ -129,7 +129,10 @@
 				<button type='button' id='timerButton'>Start Timer</button>
 				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
 				<br>
-				<button id='kickUsers' onclick='kickAll()'>
+				<button id="muteButton" onclick="muteSound()">Mute</button>
+				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
+				<br>
+				<button id="kickUsers" onclick="kickAll()">
 					Kick All Students
 				</button>
 				<button id='endClass' onclick='endClass()'>
@@ -432,6 +435,20 @@
 				if (confirm('Are you sure you want to kick all students?')) {
 					socket.emit('classKickStudents')
 				}
+			}
+
+			var mute = false
+
+			function muteSound() {
+				document.getElementById('muteButton').hidden = true
+				document.getElementById('unmuteButton').hidden = false
+				mute = true
+			}
+
+			function unmuteSound() {
+				document.getElementById('muteButton').hidden = false
+				document.getElementById('unmuteButton').hidden = true
+				mute = false
 			}
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>
