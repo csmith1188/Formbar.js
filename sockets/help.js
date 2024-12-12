@@ -23,8 +23,6 @@ module.exports = {
 
                 student.help = { reason: reason, time: time }
 
-                socket.emit('PlayHelp')
-
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`)
 
                 socketUpdates.classPermissionUpdate()

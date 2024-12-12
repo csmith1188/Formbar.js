@@ -9,8 +9,6 @@ function buildOption(value, text, selected = false) {
 }
 var userBreak = []
 
-var helpPing = new Audio('/sfx/help.wav')
-
 
 function buildStudent(room, studentData) {
     let newStudent
@@ -54,6 +52,7 @@ function buildStudent(room, studentData) {
             deleteTicketButton.textContent = 'Delete Ticket'
             help.appendChild(deleteTicketButton)
             newStudent.appendChild(help)
+            helpSound()
         }
         if (studentData.break == true) {
             userBreak.push(studentData.username)
@@ -87,6 +86,8 @@ function buildStudent(room, studentData) {
             breakDisplay.textContent = `⏱`
             newStudent.classList.add('break')
             studentElement.appendChild(breakDisplay)
+            breaksounds()
+
         }
         newStudent.appendChild(studentElement);
         let permissionSwitch = document.createElement("select");
@@ -528,4 +529,18 @@ function makeLesson() {
 
 function approveBreak(breakApproval, username) {
     socket.emit('approveBreak', breakApproval, username)
+}
+
+function helpSound() {
+    var helpPing = new Audio('/sfx/help.wav')
+    if (mute == false) (
+        helpPing.play()
+    )
+}
+
+function breaksounds() {
+    var breakPing = new Audio('/sfx/break.wav')
+    if (mute == false) (
+        breakPing.play()
+    )
 }
