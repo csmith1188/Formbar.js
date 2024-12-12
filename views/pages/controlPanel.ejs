@@ -122,13 +122,14 @@
 					</div>
 					<button onclick='clearPollFunc()'>Clear Poll</button>
 					<button onclick='endPollFunc()'>End Poll</button>
-				</div></br>
-				<input type='number' id='inputtedTime' value='5' min='0.1'> Minutes <br><input type='checkbox' id='playSound'>
+				</div><hr>
+				<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
+				<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox" id="playSound">
 				Play Sound
 				<br>
 				<button type='button' id='timerButton'>Start Timer</button>
 				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
-				<br>
+				<br><hr>
 				<button id="muteButton" onclick="muteSound()">Mute</button>
 				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
 				<br>
