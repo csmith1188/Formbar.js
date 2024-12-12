@@ -133,9 +133,9 @@ module.exports = {
                                     userData.tags,
                                     userData.displayName,
                                     userData.verified
-                                )
-                                req.session.class = 'noClass'
-                            }
+                                );
+                                req.session.class = 'noClass';
+                            };
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
