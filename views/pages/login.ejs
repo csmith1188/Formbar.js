@@ -17,6 +17,7 @@
               autocomplete='off' pattern='[a-zA-Z0-9_]+' required>
             <p style='font-size:small;font-weight:bold;color: black;' id='passwordInfo'>*Username may only contain:
               a-z, A-Z, 0-9, and _,.</p>
+            <input type='email' id='emailBox' name='email' class='loginBox' placeholder='Email' value=''>
             <input type='password' id='passwordBox' name='password' class='loginBox' placeholder='Password' value=''
               pattern='[a-z0-9A-Z!@#$%^&*_?]+' minlength='8' maxlength='32' required>
             <input type='text' id='displayNameBox' name='displayName' class='loginBox' placeholder='Display Name'
@@ -43,6 +44,7 @@
         let naButton = document.getElementById('newAccountButton');
         let gButton = document.getElementById('guestButton');
         let ub = document.getElementById('usernameBox');
+        let eb = document.getElementById('emailBox');
         let pb = document.getElementById('passwordBox');
         let pi = document.getElementById('passwordInfo');
         let fp = document.getElementById('forgotPassword');
@@ -54,9 +56,9 @@
         if (redirect.value) {
           // Change the form action to 'oauth' and hide the buttons to change the login type
           form.action = 'oauth';
-          liButton.style.display = 'none';                
-          naButton.style.display = 'none';              
-          gButton.style.display = 'none';                
+          liButton.style.display = 'none';
+          naButton.style.display = 'none';
+          gButton.style.display = 'none';
         };
 
         function changeloginType(el) {
@@ -69,6 +71,8 @@
               fp.classList.remove('hidden');
               dn.classList.add('hidden');
               ub.classList.remove('hidden');
+              eb.classList.add('hidden');
+              eb.required = false;
               dn.required = false;
               sb.value = 'Log in';
               ut.value = 'login';
@@ -80,6 +84,8 @@
               fp.classList.add('hidden');
               dn.classList.remove('hidden');
               ub.classList.remove('hidden');
+              eb.classList.remove('hidden');
+              eb.required = true;
               dn.required = true;
               sb.value = 'Create account';
               ut.value = 'new';
@@ -93,6 +99,8 @@
               pi.classList.add('hidden');
               fp.classList.add('hidden');
               dn.classList.remove('hidden');
+              eb.classList.add('hidden');
+              eb.required = false;
               dn.required = true;
               sb.value = 'Go';
               ut.value = 'guest';

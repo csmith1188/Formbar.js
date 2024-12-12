@@ -40,6 +40,33 @@ function isAuthenticated(req, res, next) {
 	}
 }
 
+// Create a function to check if the user's email is verified
+let isVerified = (req, res, next) => {
+	// Try...
+	try {
+		// Log tha the function is being called with the ip and the session of the user
+		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		// If the user is verified...
+		if (req.session.verified) {
+			// Continue
+			next()
+		// Else...
+		} else {
+			// Redirect to the verification page
+			res.redirect('/verification')
+		};
+	// Catch any errors that may arise
+	} catch (err) {
+		// Log the error through the logger
+		logger.log('error', err.stack);
+		// Render the message page with the error message
+		res.render('pages/message', {
+			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+			title: 'Error'
+		});
+	};
+};
+
 // Check if user is logged in. Only used for create and select class pages
 // Use isAuthenticated function for any other pages
 // Created for the first page since there is no check before this
@@ -148,6 +175,7 @@ module.exports = {
 	
 	// Authentication functions
     isAuthenticated,
+	isVerified,
     isLoggedIn,
     permCheck,
 	checkIPBanned

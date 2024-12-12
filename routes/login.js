@@ -42,6 +42,7 @@ module.exports = {
                 const user = {
                     username: req.body.username,
                     password: req.body.password,
+                    email: req.body.email,
                     loginType: req.body.loginType,
                     userType: req.body.userType,
                     displayName: req.body.displayName
@@ -123,22 +124,25 @@ module.exports = {
                                 // Add user to the session
                                 classInformation.noClass.students[userData.username] = new Student(
                                     userData.username,
+                                    userData.email,
                                     userData.id,
                                     userData.permissions,
                                     userData.API,
                                     JSON.parse(userData.ownedPolls),
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
-                                    userData.displayName
-
+                                    userData.displayName,
+                                    userData.verified
                                 )
                                 req.session.class = 'noClass'
                             }
                             // Add a cookie to transfer user credentials across site
-                            req.session.userId = userData.id
-                            req.session.username = userData.username
-                            req.session.tags = userData.tags
-                            req.session.displayName = userData.displayName
+                            req.session.userId = userData.id;
+                            req.session.username = userData.username;
+                            req.session.email = userData.email;
+                            req.session.tags = userData.tags;
+                            req.session.displayName = userData.displayName;
+                            req.session.verified = userData.verified;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
@@ -190,9 +194,10 @@ module.exports = {
 
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, email, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
+                                    user.email,
                                     JSON.stringify(passwordCrypt),
                                     JSON.stringify(passwordSalt),
                                     permissions,
@@ -213,6 +218,7 @@ module.exports = {
                                                 // Add user to session
                                                 classInformation.noClass.students[userData.username] = new Student(
                                                     userData.username,
+                                                    userData.email,
                                                     userData.id,
                                                     userData.permissions,
                                                     userData.API,
