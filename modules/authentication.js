@@ -108,6 +108,7 @@ function permCheck(req, res, next) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 			}
 
+			// @TODO: another one
 			// if (!classInformation[classCode].students[username]) {
 			// 	req.session.class = 'noClass'
 			// 	classCode = 'noClass'
@@ -115,6 +116,7 @@ function permCheck(req, res, next) {
 
 			if (!classInformation.users[username]) {
 				req.session.class = 'noClass'
+				req.session.classId = null
 				classCode = 'noClass'
 			}
 

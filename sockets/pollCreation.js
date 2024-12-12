@@ -17,32 +17,32 @@ module.exports = {
                 logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
                 if (generatedColors instanceof Error) throw generatedColors
 
-                classInformation[socket.request.session.class].mode = 'poll'
-                classInformation[socket.request.session.class].poll.blind = blind
-                classInformation[socket.request.session.class].poll.status = true
+                classInformation.classrooms[socket.request.session.classId].mode = 'poll'
+                classInformation.classrooms[socket.request.session.classId].poll.blind = blind
+                classInformation.classrooms[socket.request.session.classId].poll.status = true
                 
                 if (tags) {
-                    classInformation[socket.request.session.class].poll.requiredTags = tags
+                    classInformation.classrooms[socket.request.session.classId].poll.requiredTags = tags
                 } else {
-                    classInformation[socket.request.session.class].poll.requiredTags = []
+                    classInformation.classrooms[socket.request.session.classId].poll.requiredTags = []
                 }
 
                 if (boxes) {
-                    classInformation[socket.request.session.class].poll.studentBoxes = boxes
+                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = boxes
                 } else {
-                    classInformation[socket.request.session.class].poll.studentBoxes = []
+                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = []
                 }
 
                 if (indeterminate) {
-                    classInformation[socket.request.session.class].poll.studentIndeterminate = indeterminate
+                    classInformation.classrooms[socket.request.session.classId].poll.studentIndeterminate = indeterminate
                 } else {
-                    classInformation[socket.request.session.class].poll.studentIndeterminate = []
+                    classInformation.classrooms[socket.request.session.classId].poll.studentIndeterminate = []
                 }
 
                 if (lastResponse) {
-                    classInformation[socket.request.session.class].poll.lastResponse = lastResponse
+                    classInformation.classrooms[socket.request.session.classId].poll.lastResponse = lastResponse
                 } else {
-                    classInformation[socket.request.session.class].poll.lastResponse = []
+                    classInformation.classrooms[socket.request.session.classId].poll.lastResponse = []
                 }
 
                 // Creates an object for every answer possible the teacher is allowing
@@ -66,11 +66,12 @@ module.exports = {
                     }
                 }
 
-                classInformation[socket.request.session.class].poll.weight = weight
-                classInformation[socket.request.session.class].poll.textRes = resTextBox
-                classInformation[socket.request.session.class].poll.prompt = pollPrompt
-                classInformation[socket.request.session.class].poll.multiRes = multiRes
+                classInformation.classrooms[socket.request.session.classId].poll.weight = weight
+                classInformation.classrooms[socket.request.session.classId].poll.textRes = resTextBox
+                classInformation.classrooms[socket.request.session.classId].poll.prompt = pollPrompt
+                classInformation.classrooms[socket.request.session.classId].poll.multiRes = multiRes
 
+                // @TODO: come back to this
                 for (const key in classInformation[socket.request.session.class].students) {
                     classInformation[socket.request.session.class].students[key].pollRes.buttonRes = ''
                     classInformation[socket.request.session.class].students[key].pollRes.textRes = ''

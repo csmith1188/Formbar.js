@@ -74,9 +74,9 @@ module.exports = {
                     res.render('pages/student', {
                         title: 'Student',
                         user: JSON.stringify(user),
-                        myRes: classInformation[req.session.class].students[req.session.username].pollRes.buttonRes,
-                        myTextRes: classInformation[req.session.class].students[req.session.username].pollRes.textRes,
-                        lesson: classInformation[req.session.class].lesson
+                        myRes: classInformation.users[req.session.username].pollRes.buttonRes,
+                        myTextRes: classInformation.users[req.session.username].pollRes.textRes,
+                        lesson: classInformation.classrooms[req.session.classId].lesson
                     })
                 }
             } catch (err) {

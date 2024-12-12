@@ -6,7 +6,7 @@ const { logger } = require("../modules/logger")
 module.exports = {
     run(socket, socketUpdates) {
         // Moves to the next step
-        socket.on('doStep', (index) => {
+        socket.on('doStep', async (index) => {
             try {
                 logger.log('info', `[doStep] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[doStep] index=(${index})`)
@@ -15,6 +15,8 @@ module.exports = {
                 socket.broadcast.to(socket.request.session.class).emit('reload')
                 classInformation[socket.request.session.class].currentStep++
 
+                // @TODO: take a look at
+                console.log("STEP", socket.request.session.classId);
                 if (classInformation[socket.request.session.class].steps[index] !== undefined) {
                     // Creates a poll based on the step data
                     if (classInformation[socket.request.session.class].steps[index].type == 'poll') {

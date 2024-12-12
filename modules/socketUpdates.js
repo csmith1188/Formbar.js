@@ -1,5 +1,5 @@
 const { whitelistedIps, blacklistedIps } = require("./authentication");
-const { classInformation } = require("./class");
+const { classInformation, getClassIDFromCode } = require("./class");
 const { settings } = require("./config");
 const { database, getAll, runQuery } = require("./database");
 const { logger } = require("./logger");
@@ -34,12 +34,13 @@ const PASSIVE_SOCKETS = [
  * @param  {...any} data - Additional data to emit with the event
  */
 async function advancedEmitToClass(event, classCode, options, ...data) {
-	let classData = classInformation[classCode]
+	let classId = await getClassIDFromCode(classCode)
+    let classData = classInformation.classrooms[classId]
 
 	let sockets = await io.in(`class-${classCode}`).fetchSockets()
 
 	for (let socket of sockets) {
-		let user = classData.students[socket.request.session.username]
+		let user = classInformation.users[socket.request.session.username]
 		let hasAPI = false
 
 		if (!user) continue
@@ -76,6 +77,7 @@ async function setClassOfApiSockets(api, classCode) {
 		socket.leave(`class-${socket.request.session.class}`)
 
 		socket.request.session.class = classCode || 'noClass'
+        socket.request.session.classId = await getClassIDFromCode(classCode)
 		socket.request.session.save()
 
 		socket.join(`class-${socket.request.session.class}`)
@@ -117,7 +119,7 @@ class SocketUpdates {
         try {
             logger.log('info', `[classPermissionUpdate] classCode=(${classCode})`)
     
-            let classData = classInformation[classCode]
+            let classData = classInformation.classrooms[this.socket.request.session.classId]
             let cpPermissions = Math.min(
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
@@ -136,8 +138,8 @@ class SocketUpdates {
     
             if (!classCode) return
             if (classCode == 'noClass') return
-    
-            let classData = structuredClone(classInformation[classCode])
+
+            let classData = structuredClone(classInformation.classrooms[this.socket.request.session.classId])
             let responses = {}
     
             // for (let [username, student] of Object.entries(classData.students)) {
@@ -255,7 +257,7 @@ class SocketUpdates {
                 totalResponders = totalStudentsIncluded.length
             }
             
-            if (classInformation[classCode].poll.multiRes) {
+            if (classInformation.classrooms[this.socket.request.session.classId].poll.multiRes) {
                 for (let student of Object.values(classData.students)) {
                     if (student.pollRes.buttonRes.length > 1) {
                         totalResponses += student.pollRes.buttonRes.length - 1
@@ -270,8 +272,8 @@ class SocketUpdates {
             }
     
             // Get rid of students whos permissions are teacher or above or guest
-            classInformation[classCode].poll.allowedResponses = totalStudentsIncluded
-            classInformation[classCode].poll.unallowedResponses = totalStudentsExcluded
+            classInformation.classrooms[this.socket.request.session.classId].poll.allowedResponses = totalStudentsIncluded
+            classInformation.classrooms[this.socket.request.session.classId].poll.unallowedResponses = totalStudentsExcluded
     
             advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
@@ -295,7 +297,8 @@ class SocketUpdates {
     pollUpdate(classCode = this.socket.request.session.class) {
         try {
             logger.log('info', `[pollUpdate] classCode=(${classCode})`)
-            logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation[classCode].poll)})`)
+            // @TODO
+            // logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation[classCode].poll)})`)
     
             advancedEmitToClass(
                 'pollUpdate',

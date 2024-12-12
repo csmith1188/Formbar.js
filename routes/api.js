@@ -59,6 +59,7 @@ module.exports = {
 				const permissions = req.session.user.permissions
 				const classPermissions = req.session.user.classPermissions
 				let classCode = req.session.user.class
+				let classId = req.session.user.classId
 				let urlPath = req.url
 	
 				// Log the request details
@@ -94,13 +95,13 @@ module.exports = {
 				}
 	
 				// If the class does not exist, return an error
-				if (!classInformation[classCode]) {
+				if (!classInformation.classrooms[classId]) {
 					res.status(404).json({ error: 'Class not started' })
 					return
 				}
 	
 				// If the user is not in the class, return an error
-				if (!classInformation[classCode].students[username]) {
+				if (!classInformation.users[username] || !classInformation.users[username].activeClasses.includes(classId)) {
 					res.status(404).json({ error: 'You are not in this class.' })
 					return
 				}

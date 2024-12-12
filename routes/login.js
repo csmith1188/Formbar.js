@@ -104,7 +104,7 @@ module.exports = {
                             let loggedIn = false
                             let classKey = ''
 
-                            for (let classData of Object.values(classInformation)) {
+                            for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
                                     for (let username of Object.keys(classData.students)) {
                                         if (username == userData.username) {
@@ -120,6 +120,7 @@ module.exports = {
                             if (loggedIn) {
                                 logger.log('verbose', '[post /login] User is already logged in')
                                 req.session.class = classKey
+                                req.session.classId = 
                             } else {
                                 // Add user to the session
                                 classInformation.noClass.students[userData.username] = new Student(
