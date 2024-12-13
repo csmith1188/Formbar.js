@@ -122,22 +122,6 @@ module.exports = {
                                 req.session.class = classKey
                                 req.session.classId = getClassIDFromCode(classKey)
                             } else {
-                                // Add user to the session
-                                classInformation.noClass.students[userData.username] = new Student(
-                                    userData.username,
-                                    userData.email,
-                                    userData.id,
-                                    userData.permissions,
-                                    userData.API,
-                                    JSON.parse(userData.ownedPolls),
-                                    JSON.parse(userData.sharedPolls),
-                                    userData.tags,
-                                    userData.displayName,
-                                    userData.verified
-                                )
-
-                                // @TODO: again
-
                                 classInformation.users[userData.username] = new Student(
                                     userData.username,
                                     userData.email,

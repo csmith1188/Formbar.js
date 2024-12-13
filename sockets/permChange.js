@@ -21,7 +21,7 @@ module.exports = {
                 if (classCode) {
                     classInformation.classrooms[classId].students[username].permissions = newPerm
 
-                    if (classInformation[classCode].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation[classCode].students)[0] == username) {
+                    if (classInformation.classrooms[classId].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation.classrooms[classId].students)[0] == username) {
                         socketUpdates.endClass(classCode)
                     }
 

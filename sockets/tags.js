@@ -10,7 +10,7 @@ module.exports = {
             try {
                 logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-                classInformation[socket.request.session.class].students[username].tags = tags.toString()
+                classInformation.classrooms[socket.request.session.classId].students[username].tags = tags.toString()
                 database.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
                     if (err) {
                         logger.log('error', err)
@@ -40,21 +40,21 @@ module.exports = {
             // Add a new tag to the database
             try {
                 if (tagName == '') return;
-                classInformation[socket.request.session.class].tagNames.push(tagName);
+                classInformation.classrooms[socket.request.session.classId].tagNames.push(tagName);
 
                 let newTotalTags = "";
-                for (let i = 0; i < classInformation[socket.request.session.class].tagNames.length; i++) {
-                    newTotalTags += classInformation[socket.request.session.class].tagNames[i] + ", ";
+                for (let i = 0; i < classInformation.classrooms[socket.request.session.classId].tagNames.length; i++) {
+                    newTotalTags += classInformation.classrooms[socket.request.session.classId].tagNames[i] + ", ";
                 };
                 
                 newTotalTags = newTotalTags.split(", ");
                 newTotalTags.pop();
-                database.get('SELECT * FROM classroom WHERE name = ?', [classInformation[socket.request.session.class].className], (err, row) => {
+                database.get('SELECT * FROM classroom WHERE name = ?', [classInformation.classrooms[socket.request.session.classId].className], (err, row) => {
                     if (err) {
                         logger.log(err.stack);
                     }
                     if (row) {
-                        database.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation[socket.request.session.class].className], (err) => {
+                        database.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation.classrooms[socket.request.session.classId].className], (err) => {
                             if (err) {
                                 logger.log(err.stack);
                             };
@@ -74,17 +74,18 @@ module.exports = {
                 // Find the tagName in the array of tagnames from the database
                 // If the tagname is not there, socket.send('message', 'Tag not found') and return
                 // If the tagname is there, remove it from the array and update the database
-                const index = classInformation[socket.request.session.class].tagNames.indexOf(tagName);
+                const index = classInformation.classrooms[socket.request.session.classId].tagNames.indexOf(tagName);
                 if (index > -1) {
-                    classInformation[socket.request.session.class].tagNames.splice(index, 1);
+                    classInformation.classrooms[socket.request.session.classId].tagNames.splice(index, 1);
                 } else {
                     socket.send('message', 'Tag not found')
                     return;
                 }
 
                 // Now remove all instances of the tag from the students' tags
-                for (const student of Object.values(classInformation[socket.request.session.class].students)) {
+                for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
                     if (student.classPermissions == 0 || student.classPermissions >= 5) continue;
+                
                     let studentTags = student.tags.split(",");
                     let studentIndex = studentTags.indexOf(tagName);
                     if (studentIndex > -1) {
@@ -107,7 +108,7 @@ module.exports = {
                         };
                     });
 
-                    database.get('SELECT tags FROM classroom WHERE name = ?', [classInformation[socket.request.session.class].className], (err, row) => {
+                    database.get('SELECT tags FROM classroom WHERE name = ?', [classInformation.classrooms[socket.request.session.classId].className], (err, row) => {
                         if (err) {
                             logger.log(err.stack);
                         }
@@ -124,7 +125,7 @@ module.exports = {
                                 newTotalTags.splice(tagIndex, 1);
                             }
                             
-                            database.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation[socket.request.session.class].className], (err) => {
+                            database.run('UPDATE classroom SET tags = ? WHERE name = ?', [newTotalTags.toString(), classInformation.classrooms[socket.request.session.classId].className], (err) => {
                                 if (err) {
                                     logger.log(err.stack);
                                 };

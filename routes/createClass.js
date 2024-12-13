@@ -25,12 +25,8 @@ module.exports = {
                 async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags) {
                     try {
                         // Get the teachers session data ready to transport into new class
-                        const user = classInformation.noClass.students[req.session.username]
-
+                        const user = classInformation.users[req.session.username]
                         logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
-
-                        // Remove teacher from no class
-                        delete classInformation.noClass.students[req.session.username]
 
                         if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
                             for (let permission of Object.keys(permissions)) {
@@ -50,24 +46,20 @@ module.exports = {
                             })
                         }
 
-                        classInformation[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                        // Create classroom
                         classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
 
                         // Add the teacher to the newly created class
-                        // @TODO: checkout
                         classInformation.classrooms[id].students[req.session.username] = user
                         classInformation.classrooms[id].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
                         classInformation.users[req.session.username].activeClasses.push(id)
                         classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
-
-                        // console.log(classInformation.classrooms[id])
 
                         // Add class into the session data
                         req.session.class = key
                         req.session.classId = id
 
                         await setClassOfApiSockets(user.API, key)
-
                         return true
                     } catch (err) {
                         return err

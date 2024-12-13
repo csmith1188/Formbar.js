@@ -15,7 +15,6 @@ module.exports = {
                 socket.broadcast.to(socket.request.session.class).emit('reload')
                 classInformation.classrooms[socket.request.session.classId].currentStep++
 
-                // @TODO: take a look at
                 if (classInformation.classrooms[socket.request.session.classId].steps[index] !== undefined) {
                     // Creates a poll based on the step data
                     if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'poll') {

@@ -91,33 +91,28 @@ function isLoggedIn(req, res, next) {
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
 	try {
-		let username = req.session.username
-		let classCode = req.session.class
+		const username = req.session.username
+		const classId = req.session.classId
 
 		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
 
 		if (req.url) {
 			// Defines users desired endpoint
 			let urlPath = req.url
+
 			// Checks if url has a / in it and removes it from the string
 			if (urlPath.indexOf('/') != -1) {
 				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
 			}
+
 			// Check for ?(urlParams) and removes it from the string
 			if (urlPath.indexOf('?') != -1) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 			}
 
-			// @TODO: another one
-			// if (!classInformation[classCode].students[username]) {
-			// 	req.session.class = 'noClass'
-			// 	classCode = 'noClass'
-			// }
-
 			if (!classInformation.users[username]) {
 				req.session.class = 'noClass'
 				req.session.classId = null
-				classCode = 'noClass'
 			}
 
 			logger.log('verbose', `[permCheck] urlPath=(${urlPath})`)
@@ -128,7 +123,6 @@ function permCheck(req, res, next) {
 					title: 'Error'
 				})
 			}
-
 
 			// Checks if users permissions are high enough
 			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {

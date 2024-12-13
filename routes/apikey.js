@@ -12,7 +12,7 @@ module.exports = {
 
                 res.render('pages/apiKey', {
                     title: 'API Key',
-                    API: classInformation[req.session.class].students[req.session.username].API
+                    API: classInformation.classrooms[req.session.classId].students[req.session.username].API
                 })
             } catch (err) {
                 logger.log('error', err.stack);

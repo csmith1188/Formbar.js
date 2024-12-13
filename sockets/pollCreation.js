@@ -71,7 +71,6 @@ module.exports = {
                 classInformation.classrooms[socket.request.session.classId].poll.prompt = pollPrompt
                 classInformation.classrooms[socket.request.session.classId].poll.multiRes = multiRes
 
-                // @TODO: come back to this
                 for (const key in classInformation.classrooms[socket.request.session.classId].students) {
                     classInformation.classrooms[socket.request.session.classId].students[key].pollRes.buttonRes = ''
                     classInformation.classrooms[socket.request.session.classId].students[key].pollRes.textRes = ''

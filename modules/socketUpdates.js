@@ -117,7 +117,7 @@ class SocketUpdates {
         try {
             logger.log('info', `[classPermissionUpdate] classCode=(${classCode})`)
     
-            let classData = classInformation.classrooms[this.socket.request.session.classId]
+            let classData = classInformation.classrooms[classId]
             let cpPermissions = Math.min(
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
@@ -295,13 +295,13 @@ class SocketUpdates {
     pollUpdate(classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[pollUpdate] classCode=(${classCode})`)
-            logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation.classrooms[this.socket.request.session.classId].poll)})`)
+            logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation.classrooms[classId].poll)})`)
     
             advancedEmitToClass(
                 'pollUpdate',
                 classCode,
                 { classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
-                classInformation.classrooms[this.socket.request.session.classId].poll
+                classInformation.classrooms[classId].poll
             )
         } catch (err) {
             logger.log('error', err.stack);
@@ -317,7 +317,7 @@ class SocketUpdates {
                 'modeUpdate',
                 classCode,
                 { classPermissions: CLASS_SOCKET_PERMISSIONS.modeUpdate },
-                classInformation.classrooms[this.socket.request.session.classId].mode
+                classInformation.classrooms[classId].mode
             )
         } catch (err) {
             logger.log('error', err.stack);
@@ -333,7 +333,7 @@ class SocketUpdates {
                 'quizUpdate',
                 classCode,
                 { classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
-                classInformation.classrooms[this.socket.request.session.classId].quiz
+                classInformation.classrooms[classId].quiz
             )
         } catch (err) {
             logger.log('error', err.stack);
@@ -356,7 +356,7 @@ class SocketUpdates {
         }
     }
     
-    pluginUpdate(classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
+    pluginUpdate(classCode = this.socket.request.session.class) {
         try {
             logger.log('info', `[pluginUpdate] classCode=(${classCode})`)
     
@@ -495,9 +495,9 @@ class SocketUpdates {
         }
     }
     
-    classKickStudents(classCode) {
+    classKickStudents(classId) {
         try {
-            logger.log('info', `[classKickStudents] classCode=(${classCode})`)
+            logger.log('info', `[classKickStudents] classId=(${classId})`)
     
             for (let username of Object.keys(classInformation.classrooms[classId].students)) {
                 if (classInformation.classrooms[classId].students[username].classPermissions < TEACHER_PERMISSIONS) {

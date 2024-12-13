@@ -64,9 +64,10 @@ module.exports = {
                             if (userData) {
                                 // Get class code and class permissions
                                 const classCode = getUserClass(userData.username)
+                                const classId = getClassIDFromCode(classCode)
                                 userData.classPermissions = null
-                                if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
-                                    userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
+                                if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+                                    userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions
                                 }
                                 
                                 // Generate new access token

@@ -13,7 +13,7 @@ module.exports = {
 
                 logger.log('info', `[help] reason=(${reason}) time=(${time})`)
 
-                let student = classInformation[socket.request.session.class].students[socket.request.session.username]
+                let student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]
 
                 if (student.help.reason != reason) {
                     advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
@@ -35,9 +35,9 @@ module.exports = {
                 logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[deleteTicket] student=(${student})`)
 
-                classInformation[socket.request.session.class].students[student].help = false
+                classInformation.classrooms[socket.request.session.classId].students[student].help = false
 
-                logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation[socket.request.session.class].students[student])})`)
+                logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[student])})`)
 
                 socketUpdates.classPermissionUpdate()
             } catch (err) {

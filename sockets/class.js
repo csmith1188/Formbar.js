@@ -108,7 +108,8 @@ module.exports = {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classCode = socket.request.session.class
-                socketUpdates.classKickStudents(classCode)
+                const classId = socket.request.session.class
+                socketUpdates.classKickStudents(classId)
                 socketUpdates.classPermissionUpdate(classCode)
                 socketUpdates.virtualBarUpdate(classCode)
                 advancedEmitToClass('kickStudentsSound', classCode, { api: true })
@@ -212,8 +213,8 @@ module.exports = {
             try {
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-                classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = newPerm // @TODO: checkout
-                // classInformation.users[user].classPermissions = newPerm
+                classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = newPerm
+                classInformation.users[user].classPermissions = newPerm
 
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,

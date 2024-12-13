@@ -133,17 +133,6 @@ function getUserClass(username) {
 		// Log the username
 		logger.log('info', `[getUserClass] username=(${username})`)
 
-		// Iterate over the class codes
-		// for (let classCode of Object.keys(classInformation)) {
-		// 	// If the user is a student in the current class
-		// 	if (classInformation[classCode].students[username]) {
-		// 		// Log the class code
-		// 		logger.log('verbose', `[getUserClass] classCode=(${classCode})`)
-		// 		// Return the class code
-		// 		return classCode
-		// 	}
-		// }
-
         // Iterate over the classrooms to find which class the user is in
         for (const classroom of classInformation.classrooms) {
             if (classroom.students[username]) {

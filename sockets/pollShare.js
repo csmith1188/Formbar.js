@@ -207,11 +207,10 @@ module.exports = {
                                                     logger.log('critical', 'Classroom does not exist')
                                                     return
                                                 }
-                                                if (!classInformation[classroom.key]) return
 
                                                 let sharedPolls = classInformation.classrooms[classId].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-                                                for (let username of Object.keys(classInformation[classroom.key].students)) {
+                                                for (let username of Object.keys(classInformation.classrooms[classId].students)) {
                                                     socketUpdates.customPollUpdate(username)
                                                 }
                                             } catch (err) {
@@ -265,8 +264,11 @@ module.exports = {
                                 }
 
                                 let name = 'Unnamed Poll'
-                                if (poll.name) name = poll.name
-                                else if (poll.prompt) name = poll.prompt
+                                if (poll.name) {
+                                    name = poll.name
+                                } else if (poll.prompt) {
+                                    name = poll.prompt
+                                }
 
                                 database.get(
                                     'SELECT * FROM class_polls WHERE pollId=? AND classId=?',
@@ -291,8 +293,8 @@ module.exports = {
 
                                                         socketUpdates.getPollShareIds(pollId)
 
-                                                        classInformation[classCode].sharedPolls.push(pollId)
-                                                        for (let username of Object.keys(classInformation[classCode].students)) {
+                                                        classInformation.classrooms[classroom.id].sharedPolls.push(pollId)
+                                                        for (let username of Object.keys(classInformation.classrooms[classroom.id].students)) {
                                                             socketUpdates.customPollUpdate(username)
                                                         }
                                                     } catch (err) {
