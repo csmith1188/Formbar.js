@@ -1,4 +1,4 @@
-const { classInformation } = require("./class")
+const { classInformation, getClassIDFromCode } = require("./class")
 const { database } = require("./database")
 const { logger } = require("./logger")
 const { io } = require("./webServer")
@@ -24,6 +24,7 @@ async function getUser(api) {
 
         // Get the class code of the user
         let classCode = getUserClass(username)
+        let classId = await getClassIDFromCode(classCode)
 
         // If the class code is an instance of Error, throw the error
         if (classCode instanceof Error) throw classCode
@@ -98,8 +99,8 @@ async function getUser(api) {
         }
 
         // If the user is in a class and is logged in
-        if (classInformation[classCode] && classInformation[classCode].students && classInformation[classCode].students[dbUser.username]) {
-            let cdUser = classInformation[classCode].students[dbUser.username]
+        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[dbUser.username]) {
+            let cdUser = classInformation.classrooms[classId].students[dbUser.username]
             if (cdUser) {
                 // Update the user's data with the data from the class
                 userData.loggedIn = true
@@ -143,12 +144,20 @@ function getUserClass(username) {
 		// 	}
 		// }
 
-        if (classInformation.users[username].activeClasses) {
-            return classInformation.users[username].activeClasses[0];
+        // Iterate over the classrooms to find which class the user is in
+        for (const classroom of classInformation.classrooms) {
+            if (classroom.students[username]) {
+                // Log the class code
+                logger.log('verbose', `[getUserClass] classCode=(${classInformation.key})`)
+
+                // Return the class code
+                return classInformation.key
+            }
         }
 
 		// If the user is not found in any class, log null
 		logger.log('verbose', `[getUserClass] classCode=(${null})`)
+
 		// Return null
 		return null
 	} catch (err) {

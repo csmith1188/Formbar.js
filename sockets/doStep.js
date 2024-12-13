@@ -13,68 +13,67 @@ module.exports = {
 
                 // send reload to whole class
                 socket.broadcast.to(socket.request.session.class).emit('reload')
-                classInformation[socket.request.session.class].currentStep++
+                classInformation.classrooms[socket.request.session.classId].currentStep++
 
                 // @TODO: take a look at
-                console.log("STEP", socket.request.session.classId);
-                if (classInformation[socket.request.session.class].steps[index] !== undefined) {
+                if (classInformation.classrooms[socket.request.session.classId].steps[index] !== undefined) {
                     // Creates a poll based on the step data
-                    if (classInformation[socket.request.session.class].steps[index].type == 'poll') {
-                        classInformation[socket.request.session.class].mode = 'poll'
-                        if (classInformation[socket.request.session.class].poll.status == true) {
-                            classInformation[socket.request.session.class].poll.responses = {}
-                            classInformation[socket.request.session.class].poll.prompt = ''
-                            classInformation[socket.request.session.class].poll.status = false
+                    if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'poll') {
+                        classInformation.classrooms[socket.request.session.classId].mode = 'poll'
+                        if (classInformation.classrooms[socket.request.session.classId].poll.status == true) {
+                            classInformation.classrooms[socket.request.session.classId].poll.responses = {}
+                            classInformation.classrooms[socket.request.session.classId].poll.prompt = ''
+                            classInformation.classrooms[socket.request.session.classId].poll.status = false
                         };
 
-                        classInformation[socket.request.session.class].poll.status = true
+                        classInformation.classrooms[socket.request.session.classId].poll.status = true
                         
                         // Creates an object for every answer possible the teacher is allowing
-                        for (let i = 0; i < classInformation[socket.request.session.class].steps[index].responses; i++) {
-                            if (classInformation[socket.request.session.class].steps[index].labels[i] == '' || classInformation[socket.request.session.class].steps[index].labels[i] == null) {
+                        for (let i = 0; i < classInformation.classrooms[socket.request.session.classId].steps[index].responses; i++) {
+                            if (classInformation.classrooms[socket.request.session.classId].steps[index].labels[i] == '' || classInformation.classrooms[socket.request.session.classId].steps[index].labels[i] == null) {
                                 let letterString = 'abcdefghijklmnopqrstuvwxyz'
-                                classInformation[socket.request.session.class].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
+                                classInformation.classrooms[socket.request.session.classId].poll.responses[letterString[i]] = { answer: 'Answer ' + letterString[i], weight: 1 }
                             } else {
-                                classInformation[socket.request.session.class].poll.responses[classInformation[socket.request.session.class].steps[index].labels[i]] = { answer: classInformation[socket.request.session.class].steps[index].labels[i], weight: classInformation[socket.request.session.class].steps[index].weights[i] }
+                                classInformation.classrooms[socket.request.session.classId].poll.responses[classInformation.classrooms[socket.request.session.classId].steps[index].labels[i]] = { answer: classInformation.classrooms[socket.request.session.classId].steps[index].labels[i], weight: classInformation.classrooms[socket.request.session.classId].steps[index].weights[i] }
                             }
                         }
-                        classInformation[socket.request.session.class].poll.textRes = false
-                        classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
-                    } else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+                        classInformation.classrooms[socket.request.session.classId].poll.textRes = false
+                        classInformation.classrooms[socket.request.session.classId].poll.prompt = classInformation.classrooms[socket.request.session.classId].steps[index].prompt
+                    } else if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'quiz') {
                         // Creates a new quiz based on step data
-                        classInformation[socket.request.session.class].mode = 'quiz'
-                        questions = classInformation[socket.request.session.class].steps[index].questions
+                        classInformation.classrooms[socket.request.session.classId].mode = 'quiz'
+                        questions = classInformation.classrooms[socket.request.session.classId].steps[index].questions
                         
                         const quiz = new Quiz(questions.length, 100)
                         quiz.questions = questions
-                        classInformation[socket.request.session.class].quiz = quiz
-                    } else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
+                        classInformation.classrooms[socket.request.session.classId].quiz = quiz
+                    } else if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'lesson') {
                         // Creates lesson based on step data
-                        classInformation[socket.request.session.class].mode = 'lesson'
+                        classInformation.classrooms[socket.request.session.classId].mode = 'lesson'
                         
-                        const lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
-                        classInformation[socket.request.session.class].lesson = lesson
+                        const lesson = new Lesson(classInformation.classrooms[socket.request.session.classId].steps[index].date, classInformation.classrooms[socket.request.session.classId].steps[index].lesson)
+                        classInformation.classrooms[socket.request.session.classId].lesson = lesson
                         database.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-                            [classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {
+                            [classInformation.classrooms[socket.request.session.classId].className, JSON.stringify(classInformation.classrooms[socket.request.session.classId].lesson), classInformation.classrooms[socket.request.session.classId].lesson.date], (err) => {
                                 if (err) logger.log('error', err.stack)
                             }
                         )
-                        classInformation[socket.request.session.class].poll.textRes = false
-                        classInformation[socket.request.session.class].poll.prompt = classInformation[socket.request.session.class].steps[index].prompt
-                    } else if (classInformation[socket.request.session.class].steps[index].type == 'quiz') {
+                        classInformation.classrooms[socket.request.session.classId].poll.textRes = false
+                        classInformation.classrooms[socket.request.session.classId].poll.prompt = classInformation.classrooms[socket.request.session.classId].steps[index].prompt
+                    } else if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'quiz') {
                         // Check this later, there's already a quiz if statement
-                        questions = classInformation[socket.request.session.class].steps[index].questions
+                        questions = classInformation.classrooms[socket.request.session.classId].steps[index].questions
                         
                         const quiz = new Quiz(questions.length, 100)
                         quiz.questions = questions
-                        classInformation[socket.request.session.class].quiz = quiz
-                    } else if (classInformation[socket.request.session.class].steps[index].type == 'lesson') {
+                        classInformation.classrooms[socket.request.session.classId].quiz = quiz
+                    } else if (classInformation.classrooms[socket.request.session.classId].steps[index].type == 'lesson') {
                         // Check this later, there's already a lesson if statement
                         
-                        const lesson = new Lesson(classInformation[socket.request.session.class].steps[index].date, classInformation[socket.request.session.class].steps[index].lesson)
-                        classInformation[socket.request.session.class].lesson = lesson
+                        const lesson = new Lesson(classInformation.classrooms[socket.request.session.classId].steps[index].date, classInformation.classrooms[socket.request.session.classId].steps[index].lesson)
+                        classInformation.classrooms[socket.request.session.classId].lesson = lesson
                         database.run('INSERT INTO lessons(class, content, date) VALUES(?, ?, ?)',
-                            [classInformation[socket.request.session.class].className, JSON.stringify(classInformation[socket.request.session.class].lesson), classInformation[socket.request.session.class].lesson.date], (err) => {
+                            [classInformation.classrooms[socket.request.session.classId].className, JSON.stringify(classInformation.classrooms[socket.request.session.classId].lesson), classInformation.classrooms[socket.request.session.classId].lesson.date], (err) => {
                                 if (err) logger.log('error', err.stack)
                             }
                         )
@@ -85,7 +84,7 @@ module.exports = {
                     socketUpdates.quizUpdate()
                     socketUpdates.lessonUpdate()
                 } else {
-                    classInformation[socket.request.session.class].currentStep = 0
+                    classInformation.classrooms[socket.request.session.classId].currentStep = 0
                 }
 
                 socketUpdates.classPermissionUpdate()

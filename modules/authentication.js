@@ -131,7 +131,6 @@ function permCheck(req, res, next) {
 
 
 			// Checks if users permissions are high enough
-			// console.log("USERCHECK", classInformation.users[username]);
 			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
 			} else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {

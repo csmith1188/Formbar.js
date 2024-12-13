@@ -14,7 +14,7 @@ module.exports = {
 
                 await socketUpdates.clearPoll()
                 let generatedColors = generateColors(resNumber)
-                logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
+                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]})`)
                 if (generatedColors instanceof Error) throw generatedColors
 
                 classInformation.classrooms[socket.request.session.classId].mode = 'poll'
@@ -59,7 +59,7 @@ module.exports = {
                     if (polls[i].color)
                         color = polls[i].color
 
-                    classInformation[socket.request.session.class].poll.responses[answer] = {
+                    classInformation.classrooms[socket.request.session.classId].poll.responses[answer] = {
                         answer: answer,
                         weight: weight,
                         color: color
@@ -72,12 +72,12 @@ module.exports = {
                 classInformation.classrooms[socket.request.session.classId].poll.multiRes = multiRes
 
                 // @TODO: come back to this
-                for (const key in classInformation[socket.request.session.class].students) {
-                    classInformation[socket.request.session.class].students[key].pollRes.buttonRes = ''
-                    classInformation[socket.request.session.class].students[key].pollRes.textRes = ''
+                for (const key in classInformation.classrooms[socket.request.session.classId].students) {
+                    classInformation.classrooms[socket.request.session.classId].students[key].pollRes.buttonRes = ''
+                    classInformation.classrooms[socket.request.session.classId].students[key].pollRes.textRes = ''
                 }
 
-                logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
+                logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId])})`)
 
                 socketUpdates.pollUpdate()
                 socketUpdates.virtualBarUpdate()
@@ -149,7 +149,7 @@ module.exports = {
                                 try {
                                     if (err) throw err
 
-                                    classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
                                     socket.emit('message', 'Poll saved successfully!')
                                     socketUpdates.customPollUpdate(socket.request.session.username)
                                 } catch (err) {

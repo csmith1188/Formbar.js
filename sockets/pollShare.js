@@ -1,4 +1,4 @@
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
@@ -15,8 +15,8 @@ module.exports = {
                 advancedEmitToClass(
                     'previousPollData',
                     socket.request.session.class,
-                    { classPermissions: classInformation[socket.request.session.class].permissions.controlPolls },
-                    classInformation[socket.request.session.class].pollHistory[pollIndex].data
+                    { classPermissions: classInformation.classrooms[socket.request.session.classId].permissions.controlPolls },
+                    classInformation.classrooms[socket.request.session.classId].pollHistory[pollIndex].data
                 )
             } catch (err) {
                 logger.log('error', err.stack)
@@ -75,13 +75,13 @@ module.exports = {
 
                                                         socketUpdates.getPollShareIds(pollId)
 
-                                                        let classCode = getUserClass(username)
+                                                        const classCode = getUserClass(username)
+                                                        const classId = await getClassIDFromCode(classCode)
 
                                                         if (classCode instanceof Error) throw classCode
                                                         if (!classCode) return
 
-                                                        classInformation[classCode].students[user.username].sharedPolls.push(pollId)
-
+                                                        classInformation.classrooms[classId].students[user.username].sharedPolls.push(pollId)
                                                         socketUpdates.customPollUpdate(username)
                                                     } catch (err) {
                                                         logger.log('error', err.stack);
@@ -144,12 +144,13 @@ module.exports = {
                                                     return
                                                 }
 
-                                                let classCode = getUserClass(user.username)
+                                                const classCode = getUserClass(user.username)
+                                                const classId = await getClassIDFromCode(classCode)
 
                                                 if (classCode instanceof Error) throw classCode
                                                 if (!classCode) return
 
-                                                let sharedPolls = classInformation[classCode].students[user.username].sharedPolls
+                                                let sharedPolls = classInformation.classrooms[classId].students[user.username].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
                                                 socketUpdates.customPollUpdate(user.username)
                                             } catch (err) {
@@ -208,7 +209,7 @@ module.exports = {
                                                 }
                                                 if (!classInformation[classroom.key]) return
 
-                                                let sharedPolls = classInformation[classroom.key].sharedPolls
+                                                let sharedPolls = classInformation.classrooms[classId].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
                                                 for (let username of Object.keys(classInformation[classroom.key].students)) {
                                                     socketUpdates.customPollUpdate(username)

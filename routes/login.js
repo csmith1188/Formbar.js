@@ -1,6 +1,6 @@
 const { hash, compare } = require('../crypto')
 const { database } = require("../modules/database")
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
@@ -120,7 +120,7 @@ module.exports = {
                             if (loggedIn) {
                                 logger.log('verbose', '[post /login] User is already logged in')
                                 req.session.class = classKey
-                                req.session.classId = 
+                                req.session.classId = getClassIDFromCode(classKey)
                             } else {
                                 // Add user to the session
                                 classInformation.noClass.students[userData.username] = new Student(
@@ -136,6 +136,8 @@ module.exports = {
                                     userData.verified
                                 )
 
+                                // @TODO: again
+
                                 classInformation.users[userData.username] = new Student(
                                     userData.username,
                                     userData.email,
@@ -150,6 +152,7 @@ module.exports = {
                                 )
 
                                 req.session.class = 'noClass'
+                                req.session.classId = null
                             }
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
@@ -259,6 +262,7 @@ module.exports = {
                                                 req.session.userId = userData.id
                                                 req.session.username = userData.username
                                                 req.session.class = 'noClass'
+                                                req.session.classId = null
                                                 req.session.displayName = userData.displayName;
 
                                                 logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)

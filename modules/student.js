@@ -18,6 +18,7 @@ class Student {
 		this.username = username
 		this.email = email
 		this.id = id
+		this.activeClasses = []
 		this.permissions = permissions
 		this.classPermissions = null
 		this.tags = tags
@@ -33,8 +34,7 @@ class Student {
 		this.quizScore = ''
 		this.API = API
 		this.pogMeter = 0
-		this.displayName = displayName,
-		this.activeClasses = []
+		this.displayName = displayName
 	}
 }
 

@@ -1,4 +1,4 @@
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")
@@ -14,11 +14,12 @@ module.exports = {
                 logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[permChange] user=(${username}) newPerm=(${newPerm})`)
 
-                let classCode = getUserClass(username)
+                const classCode = getUserClass(username)
+                const classId = await getClassIDFromCode(classCode)
                 if (classCode instanceof Error) throw classCode
 
                 if (classCode) {
-                    classInformation[classCode].students[username].permissions = newPerm
+                    classInformation.classrooms[classId].students[username].permissions = newPerm
 
                     if (classInformation[classCode].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation[classCode].students)[0] == username) {
                         socketUpdates.endClass(classCode)

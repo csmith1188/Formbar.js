@@ -97,8 +97,9 @@ async function getClassUsers(user, key) {
 		// Create an object to store the class users
 		let classUsers = {}
 		let cDClassUsers = {}
-		if (classInformation[key]) {
-			cDClassUsers = classInformation[key].students
+		let classId = await getClassIDFromCode(key)
+		if (classInformation.classrooms[classId]) {
+			cDClassUsers = classInformation.classrooms[classId].students
 		}
 
 		// For each user in the class

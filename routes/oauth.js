@@ -1,5 +1,5 @@
 const { compare } = require('../crypto')
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
@@ -119,7 +119,7 @@ module.exports = {
                     return
                 }
 
-                database.get('SELECT * FROM users WHERE username=?', [username], (err, userData) => {
+                database.get('SELECT * FROM users WHERE username=?', [username], async (err, userData) => {
                     try {
                         if (err) throw err
 
@@ -145,9 +145,10 @@ module.exports = {
 
                         // Get class code and class permissions
                         const classCode = getUserClass(userData.username)
+                        const classId = await getClassIDFromCode(classCode)
                         userData.classPermissions = null
-                        if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
-                            userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions
+                        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+                            userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions
                         }
 
                         // Retrieve or generate refresh token

@@ -18,7 +18,7 @@ module.exports = {
         socket.on("timer", (startTime, active, sound) => {
             // This handles the server side timer
             try {
-                let classData = classInformation[socket.request.session.class];
+                let classData = classInformation.classrooms[socket.request.session.classId];
 
                 startTime = Math.round(startTime * 60)
 
@@ -47,7 +47,7 @@ module.exports = {
         })
 
         socket.on("timerOn", () => {
-            socket.emit("timerOn", classInformation[socket.request.session.class].timer.active);
+            socket.emit("timerOn", classInformation.classrooms[socket.request.session.classId].timer.active);
         })
     }
 }

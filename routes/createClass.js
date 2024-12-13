@@ -54,14 +54,17 @@ module.exports = {
                         classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
 
                         // Add the teacher to the newly created class
-                        // classInformation[key].users[req.session.username] = user
                         // @TODO: checkout
-
-                        classInformation.users[req.session.username].activeClasses.push(key)
+                        classInformation.classrooms[id].students[req.session.username] = user
+                        classInformation.classrooms[id].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+                        classInformation.users[req.session.username].activeClasses.push(id)
                         classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
+
+                        // console.log(classInformation.classrooms[id])
 
                         // Add class into the session data
                         req.session.class = key
+                        req.session.classId = id
 
                         await setClassOfApiSockets(user.API, key)
 

@@ -14,7 +14,7 @@ module.exports = {
         */
         app.get('/student', isAuthenticated, permCheck, (req, res) => {
             try {
-                //Poll Setup
+                // Poll Setup
                 let user = {
                     name: req.session.username,
                     class: req.session.class,
@@ -26,7 +26,7 @@ module.exports = {
                 logger.log('verbose', `[get /student] question=(${JSON.stringify(req.query.question)}) answer=(${req.query.letter})`)
 
                 if (answer) {
-                    classInformation[req.session.class].students[req.session.username].pollRes.buttonRes = answer
+                    classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes = answer
                 }
 
                 // Quiz Setup and Queries
@@ -38,28 +38,28 @@ module.exports = {
                 If you did not enter a query the page will be loaded normally. - Riley R., May 24, 2023
                 */
                 if (req.query.question == 'random') {
-                    let random = Math.floor(Math.random() * classInformation[req.session.class].quiz.questions.length)
+                    let random = Math.floor(Math.random() * classInformation.classrooms[req.session.classId].quiz.questions.length)
 
-                    logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[random])})`)
+                    logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[random])})`)
 
                     res.render('pages/queryquiz', {
-                        quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[random]),
+                        quiz: JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[random]),
                         title: 'Quiz'
                     })
-                    if (classInformation[req.session.class].quiz.questions[req.query.question] != undefined) {
-                        logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question])})`)
+                    if (classInformation.classrooms[req.session.classId].quiz.questions[req.query.question] != undefined) {
+                        logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[req.query.question])})`)
 
                         res.render('pages/queryquiz', {
-                            quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[random]),
+                            quiz: JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[random]),
                             title: 'Quiz'
                         })
                     }
                 } else if (isNaN(req.query.question) == false) {
-                    if (typeof classInformation[req.session.class].quiz.questions[req.query.question] != 'undefined') {
-                        logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question])})`)
+                    if (typeof classInformation.classrooms[req.session.classId].quiz.questions[req.query.question] != 'undefined') {
+                        logger.log('verbose', `[get /student] quiz=(${JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[req.query.question])})`)
 
                         res.render('pages/queryquiz', {
-                            quiz: JSON.stringify(classInformation[req.session.class].quiz.questions[req.query.question]),
+                            quiz: JSON.stringify(classInformation.classrooms[req.session.classId].quiz.questions[req.query.question]),
                             title: 'Quiz'
                         })
                     } else {
@@ -74,8 +74,8 @@ module.exports = {
                     res.render('pages/student', {
                         title: 'Student',
                         user: JSON.stringify(user),
-                        myRes: classInformation.users[req.session.username].pollRes.buttonRes,
-                        myTextRes: classInformation.users[req.session.username].pollRes.textRes,
+                        myRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes,
+                        myTextRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes,
                         lesson: classInformation.classrooms[req.session.classId].lesson
                     })
                 }
@@ -101,30 +101,30 @@ module.exports = {
                 if (req.query.poll) {
                     let answer = req.body.poll
                     if (answer) {
-                        classInformation[req.session.class].students[req.session.username].pollRes.buttonRes = answer
+                        classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes = answer
                     }
                     res.redirect('/poll')
                 }
                 if (req.body.question) {
                     let results = req.body.question
                     let totalScore = 0
-                    for (let i = 0; i < classInformation[req.session.class].quiz.questions.length; i++) {
-                        if (results[i] == classInformation[req.session.class].quiz.questions[i][1]) {
-                            totalScore += classInformation[req.session.class].quiz.pointsPerQuestion
+                    for (let i = 0; i < classInformation.classrooms[req.session.classId].quiz.questions.length; i++) {
+                        if (results[i] == classInformation.classrooms[req.session.classId].quiz.questions[i][1]) {
+                            totalScore += classInformation.classrooms[req.session.classId].quiz.pointsPerQuestion
                         } else {
                             continue
                         }
                     }
-                    classInformation[req.session.class].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + classInformation[req.session.class].quiz.totalScore
+                    classInformation.classrooms[req.session.classId].students[req.session.username].quizScore = Math.floor(totalScore) + '/' + classInformation.classrooms[req.session.classId].quiz.totalScore
 
 
-                    let user = structuredClone(classInformation[req.session.class].students[req.session.username])
+                    let user = structuredClone(classInformation.classrooms[req.session.classId].students[req.session.username])
                     delete user.API
                     logger.log('verbose', `[post /student] user=(${JSON.stringify(user)}) totalScore=(${totalScore})`)
 
                     res.render('pages/results', {
                         totalScore: Math.floor(totalScore),
-                        maxScore: classInformation[req.session.class].quiz.totalScore,
+                        maxScore: classInformation.classrooms[req.session.classId].quiz.totalScore,
                         title: 'Results'
                     })
                 }

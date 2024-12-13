@@ -76,7 +76,7 @@ function joinClass(username, code) {
 										resolve(true)
 									} else {
 										database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-											[classroom.id, user.id, classInformation[code].permissions.userDefaults, 0], (err) => {
+											[classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
 												try {
 													if (err) {
 														reject(err)
@@ -85,14 +85,14 @@ function joinClass(username, code) {
 
 													logger.log('info', '[joinClass] Added user to classusers')
 
-													let user = classInformation.users[username]
-													user.classPermissions = classInformation[code].permissions.userDefaults
+													let user = classInformation.classrooms[classroom.id].students[username]
+													user.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
 
 													// Remove student from old class
 													// @TODO: fix this
 													delete classInformation.noClass.students[username]
 													// Add the student to the newly created class
-													classInformation[code].students[username] = user
+													classInformation.classrooms[classroom.id].students[username] = user
 													logger.log('verbose', `[joinClass] cD=(${classInformation})`)
 													resolve(true)
 												} catch (err) {
@@ -200,7 +200,7 @@ module.exports = {
                     classData.permissions.manageClass
                 )
 
-                advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation[classCode])
+                advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
                 req.session.class = classCode
 				req.session.classId = classId
                 setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classCode)

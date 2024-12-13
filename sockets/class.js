@@ -67,7 +67,7 @@ module.exports = {
                         if (err) throw err
 
                         if (classroom) {
-                            if (classInformation[classroom.key]) {
+                            if (classInformation.classrooms[classId]) {
                                 socketUpdates.endClass(classroom.key)
                             }
 
@@ -144,8 +144,8 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        if (classInformation[socket.request.session.class].students[user]) {
-                            classInformation[socket.request.session.class].students[user].classPermissions = 0
+                        if (classInformation.classrooms[socket.request.session.classId].students[user]) {
+                            classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = 0
                         }
 
                         socketUpdates.classKickUser(user)
@@ -191,8 +191,8 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        if (classInformation[socket.request.session.class].students[user])
-                            classInformation[socket.request.session.class].students[user].permissions = 1
+                        if (classInformation.classrooms[socket.request.session.classId].students[user])
+                            classInformation.classrooms[socket.request.session.classId].students[user].permissions = 1
 
                         socketUpdates.classBannedUsersUpdate()
                         socket.emit('message', `Unbanned ${user}`)
@@ -212,16 +212,16 @@ module.exports = {
             try {
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-                classInformation[socket.request.session.class].students[user].classPermissions = newPerm // @TODO: remove
-                classInformation.users[user].classPermissions = newPerm
+                classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = newPerm // @TODO: checkout
+                // classInformation.users[user].classPermissions = newPerm
 
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,
-                    classInformation[socket.request.session.class].id,
-                    classInformation[socket.request.session.class].students[user].id
+                    classInformation.classrooms[socket.request.session.classId].id,
+                    classInformation.classrooms[socket.request.session.classId].students[user].id
                 ])
 
-                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation[socket.request.session.class].students[user])})`)
+                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[user])})`)
                 io.to(`user-${user}`).emit('reload')
 
                 // cpUpdate()
@@ -236,9 +236,10 @@ module.exports = {
                 logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
 
-                let classCode = socket.request.session.class
-                classInformation[classCode].permissions[permission] = level
-                database.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation[classCode].permissions), classInformation[classCode].id], (err) => {
+                const classCode = socket.request.session.class
+                const classId = socket.request.session.classId
+                classInformation.classrooms[classId].permissions[permission] = level
+                database.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].permissions), classId], (err) => {
                     try {
                         if (err) throw err
 

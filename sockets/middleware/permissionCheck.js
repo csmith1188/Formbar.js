@@ -15,7 +15,6 @@ module.exports = {
 
                 logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassCod=(${classCode})`)
                 
-                console.log(classCode, classId);
                 if (!classInformation.classrooms[classId] && classCode != "noClass") {
                     logger.log('info', '[socket permission check] Class does not exist')
                     socket.emit('message', 'Class does not exist')
