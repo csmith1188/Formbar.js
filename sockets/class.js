@@ -13,10 +13,14 @@ module.exports = {
                 const userId = socket.request.session.userId
                 const username = socket.request.session.username
                 const classCode = socket.request.session.class
-                socketUpdates.classKickUser(username, classCode)
-                socketUpdates.classPermissionUpdate(classCode)
-                socketUpdates.virtualBarUpdate(classCode)
+                const classId = socket.request.session.classId
+                socketUpdates.classKickUser(username, classCode, classId)
+                socketUpdates.classPermissionUpdate(classCode, classId)
+                socketUpdates.virtualBarUpdate(classCode, classId)
                 advancedEmitToClass('leaveSound', classCode, { api: true })
+
+                // Remove class from the user's active classes
+                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId)
 
                 database.get(
                     'SELECT * FROM classroom WHERE owner=? AND key=?',
@@ -25,7 +29,7 @@ module.exports = {
                         if (err) {
                             logger.log('error', err.stack) 
                         } else if (classroom) {
-                            socketUpdates.endClass(classroom.key)
+                            socketUpdates.endClass(classroom.key, classroom.id)
                         } 
                     }
                 )
@@ -48,7 +52,7 @@ module.exports = {
                         if (err) {
                             logger.log('error', err.stack)
                         } else if (classroom) {
-                            socketUpdates.endClass(classroom.key)
+                            socketUpdates.endClass(classroom.key, classroom.id)
                         }
                     }
                 )
@@ -68,7 +72,7 @@ module.exports = {
 
                         if (classroom) {
                             if (classInformation.classrooms[classId]) {
-                                socketUpdates.endClass(classroom.key)
+                                socketUpdates.endClass(classroom.key, classroom.id)
                             }
 
                             database.run('DELETE FROM classroom WHERE id=?', classroom.id)
@@ -93,8 +97,9 @@ module.exports = {
                 logger.log('info', `[classKickUser] username=(${username})`)
 
                 const classCode = socket.request.session.class
+                const classId = socket.request.session.classId
                 socketUpdates.classKickUser(username, classCode)
-                socketUpdates.classPermissionUpdate(classCode)
+                socketUpdates.classPermissionUpdate(classCode, classId)
                 socketUpdates.virtualBarUpdate(classCode)
                 advancedEmitToClass('leaveSound', classCode, { api: true })
             } catch (err) {
@@ -110,8 +115,8 @@ module.exports = {
                 const classCode = socket.request.session.class
                 const classId = socket.request.session.class
                 socketUpdates.classKickStudents(classId)
-                socketUpdates.classPermissionUpdate(classCode)
-                socketUpdates.virtualBarUpdate(classCode)
+                socketUpdates.classPermissionUpdate(classCode, classId)
+                socketUpdates.virtualBarUpdate(classCode, classId)
                 advancedEmitToClass('kickStudentsSound', classCode, { api: true })
             } catch (err) {
                 logger.log('error', err.stack)

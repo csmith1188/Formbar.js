@@ -22,7 +22,7 @@ module.exports = {
                     classInformation.classrooms[classId].students[username].permissions = newPerm
 
                     if (classInformation.classrooms[classId].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation.classrooms[classId].students)[0] == username) {
-                        socketUpdates.endClass(classCode)
+                        socketUpdates.endClass(classCode, classId)
                     }
 
                     io.to(`user-${username}`).emit('reload')

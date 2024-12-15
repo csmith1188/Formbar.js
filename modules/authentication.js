@@ -17,10 +17,10 @@ function isAuthenticated(req, res, next) {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		if (req.session.username) {
-			if (classInformation.noClass.students[req.session.username]) {
-				if (classInformation.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+			if (classInformation.users[req.session.username].activeClasses.length == 0) {
+				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS) {
 					res.redirect('/managerPanel')
-				} else if (classInformation.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+				} else if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 					res.redirect('/manageClass')
 				} else {
 					res.redirect('/selectClass')

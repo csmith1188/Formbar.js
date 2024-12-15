@@ -217,19 +217,6 @@ module.exports = {
                                             try {
                                                 if (err) throw err
 
-                                                // Add user to session
-                                                classInformation.noClass.students[userData.username] = new Student(
-                                                    userData.username,
-                                                    userData.email,
-                                                    userData.id,
-                                                    userData.permissions,
-                                                    userData.API,
-                                                    [],
-                                                    [],
-                                                    userData.tags,
-                                                    userData.displayName
-                                                )
-
                                                 classInformation.users[userData.username] = new Student(
                                                     userData.username,
                                                     userData.email,

@@ -63,13 +63,10 @@ function joinClass(username, code) {
 										}
 
 										user.classPermissions = classUser.permissions
-										
-										// Remove student from old class
-										delete classInformation.noClass.students[username]
 
 										// Add the student to the newly created class
 										classInformation.classrooms[classroom.id].students[username] = user
-
+										classInformation.users[username].activeClasses.push(classroom.id)
 										advancedEmitToClass('joinSound', code, { api: true })
 
 										logger.log('verbose', `[joinClass] cD=(${classInformation})`)
@@ -88,11 +85,9 @@ function joinClass(username, code) {
 													let user = classInformation.classrooms[classroom.id].students[username]
 													user.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
 
-													// Remove student from old class
-													// @TODO: fix this
-													delete classInformation.noClass.students[username]
 													// Add the student to the newly created class
 													classInformation.classrooms[classroom.id].students[username] = user
+													classInformation.users[username].activeClasses.push(classroom.id)
 													logger.log('verbose', `[joinClass] cD=(${classInformation})`)
 													resolve(true)
 												} catch (err) {
