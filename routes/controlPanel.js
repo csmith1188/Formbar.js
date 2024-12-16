@@ -31,7 +31,8 @@ module.exports = {
                     title: 'Control Panel',
                     pollStatus: classInformation[req.session.class].poll.status,
                     settingsPermissions: classInformation[req.session.class].permissions.manageClass,
-                    tagNames: classInformation[req.session.class].tagNames
+                    // tagNames: classInformation[req.session.class].tagNames
+                    tagNames: ['tag1', 'tag2', 'tag3'],
                 })
             } catch (err) {
                 logger.log('error', err.stack);

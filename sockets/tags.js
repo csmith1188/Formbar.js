@@ -139,5 +139,30 @@ module.exports = {
                 logger.log('error', err.stack);
             }
         });
+        socket.on('filterByTag', (tag) => {
+            // Filter the students by the tag
+            try {
+                logger.log('info', `[filterByTag] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                logger.log('info', `[filterByTag] tag=(${tag})`);
+                let filteredStudents = {};
+                if (tag === 'none') {
+                    for (const student of Object.values(classInformation[socket.request.session.class].students)) {
+                        filteredStudents[student.username] = student;
+                    };
+                    socket.emit('filteredStudents', filteredStudents);
+                    return;
+                }
+                for (const student of Object.values(classInformation[socket.request.session.class].students)) {
+                    if (student.tags.includes(tag)) {
+                        filteredStudents[student.username] = student;
+                    } else {
+                        filteredStudents[student.username] = null;
+                    };
+                };
+                socket.emit('filteredStudents', filteredStudents);
+            } catch (err) {
+                logger.log('error', err.stack);
+            };
+        });
     }
 }
