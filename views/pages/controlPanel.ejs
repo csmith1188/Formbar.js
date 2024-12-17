@@ -36,18 +36,6 @@
 										<button type='button' id='polls' class='filter'>Polls</button>
 									</div>
 								</div>
-								<div id='userTagBoxes' class='options'>
-									<h2 class='headerText'>Tags</h2>
-									<div class='headBox'>
-										<button type='button' id='tagFilterButton' onclick='filterByTag()'>Filter by Tag</button>
-										<select id='tagSelect'>
-											<option value='none'>None</option>
-											<% tagNames.forEach((tag) => { %>
-												<option value='<%=tag%>'><%=tag%></option>
-												<% }) %>
-										</select>
-									</div>
-								</div>
 								<div id='userSortBoxes' class='options'>
 									<h2 class='headerText'>Sort</h2>
 									<div class='headBox'>
@@ -412,6 +400,7 @@
 			let permissionsTabButton = document.querySelector('.tab#permissions')
 			let generalOptionsDiv = document.getElementById('generalOptions');
 			let responsesCounter = document.getElementById('responsesCounter');
+
 			let totalUsers = document.getElementById('totalUsers')
 			let responseDivs = document.getElementsByClassName('response');
 			// Function runs on page load
@@ -426,26 +415,22 @@
 			// Alerts the user if they try to start a poll without a prompt or responses
 			function pollCheck() {
 				if (pollPrompt.value == '' && responsesDiv.children.length == 0) {
-					alert('Please enter a prompt for the poll and add responses');
+					alert('Please enter a prompt for the poll and add responses')
 				} else if (pollPrompt.value == '') {
-					alert('Please enter a prompt for the poll');
+					alert('Please enter a prompt for the poll')
 				} else if (responsesDiv.children.length == 0) {
-					alert('Please add responses to the poll');
+					alert('Please add responses to the poll')
 				} else {
-					startPoll();
-				};
-			};
+					startPoll()
+				}
+			}
 
-			function filterByTag() {
-				let tag = document.getElementById('tagSelect').value;
-				socket.emit('filterByTag', tag);
-			};
 
 			function endClass() {
 				if (confirm('Are you sure you want to end the class?')) {
-					socket.emit('endClass');
-				};
-			};
+					socket.emit('endClass')
+				}
+			}
 
 			function kickAll() {
 				if (confirm('Are you sure you want to kick all students?')) {
