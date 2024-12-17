@@ -268,7 +268,11 @@ socket.on('customPollUpdate', (
 		startButton.onclick = () => {
 			startPoll(i);
 		};
-		fastPollDiv.appendChild(startButton);
+		if (fastPollDiv.children[i]) {
+			fastPollDiv.children[i].replaceWith(startButton);
+		} else {
+			fastPollDiv.appendChild(startButton);
+		}
 	};
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.');

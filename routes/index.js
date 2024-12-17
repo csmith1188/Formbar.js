@@ -1,4 +1,4 @@
-const { isAuthenticated } = require("../modules/authentication")
+const { isAuthenticated, isVerified } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
@@ -10,7 +10,7 @@ module.exports = {
         // It is used to redirect to the home page
         // This allows it to check if the user is logged in along with the home page
         // It also allows for redirection to any other page if needed
-        app.get('/', isAuthenticated, (req, res) => {
+        app.get('/', isAuthenticated, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 if (classInformation[req.session.class].students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
