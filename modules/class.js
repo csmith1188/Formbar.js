@@ -46,7 +46,6 @@ class Classroom {
 
 function createClassInformation() {
     return {
-        noClass: { students: {} },
 		users: {},
 		classrooms: {}
     }

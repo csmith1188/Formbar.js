@@ -113,8 +113,12 @@ class SocketUpdates {
         this.socket = socket;
     }
 
-    classPermissionUpdate(classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
+    classPermissionUpdate(classCode = this.socket.request.session.class, classId) {
         try {
+            if (!classId) {
+                classId = this.socket.request.session ? this.socket.request.session.classId : getClassIDFromCode(classCode);
+            }
+
             logger.log('info', `[classPermissionUpdate] classCode=(${classCode})`)
 
             let classData = classInformation.classrooms[classId]
@@ -130,8 +134,12 @@ class SocketUpdates {
         }
     }
     
-    virtualBarUpdate(classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
+    virtualBarUpdate(classCode = this.socket.request.session.class, classId) {
         try {
+            if (!classId) {
+                classId = this.socket.request.session ? this.socket.request.session.classId : getClassIDFromCode(classCode);
+            }
+
             logger.log('info', `[virtualBarUpdate] classCode=(${classCode})`)
             if (!classCode || !classId || classCode == 'noClass') return
 
@@ -499,21 +507,29 @@ class SocketUpdates {
         const userId = socket.request.session.userId
         const classCode = socket.request.session.class
         const classId = socket.request.session.classId
-        const className = classInformation.classrooms[classId].className
+
+        // If the user is in a class, then get the class name
+        let className = null
+        if (classId) {
+            className = classInformation.classrooms[classId].className
+        }
 
         this.socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
     
                 delete userSockets[username]
-                delete classInformation.classrooms[classId].students[username]
                 this.socket.leave(`class-${classCode}`)
                 this.socket.emit('reload')
 
-                // If the user is in a class, then update the class permissions and virtual bar
+                // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
-                    this.classPermissionUpdate(classCode)
-                    this.virtualBarUpdate(classCode)    
+                    // Remove user from class
+                    delete classInformation.classrooms[classId].students[username]
+                    
+                    // Update class permissions and virtual bar
+                    this.classPermissionUpdate(classCode, classId)
+                    this.virtualBarUpdate(classCode, classId)
                 }
     
                 database.get(
@@ -609,9 +625,8 @@ class SocketUpdates {
         try {
             logger.log('info', `[endClass] classCode=(${classCode})`)
             await advancedEmitToClass('endClassSound', classCode, { api: true })
-    
-            // @TODO: If the class is ended, then clear the poll and do other stuff
-            await this.clearPoll(classCode, classId)
+
+            // @TODO: Handle ending classes
 
             logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`)
         } catch (err) {

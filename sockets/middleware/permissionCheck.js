@@ -2,6 +2,7 @@ const { classInformation, getClassIDFromCode } = require("../../modules/class")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
+const { camelCaseToNormal } = require("../../modules/util")
 
 module.exports = {
     order: 20,

@@ -47,7 +47,14 @@ module.exports = {
                         }
 
                         // Create classroom
-                        classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                        if (!classInformation.classrooms[id]) {
+                            classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                        } else {
+                            classInformation.classrooms[id].permissions = permissions
+                            classInformation.classrooms[id].sharedPolls = sharedPolls
+                            classInformation.classrooms[id].pollHistory = pollHistory
+                            classInformation.classrooms[id].tags = tags
+                        }
 
                         // Add the teacher to the newly created class
                         classInformation.classrooms[id].students[req.session.username] = user
@@ -67,8 +74,8 @@ module.exports = {
                 }
 
                 // Checks if teacher is creating a new class or joining an old class
-                //generates a 4 character key
-                //this is used for students who want to enter a class
+                // Generates a 4 character key
+                // This is used for students who want to enter a class
                 if (submittionType == 'create') {
                     const key = generateKey(4);
 

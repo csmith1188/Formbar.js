@@ -28,7 +28,7 @@ function joinClass(username, code) {
 
 					// Load the classroom into the classInformation object if it's not already loaded
 					if (!classInformation.classrooms[classroom.id]) {
-						classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.className, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
+						classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
 					}
 
 					// Find the id of the user who is trying to join the class
@@ -82,12 +82,13 @@ function joinClass(username, code) {
 
 													logger.log('info', '[joinClass] Added user to classusers')
 
-													let user = classInformation.classrooms[classroom.id].students[username]
+													let user = classInformation.users[username]
 													user.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
 
 													// Add the student to the newly created class
 													classInformation.classrooms[classroom.id].students[username] = user
 													classInformation.users[username].activeClasses.push(classroom.id)
+
 													logger.log('verbose', `[joinClass] cD=(${classInformation})`)
 													resolve(true)
 												} catch (err) {
