@@ -653,6 +653,11 @@ div.break {
 	margin-top: 15px;
 }
 
+#startClass {
+	--theme-color: hsl(120, 100%, 12%);
+	background-color: hsl(120, 94%, 74%);
+}
+
 #deleteStudents,
 #endClass,
 .deleteStudent,
@@ -661,7 +666,6 @@ div.break {
 .banStudent {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);
-	;
 }
 
 #responses {

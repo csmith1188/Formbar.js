@@ -7,21 +7,27 @@ module.exports = {
         // Sends a help ticket
         socket.on('help', (reason) => {
             try {
-                logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                let time = new Date();
-
-                logger.log('info', `[help] reason=(${reason}) time=(${time})`)
-
-                let student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]
-
-                if (student.help.reason != reason) {
-                    advancedEmitToClass('helpSound', socket.request.session.class, { api: true })
+                // Get the class id and username from the session
+                // Check if the class is inactive before continuing
+                const classId = socket.request.session.classId;
+                const username = socket.request.session.username;
+                if (!classInformation.classrooms[classId].isActive) {
+                    socket.emit('message', 'This class is not currently active.');
+                    return;
                 }
 
-                student.help = { reason: reason, time: time }
+                logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
-                logger.log('verbose', `[help] user=(${JSON.stringify(student)}`)
+                const time = new Date();
+                const student = classInformation.classrooms[classId].students[username];
+                logger.log('info', `[help] reason=(${reason}) time=(${time})`);
+                if (student.help.reason != reason) {
+                    socket.emit('helpSuccess');
+                    advancedEmitToClass('helpSound', socket.request.session.class, { api: true });
+                }
+
+                student.help = { reason: reason, time: time };
+                logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
 
                 socketUpdates.classPermissionUpdate()
             } catch (err) {

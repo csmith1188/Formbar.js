@@ -8,16 +8,25 @@ module.exports = {
         // Sends a break ticket
         socket.on('requestBreak', (reason) => {
             try {
+                // Get the class id and username from the session
+                // Check if the class is inactive before continuing
+                const classId = socket.request.session.classId;
+                const username = socket.request.session.username;
+                if (!classInformation.classrooms[classId].isActive) {
+                    socket.emit('message', 'This class is not currently active.');
+                    return;
+                }
+
                 logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[requestBreak] reason=(${reason})`)
 
-                const student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]
+                const student = classInformation.classrooms[classId].students[username]
                 if (!student.break != reason) {
                     advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
                 }
 
                 student.break = reason
-                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username])})`)
+                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[username])})`)
 
                 socketUpdates.classPermissionUpdate()
             } catch (err) {

@@ -1,66 +1,86 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets } = require("../modules/socketUpdates")
+const { getStudentId } = require("../modules/student")
 const { io } = require("../modules/webServer")
 
 module.exports = {
     run(socket, socketUpdates) {
+        // Leaves the classroom entirely
+        // User is no longer associated with the class
+        socket.on('leaveClassroom', async () => {
+            try {
+                const classId = socket.request.session.classId;
+                const username = socket.request.session.username;
+                const studentId = await getStudentId(username);
+
+                // Remove the user from the class
+                delete classInformation.classrooms[classId].students[username];
+                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId);
+                database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
+
+                // Update the class and play leave sound
+                socketUpdates.classPermissionUpdate();
+                socketUpdates.virtualBarUpdate();
+
+                // Play leave sound and reload the user's page
+                advancedEmitToClass('leaveSound', socket.request.session.class, { api: true });
+                userSockets[username].emit('reload');
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
+
+        // Leaves a classroom session
+        // User is still associated with the class
         socket.on('leaveClass', () => {
             try {
                 logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const userId = socket.request.session.userId
                 const username = socket.request.session.username
                 const classCode = socket.request.session.class
                 const classId = socket.request.session.classId
-                socketUpdates.classKickUser(username, classCode, classId)
                 socketUpdates.classPermissionUpdate(classCode, classId)
                 socketUpdates.virtualBarUpdate(classCode, classId)
                 advancedEmitToClass('leaveSound', classCode, { api: true })
 
                 // Remove class from the user's active classes
-                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId)
-
-                database.get(
-                    'SELECT * FROM classroom WHERE owner=? AND key=?',
-                    [userId, classCode],
-                    (err, classroom) => {
-                        if (err) {
-                            logger.log('error', err.stack) 
-                        } else if (classroom) {
-                            socketUpdates.endClass(classroom.key, classroom.id)
-                        } 
-                    }
-                )
+                const activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId)
+                classInformation.users[username].activeClasses = activeClasses
+                classInformation.classrooms[classId].students[username] = activeClasses
             } catch (err) {
                 logger.log('error', err.stack)
             }
         })
-        
+
+        // Starts a classroom session
+        socket.on('startClass', () => {
+            try {
+                logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                const classCode = socket.request.session.class
+                const classId = socket.request.session.classId
+                socketUpdates.startClass(classCode, classId)
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        // Ends a classroom session
         socket.on('endClass', () => {
             try {
                 logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const userId = socket.request.session.userId
                 const classCode = socket.request.session.class
-
-                database.get(
-                    'SELECT * FROM classroom WHERE owner=? AND key=?',
-                    [userId, classCode],
-                    (err, classroom) => {
-                        if (err) {
-                            logger.log('error', err.stack)
-                        } else if (classroom) {
-                            socketUpdates.endClass(classroom.key, classroom.id)
-                        }
-                    }
-                )
+                const classId = socket.request.session.classId
+                socketUpdates.endClass(classCode, classId)
             } catch (err) {
                 logger.log('error', err.stack)
             }
         })
 
+        // Deletes a classroom
         socket.on('deleteClass', (classId) => {
             try {
                 logger.log('info', `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)

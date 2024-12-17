@@ -22,9 +22,9 @@
                       <a href="/plugins" class="headerTab">Plugins</a>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <button href="/" class="headerTab" title="Leave class"
-                            onclick="leaveClass()">Leave
-                            Class</button>
+                          <button href="/" class="headerTab" title="Leave class" onclick="leaveClass()">Leave Class</button>
+
+                            <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button>
                           <% } %>
                             <button href="/" id="logoutButton" onclick="logout()"><img id="logoutIcon"
                                 src="img/logout.svg" title="Logout"></button>
@@ -68,12 +68,20 @@
   }
 
   function logout() {
-    if (confirm('Are you sure you want to logout?')) 
-    { socket.emit('logout') }
+    if (confirm('Are you sure you want to logout?')) {
+      socket.emit('logout')
+    }
   }
 
   function leaveClass() {
-    if (confirm('Are you sure you want to leave the class?')) 
-    { socket.emit('leaveClass') }
+    if (confirm('Are you sure you want to leave the class?')) {
+      socket.emit('leaveClass')
+    }
+  }
+
+  function leaveClassroom() {
+    if (confirm('Are you sure you want to leave the classroom?')) { 
+      socket.emit('leaveClassroom') 
+    }
   }
 </script>

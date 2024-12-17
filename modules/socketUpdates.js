@@ -53,6 +53,7 @@ async function advancedEmitToClass(event, classCode, options, ...data) {
 				break
 			}
 		}
+
 		if (options.api == true && !hasAPI) continue
 		if (options.api == false && hasAPI) continue
 
@@ -620,15 +621,32 @@ class SocketUpdates {
             allowedResponses: [],
         };
     }
+
+    async startClass(classCode, classId) {
+        try {
+            logger.log('info', `[startClass] classCode=(${classCode}) classId=(${classId})`);
+            // @TODO
+            // await advancedEmitToClass('startClassSound', classCode, { api: true });
+
+            // Activate the class
+            classInformation.classrooms[classId].isActive = true;
+
+            logger.log('verbose', `[startClass] cD=(${JSON.stringify(classInformation)})`);
+        } catch (err) {
+            logger.log('error', err.stack);
+        }
+    }
     
     async endClass(classCode, classId) {
         try {
-            logger.log('info', `[endClass] classCode=(${classCode})`)
-            await advancedEmitToClass('endClassSound', classCode, { api: true })
+            logger.log('info', `[endClass] classCode=(${classCode}) classId=(${classId})`);
+            await advancedEmitToClass('endClassSound', classCode, { api: true });
 
-            // @TODO: Handle ending classes
+            // Deactivate the class and clear polls
+            classInformation.classrooms[classId].isActive = false;
+            await this.clearPoll(classCode, classId);
 
-            logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`)
+            logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -711,16 +729,15 @@ class SocketUpdates {
     async deleteClassrooms(userId) {
         try {
             const classrooms = await getAll('SELECT * FROM classroom WHERE owner=?', userId)
-    
             if (classrooms.length == 0) return
-    
+
             await runQuery('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
-    
+
             for (let classroom of classrooms) {
                 if (classInformation.classrooms[classId]) {
                     this.endClass(classroom.key. classroom.id)
                 }
-    
+
                 await Promise.all([
                     runQuery('DELETE FROM classusers WHERE classId=?', classroom.id),
                     runQuery('DELETE FROM class_polls WHERE classId=?', classroom.id),
