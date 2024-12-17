@@ -13,7 +13,7 @@ module.exports = {
         app.get('/', isAuthenticated, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                if (classInformation.users[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+                if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
                     res.redirect('/controlPanel')
                 } else {
                     res.redirect('/student')
