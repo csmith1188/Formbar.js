@@ -46,6 +46,7 @@ module.exports = {
             try {
                 // If an email is passed...
                 if (req.body.email) {
+                    req.session.email = req.body.email;
                     // Send an email to the user with the password change link
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
@@ -64,7 +65,7 @@ module.exports = {
                 // Else...
                 } else {
                     // Request a password change and redirect to the login page
-                    passwordRequest(req.body.newPassword, req.session.username);
+                    passwordRequest(req.body.newPassword, req.session.email);
                     res.redirect('/login');
                 };
             } catch (err) {
