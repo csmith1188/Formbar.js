@@ -134,14 +134,18 @@
 					</div>
 					<button onclick='clearPollFunc()'>Clear Poll</button>
 					<button onclick='endPollFunc()'>End Poll</button>
-				</div></br>
-				<input type='number' id='inputtedTime' value='5' min='0.1'> Minutes <br><input type='checkbox' id='playSound'>
+				</div><hr>
+				<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
+				<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox" id="playSound">
 				Play Sound
 				<br>
 				<button type='button' id='timerButton'>Start Timer</button>
 				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
+				<br><hr>
+				<button id="muteButton" onclick="muteSound()">Mute</button>
+				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
 				<br>
-				<button id='kickUsers' onclick='kickAll()'>
+				<button id="kickUsers" onclick="kickAll()">
 					Kick All Students
 				</button>
 				<button id='endClass' onclick='endClass()'>
@@ -448,6 +452,21 @@
 					socket.emit('classKickStudents');
 				};
 			};
+
+			let mute = false;
+
+			function muteSound() {
+				document.getElementById('muteButton').hidden = true;
+				document.getElementById('unmuteButton').hidden = false;
+				mute = true;
+			};
+
+			function unmuteSound() {
+				document.getElementById('muteButton').hidden = false;
+				document.getElementById('unmuteButton').hidden = true;
+				mute = false;
+			};
+
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>
 		<script src='/js/controlPanelSockets.js'></script>
