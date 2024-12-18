@@ -133,9 +133,9 @@
 				<button id="kickUsers" onclick="kickAll()">
 					Kick All Students
 				</button>
-				<!-- <button id="startClass" onclick="startClass()"></button>
-					Start Class
-				</button> -->
+				<button onclick="regenerateAccessCode()">
+					Regenerate Code
+				</button>
 				<button id="startClass" onclick="startClass()">
 					Start Class
 				</button>
@@ -171,9 +171,6 @@
 					<br>
 					<button id="kickUsers" onclick="((event) => {socket.emit('classKickStudents')})()">
 						Kick All Students
-					</button>
-					<button id="startClass" onclick="startClass()"></button>
-						End Class
 					</button>
 					<button id="endClass" onclick="endClass()">
 						End Class
@@ -441,9 +438,15 @@
 				}
 			}
 
+			function regenerateAccessCode() {
+				if (confirm("Are you sure you want to regenerate the class code?")) {
+					socket.emit('regenerateClassCode');
+				}
+			}
+
 			function kickAll() {
 				if (confirm("Are you sure you want to kick all students?")) {
-					socket.emit('classKickStudents')
+					socket.emit('classKickStudents');
 				}
 			}
 

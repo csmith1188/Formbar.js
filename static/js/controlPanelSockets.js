@@ -5,7 +5,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		student.pollRes.time = new Date(student.pollRes.time)
 	}
 
-	classCode.textContent = 'Class Code: ' + newClassroom.key
+	classCode.textContent = `Class Code: ${newClassroom.key} | Class ID: ${newClassroom.id}`
 	buildPreviousPolls(newClassroom.pollHistory)
 
 	document.getElementById('nextStep').onclick = () => {

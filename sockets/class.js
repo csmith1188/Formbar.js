@@ -3,6 +3,7 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
+const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 
 module.exports = {
@@ -79,6 +80,29 @@ module.exports = {
                 logger.log('error', err.stack)
             }
         })
+
+        socket.on('regenerateClassCode', () => {
+            try {
+                // Generate a new class code and set it
+                const accessCode = generateKey(4);
+
+                // Update the class code in the database
+                database.run('UPDATE classroom SET key=? WHERE id=?', [accessCode, socket.request.session.classId], (err) => {
+                    try {
+                        if (err) throw err;
+
+                        // Update the class code in the class information, session, then refresh the page
+                        classInformation.classrooms[socket.request.session.classId].key = accessCode;
+                        socket.request.session.class = accessCode;
+                        socket.emit("reload");
+                    } catch (err) {
+                        logger.log('error', err.stack);
+                    }
+                });
+            } catch (err) {
+                logger.log('error', err.stack);
+            }
+        });
 
         // Deletes a classroom
         socket.on('deleteClass', (classId) => {
