@@ -13,7 +13,7 @@
 			<script src='/js/deepObjectEqual.js'></script>
 		</head>
 
-		<body onload='load(pollStatus)'>
+		<body onload="load(<%-pollStatus%>)">
 			<%- include('../partials/formbar_header') %>
 				<header id='quickMenu'>
 					<button id='usersMenu' class='quickButton tab pressed' data-tab-group='mainTabs'>Users</button>
