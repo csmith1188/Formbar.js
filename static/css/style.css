@@ -538,12 +538,12 @@ div.break {
 
 .break,
 .break summary {
-	border-color: #ffff00 !important;
+	border-color: var(--color-yellow) !important;
 }
 
 .help,
 .help summary {
-	border-color: #ff0000 !important;
+	border-color: var(--color-red) !important;
 }
 
 #users details[id^="student"][open] {
@@ -613,6 +613,7 @@ div.break {
 #users {
 	display: flex;
 	flex-direction: column;
+	/* flex-direction: row; */
 }
 
 #bannedMenu.tabContent {
