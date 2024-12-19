@@ -1,7 +1,7 @@
-const { classInformation, getClassIDFromCode } = require("./class")
-const { database } = require("./database")
-const { logger } = require("./logger")
-const { io } = require("./webServer")
+const { classInformation, getClassIDFromCode } = require('./class')
+const { database } = require('./database')
+const { logger } = require('./logger')
+const { io } = require('./webServer')
 
 /**
  * Asynchronous function to get the current user's data.
@@ -205,7 +205,7 @@ async function getUsername(api) {
 async function passwordRequest(newPassword, username) {
 	if (newPassword && username) {
 		let passwordChange = true;
-		io.emit("passwordUpdate", passwordChange, username, newPassword);
+		io.emit('passwordUpdate', passwordChange, username, newPassword);
 	};
 };
 

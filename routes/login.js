@@ -135,8 +135,8 @@ module.exports = {
                                     userData.verified
                                 )
 
-                                req.session.class = 'noClass'
-                                req.session.classId = null
+                                req.session.class = 'noClass';
+                                req.session.classId = null;
                             }
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;

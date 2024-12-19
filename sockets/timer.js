@@ -15,12 +15,11 @@ module.exports = {
             }, classData.timer);
         })
 
+        // This handles the server side timer
         socket.on("timer", (startTime, active, sound) => {
-            // This handles the server side timer
             try {
                 let classData = classInformation.classrooms[socket.request.session.classId];
-
-                startTime = Math.round(startTime * 60)
+                startTime = Math.round(startTime)
 
                 classData.timer.startTime = startTime
                 classData.timer.timeLeft = startTime + 1

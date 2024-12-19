@@ -2,14 +2,13 @@
 const express = require('express')
 const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
-const fs = require("fs")
-const nodemailer = require('nodemailer')
+const fs = require('fs')
 const authentication = require('./modules/authentication.js')
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
 const { classInformation } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
-const { initSocketRoutes } = require("./sockets/init.js")
+const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 
 // Set EJS as our view engine
@@ -19,7 +18,7 @@ app.set('view engine', 'ejs')
 const sessionMiddleware = session({
 	secret: crypto.randomBytes(256).toString('hex'), // Used to sign into the session via cookies
 	resave: false, // Used to prevent resaving back to the session store, even if it wasn't modified
-	saveUninitialized: false // Forces a session that is new, but not modified, or "uninitialized" to be saved to the session store
+	saveUninitialized: false // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 })
 
 // Connect session middleware to express
@@ -91,7 +90,7 @@ const routeFiles = fs.readdirSync('./routes/').filter(file => file.endsWith('.js
 
 for (const routeFile of routeFiles) {
 	// Skip for now as it will be handled later
-	if (routeFile == "404.js") {
+	if (routeFile == '404.js') {
 		continue;
 	}
 	
@@ -103,7 +102,7 @@ for (const routeFile of routeFiles) {
 initSocketRoutes();
 
 // Import 404 error page
-require("./routes/404.js").run(app);
+require('./routes/404.js').run(app);
 
 http.listen(420, async () => {
 	authentication.whitelistedIps = await getIpAccess('whitelist')

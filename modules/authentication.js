@@ -44,7 +44,7 @@ function isAuthenticated(req, res, next) {
 let isVerified = (req, res, next) => {
 	// Try...
 	try {
-		// Log tha the function is being called with the ip and the session of the user
+		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		// If the user is verified...
 		if (req.session.verified) {
