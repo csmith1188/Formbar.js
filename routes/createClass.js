@@ -1,5 +1,5 @@
 const { isLoggedIn, permCheck } = require("../modules/authentication")
-const { classInformation, Classroom } = require("../modules/class")
+const { classInformation, Classroom, getClassStudents } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
@@ -61,6 +61,15 @@ module.exports = {
                         classInformation.classrooms[id].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
                         classInformation.users[req.session.username].activeClasses.push(id)
                         classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
+
+                        const classStudents = await getClassStudents(id);
+                        for (const username in classStudents) {
+                            const student = classStudents[username];
+                            classInformation.users[username] = student;
+                            classInformation.classrooms[id].students[student.username] = student;
+                        }
+
+                        console.log(classInformation.classrooms[id].students);
 
                         // Add class into the session data
                         req.session.class = key

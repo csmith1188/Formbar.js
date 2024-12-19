@@ -1,7 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass, userSockets } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
@@ -39,17 +39,10 @@ module.exports = {
             try {
                 logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const username = socket.request.session.username
-                const classCode = socket.request.session.class
-                const classId = socket.request.session.classId
-                socketUpdates.classPermissionUpdate(classCode, classId)
-                socketUpdates.virtualBarUpdate(classCode, classId)
-                advancedEmitToClass('leaveSound', classCode, { api: true })
-
-                // Remove class from the user's active classes
-                const activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId)
-                classInformation.users[username].activeClasses = activeClasses
-                classInformation.classrooms[classId].students[username] = activeClasses
+                const username = socket.request.session.username;
+                const classCode = socket.request.session.class;
+                const classId = socket.request.session.classId;
+                socketUpdates.classKickUser(username, classCode, classId)
             } catch (err) {
                 logger.log('error', err.stack)
             }

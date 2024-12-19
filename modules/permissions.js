@@ -8,16 +8,16 @@ const BANNED_PERMISSIONS = 0
 
 // Permission level needed to access each page along with if it's a class-related page or not
 const PAGE_PERMISSIONS = {
-	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
-	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
+	previouslessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
-	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	makequiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
-	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
+	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
+	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
+	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 // Defines the default permissions for people in a class

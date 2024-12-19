@@ -470,20 +470,19 @@ class SocketUpdates {
     
     classKickUser(username, classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
         try {
-            logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`)
-    
-            userSockets[username].leave(`class-${classCode}`)
-            classInformation.users[username].classPermissions = null
-            userSockets[username].request.session.class = 'noClass'
-            userSockets[username].request.session.classId = null
-            userSockets[username].request.session.save()
-            delete classInformation.classrooms[classId].students[username]
-    
-            setClassOfApiSockets(classInformation.users[username].API, 'noClass')
-    
-            logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(classInformation)})`)
-    
-            userSockets[username].emit('reload')
+            logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`);
+
+            // Remove user from class
+            userSockets[username].leave(`class-${classCode}`);
+            classInformation.users[username].classPermissions = null;
+            classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
+            userSockets[username].request.session.class = 'noClass';
+            userSockets[username].request.session.classId = null;
+            userSockets[username].request.session.save();
+            setClassOfApiSockets(classInformation.users[username].API, 'noClass');
+
+            logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(classInformation)})`);
+            userSockets[username].emit('reload');
         } catch (err) {
             logger.log('error', err.stack);
         }

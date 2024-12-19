@@ -115,6 +115,9 @@ function permCheck(req, res, next) {
 				req.session.classId = null
 			}
 
+			// Ensure the url path is all lowercase
+			urlPath = urlPath.toLowerCase();
+
 			logger.log('verbose', `[permCheck] urlPath=(${urlPath})`)
 			if (!PAGE_PERMISSIONS[urlPath]) {
 				logger.log('info', `[permCheck] ${urlPath} is not in the page permissions`)
