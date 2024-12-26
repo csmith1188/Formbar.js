@@ -21,10 +21,10 @@
 					<!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
 					<button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'>Settings</button>
 				</header>
-
-				<p id='classCode'>Class Code:</p>
-				<p><b id='totalUsers'></b></p>
+				
 				<div id='usersMenu' class='tabContent controlPanel default' data-tab-group='mainTabs'>
+					<p><b id='totalUsers'></b></p>
+					<p id='classCode'>Class Code:</p>
 					<!-- This canvas should be the student panel pie-graph thingy -->
 					<div id='VBDiv'>
 						<%- include('../partials/virtual_bar.ejs') %>
@@ -64,96 +64,93 @@
 								</div>
 							</div>
 					</div>
-				</div>
-				<div id="usersTabSettings">
-					<div>
-						<div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
-							<div id='pollOptions' class='options'>
-								<h2 class='headerText'>Custom Polls</h2>
-								<button id='publicPolls' class='quickButton tab unselectable'
-									data-tab-group='polls'>Public
-									Polls</button>
-								<button id='classPolls' class='quickButton tab unselectable'
-									data-tab-group='polls'>Class
-									Polls</button>
-								<button id='userPolls' class='quickButton tab unselectable' data-tab-group='polls'>Your
-									Polls</button>
-							</div>
-							<h2 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
-							<div id='startPollForm'>
-								<label for='pollBox'>Prompt for the poll?</label>
-								<input type='text' id='pollBox' placeholder='Prompt'>
-								<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
-								<br>
-								<div id='responses'></div>
-								<button class='quickButton' onclick='addAnswer()'>+</button>
-								<br>
-								<br>
-								<button id='generalOptionsButton' onclick='showGeneralOptions()'>General
-									Options</button>
-								<div id='generalOptions' hidden>
-									<label for='multiRes'>Multiple answer poll?</label>
-									<input type='checkbox' id='multiRes'>
-									<br>
-									<label for='resTextBox'>Would like to accept text responses?</label>
-									<input type='checkbox' id='resTextBox' onclick='resTextChange()'>
-									<br>
-									<button id='resetAnswerNames' class='quickButton'>Reset Names</button>
-									<button id='resetColors' class='quickButton'>Reset Colors</button>
-									<label for='changeNames'>Specify Tags?</label>
-									<input type='button' id='changeNames' value='Tags' onclick='selectTags.showModal()'
-										class='quickButton'>
-									<br>
-									<label for='blind'>Blind poll? (Responses won't be visible until everyone has
-										answered)</label>
-									<input type='checkbox' id='blind'>
-									<br>
-									<label for='lastResponse'>Send Poll To Students With Same Response</label>
-									<input type='checkbox' id='lastResponse'>
-									<select name='basedOnResponse' id='basedOnResponse'></select>
-									<br>
+					<div id="usersTabSettings">
+						<div>
+							<hr>
+							<div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
+								<div id='pollOptions' class='options'>
+									<h2 class='headerText'>Custom Polls</h2>
+									<button id='publicPolls' class='quickButton tab unselectable'
+										data-tab-group='polls'>Public
+										Polls</button>
+									<button id='classPolls' class='quickButton tab unselectable'
+										data-tab-group='polls'>Class
+										Polls</button>
+									<button id='userPolls' class='quickButton tab unselectable' data-tab-group='polls'>Your
+										Polls</button>
 								</div>
+								<h2 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
+								<div id='startPollForm'>
+									<label for='pollBox'>Prompt for the poll?</label>
+									<input type='text' id='pollBox' placeholder='Prompt'>
+									<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
+									<br>
+									<div id='responses'></div>
+									<button class='quickButton' onclick='addAnswer()'>+</button>
+									<br>
+									<button id='generalOptionsButton' onclick='showGeneralOptions()'>General
+										Options</button>
+									<div id='generalOptions' hidden>
+										<label for='multiRes'>Multiple answer poll?</label>
+										<input type='checkbox' id='multiRes'>
+										<br>
+										<label for='resTextBox'>Would like to accept text responses?</label>
+										<input type='checkbox' id='resTextBox' onclick='resTextChange()'>
+										<br>
+										<button id='resetAnswerNames' class='quickButton'>Reset Names</button>
+										<button id='resetColors' class='quickButton'>Reset Colors</button>
+										<label for='changeNames'>Specify Tags?</label>
+										<input type='button' id='changeNames' value='Tags' onclick='selectTags.showModal()'
+											class='quickButton'>
+										<br>
+										<label for='blind'>Blind poll? (Responses won't be visible until everyone has
+											answered)</label>
+										<input type='checkbox' id='blind'>
+										<br>
+										<label for='lastResponse'>Send Poll To Students With Same Response</label>
+										<input type='checkbox' id='lastResponse'>
+										<select name='basedOnResponse' id='basedOnResponse'></select>
+										<br>
+									</div>
+								</div>
+								<br>
+								<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
+								<br>
+								<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End Poll</button>
+								<br>
+								<button id='clearPoll' onclick='clearPollFunc()' hidden class='quickButton'>Clear
+									Poll</button>
+								<br>
+								<button type='button' onclick='displayPreviousPolls()' class='quickButton'>View Previous
+									Polls</button>
 							</div>
-							<br>
-							<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
-							<br>
-							<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End Poll</button>
-							<br>
-							<button id='clearPoll' onclick='clearPollFunc()' hidden class='quickButton'>Clear
-								Poll</button>
-							<br>
-							<button type='button' onclick='displayPreviousPolls()' class='quickButton'>View Previous
-								Polls</button>
+							<button onclick='clearPollFunc()'>Clear Poll</button>
+							<button onclick='endPollFunc()'>End Poll</button>
 						</div>
-						<button onclick='clearPollFunc()'>Clear Poll</button>
-						<button onclick='endPollFunc()'>End Poll</button>
+						<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
+						<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox"
+							id="playSound">
+						Play Sound
+						<br>
+						<button type='button' id='timerButton'>Start Timer</button>
+						<button type='button' id='timerStopButton' hidden>Stop Timer</button>
+						<br>
+						<br>
+						<button id="kickUsers" onclick="kickAll()">
+							Kick All Students
+						</button>
+						<button id='endClass' onclick='endClass()'>
+							End Class
+						</button>
 					</div>
-					<hr>
-					<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
-					<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox"
-						id="playSound">
-					Play Sound
-					<br>
-					<button type='button' id='timerButton'>Start Timer</button>
-					<button type='button' id='timerStopButton' hidden>Stop Timer</button>
-					<br>
-					<hr>
-					<button id="muteButton" onclick="muteSound()">Mute</button>
-					<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
-					<br>
-					<button id="kickUsers" onclick="kickAll()">
-						Kick All Students
-					</button>
-					<button id='endClass' onclick='endClass()'>
-						End Class
-					</button>
+					<div id='users'>
+						<p id='responsesCounter'></p>
+					</div>
 				</div>
-				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
+				<!-- Below line was moved outside the users div, just in case you need to know that-->
 				<p><b id='pollCounter'></b></p>
-				<p id='responsesCounter'></p>
-				<div id='users'>
-				</div>
-				</div>
+				
+
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
@@ -173,7 +170,7 @@
 						<input name='spreadsheet' type='file'>
 						<input type='submit' class='quickButton'>
 					</form>
-					<button type='button' id='nextStep'>Next Step</button><br>
+					<!-- <button type='button' id='nextStep'>Next Step</button><br>
 					<br>
 					<button type='button' id='timerButton'>Start Timer</button>
 					<button type='button' id='timerStopButton' hidden>Stop Timer</button>
@@ -183,13 +180,11 @@
 					</button>
 					<button id='endClass' onclick='endClass()'>
 						End Class
-					</button>
+					</button> -->
 					<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 					<p><b id='pollCounter'></b></p>
 					<p id='responsesCounter'></p>
-					<div id='users'>
-					</div>
-					</br></br></br></br></br></br></br></br></br></br>
+					
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>

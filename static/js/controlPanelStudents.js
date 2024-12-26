@@ -532,14 +532,14 @@ function approveBreak(breakApproval, username) {
 }
 
 function helpSound() {
-    var helpPing = new Audio('/sfx/help.wav')
+    let helpPing = new Audio('/sfx/help.wav')
     if (mute == false) (
         helpPing.play()
     )
 }
 
 function breaksounds() {
-    var breakPing = new Audio('/sfx/break.wav')
+    let breakPing = new Audio('/sfx/break.wav')
     if (mute == false) (
         breakPing.play()
     )

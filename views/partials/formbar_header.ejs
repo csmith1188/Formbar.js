@@ -22,16 +22,19 @@
                       <a href="/plugins" class="headerTab">Plugins</a>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <button href="/" class="headerTab" title="Leave class"
-                            onclick="leaveClass()">Leave
+                          <button href="/" class="headerTab" title="Leave class" onclick="leaveClass()">Leave
                             Class</button>
                           <% } %>
-                            <button href="/" id="logoutButton" onclick="logout()"><img id="logoutIcon"
-                                src="img/logout.svg" title="Logout"></button>
+                            <button href="/" id="logoutButton" onclick="logout()">
+                              <img id="logoutIcon" src="img/logout.svg" title="Logout">
+                            </button>
                             <% } %>
-                              <p id="version">v 1.0.0</p>
-                              <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM"><img id="lmdmIcon"
-                                  src="img/sun.svg"></button>
+                            <p id="version">v 1.0.0</p>
+                            <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM">
+                              <img id="lmdmIcon" src="img/sun.svg">
+                            </button>
+                            <button id="muteButton" onclick="muteSound()"><img id="muteIcon" src="img/mute.svg"></button>
+                            <button id="unmuteButton" onclick="unmuteSound()" hidden><img id="unmuteIcon" src="img/volume.svg"></button>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");
@@ -68,12 +71,10 @@
   }
 
   function logout() {
-    if (confirm('Are you sure you want to logout?')) 
-    { socket.emit('logout') }
+    if (confirm('Are you sure you want to logout?')) { socket.emit('logout') }
   }
 
   function leaveClass() {
-    if (confirm('Are you sure you want to leave the class?')) 
-    { socket.emit('leaveClass') }
+    if (confirm('Are you sure you want to leave the class?')) { socket.emit('leaveClass') }
   }
 </script>
