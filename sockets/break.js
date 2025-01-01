@@ -8,16 +8,25 @@ module.exports = {
         // Sends a break ticket
         socket.on('requestBreak', (reason) => {
             try {
+                // Get the class id and username from the session
+                // Check if the class is inactive before continuing
+                const classId = socket.request.session.classId;
+                const username = socket.request.session.username;
+                if (!classInformation.classrooms[classId].isActive) {
+                    socket.emit('message', 'This class is not currently active.');
+                    return;
+                }
+
                 logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[requestBreak] reason=(${reason})`)
 
-                const student = classInformation[socket.request.session.class].students[socket.request.session.username]
+                const student = classInformation.classrooms[classId].students[username]
                 if (!student.break != reason) {
                     advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
                 }
 
                 student.break = reason
-                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
+                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[username])})`)
 
                 socketUpdates.classPermissionUpdate()
             } catch (err) {
@@ -31,10 +40,10 @@ module.exports = {
                 logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) username=(${username})`)
 
-                const student = classInformation[socket.request.session.class].students[username]
+                const student = classInformation.classrooms[socket.request.session.classId].students[username]
                 student.break = breakApproval
 
-                logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[username])})`)
+                logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[username])})`)
 
                 if (breakApproval) io.to(`user-${username}`).emit('break')
                 socketUpdates.classPermissionUpdate()
@@ -49,10 +58,10 @@ module.exports = {
             try {
                 logger.log('info', `[endBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const student = classInformation[socket.request.session.class].students[socket.request.session.username]
+                const student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]
                 student.break = false
 
-                logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation[socket.request.session.class].students[socket.request.session.username])})`)
+                logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username])})`)
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()

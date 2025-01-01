@@ -70,7 +70,7 @@ app.use((req, res, next) => {
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
 	if (req.session.class) {
-		res.locals.currentUser = classInformation[req.session.class].students[req.session.username]
+		res.locals.currentUser = classInformation.users[req.session.username]
 	}
 
 	res.locals = {

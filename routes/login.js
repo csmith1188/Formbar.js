@@ -1,6 +1,6 @@
 const { hash, compare } = require('../crypto')
 const { database } = require("../modules/database")
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
@@ -104,7 +104,7 @@ module.exports = {
                             let loggedIn = false
                             let classKey = ''
 
-                            for (let classData of Object.values(classInformation)) {
+                            for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
                                     for (let username of Object.keys(classData.students)) {
                                         if (username == userData.username) {
@@ -120,9 +120,9 @@ module.exports = {
                             if (loggedIn) {
                                 logger.log('verbose', '[post /login] User is already logged in')
                                 req.session.class = classKey
+                                req.session.classId = getClassIDFromCode(classKey)
                             } else {
-                                // Add user to the session
-                                classInformation.noClass.students[userData.username] = new Student(
+                                classInformation.users[userData.username] = new Student(
                                     userData.username,
                                     userData.email,
                                     userData.id,
@@ -133,9 +133,11 @@ module.exports = {
                                     userData.tags,
                                     userData.displayName,
                                     userData.verified
-                                );
+                                )
+
                                 req.session.class = 'noClass';
-                            };
+                                req.session.classId = null;
+                            }
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
@@ -145,7 +147,7 @@ module.exports = {
                             req.session.verified = userData.verified;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                            logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                            logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                             res.redirect('/')
                         } catch (err) {
@@ -188,6 +190,7 @@ module.exports = {
                             do {
                                 newAPI = crypto.randomBytes(64).toString('hex')
                             } while (existingAPIs.includes(newAPI))
+
                             do {
                                 newSecret = crypto.randomBytes(256).toString('hex')
                             } while (existingSecrets.includes(newSecret))
@@ -215,8 +218,7 @@ module.exports = {
                                             try {
                                                 if (err) throw err
 
-                                                // Add user to session
-                                                classInformation.noClass.students[userData.username] = new Student(
+                                                classInformation.users[userData.username] = new Student(
                                                     userData.username,
                                                     userData.email,
                                                     userData.id,
@@ -232,10 +234,11 @@ module.exports = {
                                                 req.session.userId = userData.id
                                                 req.session.username = userData.username
                                                 req.session.class = 'noClass'
+                                                req.session.classId = null
                                                 req.session.displayName = userData.displayName;
 
                                                 logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                                                logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                                                logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                                                 managerUpdate()
 
@@ -249,6 +252,18 @@ module.exports = {
                                             }
                                         })
                                     } catch (err) {
+                                        // Handle the same email being used for multiple accounts
+                                        if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                            logger.log('verbose', '[post /login] Email already exists')
+                                            res.render('pages/message', {
+                                                message: 'A user with that email already exists.',
+                                                title: 'Login'
+                                            });
+
+                                            return;
+                                        }
+
+                                        // Handle other errors
                                         logger.log('error', err.stack);
                                         res.render('pages/message', {
                                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,

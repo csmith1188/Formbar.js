@@ -27,7 +27,7 @@ module.exports = {
                             try {
                                 if (err) throw err
 
-                                classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
                                 socket.emit('message', 'Poll saved successfully!')
                                 socketUpdates.customPollUpdate(socket.request.session.username)
                                 socket.emit("classPollSave", nextPollId);
@@ -135,9 +135,9 @@ module.exports = {
                 await socketUpdates.clearPoll();
                 
                 // Adds data to the previous poll answers table upon clearing the poll
-                for (const student of Object.values(classInformation[socket.request.session.class].students)) {
+                for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
                     if (student.classPermissions != 5) {
-                        const currentPollId = classInformation[socket.request.session.class].pollHistory[currentPoll].id
+                        const currentPollId = classInformation.classrooms[socket.request.session.classId].pollHistory[currentPoll].id
                         for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
                             const studentRes = student.pollRes.buttonRes[i]
                             const studentId = student.id

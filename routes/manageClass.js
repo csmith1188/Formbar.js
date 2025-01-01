@@ -12,7 +12,7 @@ module.exports = {
         app.get('/manageClass', isLoggedIn, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /manageClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                logger.log('verbose', `[get /manageClass] currentUser=(${JSON.stringify(classInformation[req.session.class].students[req.session.username])})`)
+                logger.log('verbose', `[get /manageClass] currentUser=(${JSON.stringify(classInformation.users[req.session.username])})`)
 
                 // Finds all classes the teacher is the owner of
                 res.render('pages/manageClass', {

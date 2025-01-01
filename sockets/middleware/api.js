@@ -1,3 +1,4 @@
+const { getClassIDFromCode } = require("../../modules/class")
 const { logger } = require("../../modules/logger")
 const { userSockets } = require("../../modules/socketUpdates")
 
@@ -12,7 +13,7 @@ module.exports = {
                     database.get(
                         'SELECT id, username FROM users WHERE API=?',
                         [api],
-                        (err, userData) => {
+                        async (err, userData) => {
                             try {
                                 if (err) throw err
                                 if (!userData) {
@@ -24,6 +25,7 @@ module.exports = {
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username
                                 socket.request.session.class = getUserClass(userData.username) || 'noClass'
+                                socket.request.session.classId = await getClassIDFromCode(socket.request.session.class)
 
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.class}`)

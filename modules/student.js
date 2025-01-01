@@ -1,3 +1,4 @@
+const { database } = require("./database")
 const { STUDENT_PERMISSIONS } = require("./permissions")
 
 // This class is used to create a student to be stored in the sessions data
@@ -18,6 +19,7 @@ class Student {
 		this.username = username;
 		this.email = email;
 		this.id = id;
+		this.activeClasses = [];
 		this.permissions = permissions;
 		this.classPermissions = null;
 		this.tags = tags;
@@ -37,6 +39,16 @@ class Student {
 	};
 };
 
+function getStudentId(username) {
+	return new Promise((resolve, reject) => {
+		database.get('SELECT id FROM users WHERE username=?', username, (err, row) => {
+			if (err) return reject(err)
+			resolve(row.id)
+		})
+	})
+}
+
 module.exports = {
-	Student
-};
+	Student,
+	getStudentId
+}
