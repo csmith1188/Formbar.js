@@ -65,11 +65,10 @@ module.exports = {
                         const classStudents = await getClassStudents(id);
                         for (const username in classStudents) {
                             const student = classStudents[username];
+                            student.displayName = student.displayName || student.username;
                             classInformation.users[username] = student;
-                            classInformation.classrooms[id].students[student.username] = student;
+                            classInformation.classrooms[id].students[username] = student;
                         }
-
-                        console.log(classInformation.classrooms[id].students);
 
                         // Add class into the session data
                         req.session.class = key

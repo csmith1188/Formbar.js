@@ -37,7 +37,7 @@ module.exports = {
 				}
 
 				// Get the users of the class
-				let classUsers = await getClassUsers(user, key);
+				let classUsers = await getClassUsers(user, classData.key);
 
 				// If an error occurs, log the error and return the error
 				if (classUsers.error) {

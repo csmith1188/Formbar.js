@@ -147,7 +147,7 @@ module.exports = {
                             req.session.verified = userData.verified;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                            logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                            logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                             res.redirect('/')
                         } catch (err) {
@@ -190,6 +190,7 @@ module.exports = {
                             do {
                                 newAPI = crypto.randomBytes(64).toString('hex')
                             } while (existingAPIs.includes(newAPI))
+
                             do {
                                 newSecret = crypto.randomBytes(256).toString('hex')
                             } while (existingSecrets.includes(newSecret))
@@ -237,7 +238,7 @@ module.exports = {
                                                 req.session.displayName = userData.displayName;
 
                                                 logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                                                logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                                                logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                                                 managerUpdate()
 
@@ -251,6 +252,18 @@ module.exports = {
                                             }
                                         })
                                     } catch (err) {
+                                        // Handle the same email being used for multiple accounts
+                                        if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                            logger.log('verbose', '[post /login] Email already exists')
+                                            res.render('pages/message', {
+                                                message: 'A user with that email already exists.',
+                                                title: 'Login'
+                                            });
+
+                                            return;
+                                        }
+
+                                        // Handle other errors
                                         logger.log('error', err.stack);
                                         res.render('pages/message', {
                                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,

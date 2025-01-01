@@ -6,113 +6,111 @@ const { logger } = require("../modules/logger")
 const { BANNED_PERMISSIONS } = require("../modules/permissions")
 const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socketUpdates")
 
-function joinClass(username, code) {
-	return new Promise((resolve, reject) => {
-		try {
-			logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
+async function joinClass(req, code) {
+	const username = req.session.username;
+	try {
+	
+		logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
 
-			// Find the id of the class from the database
+		// Find the id of the class from the database
+		const classroom = await new Promise((resolve, reject) => {
 			database.get('SELECT * FROM classroom WHERE key=?', [code], (err, classroom) => {
-				try {
+				if (err) {
+					reject(err)
+					return
+				}
+				resolve(classroom)
+			})
+		})
+
+		// Check to make sure there was a class with that code
+		if (!classroom) {
+			logger.log('info', '[joinClass] No class with that code')
+			return 'No class with that code'
+		}
+
+		// Load the classroom into the classInformation object if it's not already loaded
+		if (!classInformation.classrooms[classroom.id]) {
+			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
+		}
+
+		// Find the id of the user who is trying to join the class
+		const user = await new Promise((resolve, reject) => {
+			database.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
+				if (err) {
+					reject(err)
+					return
+				}
+				resolve(user)
+			})
+		})
+
+		if (!user) {
+			logger.log('critical', '[joinClass] User is not in database')
+			return 'user is not in database'
+		}
+
+		// Add the two id's to the junction table to link the user and class
+		const classUser = await new Promise((resolve, reject) => {
+			database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
+				if (err) {
+					reject(err)
+					return
+				}
+				resolve(classUser)
+			})
+		})
+
+		if (classUser) {
+			// Get the student's session data ready to transport into new class
+			let currentUser = classInformation.users[username]
+			if (classUser.permissions <= BANNED_PERMISSIONS) {
+				logger.log('info', '[joinClass] User is banned')
+				return 'You are banned from that class.'
+			}
+
+			currentUser.classPermissions = classUser.permissions
+
+			// Add the student to the newly created class
+			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classInformation.users[username].activeClasses.push(classroom.id)
+			advancedEmitToClass('joinSound', code, { api: true })
+
+			// Set session class and classId
+			req.session.class = classroom.key;
+			req.session.classId = classroom.id;
+			// Set the class of the API socket
+
+			setClassOfApiSockets(currentUser.API, classroom.key);
+
+			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
+			return true
+		} else {
+			await new Promise((resolve, reject) => {
+				database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
 					if (err) {
 						reject(err)
 						return
 					}
-
-					// Check to make sure there was a class with that code
-					if (!classroom) {
-						logger.log('info', '[joinClass] No class with that code')
-						resolve('No class with that code')
-						return
-					}
-
-					// Load the classroom into the classInformation object if it's not already loaded
-					if (!classInformation.classrooms[classroom.id]) {
-						classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
-					}
-
-					// Find the id of the user who is trying to join the class
-					database.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
-						try {
-							if (err) {
-								reject(err)
-								return
-							}
-
-							if (!user) {
-								logger.log('critical', '[joinClass] User is not in database')
-								resolve('user is not in database')
-								return
-							}
-
-							// Add the two id's to the junction table to link the user and class
-							database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
-								try {
-									if (err) {
-										reject(err)
-										return
-									}
-
-									if (classUser) {
-										// Get the student's session data ready to transport into new class
-										let user = classInformation.users[username]
-										if (classUser.permissions <= BANNED_PERMISSIONS) {
-											logger.log('info', '[joinClass] User is banned')
-											resolve('You are banned from that class.')
-											return
-										}
-
-										user.classPermissions = classUser.permissions
-
-										// Add the student to the newly created class
-										classInformation.classrooms[classroom.id].students[username] = user
-										classInformation.users[username].activeClasses.push(classroom.id)
-										advancedEmitToClass('joinSound', code, { api: true })
-
-										logger.log('verbose', `[joinClass] cD=(${classInformation})`)
-										resolve(true)
-									} else {
-										database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)',
-											[classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
-												try {
-													if (err) {
-														reject(err)
-														return
-													}
-
-													logger.log('info', '[joinClass] Added user to classusers')
-
-													let user = classInformation.users[username]
-													user.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
-
-													// Add the student to the newly created class
-													classInformation.classrooms[classroom.id].students[username] = user
-													classInformation.users[username].activeClasses.push(classroom.id)
-
-													logger.log('verbose', `[joinClass] cD=(${classInformation})`)
-													resolve(true)
-												} catch (err) {
-													reject(err)
-												}
-											}
-										)
-									}
-								} catch (err) {
-									reject(err)
-								}
-							})
-						} catch (err) {
-							reject(err)
-						}
-					})
-				} catch (err) {
-					reject(err)
-				}
+					resolve()
+				})
 			})
-		} catch (err) {
-			reject(err)
+
+			logger.log('info', '[joinClass] Added user to classusers')
+
+			let currentUser = classInformation.users[username]
+			currentUser.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
+
+			// Add the student to the newly created class
+			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classInformation.users[username].activeClasses.push(classroom.id)
+
+			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
+			return true
 		}
-	})
+	} catch (err) {
+		throw err
+	}
 }
 
 module.exports = {
@@ -122,7 +120,7 @@ module.exports = {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
                 database.all(
-                    'SELECT classroom.name, classroom.key FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username=?',
+                    'SELECT classroom.name, classroom.id FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username=?',
                     [req.session.username],
                     (err, joinedClasses) => {
                         try {
@@ -154,33 +152,65 @@ module.exports = {
         // Adds user to a selected class, typically from the select class page
         app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
             try {
-                let classCode = req.body.key.toLowerCase()
+                let classId = req.body.id;
+				let classCode = req.body.key;
 
-				// Get class id from class code
-				let classId = await new Promise((resolve, reject) => {
-					database.get('SELECT id FROM classroom WHERE key=?', [classCode], (err, classroom) => {
-						try {
-							if (err) {
+				if (!classCode) {
+					// Check if the user is in the class with the class id provided
+					const userInClass = await new Promise((resolve, reject) => {
+						database.get('SELECT * FROM users JOIN classusers ON users.id = classusers.studentId WHERE users.username=? AND classusers.classId=?', [req.session.username, classId], (err, user) => {
+							try {
+								if (err) {
+									reject(err)
+									return
+								}
+
+								if (!user) {
+									resolve(false)
+									return
+								}
+
+								resolve(true)
+							} catch (err) {
 								reject(err)
-								return
 							}
+						})
+					});
 
-							if (!classroom) {
-								resolve('No class with that code')
-								return
+					// Refuse access if the user is not in the class
+					if (!userInClass) {
+						res.render('pages/message', {
+							message: `Error: You are not in that class.`,
+							title: 'Error'
+						});
+						return;
+					}
+
+					// Retrieve the class code associated with the class id if the access code is not provided
+					classCode = await new Promise((resolve, reject) => {
+						database.get('SELECT key FROM classroom WHERE id=?', [classId], (err, classroom) => {
+							try {
+								if (err) {
+									reject(err);
+									return;
+								}
+	
+								if (!classroom) {
+									resolve(null);
+									return;
+								}
+	
+								resolve(classroom.key);
+							} catch (err) {
+								reject(err);
 							}
-
-							resolve(classroom.id)
-						} catch (err) {
-							reject(err)
 						}
-					})
-				})
-        
-                logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`)
-        
-                let classJoinStatus = await joinClass(req.session.username, classCode)
-        
+					)});
+				}
+
+                logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`)        
+                let classJoinStatus = await joinClass(req, classCode)
+
                 if (typeof classJoinStatus == 'string') {
                     res.render('pages/message', {
                         message: `Error: ${classJoinStatus}`,
@@ -188,7 +218,33 @@ module.exports = {
                     })
                     return
                 }
-        
+
+				// If class code is provided, get classId
+				if (classCode) {
+					classCode = classCode.toLowerCase();
+
+					classId = await new Promise((resolve, reject) => {
+						database.get('SELECT id FROM classroom WHERE key=?', [classCode], (err, classroom) => {
+							try {
+								if (err) {
+									reject(err);
+									return;
+								}
+	
+								if (!classroom) {
+									resolve(null);
+									return;
+								}
+	
+								resolve(classroom.id);
+							} catch (err) {
+								reject(err);
+							}
+						}
+					)});
+					req.session.classId = classId;
+				}
+
                 let classData = classInformation.classrooms[classId]
                 let cpPermissions = Math.min(
                     classData.permissions.controlPolls,
@@ -196,10 +252,10 @@ module.exports = {
                     classData.permissions.manageClass
                 )
 
-                advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
+                advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
                 req.session.class = classCode
 				req.session.classId = classId
-                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classCode)
+                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classId)
         
                 res.redirect('/')
             } catch (err) {

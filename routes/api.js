@@ -88,30 +88,7 @@ module.exports = {
 					next()
 					return
 				}
-	
-				if (!classCode || classCode == 'noClass') {
-					res.status(404).json({ error: 'You are not in a class' })
-					return
-				}
-	
-				// If the class does not exist, return an error
-				if (!classInformation.classrooms[classId]) {
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-	
-				// If the user is not in the class, return an error
-				if (!classInformation.users[username] || !classInformation.users[username].activeClasses.includes(classId)) {
-					res.status(404).json({ error: 'You are not in this class.' })
-					return
-				}
-	
-				// If the URL ends with '/polls', proceed to the next middleware
-				if (urlPath.endsWith('/polls')) {
-					next()
-					return
-				}
-	
+
 				// If the user does not have sufficient permissions, return an error
 				if (permissions <= GUEST_PERMISSIONS || classPermissions <= GUEST_PERMISSIONS) {
 					res.status(403).json({ error: 'You do not have permission to access this page.' })

@@ -481,7 +481,7 @@ class SocketUpdates {
             userSockets[username].request.session.save();
             setClassOfApiSockets(classInformation.users[username].API, 'noClass');
 
-            logger.log('verbose', `[classKickUser] cD=(${JSON.stringify(classInformation)})`);
+            logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
             userSockets[username].emit('reload');
         } catch (err) {
             logger.log('error', err.stack);
@@ -630,7 +630,7 @@ class SocketUpdates {
             // Activate the class
             classInformation.classrooms[classId].isActive = true;
 
-            logger.log('verbose', `[startClass] cD=(${JSON.stringify(classInformation)})`);
+            logger.log('verbose', `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -645,7 +645,7 @@ class SocketUpdates {
             classInformation.classrooms[classId].isActive = false;
             await this.clearPoll(classCode, classId);
 
-            logger.log('verbose', `[endClass] cD=(${JSON.stringify(classInformation)})`);
+            logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
         }
