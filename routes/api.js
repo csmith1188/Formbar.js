@@ -59,6 +59,7 @@ module.exports = {
 				const permissions = req.session.user.permissions
 				const classPermissions = req.session.user.classPermissions
 				let classCode = req.session.user.class
+				let classId = req.session.user.classId
 				let urlPath = req.url
 	
 				// Log the request details
@@ -87,30 +88,7 @@ module.exports = {
 					next()
 					return
 				}
-	
-				if (!classCode || classCode == 'noClass') {
-					res.status(404).json({ error: 'You are not in a class' })
-					return
-				}
-	
-				// If the class does not exist, return an error
-				if (!classInformation[classCode]) {
-					res.status(404).json({ error: 'Class not started' })
-					return
-				}
-	
-				// If the user is not in the class, return an error
-				if (!classInformation[classCode].students[username]) {
-					res.status(404).json({ error: 'You are not in this class.' })
-					return
-				}
-	
-				// If the URL ends with '/polls', proceed to the next middleware
-				if (urlPath.endsWith('/polls')) {
-					next()
-					return
-				}
-	
+
 				// If the user does not have sufficient permissions, return an error
 				if (permissions <= GUEST_PERMISSIONS || classPermissions <= GUEST_PERMISSIONS) {
 					res.status(403).json({ error: 'You do not have permission to access this page.' })

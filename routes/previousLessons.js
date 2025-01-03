@@ -11,7 +11,7 @@ module.exports = {
             try {
                 logger.log('info', `[get /previousLessons] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-                database.all('SELECT * FROM lessons WHERE class=?', classInformation[req.session.class].className, async (err, lessons) => {
+                database.all('SELECT * FROM lessons WHERE class=?', classInformation.classrooms[req.session.classId].className, async (err, lessons) => {
                     try {
                         if (err) throw err
 

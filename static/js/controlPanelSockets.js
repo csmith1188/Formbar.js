@@ -5,7 +5,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		student.pollRes.time = new Date(student.pollRes.time)
 	}
 
-	classCode.textContent = 'Class Code: ' + newClassroom.key
+	classCode.textContent = `Class Code: ${newClassroom.key} | Class ID: ${newClassroom.id}`
 	buildPreviousPolls(newClassroom.pollHistory)
 
 	document.getElementById('nextStep').onclick = () => {
@@ -244,27 +244,28 @@ socket.on('pluginUpdate', (plugins) => {
 	};
 })
 
-socket.emit('customPollUpdate');
+socket.emit('customPollUpdate')
 socket.on('customPollUpdate', (
 	newPublicCustomPolls,
 	newClassroomCustomPolls,
 	newUserCustomPolls,
 	newCustomPolls
 ) => {
-	const publicCustomPolls = newPublicCustomPolls;
-	const classroomCustomPolls = newClassroomCustomPolls;
-	const userCustomPolls = newUserCustomPolls;
-	const customPolls = newCustomPolls;
-	const publicPollsDiv = document.querySelector('div#publicPolls');
-	const classPollsDiv = document.querySelector('div#classPolls');
-	const userPollsDiv = document.querySelector('div#userPolls');
-	const fastPollDiv = document.querySelector('div#quickPoll');
+	publicCustomPolls = newPublicCustomPolls
+	classroomCustomPolls = newClassroomCustomPolls
+	userCustomPolls = newUserCustomPolls
+	customPolls = newCustomPolls
+	let publicPollsDiv = document.querySelector('div#publicPolls')
+	let classPollsDiv = document.querySelector('div#classPolls')
+	let userPollsDiv = document.querySelector('div#userPolls')
+	let fastPollDiv = document.querySelector('div#quickPoll')
+
 	for (let i = 1; i <= 4; i++) {
-		const customPoll = customPolls[i];
-		const startButton = document.createElement('button');
-		startButton.className = 'start-custom-poll';
-		startButton.style.gridColumn = 3;
-		startButton.textContent = customPoll.name;
+		let customPoll = customPolls[i]
+		let startButton = document.createElement('button')
+		startButton.className = 'start-custom-poll'
+		startButton.style.gridColumn = 3
+		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
 			startPoll(i);
 		};
@@ -275,10 +276,10 @@ socket.on('customPollUpdate', (
 		}
 	};
 
-	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.');
-	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.');
-	insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.');
-});
+	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
+	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
+	insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')
+})
 
 socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 	let userPollSharesDiv = document.getElementById('userPollShares')

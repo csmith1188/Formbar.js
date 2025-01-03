@@ -6,7 +6,7 @@ const { advancedEmitToClass, runningTimers } = require("../modules/socketUpdates
 module.exports = {
     run(socket, socketUpdates) {
         socket.on('vbTimer', () => {
-            let classData = classInformation[socket.request.session.class];
+            let classData = classInformation.classrooms[socket.request.session.classId];
             let username = socket.request.session.username
 
             advancedEmitToClass('vbTimer', socket.request.session.class, {
@@ -15,10 +15,10 @@ module.exports = {
             }, classData.timer);
         })
 
+        // This handles the server side timer
         socket.on("timer", (startTime, active, sound) => {
-            // This handles the server side timer
             try {
-                let classData = classInformation[socket.request.session.class];
+                let classData = classInformation.classrooms[socket.request.session.classId];
                 startTime = Math.round(startTime)
 
                 classData.timer.startTime = startTime
@@ -46,7 +46,7 @@ module.exports = {
         })
 
         socket.on("timerOn", () => {
-            socket.emit("timerOn", classInformation[socket.request.session.class].timer.active);
+            socket.emit("timerOn", classInformation.classrooms[socket.request.session.classId].timer.active);
         })
     }
 }
