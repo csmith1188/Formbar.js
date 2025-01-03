@@ -267,10 +267,14 @@ socket.on('customPollUpdate', (
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
-			startPoll(i)
+			startPoll(i);
+		};
+		if (fastPollDiv.children[i]) {
+			fastPollDiv.children[i].replaceWith(startButton);
+		} else {
+			fastPollDiv.appendChild(startButton);
 		}
-		fastPollDiv.appendChild(startButton)
-	}
+	};
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
