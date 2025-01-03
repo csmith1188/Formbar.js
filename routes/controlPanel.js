@@ -15,7 +15,7 @@ module.exports = {
             try {
                 logger.log('info', `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-                let students = classInformation[req.session.class].students
+                let students = classInformation.classrooms[req.session.classId].students
                 let keys = Object.keys(students)
                 let allStuds = []
 
@@ -29,9 +29,9 @@ module.exports = {
                 */
                 res.render('pages/controlPanel', {
                     title: 'Control Panel',
-                    pollStatus: classInformation[req.session.class].poll.status,
-                    settingsPermissions: classInformation[req.session.class].permissions.manageClass,
-                    tagNames: classInformation[req.session.class].tagNames
+                    pollStatus: classInformation.classrooms[req.session.classId].poll.status,
+                    settingsPermissions: classInformation.classrooms[req.session.classId].permissions.manageClass,
+                    tagNames: classInformation.classrooms[req.session.classId].tagNames
                 })
             } catch (err) {
                 logger.log('error', err.stack);
@@ -61,7 +61,7 @@ module.exports = {
                 It loops through the whole object - Riley R., May 22, 2023
                 */
                 if (req.file) {
-                    classInformation[req.session.class].currentStep = 0
+                    classInformation.classrooms[req.session.classId].currentStep = 0
                     const result = excelToJson({
                         sourceFile: req.file.path,
                         sheets: [{
@@ -169,7 +169,7 @@ module.exports = {
                         }
                     }
 
-                    classInformation[req.session.class].steps = steps
+                    classInformation.classrooms[req.session.classId].steps = steps
                     res.redirect('/controlPanel')
                 }
             } catch (err) {

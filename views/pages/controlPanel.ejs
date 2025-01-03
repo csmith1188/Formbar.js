@@ -13,7 +13,7 @@
 			<script src='/js/deepObjectEqual.js'></script>
 		</head>
 
-		<body onload='load(pollStatus)'>
+		<body onload="load(<%-pollStatus%>)">
 			<%- include('../partials/formbar_header') %>
 				<header id='quickMenu'>
 					<button id='usersMenu' class='quickButton tab pressed' data-tab-group='mainTabs'>Users</button>
@@ -143,14 +143,34 @@
 							End Class
 						</button>
 					</div>
-					<div id='users'>
-						<p id='responsesCounter'></p>
-					</div>
-				</div>
-				<!-- Below line was moved outside the users div, just in case you need to know that-->
+					<button onclick='clearPollFunc()'>Clear Poll</button>
+					<button onclick='endPollFunc()'>End Poll</button>
+				</div><hr>
+				<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
+				<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox" id="playSound">
+				Play Sound
+				<br>
+				<button type='button' id='timerButton'>Start Timer</button>
+				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
+				<br><hr>
+				<button id="muteButton" onclick="muteSound()">Mute</button>
+				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
+				<br>
+				<button id="kickUsers" onclick="kickAll()">
+					Kick All Students
+				</button>
+				<button onclick="regenerateAccessCode()">
+					Regenerate Code
+				</button>
+				<button id="startClass" onclick="startClass()">
+					Start Class
+				</button>
+				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 				<p><b id='pollCounter'></b></p>
-				
-
+				<p id='responsesCounter'></p>
+				<div id='users'>
+				</div>
+				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
@@ -184,7 +204,8 @@
 					<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 					<p><b id='pollCounter'></b></p>
 					<p id='responsesCounter'></p>
-					
+					<div id='users'>
+					</div>
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
@@ -226,16 +247,11 @@
 						</label>
 					</form>
 				</div>
-				<div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-					<!-- <div class='options'>
-						<button id='permissions' class='quickButton tab pressed'
-							data-tab-group='settingsTabs'>Permissions</button>
-						<button id='plugins' class='quickButton tab' data-tab-group='settingsTabs'>Plugins</button>
-					</div> -->
-					<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
-						<form method='post' enctype='multipart/form-data'>
-							<input name='spreadsheet' type='file'>
-							<input type='submit' class='quickButton'>
+				<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+					<div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
+						<form method="post" enctype="multipart/form-data">
+							<input name="spreadsheet" type="file">
+							<input type="submit" class="quickButton">
 						</form>
 						<button type='button' id='nextStep'>Next Step</button><br>
 						<br>
@@ -428,16 +444,35 @@
 				}
 			}
 
+			function startClass() {
+				socket.emit('startClass')
+
+				const startClassButton = document.getElementById('startClass')
+				startClassButton.innerText = 'End Class'
+				startClassButton.onclick = endClass
+				startClassButton.id = 'endClass'
+			}
 
 			function endClass() {
 				if (confirm('Are you sure you want to end the class?')) {
 					socket.emit('endClass')
+
+					const endClassButton = document.getElementById('endClass')
+					endClassButton.innerText = 'Start Class'
+					endClassButton.onclick = startClass
+					endClassButton.id = 'startClass'
+				}
+			}
+
+			function regenerateAccessCode() {
+				if (confirm("Are you sure you want to regenerate the class code?")) {
+					socket.emit('regenerateClassCode');
 				}
 			}
 
 			function kickAll() {
 				if (confirm('Are you sure you want to kick all students?')) {
-					socket.emit('classKickStudents')
+					socket.emit('classKickStudents');
 				}
 			}
 
