@@ -46,12 +46,11 @@ module.exports = {
             try {
                 // If an email is passed...
                 if (req.body.email) {
-                    req.session.email = req.body.email;
                     // Send an email to the user with the password change link
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>
-                        <a href='${location}/changepassword?code=${req.session.token}'>Change Password</a>
+                        <a href='${location}/changepassword?code=${req.session.token}&email=${req.body.email}'>Change Password</a>
                         `);
                     // Redirect to /
                     res.redirect('/');
@@ -65,13 +64,12 @@ module.exports = {
                 // Else...
                 } else {
                     // Request a password change and redirect to the login page
-                    passwordRequest(req.body.newPassword, req.session.email);
+                    passwordRequest(req.body.newPassword, req.query.email);
                     res.redirect('/login');
                 };
             } catch (err) {
                 logger.log('error', err.stack);
             };
         });
-        
     }
 };

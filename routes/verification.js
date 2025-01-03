@@ -3,6 +3,7 @@ const { logNumbers } = require('../modules/config')
 const { logger } = require('../modules/logger')
 const sendMail = require('../modules/mail.js').sendMail;
 const crypto = require('crypto');
+const { title } = require('process');
 
 module.exports = {
     run(app) {
@@ -13,6 +14,24 @@ module.exports = {
             if (!req.session.token) return;
             // Set the token to the session token
             const token = req.session.token;
+            // Get the email from the database
+            database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                // If there is an error...
+                if (error) {
+                    // Log the error with the logger
+                    logger.log('error', error.stack);
+                    // Render the message page with the error message
+                    res.render('pages/message', {
+                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                        title: 'Error'
+                    });
+                    // Return to prevent further execution
+                    return;
+                } else {
+                    // Set the email to the email from the database
+                    return email = row.email;
+                };
+            });
             // Create the HTML content for the email
             const html = `
             <h1>Verify your email</h1>
@@ -20,19 +39,40 @@ module.exports = {
                 <a href='${location}/verification?code=${token}'>Verify Email</a>
             `;
             // Send the email
-            sendMail(req.session.email, 'Formbar Verification', html);
+            sendMail(email, 'Formbar Verification', html);
         });
         // Make a get request for the verification route
         app.get('/verification', (req, res) => {
+            // If there is no session username, redirect to the login page
+            if (!req.session.username) {
+                res.redirect('/login'); 
+                return;
+            };
             // If there is no session token, create one
             if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
-            // Get the email from the session
-            const email = req.session.email;
-            // If there is no email in the session... 
+            // Get the email from the database
+            database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                // If there is an error...
+                if (error) {
+                    // Log the error with the logger
+                    logger.log('error', error.stack);
+                    // Render the message page with the error message
+                    res.render('pages/message', {
+                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                        title: 'Error'
+                    });
+                    // Return to prevent further execution
+                    return;
+                } else {
+                    // Set the email to the email from the database
+                    return email = row.email;
+                };
+            });
+            // If there is no email... 
             if (!email) {
                 // Render the message page with the following message
                 res.render('pages/message', {
-                    message: `There is no email in this session.`,
+                    message: `This user does not have an email.`,
                     title: 'Verification'
                 })
                 // Return to prevent further execution
@@ -50,7 +90,7 @@ module.exports = {
             // If the tokens match...
             if (req.session.token === token) {
                 // Update the user's verified status in the database
-                database.get(`UPDATE users SET verified = 1 WHERE email = '${email}'`, (errpr) => {
+                database.get(`UPDATE users SET verified = 1 WHERE email = '${email}'`, (error) => {
                     // If there is an error...
                     if (error) {
                         // Log the error with the logger
