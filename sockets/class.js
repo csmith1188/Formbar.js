@@ -42,7 +42,7 @@ module.exports = {
                 const username = socket.request.session.username;
                 const classCode = socket.request.session.class;
                 const classId = socket.request.session.classId;
-                socketUpdates.classKickUser(username, classCode, classId)
+                socketUpdates.classKickUser(username, classCode, classId, false);
             } catch (err) {
                 logger.log('error', err.stack)
             }

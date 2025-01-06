@@ -14,7 +14,8 @@ class Student {
 		ownedPolls = [],
 		sharedPolls = [],
 		tags,
-		displayName
+		displayName,
+		isGuest = false
 	) {
 		this.username = username;
 		this.email = email;
@@ -36,6 +37,7 @@ class Student {
 		this.API = API;
 		this.pogMeter = 0;
 		this.displayName = displayName;
+		this.isGuest = isGuest;
 	};
 };
 
