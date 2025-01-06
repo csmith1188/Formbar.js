@@ -42,7 +42,10 @@ module.exports = {
                 const username = socket.request.session.username;
                 const classCode = socket.request.session.class;
                 const classId = socket.request.session.classId;
-                socketUpdates.classKickUser(username, classCode, classId, false);
+
+                // Kick the user from the classroom entirely if they're a guest
+                // If not, kick them from the session
+                socketUpdates.classKickUser(username, classCode, classId, classInformation.users[username].isGuest);
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -76,7 +79,7 @@ module.exports = {
 
         socket.on('regenerateClassCode', () => {
             try {
-                // Generate a new class code and set it
+                // Generate a new class code
                 const accessCode = generateKey(4);
 
                 // Update the class code in the database
@@ -90,6 +93,31 @@ module.exports = {
                         socket.emit("reload");
                     } catch (err) {
                         logger.log('error', err.stack);
+                    }
+                });
+            } catch (err) {
+                logger.log('error', err.stack);
+            }
+        });
+
+        socket.on('changeClassName', (name) => {
+            try {
+                if (!name) {
+                    socket.emit('message', 'Class name cannot be empty.');
+                    return;
+                }
+
+                // Update the class name in the database
+                database.run('UPDATE classroom SET name=? WHERE id=?', [name, socket.request.session.classId], (err) => {
+                    try {
+                        if (err) throw err;
+
+                        // Update the class name in the class information
+                        classInformation.classrooms[socket.request.session.classId].name = name;
+                        socket.emit('message', 'Class name updated.');
+                    } catch (err) {
+                        logger.log('error', err.stack);
+                        socket.emit('message', 'There was a server error try again.');
                     }
                 });
             } catch (err) {
