@@ -35,7 +35,7 @@ async function joinClass(req, code) {
 		}
 
 		// Find the id of the user who is trying to join the class
-		const user = await new Promise((resolve, reject) => {
+		let user = await new Promise((resolve, reject) => {
 			database.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
 				if (err) {
 					reject(err)
@@ -45,21 +45,26 @@ async function joinClass(req, code) {
 			})
 		})
 
-		if (!user) {
+		if (!user && !classInformation.users[username]) {
 			logger.log('critical', '[joinClass] User is not in database')
 			return 'user is not in database'
+		} else if (classInformation.users[username] && classInformation.users[username].isGuest) {
+			user = classInformation.users[username];
 		}
 
-		// Add the two id's to the junction table to link the user and class
-		const classUser = await new Promise((resolve, reject) => {
-			database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
-				if (err) {
-					reject(err)
-					return
-				}
-				resolve(classUser)
+		let classUser
+		if (!user.isGuest) {
+			// Add the two id's to the junction table to link the user and class
+			classUser = await new Promise((resolve, reject) => {
+				database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
+					if (err) {
+						reject(err)
+						return
+					}
+					resolve(classUser)
+				})
 			})
-		})
+		}
 
 		if (classUser) {
 			// Get the student's session data ready to transport into new class
@@ -86,15 +91,17 @@ async function joinClass(req, code) {
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
-			await new Promise((resolve, reject) => {
-				database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
-					if (err) {
-						reject(err)
-						return
-					}
-					resolve()
+			if (!user.isGuest) {
+				await new Promise((resolve, reject) => {
+					database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
+						if (err) {
+							reject(err)
+							return
+						}
+						resolve()
+					})
 				})
-			})
+			}
 
 			logger.log('info', '[joinClass] Added user to classusers')
 

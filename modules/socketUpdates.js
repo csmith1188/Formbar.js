@@ -468,33 +468,47 @@ class SocketUpdates {
         }
     }
     
-    classKickUser(username, classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
+    // Kicks a user from a class
+    // If exitClass is set to true, then it will fully remove the user from the class;
+    // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
+    classKickUser(username, classCode = this.socket.request.session.class, classId = this.socket.request.session.classId, exitClass = true) {
         try {
             logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`);
 
-            // Remove user from class
-            userSockets[username].leave(`class-${classCode}`);
+            // Remove user from class session
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            userSockets[username].request.session.class = 'noClass';
-            userSockets[username].request.session.classId = null;
-            userSockets[username].request.session.save();
             setClassOfApiSockets(classInformation.users[username].API, 'noClass');
-
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
-            userSockets[username].emit('reload');
+
+            // If exitClass is true, then remove the user from the classroom entirely and update the control panel
+            if (exitClass) {
+                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[username].id, classId], (err) => {});
+                delete classInformation.classrooms[classId].students[username];
+                this.classPermissionUpdate(classCode, classId);
+                this.virtualBarUpdate(classCode, classId);
+            }
+
+            // If the user is logged in, then handle the user's session
+            if (userSockets[username]) {
+                userSockets[username].leave(`class-${classCode}`);
+                userSockets[username].request.session.class = 'noClass';
+                userSockets[username].request.session.classId = null;
+                userSockets[username].request.session.save();
+                userSockets[username].emit('reload');
+            }            
         } catch (err) {
             logger.log('error', err.stack);
         }
     }
-    
+
     classKickStudents(classId) {
         try {
             logger.log('info', `[classKickStudents] classId=(${classId})`)
     
             for (let username of Object.keys(classInformation.classrooms[classId].students)) {
                 if (classInformation.classrooms[classId].students[username].classPermissions < TEACHER_PERMISSIONS) {
-                    this.classKickUser(username, classCode)
+                    this.classKickUser(username, classCode);
                 }
             }
         } catch (err) {
@@ -512,6 +526,11 @@ class SocketUpdates {
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
+        }
+
+        // Delete the user from the users object
+        if (classInformation.users[username]) {
+            delete classInformation.users[username];
         }
 
         this.socket.request.session.destroy((err) => {
