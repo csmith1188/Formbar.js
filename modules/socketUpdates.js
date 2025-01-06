@@ -481,10 +481,12 @@ class SocketUpdates {
             setClassOfApiSockets(classInformation.users[username].API, 'noClass');
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
-            // If exitClass is true, then remove the user from the classroom entirely
+            // If exitClass is true, then remove the user from the classroom entirely and update the control panel
             if (exitClass) {
                 database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[username].id, classId], (err) => {});
                 delete classInformation.classrooms[classId].students[username];
+                this.classPermissionUpdate(classCode, classId);
+                this.virtualBarUpdate(classCode, classId);
             }
 
             // If the user is logged in, then handle the user's session
