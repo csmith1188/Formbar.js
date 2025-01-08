@@ -283,11 +283,14 @@
 
 					//help ticket/break button
 
+					socket.on("helpSuccess", () => {
+						alert("Help ticket sent")
+					})
+
 					function help() {
 						let reason = document.getElementById('ticket').value
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
-						alert('Help ticket sent')
 					}
 
 					let options = document.getElementsByName('option')

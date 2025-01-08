@@ -70,6 +70,17 @@ function generateColors(amount) {
 	}
 }
 
+function generateKey(size) {
+	let key = ''
+	for (let i = 0; i < size; i++) {
+		let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
+		let letter = keygen[Math.floor(Math.random() * keygen.length)]
+		key += letter
+	}
+
+	return key
+}
+
 function camelCaseToNormal(str) {
 	let result = str.replace(/([A-Z])/g, " $1")
 	result = result.charAt(0).toUpperCase() + result.slice(1)
@@ -79,5 +90,6 @@ function camelCaseToNormal(str) {
 module.exports = {
     convertHSLToHex,
     generateColors,
+	generateKey,
     camelCaseToNormal
 }

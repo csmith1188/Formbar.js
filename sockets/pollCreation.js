@@ -9,40 +9,48 @@ module.exports = {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
         socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
             try {
+                // Get class id and check if the class is active before continuing
+                const classId = socket.request.session.classId;
+                if (!classInformation.classrooms[classId].isActive) {
+                    socket.emit('message', 'This class is not currently active.');
+                    return;
+                }
+
+                // Log poll information
                 logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
                 await socketUpdates.clearPoll()
                 let generatedColors = generateColors(resNumber)
-                logger.log('verbose', `[pollResp] user=(${classInformation[socket.request.session.class].students[socket.request.session.username]})`)
+                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]})`)
                 if (generatedColors instanceof Error) throw generatedColors
 
-                classInformation[socket.request.session.class].mode = 'poll'
-                classInformation[socket.request.session.class].poll.blind = blind
-                classInformation[socket.request.session.class].poll.status = true
+                classInformation.classrooms[classId].mode = 'poll'
+                classInformation.classrooms[classId].poll.blind = blind
+                classInformation.classrooms[classId].poll.status = true
                 
                 if (tags) {
-                    classInformation[socket.request.session.class].poll.requiredTags = tags
+                    classInformation.classrooms[classId].poll.requiredTags = tags
                 } else {
-                    classInformation[socket.request.session.class].poll.requiredTags = []
+                    classInformation.classrooms[classId].poll.requiredTags = []
                 }
 
                 if (boxes) {
-                    classInformation[socket.request.session.class].poll.studentBoxes = boxes
+                    classInformation.classrooms[classId].poll.studentBoxes = boxes
                 } else {
-                    classInformation[socket.request.session.class].poll.studentBoxes = []
+                    classInformation.classrooms[classId].poll.studentBoxes = []
                 }
 
                 if (indeterminate) {
-                    classInformation[socket.request.session.class].poll.studentIndeterminate = indeterminate
+                    classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
                 } else {
-                    classInformation[socket.request.session.class].poll.studentIndeterminate = []
+                    classInformation.classrooms[classId].poll.studentIndeterminate = []
                 }
 
                 if (lastResponse) {
-                    classInformation[socket.request.session.class].poll.lastResponse = lastResponse
+                    classInformation.classrooms[classId].poll.lastResponse = lastResponse
                 } else {
-                    classInformation[socket.request.session.class].poll.lastResponse = []
+                    classInformation.classrooms[classId].poll.lastResponse = []
                 }
 
                 // Creates an object for every answer possible the teacher is allowing
@@ -59,24 +67,24 @@ module.exports = {
                     if (polls[i].color)
                         color = polls[i].color
 
-                    classInformation[socket.request.session.class].poll.responses[answer] = {
+                    classInformation.classrooms[classId].poll.responses[answer] = {
                         answer: answer,
                         weight: weight,
                         color: color
                     }
                 }
 
-                classInformation[socket.request.session.class].poll.weight = weight
-                classInformation[socket.request.session.class].poll.textRes = resTextBox
-                classInformation[socket.request.session.class].poll.prompt = pollPrompt
-                classInformation[socket.request.session.class].poll.multiRes = multiRes
+                classInformation.classrooms[classId].poll.weight = weight
+                classInformation.classrooms[classId].poll.textRes = resTextBox
+                classInformation.classrooms[classId].poll.prompt = pollPrompt
+                classInformation.classrooms[classId].poll.multiRes = multiRes
 
-                for (const key in classInformation[socket.request.session.class].students) {
-                    classInformation[socket.request.session.class].students[key].pollRes.buttonRes = ''
-                    classInformation[socket.request.session.class].students[key].pollRes.textRes = ''
+                for (const key in classInformation.classrooms[socket.request.session.classId].students) {
+                    classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
+                    classInformation.classrooms[classId].students[key].pollRes.textRes = ''
                 }
 
-                logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation[socket.request.session.class])})`)
+                logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
 
                 socketUpdates.pollUpdate()
                 socketUpdates.virtualBarUpdate()
@@ -87,15 +95,14 @@ module.exports = {
             }
         })
 
-        socket.on('savePoll', (poll, id) => {
+        socket.on('savePoll', (poll, pollId) => {
             try {
                 logger.log('info', `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${id})`)
+                logger.log('info', `[savePoll] poll=(${JSON.stringify(poll)}) id=(${pollId})`)
 
-                let userId = socket.request.session.userId
-
-                if (id) {
-                    database.get('SELECT * FROM custom_polls WHERE id=?', [id], (err, poll) => {
+                const userId = socket.request.session.userId
+                if (pollId) {
+                    database.get('SELECT * FROM custom_polls WHERE id=?', [pollId], (err, poll) => {
                         try {
                             if (err) throw err
 
@@ -112,7 +119,7 @@ module.exports = {
                                 poll.blind,
                                 poll.weight,
                                 poll.public,
-                                id
+                                pollId
                             ], (err) => {
                                 try {
                                     if (err) throw err
@@ -148,7 +155,7 @@ module.exports = {
                                 try {
                                     if (err) throw err
 
-                                    classInformation[socket.request.session.class].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
                                     socket.emit('message', 'Poll saved successfully!')
                                     socketUpdates.customPollUpdate(socket.request.session.username)
                                 } catch (err) {

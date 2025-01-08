@@ -1,10 +1,11 @@
 const { isLoggedIn, permCheck } = require("../modules/authentication")
-const { classInformation, Classroom } = require("../modules/class")
+const { classInformation, Classroom, getClassStudents } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
 const { setClassOfApiSockets } = require("../modules/socketUpdates")
+const { generateKey } = require("../modules/util")
 
 module.exports = {
     run(app) {
@@ -24,11 +25,8 @@ module.exports = {
                 async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags) {
                     try {
                         // Get the teachers session data ready to transport into new class
-                        const user = classInformation.noClass.students[req.session.username]
-
+                        const user = classInformation.users[req.session.username]
                         logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
-                        // Remove teacher from no class
-                        delete classInformation.noClass.students[req.session.username]
 
                         if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
                             for (let permission of Object.keys(permissions)) {
@@ -42,20 +40,41 @@ module.exports = {
                                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
                                 }
                             }
+
                             database.run('UPDATE classroom SET permissions=? WHERE key=?', [JSON.stringify(permissions), key], (err) => {
                                 if (err) logger.log('error', err.stack)
                             })
                         }
-                        classInformation[key] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+
+                        // Create classroom
+                        if (!classInformation.classrooms[id]) {
+                            classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                        } else {
+                            classInformation.classrooms[id].permissions = permissions
+                            classInformation.classrooms[id].sharedPolls = sharedPolls
+                            classInformation.classrooms[id].pollHistory = pollHistory
+                            classInformation.classrooms[id].tags = tags
+                        }
+
                         // Add the teacher to the newly created class
-                        classInformation[key].students[req.session.username] = user
-                        classInformation[key].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+                        classInformation.classrooms[id].students[req.session.username] = user
+                        classInformation.classrooms[id].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
+                        classInformation.users[req.session.username].activeClasses.push(id)
+                        classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
+
+                        const classStudents = await getClassStudents(id);
+                        for (const username in classStudents) {
+                            const student = classStudents[username];
+                            student.displayName = student.displayName || student.username;
+                            classInformation.users[username] = student;
+                            classInformation.classrooms[id].students[username] = student;
+                        }
 
                         // Add class into the session data
                         req.session.class = key
+                        req.session.classId = id
 
                         await setClassOfApiSockets(user.API, key)
-
                         return true
                     } catch (err) {
                         return err
@@ -63,15 +82,10 @@ module.exports = {
                 }
 
                 // Checks if teacher is creating a new class or joining an old class
-                //generates a 4 character key
-                //this is used for students who want to enter a class
+                // Generates a 4 character key
+                // This is used for students who want to enter a class
                 if (submittionType == 'create') {
-                    let key = ''
-                    for (let i = 0; i < 4; i++) {
-                        let keygen = 'abcdefghijklmnopqrstuvwxyz123456789'
-                        let letter = keygen[Math.floor(Math.random() * keygen.length)]
-                        key += letter
-                    }
+                    const key = generateKey(4);
 
                     // Add classroom to the database
                     database.run('INSERT INTO classroom(name, owner, key, permissions, tags) VALUES(?, ?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS), null], (err) => {

@@ -30,6 +30,7 @@ module.exports = {
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username
                                 socket.request.session.class = 'noClass'
+                                socket.request.session.classId = null
 
                                 next()
                             } catch (err) {
