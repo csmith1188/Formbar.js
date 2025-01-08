@@ -43,26 +43,36 @@ async function upgradeDatabase() {
     }
 
     // Backup the database
+    // If there's already a backup, denote it with a number
+    let backupNumber = 0;
+    while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
+        backupNumber++;
+    }
     fs.copyFileSync('database/database.db', 'database/database.bak');
 
     switch (databaseVersion) {
         case null: // Pre-v1 database verson
-            // Move passwords to be hashed rather than encrypted for security purposes
-            database.all('SELECT * FROM users', (err, rows) => {
+            // Update passwords from encrypted to hashed
+            database.all('SELECT * FROM users', async (err, rows) => {
                 if (err) {
                     console.error(err);
                     return;
                 }
 
                 for (const row of rows) {
-                    const decryptedPassword = decrypt(row.password);
-                    // Password hashing needs fixed before this
+                    const decryptedPassword = decrypt(JSON.parse(row.password));
+                    const hashedPassword = await hash(decryptedPassword);
+                    database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, row.id]);
                 }
             });
 
+            // Create refresh_tokens table
+            database.run('CREATE TABLE refresh_tokens (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
+
             // Create database stats table and set the version to 1
-            database.run('CREATE TABLE stats (key TEXT, value TEXT)');
-            database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
+            database.run('CREATE TABLE stats (key TEXT NOT NULL, value TEXT)', () => {
+                database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
+            });
     }
 }
 
