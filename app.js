@@ -10,6 +10,13 @@ const { classInformation } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
+const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
+
+// If -upgrade is provided, skip everything else and run data_upgrader/dataUpgrader.js
+if (process.argv.includes('-upgrade')) {
+	upgradeDatabase();
+	return;
+}
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
