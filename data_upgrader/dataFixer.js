@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const { decrypt } = require('./modules/crypto'); // Old crypto module
-const { hash } = require('../crypto'); // New crypto module
+const { hash } = require('../modules/crypto'); // New crypto module
 
 // Open database
 const database = new sqlite3.Database('database/database.db');

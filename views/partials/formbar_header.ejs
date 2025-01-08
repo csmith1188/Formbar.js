@@ -74,7 +74,7 @@
   }
 
   function leaveClass() {
-    if (confirm('Are you sure you want to leave the class?')) {
+    if (confirm('Are you sure you want to change classes? This will remove you from the current class session.')) {
       socket.emit('leaveClass')
     }
   }
