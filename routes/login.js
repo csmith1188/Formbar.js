@@ -216,7 +216,6 @@ module.exports = {
                                                 // Add user to session
                                                 classInformation.noClass.students[userData.username] = new Student(
                                                     userData.username,
-                                                    userData.email,
                                                     userData.id,
                                                     userData.permissions,
                                                     userData.API,
