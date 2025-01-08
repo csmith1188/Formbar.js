@@ -1,5 +1,7 @@
 const sqlite3 = require('sqlite3');
-const { decrypt } = require('./modules/crypto');
+const fs = require('fs');
+const { decrypt } = require('./modules/crypto'); // Old crypto module
+const { hash } = require('../crypto'); // New crypto module
 
 // Open database
 const database = new sqlite3.Database('database/database.db');
@@ -40,12 +42,27 @@ async function upgradeDatabase() {
         return;
     }
 
-    // Set 
+    // Backup the database
+    fs.copyFileSync('database/database.db', 'database/database.bak');
 
     switch (databaseVersion) {
-        case null:
-            
-            break;
+        case null: // Pre-v1 database verson
+            // Move passwords to be hashed rather than encrypted for security purposes
+            database.all('SELECT * FROM users', (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+
+                for (const row of rows) {
+                    const decryptedPassword = decrypt(row.password);
+                    // Password hashing needs fixed before this
+                }
+            });
+
+            // Create database stats table and set the version to 1
+            database.run('CREATE TABLE stats (key TEXT, value TEXT)');
+            database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
     }
 }
 
