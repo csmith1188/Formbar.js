@@ -1,7 +1,7 @@
 const excelToJson = require("convert-excel-to-json")
 const multer = require('multer') // Used to upload files
 const upload = multer({ dest: 'uploads/' }) // Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
-const { isAuthenticated, permCheck } = require("../modules/authentication")
+const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
@@ -11,7 +11,7 @@ module.exports = {
         // An endpoint for the teacher to control the formbar
         // Used to update students permissions, handle polls and their corresponsing responses
         // On render it will send all students in that class to the page
-        app.get('/controlPanel', isAuthenticated, permCheck, (req, res) => {
+        app.get('/controlPanel', isAuthenticated, permCheck, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 

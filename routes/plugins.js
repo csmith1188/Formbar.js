@@ -1,10 +1,10 @@
-const { isAuthenticated, permCheck } = require("../modules/authentication")
+const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 
 module.exports = {
     run(app) {
-        app.get('/plugins', isAuthenticated, permCheck, (req, res) => {
+        app.get('/plugins', isAuthenticated, permCheck, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /plugins] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         

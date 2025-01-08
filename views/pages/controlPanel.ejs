@@ -21,7 +21,10 @@
 					<!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
 					<button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'>Settings</button>
 				</header>
-				
+
+				<p id='classCode' style="margin: 5px;">Class Code:</p>
+				<p id='classId' style="margin: 5px;">Class Id:</p>
+				<p><b id='totalUsers'></b></p>
 				<div id='usersMenu' class='tabContent controlPanel default' data-tab-group='mainTabs'>
 					<p><b id='totalUsers'></b></p>
 					<p id='classCode'>Class Code:</p>
@@ -165,6 +168,9 @@
 				<button id="startClass" onclick="startClass()">
 					Start Class
 				</button>
+				<br>
+				<input type="text" id="classNameInput" placeholder="New class name">
+				<button id="changeClassNameButton" onclick="changeClassName()">Change Class Name</button>
 				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 				<p><b id='pollCounter'></b></p>
 				<p id='responsesCounter'></p>
@@ -405,6 +411,7 @@
 			let toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
 			let classCode = document.getElementById('classCode')
+			let classId = document.getElementById("classId")
 			let mainPolls = document.getElementById('menuPolls')
 			let unloadPollButton = document.getElementById('unload-poll')
 			let savePollButton = document.getElementById('save-poll')
@@ -467,6 +474,14 @@
 			function regenerateAccessCode() {
 				if (confirm("Are you sure you want to regenerate the class code?")) {
 					socket.emit('regenerateClassCode');
+				}
+			}
+
+			function changeClassName() {
+				const newClassName = document.getElementById('classNameInput').value;
+				if (!newClassName) return;
+				if (confirm(`Are you sure you want to change the class name to "${newClassName}"?`)) {
+					socket.emit('changeClassName', newClassName);
 				}
 			}
 

@@ -5,7 +5,8 @@ socket.on('cpUpdate', (newClassroom) => {
 		student.pollRes.time = new Date(student.pollRes.time)
 	}
 
-	classCode.textContent = `Class Code: ${newClassroom.key} | Class ID: ${newClassroom.id}`
+	classCode.textContent = `Class Code: ${newClassroom.key}`
+	classId.textContent = `Class ID: ${newClassroom.id}`
 	buildPreviousPolls(newClassroom.pollHistory)
 
 	document.getElementById('nextStep').onclick = () => {
@@ -267,10 +268,14 @@ socket.on('customPollUpdate', (
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
-			startPoll(i)
+			startPoll(i);
+		};
+		if (fastPollDiv.children[i]) {
+			fastPollDiv.children[i].replaceWith(startButton);
+		} else {
+			fastPollDiv.appendChild(startButton);
 		}
-		fastPollDiv.appendChild(startButton)
-	}
+	};
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
