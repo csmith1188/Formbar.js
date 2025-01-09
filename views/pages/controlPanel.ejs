@@ -27,7 +27,6 @@
 				<p><b id='totalUsers'></b></p>
 				<div id='usersMenu' class='tabContent controlPanel default' data-tab-group='mainTabs'>
 					<p><b id='totalUsers'></b></p>
-					<p id='classCode'>Class Code:</p>
 					<!-- This canvas should be the student panel pie-graph thingy -->
 					<div id='VBDiv'>
 						<%- include('../partials/virtual_bar.ejs') %>
@@ -79,7 +78,8 @@
 									<button id='classPolls' class='quickButton tab unselectable'
 										data-tab-group='polls'>Class
 										Polls</button>
-									<button id='userPolls' class='quickButton tab unselectable' data-tab-group='polls'>Your
+									<button id='userPolls' class='quickButton tab unselectable'
+										data-tab-group='polls'>Your
 										Polls</button>
 								</div>
 								<h2 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
@@ -103,8 +103,8 @@
 										<button id='resetAnswerNames' class='quickButton'>Reset Names</button>
 										<button id='resetColors' class='quickButton'>Reset Colors</button>
 										<label for='changeNames'>Specify Tags?</label>
-										<input type='button' id='changeNames' value='Tags' onclick='selectTags.showModal()'
-											class='quickButton'>
+										<input type='button' id='changeNames' value='Tags'
+											onclick='selectTags.showModal()' class='quickButton'>
 										<br>
 										<label for='blind'>Blind poll? (Responses won't be visible until everyone has
 											answered)</label>
@@ -119,7 +119,8 @@
 								<br>
 								<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
 								<br>
-								<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End Poll</button>
+								<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End
+									Poll</button>
 								<br>
 								<button id='clearPoll' onclick='clearPollFunc()' hidden class='quickButton'>Clear
 									Poll</button>
@@ -127,35 +128,20 @@
 								<button type='button' onclick='displayPreviousPolls()' class='quickButton'>View Previous
 									Polls</button>
 							</div>
-							<button onclick='clearPollFunc()'>Clear Poll</button>
-							<button onclick='endPollFunc()'>End Poll</button>
 						</div>
 						<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
-						<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox"
-							id="playSound">
+						<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br>
+						<input type="checkbox" id="playSound">
 						Play Sound
 						<br>
 						<button type='button' id='timerButton'>Start Timer</button>
 						<button type='button' id='timerStopButton' hidden>Stop Timer</button>
 						<br>
-						<br>
-						<button id="kickUsers" onclick="kickAll()">
-							Kick All Students
-						</button>
-						<button id='endClass' onclick='endClass()'>
-							End Class
-						</button>
 					</div>
 					<button onclick='clearPollFunc()'>Clear Poll</button>
 					<button onclick='endPollFunc()'>End Poll</button>
-				</div><hr>
-				<input type="number" class="inputtedTime" min="0.1" placeholder="Min">
-				<input type="number" class="inputtedTime" min="1" placeholder="Sec"><br><input type="checkbox" id="playSound">
-				Play Sound
-				<br>
-				<button type='button' id='timerButton'>Start Timer</button>
-				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
-				<br><hr>
+				</div>
+				<hr>
 				<button id="muteButton" onclick="muteSound()">Mute</button>
 				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
 				<br>
