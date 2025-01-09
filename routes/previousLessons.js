@@ -1,4 +1,4 @@
-const { isAuthenticated, permCheck } = require("../modules/authentication")
+const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -7,11 +7,11 @@ const { logger } = require("../modules/logger")
 module.exports = {
     run(app) {
         /* Allows the user to view previous lessons created, they are stored in the database- Riley R., May 22, 2023 */
-        app.get('/previousLessons', isAuthenticated, permCheck, (req, res) => {
+        app.get('/previousLessons', isAuthenticated, permCheck, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /previousLessons] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-                database.all('SELECT * FROM lessons WHERE class=?', classInformation[req.session.class].className, async (err, lessons) => {
+                database.all('SELECT * FROM lessons WHERE class=?', classInformation.classrooms[req.session.classId].className, async (err, lessons) => {
                     try {
                         if (err) throw err
 

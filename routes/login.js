@@ -1,10 +1,10 @@
-const { hash, compare } = require('../crypto')
+const { hash, compare } = require('../modules/crypto')
 const { database } = require("../modules/database")
-const { classInformation } = require("../modules/class")
+const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
-const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
+const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions")
 const { managerUpdate } = require("../modules/socketUpdates")
 const crypto = require('crypto')
 
@@ -47,14 +47,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 }
-                var passwordCrypt
-                var passwordSalt
-                await hash('password').then((value) => {
-                    passwordCrypt = value.hash;
-                    passwordSalt = value.salt;
-                }).catch((err) => {
-                    console.log('Error hashing password: ' + err);
-                });
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -92,7 +84,8 @@ module.exports = {
                             };
 
                             // Compare password hashes and check if it is correct
-                            if (compare(JSON.parse(userData.password), passwordCrypt)) {
+                            const passwordMatches = await compare(user.password, userData.password);
+                            if (!passwordMatches) {
                                 logger.log('verbose', '[post /login] Incorrect password')
                                 res.render('pages/message', {
                                     message: 'Incorrect password',
@@ -104,7 +97,7 @@ module.exports = {
                             let loggedIn = false
                             let classKey = ''
 
-                            for (let classData of Object.values(classInformation)) {
+                            for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
                                     for (let username of Object.keys(classData.students)) {
                                         if (username == userData.username) {
@@ -120,9 +113,9 @@ module.exports = {
                             if (loggedIn) {
                                 logger.log('verbose', '[post /login] User is already logged in')
                                 req.session.class = classKey
+                                req.session.classId = getClassIDFromCode(classKey)
                             } else {
-                                // Add user to the session
-                                classInformation.noClass.students[userData.username] = new Student(
+                                classInformation.users[userData.username] = new Student(
                                     userData.username,
                                     userData.id,
                                     userData.permissions,
@@ -131,10 +124,13 @@ module.exports = {
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
                                     userData.displayName,
-                                    userData.verified
-                                );
+                                    userData.verified,
+                                    false
+                                )
+
                                 req.session.class = 'noClass';
-                            };
+                                req.session.classId = null;
+                            }
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
@@ -143,7 +139,7 @@ module.exports = {
                             req.session.verified = userData.verified;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                            logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                            logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                             res.redirect('/')
                         } catch (err) {
@@ -159,7 +155,7 @@ module.exports = {
 
                     let permissions = STUDENT_PERMISSIONS
 
-                    database.all('SELECT API, secret, username FROM users', (err, users) => {
+                    database.all('SELECT API, secret, username FROM users', async (err, users) => {
                         try {
                             if (err) throw err
 
@@ -186,18 +182,21 @@ module.exports = {
                             do {
                                 newAPI = crypto.randomBytes(64).toString('hex')
                             } while (existingAPIs.includes(newAPI))
+
                             do {
                                 newSecret = crypto.randomBytes(256).toString('hex')
                             } while (existingSecrets.includes(newSecret))
 
+                            // Hash the provided password
+                            const passwordCrypt = await hash(user.password);
+
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, email, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
                                     user.email,
-                                    JSON.stringify(passwordCrypt),
-                                    JSON.stringify(passwordSalt),
+                                    passwordCrypt,
                                     permissions,
                                     newAPI,
                                     newSecret,
@@ -213,8 +212,7 @@ module.exports = {
                                             try {
                                                 if (err) throw err
 
-                                                // Add user to session
-                                                classInformation.noClass.students[userData.username] = new Student(
+                                                classInformation.users[userData.username] = new Student(
                                                     userData.username,
                                                     userData.id,
                                                     userData.permissions,
@@ -222,17 +220,19 @@ module.exports = {
                                                     [],
                                                     [],
                                                     userData.tags,
-                                                    userData.displayName
+                                                    userData.displayName,
+                                                    false
                                                 )
 
                                                 // Add the user to the session in order to transfer data between each page
                                                 req.session.userId = userData.id
                                                 req.session.username = userData.username
                                                 req.session.class = 'noClass'
+                                                req.session.classId = null
                                                 req.session.displayName = userData.displayName;
 
                                                 logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                                                logger.log('verbose', `[post /login] cD=(${JSON.stringify(classInformation)})`)
+                                                logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                                                 managerUpdate()
 
@@ -246,6 +246,18 @@ module.exports = {
                                             }
                                         })
                                     } catch (err) {
+                                        // Handle the same email being used for multiple accounts
+                                        if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                            logger.log('verbose', '[post /login] Email already exists')
+                                            res.render('pages/message', {
+                                                message: 'A user with that email already exists.',
+                                                title: 'Login'
+                                            });
+
+                                            return;
+                                        }
+
+                                        // Handle other errors
                                         logger.log('error', err.stack);
                                         res.render('pages/message', {
                                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
@@ -263,7 +275,44 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'guest') {
-                    logger.log('verbose', '[post /login] Logging in as guest')
+                    logger.log('verbose', '[post /login] Logging in as guest');
+
+                    // Create a temporary guest user
+                    const username = 'guest' + crypto.randomBytes(4).toString('hex');
+                    const userData = {
+                        username,
+                        id: username,
+                        email: null,
+                        tags: [],
+                        displayName: user.displayName,
+                        verified: false
+                    };
+
+                    classInformation.users[userData.username] = new Student(
+                        username, // Username
+                        null, // Email
+                        userData.id, // Id
+                        GUEST_PERMISSIONS,
+                        null, // API key
+                        [], // Owned polls
+                        [], // Shared polls
+                        [], // Tags
+                        user.displayName,
+                        true
+                    );
+
+                    // Set their current class to no class
+                    req.session.class = 'noClass';
+                    req.session.classId = null;
+
+                    // Add a cookie to transfer user credentials across site
+                    req.session.userId = userData.id;
+                    req.session.username = userData.username;
+                    req.session.email = userData.email;
+                    req.session.tags = userData.tags;
+                    req.session.displayName = userData.displayName;
+                    req.session.verified = userData.verified;
+                    res.redirect('/');
                 }
             } catch (err) {
                 logger.log('error', err.stack);

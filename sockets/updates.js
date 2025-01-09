@@ -67,9 +67,9 @@ module.exports = {
                 logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[modechange] mode=(${mode})`)
 
-                classInformation[socket.request.session.class].mode = mode
+                classInformation.classrooms[socket.request.session.classId].mode = mode
 
-                logger.log('verbose', `[modechange] classData=(${classInformation[socket.request.session.class]})`)
+                logger.log('verbose', `[modechange] classData=(${classInformation.classrooms[socket.request.session.classId]})`)
 
                 socketUpdates.modeUpdate()
             } catch (err) {

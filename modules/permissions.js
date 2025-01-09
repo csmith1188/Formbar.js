@@ -8,16 +8,16 @@ const BANNED_PERMISSIONS = 0
 
 // Permission level needed to access each page along with if it's a class-related page or not
 const PAGE_PERMISSIONS = {
-	controlPanel: { permissions: MOD_PERMISSIONS, classPage: true },
-	previousLessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
+	previouslessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
-	makeQuiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
+	makequiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
-	manageClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	createClass: { permissions: TEACHER_PERMISSIONS, classPage: false },
-	selectClass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	managerPanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
+	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
+	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
+	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 // Defines the default permissions for people in a class
@@ -67,6 +67,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	vbUpdate: GUEST_PERMISSIONS,
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
+	leaveClassroom: GUEST_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
 	pluginUpdate: STUDENT_PERMISSIONS,
@@ -100,8 +101,11 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	changePlugin: 'manageClass',
 	addPlugin: 'manageClass',
 	removePlugin: 'manageClass',
+	startClass: 'manageClass',
 	endClass: 'manageClass',
 	modechange: 'manageClass',
+	regenerateClassCode: 'manageClass',
+	changeClassName: 'manageClass',
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',

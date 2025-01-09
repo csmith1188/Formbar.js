@@ -17,10 +17,10 @@ function isAuthenticated(req, res, next) {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
 		if (req.session.username) {
-			if (classInformation.noClass.students[req.session.username]) {
-				if (classInformation.noClass.students[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+			if (classInformation.users[req.session.username].activeClasses.length == 0) {
+				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS) {
 					res.redirect('/managerPanel')
-				} else if (classInformation.noClass.students[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+				} else if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
 					res.redirect('/manageClass')
 				} else {
 					res.redirect('/selectClass')
@@ -91,27 +91,32 @@ function isLoggedIn(req, res, next) {
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
 	try {
-		let username = req.session.username
-		let classCode = req.session.class
+		const username = req.session.username
+		const classId = req.session.classId
 
 		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
 
 		if (req.url) {
 			// Defines users desired endpoint
 			let urlPath = req.url
+
 			// Checks if url has a / in it and removes it from the string
 			if (urlPath.indexOf('/') != -1) {
 				urlPath = urlPath.slice(urlPath.indexOf('/') + 1)
 			}
+
 			// Check for ?(urlParams) and removes it from the string
 			if (urlPath.indexOf('?') != -1) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 			}
 
-			if (!classInformation[classCode].students[username]) {
+			if (!classInformation.users[username]) {
 				req.session.class = 'noClass'
-				classCode = 'noClass'
+				req.session.classId = null
 			}
+
+			// Ensure the url path is all lowercase
+			urlPath = urlPath.toLowerCase();
 
 			logger.log('verbose', `[permCheck] urlPath=(${urlPath})`)
 			if (!PAGE_PERMISSIONS[urlPath]) {
@@ -123,20 +128,14 @@ function permCheck(req, res, next) {
 			}
 
 			// Checks if users permissions are high enough
-			if (
-				PAGE_PERMISSIONS[urlPath].classPage &&
-				classInformation[classCode].students[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
+			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
-			} else if (
-				!PAGE_PERMISSIONS[urlPath].classPage &&
-				classInformation[classCode].students[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions
-			) {
+			} else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
 			} else {
 				logger.log('info', '[permCheck] Not enough permissions')
 				res.render('pages/message', {
-					message: `Error: you don't have high enough permissions to access ${urlPath}`,
+					message: `Error: You don't have high enough permissions to access ${urlPath}`,
 					title: 'Error'
 				})
 			}

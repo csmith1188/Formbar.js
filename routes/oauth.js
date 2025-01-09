@@ -1,9 +1,9 @@
-const { compare } = require('../crypto');
-const { classInformation } = require("../modules/class");
-const { logNumbers } = require("../modules/config");
-const { database } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const { getUserClass } = require("../modules/user");
+const { compare } = require('../modules/crypto');
+const { classInformation, getClassIDFromCode } = require('../modules/class');
+const { logNumbers } = require('../modules/config');
+const { database } = require('../modules/database');
+const { logger } = require('../modules/logger');
+const { getUserClass } = require('../modules/user');
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(userData, classCode, refreshToken) {
@@ -64,10 +64,11 @@ module.exports = {
                             if (userData) {
                                 // Get class code and class permissions
                                 const classCode = getUserClass(userData.username);
+                                const classId = getClassIDFromCode(classCode);
                                 userData.classPermissions = null;
-                                if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
-                                    userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions;
-                                };
+                                if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+                                    userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+                                }
                                 
                                 // Generate new access token
                                 const accessToken = generateAccessToken(userData, classCode, refreshTokenData.refresh_token);
@@ -119,7 +120,7 @@ module.exports = {
                     return;
                 };
 
-                database.get('SELECT * FROM users WHERE username=?', [username], (err, userData) => {
+                database.get('SELECT * FROM users WHERE username=?', [username], async (err, userData) => {
                     try {
                         if (err) throw err;
 
@@ -145,10 +146,11 @@ module.exports = {
 
                         // Get class code and class permissions
                         const classCode = getUserClass(userData.username)
+                        const classId = await getClassIDFromCode(classCode)
                         userData.classPermissions = null
-                        if (classInformation[classCode] && classInformation[classCode].students[userData.username]) {
-                            userData.classPermissions = classInformation[classCode].students[userData.username].classPermissions;
-                        };
+                        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+                            userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+                        }
 
                         // Retrieve or generate refresh token
                         database.get('SELECT * from refresh_tokens WHERE user_id=?', [userData.id], (err, refreshTokenData) => {

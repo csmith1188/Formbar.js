@@ -5,40 +5,40 @@ const { logger } = require("../../../modules/logger")
 module.exports = {
     run(router) {
         // Gets the polls of a class
-		router.get('/class/:key/polls', (req, res) => {
+		router.get('/class/:id/polls', (req, res) => {
 			try {
 				// Get the class key from the request parameters
-				let key = req.params.key
+				let classId = req.params.id;
 
 				// Log the request details
-				logger.log('info', `[get api/class/${key}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+				logger.log('info', `[get api/class/${classId}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
 				// If the class does not exist, return an error
-				if (!classInformation[key]) {
-					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
-					res.status(404).json({ error: 'Class not started' })
-					return
+				if (!classInformation.classrooms[classId]) {
+					logger.log('verbose', `[get api/class/${classId}/polls] class not started`);
+					res.status(404).json({ error: 'Class not started' });
+					return;
 				}
 
 				// Get the user from the session
 				let user = req.session.user
 
 				// If the user is not in the class, return an error
-				if (!classInformation[key].students[user.username]) {
-					logger.log('verbose', `[get api/class/${key}/polls] user is not logged in`)
-					res.status(403).json({ error: 'User is not logged into the selected class' })
-					return
+				if (!classInformation.classrooms[classId].students[user.username]) {
+					logger.log('verbose', `[get api/class/${classId}/polls] user is not logged in`);
+					res.status(403).json({ error: 'User is not logged into the selected class' });
+					return;
 				}
 
 				// Get a clone of the class data and the poll responses in the class
-				let classData = structuredClone(classInformation[key])
-				classData.poll.responses = getPollResponses(classData)
+				let classData = structuredClone(classInformation.classrooms[classId]);
+				classData.poll.responses = getPollResponses(classData);
 
 				// If the class does not exist, return an error
 				if (!classData) {
-					logger.log('verbose', `[get api/class/${key}/polls] class not started`)
-					res.status(404).json({ error: 'Class not started' })
-					return
+					logger.log('verbose', `[get api/class/${classId}/polls] class not started`);
+					res.status(404).json({ error: 'Class not started' });
+					return;
 				}
 
 				// Update the class data with the poll status, the total number of students, and the poll data
@@ -46,17 +46,17 @@ module.exports = {
 					status: classData.status,
 					totalStudents: Object.keys(classData.students).length,
 					...classData.poll
-				}
+				};
 
 				// Log the poll data
-				logger.log('verbose', `[get api/class/${key}/polls] response=(${JSON.stringify(classData.poll)})`)
+				logger.log('verbose', `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
 
 				// Send the poll data as a JSON response
-				res.status(200).json(classData.poll)
+				res.status(200).json(classData.poll);
 			} catch (err) {
 				// If an error occurs, log the error
-				logger.log('error', err.stack)
-				res.status(500).json({ error: 'There was a server error try again.' })
+				logger.log('error', err.stack);
+				res.status(500).json({ error: 'There was a server error try again.' });
 			}
 		})
     }

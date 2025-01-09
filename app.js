@@ -10,6 +10,10 @@ const { classInformation } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
+const { upgradeDatabase } = require('./data_upgrader/dataFixer.js')
+
+// Upgrade the database if it's not up to date
+upgradeDatabase();
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -70,7 +74,7 @@ app.use((req, res, next) => {
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
 	if (req.session.class) {
-		res.locals.currentUser = classInformation[req.session.class].students[req.session.username]
+		res.locals.currentUser = classInformation.users[req.session.username]
 	}
 
 	res.locals = {

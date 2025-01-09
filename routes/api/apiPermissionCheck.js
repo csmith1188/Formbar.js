@@ -1,4 +1,4 @@
-const { classInformation } = require("../../modules/class")
+const { classInformation, getClassIDFromCode } = require("../../modules/class")
 const { getUser } = require("../../modules/user")
 const { logger } = require("../../modules/logger")
 
@@ -40,7 +40,8 @@ module.exports = {
 					return
 				}
 
-				const classroom = classInformation[user.class]
+				const classroomId = getClassIDFromCode(user.class)
+				const classroom = classInformation.classrooms[classroomId]
 
 				permissionTypes.games = classroom.permissions.games
 				permissionTypes.lights = classroom.permissions.lights
