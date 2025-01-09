@@ -44,15 +44,24 @@ async function upgradeDatabase() {
 
     // Backup the database
     // If there's already a backup, denote it with a number
-    let backupNumber = 0;
+    let backupNumber = fs.existsSync("database/database.bak") ? 1 : 0;
     while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
         backupNumber++;
     }
-    fs.copyFileSync('database/database.db', 'database/database.bak');
+
+    const backupPath = backupNumber == 0 ? 'database/database.bak' : `database/database-${backupNumber}.bak`;
+    fs.copyFileSync('database/database.db', backupPath);
 
     switch (databaseVersion) {
         case null: // Pre-v1 database verson
-            // Update passwords from encrypted to hashed
+            // Create refresh_tokens table
+            database.run('CREATE TABLE "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
+
+            // Add email and verified fields to users 
+            database.run('ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ""');
+            database.run('ALTER TABLE users ADD COLUMN verified INTEGER NOT NULL DEFAULT 0');
+
+            // Update passwords from encrypted to hashed and add new fields
             database.all('SELECT * FROM users', async (err, rows) => {
                 if (err) {
                     console.error(err);
@@ -62,18 +71,17 @@ async function upgradeDatabase() {
                 for (const row of rows) {
                     const decryptedPassword = decrypt(JSON.parse(row.password));
                     const hashedPassword = await hash(decryptedPassword);
-                    database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, row.id]);
+                    database.run('UPDATE users SET password=?, email="", verified=0 WHERE id=?', [hashedPassword, row.id]);
                 }
             });
-
-            // Create refresh_tokens table
-            database.run('CREATE TABLE refresh_tokens (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
-
+            
             // Create database stats table and set the version to 1
-            database.run('CREATE TABLE stats (key TEXT NOT NULL, value TEXT)', () => {
+            database.run('CREATE TABLE "stats" (key TEXT NOT NULL, value TEXT)', () => {
                 database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
             });
     }
+
+    console.log(`Database has been upgraded to version ${CURRENT_VERSION}!`);
 }
 
 module.exports = {

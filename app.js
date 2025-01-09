@@ -12,11 +12,8 @@ const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataFixer.js')
 
-// If -upgrade is provided, skip everything else and run data_upgrader/dataUpgrader.js
-if (process.argv.includes('-upgrade')) {
-	upgradeDatabase();
-	return;
-}
+// Upgrade the database if it's not up to date
+upgradeDatabase();
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
