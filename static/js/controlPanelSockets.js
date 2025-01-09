@@ -34,10 +34,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		let oldStudentData = null
 		let newStudentData = newClassroom.students[username]
 
-		if (!newStudentData.activeClasses.includes(newClassroom.id)) {
-			continue;
-		}
-
 		if (classroom.students && classroom.students[username])
 			oldStudentData = classroom.students[username]
 
