@@ -8,7 +8,7 @@ module.exports = {
                 if (changeApproval) {
                     const passwordCrypt = hash(newPassword);
                     const passwordCryptString = JSON.stringify(passwordCrypt);
-                    database.run('UPDATE users SET password = ? WHERE username = ?', [passwordCryptString, username], (err) => {
+                    database.run('UPDATE users SET password = ? WHERE email = ?', [passwordCryptString, email], (err) => {
                         if (err) {
                             logger.log('error', err.stack);
                         };

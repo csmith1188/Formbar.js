@@ -156,6 +156,10 @@ class SocketUpdates {
                 }
 
                 for (let studentData of Object.values(classData.students)) {
+                    if (studentData.break) {
+                        continue;
+                    }
+
                     if (Array.isArray(studentData.pollRes.buttonRes)) {
                         for (let response of studentData.pollRes.buttonRes) {
                             if (
@@ -237,7 +241,9 @@ class SocketUpdates {
             totalResponses = totalStudentsIncluded.length
             if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
                 // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-                totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length
+                totalResponders = Object.keys(classData.students).filter(student => 
+                    classData.students[student].activeClasses.includes(classId)
+                ).length - totalStudentsExcluded.length
             } else if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
@@ -246,7 +252,10 @@ class SocketUpdates {
                         totalStudentsIncluded.splice(i, 1);
                     }
                 }
-                totalResponders = totalStudentsIncluded.length
+
+                totalResponders = Object.keys(classData.students).filter(student => 
+                    classData.students[student].activeClasses.includes(classId)
+                ).length;
             }
             
             if (classInformation.classrooms[classId].poll.multiRes) {
@@ -266,7 +275,6 @@ class SocketUpdates {
             // Get rid of students whos permissions are teacher or above or guest
             classInformation.classrooms[classId].poll.allowedResponses = totalStudentsIncluded
             classInformation.classrooms[classId].poll.unallowedResponses = totalStudentsExcluded
-
             advancedEmitToClass('vbUpdate', classCode, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
                 totalResponders: totalResponders,
@@ -468,33 +476,50 @@ class SocketUpdates {
         }
     }
     
-    classKickUser(username, classCode = this.socket.request.session.class, classId = this.socket.request.session.classId) {
+    // Kicks a user from a class
+    // If exitClass is set to true, then it will fully remove the user from the class;
+    // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
+    classKickUser(username, classCode = this.socket.request.session.class, classId = this.socket.request.session.classId, exitClass = true) {
         try {
             logger.log('info', `[classKickUser] username=(${username}) classCode=(${classCode})`);
 
-            // Remove user from class
-            userSockets[username].leave(`class-${classCode}`);
+            // Remove user from class session
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            userSockets[username].request.session.class = 'noClass';
-            userSockets[username].request.session.classId = null;
-            userSockets[username].request.session.save();
+            classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
             setClassOfApiSockets(classInformation.users[username].API, 'noClass');
-
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
-            userSockets[username].emit('reload');
+
+            // If exitClass is true, then remove the user from the classroom entirely
+            if (exitClass) {
+                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[username].id, classId], (err) => {});
+                delete classInformation.classrooms[classId].students[username];
+            }
+
+            // Update the control panel
+            this.classPermissionUpdate(classCode, classId);
+            this.virtualBarUpdate(classCode, classId);
+
+            // If the user is logged in, then handle the user's session
+            if (userSockets[username]) {
+                userSockets[username].leave(`class-${classCode}`);
+                userSockets[username].request.session.class = 'noClass';
+                userSockets[username].request.session.classId = null;
+                userSockets[username].request.session.save();
+                userSockets[username].emit('reload');
+            }            
         } catch (err) {
             logger.log('error', err.stack);
         }
     }
-    
+
     classKickStudents(classId) {
         try {
             logger.log('info', `[classKickStudents] classId=(${classId})`)
     
             for (let username of Object.keys(classInformation.classrooms[classId].students)) {
                 if (classInformation.classrooms[classId].students[username].classPermissions < TEACHER_PERMISSIONS) {
-                    this.classKickUser(username, classCode)
+                    this.classKickUser(username, classCode);
                 }
             }
         } catch (err) {
@@ -512,6 +537,11 @@ class SocketUpdates {
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
+        }
+
+        // Delete the user from the users object
+        if (classInformation.users[username]) {
+            delete classInformation.users[username];
         }
 
         this.socket.request.session.destroy((err) => {

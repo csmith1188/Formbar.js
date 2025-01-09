@@ -13,7 +13,7 @@
 			<script src='/js/deepObjectEqual.js'></script>
 		</head>
 
-		<body onload="load(<%-pollStatus%>)">
+		<body onload="load(<%= pollStatus %>)">
 			<%- include('../partials/formbar_header') %>
 				<header id='quickMenu'>
 					<button id='usersMenu' class='quickButton tab pressed' data-tab-group='mainTabs'>Users</button>
@@ -22,7 +22,8 @@
 					<button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'>Settings</button>
 				</header>
 
-				<p id='classCode'>Class Code:</p>
+				<p id='classCode' style="margin: 5px;">Class Code:</p>
+				<p id='classId' style="margin: 5px;">Class Id:</p>
 				<p><b id='totalUsers'></b></p>
 				<div id='usersMenu' class='tabContent controlPanel default' data-tab-group='mainTabs'>
 					<!-- This canvas should be the student panel pie-graph thingy -->
@@ -142,6 +143,9 @@
 				<button id="startClass" onclick="startClass()">
 					Start Class
 				</button>
+				<br>
+				<input type="text" id="classNameInput" placeholder="New class name">
+				<button id="changeClassNameButton" onclick="changeClassName()">Change Class Name</button>
 				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 				<p><b id='pollCounter'></b></p>
 				<p id='responsesCounter'></p>
@@ -382,6 +386,7 @@
 			let toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
 			let classCode = document.getElementById('classCode')
+			let classId = document.getElementById("classId")
 			let mainPolls = document.getElementById('menuPolls')
 			let unloadPollButton = document.getElementById('unload-poll')
 			let savePollButton = document.getElementById('save-poll')
@@ -421,23 +426,34 @@
 				}
 			}
 
+			socket.emit("isClassActive")
+			socket.on("isClassActive", (isActive) => {
+				changeClassText(isActive);
+			});
+
+			function changeClassText(isActive) {
+				if (isActive) {
+					const startClassButton = document.getElementById('startClass');
+					startClassButton.innerText = 'End Class';
+					startClassButton.onclick = endClass;
+					startClassButton.id = 'endClass';
+				} else {
+					const endClassButton = document.getElementById('endClass');
+					endClassButton.innerText = 'Start Class';
+					endClassButton.onclick = startClass;
+					endClassButton.id = 'startClass';
+				}
+			}
+
 			function startClass() {
 				socket.emit('startClass')
-
-				const startClassButton = document.getElementById('startClass')
-				startClassButton.innerText = 'End Class'
-				startClassButton.onclick = endClass
-				startClassButton.id = 'endClass'
+				changeClassText(true);
 			}
 
 			function endClass() {
 				if (confirm('Are you sure you want to end the class?')) {
 					socket.emit('endClass')
-
-					const endClassButton = document.getElementById('endClass')
-					endClassButton.innerText = 'Start Class'
-					endClassButton.onclick = startClass
-					endClassButton.id = 'startClass'
+					changeClassText(false);
 				}
 			}
 
@@ -447,25 +463,34 @@
 				}
 			}
 
+			function changeClassName() {
+				const newClassName = document.getElementById('classNameInput').value;
+				if (!newClassName) return;
+				if (confirm(`Are you sure you want to change the class name to "${newClassName}"?`)) {
+					socket.emit('changeClassName', newClassName);
+				}
+			}
+
 			function kickAll() {
 				if (confirm('Are you sure you want to kick all students?')) {
 					socket.emit('classKickStudents');
 				}
 			}
 
-			var mute = false
+			let mute = false;
 
 			function muteSound() {
-				document.getElementById('muteButton').hidden = true
-				document.getElementById('unmuteButton').hidden = false
-				mute = true
-			}
+				document.getElementById('muteButton').hidden = true;
+				document.getElementById('unmuteButton').hidden = false;
+				mute = true;
+			};
 
 			function unmuteSound() {
-				document.getElementById('muteButton').hidden = false
-				document.getElementById('unmuteButton').hidden = true
-				mute = false
-			}
+				document.getElementById('muteButton').hidden = false;
+				document.getElementById('unmuteButton').hidden = true;
+				mute = false;
+			};
+
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>
 		<script src='/js/controlPanelSockets.js'></script>

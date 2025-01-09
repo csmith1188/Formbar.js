@@ -1,10 +1,10 @@
-const { hash, compare } = require('../crypto')
+const { hash, compare } = require('../modules/crypto')
 const { database } = require("../modules/database")
 const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
-const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
+const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions")
 const { managerUpdate } = require("../modules/socketUpdates")
 const crypto = require('crypto')
 
@@ -47,14 +47,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 }
-                var passwordCrypt
-                var passwordSalt
-                await hash('password').then((value) => {
-                    passwordCrypt = value.hash;
-                    passwordSalt = value.salt;
-                }).catch((err) => {
-                    console.log('Error hashing password: ' + err);
-                });
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -92,7 +84,8 @@ module.exports = {
                             };
 
                             // Compare password hashes and check if it is correct
-                            if (compare(JSON.parse(userData.password), passwordCrypt)) {
+                            const passwordMatches = await compare(user.password, userData.password);
+                            if (!passwordMatches) {
                                 logger.log('verbose', '[post /login] Incorrect password')
                                 res.render('pages/message', {
                                     message: 'Incorrect password',
@@ -124,7 +117,6 @@ module.exports = {
                             } else {
                                 classInformation.users[userData.username] = new Student(
                                     userData.username,
-                                    userData.email,
                                     userData.id,
                                     userData.permissions,
                                     userData.API,
@@ -132,7 +124,8 @@ module.exports = {
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
                                     userData.displayName,
-                                    userData.verified
+                                    userData.verified,
+                                    false
                                 )
 
                                 req.session.class = 'noClass';
@@ -141,7 +134,6 @@ module.exports = {
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
-                            req.session.email = userData.email;
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
@@ -163,7 +155,7 @@ module.exports = {
 
                     let permissions = STUDENT_PERMISSIONS
 
-                    database.all('SELECT API, secret, username FROM users', (err, users) => {
+                    database.all('SELECT API, secret, username FROM users', async (err, users) => {
                         try {
                             if (err) throw err
 
@@ -195,14 +187,16 @@ module.exports = {
                                 newSecret = crypto.randomBytes(256).toString('hex')
                             } while (existingSecrets.includes(newSecret))
 
+                            // Hash the provided password
+                            const passwordCrypt = await hash(user.password);
+
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, email, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
                                     user.email,
-                                    JSON.stringify(passwordCrypt),
-                                    JSON.stringify(passwordSalt),
+                                    passwordCrypt,
                                     permissions,
                                     newAPI,
                                     newSecret,
@@ -220,14 +214,14 @@ module.exports = {
 
                                                 classInformation.users[userData.username] = new Student(
                                                     userData.username,
-                                                    userData.email,
                                                     userData.id,
                                                     userData.permissions,
                                                     userData.API,
                                                     [],
                                                     [],
                                                     userData.tags,
-                                                    userData.displayName
+                                                    userData.displayName,
+                                                    false
                                                 )
 
                                                 // Add the user to the session in order to transfer data between each page
@@ -281,7 +275,44 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'guest') {
-                    logger.log('verbose', '[post /login] Logging in as guest')
+                    logger.log('verbose', '[post /login] Logging in as guest');
+
+                    // Create a temporary guest user
+                    const username = 'guest' + crypto.randomBytes(4).toString('hex');
+                    const userData = {
+                        username,
+                        id: username,
+                        email: null,
+                        tags: [],
+                        displayName: user.displayName,
+                        verified: false
+                    };
+
+                    classInformation.users[userData.username] = new Student(
+                        username, // Username
+                        null, // Email
+                        userData.id, // Id
+                        GUEST_PERMISSIONS,
+                        null, // API key
+                        [], // Owned polls
+                        [], // Shared polls
+                        [], // Tags
+                        user.displayName,
+                        true
+                    );
+
+                    // Set their current class to no class
+                    req.session.class = 'noClass';
+                    req.session.classId = null;
+
+                    // Add a cookie to transfer user credentials across site
+                    req.session.userId = userData.id;
+                    req.session.username = userData.username;
+                    req.session.email = userData.email;
+                    req.session.tags = userData.tags;
+                    req.session.displayName = userData.displayName;
+                    req.session.verified = userData.verified;
+                    res.redirect('/');
                 }
             } catch (err) {
                 logger.log('error', err.stack);

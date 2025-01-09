@@ -216,7 +216,8 @@ async function getClassStudents(classId) {
 	        userData.API,
 	        userData.tags,
 	        displayName = userData.displayName || "NPOM",
-	        userData.verified
+	        userData.verified,
+			false
 	    );
 	};
 

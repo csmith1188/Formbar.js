@@ -7,17 +7,16 @@ class Student {
 	// These will need to be put into the constructor in order to allow the creation of the object
 	constructor(
 		username,
-		email,
 		id,
 		permissions = STUDENT_PERMISSIONS,
 		API,
 		ownedPolls = [],
 		sharedPolls = [],
 		tags,
-		displayName
+		displayName,
+		isGuest = false
 	) {
 		this.username = username;
-		this.email = email;
 		this.id = id;
 		this.activeClasses = [];
 		this.permissions = permissions;
@@ -36,6 +35,7 @@ class Student {
 		this.API = API;
 		this.pogMeter = 0;
 		this.displayName = displayName;
+		this.isGuest = isGuest;
 	};
 };
 

@@ -4,36 +4,77 @@ const { logger } = require('../modules/logger')
 const { isAuthenticated } = require("../modules/authentication")
 const sendMail = require('../modules/mail.js').sendMail;
 const crypto = require('crypto');
+const { title } = require('process');
 
 module.exports = {
     run(app) {
         const location = process.env.LOCATION;
         // Make a post request to send the verification email
-        app.post('/verification', isAuthenticated, (req, res) => {
+        app.post('/verification', async (req, res) => {
             // If there is no session token, return
             if (!req.session.token) return;
             // Set the token to the session token
             const token = req.session.token;
-            // Create the HTML content for the email
-            const html = `
-            <h1>Verify your email</h1>
-            <p>Click the link below to verify your email address with Formbar</p>
-                <a href='${location}/verification?code=${token}'>Verify Email</a>
-            `;
-            // Send the email
-            sendMail(req.session.email, 'Formbar Verification', html);
+            try {
+                const email = await new Promise((resolve, reject) => {
+                    database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.email);
+                        }
+                    });
+                });
+                // Create the HTML content for the email
+                const html = `
+                <h1>Verify your email</h1>
+                <p>Click the link below to verify your email address with Formbar</p>
+                    <a href='${location}/verification?code=${token}'>Verify Email</a>
+                `;
+                // Send the email
+                sendMail(email, 'Formbar Verification', html);
+                res.render('pages/message', {
+                    message: 'Verification email sent.',
+                    title: 'Verification'
+                });
+            } catch (error) {
+                logger.log('error', error.stack);
+            }
         });
+
         // Make a get request for the verification route
-        app.get('/verification', isAuthenticated, (req, res) => {
+        app.get('/verification', async (req, res) => {
             // If there is no session token, create one
             if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
             // Get the email from the session
-            const email = req.session.email;
+            const email = await new Promise((resolve, reject) => {
+                database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                    if (error) {
+                        logger.log('error', error.stack);
+                        // Render the message page with the error message
+                        res.render('pages/message', {
+                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                            title: 'Error'
+                        });
+                        reject(error);
+                    } else if (!row) {
+                        res.redirect('/');
+                    } else {
+                        resolve(row.email);
+                    }
+                });
+            });
             // If there is no email in the session... 
             if (!email) {
                 // Render the message page with the following message
                 res.render('pages/message', {
-                    message: `There is no email in this session.`,
+                    message: `No email associated with user.`,
                     title: 'Verification'
                 })
                 // Return to prevent further execution
@@ -44,7 +85,10 @@ module.exports = {
             // If there is no token...
             if (!token) {
                 // Render the verification page with the email
-                res.render('pages/verification', { email: email });
+                res.render('pages/verification', { 
+                    title: 'Verification',
+                    email: email 
+                });
                 // Return to prevent further execution
                 return;
             };
@@ -55,7 +99,7 @@ module.exports = {
                     // If there is an error...
                     if (error) {
                         // Log the error with the logger
-                        logger.log('error', err.stack);
+                        logger.log('error', error.stack);
                         // Render the message page with the error message
                         res.render('pages/message', {
                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
@@ -69,7 +113,7 @@ module.exports = {
                     // Set the session verified status to true
                     req.session.verified = 1;
                     // Render the verification page with the email and verified status equal to 1
-                    res.redirect('/');
+                    res.redirect('/')
                 });
             } else {
                 // Render the message page with the following message

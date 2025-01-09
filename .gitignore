@@ -1,5 +1,6 @@
 node_modules/
 database/database.db
+database/*.bak
 .vscode/
 uploads/
 .env
