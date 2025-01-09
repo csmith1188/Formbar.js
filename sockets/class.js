@@ -31,7 +31,7 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
-        })
+        });
 
         // Leaves a classroom session
         // User is still associated with the class
@@ -49,7 +49,7 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
-        })
+        });
 
         // Starts a classroom session
         socket.on('startClass', () => {
@@ -75,7 +75,20 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
-        })
+        });
+
+        socket.on("isClassActive", () => {
+            try {
+                logger.log('info', `[isClassActive] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+
+                const classId = socket.request.session.classId;
+                if (classInformation.classrooms[classId].isActive) {
+                    socket.emit("isClassActive", true);
+                }
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
 
         socket.on('regenerateClassCode', () => {
             try {
