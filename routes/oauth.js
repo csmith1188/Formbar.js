@@ -1,4 +1,4 @@
-const { compare } = require('../crypto');
+const { compare } = require('../modules/crypto');
 const { classInformation, getClassIDFromCode } = require('../modules/class');
 const { logNumbers } = require('../modules/config');
 const { database } = require('../modules/database');
