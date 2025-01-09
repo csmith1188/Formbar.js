@@ -170,16 +170,6 @@
                 pieChart.data = [timePassed]
                 doughnutChart.data.datasets[1].label = timeString
                 pieChart.backgroundColor = ["red"]
-                // console.log("timerAudio")
-                if (sound) {
-                    onload(
-                        function () {
-                            // let timerAudio = new Audio('/static/sfx/alarmClock.mp3')
-                            // timerAudio.play()
-                            console.log("timerAudio")
-                        }
-                    )
-                }
             }
         } else {
             if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {

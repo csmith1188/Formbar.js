@@ -48,6 +48,7 @@ function buildStudent(room, studentData) {
             deleteTicketButton.dataset.studentName = studentData.username
             deleteTicketButton.onclick = (event) => {
                 deleteTicket(event.target)
+                helpSoundPlayed = false;
             }
             deleteTicketButton.textContent = 'Delete Ticket'
             help.appendChild(deleteTicketButton)
@@ -71,12 +72,18 @@ function buildStudent(room, studentData) {
             breakDiv.appendChild(breakReason)
             let breakApprove = document.createElement('button')
             breakApprove.classList.add('quickButton')
-            breakApprove.onclick = () => { approveBreak(true, studentData.username) }
+            breakApprove.onclick = () => {
+                approveBreak(true, studentData.username)
+                breakSoundPlayed = false
+            }
             breakApprove.textContent = 'Approve'
             breakDiv.appendChild(breakApprove)
             let breakDeny = document.createElement('button')
             breakDeny.classList.add('quickButton')
-            breakDeny.onclick = () => { approveBreak(false, studentData.username) }
+            breakDeny.onclick = () => {
+                approveBreak(false, studentData.username)
+                breakSoundPlayed = false
+            }
             breakDeny.textContent = 'Deny'
             breakDiv.appendChild(breakDeny)
             newStudent.appendChild(breakDiv)
@@ -531,16 +538,25 @@ function approveBreak(breakApproval, username) {
     socket.emit('approveBreak', breakApproval, username)
 }
 
+let helpSoundPlayed = false;
+let breakSoundPlayed = false;
+
 function helpSound() {
-    let helpPing = new Audio('/sfx/help.wav')
-    if (mute == false) (
-        helpPing.play()
-    )
+    if (!helpSoundPlayed) {
+        let helpPing = new Audio('/sfx/help.wav');
+        if (mute == false) {
+            helpPing.play();
+            helpSoundPlayed = true;
+        }
+    }
 }
 
 function breaksounds() {
-    let breakPing = new Audio('/sfx/break.wav')
-    if (mute == false) (
-        breakPing.play()
-    )
+    if (!breakSoundPlayed) {
+        let breakPing = new Audio('/sfx/break.wav');
+        if (mute == false) {
+            breakPing.play();
+            breakSoundPlayed = true;
+        }
+    }
 }
