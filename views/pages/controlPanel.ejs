@@ -426,23 +426,34 @@
 				}
 			}
 
+			socket.emit("isClassActive")
+			socket.on("isClassActive", (isActive) => {
+				changeClassText(isActive);
+			});
+
+			function changeClassText(isActive) {
+				if (isActive) {
+					const startClassButton = document.getElementById('startClass');
+					startClassButton.innerText = 'End Class';
+					startClassButton.onclick = endClass;
+					startClassButton.id = 'endClass';
+				} else {
+					const endClassButton = document.getElementById('endClass');
+					endClassButton.innerText = 'Start Class';
+					endClassButton.onclick = startClass;
+					endClassButton.id = 'startClass';
+				}
+			}
+
 			function startClass() {
 				socket.emit('startClass')
-
-				const startClassButton = document.getElementById('startClass')
-				startClassButton.innerText = 'End Class'
-				startClassButton.onclick = endClass
-				startClassButton.id = 'endClass'
+				changeClassText(true);
 			}
 
 			function endClass() {
 				if (confirm('Are you sure you want to end the class?')) {
 					socket.emit('endClass')
-
-					const endClassButton = document.getElementById('endClass')
-					endClassButton.innerText = 'Start Class'
-					endClassButton.onclick = startClass
-					endClassButton.id = 'startClass'
+					changeClassText(false);
 				}
 			}
 

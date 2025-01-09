@@ -104,6 +104,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	startClass: 'manageClass',
 	endClass: 'manageClass',
 	modechange: 'manageClass',
+	isClassActive: 'manageClass',
 	regenerateClassCode: 'manageClass',
 	changeClassName: 'manageClass',
 	classBannedUsersUpdate: 'manageStudents',
