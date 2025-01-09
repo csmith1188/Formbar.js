@@ -1,4 +1,4 @@
-const { hash, compare } = require('../crypto')
+const { hash, compare } = require('../modules/crypto')
 const { database } = require("../modules/database")
 const { classInformation, getClassIDFromCode } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
@@ -47,14 +47,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 }
-                var passwordCrypt
-                var passwordSalt
-                await hash('password').then((value) => {
-                    passwordCrypt = value.hash;
-                    passwordSalt = value.salt;
-                }).catch((err) => {
-                    console.log('Error hashing password: ' + err);
-                });
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -92,7 +84,8 @@ module.exports = {
                             };
 
                             // Compare password hashes and check if it is correct
-                            if (compare(JSON.parse(userData.password), passwordCrypt)) {
+                            const passwordMatches = await compare(user.password, userData.password);
+                            if (!passwordMatches) {
                                 logger.log('verbose', '[post /login] Incorrect password')
                                 res.render('pages/message', {
                                     message: 'Incorrect password',
@@ -164,7 +157,7 @@ module.exports = {
 
                     let permissions = STUDENT_PERMISSIONS
 
-                    database.all('SELECT API, secret, username FROM users', (err, users) => {
+                    database.all('SELECT API, secret, username FROM users', async (err, users) => {
                         try {
                             if (err) throw err
 
@@ -196,14 +189,16 @@ module.exports = {
                                 newSecret = crypto.randomBytes(256).toString('hex')
                             } while (existingSecrets.includes(newSecret))
 
+                            // Hash the provided password
+                            const passwordCrypt = await hash(user.password);
+
                             // Add the new user to the database
                             database.run(
-                                'INSERT INTO users(username, email, password, salt, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                                'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
                                 [
                                     user.username,
                                     user.email,
-                                    JSON.stringify(passwordCrypt),
-                                    JSON.stringify(passwordSalt),
+                                    passwordCrypt,
                                     permissions,
                                     newAPI,
                                     newSecret,
