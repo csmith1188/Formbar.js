@@ -84,8 +84,8 @@ async function joinClass(req, code) {
 			// Set session class and classId
 			req.session.class = classroom.key;
 			req.session.classId = classroom.id;
-			// Set the class of the API socket
 
+			// Set the class of the API socket
 			setClassOfApiSockets(currentUser.API, classroom.key);
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
@@ -259,7 +259,7 @@ module.exports = {
                     classData.permissions.manageClass
                 )
 
-                advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
+                advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
                 req.session.class = classCode
 				req.session.classId = classId
                 setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classId)
