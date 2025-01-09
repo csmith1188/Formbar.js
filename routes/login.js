@@ -117,7 +117,6 @@ module.exports = {
                             } else {
                                 classInformation.users[userData.username] = new Student(
                                     userData.username,
-                                    userData.email,
                                     userData.id,
                                     userData.permissions,
                                     userData.API,
@@ -135,7 +134,6 @@ module.exports = {
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
-                            req.session.email = userData.email;
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
@@ -216,7 +214,6 @@ module.exports = {
 
                                                 classInformation.users[userData.username] = new Student(
                                                     userData.username,
-                                                    userData.email,
                                                     userData.id,
                                                     userData.permissions,
                                                     userData.API,

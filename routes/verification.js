@@ -14,15 +14,39 @@ module.exports = {
             if (!req.session.token) return;
             // Set the token to the session token
             const token = req.session.token;
-            // Create the HTML content for the email
-            const html = `
-            <h1>Verify your email</h1>
-            <p>Click the link below to verify your email address with Formbar</p>
-                <a href='${location}/verification?code=${token}'>Verify Email</a>
-            `;
-            // Send the email
-            sendMail(req.session.email, 'Formbar Verification', html);
+            try {
+                const email = await new Promise((resolve, reject) => {
+                    database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.email);
+                        }
+                    });
+                });
+                // Create the HTML content for the email
+                const html = `
+                <h1>Verify your email</h1>
+                <p>Click the link below to verify your email address with Formbar</p>
+                    <a href='${location}/verification?code=${token}'>Verify Email</a>
+                `;
+                // Send the email
+                sendMail(email, 'Formbar Verification', html);
+                res.render('pages/message', {
+                    message: 'Verification email sent.',
+                    title: 'Verification'
+                });
+            } catch (error) {
+                logger.log('error', error.stack);
+            }
         });
+
         // Make a get request for the verification route
         app.get('/verification', isAuthenticated, (req, res) => {
             // If there is no session token, create one
