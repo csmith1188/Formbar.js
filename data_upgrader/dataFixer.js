@@ -5,7 +5,7 @@ const { hash } = require('../modules/crypto'); // New crypto module
 
 // Open database
 const database = new sqlite3.Database('database/database.db');
-let CURRENT_VERSION = 1;
+const CURRENT_VERSION = 1;
 
 function getDatabaseVersion() {
     return new Promise((resolve, reject) => {
@@ -37,10 +37,7 @@ function getDatabaseVersion() {
 
 async function upgradeDatabase() {
     const databaseVersion = await getDatabaseVersion();
-    if (databaseVersion == CURRENT_VERSION) {
-        console.log("Database is up to date.");
-        return;
-    }
+    if (databaseVersion == CURRENT_VERSION) return;
 
     // Backup the database
     // If there's already a backup, denote it with a number
@@ -80,8 +77,7 @@ async function upgradeDatabase() {
                 database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
             });
     }
-
-    console.log(`Database has been upgraded to version ${CURRENT_VERSION}!`);
+    console.log(`Database upgraded to: ${CURRENT_VERSION}!`);
 }
 
 module.exports = {

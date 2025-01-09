@@ -7,7 +7,6 @@ class Student {
 	// These will need to be put into the constructor in order to allow the creation of the object
 	constructor(
 		username,
-		email,
 		id,
 		permissions = STUDENT_PERMISSIONS,
 		API,
@@ -18,7 +17,6 @@ class Student {
 		isGuest = false
 	) {
 		this.username = username;
-		this.email = email;
 		this.id = id;
 		this.activeClasses = [];
 		this.permissions = permissions;
