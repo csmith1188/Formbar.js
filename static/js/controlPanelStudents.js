@@ -24,7 +24,6 @@ function buildStudent(room, studentData) {
         for (let eachResponse in room.poll.responses) {
             if (eachResponse == studentData.pollRes.buttonRes) {
                 studentElement.style.color = room.poll.responses[eachResponse].color
-
             }
         }
         if (studentData.help) {
@@ -322,6 +321,7 @@ function buildStudent(room, studentData) {
         for (let eachResponse in room.poll.responses) {
             if (eachResponse == studentData.pollRes.buttonRes) {
                 pollResponse.style.color = room.poll.responses[eachResponse].color
+                responseSound()
             }
         }
         newStudent.appendChild(pollResponse)
@@ -330,6 +330,7 @@ function buildStudent(room, studentData) {
         let textResponse = document.createElement('p')
         textResponse.textContent = `Text Response: ${studentData.pollRes.textRes}`
         newStudent.appendChild(textResponse)
+        responseSound()
     }
 
     return newStudent
@@ -543,20 +544,30 @@ let breakSoundPlayed = false;
 
 function helpSound() {
     if (!helpSoundPlayed) {
-        let helpPing = new Audio('/sfx/help.wav');
-        if (mute == false) {
-            helpPing.play();
-            helpSoundPlayed = true;
-        }
+            let helpPing = new Audio('/sfx/help.wav');
+            if (mute == false) {
+                helpPing.play();
+                helpSoundPlayed = true;
+            }
     }
 }
 
 function breaksounds() {
     if (!breakSoundPlayed) {
-        let breakPing = new Audio('/sfx/break.wav');
-        if (mute == false) {
-            breakPing.play();
-            breakSoundPlayed = true;
-        }
+            let breakPing = new Audio('/sfx/break.wav');
+            if (mute == false) {
+                breakPing.play();
+                breakSoundPlayed = true;
+            }
     }
+}
+
+function responseSound() {
+    document.addEventListener('click', function playResponseSound() {
+        let responsePing = new Audio('/sfx/TUTD.wav');
+        if (mute == false) {
+            responsePing.play();
+        }
+        document.removeEventListener('click', playResponseSound);
+    });
 }
