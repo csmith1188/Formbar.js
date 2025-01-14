@@ -210,13 +210,13 @@ async function getClassStudents(classId) {
 	    const userData = studentsData[username];
 	    students[username] = new Student(
 	        username,
-	        userData.email,
 	        userData.id,
 	        userData.permissions,
 	        userData.API,
+			JSON.parse(userData.ownedPolls),
+			JSON.parse(userData.sharedPolls),
 	        userData.tags,
-	        displayName = userData.displayName || "NPOM",
-	        userData.verified,
+	        displayName = userData.displayName,
 			false
 	    );
 	};
