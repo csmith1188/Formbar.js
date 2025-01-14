@@ -807,7 +807,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 
 // close all color pickers if you press escape
 document.addEventListener('keydown', function (event) {
-	if (event.key == 'Escape') {
+	if (event.key == 'Escape') {	
 		let colorPickersDiv = document.getElementsByClassName('colorPicker')
 		for (let i = 0; i < colorPickersDiv.length; i++) {
 			colorPickers[i].color.set(pollResponses[i].color)
