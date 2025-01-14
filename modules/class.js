@@ -213,8 +213,8 @@ async function getClassStudents(classId) {
 	        userData.id,
 	        userData.permissions,
 	        userData.API,
-			JSON.parse(userData.ownedPolls),
-			JSON.parse(userData.sharedPolls),
+			[],
+			[],
 	        userData.tags,
 	        displayName = userData.displayName,
 			false
