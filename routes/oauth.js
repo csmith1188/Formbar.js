@@ -44,7 +44,7 @@ module.exports = {
         */
         app.get('/oauth', (req, res) => {
             try {
-                const redirectURL = new URL(req.query.redirectURL);
+                const redirectURL = req.query.redirectURL;
                 const refreshToken = req.query.refreshToken;
 
                 logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
@@ -72,11 +72,10 @@ module.exports = {
                                 
                                 // Generate new access token
                                 const accessToken = generateAccessToken(userData, classCode, refreshTokenData.refresh_token);
-                                redirectURL.searchParams.set('token', accessToken);
-                                res.redirect(redirectURL.toString());
+                                res.redirect(`${redirectURL}?token=${accessToken}`);
                             } else {
                                 // Invalid user
-                                res.redirect(redirectURL.toString());
+                                res.redirect(`/oauth?redirectURL=${redirectURL}`);
                             };
                         });
                     });
