@@ -242,8 +242,10 @@ class SocketUpdates {
             if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
                 // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
                 totalResponders = Object.keys(classData.students).filter(student => 
-                    classData.students[student].activeClasses.includes(classId)
-                ).length - totalStudentsExcluded.length
+                    classData.students[student].activeClasses.includes(classId) &&
+                    classData.students[student].classPermissions < TEACHER_PERMISSIONS &&
+                    classData.students[student].classPermissions != GUEST_PERMISSIONS
+                ).length - totalStudentsExcluded.length;
             } else if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
@@ -254,7 +256,9 @@ class SocketUpdates {
                 }
 
                 totalResponders = Object.keys(classData.students).filter(student => 
-                    classData.students[student].activeClasses.includes(classId)
+                    classData.students[student].activeClasses.includes(classId) &&
+                    classData.students[student].classPermissions < TEACHER_PERMISSIONS &&
+                    classData.students[student].classPermissions != GUEST_PERMISSIONS
                 ).length;
             }
             

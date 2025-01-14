@@ -50,34 +50,35 @@ async function upgradeDatabase() {
     fs.copyFileSync('database/database.db', backupPath);
 
     switch (databaseVersion) {
-        case null: // Pre-v1 database verson
-            // Create refresh_tokens table
-            database.run('CREATE TABLE "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
+    case null: // Pre-v1 database verson
+        // Create refresh_tokens table if there is not already a refresh_tokens table
+        database.run('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
 
-            // Add email and verified fields to users 
-            database.run('ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ""');
-            database.run('ALTER TABLE users ADD COLUMN verified INTEGER NOT NULL DEFAULT 0');
+        // Add email and verified fields to users
+        database.run('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
+        database.run('ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0');
 
-            // Update passwords from encrypted to hashed and add new fields
-            database.all('SELECT * FROM users', async (err, rows) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
+        // Update passwords from encrypted to hashed and add new fields
+        database.all('SELECT * FROM users', async (err, rows) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
 
-                for (const row of rows) {
-                    const decryptedPassword = decrypt(JSON.parse(row.password));
-                    const hashedPassword = await hash(decryptedPassword);
-                    database.run('UPDATE users SET password=?, email="", verified=0 WHERE id=?', [hashedPassword, row.id]);
-                }
-            });
-            
-            // Create database stats table and set the version to 1
-            database.run('CREATE TABLE "stats" (key TEXT NOT NULL, value TEXT)', () => {
-                database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
-            });
+            for (const row of rows) {
+                const decryptedPassword = decrypt(JSON.parse(row.password));
+                const hashedPassword = await hash(decryptedPassword);
+                database.run('UPDATE users SET password=?, email="", verified=0 WHERE id=?', [hashedPassword, row.id]);
+            }
+        });
+        
+        // Create database stats table and set the version to 1
+        database.run('CREATE TABLE "stats" (key TEXT NOT NULL, value TEXT)', () => {
+            database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
+        });
     }
-    console.log(`Database upgraded to: ${CURRENT_VERSION}!`);
+
+    console.log(`Database has been upgraded to version ${CURRENT_VERSION}!`);
 }
 
 module.exports = {
