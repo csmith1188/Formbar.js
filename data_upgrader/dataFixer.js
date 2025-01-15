@@ -3,19 +3,20 @@ const fs = require('fs');
 const { decrypt } = require('./modules/crypto'); // Old crypto module
 const { hash } = require('../modules/crypto'); // New crypto module
 
-// Open database
+// Open both the database and the template database
+// The template database is used to retrieve the latest version of the database
 const database = new sqlite3.Database('database/database.db');
-const CURRENT_VERSION = 1;
+const database_template = new sqlite3.Database('database/database_template.db');
 
-function getDatabaseVersion() {
+function getDatabaseVersion(db) {
     return new Promise((resolve, reject) => {
-        database.get('SELECT name FROM sqlite_master WHERE type="table" AND name="stats"', (err, row) => {
+        db.get('SELECT name FROM sqlite_master WHERE type="table" AND name="stats"', (err, row) => {
             if (err) {
                 reject(err);
             } else {
                 if (row) {
                     // Get dbVersion
-                    database.get('SELECT * FROM stats WHERE key="dbVersion"', (err, row) => {
+                    db.get('SELECT * FROM stats WHERE key="dbVersion"', (err, row) => {
                         if (err) {
                             reject(err);
                         }
@@ -36,8 +37,9 @@ function getDatabaseVersion() {
 }
 
 async function upgradeDatabase() {
-    const databaseVersion = await getDatabaseVersion();
-    if (databaseVersion == CURRENT_VERSION) return;
+    const databaseVersion = await getDatabaseVersion(database); // Get the current version of the database
+    const currentVersion = await getDatabaseVersion(database_template); // Get the latest database version
+    if (databaseVersion == currentVersion) return;
 
     // Backup the database
     // If there's already a backup, denote it with a number
@@ -50,35 +52,38 @@ async function upgradeDatabase() {
     fs.copyFileSync('database/database.db', backupPath);
 
     switch (databaseVersion) {
-    case null: // Pre-v1 database verson
-        // Create refresh_tokens table if there is not already a refresh_tokens table
-        database.run('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
+        case null: // Pre-v1 database verson
+            // Create refresh_tokens table if there is not already a refresh_tokens table
+            database.run('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
 
-        // Add email and verified fields to users
-        database.run('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
-        database.run('ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0');
+            // Add email and verified fields to users
+            database.run('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""', [], () => {});
+            database.run('ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0', [], () => {});
 
-        // Update passwords from encrypted to hashed and add new fields
-        database.all('SELECT * FROM users', async (err, rows) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
+            // Update passwords from encrypted to hashed and add new fields
+            database.all('SELECT * FROM users', async (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
 
-            for (const row of rows) {
-                const decryptedPassword = decrypt(JSON.parse(row.password));
-                const hashedPassword = await hash(decryptedPassword);
-                database.run('UPDATE users SET password=?, email="", verified=0 WHERE id=?', [hashedPassword, row.id]);
-            }
-        });
-        
-        // Create database stats table and set the version to 1
-        database.run('CREATE TABLE "stats" (key TEXT NOT NULL, value TEXT)', () => {
-            database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
-        });
+                for (const row of rows) {
+                    // Skip if the email is already present as they have likely already had their password updated
+                    if (row.email) continue;
+
+                    const decryptedPassword = decrypt(JSON.parse(row.password));
+                    const hashedPassword = await hash(decryptedPassword);
+                    database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, row.id]);
+                }
+            });
+            
+            // Create database stats table and set the version to 1
+            database.run('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)', () => {
+                database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
+            });
     }
 
-    console.log(`Database has been upgraded to version ${CURRENT_VERSION}!`);
+    console.log(`Database upgraded to version ${currentVersion}!`);
 }
 
 module.exports = {
