@@ -1,8 +1,40 @@
 socket.emit('cpUpdate')
+let currentTags = []
+let students = []
 socket.on('cpUpdate', (newClassroom) => {
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
+		let studentTags = student.tags
+		if (student.tags == null || student.tags == "") {
+			continue
+		}
+		studentTags = studentTags.split(",")
+		for (let tag of studentTags) {
+			if (!currentTags.includes(tag)) {
+				currentTags.push(tag)
+			}
+		}
+		for (let res of student.pollRes.buttonRes.split(",")) {
+			if (currentTags.includes(res) || res == "" || res == "remove") {
+				continue
+			}
+			currentTags.push(res)
+		}
+
+		if (students.length > 0) {
+			for (let i = 0; i < students.length; i++) {
+				if (students[i].username == student.username) {
+					students[i] = student
+					break
+				}
+				if (i == students.length - 1) {
+					students.push(student)
+				}
+			}
+		} else {
+			students.push(student)
+		}
 	}
 
 	classCode.textContent = `Class Code: ${newClassroom.key}`
@@ -260,7 +292,9 @@ socket.on('customPollUpdate', (
 	let classPollsDiv = document.querySelector('div#classPolls')
 	let userPollsDiv = document.querySelector('div#userPolls')
 	let fastPollDiv = document.querySelector('div#quickPoll')
+	let selectPollDiv = document.querySelector('div#selectPoll')
 
+	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
 		let customPoll = customPolls[i]
 		let startButton = document.createElement('button')
@@ -276,6 +310,82 @@ socket.on('customPollUpdate', (
 			fastPollDiv.appendChild(startButton);
 		}
 	};
+	// Creation of deselect button
+	let deselect = document.createElement('button')
+	deselect.className = 'deselect'
+	deselect.textContent = 'Switch All'
+	deselect.onclick = () => {
+		let switchState = document.querySelector(`button[name="${currentTags[0]}"]`).className
+		for (let i = 1; i <= currentTags.length; i++) {
+			tagPoll = document.querySelector(`button[name="${currentTags[i - 1]}"]`)
+			if (tagPoll.className == switchState) {
+				tagPoll.click()
+			}
+		}
+	};
+	if (selectPollDiv.children[0]) {
+		selectPollDiv.children[0].replaceWith(deselect);
+	} else {
+		selectPollDiv.appendChild(deselect);
+	}
+
+	// Creation of tag buttons in the select box
+	for (let i = 1; i <= currentTags.length; i++) {
+		let tagPoll = document.createElement('button');
+		tagPoll.className = 'tagPoll';
+		tagPoll.textContent = currentTags[i - 1];
+		tagPoll.name = currentTags[i - 1];
+		tagPoll.onclick = () => {
+			let tempTags = []
+			if (tagPoll.className == 'tagPoll') {
+				tagPoll.className = 'pressed';
+			} else {
+				tagPoll.className = 'tagPoll'
+			}
+			for (let tag of document.getElementsByClassName('pressed')) {
+				if (tempTags.includes(tag.name) || tag.name == "") {
+					continue
+				}
+				tempTags.push(tag.name);
+			}
+			tempTags = tempTags.sort().join();
+
+			// If the student has any of the selected tags, check the checkbox and open their menu
+			for (let student of students) {
+				// Combines the students tags and their poll responses
+				let tempStudTags = []
+				for (let tag of student.tags.split(",")) {
+					if (tag == "") {
+						continue
+					}
+					tempStudTags.push(tag)
+				}
+				for (let tag of student.pollRes.buttonRes.split(",")) {
+					if (tag == "" || tag == "remove") {
+						continue
+					}
+					tempStudTags.push(tag)
+				}
+				tempStudTags = tempStudTags.sort().join();
+
+				studentElement = document.getElementById(`student-${student.username}`)
+				let checkbox = studentElement.querySelector('input[type="checkbox"]')
+				// Comparer
+				if (tempStudTags == tempTags || tempTags == "") {
+					studentElement.open = true
+					checkbox.checked = true
+				} else {
+					studentElement.open = false
+					checkbox.checked = false
+				}
+			}
+		};
+		if (selectPollDiv.children[i]) {
+			selectPollDiv.children[i].replaceWith(tagPoll);
+		} else {
+			selectPollDiv.appendChild(tagPoll);
+		}
+	}
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
