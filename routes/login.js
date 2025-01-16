@@ -124,7 +124,6 @@ module.exports = {
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
                                     userData.displayName,
-                                    userData.verified,
                                     false
                                 )
 
@@ -290,7 +289,6 @@ module.exports = {
 
                     classInformation.users[userData.username] = new Student(
                         username, // Username
-                        null, // Email
                         userData.id, // Id
                         GUEST_PERMISSIONS,
                         null, // API key

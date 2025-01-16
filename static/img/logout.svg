@@ -10,15 +10,15 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <defs
-     id="defs6" />
-  <g
-     id="g8">
-    <image
-       width="682.66669"
-       height="682.66669"
-       preserveAspectRatio="none"
-       xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAwnpUWHRSYXcgcHJvZmlsZSB0eXBl
+   <defs
+      id="defs6" />
+   <g
+      id="g8">
+      <image
+         width="682.66669"
+         height="682.66669"
+         preserveAspectRatio="none"
+         xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAMAAADDpiTIAAAAwnpUWHRSYXcgcHJvZmlsZSB0eXBl
 IGV4aWYAAHjabVBbDsMwCPvnFDsCCTQlx0nXTtoNdvw5hUzNNksxBEvmQcfr+aBbR05KuqxWaikM
 aNWaGxJjRzs5sZ48kKM61ekjZJQEUVyw4jGN+jCKmBqy5WJk9xC2Waga7e3LyNuy9Il6vodRDSPJ
 LqQwaL4Wl2rrdYXt4BnmjzqpzWP//Fdcb1/QR3I+JAmDRdQHkP6UpEFIJ2MoFA25QmrIx0o4yL87
@@ -136,6 +136,6 @@ bQEmbQswaFuAOdsCjNkWYMo2ATu2BVixLcCGaQEGbAswX5uA7dICDNcWYLY0AZO1CdgrLcBYaQKG
 ahOwUpmAgdIEjJMmYJiyAZOkDVgjbMAMZQTuv4vAtVcduGhJkiRJkiRJkiRJkiRJkiRJkiRJkiRJ
 kiRJkiRJkiRJkiRJkiRJkiRJkiRJkiRJknS+X6Za6lVnVV9sAAAAAElFTkSuQmCC
 "
-       id="image10" />
-  </g>
+         id="image10" />
+   </g>
 </svg>
