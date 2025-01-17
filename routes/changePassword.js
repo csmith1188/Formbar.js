@@ -13,6 +13,7 @@ module.exports = {
                 if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
                 // Get the token from the query string
                 const token = req.query.code;
+                console.log(req.query.code, req.session.token);
                 // If there is no token...
                 if (token === undefined || token === null) { 
                     // Render the message page with the following message
@@ -32,6 +33,7 @@ module.exports = {
                     });
                 // Else...
                 } else {
+                    console.log(token, req.session.token);
                     // Render the message page with the following message
                     res.render('pages/message', {
                         message: 'Invalid token',
