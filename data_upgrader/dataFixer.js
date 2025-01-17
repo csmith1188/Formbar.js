@@ -2,11 +2,7 @@ const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const { decrypt } = require('./modules/crypto'); // Old crypto module
 const { hash } = require('../modules/crypto'); // New crypto module
-
-// Open both the database and the template database
-// The template database is used to retrieve the latest version of the database
-const database = new sqlite3.Database('database/database.db');
-const database_template = new sqlite3.Database('database/database_template.db');
+const { database, databaseTemplate } = require('../modules/database');
 
 function getDatabaseVersion(db) {
     return new Promise((resolve, reject) => {
@@ -38,7 +34,7 @@ function getDatabaseVersion(db) {
 
 async function upgradeDatabase() {
     const databaseVersion = await getDatabaseVersion(database); // Get the current version of the database
-    const currentVersion = await getDatabaseVersion(database_template); // Get the latest database version
+    const currentVersion = await getDatabaseVersion(databaseTemplate); // Get the latest database version
     if (databaseVersion == currentVersion) return;
 
     // Backup the database
