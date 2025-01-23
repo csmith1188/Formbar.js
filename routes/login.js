@@ -203,7 +203,7 @@ module.exports = {
                             } while (existingSecrets.includes(newSecret))
 
                             // Hash the provided password
-                            const passwordCrypt = await hash(user.password);
+                            const hashedPassword = await hash(user.password);
 
                             // Add the new user to the database
                             database.run(
@@ -211,7 +211,7 @@ module.exports = {
                                 [
                                     user.username,
                                     user.email,
-                                    passwordCrypt,
+                                    hashedPassword,
                                     permissions,
                                     newAPI,
                                     newSecret,

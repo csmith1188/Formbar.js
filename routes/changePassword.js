@@ -1,7 +1,9 @@
 const { logger } = require('../modules/logger');
-const { passwordRequest } = require('../modules/user');
 const { sendMail } = require('../modules/mail.js');
+const { database } = require('../modules/database.js');
+const { hash } = require('../modules/crypto.js');
 const crypto = require('crypto');
+const { logNumbers } = require('../modules/config.js');
 
 module.exports = {
     run(app) {
@@ -24,6 +26,9 @@ module.exports = {
                 // If the token is valid, render the page to let the user reset their password
                 // If not, render an error message
                 if (token === req.session.token) {
+                    // Set session email so that it can be used when changing the password
+                    req.session.email = req.body.email;
+
                     res.render('pages/changepassword', {
                         sent: true,
                         title: 'Change Password'
@@ -39,7 +44,7 @@ module.exports = {
             };
         });
 
-        app.post('/changepassword', (req, res) => {
+        app.post('/changepassword', async (req, res) => {
             try {
                 if (req.body.email) {
                     // Send an email to the user with the password change link
@@ -55,10 +60,23 @@ module.exports = {
                         message: 'Passwords do not match',
                         title: 'Error'
                     });
-                } else {
-                    // Request a password change and redirect to the login page
-                    passwordRequest(req.body.newPassword, req.query.email);
-                    res.redirect('/login');
+                } else if (req.session.email) {
+                    // If the email is in the session, change the password
+                    const hashedPassword = await hash(req.body.newPassword);
+                    database.run('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, req.session.email], (err) => {
+                        if (err) {
+                            logger.log('error', err.stack);
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                        }
+
+                        res.render('pages/message', {
+                            message: 'Password changed',
+                            title: 'Success'
+                        });
+                    });
                 };
             } catch (err) {
                 logger.log('error', err.stack);
