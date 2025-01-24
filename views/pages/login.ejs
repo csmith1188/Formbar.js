@@ -14,19 +14,22 @@
             <!-- Carries over and submits the redirectURL specified by the user. -->
             <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
             <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
-                autocomplete="off" pattern="[a-zA-Z0-9_]+" required>
-            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
-                *Username may only contain: a-z, A-Z, 0-9, and _.
-            </p>
+                autocomplete="off" pattern="[a-zA-Z0-9_]+" minlength="5" maxlength="20" required>
             <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
             <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password" value=""
-                pattern="[a-z0-9A-Z!@#$%^&*_?]+" minlength="8" maxlength="32" required>
+                pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]+" minlength="5" maxlength="20" required>
             <input type="text" id="displayNameBox" name="displayName" class="loginBox" placeholder="Display Name"
-                value="" pattern="[a-zA-Z0-9]+" required>
-            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
-                *Passwords may only contain: a-z, A-Z, 0-9, !, @, #, $, ^, %, &, *, _, and ?.
-            </p>
+                value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20" required>
             <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
+            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
+                *Username may only contain: A-Z, a-z, 0-9, and _. 5-20 characters
+            </p>
+            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
+                *Display name may only contain: A-Z, a-z, 0-9, _, and spaces. 5-20 characters
+            </p>
+            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
+                *Passwords may only contain: a-z, A-Z, 0-9, and special symbols. 5-20 characters.
+            </p>
             <input type="hidden" id="loginTypeBox" name="loginType" value="login">
             <input type="hidden" id="userTypeBox" name="userType" value="user">
             <br><br>

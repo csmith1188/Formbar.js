@@ -8,6 +8,11 @@ const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require(
 const { managerUpdate } = require("../modules/socketUpdates")
 const crypto = require('crypto')
 
+// Regex to test if the username, password, and display name are valid
+const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
+const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]{5,20}$/;
+const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
+
 module.exports = {
     run(app) {
         // This renders the login page
@@ -124,7 +129,6 @@ module.exports = {
                                     JSON.parse(userData.sharedPolls),
                                     userData.tags,
                                     userData.displayName,
-                                    userData.verified,
                                     false
                                 )
 
@@ -151,10 +155,21 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'new') {
+                    // Check if the username, password, and display name are valid
+                    if (!usernameRegex.test(user.username) || !passwordRegex.test(user.password) || !displayRegex.test(user.displayName)) {
+                        logger.log('verbose', '[post /login] Invalid data provided to create new user');
+                        res.render('pages/message', {
+                            message: 'Invalid username, password, or display name. Please try again.',
+                            title: 'Login'
+                        });
+                        return;
+                    }
+
+                    // Trim whitespace from email
+                    user.email = user.email.trim()
+
                     logger.log('verbose', '[post /login] Creating new user')
-
                     let permissions = STUDENT_PERMISSIONS
-
                     database.all('SELECT API, secret, username FROM users', async (err, users) => {
                         try {
                             if (err) throw err
@@ -290,7 +305,6 @@ module.exports = {
 
                     classInformation.users[userData.username] = new Student(
                         username, // Username
-                        null, // Email
                         userData.id, // Id
                         GUEST_PERMISSIONS,
                         null, // API key

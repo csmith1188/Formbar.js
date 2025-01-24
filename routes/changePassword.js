@@ -1,7 +1,6 @@
-const { title } = require('process');
 const { logger } = require('../modules/logger');
 const { passwordRequest } = require('../modules/user');
-const sendMail = require('../modules/mail.js').sendMail;
+const { sendMail } = require('../modules/mail.js');
 const crypto = require('crypto');
 
 module.exports = {
@@ -11,28 +10,25 @@ module.exports = {
             try {
                 // If there is no session token, create one
                 if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
-                // Get the token from the query string
+                
+                // If there is no token, render the normal change password page
                 const token = req.query.code;
-                // If there is no token...
                 if (token === undefined || token === null) { 
-                    // Render the message page with the following message
                     res.render('pages/changepassword', { 
                         sent: false,
                         title: 'Change Password'
                     });
-                    // Return to prevent further execution
                     return;
-                };
-                // If the tokens match...
+                }
+
+                // If the token is valid, render the page to let the user reset their password
+                // If not, render an error message
                 if (token === req.session.token) {
-                    // Render the change password page
                     res.render('pages/changepassword', {
                         sent: true,
                         title: 'Change Password'
                     });
-                // Else...
                 } else {
-                    // Render the message page with the following message
                     res.render('pages/message', {
                         message: 'Invalid token',
                         title: 'Error'
@@ -42,26 +38,23 @@ module.exports = {
                 logger.log('error', err.stack);
             };
         });
+
         app.post('/changepassword', (req, res) => {
             try {
-                // If an email is passed...
                 if (req.body.email) {
                     // Send an email to the user with the password change link
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>
                         <a href='${location}/changepassword?code=${req.session.token}&email=${req.body.email}'>Change Password</a>
-                        `);
-                    // Redirect to /
+                    `);
                     res.redirect('/');
-                // If the new password does not match the confirm password...
                 } else if (req.body.newPassword !== req.body.confirmPassword) {
-                    // Render the message page with the following message
+                    // If the passwords do not match, tell the user
                     res.render('pages/message', {
                         message: 'Passwords do not match',
                         title: 'Error'
                     });
-                // Else...
                 } else {
                     // Request a password change and redirect to the login page
                     passwordRequest(req.body.newPassword, req.query.email);
