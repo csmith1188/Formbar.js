@@ -203,17 +203,9 @@ async function getUsername(api) {
     }
 }
 
-async function passwordRequest(newPassword, username) {
-	if (newPassword && username) {
-		let passwordChange = true;
-		io.emit('passwordUpdate', passwordChange, username, newPassword);
-	};
-};
-
 
 module.exports = {
     getUser,
     getUserClass,
-    getUsername,
-    passwordRequest,
+    getUsername
 }
