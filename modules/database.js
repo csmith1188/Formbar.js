@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const database = getDatabase();
+const databaseTemplate = getDatabaseTemplate();
 function getDatabase() {
     // If the database file doesn't exist, copy the template
     if (!fs.existsSync('database/database.db')) {
@@ -10,6 +11,10 @@ function getDatabase() {
     // Establishes the connection to the database file
     return new sqlite3.Database('database/database.db')
 };
+
+function getDatabaseTemplate() {
+    return new sqlite3.Database('database/database-template.db')
+}
 
 function getAll(query, params) {
 	return new Promise((resolve, reject) => {
@@ -37,6 +42,7 @@ function runQuery(query, params) {
 
 module.exports = {
     database,
+    databaseTemplate,
     getAll,
     runQuery
 };

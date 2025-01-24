@@ -171,54 +171,59 @@ async function getClassUsers(user, key) {
  */
 async function getClassStudents(classId) {
 	// Grab students associated with the class
-	const studentIds = await new Promise((resolve, reject) => {
-	    database.all('SELECT * FROM classusers WHERE classId = ?', [classId], (err, rows) => {
-	        if (err) {
-	            logger.log('error', err.stack);
-	            return reject(err);
-	        }
+	const studentIdsAndPermissions = await new Promise((resolve, reject) => {
+		database.all('SELECT studentId, permissions FROM classusers WHERE classId = ?', [classId], (err, rows) => {
+			if (err) {
+				logger.log('error', err.stack);
+				return reject(err);
+			}
 
-	        const studentIds = [];
-	        for (const row of rows) {
-	            studentIds.push(row.studentId);
-	        }
+			const studentIdsAndPermissions = rows.map(row => ({
+				id: row.studentId,
+				permissions: row.permissions
+			}));
 
-	        resolve(studentIds);
-	    });
+			resolve(studentIdsAndPermissions);
+		});
 	});
 
+
 	// Get student ids in the class user data
+	const studentIds = studentIdsAndPermissions.map(student => student.id);
 	const studentsData = await new Promise((resolve, reject) => {
-	    database.all('SELECT * FROM users WHERE id IN (' + studentIds.map(() => '?').join(',') + ')', studentIds, (err, rows) => {
-	        if (err) {
-	            logger.log('error', err.stack);
-	            return reject(err);
-	        }
+		database.all('SELECT * FROM users WHERE id IN (' + studentIds.map(() => '?').join(',') + ')', studentIds, (err, rows) => {
+			if (err) {
+				logger.log('error', err.stack);
+				return reject(err);
+			}
 
-	        const studentData = {};
-	        for (const row of rows) {
-	            studentData[row.username] = row;
-	        }
+			const studentData = {};
+			for (const row of rows) {
+				studentData[row.username] = row;
+			}
 
-	        resolve(studentData);
-	    });
+			resolve(studentData);
+		});
 	});
 
 	// Create student class and return the data
 	const students = {};
 	for (const username in studentsData) {
-	    const userData = studentsData[username];
-	    students[username] = new Student(
-	        username,
-	        userData.id,
-	        userData.permissions,
-	        userData.API,
+		const userData = studentsData[username];
+		const studentPermissions = studentIdsAndPermissions.find(student => student.id === userData.id).permissions;
+		students[username] = new Student(
+			username,
+			userData.id,
+			userData.permissions,
+			userData.API,
 			[],
 			[],
-	        userData.tags,
-	        displayName = userData.displayName,
+			userData.tags,
+			displayName = userData.displayName,
 			false
-	    );
+		);
+		
+		students[username].classPermissions = studentPermissions;
 	};
 
 	return students;
