@@ -38,8 +38,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	console.log(currentTags)
-
 	classCode.textContent = `Class Code: ${newClassroom.key}`
 	classId.textContent = `Class ID: ${newClassroom.id}`
 	buildPreviousPolls(newClassroom.pollHistory)
