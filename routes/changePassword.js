@@ -27,7 +27,7 @@ module.exports = {
                 // If not, render an error message
                 if (token === req.session.token) {
                     // Set session email so that it can be used when changing the password
-                    req.session.email = req.body.email;
+                    req.session.email = req.query.email;
 
                     res.render('pages/changepassword', {
                         sent: true,
@@ -72,12 +72,9 @@ module.exports = {
                             });
                         }
 
-                        res.render('pages/message', {
-                            message: 'Password changed',
-                            title: 'Success'
-                        });
+                        res.redirect("/login");
                     });
-                };
+                }
             } catch (err) {
                 logger.log('error', err.stack);
             };
