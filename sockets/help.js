@@ -25,7 +25,7 @@ module.exports = {
                 logger.log('info', `[help] reason=(${reason}) time=(${time})`);
                 if (student.help.reason != reason) {
                     socket.emit('helpSuccess');
-                    advancedEmitToClass('helpSound', socket.request.session.class, { api: true });
+                    advancedEmitToClass('helpSound', classId, { api: true });
                 }
 
                 student.help = { reason: reason, time: time };

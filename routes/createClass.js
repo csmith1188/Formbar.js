@@ -74,7 +74,7 @@ module.exports = {
                         req.session.class = key
                         req.session.classId = id
 
-                        await setClassOfApiSockets(user.API, key)
+                        await setClassOfApiSockets(user.API, id)
                         return true
                     } catch (err) {
                         return err

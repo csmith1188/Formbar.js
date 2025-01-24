@@ -26,12 +26,12 @@ module.exports = {
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username
-                                socket.request.session.class = getUserClass(userData.username) || 'noClass'
+                                socket.request.session.class = getUserClass(userData.username) || 'noClass' // @TODO
                                 socket.request.session.classId = await getClassIDFromCode(socket.request.session.class)
 
                                 socket.join(`api-${socket.request.session.api}`)
-                                socket.join(`class-${socket.request.session.class}`)
-                                socket.emit('setClass', socket.request.session.class)
+                                socket.join(`class-${socket.request.session.classId}`)
+                                socket.emit('setClass', socket.request.session.classId)
 
                                 resolve()
                             } catch (err) {
@@ -45,7 +45,7 @@ module.exports = {
                     }
                 })
             } else if (socket.request.session.username) {
-                socket.join(`class-${socket.request.session.class}`)
+                socket.join(`class-${socket.request.session.classId}`)
                 socket.join(`user-${socket.request.session.username}`)
 
                 userSockets[socket.request.session.username] = socket

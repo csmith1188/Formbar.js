@@ -816,7 +816,7 @@ document.addEventListener('keydown', function (event) {
 	}
 })
 
-// close all color pickers if you click outside of them
+// Close all color pickers if you click outside of them
 document.addEventListener('click', (event) => {
 	if (
 		!event.target.closest('.colorPicker') &&
@@ -864,7 +864,8 @@ timerStopButton.addEventListener('click', function () {
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
-//If there is an active timer after refreshing the page, show the stop button
+
+// If there is an active timer after refreshing the page, show the stop button
 socket.emit('timerOn')
 socket.on('timerOn', function (time) {
 	if (time) {
@@ -873,8 +874,7 @@ socket.on('timerOn', function (time) {
 		document.getElementsByClassName('inputtedTime')[1].hidden = true
 		document.getElementById('playSound').hidden = true
 		timerStopButton.hidden = false
-	}
-	else {
+	} else {
 		timerButton.hidden = false
 		document.getElementsByClassName('inputtedTime')[0].hidden = false
 		document.getElementsByClassName('inputtedTime')[1].hidden = false

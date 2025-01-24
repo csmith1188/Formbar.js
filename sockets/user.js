@@ -28,10 +28,10 @@ module.exports = {
                                 return
                             }
 
-                            let classCode = getUserClass(userData.username)
-                            if (classCode instanceof Error) throw classCode
+                            let classId = getUserClass(userData.username)
+                            if (classId instanceof Error) throw classId
                             
-                            if (!classCode) {
+                            if (!classId) {
                                 socket.emit('getUserClass', { error: 'user is not logged in' })
                             } else if (classCode == 'noClass') {
                                 socket.emit('getUserClass', { error: 'user is not in a class' })
@@ -44,14 +44,20 @@ module.exports = {
                         }
                     })
                 } else if (username) {
-                    let classCode = getUserClass(username)
+                    let classId = getUserClass(username)
+                    if (classId instanceof Error) throw classId
 
-                    if (classCode instanceof Error) throw classCode
-
-                    if (!classCode) socket.emit('getUserClass', { error: 'user is not logged in' })
-                    else if (classCode == 'noClass') socket.emit('getUserClass', { error: 'user is not in a class' })
-                    else socket.emit('getUserClass', className)
-                } else socket.emit('getUserClass', { error: 'missing username or api key' })
+                    // @TODO
+                    if (!classCode) {
+                        socket.emit('getUserClass', { error: 'user is not logged in' })
+                    } else if (classCode == 'noClass') {
+                        socket.emit('getUserClass', { error: 'user is not in a class' })
+                    } else {
+                        socket.emit('getUserClass', className)
+                    }
+                } else {
+                    socket.emit('getUserClass', { error: 'missing username or api key' })
+                }
             } catch (err) {
                 logger.log('error', err.stack)
                 socket.emit('getUserClass', { error: 'There was a server error try again.' })
