@@ -2,6 +2,7 @@ socket.emit('cpUpdate')
 let currentTags = []
 let students = []
 socket.on('cpUpdate', (newClassroom) => {
+	currentTags = []
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
 		student.pollRes.time = new Date(student.pollRes.time)
@@ -36,6 +37,8 @@ socket.on('cpUpdate', (newClassroom) => {
 			students.push(student)
 		}
 	}
+
+	console.log(currentTags)
 
 	classCode.textContent = `Class Code: ${newClassroom.key}`
 	classId.textContent = `Class ID: ${newClassroom.id}`
@@ -188,6 +191,8 @@ socket.on('cpUpdate', (newClassroom) => {
 	filterSortChange(newClassroom)
 
 	classroom = newClassroom
+
+	socket.emit('customPollUpdate')
 })
 
 socket.emit('pluginUpdate')
@@ -304,17 +309,18 @@ socket.on('customPollUpdate', (
 		startButton.onclick = () => {
 			startPoll(i);
 		};
-		if (fastPollDiv.children[i]) {
-			fastPollDiv.children[i].replaceWith(startButton);
+		if (fastPollDiv.children[i - 1]) {
+			fastPollDiv.children[i - 1].replaceWith(startButton);
 		} else {
 			fastPollDiv.appendChild(startButton);
 		}
 	};
-	// Creation of deselect button
-	let deselect = document.createElement('button')
-	deselect.className = 'deselect'
-	deselect.textContent = 'Switch All'
-	deselect.onclick = () => {
+	selectPollDiv.innerHTML = ''
+	// Creation of switchAll button
+	let switchAll = document.createElement('button')
+	switchAll.className = 'switchAll'
+	switchAll.textContent = 'Switch All'
+	switchAll.onclick = () => {
 		let switchState = document.querySelector(`button[name="${currentTags[0]}"]`).className
 		for (let i = 1; i <= currentTags.length; i++) {
 			tagPoll = document.querySelector(`button[name="${currentTags[i - 1]}"]`)
@@ -324,9 +330,9 @@ socket.on('customPollUpdate', (
 		}
 	};
 	if (selectPollDiv.children[0]) {
-		selectPollDiv.children[0].replaceWith(deselect);
+		selectPollDiv.children[0].replaceWith(switchAll);
 	} else {
-		selectPollDiv.appendChild(deselect);
+		selectPollDiv.appendChild(switchAll);
 	}
 
 	// Creation of tag buttons in the select box
