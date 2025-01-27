@@ -13,11 +13,12 @@ module.exports = {
         app.get('/', isAuthenticated, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
-                    res.redirect('/controlPanel')
-                } else {
-                    res.redirect('/student')
-                }
+                res.render('pages/news');
+                // if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+                //     res.redirect('/controlPanel')
+                // } else {
+                //     res.redirect('/student')
+                // }
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {

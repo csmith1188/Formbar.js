@@ -19,13 +19,14 @@ function isAuthenticated(req, res, next) {
 
 		if (req.session.username) {
 			if (classInformation.users[req.session.username].activeClasses.length == 0) {
-				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS) {
-					res.redirect('/managerPanel')
-				} else if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
-					res.redirect('/manageClass')
-				} else {
-					res.redirect('/selectClass')
-				}
+				res.render("pages/news");
+				// if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS) {
+				// 	res.redirect('/managerPanel')
+				// } else if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
+				// 	res.redirect('/manageClass')
+				// } else {
+				// 	res.redirect('/selectClass')
+				// }
 			} else {
 				next()
 			}
