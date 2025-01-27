@@ -432,10 +432,9 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 	}
 })
 
-//socket.emit("classPollEmit");
 socket.on("classPollSave", (pollId) => {
-	let classCodeText = classCode.textContent.split(": ")
-	socket.emit("sharePollToClass", pollId, classCodeText[1]);
+	const classId = classId.textContent.split(": ")[1];
+	socket.emit("sharePollToClass", pollId, classId);
 })
 
 var selectTags = document.createElement('dialog')

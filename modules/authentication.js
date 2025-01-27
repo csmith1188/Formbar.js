@@ -112,7 +112,6 @@ function permCheck(req, res, next) {
 			}
 
 			if (!classInformation.users[username]) {
-				req.session.class = 'noClass'
 				req.session.classId = null
 			}
 

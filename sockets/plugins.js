@@ -40,8 +40,8 @@ module.exports = {
                 logger.log('info', `[addPlugin] name=(${name}) url=(${url})`)
 
                 database.get(
-                    'SELECT * FROM classroom WHERE key=?',
-                    [socket.request.session.class],
+                    'SELECT * FROM classroom WHERE id=?',
+                    [socket.request.session.classId],
                     (err, classData) => {
                         try {
                             if (err) throw err

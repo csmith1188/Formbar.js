@@ -14,17 +14,14 @@ module.exports = {
                 logger.log('info', `[permChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[permChange] user=(${username}) newPerm=(${newPerm})`)
 
-                const classCode = getUserClass(username)
-                const classId = await getClassIDFromCode(classCode)
-                if (classCode instanceof Error) throw classCode
-
-                if (classCode) {
+                const classId = getUserClass(username)
+                if (classId instanceof Error) throw classId
+                if (classId) {
                     classInformation.classrooms[classId].students[username].permissions = newPerm
-
                     if (classInformation.classrooms[classId].students[username].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation.classrooms[classId].students)[0] == username) {
-                        socketUpdates.endClass(classCode, classId)
+                        socketUpdates.endClass(classId)
                     }
-
+                    
                     io.to(`user-${username}`).emit('reload')
                 }
 
