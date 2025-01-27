@@ -47,10 +47,9 @@ module.exports = {
                     let classId = getUserClass(username)
                     if (classId instanceof Error) throw classId
 
-                    // @TODO
-                    if (!classCode) {
+                    if (!classId) {
                         socket.emit('getUserClass', { error: 'user is not logged in' })
-                    } else if (classCode == 'noClass') {
+                    } else if (classId == null) {
                         socket.emit('getUserClass', { error: 'user is not in a class' })
                     } else {
                         socket.emit('getUserClass', className)

@@ -267,7 +267,7 @@ function buildStudent(room, studentData) {
 
         // Create a checkbox for the student
         let studentCheckbox = document.createElement("input");
-        studentCheckbox.checked = true
+        // studentCheckbox.checked = true
         studentCheckbox.type = "checkbox";
         studentCheckbox.id = "checkbox_" + studentData.username;
         studentCheckbox.name = "studentCheckbox";

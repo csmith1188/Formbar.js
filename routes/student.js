@@ -17,7 +17,7 @@ module.exports = {
                 // Poll Setup
                 let user = {
                     name: req.session.username,
-                    class: req.session.class,
+                    class: req.session.classId,
                     tags: req.session.tags
                 }
                 let answer = req.query.letter
@@ -69,7 +69,7 @@ module.exports = {
                         })
                     }
                 } else if (typeof req.query.question == 'undefined') {
-                    logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (cD[req.session.class].students[req.session.username].pollRes.buttonRes) myTextRes = (cD[req.session.class].students[req.session.username].pollRes.textRes) lesson = (cD[req.session.class].lesson)`)
+                    logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes) myTextRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes) lesson = (classInformation.classrooms[req.session.classId].lesson)`)
 
                     res.render('pages/student', {
                         title: 'Student',

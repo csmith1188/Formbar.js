@@ -71,7 +71,6 @@ module.exports = {
                         }
 
                         // Add class into the session data
-                        req.session.class = key
                         req.session.classId = id
 
                         await setClassOfApiSockets(user.API, id)

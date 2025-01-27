@@ -26,8 +26,7 @@ module.exports = {
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username
-                                socket.request.session.class = getUserClass(userData.username) || 'noClass' // @TODO
-                                socket.request.session.classId = await getClassIDFromCode(socket.request.session.class)
+                                socket.request.session.classId = getUserClass(userData.username);
 
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.classId}`)

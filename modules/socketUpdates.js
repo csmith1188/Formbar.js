@@ -61,18 +61,18 @@ async function advancedEmitToClass(event, classId, options, ...data) {
 }
 
 /**
- * Sets the class code for all sockets in a specific API.
- * If no class code is provided, the default value is 'noClass'.
+ * Sets the class id for all sockets in a specific API.
+ * If no class id is provided, then the class id will be set to null.
  *
  * @param {string} api - The API identifier.
- * @param {string} [classId='noClass'] - The class code to set.
+ * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
 	const sockets = await io.in(`api-${api}`).fetchSockets()
 	for (let socket of sockets) {
-		socket.leave(`class-${socket.request.session.class}`)
+		socket.leave(`class-${socket.request.session.classId}`)
 
         socket.request.session.classId = classId
 		socket.request.session.save()
@@ -488,7 +488,6 @@ class SocketUpdates {
             // If the user is logged in, then handle the user's session
             if (userSockets[username]) {
                 userSockets[username].leave(`class-${classId}`);
-                userSockets[username].request.session.class = 'noClass';
                 userSockets[username].request.session.classId = null;
                 userSockets[username].request.session.save();
                 userSockets[username].emit('reload');

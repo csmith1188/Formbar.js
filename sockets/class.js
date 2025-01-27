@@ -1,7 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass, userSockets } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
@@ -74,6 +74,22 @@ module.exports = {
             }
         });
 
+        socket.on('getActiveClass', (api) => {
+            try {
+                logger.log('info', `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                for (const username in classInformation.users) {
+                    const user = classInformation.users[username];
+                    if (user.API == api) {
+                        setClassOfApiSockets(api, user.activeClasses[0]);
+                        return;
+                    }
+                }
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
         socket.on("isClassActive", () => {
             try {
                 logger.log('info', `[isClassActive] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
@@ -99,7 +115,6 @@ module.exports = {
 
                         // Update the class code in the class information, session, then refresh the page
                         classInformation.classrooms[socket.request.session.classId].key = accessCode;
-                        socket.request.session.class = accessCode;
                         socket.emit("reload");
                     } catch (err) {
                         logger.log('error', err.stack);

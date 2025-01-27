@@ -78,7 +78,7 @@ if(!fs.existsSync('.env')) {
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
-	if (req.session.class) {
+	if (req.session.classId || req.session.classId === null) {
 		res.locals.currentUser = classInformation.users[req.session.username]
 	}
 
