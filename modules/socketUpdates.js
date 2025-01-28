@@ -659,10 +659,8 @@ class SocketUpdates {
             logger.log('info', `[endClass] classId=(${classId})`);
             await advancedEmitToClass('endClassSound', classId, { api: true });
 
-            // Deactivate the class and clear polls
+            // Deactivate the class
             classInformation.classrooms[classId].isActive = false;
-            await this.clearPoll(classId);
-
             logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
