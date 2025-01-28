@@ -6,6 +6,7 @@ const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions")
 const { managerUpdate } = require("../modules/socketUpdates")
+const { sendMail } = require("../modules/mail")
 const crypto = require('crypto')
 
 // Regex to test if the username, password, and display name are valid
@@ -42,7 +43,7 @@ module.exports = {
         // This lets users actually log in instead of not being able to log in at all
         // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
         // This also hashes passwords to make sure people's accounts don't get hacked
-        app.post('/login', async (req, res) => {
+        app.post('/login', (req, res) => {
             try {
                 const user = {
                     username: req.body.username,
@@ -250,6 +251,15 @@ module.exports = {
                                                 logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
                                                 managerUpdate()
+
+                                                // Send an email to verify the user
+                                                const location = process.env.LOCATION;
+                                                const html = `
+                                                <h1>Verify your email</h1>
+                                                <p>Click the link below to verify your email address with Formbar</p>
+                                                    <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
+                                                `;
+                                                sendMail(userData.email, 'Formbar Verification', html);
 
                                                 res.redirect('/')
                                             } catch (err) {
