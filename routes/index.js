@@ -14,7 +14,7 @@ module.exports = {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
-                    res.redirect('/controlPanel')
+                    res.render('pages/news');
                 } else {
                     res.redirect('/student')
                 }

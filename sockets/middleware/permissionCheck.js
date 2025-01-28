@@ -1,4 +1,4 @@
-const { classInformation, getClassIDFromCode } = require("../../modules/class")
+const { classInformation } = require("../../modules/class")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
@@ -11,12 +11,10 @@ module.exports = {
         socket.use(async ([event, ...args], next) => {
             try {
                 const username = socket.request.session.username;
-                const classCode = socket.request.session.class;
-                const classId = await getClassIDFromCode(classCode);
+                const classId = socket.request.session.classId;
 
-                logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassCode=(${classCode})`)
-
-                if (!classInformation.classrooms[classId] && classCode != "noClass") {
+                logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassId=(${classId})`)
+                if (!classInformation.classrooms[classId] && classId != null) {
                     logger.log('info', '[socket permission check] Class does not exist')
                     socket.emit('message', 'Class does not exist')
                     return

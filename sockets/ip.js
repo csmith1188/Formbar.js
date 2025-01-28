@@ -35,11 +35,14 @@ module.exports = {
 
 
                     database.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
-                        if (err) logger.log('error', err)
-                        else {
-                            if (type == 'whitelist') whitelistedIps[dbIp.id].ip = ip
-                            else if (type == 'blacklist') blacklistedIps[dbIp.id].ip = ip
-
+                        if (err) {
+                            logger.log('error', err)
+                        } else {
+                            if (type == 'whitelist') {
+                                whitelistedIps[dbIp.id].ip = ip
+                            } else if (type == 'blacklist') {
+                                blacklistedIps[dbIp.id].ip = ip
+                            }
 
                             socketUpdates.reloadPageByIp(type == 'whitelist', ip)
                             socketUpdates.reloadPageByIp(type == 'whitelist', dbIp.ip)
@@ -88,8 +91,11 @@ module.exports = {
                             return
                         }
 
-                        if (type == 'whitelist') whitelistedIps[dbIp.id] = dbIp
-                        else if (type == 'blacklist') blacklistedIps[dbIp.id] = dbIp
+                        if (type == 'whitelist') {
+                            whitelistedIps[dbIp.id] = dbIp
+                        } else if (type == 'blacklist') {
+                            blacklistedIps[dbIp.id] = dbIp
+                        }
 
                         socketUpdates.reloadPageByIp(type != 'whitelist', ip)
                         socketUpdates.ipUpdate(type)

@@ -231,10 +231,6 @@
             }
         }
 
-        function approvePasswordChange(changeApproval, username, newPassword) {
-            socket.emit("approvePasswordChange", changeApproval, username, newPassword);
-        }
-
         // sets filters
         for (let filterElement of document.getElementsByClassName('filter')) {
             filterElement.onclick = () => {
@@ -363,37 +359,6 @@
             }
             addIpForm.append(submitIp)
             ipListDiv.append(addIpForm)
-        })
-
-        socket.emit("passwordUpdate");
-        socket.on("passwordUpdate", (passwordChange, username, newPassword) => {
-            let userDiv = document.getElementById(username);
-            if (passwordChange) {
-                let passwordChangeDiv = document.createElement("div");
-                passwordChangeDiv.setAttribute("id", "passwordChange");
-                let passwordChangeNeeded = document.createElement("p");
-                passwordChangeNeeded.textContent = "Needs/requested a password change";
-                passwordChangeDiv.appendChild(passwordChangeNeeded);
-                let passwordChangeApprove = document.createElement("button");
-                passwordChangeApprove.classList.add("quickButton");
-                passwordChangeApprove.onclick = () => {
-                    approvePasswordChange(true, username, newPassword);
-                    passwordChangeDiv.hidden = true;
-                };
-                passwordChangeApprove.textContent = "Approve";
-                passwordChangeDiv.appendChild(passwordChangeApprove);
-                let passwordChangeDeny = document.createElement("button");
-                passwordChangeDeny.classList.add("quickButton");
-                passwordChangeDeny.onclick = () => {
-                    approvePasswordChange(false, username, newPassword);
-                    passwordChangeDiv.hidden = true;
-                };
-                passwordChangeDeny.textContent = "Deny";
-                passwordChangeDiv.appendChild(passwordChangeDeny);
-                userDiv.appendChild(passwordChangeDiv);
-                let lineBreak = document.createElement("br");
-                userDiv.appendChild(lineBreak);
-            };
         })
     </script>
     <% - include('../partials/footer_content') %>

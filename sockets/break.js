@@ -22,7 +22,7 @@ module.exports = {
 
                 const student = classInformation.classrooms[classId].students[username]
                 if (!student.break != reason) {
-                    advancedEmitToClass('breakSound', socket.request.session.class, { api: true })
+                    advancedEmitToClass('breakSound', classId, { api: true })
                 }
 
                 student.break = reason

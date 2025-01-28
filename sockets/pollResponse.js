@@ -10,31 +10,32 @@ module.exports = {
             try {
                 logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
-
-                if (
-                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pollRes.buttonRes != res ||
-                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pollRes.textRes != textRes
-                ) {
-                    if (res == 'remove')
-                        advancedEmitToClass('removePollSound', socket.request.session.class, { api: true })
-                    else
-                        advancedEmitToClass('pollSound', socket.request.session.class, { api: true })
+                
+                const classId = socket.request.session.classId
+                const username = socket.request.session.username
+                const classroom = classInformation.classrooms[classId]
+                if (classroom.students[username].pollRes.buttonRes != res || classroom.students[username].pollRes.textRes != textRes) {
+                    if (res == 'remove') {
+                        advancedEmitToClass('removePollSound', classId, { api: true })
+                    } else {
+                        advancedEmitToClass('pollSound', classId, { api: true })
+                    }
                 }
 
-                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pollRes.buttonRes = res
-                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pollRes.textRes = textRes
-                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pollRes.time = new Date()
+                classroom.students[username].pollRes.buttonRes = res
+                classroom.students[username].pollRes.textRes = textRes
+                classroom.students[username].pollRes.time = new Date()
 
                 for (let i = 0; i < resLength; i++) {
                     if (res) {
-                        let calcWeight = classInformation.classrooms[socket.request.session.classId].poll.weight * resWeight
-                        classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pogMeter += calcWeight
-                        if (classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pogMeter >= 25) {
-                            database.get('SELECT digipogs FROM classusers WHERE studentId=?', [classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].id], (err, data) => {
+                        let calcWeight = classroom.poll.weight * resWeight
+                        classroom.students[socket.request.session.username].pogMeter += calcWeight
+                        if (classroom.students[socket.request.session.username].pogMeter >= 25) {
+                            database.get('SELECT digipogs FROM classusers WHERE studentId=?', [classroom.students[socket.request.session.username].id], (err, data) => {
                                 try {
                                     if (err) throw err
 
-                                    database.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].id], (err) => {
+                                    database.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, classroom.students[socket.request.session.username].id], (err) => {
                                         try {
                                             if (err) throw err
 
@@ -47,11 +48,11 @@ module.exports = {
                                     logger.log('error', err.stack);
                                 }
                             })
-                            classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].pogMeter = 0
+                            classroom.students[socket.request.session.username].pogMeter = 0
                         }
                     }
                 }
-                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]})`)
+                logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()

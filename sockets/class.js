@@ -26,7 +26,7 @@ module.exports = {
                 socketUpdates.virtualBarUpdate();
 
                 // Play leave sound and reload the user's page
-                advancedEmitToClass('leaveSound', socket.request.session.class, { api: true });
+                advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
                 userSockets[username].emit('reload');
             } catch (err) {
                 logger.log('error', err.stack)
@@ -40,12 +40,11 @@ module.exports = {
                 logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const username = socket.request.session.username;
-                const classCode = socket.request.session.class;
                 const classId = socket.request.session.classId;
 
                 // Kick the user from the classroom entirely if they're a guest
                 // If not, kick them from the session
-                socketUpdates.classKickUser(username, classCode, classId, classInformation.users[username].isGuest);
+                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -56,9 +55,8 @@ module.exports = {
             try {
                 logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const classCode = socket.request.session.class
                 const classId = socket.request.session.classId
-                socketUpdates.startClass(classCode, classId)
+                socketUpdates.startClass(classId)
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -69,9 +67,24 @@ module.exports = {
             try {
                 logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const classCode = socket.request.session.class
                 const classId = socket.request.session.classId
-                socketUpdates.endClass(classCode, classId)
+                socketUpdates.endClass(classId)
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        socket.on('getActiveClass', (api) => {
+            try {
+                logger.log('info', `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                for (const username in classInformation.users) {
+                    const user = classInformation.users[username];
+                    if (user.API == api) {
+                        setClassOfApiSockets(api, user.activeClasses[0]);
+                        return;
+                    }
+                }
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -102,7 +115,6 @@ module.exports = {
 
                         // Update the class code in the class information, session, then refresh the page
                         classInformation.classrooms[socket.request.session.classId].key = accessCode;
-                        socket.request.session.class = accessCode;
                         socket.emit("reload");
                     } catch (err) {
                         logger.log('error', err.stack);
@@ -174,12 +186,11 @@ module.exports = {
                 logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classKickUser] username=(${username})`)
 
-                const classCode = socket.request.session.class
                 const classId = socket.request.session.classId
-                socketUpdates.classKickUser(username, classCode)
-                socketUpdates.classPermissionUpdate(classCode, classId)
-                socketUpdates.virtualBarUpdate(classCode)
-                advancedEmitToClass('leaveSound', classCode, { api: true })
+                socketUpdates.classKickUser(username, classId)
+                socketUpdates.classPermissionUpdate(classId)
+                socketUpdates.virtualBarUpdate(classId)
+                advancedEmitToClass('leaveSound', classId, { api: true })
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -190,12 +201,11 @@ module.exports = {
             try {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const classCode = socket.request.session.class
-                const classId = socket.request.session.class
+                const classId = socket.request.session.classId
                 socketUpdates.classKickStudents(classId)
-                socketUpdates.classPermissionUpdate(classCode, classId)
-                socketUpdates.virtualBarUpdate(classCode, classId)
-                advancedEmitToClass('kickStudentsSound', classCode, { api: true })
+                socketUpdates.classPermissionUpdate(classId)
+                socketUpdates.virtualBarUpdate(classId)
+                advancedEmitToClass('kickStudentsSound', classId, { api: true })
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -206,23 +216,23 @@ module.exports = {
                 logger.log('info', `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[ban] user=(${user})`)
 
-                let classCode = socket.request.session.class
-                logger.log('info', `[ban] classCode=(${classCode})`)
+                let classId = socket.request.session.classId
+                logger.log('info', `[ban] classId=(${classId})`)
 
-                if (!classCode || classCode == 'noClass') {
+                if (!classId) {
                     logger.log('info', '[ban] The user is not in a class.')
                     socket.emit('message', 'You are not in a class')
                     return
                 }
 
                 if (!user) {
-                    logger.log('critical', '[ban] no username provided.')
+                    logger.log('critical', '[ban] No username provided.')
                     socket.emit('message', 'No username provided. (Please contact the programmer)')
                     return
                 }
 
-                database.run('UPDATE classusers SET permissions = 0 WHERE classId = (SELECT id FROM classroom WHERE key=?) AND studentId = (SELECT id FROM users WHERE username=?)', [
-                    socket.request.session.class,
+                database.run('UPDATE classusers SET permissions = 0 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE username=?)', [
+                    classId,
                     user
                 ], (err) => {
                     try {
@@ -235,7 +245,7 @@ module.exports = {
                         socketUpdates.classKickUser(user)
                         socketUpdates.classBannedUsersUpdate()
                         socketUpdates.classPermissionUpdate()
-                        advancedEmitToClass('leaveSound', classCode, { api: true })
+                        advancedEmitToClass('leaveSound', classId, { api: true })
                         socket.emit('message', `Banned ${user}`)
                     } catch (err) {
                         logger.log('error', err.stack)
@@ -253,10 +263,10 @@ module.exports = {
                 logger.log('info', `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[unban] user=(${user})`)
 
-                let classCode = socket.request.session.class
-                logger.log('info', `[unban] classCode=(${classCode})`)
+                let classId = socket.request.session.classId
+                logger.log('info', `[unban] classId=(${classId})`)
 
-                if (!classCode || classCode == 'noClass') {
+                if (!classId) {
                     logger.log('info', '[unban] The user is not in a class.')
                     socket.emit('message', 'You are not in a class')
                     return
@@ -268,15 +278,15 @@ module.exports = {
                     return
                 }
 
-                database.run('UPDATE classusers SET permissions = 1 WHERE classId = (SELECT id FROM classroom WHERE key=?) AND studentId = (SELECT id FROM users WHERE username=?)', [
-                    socket.request.session.class,
+                database.run('UPDATE classusers SET permissions = 1 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE username=?)', [
+                    classId,
                     user
                 ], (err) => {
                     try {
                         if (err) throw err
 
-                        if (classInformation.classrooms[socket.request.session.classId].students[user])
-                            classInformation.classrooms[socket.request.session.classId].students[user].permissions = 1
+                        if (classInformation.classrooms[classId].students[user])
+                            classInformation.classrooms[classId].students[user].permissions = 1
 
                         socketUpdates.classBannedUsersUpdate()
                         socket.emit('message', `Unbanned ${user}`)
@@ -320,7 +330,6 @@ module.exports = {
                 logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
 
-                const classCode = socket.request.session.class
                 const classId = socket.request.session.classId
                 classInformation.classrooms[classId].permissions[permission] = level
                 database.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].permissions), classId], (err) => {

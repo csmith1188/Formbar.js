@@ -19,10 +19,8 @@ function isAuthenticated(req, res, next) {
 
 		if (req.session.username) {
 			if (classInformation.users[req.session.username].activeClasses.length == 0) {
-				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS) {
-					res.redirect('/managerPanel')
-				} else if (classInformation.users[req.session.username].classPermissions >= TEACHER_PERMISSIONS) {
-					res.redirect('/manageClass')
+				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS || classInformation.users[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+					res.render("pages/news");
 				} else {
 					res.redirect('/selectClass')
 				}
@@ -112,7 +110,6 @@ function permCheck(req, res, next) {
 			}
 
 			if (!classInformation.users[username]) {
-				req.session.class = 'noClass'
 				req.session.classId = null
 			}
 

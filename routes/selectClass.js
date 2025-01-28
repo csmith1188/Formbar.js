@@ -79,14 +79,13 @@ async function joinClass(req, code) {
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[username] = currentUser
 			classInformation.users[username].activeClasses.push(classroom.id)
-			advancedEmitToClass('joinSound', code, { api: true })
+			advancedEmitToClass('joinSound', classroom.id, { api: true })
 
 			// Set session class and classId
-			req.session.class = classroom.key;
 			req.session.classId = classroom.id;
 
 			// Set the class of the API socket
-			setClassOfApiSockets(currentUser.API, classroom.key);
+			setClassOfApiSockets(currentUser.API, classroom.id);
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -259,8 +258,7 @@ module.exports = {
                     classData.permissions.manageClass
                 )
 
-                advancedEmitToClass('cpUpdate', classCode, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
-                req.session.class = classCode
+                advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
 				req.session.classId = classId
                 setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classId)
         
