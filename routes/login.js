@@ -290,6 +290,14 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'guest') {
+                    if (user.displayName.trim() == '') {
+                        logger.log('verbose', '[post /login] Invalid display name provided to create guest user');
+                        res.render('pages/message', {
+                            message: 'Invalid display name. Please try again.',
+                            title: 'Login'
+                        });
+                        return;
+                    }
                     logger.log('verbose', '[post /login] Logging in as guest');
 
                     // Create a temporary guest user
