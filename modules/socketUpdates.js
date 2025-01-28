@@ -472,7 +472,7 @@ class SocketUpdates {
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
             classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-            setClassOfApiSockets(classInformation.users[username].API, 'noClass');
+            setClassOfApiSockets(classInformation.users[username].API, null);
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
             // If exitClass is true, then remove the user from the classroom entirely
@@ -659,10 +659,8 @@ class SocketUpdates {
             logger.log('info', `[endClass] classId=(${classId})`);
             await advancedEmitToClass('endClassSound', classId, { api: true });
 
-            // Deactivate the class and clear polls
+            // Deactivate the class
             classInformation.classrooms[classId].isActive = false;
-            await this.clearPoll(classId);
-
             logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
