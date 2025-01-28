@@ -23,16 +23,15 @@ async function getUser(api) {
         if (username.error) return username
 
         // Get the class code of the user
-        let classCode = getUserClass(username)
-        let classId = await getClassIDFromCode(classCode)
+        let classId = getUserClass(username)
 
         // If the class code is an instance of Error, throw the error
-        if (classCode instanceof Error) throw classCode
+        if (classId instanceof Error) throw classId
 
         // Query the database for the user's data
         let dbUser = await new Promise((resolve, reject) => {
             // If the user is not in any class
-            if (!classCode || classCode == 'noClass') {
+            if (!classId) {
                 // Query the database for the user's data
                 database.get(
                     'SELECT id, username, permissions, NULL AS classPermissions FROM users WHERE username = ?',
@@ -61,8 +60,8 @@ async function getUser(api) {
 
             // If the user is in a class, query the database for the user's data and class permissions
             database.get(
-                'SELECT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ? AND users.username = ?',
-                [classCode, username],
+                'SELECT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.id = ? AND users.username = ?',
+                [classId, username],
                 (err, dbUser) => {
                     try {
                         // If an error occurs, throw the error
@@ -95,7 +94,7 @@ async function getUser(api) {
             break: null,
             quizScore: null,
             pogMeter: null,
-            class: classCode
+            class: classId
         }
 
         // If the user is in a class and is logged in
@@ -146,7 +145,7 @@ function getUserClass(username) {
         }
 
 		// If the user is not found in any class, log null
-		logger.log('verbose', `[getUserClass] classCode=(${null})`);
+		logger.log('verbose', `[getUserClass] classId=(${null})`);
 
 		// Return null
 		return null;
