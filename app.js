@@ -4,6 +4,7 @@ const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
 const fs = require('fs')
 const authentication = require('./modules/authentication.js')
+const dotenv = require('dotenv')
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
 const { classInformation } = require('./modules/class.js')
@@ -11,6 +12,7 @@ const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataFixer.js')
+dotenv.config()
 
 // Upgrade the database if it's not up to date
 upgradeDatabase();
