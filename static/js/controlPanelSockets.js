@@ -330,9 +330,9 @@ socket.on('customPollUpdate', (
 
 			if (studCheck.checked == switchState) {
 				studCheck.click()
-				if (studCheck.checked) studElem.open = true
-				else studElem.open = false
 			}
+			if (studCheck.checked) studElem.open = true
+			else studElem.open = false
 		}
 	};
 	if (selectPollDiv.children[0]) {
