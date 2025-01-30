@@ -64,9 +64,11 @@ module.exports = {
                                     // Add the user to the session in order to transfer data between each page
                                     req.session.userId = userData.id;
                                     req.session.username = userData.username;
+                                    req.session.email = userData.email;
                                     req.session.class = 'noClass';
                                     req.session.classId = null;
                                     req.session.displayName = userData.displayName;
+                                    res.session.verified = 1;
                                     // Log the information
                                     logger.log('verbose', `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
                                     logger.log('verbose', `[auth/google/callback] classInformation=(${JSON.stringify(classInformation)})`);
@@ -97,9 +99,11 @@ module.exports = {
                                     // Add the user to the session in order to transfer data between each page
                                     req.session.userId = userData.id;
                                     req.session.username = userData.username;
+                                    req.session.email = userData.email;
                                     req.session.class = 'noClass';
                                     req.session.classId = null;
                                     req.session.displayName = userData.displayName;
+                                    req.session.verified = 1;
                                     // Log the information
                                     logger.log('verbose', `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
                                     logger.log('verbose', `[auth/google/callback] classInformation=(${JSON.stringify(classInformation)})`);
@@ -127,9 +131,11 @@ module.exports = {
                                 // Add the user to the session
                                 req.session.userId = userData.id;
                                 req.session.username = userData.username;
+                                req.session.email = userData.email;
                                 req.session.class = 'noClass';
                                 req.session.classId = null;
                                 req.session.displayName = userData.displayName;
+                                req.session.verified = 1;
                                 // Log the information
                                 logger.log('verbose', `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
                                 logger.log('verbose', `[auth/google/callback] classInformation=(${JSON.stringify(classInformation)})`);
@@ -141,6 +147,7 @@ module.exports = {
                         };
                     });
                 });
+
             }
         );
     }

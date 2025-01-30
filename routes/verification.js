@@ -11,24 +11,10 @@ module.exports = {
         app.post('/verification', async (req, res) => {
             try {
                 // Create a promise for the user's email
-                const email = await new Promise((resolve, reject) => {
-                    database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
-                        if (error) {
-                            logger.log('error', error.stack);
-                            // Render the message page with the error message
-                            res.render('pages/message', {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: 'Error'
-                            });
-                            reject(error);
-                        } else {
-                            resolve(row.email);
-                        }
-                    });
-                });
+                const email = req.session.email
                 // Create a promise for the user's secret
                 const token = await new Promise((resolve, reject) => {
-                    database.get(`SELECT secret FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
                         if (error) {
                             logger.log('error', error.stack);
                             // Render the message page with the error message
@@ -62,37 +48,26 @@ module.exports = {
         // Make a get request for the verification route
         app.get('/verification', async (req, res) => {
             // Create a promise for the user's email
-            const email = await new Promise((resolve, reject) => {
-                database.get(`SELECT email FROM users WHERE username = '${req.session.username}'`, (error, row) => {
-                    if (error) {
-                        logger.log('error', error.stack);
-                        // Render the message page with the error message
-                        res.render('pages/message', {
-                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                            title: 'Error'
-                        });
-                        reject(error);
-                    } else if (!row) {
-                        res.redirect('/');
-                    } else {
-                        resolve(row.email);
-                    }
-                });
-            });
+            const email = req.session.email;
             // Create a promise for the user's secret
             const token = await new Promise((resolve, reject) => {
                 database.get(`SELECT secret FROM users WHERE username = '${req.session.username}'`, (error, row) => {
-                    if (error) {
+                    try {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.secret);
+                        }
+                    } catch (error) {
                         logger.log('error', error.stack);
-                        // Render the message page with the error message
-                        res.render('pages/message', {
-                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                            title: 'Error'
-                        });
-                        reject(error);
-                    } else {
-                        resolve(row.secret);
-                    }
+                        res.redirect('/');
+                    };
                 });
             });
             // If there is no email for the user... 
@@ -108,7 +83,7 @@ module.exports = {
             // Get the verification code from the query string
             const code = req.query.code;
             // If there is no token...
-            if (!token) {
+            if (!code) {
                 // Render the verification page with the email
                 res.render('pages/verification', { 
                     title: 'Verification',
