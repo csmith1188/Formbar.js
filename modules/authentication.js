@@ -1,7 +1,7 @@
 const { logger } = require("./logger")
 const { classInformation } = require("./class")
 const { logNumbers, settings } = require("./config")
-const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS } = require("./permissions")
+const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions")
 const fs = require('fs');
 
 const whitelistedIps = {}
@@ -46,7 +46,7 @@ let isVerified = (req, res, next) => {
 		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		// If the user is verified or there is no .env file set up...
-		if (req.session.verified || !fs.existsSync('.env')) {
+		if (req.session.verified || !fs.existsSync('.env') || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
 			// Continue
 			next()
 		// Else...

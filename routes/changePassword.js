@@ -8,34 +8,45 @@ const { logNumbers } = require('../modules/config.js');
 module.exports = {
     run(app) {
         const location = process.env.LOCATION;
-        app.get('/changepassword', (req, res) => {
+        app.get('/changepassword', async (req, res) => {
             try {
-                // If there is no session token, create one
-                if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
-                
                 // If there is no token, render the normal change password page
-                const token = req.query.code;
-                if (token === undefined || token === null) { 
+                const code = req.query.code;
+                if (code === undefined || code === null) { 
                     res.render('pages/changepassword', { 
                         sent: false,
                         title: 'Change Password'
                     });
                     return;
                 }
-
+                // Set session email so that it can be used when changing the password
+                req.session.email = req.query.email;
+                // Create a promise for the user's secret
+                const token = await new Promise((resolve, reject) => {
+                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.secret);
+                        }
+                    });
+                });
                 // If the token is valid, render the page to let the user reset their password
                 // If not, render an error message
-                if (token === req.session.token) {
-                    // Set session email so that it can be used when changing the password
-                    req.session.email = req.query.email;
-
+                if (code === token) {
                     res.render('pages/changepassword', {
                         sent: true,
                         title: 'Change Password'
                     });
                 } else {
                     res.render('pages/message', {
-                        message: 'Invalid token',
+                        message: 'Invalid code',
                         title: 'Error'
                     });
                 };
@@ -46,12 +57,27 @@ module.exports = {
 
         app.post('/changepassword', async (req, res) => {
             try {
+                const token = await new Promise((resolve, reject) => {
+                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email || req.body.email}'`, (error, row) => {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.secret);
+                        }
+                    });
+                });
                 if (req.body.email) {
                     // Send an email to the user with the password change link
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>
-                        <a href='${location}/changepassword?code=${req.session.token}&email=${req.body.email}'>Change Password</a>
+                        <a href='${location}/changepassword?code=${token}&email=${req.body.email}'>Change Password</a>
                     `);
                     res.redirect('/');
                 } else if (req.body.newPassword !== req.body.confirmPassword) {
@@ -71,8 +97,8 @@ module.exports = {
                                 title: 'Error'
                             });
                         }
-
-                        res.redirect("/login");
+                        console.log(`[${req.session.email}]: Password changed`);
+                        res.redirect('/');
                     });
                 }
             } catch (err) {
