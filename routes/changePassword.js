@@ -19,9 +19,11 @@ module.exports = {
                     });
                     return;
                 }
+                // Set session email so that it can be used when changing the password
+                req.session.email = req.query.email;
                 // Create a promise for the user's secret
                 const token = await new Promise((resolve, reject) => {
-                    database.get(`SELECT secret FROM users WHERE username = '${req.session.username}'`, (error, row) => {
+                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
                         if (error) {
                             logger.log('error', error.stack);
                             // Render the message page with the error message
@@ -38,16 +40,13 @@ module.exports = {
                 // If the token is valid, render the page to let the user reset their password
                 // If not, render an error message
                 if (code === token) {
-                    // Set session email so that it can be used when changing the password
-                    req.session.email = req.query.email;
-
                     res.render('pages/changepassword', {
                         sent: true,
                         title: 'Change Password'
                     });
                 } else {
                     res.render('pages/message', {
-                        message: 'Invalid token',
+                        message: 'Invalid code',
                         title: 'Error'
                     });
                 };
@@ -58,6 +57,21 @@ module.exports = {
 
         app.post('/changepassword', async (req, res) => {
             try {
+                const token = await new Promise((resolve, reject) => {
+                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email || req.body.email}'`, (error, row) => {
+                        if (error) {
+                            logger.log('error', error.stack);
+                            // Render the message page with the error message
+                            res.render('pages/message', {
+                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                title: 'Error'
+                            });
+                            reject(error);
+                        } else {
+                            resolve(row.secret);
+                        }
+                    });
+                });
                 if (req.body.email) {
                     // Send an email to the user with the password change link
                     sendMail(req.body.email, 'Formbar Password Change', `
@@ -83,8 +97,8 @@ module.exports = {
                                 title: 'Error'
                             });
                         }
-
-                        res.redirect("/login");
+                        console.log(`[${req.session.email}]: Password changed`);
+                        res.redirect('/');
                     });
                 }
             } catch (err) {

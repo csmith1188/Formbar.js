@@ -1,8 +1,7 @@
 const { database } = require('../modules/database')
 const { logNumbers } = require('../modules/config')
 const { logger } = require('../modules/logger')
-const sendMail = require('../modules/mail.js').sendMail;
-const crypto = require('crypto');
+const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
 
 module.exports = {
     run(app) {
@@ -11,7 +10,7 @@ module.exports = {
         app.post('/verification', async (req, res) => {
             try {
                 // Create a promise for the user's email
-                const email = req.session.email
+                const email = req.session.email || req.query.email;
                 // Create a promise for the user's secret
                 const token = await new Promise((resolve, reject) => {
                     database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
@@ -32,14 +31,22 @@ module.exports = {
                 const html = `
                 <h1>Verify your email</h1>
                 <p>Click the link below to verify your email address with Formbar</p>
-                    <a href='${location}/verification?code=${token}'>Verify Email</a>
+                    <a href='${location}/verification?code=${token}&email=${email}'>Verify Email</a>
                 `;
                 // Send the email
                 sendMail(email, 'Formbar Verification', html);
-                res.render('pages/message', {
-                    message: 'Verification email sent.',
-                    title: 'Verification'
-                });
+                // If the email has been rate limited, render the message page relaying this. Otherwise, relay that the email has been sent.
+                if (limitStore.has(email) && (Date.now() - limitStore.get(email) < RATE_LIMIT)) {
+                    res.render('pages/message', {
+                        message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(email) + RATE_LIMIT - Date.now())/1000)} seconds.`,
+                        title: 'Verification'
+                    });
+                } else {
+                    res.render('pages/message', {
+                        message: 'Verification email sent.',
+                        title: 'Verification'
+                    });
+                };
             } catch (error) {
                 logger.log('error', error.stack);
             }

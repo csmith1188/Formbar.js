@@ -3,10 +3,9 @@ const nodemailer = require('nodemailer');
 // Import the dotenv module
 require('dotenv').config();
 
-const limitStore = {};
-
+// Create a map to store the email rate limits
+const limitStore = new Map();
 const RATE_LIMIT = 60 * 1000; // 1 minute
-
 
 // Create a function for sending mail, passing the recipient, subject, and HTML content as arguments
 const sendMail = (recipient, subject, html) => {
@@ -18,8 +17,8 @@ const sendMail = (recipient, subject, html) => {
     // Get the current time
     const currentTime = Date.now();
     // Check if the user has sent an email within the specified time period
-    if (limitStore[recipient] && (currentTime - limitStore[recipient] < RATE_LIMIT)) {
-        console.log(`Rate limit exceeded for ${recipient}. Email not sent.`);
+    if (limitStore.has(recipient) && (currentTime - limitStore.get(recipient) < RATE_LIMIT)) {
+        console.log(`Email rejected: ${recipient} exceeded rate limit`);
         return;
     }
     // Configure the SMTP transport
@@ -44,18 +43,22 @@ const sendMail = (recipient, subject, html) => {
         subject: subject,
         html: html
     };
-    // Sends the mail through the transporter, catching any errors that may arise
+    // Sends the mail through the transporter, and adds the recipient to the limitStore
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error('Error sending email: ', error);
+            console.error('Error sending email:', error);
         } else {
-            console.log('Email sent: ', info.response);
-            limitStore[recipient] = currentTime;
+            console.log('Email sent:', info.response);
+            // Store the current time for the recipient
+            limitStore.set(recipient, currentTime);
+            return;
         };
     });
 };
 
 // Export the sendMail function
 module.exports = {
-    sendMail: sendMail
+    sendMail,
+    limitStore,
+    RATE_LIMIT
 };
