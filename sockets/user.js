@@ -33,7 +33,7 @@ module.exports = {
                             
                             if (!classId) {
                                 socket.emit('getUserClass', { error: 'user is not logged in' })
-                            } else if (classCode == 'noClass') {
+                            } else if (classId == null) {
                                 socket.emit('getUserClass', { error: 'user is not in a class' })
                             } else {
                                 socket.emit('getUserClass', className)

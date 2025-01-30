@@ -2,7 +2,6 @@
     <%- include('../partials/sockets') %>
         <!-- ^^ This means add this file into the contents of the header page -->
         <!-- This is where the title, top buttons, and stylesheet is located -->
-
         <body id="colorContent">
             <%- include('../partials/formbar_header') %>
                 <div id="content" class="contentBox">
@@ -95,7 +94,6 @@
                     [loginButton, newAccountButton, guestButton].forEach(button =>
                         (button === el) ? button.classList.add('pressed') : button.classList.remove('pressed')
                     );
-
                     // Hide or show inputs based on the selected login type
                     switch (el) {
                         case loginButton:
@@ -137,6 +135,47 @@
                             loginTypeBox.value = 'guest';
                             break;
                     }
+        // Hide or show inputs based on the selected login type
+        switch (el) {
+            case loginButton:
+                passwordBox.classList.remove('hidden');
+                passwordBox.required = true;
+                forgotPassword.classList.remove('hidden');
+                displayNameBox.classList.add('hidden');
+                usernameBox.classList.remove('hidden');
+                emailBox.classList.add('hidden');
+                emailBox.required = false;
+                displayNameBox.required = false;
+                submitButton.value = 'Log in';
+                loginTypeBox.value = 'login';
+                break;
+            case newAccountButton:
+                passwordBox.classList.remove('hidden');
+                passwordBox.required = true;
+                forgotPassword.classList.add('hidden');
+                displayNameBox.classList.remove('hidden');
+                usernameBox.classList.remove('hidden');
+                emailBox.classList.remove('hidden');
+                emailBox.required = true;
+                displayNameBox.required = true;
+                submitButton.value = 'Create account';
+                loginTypeBox.value = 'new';
+                break;
+            case guestButton:
+                usernameBox.value = null;
+                usernameBox.classList.add('hidden');
+                passwordBox.value = null;
+                passwordBox.classList.add('hidden');
+                passwordBox.required = false;
+                forgotPassword.classList.add('hidden');
+                displayNameBox.classList.remove('hidden');
+                emailBox.classList.add('hidden');
+                emailBox.required = false;
+                displayNameBox.required = true;
+                submitButton.value = 'Go';
+                loginTypeBox.value = 'guest';
+                break;
+        }
 
                     // Set if the inputs are required based on if they are visible
                     usernameBox.required = !usernameBox.classList.contains('hidden');
@@ -153,7 +192,6 @@
 
                     checkIfBlank();
                 }
-
                 function checkIfBlank() {
                     if ((usernameBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value.trim() !== '' || loginTypeBox.value === 'login')) {
                         submitButton.classList.remove('unselectable');
