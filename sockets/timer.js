@@ -9,7 +9,7 @@ module.exports = {
             let classData = classInformation.classrooms[socket.request.session.classId];
             let username = socket.request.session.username
 
-            advancedEmitToClass('vbTimer', socket.request.session.class, {
+            advancedEmitToClass('vbTimer', socket.request.session.classId, {
                 classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
                 username
             }, classData.timer);
@@ -32,11 +32,11 @@ module.exports = {
                     socketUpdates.timer(sound, active)
                     
                     // Save a clock in the class data, which will saves when the page is refreshed
-                    runningTimers[socket.request.session.class] = setInterval(() => socketUpdates.timer(sound, active), 1000);
+                    runningTimers[socket.request.session.classId] = setInterval(() => socketUpdates.timer(sound, active), 1000);
                 } else {
                     // If the timer is not active, clear the interval
-                    clearInterval(runningTimers[socket.request.session.class]);
-                    runningTimers[socket.request.session.class] = null;
+                    clearInterval(runningTimers[socket.request.session.classId]);
+                    runningTimers[socket.request.session.classId] = null;
 
                     socketUpdates.timer(sound, active)
                 }

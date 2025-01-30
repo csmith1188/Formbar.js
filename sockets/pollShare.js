@@ -14,7 +14,7 @@ module.exports = {
 
                 advancedEmitToClass(
                     'previousPollData',
-                    socket.request.session.class,
+                    socket.request.session.classId,
                     { classPermissions: classInformation.classrooms[socket.request.session.classId].permissions.controlPolls },
                     classInformation.classrooms[socket.request.session.classId].pollHistory[pollIndex].data
                 )
@@ -75,11 +75,8 @@ module.exports = {
 
                                                         socketUpdates.getPollShareIds(pollId)
 
-                                                        const classCode = getUserClass(username)
-                                                        const classId = await getClassIDFromCode(classCode)
-
-                                                        if (classCode instanceof Error) throw classCode
-                                                        if (!classCode) return
+                                                        const classId = getUserClass(username)
+                                                        if (!classId) return
 
                                                         classInformation.classrooms[classId].students[user.username].sharedPolls.push(pollId)
                                                         socketUpdates.customPollUpdate(username)
@@ -144,11 +141,9 @@ module.exports = {
                                                     return
                                                 }
 
-                                                const classCode = getUserClass(user.username)
-                                                const classId = await getClassIDFromCode(classCode)
-
-                                                if (classCode instanceof Error) throw classCode
-                                                if (!classCode) return
+                                                const classId = getUserClass(user.username)
+                                                if (classId instanceof Error) throw classId
+                                                if (!classId) return
 
                                                 let sharedPolls = classInformation.classrooms[classId].students[user.username].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
@@ -239,15 +234,14 @@ module.exports = {
             socketUpdates.getPollShareIds(pollId)
         })
 
-        socket.on('sharePollToClass', (pollId, classCode) => {
+        socket.on('sharePollToClass', (pollId, classId) => {
             try {
                 logger.log('info', `[sharePollToClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[sharePollToClass] pollId=(${pollId}) classCode=(${classCode})`)
+                logger.log('info', `[sharePollToClass] pollId=(${pollId}) classId=(${classId})`)
 
-                database.get('SELECT * FROM classroom WHERE key=?', classCode, (err, classroom) => {
+                database.get('SELECT * FROM classroom WHERE id=?', classId, (err, classroom) => {
                     try {
                         if (err) throw err
-
                         if (!classroom) {
                             socket.emit('message', 'There is no class with that code.')
                             return

@@ -101,15 +101,14 @@ module.exports = {
                             }
 
                             let loggedIn = false
-                            let classKey = ''
+                            let classId = ''
 
                             for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
                                     for (let username of Object.keys(classData.students)) {
                                         if (username == userData.username) {
                                             loggedIn = true
-                                            classKey = classData.key
-
+                                            classId = classData.id
                                             break
                                         }
                                     }
@@ -118,8 +117,7 @@ module.exports = {
 
                             if (loggedIn) {
                                 logger.log('verbose', '[post /login] User is already logged in')
-                                req.session.class = classKey
-                                req.session.classId = getClassIDFromCode(classKey)
+                                req.session.classId = classId
                             } else {
                                 classInformation.users[userData.username] = new Student(
                                     userData.username,
@@ -133,9 +131,9 @@ module.exports = {
                                     false
                                 )
 
-                                req.session.class = 'noClass';
                                 req.session.classId = null;
                             }
+
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.username = userData.username;
@@ -243,7 +241,6 @@ module.exports = {
                                                 // Add the user to the session in order to transfer data between each page
                                                 req.session.userId = userData.id
                                                 req.session.username = userData.username
-                                                req.session.class = 'noClass'
                                                 req.session.classId = null
                                                 req.session.displayName = userData.displayName;
 
@@ -334,7 +331,6 @@ module.exports = {
                     );
 
                     // Set their current class to no class
-                    req.session.class = 'noClass';
                     req.session.classId = null;
 
                     // Add a cookie to transfer user credentials across site

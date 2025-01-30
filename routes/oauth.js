@@ -63,8 +63,7 @@ module.exports = {
                             if (err) throw err;
                             if (userData) {
                                 // Get class code and class permissions
-                                const classCode = getUserClass(userData.username);
-                                const classId = getClassIDFromCode(classCode);
+                                const classId = getUserClass(userData.username);
                                 userData.classPermissions = null;
                                 if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
                                     userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
@@ -145,9 +144,8 @@ module.exports = {
                         };
 
                         // Get class code and class permissions
-                        const classCode = getUserClass(userData.username)
-                        const classId = await getClassIDFromCode(classCode)
-                        userData.classPermissions = null
+                        const classId = getUserClass(userData.username);
+                        userData.classPermissions = null;
                         if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
                             userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
                         }

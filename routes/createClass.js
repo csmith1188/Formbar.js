@@ -64,6 +64,10 @@ module.exports = {
 
                         const classStudents = await getClassStudents(id);
                         for (const username in classStudents) {
+                            // If the student is the teacher or already in the class, skip
+                            if (username == req.session.username) continue;
+                            if (classInformation.classrooms[id].students[username]) continue;
+
                             const student = classStudents[username];
                             student.displayName = student.displayName || student.username;
                             classInformation.users[username] = student;
@@ -71,10 +75,9 @@ module.exports = {
                         }
 
                         // Add class into the session data
-                        req.session.class = key
                         req.session.classId = id
 
-                        await setClassOfApiSockets(user.API, key)
+                        await setClassOfApiSockets(user.API, id)
                         return true
                     } catch (err) {
                         return err
