@@ -348,7 +348,7 @@ socket.on('customPollUpdate', (
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
-		// With every click sets up an array with all clicked tags to compare with users
+		// With every click creates an array with all clicked tags to compare with users
 		tagPoll.onclick = () => {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
