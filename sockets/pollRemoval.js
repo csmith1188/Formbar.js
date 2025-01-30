@@ -1,6 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database, runQuery } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { currentPoll } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {
