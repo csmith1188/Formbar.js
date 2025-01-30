@@ -5,28 +5,10 @@
 
     <body id='colorContent'>
       <%- include('../partials/formbar_header') %>
-        <div>
+        <form action='/verification' method='post'>
             <h1>Verification</h1>
-            <p id='sentMessage' hidden>Please check your email for a verification link.</p>
-            <a id='sendVerification' href='/verification' onclick='sendVerificationEmail(event);'>Send Verification Email</a>
-        </div>
+            <button type='submit'>Send Verification Email</button>
+        </form>
     </body>
 
     <%- include('../partials/footer_content') %>
-
-    <script>
-        let event = new Event('DOMContentLoaded');
-        let sendVerificationEmail = (event) => {
-            event.preventDefault();
-            let xhr = new XMLHttpRequest();
-            xhr.open('POST', '/verification', true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.send(JSON.stringify({}));
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    document.getElementById('sentMessage').removeAttribute('hidden');
-                    document.getElementById('sendVerification').setAttribute('hidden', true);
-                }
-            }
-        }
-    </script>

@@ -58,7 +58,7 @@ module.exports = {
                             res.redirect(`/oauth?redirectURL=${redirectURL}`);
                             return;
                         };
-
+                        
                         database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
                             if (err) throw err;
                             if (userData) {
