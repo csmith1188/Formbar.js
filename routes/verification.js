@@ -8,14 +8,12 @@ const fs = require('fs')
 module.exports = {
     run(app) {
         const location = process.env.LOCATION;
-
         app.get('/verification', async (req, res) => {
             // If the user is already verified or there is no .env file set up, then redirect to the home page
             if (req.session.verified || !fs.existsSync('.env')) {
                 res.redirect('/');
                 return;
             };
-
             // Create a promise to retrieve the user's secret
             const token = await new Promise((resolve, reject) => {
                 database.get(`SELECT secret FROM users WHERE username = '${req.session.username}'`, (error, row) => {
@@ -36,13 +34,8 @@ module.exports = {
                     }
                 });
             });
-
-            // If there is no session token, create one
-            if (!req.session.token) req.session.token = crypto.randomBytes(64).toString('hex');
-
             // Get the email from the session
             const email = req.session.email || req.query.email;
-
             // If there is no email in the session, tell the user that there is no email associated with the user
             if (!email) {
                 res.render('pages/message', {
@@ -51,7 +44,6 @@ module.exports = {
                 })
                 return;
             };
-
             // Get the verification code from the query string
             // If there is no verification code, then render the verification page with the email
             const code = req.query.code;
@@ -62,7 +54,6 @@ module.exports = {
                 });
                 return;
             };
-
             // If the tokens match...
             if (token === code) {
                 // Update the user's verified status in the database
@@ -76,7 +67,6 @@ module.exports = {
                         })
                         return;
                     };
-
                     // Log the verification, set the verified status to true, and redirect to the home page
                     logger.log('info', `${email} has been verified.`);
                     req.session.verified = 1;
@@ -90,12 +80,10 @@ module.exports = {
                 });
             };
         });
-
         // Make a post request to send the verification email
         app.post('/verification', async (req, res) => {
             try {
                 const email = req.session.email || req.query.email;
-
                 // Create a promise to retrieve the user's secret
                 const token = await new Promise((resolve, reject) => {
                     database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
@@ -112,17 +100,14 @@ module.exports = {
                         }
                     });
                 });
-
                 // Create the HTML content for the email
                 const html = `
                 <h1>Verify your email</h1>
                 <p>Click the link below to verify your email address with Formbar</p>
                     <a href='${location}/verification?code=${token}&email=${email}'>Verify Email</a>
                 `;
-
                 // Send the email
                 sendMail(email, 'Formbar Verification', html);
-
                 // If the email has been rate limited, render the message page relaying this. Otherwise, relay that the email has been sent.
                 if (limitStore.has(email) && (Date.now() - limitStore.get(email) < RATE_LIMIT)) {
                     res.render('pages/message', {
