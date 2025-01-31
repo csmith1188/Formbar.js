@@ -6,7 +6,7 @@ const { logger } = require("../modules/logger")
 const { Student } = require("../modules/student")
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions")
 const { managerUpdate } = require("../modules/socketUpdates")
-const { sendMail } = require("../modules/mail")
+const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js')
 const crypto = require('crypto')
 
 // Regex to test if the username, password, and display name are valid
@@ -22,6 +22,101 @@ module.exports = {
         // This makes sure the lesson can see the students and work with them
         app.get('/login', (req, res) => {
             try {
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                if (req.query.code && req.query.code.trim() !== '') {
+                    if (req.query.code === req.session.createData.newSecret) {
+                        const user = req.session.createData;
+                        delete req.session.createData;
+                        // Add the new user to the database
+                        database.run(
+                            'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
+                            [
+                                user.username,
+                                user.email,
+                                user.hashedPassword,
+                                user.permissions,
+                                user.newAPI,
+                                user.newSecret,
+                                user.displayName
+                            ], (err) => {
+                                try {
+                                    if (err) throw err
+                                    logger.log('verbose', '[get /login] Added user to database')
+                                    // Find the user in which was just created to get the id of the user
+                                    database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                                        try {
+                                            if (err) throw err;
+                                            classInformation.users[userData.username] = new Student(
+                                                userData.username,
+                                                userData.id,
+                                                userData.permissions,
+                                                userData.API,
+                                                [],
+                                                [],
+                                                userData.tags,
+                                                userData.displayName,
+                                                false
+                                            );
+                                            // Add the user to the session in order to transfer data between each page
+                                            req.session.userId = userData.id
+                                            req.session.username = userData.username
+                                            req.session.classId = null
+                                            req.session.displayName = userData.displayName;
+                                            req.session.email = userData.email;
+
+                                            logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+                                            logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
+
+                                            managerUpdate()
+
+                                            // Send an email to verify the user
+                                            const location = process.env.LOCATION;
+                                            const html = `
+                                            <h1>Verify your email</h1>
+                                            <p>Click the link below to verify your email address with Formbar</p>
+                                                <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
+                                            `;
+                                            sendMail(userData.email, 'Formbar Verification', html);
+
+                                            res.redirect('/');
+                                            return;
+                                        } catch (err) {
+                                            logger.log('error', err.stack);
+                                            res.render('pages/message', {
+                                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                                title: 'Error'
+                                            });
+                                            return;
+                                        };
+                                    });
+                                } catch (err) {
+                                    // Handle the same email being used for multiple accounts
+                                    if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                        logger.log('verbose', '[post /login] Email already exists')
+                                        res.render('pages/message', {
+                                            message: 'A user with that email already exists.',
+                                            title: 'Login'
+                                        });
+                                        return;
+                                    }
+
+                                    // Handle other errors
+                                    logger.log('error', err.stack);
+                                    res.render('pages/message', {
+                                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                        title: 'Error'
+                                    })
+                                    return;
+                                };
+                            }
+                        );
+                    };
+                };
+            
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                 logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
                 res.render('pages/login', {
@@ -204,92 +299,114 @@ module.exports = {
 
                             // Hash the provided password
                             const hashedPassword = await hash(user.password);
+                            // Set the creation data for the user
+                            req.session.createData = user;
+                            req.session.createData.newAPI = newAPI;
+                            req.session.createData.newSecret = newSecret;
+                            req.session.createData.hashedPassword = hashedPassword;
+                            req.session.createData.permissions = permissions;
+                            // Process LOCATION from the .env file
+                            const location = process.env.LOCATION;
+                            // Create the HTML content for the email
+                            const html = `
+                            <h1>Verify your email</h1>
+                            <p>Click the link below to verify your email address with Formbar</p>
+                                <a href='${location}/login?code=${newSecret}'>Verify Email</a>
+                            `;
+                            // Send the email
+                            sendMail(user.email, 'Formbar Verification', html);
+                            if (limitStore.has(user.email) && (Date.now() - limitStore.get(user.email) < RATE_LIMIT)) {
+                                res.render('pages/message', {
+                                    message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now())/1000)} seconds.`,
+                                    title: 'Verification'
+                                });
+                            };
 
-                            // Add the new user to the database
-                            database.run(
-                                'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
-                                [
-                                    user.username,
-                                    user.email,
-                                    hashedPassword,
-                                    permissions,
-                                    newAPI,
-                                    newSecret,
-                                    user.displayName
-                                ], (err) => {
-                                    try {
-                                        if (err) throw err
+                            // // Add the new user to the database
+                            // database.run(
+                            //     'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
+                            //     [
+                            //         user.username,
+                            //         user.email,
+                            //         hashedPassword,
+                            //         permissions,
+                            //         newAPI,
+                            //         newSecret,
+                            //         user.displayName
+                            //     ], (err) => {
+                            //         try {
+                            //             if (err) throw err
 
-                                        logger.log('verbose', '[post /login] Added user to database')
+                            //             logger.log('verbose', '[post /login] Added user to database')
 
-                                        // Find the user in which was just created to get the id of the user
-                                        database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-                                            try {
-                                                if (err) throw err
+                            //             // Find the user in which was just created to get the id of the user
+                            //             database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                            //                 try {
+                            //                     if (err) throw err
 
-                                                classInformation.users[userData.username] = new Student(
-                                                    userData.username,
-                                                    userData.id,
-                                                    userData.permissions,
-                                                    userData.API,
-                                                    [],
-                                                    [],
-                                                    userData.tags,
-                                                    userData.displayName,
-                                                    false
-                                                )
+                            //                     classInformation.users[userData.username] = new Student(
+                            //                         userData.username,
+                            //                         userData.id,
+                            //                         userData.permissions,
+                            //                         userData.API,
+                            //                         [],
+                            //                         [],
+                            //                         userData.tags,
+                            //                         userData.displayName,
+                            //                         false
+                            //                     )
 
-                                                // Add the user to the session in order to transfer data between each page
-                                                req.session.userId = userData.id
-                                                req.session.username = userData.username
-                                                req.session.classId = null
-                                                req.session.displayName = userData.displayName;
-                                                req.session.email = userData.email;
+                            //                     // Add the user to the session in order to transfer data between each page
+                            //                     req.session.userId = userData.id
+                            //                     req.session.username = userData.username
+                            //                     req.session.classId = null
+                            //                     req.session.displayName = userData.displayName;
+                            //                     req.session.email = userData.email;
 
-                                                logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                                                logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
+                            //                     logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+                            //                     logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
-                                                managerUpdate()
+                            //                     managerUpdate()
 
-                                                // Send an email to verify the user
-                                                const location = process.env.LOCATION;
-                                                const html = `
-                                                <h1>Verify your email</h1>
-                                                <p>Click the link below to verify your email address with Formbar</p>
-                                                    <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
-                                                `;
-                                                sendMail(userData.email, 'Formbar Verification', html);
+                            //                     // Send an email to verify the user
+                            //                     const location = process.env.LOCATION;
+                            //                     const html = `
+                            //                     <h1>Verify your email</h1>
+                            //                     <p>Click the link below to verify your email address with Formbar</p>
+                            //                         <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
+                            //                     `;
+                            //                     sendMail(userData.email, 'Formbar Verification', html);
 
-                                                res.redirect('/')
-                                            } catch (err) {
-                                                logger.log('error', err.stack);
-                                                res.render('pages/message', {
-                                                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                                    title: 'Error'
-                                                })
-                                            }
-                                        })
-                                    } catch (err) {
-                                        // Handle the same email being used for multiple accounts
-                                        if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
-                                            logger.log('verbose', '[post /login] Email already exists')
-                                            res.render('pages/message', {
-                                                message: 'A user with that email already exists.',
-                                                title: 'Login'
-                                            });
+                            //                     res.redirect('/')
+                            //                 } catch (err) {
+                            //                     logger.log('error', err.stack);
+                            //                     res.render('pages/message', {
+                            //                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                            //                         title: 'Error'
+                            //                     })
+                            //                 }
+                            //             })
+                            //         } catch (err) {
+                            //             // Handle the same email being used for multiple accounts
+                            //             if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                            //                 logger.log('verbose', '[post /login] Email already exists')
+                            //                 res.render('pages/message', {
+                            //                     message: 'A user with that email already exists.',
+                            //                     title: 'Login'
+                            //                 });
 
-                                            return;
-                                        }
+                            //                 return;
+                            //             }
 
-                                        // Handle other errors
-                                        logger.log('error', err.stack);
-                                        res.render('pages/message', {
-                                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                            title: 'Error'
-                                        })
-                                    }
-                                }
-                            )
+                            //             // Handle other errors
+                            //             logger.log('error', err.stack);
+                            //             res.render('pages/message', {
+                            //                 message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                            //                 title: 'Error'
+                            //             })
+                            //         }
+                            //     }
+                            // )
                         } catch (err) {
                             logger.log('error', err.stack);
                             res.render('pages/message', {
