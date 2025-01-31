@@ -27,8 +27,8 @@ module.exports = {
                     }
                 }
 
-                classroom.students[username].pollRes.buttonRes = res
-                classroom.students[username].pollRes.textRes = textRes
+                classroom.students[username].pollRes.buttonRes = res == "remove" ? "" : res
+                classroom.students[username].pollRes.textRes = res == "remove" ? "" : textRes
                 classroom.students[username].pollRes.time = new Date()
 
                 for (let i = 0; i < resLength; i++) {
