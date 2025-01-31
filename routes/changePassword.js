@@ -19,8 +19,10 @@ module.exports = {
                     });
                     return;
                 }
+
                 // Set session email so that it can be used when changing the password
                 req.session.email = req.query.email;
+
                 // Create a promise for the user's secret
                 const token = await new Promise((resolve, reject) => {
                     database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
