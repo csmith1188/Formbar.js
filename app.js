@@ -75,7 +75,7 @@ app.use((req, res, next) => {
 
 // Check if the .env file is set up
 if(!fs.existsSync('.env')) {
-	console.log('Warning: No .env file found. Email verification will not work. Please refer to the Formbar Wiki, under github.com/csmith1188/Formbar.js/wiki/Hosting-Formbar-Locally, for information on setting up the .env file.') 
+	console.log('Warning: No .env file found. Email verification or Google OAuth2 login will not work. Please refer to the Formbar Wiki, under github.com/csmith1188/Formbar.js/wiki/Hosting-Formbar-Locally, for information on setting up the .env file.') 
 }
 
 // Add currentUser and permission constants to all pages

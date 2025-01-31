@@ -7,6 +7,14 @@ const { Student } = require('../modules/student');
 const { logger } = require('../modules/logger');
 const crypto = require('crypto');
 
+function checkEnv(req, res, next) {
+	if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+		res.redirect('/');
+	} else {
+		next();
+	}
+}
+
 module.exports = {
 	run(app) {
 		// Use the passport middleware
@@ -14,11 +22,11 @@ module.exports = {
 		app.use(passport.session());
 
 		// Use the Passport strategy to authenticate the user through Google
-		app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+		app.get('/auth/google', checkEnv, passport.authenticate('google', { scope: ['profile', 'email'] }));
 		
 		// Handle the callback after Google has authenticated the user
 		// If the authentication fails, redirect the user back to the home page
-		app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+		app.get('/auth/google/callback', checkEnv, passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
 			// Get the user by their email
 			database.get(`SELECT * FROM users WHERE email=?`, [req.user.emails[0].value], (err, user) => {
 				if (err) throw err;
