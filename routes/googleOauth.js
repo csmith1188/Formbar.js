@@ -64,6 +64,7 @@ module.exports = {
 								req.session.userId = userData.id;
 								req.session.username = userData.username;
 								req.session.email = userData.email;
+								req.session.classId = null;
 								req.session.displayName = userData.displayName;
 								req.session.verified = 1;
 								
