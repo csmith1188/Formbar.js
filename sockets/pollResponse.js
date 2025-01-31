@@ -6,8 +6,13 @@ const { advancedEmitToClass } = require("../modules/socketUpdates")
 module.exports = {
     run(socket, socketUpdates) {
         // /poll websockets for updating the database
-        socket.on('pollResp', (res, textRes, resWeight, resLength) => {
+        socket.on('pollResp', (res, textRes) => {
             try {
+                // This is hardcoded for now as digipogs aren't implemented yet.
+                // These should be calculated on the server rather than the client to prevent exploits to obtain digipogs.
+                const resWeight = 1;
+                const resLength = 0;
+
                 logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resWeight=(${resWeight}) resLength=(${resLength})`)
                 
