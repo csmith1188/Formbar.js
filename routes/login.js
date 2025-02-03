@@ -1,13 +1,14 @@
-const { hash, compare } = require('../modules/crypto')
-const { database } = require("../modules/database")
-const { classInformation, getClassIDFromCode } = require("../modules/class")
-const { logNumbers } = require("../modules/config")
-const { logger } = require("../modules/logger")
-const { Student } = require("../modules/student")
-const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions")
-const { managerUpdate } = require("../modules/socketUpdates")
-const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js')
-const crypto = require('crypto')
+const { hash, compare } = require('../modules/crypto');
+const { database } = require("../modules/database");
+const { classInformation, getClassIDFromCode } = require("../modules/class");
+const { logNumbers } = require("../modules/config");
+const { logger } = require("../modules/logger");
+const { Student } = require("../modules/student");
+const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions");
+const { managerUpdate } = require("../modules/socketUpdates");
+const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
+const crypto = require('crypto');
+const fs = require('fs');
 
 // Regex to test if the username, password, and display name are valid
 const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
@@ -16,115 +17,118 @@ const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
 
 module.exports = {
     run(app) {
-        // This renders the login page
-        // It displays the title and the color of the login page of the formbar js
-        // It allows for the login to check if the user wants to login to the server
-        // This makes sure the lesson can see the students and work with them
         app.get('/login', (req, res) => {
             try {
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                if (req.query.code && req.query.code.trim() !== '') {
-                    if (req.query.code === req.session.createData.newSecret) {
-                        const user = req.session.createData;
-                        delete req.session.createData;
-                        // Add the new user to the database
-                        database.run(
-                            'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
-                            [
-                                user.username,
-                                user.email,
-                                user.hashedPassword,
-                                user.permissions,
-                                user.newAPI,
-                                user.newSecret,
-                                user.displayName
-                            ], (err) => {
-                                try {
-                                    if (err) throw err
-                                    logger.log('verbose', '[get /login] Added user to database')
-                                    // Find the user in which was just created to get the id of the user
-                                    database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-                                        try {
-                                            if (err) throw err;
-                                            classInformation.users[userData.username] = new Student(
-                                                userData.username,
-                                                userData.id,
-                                                userData.permissions,
-                                                userData.API,
-                                                [],
-                                                [],
-                                                userData.tags,
-                                                userData.displayName,
-                                                false
-                                            );
-                                            // Add the user to the session in order to transfer data between each page
-                                            req.session.userId = userData.id
-                                            req.session.username = userData.username
-                                            req.session.classId = null
-                                            req.session.displayName = userData.displayName;
-                                            req.session.email = userData.email;
-
-                                            logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                                            logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
-
-                                            managerUpdate()
-
-                                            // Send an email to verify the user
-                                            const location = process.env.LOCATION;
-                                            const html = `
-                                            <h1>Verify your email</h1>
-                                            <p>Click the link below to verify your email address with Formbar</p>
-                                                <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
-                                            `;
-                                            sendMail(userData.email, 'Formbar Verification', html);
-
-                                            res.redirect('/');
-                                            return;
-                                        } catch (err) {
-                                            logger.log('error', err.stack);
-                                            res.render('pages/message', {
-                                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                                title: 'Error'
-                                            });
-                                            return;
-                                        };
-                                    });
-                                } catch (err) {
-                                    // Handle the same email being used for multiple accounts
-                                    if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
-                                        logger.log('verbose', '[post /login] Email already exists')
+                // If the user is not logged in, render the login page
+                if (req.session.email !== undefined) {
+                    res.render('pages/message', {
+                        message: 'You are already logged in.',
+                        title: 'Login'
+                    });
+                    return;
+                // If the session 
+                } else if (!req.session.createData) {
+                    logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+                    res.render('pages/login', {
+                        title: 'Login',
+                        redirectURL: undefined
+                    });
+                    return;
+                } else if (!req.query.code) { 
+                    req.session.createData = undefined;
+                    logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+                    res.render('pages/login', {
+                        title: 'Login',
+                        redirectURL: undefined
+                    });
+                    return;
+                } else {
+                    // Assign the create data to a variable for easier access
+                    const user = req.session.createData;
+                    // If the codes don't match, wipe the create data and render a message saying the codes don't match
+                    if (req.query.code !== user.newSecret) {
+                        req.session.createData = undefined;
+                        res.render('pages/message', {
+                            message: 'Invalid verification code. Please try again.',
+                            title: 'Error'
+                        });
+                        return;
+                    };
+                    database.run(
+                        'INSERT INTO users(username, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                        [
+                            user.username,
+                            user.email,
+                            user.hashedPassword,
+                            user.permissions,
+                            user.newAPI,
+                            user.newSecret,
+                            user.displayName,
+                            1
+                        ], (err) => {
+                            try {
+                                if (err) throw err
+                                logger.log('verbose', '[get /login] Added user to database')
+                                // Find the user in which was just created to get the id of the user
+                                database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                                    try {
+                                        if (err) throw err;
+                                        classInformation.users[userData.username] = new Student(
+                                            userData.username,
+                                            userData.id,
+                                            userData.permissions,
+                                            userData.API,
+                                            [],
+                                            [],
+                                            userData.tags,
+                                            userData.displayName,
+                                            false
+                                        );
+                                        // Add the user to the session in order to transfer data between each page
+                                        req.session.userId = userData.id
+                                        req.session.username = userData.username
+                                        req.session.classId = null
+                                        req.session.displayName = userData.displayName;
+                                        req.session.email = userData.email;
+                                        req.session.verified
+                    
+                                        logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+                                        logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
+                    
+                                        managerUpdate()
+                    
+                                        res.redirect('/')
+                                        return;
+                                    } catch (err) {
+                                        logger.log('error', err.stack);
                                         res.render('pages/message', {
-                                            message: 'A user with that email already exists.',
-                                            title: 'Login'
+                                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                            title: 'Error'
                                         });
                                         return;
-                                    }
-
-                                    // Handle other errors
-                                    logger.log('error', err.stack);
+                                    };
+                                });
+                            } catch (err) {
+                                // Handle the same email being used for multiple accounts
+                                if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                    logger.log('verbose', '[post /login] Email already exists')
                                     res.render('pages/message', {
-                                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                        title: 'Error'
-                                    })
+                                        message: 'A user with that email already exists.',
+                                        title: 'Login'
+                                    });
                                     return;
-                                };
-                            }
-                        );
-                    };
+                                }
+                    
+                                // Handle other errors
+                                logger.log('error', err.stack);
+                                res.render('pages/message', {
+                                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                    title: 'Error'
+                                })
+                                return;
+                            };
+                        });
                 };
-            
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-                res.render('pages/login', {
-                    title: 'Login',
-
-                    // Pass the redirect URL as undefined so that the EJS file does error upon setting the value of redirect to redirect URL
-                    redirectURL: undefined
-                })
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
@@ -147,8 +151,7 @@ module.exports = {
                     loginType: req.body.loginType,
                     userType: req.body.userType,
                     displayName: req.body.displayName
-                }
-
+                };
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] username=(${user.username}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
@@ -165,10 +168,9 @@ module.exports = {
                                 res.render('pages/message', {
                                     message: 'No user found with that username.',
                                     title: 'Login'
-                                })
-                                return
-                            }
-
+                                });
+                                return;
+                            };
                             if (!userData.displayName) {
                                 database.run("UPDATE users SET displayName = ? WHERE username = ?", [userData.username, userData.username]), (err) => {
                                     try {
@@ -183,7 +185,6 @@ module.exports = {
                                     };
                                 };
                             };
-
                             // Compare password hashes and check if it is correct
                             const passwordMatches = await compare(user.password, userData.password);
                             if (!passwordMatches) {
@@ -299,6 +300,88 @@ module.exports = {
 
                             // Hash the provided password
                             const hashedPassword = await hash(user.password);
+
+                            if (!fs.existsSync('.env')) {
+                                user.newAPI = newAPI;
+                                user.newSecret = newSecret;
+                                user.hashedPassword = hashedPassword;
+                                user.permissions = permissions;
+                                database.run(
+                                    'INSERT INTO users(username, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                                    [
+                                        user.username,
+                                        user.email,
+                                        user.hashedPassword,
+                                        user.permissions,
+                                        user.newAPI,
+                                        user.newSecret,
+                                        user.displayName,
+                                        1
+                                    ], (err) => {
+                                        try {
+                                            if (err) throw err
+                                            logger.log('verbose', '[get /login] Added user to database')
+                                            // Find the user in which was just created to get the id of the user
+                                            database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                                                try {
+                                                    if (err) throw err;
+                                                    classInformation.users[userData.username] = new Student(
+                                                        userData.username,
+                                                        userData.id,
+                                                        userData.permissions,
+                                                        userData.API,
+                                                        [],
+                                                        [],
+                                                        userData.tags,
+                                                        userData.displayName,
+                                                        false
+                                                    );
+                                                    // Add the user to the session in order to transfer data between each page
+                                                    req.session.userId = userData.id
+                                                    req.session.username = userData.username
+                                                    req.session.classId = null
+                                                    req.session.displayName = userData.displayName;
+                                                    req.session.email = userData.email;
+                                                    req.session.verified
+                                
+                                                    logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
+                                                    logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
+                                
+                                                    managerUpdate()
+                                
+                                                    res.redirect('/')
+                                                    return;
+                                                } catch (err) {
+                                                    logger.log('error', err.stack);
+                                                    res.render('pages/message', {
+                                                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                                        title: 'Error'
+                                                    });
+                                                    return;
+                                                };
+                                            });
+                                        } catch (err) {
+                                            // Handle the same email being used for multiple accounts
+                                            if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
+                                                logger.log('verbose', '[post /login] Email already exists')
+                                                res.render('pages/message', {
+                                                    message: 'A user with that email already exists.',
+                                                    title: 'Login'
+                                                });
+                                                return;
+                                            }
+                                
+                                            // Handle other errors
+                                            logger.log('error', err.stack);
+                                            res.render('pages/message', {
+                                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                                title: 'Error'
+                                            })
+                                            return;
+                                        };
+                                    });
+                                return;
+                            };
                             // Set the creation data for the user
                             req.session.createData = user;
                             req.session.createData.newAPI = newAPI;
@@ -320,93 +403,12 @@ module.exports = {
                                     message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now())/1000)} seconds.`,
                                     title: 'Verification'
                                 });
+                            } else {
+                                res.render('pages/message', {
+                                    message: 'Verification email sent. Please check your email. Please close this tab.',
+                                    title: 'Verification'
+                                });
                             };
-
-                            // // Add the new user to the database
-                            // database.run(
-                            //     'INSERT INTO users(username, email, password, permissions, API, secret, displayName) VALUES(?, ?, ?, ?, ?, ?, ?)',
-                            //     [
-                            //         user.username,
-                            //         user.email,
-                            //         hashedPassword,
-                            //         permissions,
-                            //         newAPI,
-                            //         newSecret,
-                            //         user.displayName
-                            //     ], (err) => {
-                            //         try {
-                            //             if (err) throw err
-
-                            //             logger.log('verbose', '[post /login] Added user to database')
-
-                            //             // Find the user in which was just created to get the id of the user
-                            //             database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
-                            //                 try {
-                            //                     if (err) throw err
-
-                            //                     classInformation.users[userData.username] = new Student(
-                            //                         userData.username,
-                            //                         userData.id,
-                            //                         userData.permissions,
-                            //                         userData.API,
-                            //                         [],
-                            //                         [],
-                            //                         userData.tags,
-                            //                         userData.displayName,
-                            //                         false
-                            //                     )
-
-                            //                     // Add the user to the session in order to transfer data between each page
-                            //                     req.session.userId = userData.id
-                            //                     req.session.username = userData.username
-                            //                     req.session.classId = null
-                            //                     req.session.displayName = userData.displayName;
-                            //                     req.session.email = userData.email;
-
-                            //                     logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
-                            //                     logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
-
-                            //                     managerUpdate()
-
-                            //                     // Send an email to verify the user
-                            //                     const location = process.env.LOCATION;
-                            //                     const html = `
-                            //                     <h1>Verify your email</h1>
-                            //                     <p>Click the link below to verify your email address with Formbar</p>
-                            //                         <a href='${location}/verification?code=${userData.secret}'>Verify Email</a>
-                            //                     `;
-                            //                     sendMail(userData.email, 'Formbar Verification', html);
-
-                            //                     res.redirect('/')
-                            //                 } catch (err) {
-                            //                     logger.log('error', err.stack);
-                            //                     res.render('pages/message', {
-                            //                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                            //                         title: 'Error'
-                            //                     })
-                            //                 }
-                            //             })
-                            //         } catch (err) {
-                            //             // Handle the same email being used for multiple accounts
-                            //             if (err.code === 'SQLITE_CONSTRAINT' && err.message.includes('UNIQUE constraint failed: users.email')) {
-                            //                 logger.log('verbose', '[post /login] Email already exists')
-                            //                 res.render('pages/message', {
-                            //                     message: 'A user with that email already exists.',
-                            //                     title: 'Login'
-                            //                 });
-
-                            //                 return;
-                            //             }
-
-                            //             // Handle other errors
-                            //             logger.log('error', err.stack);
-                            //             res.render('pages/message', {
-                            //                 message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                            //                 title: 'Error'
-                            //             })
-                            //         }
-                            //     }
-                            // )
                         } catch (err) {
                             logger.log('error', err.stack);
                             res.render('pages/message', {
