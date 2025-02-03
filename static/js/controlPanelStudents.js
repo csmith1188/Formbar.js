@@ -15,6 +15,11 @@ function buildStudent(room, studentData) {
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = document.createElement("details");
+        for (student of room.poll.studentBoxes) {
+            if (student == studentData.username) {
+                newStudent.open = true
+            }
+        }
         newStudent.classList.add("student");
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.displayName;
@@ -266,7 +271,11 @@ function buildStudent(room, studentData) {
 
         // Create a checkbox for the student
         let studentCheckbox = document.createElement("input");
-        // studentCheckbox.checked = true
+        for (student of room.poll.studentBoxes) {
+            if (student == studentData.username) {
+                studentCheckbox.checked = true
+            }
+        }
         studentCheckbox.type = "checkbox";
         studentCheckbox.id = "checkbox_" + studentData.username;
         studentCheckbox.name = "studentCheckbox";

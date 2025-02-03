@@ -10,6 +10,7 @@ const runningTimers = {};
 const rateLimits = {}
 const userSockets = {}
 let currentPoll = 0
+let excludedStudents = []
 
 // Socket update events
 const PASSIVE_SOCKETS = [
@@ -205,7 +206,7 @@ class SocketUpdates {
                     // Check if the student's checkbox was checked
                     if (classData.poll.studentBoxes.includes(student.username)) {
                         included = true;
-                    } else if (classData.poll.studentBoxes.length > 0) {
+                    } else {
                         excluded = true;
                     }
     
@@ -231,7 +232,7 @@ class SocketUpdates {
             totalResponses = totalStudentsIncluded.length
             if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
                 // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-                totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length;
+                totalResponders = totalLastResponses - totalStudentsExcluded.length;
             } else if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
@@ -252,13 +253,15 @@ class SocketUpdates {
                 }
             } else {
                 for (let value of Object.values(classData.students)) {
-                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
-                        totalResponses++;
+                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
+                        totalResponses--;
                     }
                 }
             }
+            totalResponses *= -1
 
             // Get rid of students whos permissions are teacher or above or guest
+            excludedStudents = totalStudentsExcluded
             classInformation.classrooms[classId].poll.allowedResponses = totalStudentsIncluded
             classInformation.classrooms[classId].poll.unallowedResponses = totalStudentsExcluded
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
@@ -291,6 +294,7 @@ class SocketUpdates {
                 { classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
                 classInformation.classrooms[classId].poll
             )
+
         } catch (err) {
             logger.log('error', err.stack);
         }

@@ -157,20 +157,24 @@
 								pollPromptDisplay.innerText = poll.prompt
 
 								// Creates all selectable answers and displays them to the user
-								for (let response of Object.values(poll.responses)) {
+								if (!poll.studentBoxes.includes(currentUser.username)) {
+									pollForm.innerHTML += `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
+								} else {
+									for (let response of Object.values(poll.responses)) {
+										pollForm.innerHTML += `
+											<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
+												<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
+												${response.answer}
+											</label>
+										`;
+									}
 									pollForm.innerHTML += `
-										<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
-											<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
-											${response.answer}
-										</label>
-									`;
+											<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
+												<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
+												remove
+											</label>
+										`
 								}
-								pollForm.innerHTML += `
-										<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
-											<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
-											remove
-										</label>
-									`
 
 								// let remove = document.querySelector('label:has(#remove)')
 								// console.log(remove)
