@@ -114,9 +114,6 @@
 						<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End Poll</button>
 						<br>
 						<button id='clearPoll' onclick='clearPollFunc()' hidden class='quickButton'>Clear Poll</button>
-						<br>
-						<button type='button' onclick='displayPreviousPolls()' class='quickButton'>View Previous
-							Polls</button>
 					</div>
 					<button onclick='clearPollFunc()'>Clear Poll</button>
 					<button onclick='endPollFunc()'>End Poll</button>
@@ -156,12 +153,6 @@
 				</div>
 				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
-				<div id='previousPolls' class='tabContent' data-tab-group='polls'>
-					<button id='toPolls' type='button' onclick=`changeTab('mainPolls', 'polls')`>Return to
-						polls</button>
-					<button id='toPollHistory' type='button' onclick='displayPoll()'>Return To Selection</button>
-					<div id='previousPollButtons'></div>
-				</div>
 				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
 					<form method='post' enctype='multipart/form-data'>
@@ -191,12 +182,6 @@
 				<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
 				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='previousPolls' class='tabContent' data-tab-group='polls'>
-					<button id='toPolls' type='button' onclick=`changeTab('mainPolls', 'polls')`>Return to
-						polls</button>
-					<button id='toPollHistory' type='button' onclick='displayPoll()'>Return To Selection</button>
-					<div id='previousPollButtons'></div>
 				</div>
 				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
@@ -377,8 +362,6 @@
 			let pluginsDiv = document.getElementById('installedPlugins');
 			let pluginsMenu = document.querySelector('.tabContent#plugins');
 			let pluginsForm = document.getElementById('pluginsForm');
-			let previousPolls = document.getElementById('previousPolls')
-			let previousPollButtons = document.getElementById('previousPollButtons')
 			let toPollsButton = document.getElementById('toPolls')
 			let toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
