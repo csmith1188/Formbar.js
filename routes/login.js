@@ -140,6 +140,7 @@ module.exports = {
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
+                            req.session.email = userData.email;
 
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
@@ -243,6 +244,7 @@ module.exports = {
                                                 req.session.username = userData.username
                                                 req.session.classId = null
                                                 req.session.displayName = userData.displayName;
+                                                req.session.email = userData.email;
 
                                                 logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                                 logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)

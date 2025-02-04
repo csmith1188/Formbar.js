@@ -1,10 +1,10 @@
-const { isAuthenticated } = require('../modules/authentication');
+const { isVerified } = require('../modules/authentication');
 const { logger } = require('../modules/logger');
 
 module.exports = {
     run(app) {
         // Party Time.
-        app.get('/party',isAuthenticated, (req, res) => {
+        app.get('/party', isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /party] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 res.render('pages/party', {
