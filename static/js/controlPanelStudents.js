@@ -283,6 +283,12 @@ function buildStudent(room, studentData) {
             event.preventDefault();
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
         })
+        console.log()
+        studentCheckbox.addEventListener("click", function () {
+            if (room.students[studentData.username].break) {
+                studentCheckbox.checked = false
+            }
+        });
 
         newStudent.appendChild(studentCheckbox)
         studentTags.appendChild(closeButton)

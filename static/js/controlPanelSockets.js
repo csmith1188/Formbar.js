@@ -394,7 +394,7 @@ socket.on('customPollUpdate', (
 				studentElement = document.getElementById(`student-${student.username}`)
 				let checkbox = studentElement.querySelector('input[type="checkbox"]')
 				
-				if (tempStudTags == tempTags || tempTags == "") {
+				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
 					studentElement.open = true
 					checkbox.checked = true
 				} else {
