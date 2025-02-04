@@ -16,11 +16,17 @@ socket.on('cpUpdate', (newClassroom) => {
 				currentTags.push(tag)
 			}
 		}
-		for (let res of student.pollRes.buttonRes.split(",")) {
-			if (currentTags.includes(res) || res == "" || res == "remove") {
-				continue
+		if (student.pollRes.buttonRes != null && student.pollRes.buttonRes != "") {
+			let tempArr = []
+			if (typeof student.pollRes.buttonRes == 'object') tempArr = student.pollRes.buttonRes
+			else tempArr = student.pollRes.buttonRes.split(",")
+
+			for (let res of tempArr) {
+				if (currentTags.includes(res) || res == "" || res == "remove") {
+					continue
+				}
+				currentTags.push(res)
 			}
-			currentTags.push(res)
 		}
 
 		if (students.length > 0) {
