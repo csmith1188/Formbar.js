@@ -37,12 +37,16 @@ class Classroom {
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || [];
+		this.tagNames = tags || ["Offline"];
 		this.timer = {
 			startTime: 0,
 			timeLeft: 0,
 			active: false,
 			sound: false
+		}
+
+		if (!this.tagNames.includes("Offline")) {
+			this.tagNames.push("Offline");
 		}
 	}
 }
