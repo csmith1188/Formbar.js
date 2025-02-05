@@ -6,13 +6,13 @@ const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
 const jwt = require('jsonwebtoken');
 
-function generateAccessToken(userData, classCode, refreshToken) {
+function generateAccessToken(userData, classId, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
         username: userData.username,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
-        class: classCode,
+        class: classId,
         refreshToken
     }, userData.secret, { expiresIn: '30m' });
 
@@ -58,7 +58,7 @@ module.exports = {
                             res.redirect(`/oauth?redirectURL=${redirectURL}`);
                             return;
                         };
-
+                        
                         database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
                             if (err) throw err;
                             if (userData) {
@@ -70,7 +70,7 @@ module.exports = {
                                 }
                                 
                                 // Generate new access token
-                                const accessToken = generateAccessToken(userData, classCode, refreshTokenData.refresh_token);
+                                const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
                                 res.redirect(`${redirectURL}?token=${accessToken}`);
                             } else {
                                 // Invalid user
@@ -173,7 +173,7 @@ module.exports = {
                             };
 
                             // Generate access token
-                            const accessToken = generateAccessToken(userData, classCode, refreshToken);
+                            const accessToken = generateAccessToken(userData, classId, refreshToken);
                                                 
                             logger.log('verbose', '[post /oauth] Successfully Logged in with oauth');
                             res.redirect(`${redirectURL}?token=${accessToken}`);

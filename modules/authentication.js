@@ -1,7 +1,7 @@
 const { logger } = require("./logger")
 const { classInformation } = require("./class")
 const { logNumbers, settings } = require("./config")
-const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS } = require("./permissions")
+const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions")
 const fs = require('fs');
 
 const whitelistedIps = {}
@@ -40,25 +40,21 @@ function isAuthenticated(req, res, next) {
 }
 
 // Create a function to check if the user's email is verified
-let isVerified = (req, res, next) => {
-	// Try...
+function isVerified(req, res, next) {
 	try {
 		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
+		
 		// If the user is verified or there is no .env file set up...
-		if (req.session.verified || !fs.existsSync('.env')) {
+		if (req.session.verified || !fs.existsSync('.env') || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
 			// Continue
 			next()
-		// Else...
 		} else {
 			// Redirect to the verification page
 			res.redirect('/verification')
 		};
-	// Catch any errors that may arise
 	} catch (err) {
-		// Log the error through the logger
 		logger.log('error', err.stack);
-		// Render the message page with the error message
 		res.render('pages/message', {
 			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
@@ -91,7 +87,6 @@ function isLoggedIn(req, res, next) {
 function permCheck(req, res, next) {
 	try {
 		const username = req.session.username
-		const classId = req.session.classId
 
 		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
 

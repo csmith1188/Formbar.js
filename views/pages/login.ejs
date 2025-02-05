@@ -1,149 +1,176 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/sockets') %>
-<!-- ^^ This means add this file into the contents of the header page -->
-<!-- This is where the title, top buttons, and stylesheet is located -->
+    <!-- ^^ This means add this file into the contents of the header page -->
+    <!-- This is where the title, top buttons, and stylesheet is located -->
+    <body id="colorContent">
+        <%- include('../partials/formbar_header') %>
+            <div id="content" class="contentBox">
+                <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log
+                    in</button>
+                <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New
+                    account</button>
+                <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
+                <br><br>
+                <form id="login" action="login" method="post" style="margin-bottom: 16px;">
+                    <!-- Carries over and submits the redirectURL specified by the user. -->
+                    <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
+                    <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
+                        autocomplete="off" pattern="[a-zA-Z0-9_]+" minlength="5" maxlength="20"
+                        title='Username must be 5-20 characters and contain only letters, numbers, and underscores'
+                        required>
+                    <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
+                    <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password"
+                        value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\" ~?/\|\\]+"
+                        title='Password must be 5-20 characters and contain only letters, numbers, and certain special characters'
+                        minlength="5" maxlength="20" required>
+                    <input type="text" id="displayNameBox" name="displayName" class="loginBox"
+                        placeholder="Display Name" value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20"
+                        title='Display name must be 5-20 characters and contain only letters, numbers, and underscores'
+                        required>
+                    <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
+                    <input type="hidden" id="loginTypeBox" name="loginType" value="login">
+                    <input type="hidden" id="userTypeBox" name="userType" value="user">
+                    <br>
+                    <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in"
+                        onsubmit="return false;">
+                    <br>
+                    Or
+                    <br>
+                </form>
 
-<body id="colorContent">
-    <%- include('../partials/formbar_header') %>
-    <div id="content" class="contentBox">
-        <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log in</button>
-        <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New account</button>
-        <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
-        <br><br>
-        <form id="login" action="login" method="post" style="margin-bottom: 16px;">
-            <!-- Carries over and submits the redirectURL specified by the user. -->
-            <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
-            <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
-                autocomplete="off" pattern="[a-zA-Z0-9_]+" minlength="5" maxlength="20" required>
-            <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
-            <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password" value=""
-                pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]+" minlength="5" maxlength="20" required>
-            <input type="text" id="displayNameBox" name="displayName" class="loginBox" placeholder="Display Name"
-                value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20" required>
-            <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
-            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
-                *Username may only contain: A-Z, a-z, 0-9, and _. 5-20 characters
-            </p>
-            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
-                *Display name may only contain: A-Z, a-z, 0-9, _, and spaces. 5-20 characters
-            </p>
-            <p style="font-size: small; font-weight: bold; color: black;" id="passwordInfo">
-                *Passwords may only contain: a-z, A-Z, 0-9, and special symbols. 5-20 characters.
-            </p>
-            <input type="hidden" id="loginTypeBox" name="loginType" value="login">
-            <input type="hidden" id="userTypeBox" name="userType" value="user">
-            <br><br>
-            <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in"
-                onsubmit="return false;">
-        </form>
-    </div>
-</body>
+                <button class="gsi-material-button" onclick="loginWithGoogle()">
+                    <div class="gsi-material-button-state"></div>
+                    <div class="gsi-material-button-content-wrapper">
+                        <div class="gsi-material-button-icon">
+                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"
+                                xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
+                                <path fill="#EA4335"
+                                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
+                                </path>
+                                <path fill="#4285F4"
+                                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z">
+                                </path>
+                                <path fill="#FBBC05"
+                                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z">
+                                </path>
+                                <path fill="#34A853"
+                                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
+                                </path>
+                                <path fill="none" d="M0 0h48v48H0z"></path>
+                            </svg>
+                        </div>
+                        <span class="gsi-material-button-contents">Sign in with Google</span>
+                        <span style="display: none;">Sign in with Google</span>
+                    </div>
+                </button>
+            </div>
+    </body>
 
-<%- include('../partials/footer_content') %>
-<script type="text/javascript">
-    // Prevent submission if a field is blank
-    const form = document.getElementById('login');
-    const redirect = document.getElementById('redirect');
-    let loginButton = document.getElementById('logInButton');
-    let newAccountButton = document.getElementById('newAccountButton');
-    let guestButton = document.getElementById('guestButton');
-    let usernameBox = document.getElementById('usernameBox');
-    let emailBox = document.getElementById('emailBox');
-    let passwordBox = document.getElementById('passwordBox');
-    let displayNameBox = document.getElementById('displayNameBox');
-    let loginTypeBox = document.getElementById('loginTypeBox');
-    let passwordInfo = document.getElementById('passwordInfo');
-    let forgotPassword = document.getElementById('forgotPassword');
-    let submitButton = document.getElementById('submitButton');
+    <%- include('../partials/footer_content') %>
+    <script type="text/javascript">
+        // Prevent submission if a field is blank
+        const form = document.getElementById('login');
+        const redirect = document.getElementById('redirect');
+        const loginButton = document.getElementById('logInButton');
+        const newAccountButton = document.getElementById('newAccountButton');
+        const guestButton = document.getElementById('guestButton');
+        const usernameBox = document.getElementById('usernameBox');
+        const emailBox = document.getElementById('emailBox');
+        const passwordBox = document.getElementById('passwordBox');
+        const displayNameBox = document.getElementById('displayNameBox');
+        const loginTypeBox = document.getElementById('loginTypeBox');
+        const forgotPassword = document.getElementById('forgotPassword');
+        const submitButton = document.getElementById('submitButton');
 
-    // If a redirect value is given...
-    if (redirect.value) {
-        // Change the form action to 'oauth' and hide the buttons to change the login type
-        form.action = 'oauth';
-        loginButton.style.display = 'none';
-        newAccountButton.style.display = 'none';
-        guestButton.style.display = 'none';
-    }
-
-    function changeloginType(el) {
-        [loginButton, newAccountButton, guestButton].forEach(button => 
-            (button === el) ? button.classList.add('pressed') : button.classList.remove('pressed')
-        );
-
-        // Hide or show inputs based on the selected login type
-        switch (el) {
-            case loginButton:
-                passwordBox.classList.remove('hidden');
-                passwordBox.required = true;
-                passwordInfo.classList.remove('hidden');
-                forgotPassword.classList.remove('hidden');
-                displayNameBox.classList.add('hidden');
-                usernameBox.classList.remove('hidden');
-                emailBox.classList.add('hidden');
-                emailBox.required = false;
-                displayNameBox.required = false;
-                submitButton.value = 'Log in';
-                loginTypeBox.value = 'login';
-                break;
-            case newAccountButton:
-                passwordBox.classList.remove('hidden');
-                passwordBox.required = true;
-                passwordInfo.classList.remove('hidden');
-                forgotPassword.classList.add('hidden');
-                displayNameBox.classList.remove('hidden');
-                usernameBox.classList.remove('hidden');
-                emailBox.classList.remove('hidden');
-                emailBox.required = true;
-                displayNameBox.required = true;
-                submitButton.value = 'Create account';
-                loginTypeBox.value = 'new';
-                break;
-            case guestButton:
-                usernameBox.value = null;
-                usernameBox.classList.add('hidden');
-                passwordBox.value = null;
-                passwordBox.classList.add('hidden');
-                passwordBox.required = false;
-                passwordInfo.classList.add('hidden');
-                forgotPassword.classList.add('hidden');
-                displayNameBox.classList.remove('hidden');
-                emailBox.classList.add('hidden');
-                emailBox.required = false;
-                displayNameBox.required = true;
-                submitButton.value = 'Go';
-                loginTypeBox.value = 'guest';
-                break;
+        // If a redirect value is given...
+        if (redirect.value) {
+            // Change the form action to 'oauth' and hide the buttons to change the login type
+            form.action = 'oauth';
+            loginButton.style.display = 'none';
+            newAccountButton.style.display = 'none';
+            guestButton.style.display = 'none';
         }
 
-        // Set if the inputs are required based on if they are visible
-        usernameBox.required = !usernameBox.classList.contains('hidden');
-        emailBox.required = !emailBox.classList.contains('hidden');
-        displayNameBox.required = !displayNameBox.classList.contains('hidden');
-        passwordBox.required = !passwordBox.classList.contains('hidden');
+        function changeloginType(el) {
+            [loginButton, newAccountButton, guestButton].forEach(button =>
+                (button === el) ? button.classList.add('pressed') : button.classList.remove('pressed')
+            );
 
-        // Focus on the first visible input
-        if (!usernameBox.classList.contains('hidden')) {
-            usernameBox.focus();
-        } else if (!displayNameBox.classList.contains('hidden')) {
-            displayNameBox.focus();
+            // Hide or show inputs based on the selected login type
+            switch (el) {
+                case loginButton:
+                    passwordBox.classList.remove('hidden');
+                    passwordBox.required = true;
+                    forgotPassword.classList.remove('hidden');
+                    displayNameBox.classList.add('hidden');
+                    usernameBox.classList.remove('hidden');
+                    emailBox.classList.add('hidden');
+                    emailBox.required = false;
+                    displayNameBox.required = false;
+                    submitButton.value = 'Log in';
+                    loginTypeBox.value = 'login';
+                    break;
+                case newAccountButton:
+                    passwordBox.classList.remove('hidden');
+                    passwordBox.required = true;
+                    forgotPassword.classList.add('hidden');
+                    displayNameBox.classList.remove('hidden');
+                    usernameBox.classList.remove('hidden');
+                    emailBox.classList.remove('hidden');
+                    emailBox.required = true;
+                    displayNameBox.required = true;
+                    submitButton.value = 'Create account';
+                    loginTypeBox.value = 'new';
+                    break;
+                case guestButton:
+                    usernameBox.value = null;
+                    usernameBox.classList.add('hidden');
+                    passwordBox.value = null;
+                    passwordBox.classList.add('hidden');
+                    passwordBox.required = false;
+                    forgotPassword.classList.add('hidden');
+                    displayNameBox.classList.remove('hidden');
+                    emailBox.classList.add('hidden');
+                    emailBox.required = false;
+                    displayNameBox.required = true;
+                    submitButton.value = 'Go';
+                    loginTypeBox.value = 'guest';
+                    break;
+            }
+            // Set if the inputs are required based on if they are visible
+            usernameBox.required = !usernameBox.classList.contains('hidden');
+            emailBox.required = !emailBox.classList.contains('hidden');
+            displayNameBox.required = !displayNameBox.classList.contains('hidden');
+            passwordBox.required = !passwordBox.classList.contains('hidden');
+
+            // Focus on the first visible input
+            if (!usernameBox.classList.contains('hidden')) {
+                usernameBox.focus();
+            } else if (!displayNameBox.classList.contains('hidden')) {
+                displayNameBox.focus();
+            }
+
+            checkIfBlank();
         }
 
-        checkIfBlank();
-    }
-
-    function checkIfBlank() {
-        if ((usernameBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value || loginTypeBox.value === 'login')) {
-            submitButton.classList.remove('unselectable');
-            submitButton.onsubmit = () => true;
-        } else {
-            submitButton.classList.add('unselectable');
-            submitButton.onsubmit = () => false;
+        function checkIfBlank() {
+            if ((usernameBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value.trim() !== '' || loginTypeBox.value === 'login')) {
+                submitButton.classList.remove('unselectable');
+                submitButton.onsubmit = () => true;
+            } else {
+                submitButton.classList.add('unselectable');
+                submitButton.onsubmit = () => false;
+            }
         }
-    }
 
-    usernameBox.oninput = checkIfBlank;
-    passwordBox.oninput = checkIfBlank;
-    displayNameBox.oninput = checkIfBlank;
+        function loginWithGoogle() {
+            window.location.href = '/auth/google';
+        }
 
-    changeloginType(loginButton);
-</script>
+        usernameBox.oninput = checkIfBlank;
+        passwordBox.oninput = checkIfBlank;
+        displayNameBox.oninput = checkIfBlank;
+
+        changeloginType(loginButton);
+    </script>
+</html>
