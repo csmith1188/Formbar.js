@@ -331,8 +331,8 @@ socket.on('customPollUpdate', (
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
 
-			studElem = document.querySelector(`details[id="student-${student.username}"]`)
-			studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
 			if (studCheck.checked == switchState) {
 				studCheck.click()
@@ -345,6 +345,19 @@ socket.on('customPollUpdate', (
 		selectPollDiv.children[0].replaceWith(switchAll);
 	} else {
 		selectPollDiv.appendChild(switchAll);
+	}
+
+	for (let student of Object.values(students)) {
+		if (student.permissions >= TEACHER_PERMISSIONS) continue
+
+		let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+
+		studCheck.onclick = () => {
+			let votingRight = studCheck.checked
+			socket.emit('votingRightChange', student.username, votingRight)
+			socket.emit('vbUpdate')
+		}
 	}
 
 	// Creation of tag buttons in the select box
@@ -393,7 +406,7 @@ socket.on('customPollUpdate', (
 
 				studentElement = document.getElementById(`student-${student.username}`)
 				let checkbox = studentElement.querySelector('input[type="checkbox"]')
-				
+
 				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
 					studentElement.open = true
 					checkbox.checked = true
@@ -401,9 +414,11 @@ socket.on('customPollUpdate', (
 					studentElement.open = false
 					checkbox.checked = false
 				}
+
+				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)
 			}
 		};
-		
+
 		if (selectPollDiv.children[i]) {
 			selectPollDiv.children[i].replaceWith(tagPoll);
 		} else {

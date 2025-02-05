@@ -282,8 +282,7 @@ function buildStudent(room, studentData) {
         studentCheckbox.addEventListener("contextmenu", function () {
             event.preventDefault();
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
-        })
-        console.log()
+        });
         studentCheckbox.addEventListener("click", function () {
             if (room.students[studentData.username].break) {
                 studentCheckbox.checked = false

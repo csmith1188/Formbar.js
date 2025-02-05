@@ -258,6 +258,14 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
+					socket.on('votingRightChange', (votingRight) => {
+						if (votingRight) {
+							updatePage()
+						} else {
+							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
+						}
+					})
+
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {
 						if (deepObjectEqual(poll, newPoll)) return

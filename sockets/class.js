@@ -33,6 +33,14 @@ module.exports = {
             }
         });
 
+        socket.on('votingRightChange', (username, votingRight) => {
+            try {
+                userSockets[username].emit('votingRightChange', votingRight);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
         // Leaves a classroom session
         // User is still associated with the class
         socket.on('leaveClass', () => {
