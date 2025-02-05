@@ -179,7 +179,7 @@ class SocketUpdates {
                 totalStudentsIncluded = totalLastResponses
             } else {
                 for (let student of Object.values(classData.students)) {
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || !student.activeClasses.includes(classId)) continue;
+                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS) continue;
                     let included = false;
                     let excluded = false;
 
@@ -217,9 +217,17 @@ class SocketUpdates {
                     if (classData.poll.studentIndeterminate.includes(student.username)) {
                         excluded = true;
                     }
+
+                    // Prevent students from being included if they are offline
+                    if (student.tags.includes('Offline')) {
+                        excluded = true;
+                        included = false;
+                    }
     
                     // Update the included and excluded lists
-                    if (excluded) totalStudentsExcluded.push(student.username);
+                    if (excluded) {
+                        totalStudentsExcluded.push(student.username);
+                    }
                     if (included) totalStudentsIncluded.push(student.username);
                 }
                 totalStudentsIncluded = new Set(totalStudentsIncluded)
@@ -466,7 +474,7 @@ class SocketUpdates {
     // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
     classKickUser(username, classId = this.socket.request.session.classId, exitClass = true) {
         try {
-            logger.log('info', `[classKickUser] username=(${username}) classId=(${classId})`);
+            logger.log('info', `[classKickUser] username=(${username}) classId=(${classId}) exitClass=${exitClass}`);
 
             // Remove user from class session
             classInformation.users[username].classPermissions = null;
@@ -516,15 +524,11 @@ class SocketUpdates {
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId
 
-        // If the user is in a class, then get the class name
+        // If the user is in a class, then get the class name and mark the user as inactive
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
-        }
-
-        // Delete the user from the users object
-        if (classInformation.users[username]) {
-            delete classInformation.users[username];
+            classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
         }
 
         this.socket.request.session.destroy((err) => {
@@ -537,8 +541,9 @@ class SocketUpdates {
 
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
-                    // Remove user from class
-                    delete classInformation.classrooms[classId].students[username]
+                    // Remove user from being active in the class
+                    classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                    classInformation.classrooms[classId].students[username].tags = "Offline"
                     
                     // Update class permissions and virtual bar
                     this.classPermissionUpdate(classId)

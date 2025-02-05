@@ -78,6 +78,8 @@ async function joinClass(req, code) {
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classInformation.classrooms[classroom.id].students[username].tags = classInformation.classrooms[classroom.id].students[username].tags.replace('Offline', '')
+			classInformation.users[username].tags = classInformation.users[username].tags.replace('Offline', '')
 			classInformation.users[username].activeClasses.push(classroom.id)
 			advancedEmitToClass('joinSound', classroom.id, { api: true })
 
@@ -106,7 +108,8 @@ async function joinClass(req, code) {
 
 			let currentUser = classInformation.users[username]
 			currentUser.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
-
+			currentUser.tags = currentUser.tags.replace('Offline', '')
+			
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[username] = currentUser
 			classInformation.users[username].activeClasses.push(classroom.id)

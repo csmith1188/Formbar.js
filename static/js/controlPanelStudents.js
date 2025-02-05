@@ -26,6 +26,13 @@ function buildStudent(room, studentData) {
                 studentElement.style.color = room.poll.responses[eachResponse].color
             }
         }
+        
+        if (studentData.tags.includes("Offline")) {
+            newStudent.style.opacity = 0.35;
+        } else {
+            newStudent.style.opacity = 1;
+        }
+
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
