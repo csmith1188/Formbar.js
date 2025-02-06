@@ -8,11 +8,11 @@ socket.on('cpUpdate', (newClassroom) => {
 		student.pollRes.time = new Date(student.pollRes.time)
 		let studentTags = student.tags
 		if (student.tags == null || student.tags == "") {
-			continue
+			studentTags = ""
 		}
 		studentTags = studentTags.split(",")
 		for (let tag of studentTags) {
-			if (!currentTags.includes(tag)) {
+			if (!currentTags.includes(tag) && tag != "") {
 				currentTags.push(tag)
 			}
 		}
@@ -319,12 +319,20 @@ socket.on('customPollUpdate', (
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
 	switchAll.onclick = () => {
-		let switchState = document.querySelector(`button[name="${currentTags[0]}"]`).className
-		for (let i = 1; i <= currentTags.length; i++) {
-			tagPoll = document.querySelector(`button[name="${currentTags[i - 1]}"]`)
-			if (tagPoll.className == switchState) {
-				tagPoll.click()
+		let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
+
+		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) elem.click()
+		for (let student of Object.values(students)) {
+			if (student.permissions >= TEACHER_PERMISSIONS) continue
+
+			studElem = document.querySelector(`details[id="student-${student.username}"]`)
+			studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+
+			if (studCheck.checked == switchState) {
+				studCheck.click()
 			}
+			if (studCheck.checked) studElem.open = true
+			else studElem.open = false
 		}
 	};
 	if (selectPollDiv.children[0]) {
@@ -339,6 +347,8 @@ socket.on('customPollUpdate', (
 		tagPoll.className = 'tagPoll';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
+
+		// With every click creates an array with all clicked tags to compare with users
 		tagPoll.onclick = () => {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
@@ -358,6 +368,9 @@ socket.on('customPollUpdate', (
 			for (let student of students) {
 				// Combines the students tags and their poll responses
 				let tempStudTags = []
+				if (student.tags == null) {
+					continue
+				}
 				for (let tag of student.tags.split(",")) {
 					if (tag == "") {
 						continue
@@ -374,7 +387,7 @@ socket.on('customPollUpdate', (
 
 				studentElement = document.getElementById(`student-${student.username}`)
 				let checkbox = studentElement.querySelector('input[type="checkbox"]')
-				// Comparer
+				
 				if (tempStudTags == tempTags || tempTags == "") {
 					studentElement.open = true
 					checkbox.checked = true
@@ -384,6 +397,7 @@ socket.on('customPollUpdate', (
 				}
 			}
 		};
+		
 		if (selectPollDiv.children[i]) {
 			selectPollDiv.children[i].replaceWith(tagPoll);
 		} else {

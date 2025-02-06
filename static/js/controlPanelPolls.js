@@ -98,83 +98,6 @@ function camelCaseToNormal(str) {
 	return result
 }
 
-//displays the previous polls page
-function displayPreviousPolls() {
-	toPollHistoryButton.style.display = 'none'
-	changeTab('previousPolls', 'polls')
-}
-
-//makes the previous polls page
-function buildPreviousPolls(data) {
-	previousPollButtons.innerHTML = ''
-	let br = document.createElement('br')
-
-	for (let pollIndex = data.length - 1; pollIndex >= 0; pollIndex--) {
-		let pollButton = document.createElement('button')
-		pollButton.type = 'button'
-		pollButton.className = 'quickButton'
-		pollButton.textContent = data[pollIndex].date + ' ' + data[pollIndex].data.prompt
-		pollButton.onclick = (event) => {
-			event.preventDefault()
-			displayPoll(data[pollIndex].id)
-		}
-		previousPollButtons.appendChild(pollButton)
-
-		previousPollButtons.appendChild(br.cloneNode(true))
-
-
-		let previousPollDiv = document.createElement('div')
-		previousPollDiv.className = 'previousPoll'
-		previousPollDiv.id = data[pollIndex].id
-		previousPollDiv.style.display = 'none'
-
-		let previousPollPrompt = document.createElement('p')
-		previousPollPrompt.textContent = `Prompt: ${data[pollIndex].data.prompt}`
-		previousPollDiv.appendChild(previousPollPrompt)
-
-		for (let userIndex = 0; userIndex < data[pollIndex].data.names.length; userIndex++) {
-			let username = document.createElement('p')
-			username.textContent = `Name: ${data[pollIndex].data.names[userIndex]}`
-			previousPollDiv.appendChild(username)
-
-			let letter = document.createElement('p')
-			letter.textContent = `Letter: ${data[pollIndex].data.letter[userIndex]}`
-			previousPollDiv.appendChild(letter)
-
-			let text = document.createElement('p')
-			text.textContent = `Text: ${data[pollIndex].data.text[userIndex]}`
-			previousPollDiv.appendChild(text)
-		}
-		previousPolls.appendChild(previousPollDiv)
-	}
-}
-
-function displayPoll(id) {
-	if (id) {
-		let previousPollDivs = document.getElementsByClassName('previousPoll')
-
-		previousPollButtons.style.display = 'none'
-		toPollsButton.style.display = 'none'
-		toPollHistoryButton.style.display = ''
-
-		for (let pollDiv of previousPollDivs) {
-			if (pollDiv.id == id)
-				pollDiv.style.display = 'block'
-			else
-				pollDiv.style.display = 'none'
-		}
-	} else {
-		let previousPollDivs = document.getElementsByClassName('previousPoll')
-		previousPollButtons.style.display = 'block'
-		toPollsButton.style.display = ''
-		toPollHistoryButton.style.display = 'none'
-
-		for (let pollDiv of previousPollDivs) {
-			pollDiv.style.display = 'none'
-		}
-	}
-}
-
 function saveColor(index) {
 	let colorPickerButton = document.getElementsByClassName('colorPickerButton')[index]
 	let oldColor = document.getElementsByClassName('oldColor')[index]
@@ -807,7 +730,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 
 // close all color pickers if you press escape
 document.addEventListener('keydown', function (event) {
-	if (event.key == 'Escape') {	
+	if (event.key == 'Escape') {
 		let colorPickersDiv = document.getElementsByClassName('colorPicker')
 		for (let i = 0; i < colorPickersDiv.length; i++) {
 			colorPickers[i].color.set(pollResponses[i].color)
