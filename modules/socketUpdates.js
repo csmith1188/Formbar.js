@@ -1,7 +1,7 @@
 const { whitelistedIps, blacklistedIps } = require("./authentication");
-const { classInformation, getClassIDFromCode } = require("./class");
+const { classInformation } = require("./class");
 const { settings } = require("./config");
-const { database, getAll, runQuery } = require("./database");
+const { database, dbGetAll } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
@@ -734,13 +734,13 @@ class SocketUpdates {
 
     async deleteCustomPolls(userId) {
         try {
-            const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner=?', userId)
+            const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
             if (customPolls.length == 0) return
     
-            await runQuery('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
+            await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
     
             for (let customPoll of customPolls) {
-                await runQuery('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
+                await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
             }
         } catch (err) {
             throw err
@@ -749,10 +749,10 @@ class SocketUpdates {
     
     async deleteClassrooms(userId) {
         try {
-            const classrooms = await getAll('SELECT * FROM classroom WHERE owner=?', userId)
+            const classrooms = await dbGetAll('SELECT * FROM classroom WHERE owner=?', userId)
             if (classrooms.length == 0) return
 
-            await runQuery('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
+            await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
 
             for (let classroom of classrooms) {
                 if (classInformation.classrooms[classId]) {
@@ -760,10 +760,10 @@ class SocketUpdates {
                 }
 
                 await Promise.all([
-                    runQuery('DELETE FROM classusers WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM class_polls WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM plugins WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM lessons WHERE class=?', classroom.id)
+                    dbRun('DELETE FROM classusers WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM class_polls WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM plugins WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM lessons WHERE class=?', classroom.id)
                 ])
             }
         } catch (err) {
