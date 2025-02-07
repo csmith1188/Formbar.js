@@ -484,7 +484,10 @@ class SocketUpdates {
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
             classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-            setClassOfApiSockets(classInformation.users[username].API, null);
+            setClassOfApiSockets(classInformation.users[username].API, null);            
+            
+            // Mark the user as offline in the class
+            classInformation.classrooms[classId].students[username].tags = "Offline";
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
             // If exitClass is true, then remove the user from the classroom entirely

@@ -112,11 +112,6 @@ async function joinClass(req, code) {
 			const currentUser = classInformation.users[username]
 			currentUser.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
 
-			// If the user is marked as offline, then remove the tag
-			if (currentUser.tags.includes("Offline")) {
-				currentUser.tags = currentUser.tags.replace('Offline', '')
-			}
-			
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[username] = currentUser
 			classInformation.users[username].activeClasses.push(classroom.id)
