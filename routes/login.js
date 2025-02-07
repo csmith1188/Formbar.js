@@ -90,7 +90,7 @@ module.exports = {
                                         req.session.classId = null
                                         req.session.displayName = userData.displayName;
                                         req.session.email = userData.email;
-                                        req.session.verified
+                                        req.session.verified = 1
                     
                                         logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                         logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
