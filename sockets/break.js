@@ -17,22 +17,20 @@ module.exports = {
                     return;
                 }
 
-                logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[requestBreak] reason=(${reason})`)
+                logger.log('info', `[requestBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                logger.log('info', `[requestBreak] reason=(${reason})`);
 
-                const student = classInformation.classrooms[classId].students[username]
-                if (!student.break != reason) {
-                    advancedEmitToClass('breakSound', classId, { api: true })
-                }
+                // Get the student, play the break sound, and set the break reason
+                const student = classInformation.classrooms[classId].students[username];
+                advancedEmitToClass('breakSound', classId, { api: true });
+                student.break = reason;
 
-                student.break = reason
-                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[username])})`)
-
-                socketUpdates.classPermissionUpdate()
+                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[username])})`);
+                socketUpdates.classPermissionUpdate();
             } catch (err) {
-                logger.log('error', err.stack)
+                logger.log('error', err.stack);
             }
-        })
+        });
 
         // Approves the break ticket request
         socket.on('approveBreak', (breakApproval, username) => {
