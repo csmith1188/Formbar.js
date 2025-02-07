@@ -220,7 +220,7 @@ class SocketUpdates {
                     }
 
                     // Prevent students from being included if they are offline
-                    if (student.tags.includes('Offline')) {
+                    if (student.tags && student.tags.includes('Offline')) {
                         excluded = true;
                         included = false;
                     }

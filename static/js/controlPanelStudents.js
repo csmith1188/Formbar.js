@@ -36,7 +36,7 @@ function buildStudent(room, studentData) {
             }
         }
         
-        if (studentData.tags.includes("Offline")) {
+        if (studentData.tags && studentData.tags.includes("Offline")) {
             // Add offline icon
             let offlineDisplay = document.createElement('span')
             offlineDisplay.textContent = `💤`
