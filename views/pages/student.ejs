@@ -131,6 +131,7 @@
 					let poll = {}
 					let mode = ''
 					let quiz = {}
+					let votingRight = false
 
 					function unselectRemove(event) {
 						event.preventDefault();
@@ -143,7 +144,7 @@
 						} else {
 							multiAnswer = "radio"
 						}
-						if (mode == 'poll') {
+						if (mode == 'poll' && votingRight) {
 							pollContent.style.display = 'block'
 							quizContent.style.display = 'none'
 							lessonContent.style.display = 'none'
@@ -258,10 +259,13 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
-					socket.on('votingRightChange', (votingRight) => {
-						if (votingRight) {
+					socket.emit('votingRightChange')
+					socket.on('votingRightChange', (vr) => {
+						votingRight = vr
+						if (vr) {
 							updatePage()
 						} else {
+							socket.emit('pollResp', "remove")
 							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 						}
 					})

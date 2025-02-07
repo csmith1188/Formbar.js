@@ -355,8 +355,13 @@ socket.on('customPollUpdate', (
 
 		studCheck.onclick = () => {
 			let votingRight = studCheck.checked
-			socket.emit('votingRightChange', student.username, votingRight)
-			socket.emit('vbUpdate')
+			if (studCheck.checked) {
+				classroom.poll.studentBoxes.push(student.username)
+			} else {
+				classroom.poll.studentBoxes = classroom.poll.studentBoxes.filter((response) => response != student.username)
+			}
+			classroom.poll.studentBoxes = classroom.poll.studentBoxes.sort()
+			socket.emit('votingRightChange', student.username, votingRight, classroom.poll.studentBoxes)
 		}
 	}
 

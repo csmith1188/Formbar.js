@@ -74,7 +74,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	classPoll: MOD_PERMISSIONS,
 	timer: TEACHER_PERMISSIONS,
 	timerOn: TEACHER_PERMISSIONS,
-	votingRightChange: TEACHER_PERMISSIONS,
+	votingRightChange: STUDENT_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions

@@ -33,9 +33,15 @@ module.exports = {
             }
         });
 
-        socket.on('votingRightChange', (username, votingRight) => {
+        socket.on('votingRightChange', (username, votingRight, studBox) => {
             try {
-                userSockets[username].emit('votingRightChange', votingRight);
+                if (userSockets[username]) {
+                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
+                    userSockets[username].emit('votingRightChange', votingRight);
+                    socketUpdates.virtualBarUpdate(socket.request.session.classId);
+                } else if (!username) {
+                    socket.emit('votingRightChange', false);
+                }
             } catch (err) {
                 logger.log('error', err.stack)
             }
