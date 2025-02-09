@@ -1,5 +1,5 @@
 const { classInformation } = require("../modules/class")
-const { database } = require("../modules/database")
+const { database, dbRun } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
@@ -102,6 +102,14 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
+        });
+
+        socket.on("classSettingUpdate", (setting, value) => {
+            const classId = socket.request.session.classId;
+            
+            // Update the setting in the classInformation and in the database
+            classInformation.classrooms[classId].settings[setting] = value;
+            dbRun('UPDATE classroom SET settings=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
         });
 
         socket.on("isClassActive", () => {

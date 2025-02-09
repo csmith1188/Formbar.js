@@ -546,6 +546,11 @@ div.break {
 	border-color: #ff0000 !important;
 }
 
+.offline,
+.offline summary {
+	border-color: var(--dark-gray) !important;
+}
+
 #users details[id^="student"][open] {
 	padding-bottom: 2.5%;
 }

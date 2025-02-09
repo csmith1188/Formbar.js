@@ -69,6 +69,7 @@ module.exports = {
                             if (classInformation.classrooms[id].students[username]) continue;
 
                             const student = classStudents[username];
+                            student.tags = "Offline";
                             student.displayName = student.displayName || student.username;
                             classInformation.users[username] = student;
                             classInformation.classrooms[id].students[username] = student;

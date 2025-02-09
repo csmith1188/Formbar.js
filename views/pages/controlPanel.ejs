@@ -125,8 +125,8 @@
 				<button type='button' id='timerButton'>Start Timer</button>
 				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
 				<br><hr>
-				<button id="muteButton" onclick="muteSound()">Mute</button>
-				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
+				<button id="muteButton" onclick="toggleMuteSound()">Mute</button>
+				<button id="unmuteButton" onclick="toggleMuteSound()" hidden>Unmute</button>
 				<br>
 				<button id="kickUsers" onclick="kickAll()">
 					Kick All Students
@@ -467,20 +467,17 @@
 				}
 			}
 
-			let mute = false;
+			const settings = <%- settings %>;
+			let mute = settings.mute;
 
-			function muteSound() {
-				document.getElementById('muteButton').hidden = true;
-				document.getElementById('unmuteButton').hidden = false;
-				mute = true;
-			};
+			function toggleMuteSound() {
+				document.getElementById('muteButton').hidden = !mute;
+				document.getElementById('unmuteButton').hidden = mute;
+				mute = !mute;
 
-			function unmuteSound() {
-				document.getElementById('muteButton').hidden = false;
-				document.getElementById('unmuteButton').hidden = true;
-				mute = false;
-			};
-
+				// Send the new setting update to the server to save
+				socket.emit('classSettingUpdate', "mute", mute);
+			}
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>
 		<script src='/js/controlPanelSockets.js'></script>

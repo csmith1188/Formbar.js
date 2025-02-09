@@ -1,4 +1,3 @@
-const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const { decrypt } = require('./modules/crypto'); // Old crypto module
 const { hash } = require('../modules/crypto'); // New crypto module
