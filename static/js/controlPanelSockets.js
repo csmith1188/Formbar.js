@@ -46,7 +46,6 @@ socket.on('cpUpdate', (newClassroom) => {
 
 	classCode.textContent = `Class Code: ${newClassroom.key}`
 	classId.textContent = `Class ID: ${newClassroom.id}`
-	buildPreviousPolls(newClassroom.pollHistory)
 
 	document.getElementById('nextStep').onclick = () => {
 		doStep(classroom.currentStep)

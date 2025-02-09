@@ -559,30 +559,46 @@ let breakSoundPlayed = false;
 
 function helpSound() {
     if (!helpSoundPlayed) {
-            let helpPing = new Audio('/sfx/help.wav');
-            if (mute == false) {
-                helpPing.play();
-                helpSoundPlayed = true;
-            }
+        let helpPing = new Audio('/sfx/help.wav');
+        if (mute == false) {
+            helpPing.play();
+            helpSoundPlayed = true;
+        }
     }
 }
 
 function breaksounds() {
     if (!breakSoundPlayed) {
-            let breakPing = new Audio('/sfx/break.wav');
-            if (mute == false) {
-                breakPing.play();
-                breakSoundPlayed = true;
-            }
+        let breakPing = new Audio('/sfx/break.wav');
+        if (mute == false) {
+            breakPing.play();
+            breakSoundPlayed = true;
+        }
     }
 }
 
 function responseSound() {
-    document.addEventListener('click', function playResponseSound() {
-        let responsePing = new Audio('/sfx/TUTD.wav');
+    let responsePing = new Audio('/sfx/TUTD.wav');
+
+    // plays the sounds
+    function playResponseSound() {
         if (mute == false) {
             responsePing.play();
         }
-        document.removeEventListener('click', playResponseSound);
-    });
+    }
+
+    //creates a mutation observer to watch for changes in the DOM
+
+    const observer = new MutationObserver((mutationsList, observer) => {
+        for (let mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                playResponseSound()
+            }
+        }
+    })
+
+    //starts the observer and targets the node for configured mutations
+    const targetNode = document.body
+    const config = { childList: true }
+    observer.observe(targetNode, config)
 }
