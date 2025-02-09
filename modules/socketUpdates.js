@@ -254,9 +254,13 @@ class SocketUpdates {
             }
             
             if (classInformation.classrooms[classId].poll.multiRes) {
-                for (let student of Object.values(classData.students)) {
-                    if (student.pollRes.buttonRes.length > 1) {
-                        totalResponses += student.pollRes.buttonRes.length - 1
+                for (let value of Object.values(classData.students)) {
+                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
+                        if (value.pollRes.buttonRes.length == 2) {
+                            totalResponses -= value.pollRes.buttonRes.length - 1
+                        } else {
+                            totalResponses--;
+                        }
                     }
                 }
             } else {

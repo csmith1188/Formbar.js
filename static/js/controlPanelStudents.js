@@ -322,7 +322,12 @@ function buildStudent(room, studentData) {
         studentCheckbox.addEventListener("contextmenu", function () {
             event.preventDefault();
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
-        })
+        });
+        studentCheckbox.addEventListener("click", function () {
+            if (room.students[studentData.username].break) {
+                studentCheckbox.checked = false
+            }
+        });
 
         newStudent.appendChild(studentCheckbox)
         studentTags.appendChild(closeButton)
