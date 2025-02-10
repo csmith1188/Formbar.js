@@ -263,7 +263,17 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
-					socket.emit('votingRightChange')
+					
+					socket.emit('pollUpdate')
+					socket.on('pollUpdate', (newPoll) => {
+						if (deepObjectEqual(poll, newPoll)) return
+						
+						poll = newPoll
+						if (poll.status) socket.emit('votingRightChange', currentUser.username)
+						updatePage()
+					})
+					
+					if (poll.status) socket.emit('votingRightChange', currentUser.username)
 					socket.on('votingRightChange', (vr) => {
 						votingRight = vr
 						if (vr) {
@@ -272,14 +282,6 @@
 							socket.emit('pollResp', "remove")
 							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 						}
-					})
-
-					socket.emit('pollUpdate')
-					socket.on('pollUpdate', (newPoll) => {
-						if (deepObjectEqual(poll, newPoll)) return
-
-						poll = newPoll
-						updatePage()
 					})
 
 					socket.emit('modeUpdate')
