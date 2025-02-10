@@ -104,12 +104,19 @@ module.exports = {
             }
         });
 
-        socket.on("classSettingUpdate", (setting, value) => {
-            const classId = socket.request.session.classId;
+        const validSettings = ["mute"]
+        socket.on("setClassSetting", (setting, value) => {
+            try {
+                const classId = socket.request.session.classId;
+                if (!validSettings.includes(setting)) return;
+                
+                // Update the setting in the classInformation and in the database
+                classInformation.classrooms[classId].settings[setting] = value;
+                dbRun('UPDATE classroom SET settings=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
             
-            // Update the setting in the classInformation and in the database
-            classInformation.classrooms[classId].settings[setting] = value;
-            dbRun('UPDATE classroom SET settings=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
         });
 
         socket.on("isClassActive", () => {
