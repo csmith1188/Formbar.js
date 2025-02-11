@@ -4,7 +4,7 @@ const fs = require('fs');
 
 function setupGooglePassport() {
     // If the .env file does not exist, skip
-    if (!fs.existsSync('.env') || !fs.readFileSync('.env').toString().includes('CLIENT_ID')) {
+    if (!fs.existsSync('.env') || !process.env.CLIENT_ID) {
         return;
     };
 
