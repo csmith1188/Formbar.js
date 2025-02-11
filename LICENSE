@@ -1,0 +1,33 @@
+# York County School of Technology Educational License (YCSTEL-1.0)
+
+This software is licensed under the York County School of Technology Educational License (YCSTEL-1.0), which is based on the GNU Affero General Public License v3.0 (AGPL-3.0) with additional conditions to ensure proper attribution, openness, and responsible monetization.
+
+## 1. Permissions
+You are free to:
+- **Use** the software for any purpose, including educational and commercial applications.
+- **Modify** the source code to create derivative works.
+- **Distribute** copies of the software and modified versions under the same license.
+- **Host** an instance of the software and charge for its use, as long as the source code remains open and available.
+
+## 2. Conditions
+- **Source Code Availability:** Any modifications or derivative works must be made open-source under the same license and be publicly accessible.
+- **Attribution:** You must prominently credit the original creators in both the application and documentation. Acknowledgment must be visible to users, such as in an "About" section or footer.
+- **Distinct Naming:** If you modify and distribute a version of this software, it must have a name that is clearly different from the original to avoid confusion.
+- **Monetization:**
+  - You **may charge** for hosting an instance of the software (e.g., SaaS model) to recoup operational costs.
+  - You **may not** sell, sublicense, or otherwise monetize the software itself or its source code.
+- **License Continuity:** Any redistribution of this software, modified or unmodified, must include this license.
+
+## 3. License Modification Authority
+Only employees of the original organization may approve changes to this license. Past contributors do not need to be consulted regarding license modifications.
+
+## 4. Additional Terms
+This license is based on the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html), and all provisions of AGPL-3.0 apply except where explicitly modified above.
+
+By using, modifying, or distributing this software, you agree to these terms.
+
+---
+**Original Authors:** Christopher Smith / York Count School of Technology
+**License Version:** YCSTEL-1.0  
+**Date:** 2025-02-11
+
