@@ -88,8 +88,9 @@ module.exports = {
             }
         });
 
-        socket.on('getActiveClass', (api) => {
+        socket.on('getActiveClass', () => {
             try {
+                const api = socket.request.session.api;
                 logger.log('info', `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 for (const username in classInformation.users) {
@@ -99,6 +100,9 @@ module.exports = {
                         return;
                     }
                 }
+
+                // If no class is found, set the class to null
+                setClassOfApiSockets(api, null);
             } catch (err) {
                 logger.log('error', err.stack)
             }

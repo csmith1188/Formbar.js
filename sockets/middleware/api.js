@@ -9,7 +9,6 @@ module.exports = {
     async run(socket, socketUpdates) {
         try {
             const { api } = socket.request.headers
-
             if (api) {
                 await new Promise((resolve, reject) => {
                     database.get(

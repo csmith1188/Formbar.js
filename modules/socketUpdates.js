@@ -78,6 +78,7 @@ async function setClassOfApiSockets(api, classId) {
         socket.request.session.classId = classId
 		socket.request.session.save()
 
+        // Emit the setClass event to the socket
 		socket.join(`class-${classId}`)
 		socket.emit('setClass', socket.request.session.classId)
 	}

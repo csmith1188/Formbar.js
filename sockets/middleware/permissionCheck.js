@@ -1,4 +1,5 @@
 const { classInformation } = require("../../modules/class")
+const { dbGet } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
@@ -20,16 +21,17 @@ module.exports = {
                     return
                 }
 
+                let userData = classInformation.users[username];
                 if (!classInformation.users[username]) {
-                    logger.log('info', '[socket permission check] User is not logged in')
-                    socket.emit('message', 'User is not logged in')
-                    return
+                    // Get the user data from the database
+                    userData = await dbGet('SELECT * FROM users WHERE username=?', [username]);
+                    userData.classPermissions = await dbGet('SELECT permissions FROM classUsers WHERE studentId=? AND classId=?', [userData.id, classId]);
                 }
 
-                if (GLOBAL_SOCKET_PERMISSIONS[event] && classInformation.users[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
+                if (GLOBAL_SOCKET_PERMISSIONS[event] && userData.permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Global socket permission check passed')
                     next()
-                } else if (CLASS_SOCKET_PERMISSIONS[event] && classInformation.users[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
+                } else if (CLASS_SOCKET_PERMISSIONS[event] && userData.classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Class socket permission check passed')
                     next()
                 } else if (
