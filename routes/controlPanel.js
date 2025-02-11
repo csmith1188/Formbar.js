@@ -24,6 +24,8 @@ module.exports = {
                     allStuds.push(val)
                 }
 
+                console.log(classInformation.classrooms[req.session.classId].settings)
+
                 /* Uses EJS to render the template and display the information for the class.
                 This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
                 */

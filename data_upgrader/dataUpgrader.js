@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { decrypt } = require('./modules/crypto'); // Old crypto module
 const { hash } = require('../modules/crypto'); // New crypto module
-const { database, databaseTemplate } = require('../modules/database');
+const { database, databaseTemplate, dbRun, dbGetAll } = require('../modules/database');
 
 function getDatabaseVersion(db) {
     return new Promise((resolve, reject) => {
@@ -31,6 +31,53 @@ function getDatabaseVersion(db) {
     });
 }
 
+// Grab the table in the latest database-template and recreate it
+// Creates a temporary table with the new columns then copies the data over
+// Drops the old table and renames the temporary table to the old table name
+function recreateTable(tableName) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Get columns from the table in the template database
+            const columns = await dbGetAll(`PRAGMA table_info(${tableName})`, [], databaseTemplate);
+            const columnDefinitions = columns
+                .map(column => `${column.name} ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
+                .join(', ');
+
+            // Create a temporary table with the new columns
+            await dbRun(`CREATE TABLE ${tableName}_temp (${columnDefinitions})`, []);
+
+            // Get old and new columns
+            // Match them with the original columns to check which ones they have in common
+            const originalColumns = (await dbGetAll(`PRAGMA table_info(${tableName})`, [])).map(col => col.name);
+            const newColumns = (await dbGetAll(`PRAGMA table_info(${tableName}_temp)`, [])).map(col => col.name);
+            const commonColumns = originalColumns.filter(col => newColumns.includes(col));
+
+            // Copy the data over only from columns that they have in common
+            // This is to support columns being removed
+            const rows = await dbGetAll(`SELECT ${commonColumns.join(', ')} FROM ${tableName}`, []);
+            for (const row of rows) {
+                const values = newColumns.map(column => {
+                    const columnInfo = columns.find(col => col.name === column);
+                    if (columnInfo.notnull && row[column] === undefined) {
+                        return "NULL";
+                    }
+
+                    return row[column] !== undefined ? row[column] : null;
+                });
+                await dbRun(`INSERT INTO ${tableName}_temp VALUES (${values.map(() => '?').join(', ')})`, values);
+            }
+
+            // Drop the old table and rename the temporary table to the original table name
+            await dbRun(`DROP TABLE ${tableName}`, []);
+            await dbRun(`ALTER TABLE ${tableName}_temp RENAME TO ${tableName}`, []);
+
+            resolve();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
 async function upgradeDatabase() {
     const databaseVersion = await getDatabaseVersion(database); // Get the current version of the database
     const currentVersion = await getDatabaseVersion(databaseTemplate); // Get the latest database version
@@ -49,11 +96,10 @@ async function upgradeDatabase() {
     switch (databaseVersion) {
         case null: // Pre-v1 database verson
             // Create refresh_tokens table if there is not already a refresh_tokens table
-            database.run('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)');
+            await dbRun('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)', []);
 
-            // Add email and verified fields to users
-            database.run('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""', [], () => {});
-            database.run('ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0', [], () => {});
+            // Recreate the users table
+            recreateTable('users');
 
             // Update passwords from encrypted to hashed and add new fields
             database.all('SELECT * FROM users', async (err, rows) => {
@@ -71,13 +117,16 @@ async function upgradeDatabase() {
                     database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, row.id]);
                 }
             });
-            
-            // Create database stats table and set the version to 1
-            database.run('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)', () => {
-                database.run('INSERT INTO stats VALUES ("dbVersion", "1")');
-            });
+
+            await dbRun('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)');
+        case "1": // Upgrade to version 2
+            await recreateTable('users'); // Due to an issue with version 1
+            await recreateTable('classroom');
+        case "2":
+            await recreateTable('users');
     }
 
+    await dbRun(`UPDATE stats SET value="${currentVersion}" WHERE key="dbVersion"`, []);
     console.log(`Database upgraded to version ${currentVersion}!`);
 }
 

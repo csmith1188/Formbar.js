@@ -469,14 +469,18 @@
 
 			const settings = <%- settings %>;
 			let mute = settings.mute;
+			console.log(settings);
+			setMuteSound(mute)
+
+			function setMuteSound(isMuted) {
+				mute = isMuted;
+				document.getElementById('muteButton').hidden = mute;
+				document.getElementById('unmuteButton').hidden = !mute;
+			}
 
 			function toggleMuteSound() {
-				document.getElementById('muteButton').hidden = !mute;
-				document.getElementById('unmuteButton').hidden = mute;
-				mute = !mute;
-
-				// Send the new setting update to the server to save
-				socket.emit('classSettingUpdate', "mute", mute);
+				setMuteSound(!mute);
+				socket.emit('setClassSetting', 'mute', mute);
 			}
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>

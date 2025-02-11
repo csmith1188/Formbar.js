@@ -29,6 +29,12 @@ async function joinClass(req, code) {
 			return 'No class with that code'
 		}
 
+		if (classroom.tags) {
+			classroom.tags = classroom.tags.split(",");
+		} else {
+			classroom.tags = [];
+		}
+
 		// Load the classroom into the classInformation object if it's not already loaded
 		if (!classInformation.classrooms[classroom.id]) {
 			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
