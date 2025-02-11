@@ -52,7 +52,7 @@ class Classroom {
 			sound: false
 		}
 
-		if (!this.tagNames.includes("Offline")) {
+		if (!this.tagNames.includes("Offline") && Array.isArray(this.tagNames)) {
 			this.tagNames.push("Offline");
 		}
 	}
