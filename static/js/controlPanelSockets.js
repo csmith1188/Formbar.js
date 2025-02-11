@@ -354,13 +354,14 @@ socket.on('customPollUpdate', (
 
 		studCheck.onclick = () => {
 			let votingRight = studCheck.checked
+			let studBox = classroom.poll.studentBoxes
 			if (studCheck.checked) {
-				classroom.poll.studentBoxes.push(student.username)
+				if (!studBox.includes(student.username)) studBox.push(student.username)
 			} else {
-				classroom.poll.studentBoxes = classroom.poll.studentBoxes.filter((response) => response != student.username)
+				studBox = studBox.filter((box) => box != student.username)
 			}
-			classroom.poll.studentBoxes = classroom.poll.studentBoxes.sort()
-			socket.emit('votingRightChange', student.username, votingRight, classroom.poll.studentBoxes)
+			studBox = studBox.sort()
+			socket.emit('votingRightChange', student.username, votingRight, studBox)
 		}
 	}
 
@@ -413,10 +414,10 @@ socket.on('customPollUpdate', (
 
 				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
 					studentElement.open = true
-					checkbox.checked = true
+					if (!checkbox.checked) checkbox.click()
 				} else {
 					studentElement.open = false
-					checkbox.checked = false
+					if (checkbox.checked) checkbox.click()
 				}
 
 				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)

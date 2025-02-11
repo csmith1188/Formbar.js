@@ -4,9 +4,9 @@ const fs = require('fs');
 
 function setupGooglePassport() {
     // If the .env file does not exist, skip
-    if (!fs.existsSync('.env')) {
+    if (!fs.existsSync('.env') || !process.env.CLIENT_ID) {
         return;
-    }
+    };
 
     // Set up the google strategy using information from the .env file
     passport.use(new GoogleStrategy({
