@@ -17,27 +17,27 @@ function getDatabaseTemplate() {
     return new sqlite3.Database('database/database-template.db')
 }
 
-function dbGet(query, params) {
+function dbGet(query, params, db = database) {
     return new Promise((resolve, reject) => {
-        database.get(query, params, (err, row) => {
+        db.get(query, params, (err, row) => {
             if (err) return reject(err);
             resolve(row);
         });
     });
 }
 
-function dbRun(query, params) {
+function dbRun(query, params, db = database) {
     return new Promise((resolve, reject) => {
-        database.run(query, params, function(err) {
+        db.run(query, params, function(err) {
             if (err) return reject(err);
             resolve(this.lastID);
         });
     });
 }
 
-function dbGetAll(query, params) {
+function dbGetAll(query, params, db = database) {
     return new Promise((resolve, reject) => {
-        database.all(query, params, (err, rows) => {
+        db.all(query, params, (err, rows) => {
             if (err) return reject(err);
             resolve(rows);
         });
