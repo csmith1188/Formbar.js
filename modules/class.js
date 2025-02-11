@@ -9,7 +9,7 @@ const classInformation = createClassInformation();
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags) {
+	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags, settings) {
 		this.id = id
 		this.className = className
 		this.isActive = false
@@ -37,12 +37,23 @@ class Classroom {
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || [];
+		this.tagNames = tags || ["Offline"];
+		this.settings = settings || {
+			mute: false,
+			filter: "",
+			sort: "",
+			select: "",
+			fastPoll: ""
+		}
 		this.timer = {
 			startTime: 0,
 			timeLeft: 0,
 			active: false,
 			sound: false
+		}
+
+		if (!this.tagNames.includes("Offline") && Array.isArray(this.tagNames)) {
+			this.tagNames.push("Offline");
 		}
 	}
 }

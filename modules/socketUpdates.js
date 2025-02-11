@@ -1,7 +1,7 @@
 const { whitelistedIps, blacklistedIps } = require("./authentication");
-const { classInformation, getClassIDFromCode } = require("./class");
+const { classInformation } = require("./class");
 const { settings } = require("./config");
-const { database, getAll, runQuery } = require("./database");
+const { database, dbGetAll } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
@@ -10,6 +10,7 @@ const runningTimers = {};
 const rateLimits = {}
 const userSockets = {}
 let currentPoll = 0
+let excludedStudents = []
 
 // Socket update events
 const PASSIVE_SOCKETS = [
@@ -179,7 +180,7 @@ class SocketUpdates {
                 totalStudentsIncluded = totalLastResponses
             } else {
                 for (let student of Object.values(classData.students)) {
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || !student.activeClasses.includes(classId)) continue;
+                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS) continue;
                     let included = false;
                     let excluded = false;
 
@@ -205,7 +206,7 @@ class SocketUpdates {
                     // Check if the student's checkbox was checked
                     if (classData.poll.studentBoxes.includes(student.username)) {
                         included = true;
-                    } else if (classData.poll.studentBoxes.length > 0) {
+                    } else {
                         excluded = true;
                     }
     
@@ -217,9 +218,17 @@ class SocketUpdates {
                     if (classData.poll.studentIndeterminate.includes(student.username)) {
                         excluded = true;
                     }
+
+                    // Prevent students from being included if they are offline
+                    if (student.tags && student.tags.includes('Offline')) {
+                        excluded = true;
+                        included = false;
+                    }
     
                     // Update the included and excluded lists
-                    if (excluded) totalStudentsExcluded.push(student.username);
+                    if (excluded) {
+                        totalStudentsExcluded.push(student.username);
+                    }
                     if (included) totalStudentsIncluded.push(student.username);
                 }
                 totalStudentsIncluded = new Set(totalStudentsIncluded)
@@ -231,7 +240,7 @@ class SocketUpdates {
             totalResponses = totalStudentsIncluded.length
             if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
                 // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-                totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length;
+                totalResponders = totalLastResponses - totalStudentsExcluded.length;
             } else if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
@@ -245,20 +254,26 @@ class SocketUpdates {
             }
             
             if (classInformation.classrooms[classId].poll.multiRes) {
-                for (let student of Object.values(classData.students)) {
-                    if (student.pollRes.buttonRes.length > 1) {
-                        totalResponses += student.pollRes.buttonRes.length - 1
+                for (let value of Object.values(classData.students)) {
+                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
+                        if (value.pollRes.buttonRes.length == 2) {
+                            totalResponses -= value.pollRes.buttonRes.length - 1
+                        } else {
+                            totalResponses--;
+                        }
                     }
                 }
             } else {
                 for (let value of Object.values(classData.students)) {
-                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
-                        totalResponses++;
+                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
+                        totalResponses--;
                     }
                 }
             }
+            totalResponses *= -1
 
             // Get rid of students whos permissions are teacher or above or guest
+            excludedStudents = totalStudentsExcluded
             classInformation.classrooms[classId].poll.allowedResponses = totalStudentsIncluded
             classInformation.classrooms[classId].poll.unallowedResponses = totalStudentsExcluded
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
@@ -291,6 +306,7 @@ class SocketUpdates {
                 { classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
                 classInformation.classrooms[classId].poll
             )
+
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -466,13 +482,16 @@ class SocketUpdates {
     // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
     classKickUser(username, classId = this.socket.request.session.classId, exitClass = true) {
         try {
-            logger.log('info', `[classKickUser] username=(${username}) classId=(${classId})`);
+            logger.log('info', `[classKickUser] username=(${username}) classId=(${classId}) exitClass=${exitClass}`);
 
             // Remove user from class session
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
             classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-            setClassOfApiSockets(classInformation.users[username].API, null);
+            setClassOfApiSockets(classInformation.users[username].API, null);            
+            
+            // Mark the user as offline in the class
+            classInformation.classrooms[classId].students[username].tags = "Offline";
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
             // If exitClass is true, then remove the user from the classroom entirely
@@ -516,15 +535,11 @@ class SocketUpdates {
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId
 
-        // If the user is in a class, then get the class name
+        // If the user is in a class, then get the class name and mark the user as inactive
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
-        }
-
-        // Delete the user from the users object
-        if (classInformation.users[username]) {
-            delete classInformation.users[username];
+            classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
         }
 
         this.socket.request.session.destroy((err) => {
@@ -537,8 +552,9 @@ class SocketUpdates {
 
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
-                    // Remove user from class
-                    delete classInformation.classrooms[classId].students[username]
+                    // Remove user from being active in the class
+                    classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                    classInformation.classrooms[classId].students[username].tags = "Offline"
                     
                     // Update class permissions and virtual bar
                     this.classPermissionUpdate(classId)
@@ -725,13 +741,13 @@ class SocketUpdates {
 
     async deleteCustomPolls(userId) {
         try {
-            const customPolls = await getAll('SELECT * FROM custom_polls WHERE owner=?', userId)
+            const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
             if (customPolls.length == 0) return
     
-            await runQuery('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
+            await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
     
             for (let customPoll of customPolls) {
-                await runQuery('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
+                await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
             }
         } catch (err) {
             throw err
@@ -740,10 +756,10 @@ class SocketUpdates {
     
     async deleteClassrooms(userId) {
         try {
-            const classrooms = await getAll('SELECT * FROM classroom WHERE owner=?', userId)
+            const classrooms = await dbGetAll('SELECT * FROM classroom WHERE owner=?', userId)
             if (classrooms.length == 0) return
 
-            await runQuery('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
+            await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
 
             for (let classroom of classrooms) {
                 if (classInformation.classrooms[classId]) {
@@ -751,10 +767,10 @@ class SocketUpdates {
                 }
 
                 await Promise.all([
-                    runQuery('DELETE FROM classusers WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM class_polls WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM plugins WHERE classId=?', classroom.id),
-                    runQuery('DELETE FROM lessons WHERE class=?', classroom.id)
+                    dbRun('DELETE FROM classusers WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM class_polls WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM plugins WHERE classId=?', classroom.id),
+                    dbRun('DELETE FROM lessons WHERE class=?', classroom.id)
                 ])
             }
         } catch (err) {

@@ -114,9 +114,6 @@
 						<button id='endPoll' onclick='endPollFunc()' hidden class='quickButton'>End Poll</button>
 						<br>
 						<button id='clearPoll' onclick='clearPollFunc()' hidden class='quickButton'>Clear Poll</button>
-						<br>
-						<button type='button' onclick='displayPreviousPolls()' class='quickButton'>View Previous
-							Polls</button>
 					</div>
 					<button onclick='clearPollFunc()'>Clear Poll</button>
 					<button onclick='endPollFunc()'>End Poll</button>
@@ -128,8 +125,8 @@
 				<button type='button' id='timerButton'>Start Timer</button>
 				<button type='button' id='timerStopButton' hidden>Stop Timer</button>
 				<br><hr>
-				<button id="muteButton" onclick="muteSound()">Mute</button>
-				<button id="unmuteButton" onclick="unmuteSound()" hidden>Unmute</button>
+				<button id="muteButton" onclick="toggleMuteSound()">Mute</button>
+				<button id="unmuteButton" onclick="toggleMuteSound()" hidden>Unmute</button>
 				<br>
 				<button id="kickUsers" onclick="kickAll()">
 					Kick All Students
@@ -155,12 +152,6 @@
 				<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
 				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='previousPolls' class='tabContent' data-tab-group='polls'>
-					<button id='toPolls' type='button' onclick=`changeTab('mainPolls', 'polls')`>Return to
-						polls</button>
-					<button id='toPollHistory' type='button' onclick='displayPoll()'>Return To Selection</button>
-					<div id='previousPollButtons'></div>
 				</div>
 				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
@@ -191,12 +182,6 @@
 				<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
 				</div>
 				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='previousPolls' class='tabContent' data-tab-group='polls'>
-					<button id='toPolls' type='button' onclick=`changeTab('mainPolls', 'polls')`>Return to
-						polls</button>
-					<button id='toPollHistory' type='button' onclick='displayPoll()'>Return To Selection</button>
-					<div id='previousPollButtons'></div>
 				</div>
 				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
@@ -377,8 +362,6 @@
 			let pluginsDiv = document.getElementById('installedPlugins');
 			let pluginsMenu = document.querySelector('.tabContent#plugins');
 			let pluginsForm = document.getElementById('pluginsForm');
-			let previousPolls = document.getElementById('previousPolls')
-			let previousPollButtons = document.getElementById('previousPollButtons')
 			let toPollsButton = document.getElementById('toPolls')
 			let toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
@@ -484,20 +467,17 @@
 				}
 			}
 
-			let mute = false;
+			const settings = <%- settings %>;
+			let mute = settings.mute;
 
-			function muteSound() {
-				document.getElementById('muteButton').hidden = true;
-				document.getElementById('unmuteButton').hidden = false;
-				mute = true;
-			};
+			function toggleMuteSound() {
+				document.getElementById('muteButton').hidden = !mute;
+				document.getElementById('unmuteButton').hidden = mute;
+				mute = !mute;
 
-			function unmuteSound() {
-				document.getElementById('muteButton').hidden = false;
-				document.getElementById('unmuteButton').hidden = true;
-				mute = false;
-			};
-
+				// Send the new setting update to the server to save
+				socket.emit('classSettingUpdate', "mute", mute);
+			}
 		</script>
 		<script src='/js/controlPanelStudents.js'></script>
 		<script src='/js/controlPanelSockets.js'></script>

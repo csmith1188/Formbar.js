@@ -1,5 +1,5 @@
 const { classInformation } = require("../modules/class")
-const { database } = require("../modules/database")
+const { database, dbRun } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
@@ -28,6 +28,23 @@ module.exports = {
                 // Play leave sound and reload the user's page
                 advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
                 userSockets[username].emit('reload');
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        socket.on('votingRightChange', (username, votingRight, studBox) => {
+            try {
+                stewBox = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
+                if (userSockets[username] && studBox) {
+                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
+                    userSockets[username].emit('votingRightChange', votingRight);
+                    socketUpdates.virtualBarUpdate(socket.request.session.classId);
+                } else if (userSockets[username] && username) {
+                    if (stewBox.length > 0) {
+                        userSockets[username].emit('votingRightChange', stewBox.includes(username));
+                    } else userSockets[username].emit('votingRightChange', false);
+                }
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -88,6 +105,14 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
+        });
+
+        socket.on("classSettingUpdate", (setting, value) => {
+            const classId = socket.request.session.classId;
+            
+            // Update the setting in the classInformation and in the database
+            classInformation.classrooms[classId].settings[setting] = value;
+            dbRun('UPDATE classroom SET settings=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
         });
 
         socket.on("isClassActive", () => {
