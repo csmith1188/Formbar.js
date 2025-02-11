@@ -121,11 +121,12 @@ async function upgradeDatabase() {
             await dbRun('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)');
             await dbRun('INSERT INTO stats VALUES ("dbVersion", "1")');
         case "1": // Upgrade to version 2
-            // Due to an issue with version 1
-            await recreateTable('users');
+            await recreateTable('users'); // Due to an issue with version 1
             await recreateTable('classroom');
 
             await dbRun('UPDATE stats SET value="2" WHERE key="dbVersion"', []);
+        case "2":
+            await recreateTable('users');
     }
 
     console.log(`Database upgraded to version ${currentVersion}!`);
