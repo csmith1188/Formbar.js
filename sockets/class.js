@@ -35,17 +35,15 @@ module.exports = {
 
         socket.on('votingRightChange', (username, votingRight, studBox) => {
             try {
-                console.log('votingRightChange1')
                 stewBox = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
-                if (userSockets[username] && votingRight && studBox && username) {
+                if (userSockets[username] && studBox) {
                     classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
                     userSockets[username].emit('votingRightChange', votingRight);
                     socketUpdates.virtualBarUpdate(socket.request.session.classId);
                 } else if (username) {
                     if (stewBox.length > 0) {
-                        console.log('votingRightChange1')
-                        userSockets[username].emit('votingRightChange', !stewBox.includes(username));
-                    }
+                        userSockets[username].emit('votingRightChange', stewBox.includes(username));
+                    } else userSockets[username].emit('votingRightChange', false);
                 }
             } catch (err) {
                 logger.log('error', err.stack)

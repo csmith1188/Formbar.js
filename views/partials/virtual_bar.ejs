@@ -143,10 +143,6 @@
         doughnutChart.update()
     })
 
-    socket.on('votingRightChange', (username, votingRight) => {
-        console.log(username, votingRight)
-    });
-
     socket.emit('vbTimer')
     socket.on('vbTimer', (newTimeData) => {
         if (deepObjectEqual(newTimeData, timeData)) return
