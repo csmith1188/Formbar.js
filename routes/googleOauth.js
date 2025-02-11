@@ -27,6 +27,7 @@ module.exports = {
 		// Handle the callback after Google has authenticated the user
 		// If the authentication fails, redirect the user back to the home page
 		app.get('/auth/google/callback', checkEnv, passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+			console.log('check')
 			// Get the user by their email
 			database.get(`SELECT * FROM users WHERE email=?`, [req.user.emails[0].value], (err, user) => {
 				if (err) throw err;
