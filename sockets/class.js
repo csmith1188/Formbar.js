@@ -40,7 +40,7 @@ module.exports = {
                     classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
                     userSockets[username].emit('votingRightChange', votingRight);
                     socketUpdates.virtualBarUpdate(socket.request.session.classId);
-                } else if (username) {
+                } else if (userSockets[username] && username) {
                     if (stewBox.length > 0) {
                         userSockets[username].emit('votingRightChange', stewBox.includes(username));
                     } else userSockets[username].emit('votingRightChange', false);
