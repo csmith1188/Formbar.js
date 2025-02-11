@@ -1,5 +1,5 @@
 const express = require("express");
-const { getAll } = require("./database");
+const { dbGetAll } = require("./database");
 
 // Create the express server and attach socket.io to it
 function createServer() {
@@ -11,7 +11,7 @@ function createServer() {
 }
 
 async function getIpAccess(type) {
-	const ipList = await getAll(`SELECT id, ip FROM ip_${type}`)
+	const ipList = await dbGetAll(`SELECT id, ip FROM ip_${type}`)
 	return ipList.reduce((ips, ip) => {
 		ips[ip.id] = ip
 		return ips

@@ -11,7 +11,8 @@ const { classInformation } = require('./modules/class.js')
 const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
-const { upgradeDatabase } = require('./data_upgrader/dataFixer.js')
+const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
+const { SocketUpdates, userSockets } = require('./modules/socketUpdates.js')
 dotenv.config()
 
 // Upgrade the database if it's not up to date
@@ -79,9 +80,25 @@ if(!fs.existsSync('.env')) {
 }
 
 // Add currentUser and permission constants to all pages
+// Additionally, handle session expiration
 app.use((req, res, next) => {
+	// If the user's session has expired, log them out
+	if (req.session.expireTime && req.session.username && userSockets[req.session.username]) {
+		if (new Date().getTime() > req.session.expireTime) {
+			// Logout the user
+			const socketUpdates = new SocketUpdates(userSockets[req.session.username]);
+			socketUpdates.logout(userSockets[req.session.username]);
+
+			// Clean up the SocketUpdates class and destroy the users Express session
+			delete socketUpdates;
+			req.session.destroy();
+			return res.redirect('/');
+		}
+	}
+
 	if (req.session.classId || req.session.classId === null) {
-		res.locals.currentUser = classInformation.users[req.session.username]
+		req.session.expireTime = new Date().getTime() + 1800000; // 30 minutes
+		res.locals.currentUser = classInformation.users[req.session.username];
 	}
 
 	res.locals = {

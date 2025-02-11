@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const database = getDatabase();
 const databaseTemplate = getDatabaseTemplate();
+
 function getDatabase() {
     // If the database file doesn't exist, copy the template
     if (!fs.existsSync('database/database.db')) {
@@ -10,39 +11,43 @@ function getDatabase() {
 
     // Establishes the connection to the database file
     return new sqlite3.Database('database/database.db')
-};
+}
 
 function getDatabaseTemplate() {
     return new sqlite3.Database('database/database-template.db')
 }
 
-function getAll(query, params) {
-	return new Promise((resolve, reject) => {
-		database.all(query, params, (err, rows) => {
-			if (err) {
-                reject(new Error(err));
-            } else {
-                resolve(rows);
-            };
-		});
-	});
-};
+function dbGet(query, params) {
+    return new Promise((resolve, reject) => {
+        database.get(query, params, (err, row) => {
+            if (err) return reject(err);
+            resolve(row);
+        });
+    });
+}
 
-function runQuery(query, params) {
-	return new Promise((resolve, reject) => {
-		database.run(query, params, (err) => {
-			if (err) {
-                reject(new Error(err));
-            } else {
-                resolve();
-            };
-		});
-	});
-};
+function dbRun(query, params) {
+    return new Promise((resolve, reject) => {
+        database.run(query, params, function(err) {
+            if (err) return reject(err);
+            resolve(this.lastID);
+        });
+    });
+}
+
+function dbGetAll(query, params) {
+    return new Promise((resolve, reject) => {
+        database.all(query, params, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+        });
+    });
+}
 
 module.exports = {
     database,
     databaseTemplate,
-    getAll,
-    runQuery
+    dbGet,
+    dbRun,
+    dbGetAll,
 };

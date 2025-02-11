@@ -1,4 +1,4 @@
-// makes student elements
+// Creates student elements for the user list inside the control panel
 
 function buildOption(value, text, selected = false) {
     let option = document.createElement('option')
@@ -7,9 +7,11 @@ function buildOption(value, text, selected = false) {
     option.textContent = text
     return option
 }
-var userBreak = []
 
+// Holds users that are taking a break
+const userBreak = []
 
+// Create a student in the user list
 function buildStudent(room, studentData) {
     let newStudent
 
@@ -21,8 +23,10 @@ function buildStudent(room, studentData) {
             }
         }
         newStudent.classList.add("student");
+
         let studentElement = document.createElement("summary");
         studentElement.innerText = studentData.displayName;
+
         let space = document.createElement('span')
         space.textContent = ' '
         studentElement.appendChild(space)
@@ -31,22 +35,40 @@ function buildStudent(room, studentData) {
                 studentElement.style.color = room.poll.responses[eachResponse].color
             }
         }
+        
+        if (studentData.tags && studentData.tags.includes("Offline")) {
+            // Add offline icon
+            let offlineDisplay = document.createElement('span')
+            offlineDisplay.textContent = `💤`
+            newStudent.classList.add('offline')
+            studentElement.appendChild(offlineDisplay)
+
+            // Lower the opacity to indicate offline status
+            newStudent.style.opacity = 0.65;
+        } else {
+            newStudent.style.opacity = 1;
+        }
+
         if (studentData.help) {
             let helpDisplay = document.createElement('span')
             helpDisplay.textContent = `❗`
             newStudent.classList.add('help')
             studentElement.appendChild(helpDisplay)
+
             let help = document.createElement('div')
             help.classList.add('help')
             help.textContent = 'Needs Help'
+
             if (studentData.help.reason) {
                 let helpReason = document.createElement('p')
                 helpReason.textContent = `Reason: ${studentData.help.reason} `
                 help.appendChild(helpReason)
             }
+
             let helpTimeDisplay = document.createElement('p')
             helpTimeDisplay.textContent = `at ${studentData.help.time.toLocaleTimeString()} `
             help.appendChild(helpTimeDisplay)
+
             let deleteTicketButton = document.createElement('button')
             deleteTicketButton.classList.add('quickButton')
             deleteTicketButton.dataset.studentName = studentData.username
@@ -55,39 +77,46 @@ function buildStudent(room, studentData) {
                 helpSoundPlayed = false;
             }
             deleteTicketButton.textContent = 'Delete Ticket'
+
             help.appendChild(deleteTicketButton)
             newStudent.appendChild(help)
             helpSound()
         }
+
         if (studentData.break == true) {
             userBreak.push(studentData.username)
             let breakText = document.createElement('p')
             breakText.textContent += 'taking a break'
             newStudent.appendChild(breakText)
-        }
-        else if (studentData.break) {
+        } else if (studentData.break) {
             let breakDiv = document.createElement('div')
             breakDiv.classList.add('break')
+
             let breakNeeded = document.createElement('p')
             breakNeeded.textContent = 'Needs a Break'
             breakDiv.appendChild(breakNeeded)
+
             let breakReason = document.createElement('p')
             breakReason.textContent = `Reason: ${studentData.break} `
             breakDiv.appendChild(breakReason)
+            
             let breakApprove = document.createElement('button')
             breakApprove.classList.add('quickButton')
             breakApprove.onclick = () => {
                 approveBreak(true, studentData.username)
                 breakSoundPlayed = false
             }
+
             breakApprove.textContent = 'Approve'
             breakDiv.appendChild(breakApprove)
+            
             let breakDeny = document.createElement('button')
             breakDeny.classList.add('quickButton')
             breakDeny.onclick = () => {
                 approveBreak(false, studentData.username)
                 breakSoundPlayed = false
             }
+            
             breakDeny.textContent = 'Deny'
             breakDiv.appendChild(breakDeny)
             newStudent.appendChild(breakDiv)
@@ -97,7 +126,7 @@ function buildStudent(room, studentData) {
             breakDisplay.textContent = `⏱`
             newStudent.classList.add('break')
             studentElement.appendChild(breakDisplay)
-            breaksounds()
+            breakSound()
 
         }
         newStudent.appendChild(studentElement);
@@ -138,29 +167,37 @@ function buildStudent(room, studentData) {
 
         let studentTags = document.createElement('dialog');
         studentTags.innerHTML = '<p>' + studentData.username + '</p>';
+
         let closeButton = document.createElement('button');
         closeButton.textContent = 'Save';
+
         let newTagButton = document.createElement('button');
         newTagButton.textContent = 'Edit Tags';
-        //Create a form to add new tags or remove existing tags from the database
+
+        // Create a form to add new tags or remove existing tags from the database
         let newTagForm = document.createElement('form');
         newTagForm.setAttribute('hidden', true);
+
         let newTagTextBox = document.createElement('input');
         newTagTextBox.setAttribute('type', 'text');
         newTagTextBox.setAttribute('id', 'tagBox');
         newTagTextBox.setAttribute('hidden', true);
         newTagForm.appendChild(newTagTextBox);
+
         let newTagSaveButton = document.createElement('button');
         newTagSaveButton.textContent = 'Save Tag';
         newTagSaveButton.setAttribute('hidden', true);
+
         let removeTagButton = document.createElement('button');
         removeTagButton.textContent = 'Remove Tag';
         removeTagButton.setAttribute('hidden', true);
         newTagForm.appendChild(newTagSaveButton);
         newTagForm.appendChild(removeTagButton);
+
         let tagForm = document.createElement('form');
         tagForm.setAttribute('id', studentData.username + "tags");
-        //Add each tag as a checkbox to the tag form
+
+        // Add each tag as a checkbox to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -181,6 +218,7 @@ function buildStudent(room, studentData) {
             tagForm.appendChild(label);
             tagForm.appendChild(document.createElement('br'));
         }
+
         studentTags.appendChild(tagForm)
         document.body.appendChild(studentTags)
         closeButton.addEventListener('click', function () {
@@ -233,6 +271,7 @@ function buildStudent(room, studentData) {
             checkboxForm.appendChild(document.createElement('br'));
             newTagTextBox.value = '';
         })
+
         removeTagButton.addEventListener('click', function () {
             event.preventDefault();
             newTagButton.removeAttribute('hidden');
@@ -251,8 +290,9 @@ function buildStudent(room, studentData) {
                 }
             }
             newTagTextBox.value = '';
-            //Remove broken line break
-            //for all elements in the form, if there are 2 line breaks in a row, remove the first one
+
+            // Remove broken line break
+            // for all elements in the form, if there are 2 line breaks in a row, remove the first one
             for (let i = 0; i < checkboxForm.children.length; i++) {
                 if (checkboxForm.children[0].nodeName == 'BR') {
                     checkboxForm.removeChild(checkboxForm.children[0])
@@ -478,14 +518,16 @@ function filterSortChange(classroom) {
         userOrder.sort((a, b) => classroom.students[a].classPermissions - classroom.students[b].classPermissions)
     }
 
+    // Decide the order that the students should be displayed in
+    // If the user is offline, they should be at the bottom of the list
     for (let i = 0; i < userOrder.length; i++) {
-        document.getElementById(`student-${userOrder[i]}`).style.order = i
+        const studentElement = document.getElementById(`student-${userOrder[i]}`);
+        studentElement.style.order = studentElement.style.opacity < 1 ? 9999 - i : i;
     }
 }
 
 function makeLesson() {
     let learningObj = document.getElementById('learningObj')
-    let dueAssigns = document.getElementById('dueAssigns')
     socket.emit('lessonStart', learningObj.value)
     alert('Lesson Created')
 }
@@ -567,7 +609,7 @@ function helpSound() {
     }
 }
 
-function breaksounds() {
+function breakSound() {
     if (!breakSoundPlayed) {
         let breakPing = new Audio('/sfx/break.wav');
         if (mute == false) {

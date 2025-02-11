@@ -1,5 +1,5 @@
 const { classInformation } = require("../modules/class")
-const { database, runQuery } = require("../modules/database")
+const { database, dbRun } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { currentPoll } = require("../modules/socketUpdates")
 
@@ -79,18 +79,17 @@ module.exports = {
                             return
                         }
 
-                        await runQuery('BEGIN TRANSACTION')
-
+                        await dbRun('BEGIN TRANSACTION')
                         await Promise.all([
-                            runQuery('DELETE FROM custom_polls WHERE id=?', pollId),
-                            runQuery('DELETE FROM shared_polls WHERE pollId=?', pollId),
-                            runQuery('DELETE FROM class_polls WHERE pollId=?', pollId),
+                            dbRun('DELETE FROM custom_polls WHERE id=?', pollId),
+                            dbRun('DELETE FROM shared_polls WHERE pollId=?', pollId),
+                            dbRun('DELETE FROM class_polls WHERE pollId=?', pollId),
                         ]).catch(async (err) => {
-                            await runQuery('ROLLBACK')
+                            await dbRun('ROLLBACK')
                             throw err
                         })
 
-                        await runQuery('COMMIT')
+                        await dbRun('COMMIT')
 
                         for (let classroom of Object.values(classInformation)) {
                             let updatePolls = false
