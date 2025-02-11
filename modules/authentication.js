@@ -47,11 +47,10 @@ function isVerified(req, res, next) {
 		
 		// If the user is verified or there is no .env file set up...
 		if (req.session.verified || !fs.existsSync('.env') || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
-			// Continue
-			next()
+			next();
 		} else {
-			// Redirect to the verification page
-			res.redirect('/verification')
+			// Redirect to the login page
+			res.redirect('/login');
 		};
 	} catch (err) {
 		logger.log('error', err.stack);

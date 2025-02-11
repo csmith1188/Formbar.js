@@ -16,11 +16,17 @@ socket.on('cpUpdate', (newClassroom) => {
 				currentTags.push(tag)
 			}
 		}
-		for (let res of student.pollRes.buttonRes.split(",")) {
-			if (currentTags.includes(res) || res == "" || res == "remove") {
-				continue
+		if (student.pollRes.buttonRes != null && student.pollRes.buttonRes != "") {
+			let tempArr = []
+			if (typeof student.pollRes.buttonRes == 'object') tempArr = student.pollRes.buttonRes
+			else tempArr = student.pollRes.buttonRes.split(",")
+
+			for (let res of tempArr) {
+				if (currentTags.includes(res) || res == "" || res == "remove") {
+					continue
+				}
+				currentTags.push(res)
 			}
-			currentTags.push(res)
 		}
 
 		if (students.length > 0) {
@@ -324,8 +330,8 @@ socket.on('customPollUpdate', (
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
 
-			studElem = document.querySelector(`details[id="student-${student.username}"]`)
-			studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
 			if (studCheck.checked == switchState) {
 				studCheck.click()
@@ -338,6 +344,24 @@ socket.on('customPollUpdate', (
 		selectPollDiv.children[0].replaceWith(switchAll);
 	} else {
 		selectPollDiv.appendChild(switchAll);
+	}
+
+	for (let student of Object.values(students)) {
+		if (student.permissions >= TEACHER_PERMISSIONS) continue
+
+		let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+
+		studCheck.onclick = () => {
+			let votingRight = studCheck.checked
+			if (studCheck.checked) {
+				classroom.poll.studentBoxes.push(student.username)
+			} else {
+				classroom.poll.studentBoxes = classroom.poll.studentBoxes.filter((response) => response != student.username)
+			}
+			classroom.poll.studentBoxes = classroom.poll.studentBoxes.sort()
+			socket.emit('votingRightChange', student.username, votingRight, classroom.poll.studentBoxes)
+		}
 	}
 
 	// Creation of tag buttons in the select box
@@ -386,17 +410,19 @@ socket.on('customPollUpdate', (
 
 				studentElement = document.getElementById(`student-${student.username}`)
 				let checkbox = studentElement.querySelector('input[type="checkbox"]')
-				
-				if (tempStudTags == tempTags || tempTags == "") {
+
+				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
 					studentElement.open = true
 					checkbox.checked = true
 				} else {
 					studentElement.open = false
 					checkbox.checked = false
 				}
+
+				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)
 			}
 		};
-		
+
 		if (selectPollDiv.children[i]) {
 			selectPollDiv.children[i].replaceWith(tagPoll);
 		} else {

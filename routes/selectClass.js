@@ -52,6 +52,7 @@ async function joinClass(req, code) {
 			user = classInformation.users[username];
 		}
 
+		// If the user is not a guest, then link them to the class
 		let classUser
 		if (!user.isGuest) {
 			// Add the two id's to the junction table to link the user and class
@@ -78,6 +79,8 @@ async function joinClass(req, code) {
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classInformation.classrooms[classroom.id].students[username].tags = classInformation.classrooms[classroom.id].students[username].tags.replace('Offline', '')
+			classInformation.users[username].tags = classInformation.users[username].tags.replace('Offline', '')
 			classInformation.users[username].activeClasses.push(classroom.id)
 			advancedEmitToClass('joinSound', classroom.id, { api: true })
 
@@ -90,6 +93,7 @@ async function joinClass(req, code) {
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
+			// If the user is not a guest, then insert them into the database
 			if (!user.isGuest) {
 				await new Promise((resolve, reject) => {
 					database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
@@ -100,11 +104,12 @@ async function joinClass(req, code) {
 						resolve()
 					})
 				})
+
+				logger.log('info', '[joinClass] Added user to classusers')
 			}
 
-			logger.log('info', '[joinClass] Added user to classusers')
-
-			let currentUser = classInformation.users[username]
+			// Grab the user from tthe users list
+			const currentUser = classInformation.users[username]
 			currentUser.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
 
 			// Add the student to the newly created class

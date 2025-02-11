@@ -131,6 +131,7 @@
 					let poll = {}
 					let mode = ''
 					let quiz = {}
+					let votingRight = false
 
 					function unselectRemove(event) {
 						event.preventDefault();
@@ -143,7 +144,7 @@
 						} else {
 							multiAnswer = "radio"
 						}
-						if (mode == 'poll') {
+						if (mode == 'poll' && votingRight) {
 							pollContent.style.display = 'block'
 							quizContent.style.display = 'none'
 							lessonContent.style.display = 'none'
@@ -155,7 +156,6 @@
 								pollForm.innerHTML = ''
 
 								pollPromptDisplay.innerText = poll.prompt
-
 								// Creates all selectable answers and displays them to the user
 								if (!poll.studentBoxes.includes(currentUser.username)) {
 									pollForm.innerHTML += `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
@@ -168,20 +168,15 @@
 											</label>
 										`;
 									}
-									pollForm.innerHTML += `
-											<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
-												<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
-												remove
-											</label>
-										`
 								}
-
-								// let remove = document.querySelector('label:has(#remove)')
-								// console.log(remove)
-								// remove.addEventListener('contextmenu', function (event) {
-								// 	event.preventDefault();
-								// 	document.getElementById('remove').checked = false;
-								// });
+								if (!poll.multiRes) {
+									pollForm.innerHTML += `
+												<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
+													<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
+													remove
+												</label>
+											`
+								}
 
 								if (poll.textRes) {
 									pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
@@ -224,6 +219,11 @@
 									return
 								}
 							}
+							for (let eachUnallowedResponse of poll.unallowedResponses) {
+								if (eachUnallowedResponse == currentUser.username) {
+									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
+								}
+							}
 						}
 						else if (poll.allowedResponses.length == 0) {
 							updatePageLoop()
@@ -262,6 +262,17 @@
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
 					}
+
+					socket.emit('votingRightChange')
+					socket.on('votingRightChange', (vr) => {
+						votingRight = vr
+						if (vr) {
+							updatePage()
+						} else {
+							socket.emit('pollResp', "remove")
+							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
+						}
+					})
 
 					socket.emit('pollUpdate')
 					socket.on('pollUpdate', (newPoll) => {

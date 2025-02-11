@@ -3,7 +3,7 @@ const multer = require('multer') // Used to upload files
 const upload = multer({ dest: 'uploads/' }) // Selects a file destination for uploaded files to go to, will create folder when file is submitted(?)
 const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
 const { classInformation } = require("../modules/class")
-const { logNumbers } = require("../modules/config")
+const { logNumbers, settings } = require("../modules/config")
 const { logger } = require("../modules/logger")
 
 module.exports = {
@@ -31,7 +31,8 @@ module.exports = {
                     title: 'Control Panel',
                     pollStatus: classInformation.classrooms[req.session.classId].poll.status,
                     settingsPermissions: classInformation.classrooms[req.session.classId].permissions.manageClass,
-                    tagNames: classInformation.classrooms[req.session.classId].tagNames
+                    tagNames: classInformation.classrooms[req.session.classId].tagNames,
+                    settings: JSON.stringify(classInformation.classrooms[req.session.classId].settings)
                 })
             } catch (err) {
                 logger.log('error', err.stack);
