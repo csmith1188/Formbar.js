@@ -31,7 +31,8 @@ module.exports = {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
-                        redirectURL: undefined
+                        redirectURL: undefined,
+                        route: 'login'
                     });
                     return;
                 } else if (!req.query.code) { 
@@ -39,7 +40,8 @@ module.exports = {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
-                        redirectURL: undefined
+                        redirectURL: undefined,
+                        route: 'login'
                     });
                     return;
                 } else {
@@ -237,10 +239,15 @@ module.exports = {
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
                             req.session.email = userData.email;
-
+                            // Log the login post
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
-
+                            // If the user was logging in from the consent page, redirect them back to the consent page
+                            if (req.session.query.includes('key') && req.session.query.includes('data')) {
+                                res.redirect('/consent?key=' + req.session.query.key + '&data=' + req.session.query.data);
+                                return;
+                            };
+                            // Otherwise, redirect them to the home page
                             res.redirect('/')
                         } catch (err) {
                             logger.log('error', err.stack);
