@@ -90,7 +90,8 @@ module.exports = {
 				}
 
 				// If the user does not have sufficient permissions, return an error
-				if (permissions <= GUEST_PERMISSIONS || classPermissions <= GUEST_PERMISSIONS) {
+				// if (permissions <= GUEST_PERMISSIONS || classPermissions <= GUEST_PERMISSIONS) {
+				if(false) {
 					res.status(403).json({ error: 'You do not have permission to access this page.' })
 					return
 				}
