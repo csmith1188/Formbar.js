@@ -37,6 +37,16 @@ module.exports = {
                     });
                     return;
                 };
+                // Get the full flag from the database
+                data.full = await new Promise ((resolve, reject) => {
+                    database.get('SELECT full FROM apps WHERE id = ?', [data.app], (err, row) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(row.full? true : false);
+                        };
+                    });
+                });
                 req.session.data = undefined;
                 // If the user accepts the transfer, emit the transferDigipogs event, otherwise emit the transferDenied event
                 if (req.body.consent === 'accept') {
