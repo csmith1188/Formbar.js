@@ -428,22 +428,12 @@
 			function startClass() {
 				socket.emit('startClass')
 				changeClassText(true);
-
-				const startClassButton = document.getElementById('startClass')
-				startClassButton.innerText = 'End Class'
-				startClassButton.onclick = endClass
-				startClassButton.id = 'endClass'
 			}
 
 			function endClass() {
 				if (confirm('Are you sure you want to end the class?')) {
 					socket.emit('endClass')
 					changeClassText(false);
-
-					const endClassButton = document.getElementById('endClass')
-					endClassButton.innerText = 'Start Class'
-					endClassButton.onclick = startClass
-					endClassButton.id = 'startClass'
 				}
 			}
 
