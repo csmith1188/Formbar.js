@@ -243,7 +243,11 @@ module.exports = {
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
                             // If the user was logging in from the consent page, redirect them back to the consent page
-                            if (req.body.route == 'consent') res.redirect('/consent');
+                            if (req.body.route === 'transfer') {
+                                res.redirect(req.body.redirectURL);
+                                return;
+                            };
+                            console.log(req.body.route)
                             // Otherwise, redirect them to the home page
                             res.redirect('/')
                         } catch (err) {

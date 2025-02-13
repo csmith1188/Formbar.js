@@ -12,8 +12,8 @@
                 <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
                 <br><br>
                 <!-- The route to post to after redirecting. Only used if the redirect url is specified -->
-                <input type="hidden" id="route" name="route" value="<%-route%>">
                 <form id="login" action="login" method="post" style="margin-bottom: 16px;">
+                    <input type="hidden" id="route" name="route" value="<%-route%>">
                     <!-- Carries over and submits the redirectURL specified by the user. -->
                     <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
                     <!-- Login Inputs -->

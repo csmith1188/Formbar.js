@@ -1,8 +1,9 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/formbar_header') %>
-    <form id='consent-form' action='/consent' method='post'>
+    <form id='consent-form' action='<%=redirect%>' method='post'>
         <div id='consent-text'>
             <p>An app (<%= name %>) is asking to transfer <%= digipogs %> digipogs from your account.</p>
+            <p>Reason: <%= reason %></p>
         </div>
         <button type='submit' name='action' value='accept'>Accept</button>
         <button type='submit' name='action' value='decline'>Decline</button>
