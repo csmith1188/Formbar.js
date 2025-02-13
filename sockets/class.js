@@ -8,6 +8,47 @@ const { io } = require("../modules/webServer")
 
 module.exports = {
     run(socket, socketUpdates) {
+        // Starts a classroom session
+        socket.on('startClass', () => {
+            try {
+                logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                const classId = socket.request.session.classId
+                socketUpdates.startClass(classId)
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        // Ends a classroom session
+        socket.on('endClass', () => {
+            try {
+                logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                const classId = socket.request.session.classId
+                socketUpdates.endClass(classId)
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        // Leaves a classroom session
+        // User is still associated with the class
+        socket.on('leaveClass', () => {
+            try {
+                logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                const username = socket.request.session.username;
+                const classId = socket.request.session.classId;
+
+                // Kick the user from the classroom entirely if they're a guest
+                // If not, kick them from the session
+                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
         // Leaves the classroom entirely
         // User is no longer associated with the class
         socket.on('leaveClassroom', async () => {
@@ -45,47 +86,6 @@ module.exports = {
                         userSockets[username].emit('votingRightChange', stewBox.includes(username));
                     } else userSockets[username].emit('votingRightChange', false);
                 }
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        // Leaves a classroom session
-        // User is still associated with the class
-        socket.on('leaveClass', () => {
-            try {
-                logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const username = socket.request.session.username;
-                const classId = socket.request.session.classId;
-
-                // Kick the user from the classroom entirely if they're a guest
-                // If not, kick them from the session
-                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        // Starts a classroom session
-        socket.on('startClass', () => {
-            try {
-                logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const classId = socket.request.session.classId
-                socketUpdates.startClass(classId)
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        // Ends a classroom session
-        socket.on('endClass', () => {
-            try {
-                logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const classId = socket.request.session.classId
-                socketUpdates.endClass(classId)
             } catch (err) {
                 logger.log('error', err.stack)
             }
