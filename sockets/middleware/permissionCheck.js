@@ -21,6 +21,11 @@ module.exports = {
                     return
                 }
 
+                // If the class provided by the user is not loaded into memory, avoid going further to avoid errors
+                if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
+                    return;
+                }
+
                 let userData = classInformation.users[username];
                 if (!classInformation.users[username]) {
                     // Get the user data from the database
@@ -37,7 +42,7 @@ module.exports = {
                 } else if (
                     CLASS_SOCKET_PERMISSION_MAPPER[event] &&
                     classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
-                    classInformation.users[username].classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
+                    userData.classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
                 ) {
                     logger.log('info', '[socket permission check] Class socket permission settings check passed')
                     next()

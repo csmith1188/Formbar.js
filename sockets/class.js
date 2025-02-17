@@ -1,5 +1,5 @@
 const { classInformation } = require("../modules/class")
-const { database, dbRun } = require("../modules/database")
+const { database, dbRun, dbGet } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
@@ -60,7 +60,14 @@ module.exports = {
                 // Remove the user from the class
                 delete classInformation.classrooms[classId].students[username];
                 classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId);
+                classInformation.users[username].classPermissions = null;
                 database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
+
+                // If the owner of the classroom leaves, then delete the classroom
+                const owner = (await dbGet('SELECT owner FROM classroom WHERE id=?', classId)).owner;
+                if (owner == studentId) {
+                    await dbRun('DELETE FROM classroom WHERE id=?', classId);
+                }
 
                 // Update the class and play leave sound
                 socketUpdates.classPermissionUpdate();
@@ -76,15 +83,18 @@ module.exports = {
 
         socket.on('votingRightChange', (username, votingRight, studBox) => {
             try {
-                stewBox = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
+                const studentBoxes = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
+
                 if (userSockets[username] && studBox) {
                     classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
                     userSockets[username].emit('votingRightChange', votingRight);
                     socketUpdates.virtualBarUpdate(socket.request.session.classId);
                 } else if (userSockets[username] && username) {
-                    if (stewBox.length > 0) {
-                        userSockets[username].emit('votingRightChange', stewBox.includes(username));
-                    } else userSockets[username].emit('votingRightChange', false);
+                    if (studentBoxes.length > 0) {
+                        userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
+                    } else {
+                        userSockets[username].emit('votingRightChange', false);
+                    }
                 }
             } catch (err) {
                 logger.log('error', err.stack)
@@ -111,11 +121,9 @@ module.exports = {
             }
         });
 
-        const validSettings = ["mute"]
         socket.on("setClassSetting", (setting, value) => {
             try {
                 const classId = socket.request.session.classId;
-                if (!validSettings.includes(setting)) return;
                 
                 // Update the setting in the classInformation and in the database
                 classInformation.classrooms[classId].settings[setting] = value;

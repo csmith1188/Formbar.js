@@ -81,12 +81,15 @@ async function joinClass(req, code) {
 				return 'You are banned from that class.'
 			}
 
+			// Set class permissions and remove the user's Offline tag if their tags aren't null
 			currentUser.classPermissions = classUser.permissions
+			if (currentUser.tags) {
+				currentUser.tags = currentUser.tags.replace('Offline', '');	
+				classInformation.users[username].tags = classInformation.users[username].tags.replace('Offline', '')
+			}
 
 			// Add the student to the newly created class
-			classInformation.classrooms[classroom.id].students[username] = currentUser
-			classInformation.classrooms[classroom.id].students[username].tags = classInformation.classrooms[classroom.id].students[username].tags.replace('Offline', '')
-			classInformation.users[username].tags = classInformation.users[username].tags.replace('Offline', '')
+			classInformation.classrooms[classroom.id].students[username] = currentUser			
 			classInformation.users[username].activeClasses.push(classroom.id)
 			advancedEmitToClass('joinSound', classroom.id, { api: true })
 

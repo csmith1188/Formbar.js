@@ -103,7 +103,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	removePlugin: 'manageClass',
 	startClass: 'manageClass',
 	endClass: 'manageClass',
-	modechange: 'manageClass',
+	modeChange: 'manageClass',
 	isClassActive: 'manageClass',
 	regenerateClassCode: 'manageClass',
 	changeClassName: 'manageClass',

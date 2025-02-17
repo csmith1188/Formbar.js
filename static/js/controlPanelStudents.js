@@ -540,9 +540,15 @@ for (let filterElement of document.getElementsByClassName('filter')) {
         if (filter[filterElement.id] > 2) {
             filter[filterElement.id] = 0
         }
-        if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
-        else filterElement.classList.add('pressed')
+
+        if (filter[filterElement.id] == 0) {
+            filterElement.classList.remove('pressed')
+        } else {
+            filterElement.classList.add('pressed')
+        }
+
         filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
+        socket.emit("setClassSetting", "filter", `${filterElement.id}-${filter[filterElement.id]}`)
         filterSortChange(classroom)
     }
 }
@@ -562,16 +568,22 @@ for (let sortElement of document.getElementsByClassName('sort')) {
                 }
             }
         }
+
         sort[sortElement.id] += 1
         if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
             sort[sortElement.id] = 0
-        }
-        else if (sort[sortElement.id] > 2) {
+        } else if (sort[sortElement.id] > 2) {
             sort[sortElement.id] = 0
+        }        
+
+        if (sort[sortElement.id] == 0) {
+            sortElement.classList.remove('pressed') 
+        } else {
+            sortElement.classList.add('pressed')
         }
-        if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
-        else sortElement.classList.add('pressed')
+
         sortElement.textContent = SortState[sortElement.id][sort[sortElement.id]]
+        socket.emit("setClassSetting", "sort", `${sortElement.id}-${sort[sortElement.id]}`)
         filterSortChange(classroom)
     }
 }

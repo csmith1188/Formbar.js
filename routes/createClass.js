@@ -121,8 +121,9 @@ module.exports = {
                                     );
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
-
-                                    res.redirect('/')
+                                    if (classInformation.users[req.session.username].permissions == MANAGER_PERMISSIONS) {
+                                        res.redirect('/controlPanel')
+                                    }
                                 } catch (err) {
                                     logger.log('error', err.stack);
                                     res.render('pages/message', {
@@ -184,7 +185,10 @@ module.exports = {
                             if (makeClassStatus instanceof Error)  {
                                 throw makeClassStatus
                             }
-                            res.redirect('/')
+
+                            if (classInformation.users[req.session.username].permissions == MANAGER_PERMISSIONS) {
+                                res.redirect('/controlPanel')
+                            }
                         } catch (err) {
                             logger.log('error', err.stack);
                             res.render('pages/message', {
