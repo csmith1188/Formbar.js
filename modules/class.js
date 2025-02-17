@@ -37,13 +37,11 @@ class Classroom {
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || ["Offline"];
+		this.tagNames = tags || ['Offline'];
 		this.settings = settings || {
 			mute: false,
-			filter: "",
-			sort: "",
-			select: "",
-			fastPoll: ""
+			filter: '',
+			sort: ''
 		}
 		this.timer = {
 			startTime: 0,
@@ -52,8 +50,8 @@ class Classroom {
 			sound: false
 		}
 
-		if (!this.tagNames.includes("Offline") && Array.isArray(this.tagNames)) {
-			this.tagNames.push("Offline");
+		if (!this.tagNames.includes('Offline') && Array.isArray(this.tagNames)) {
+			this.tagNames.push('Offline');
 		}
 	}
 }

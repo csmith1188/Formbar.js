@@ -48,7 +48,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	saveTags: TEACHER_PERMISSIONS,
 	newTag: TEACHER_PERMISSIONS,
 	removeTag: TEACHER_PERMISSIONS,
-	passwordUpdate: MANAGER_PERMISSIONS
+	passwordUpdate: MANAGER_PERMISSIONS,
+	getActiveClass: GUEST_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
@@ -65,7 +66,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	leaveClassroom: GUEST_PERMISSIONS,
-	getActiveClass: GUEST_PERMISSIONS,
 	setClassSetting: TEACHER_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	previousPollDisplay: TEACHER_PERMISSIONS,
@@ -103,7 +103,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	removePlugin: 'manageClass',
 	startClass: 'manageClass',
 	endClass: 'manageClass',
-	modechange: 'manageClass',
+	modeChange: 'manageClass',
 	isClassActive: 'manageClass',
 	regenerateClassCode: 'manageClass',
 	changeClassName: 'manageClass',

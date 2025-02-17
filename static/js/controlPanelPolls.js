@@ -392,13 +392,13 @@ function modeChange() {
 	let modePT = document.getElementById('modePT')
 
 	if (modeP.checked) {
-		socket.emit('modechange', modeP.value)
+		socket.emit('modeChange', modeP.value)
 	} else if (modeL.checked) {
-		socket.emit('modechange', modeL.value)
+		socket.emit('modeChange', modeL.value)
 	} else if (modeQ.checked) {
-		socket.emit('modechange', modeQ.value)
+		socket.emit('modeChange', modeQ.value)
 	} else if (modePT.checked) {
-		socket.emit('modechange', modePT.value)
+		socket.emit('modeChange', modePT.value)
 	}
 }
 

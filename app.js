@@ -82,22 +82,7 @@ if(!fs.existsSync('.env')) {
 // Add currentUser and permission constants to all pages
 // Additionally, handle session expiration
 app.use((req, res, next) => {
-	// If the user's session has expired, log them out
-	if (req.session.expireTime && req.session.username && userSockets[req.session.username]) {
-		if (new Date().getTime() > req.session.expireTime) {
-			// Logout the user
-			const socketUpdates = new SocketUpdates(userSockets[req.session.username]);
-			socketUpdates.logout(userSockets[req.session.username]);
-
-			// Clean up the SocketUpdates class and destroy the users Express session
-			delete socketUpdates;
-			req.session.destroy();
-			return res.redirect('/');
-		}
-	}
-
 	if (req.session.classId || req.session.classId === null) {
-		req.session.expireTime = new Date().getTime() + 1800000; // 30 minutes
 		res.locals.currentUser = classInformation.users[req.session.username];
 	}
 

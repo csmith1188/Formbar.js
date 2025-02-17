@@ -1,3 +1,4 @@
+const { database } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 
 module.exports = {
