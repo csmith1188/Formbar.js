@@ -1,4 +1,5 @@
 const { classInformation } = require("../../modules/class")
+const { dbGet } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
@@ -20,22 +21,28 @@ module.exports = {
                     return
                 }
 
-                if (!classInformation.users[username]) {
-                    logger.log('info', '[socket permission check] User is not logged in')
-                    socket.emit('message', 'User is not logged in')
-                    return
+                // If the class provided by the user is not loaded into memory, avoid going further to avoid errors
+                if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
+                    return;
                 }
 
-                if (GLOBAL_SOCKET_PERMISSIONS[event] && classInformation.users[username].permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
+                let userData = classInformation.users[username];
+                if (!classInformation.users[username]) {
+                    // Get the user data from the database
+                    userData = await dbGet('SELECT * FROM users WHERE username=?', [username]);
+                    userData.classPermissions = await dbGet('SELECT permissions FROM classUsers WHERE studentId=? AND classId=?', [userData.id, classId]);
+                }
+
+                if (GLOBAL_SOCKET_PERMISSIONS[event] && userData.permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Global socket permission check passed')
                     next()
-                } else if (CLASS_SOCKET_PERMISSIONS[event] && classInformation.users[username].classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
+                } else if (CLASS_SOCKET_PERMISSIONS[event] && userData.classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Class socket permission check passed')
                     next()
                 } else if (
                     CLASS_SOCKET_PERMISSION_MAPPER[event] &&
                     classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
-                    classInformation.users[username].classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
+                    userData.classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
                 ) {
                     logger.log('info', '[socket permission check] Class socket permission settings check passed')
                     next()

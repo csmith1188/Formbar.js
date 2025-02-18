@@ -27,36 +27,40 @@ module.exports = {
                     }
                 }
 
+                // If the users response is to remove their response, set the response to an empty string
+                // Also, set the time of the response to the current time
                 classroom.students[username].pollRes.buttonRes = res == "remove" ? "" : res
                 classroom.students[username].pollRes.textRes = res == "remove" ? "" : textRes
                 classroom.students[username].pollRes.time = new Date()
 
-                for (let i = 0; i < resLength; i++) {
-                    if (res) {
-                        let calcWeight = classroom.poll.weight * resWeight
-                        classroom.students[socket.request.session.username].pogMeter += calcWeight
-                        if (classroom.students[socket.request.session.username].pogMeter >= 25) {
-                            database.get('SELECT digipogs FROM classusers WHERE studentId=?', [classroom.students[socket.request.session.username].id], (err, data) => {
-                                try {
-                                    if (err) throw err
+                // Digipog calculations
+                // This is commented out for now as digipogs aren't implemented yet.
+                // for (let i = 0; i < resLength; i++) {
+                //     if (res) {
+                //         let calcWeight = classroom.poll.weight * resWeight
+                //         classroom.students[socket.request.session.username].pogMeter += calcWeight
+                //         if (classroom.students[socket.request.session.username].pogMeter >= 25) {
+                //             database.get('SELECT digipogs FROM classusers WHERE studentId=?', [classroom.students[socket.request.session.username].id], (err, data) => {
+                //                 try {
+                //                     if (err) throw err
 
-                                    database.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, classroom.students[socket.request.session.username].id], (err) => {
-                                        try {
-                                            if (err) throw err
+                //                     database.run('UPDATE classusers SET digiPogs=? WHERE studentId=?', [data + 1, classroom.students[socket.request.session.username].id], (err) => {
+                //                         try {
+                //                             if (err) throw err
 
-                                            logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username}`)
-                                        } catch (err) {
-                                            logger.log('error', err.stack);
-                                        }
-                                    })
-                                } catch (err) {
-                                    logger.log('error', err.stack);
-                                }
-                            })
-                            classroom.students[socket.request.session.username].pogMeter = 0
-                        }
-                    }
-                }
+                //                             logger.log('verbose', `[pollResp] Added 1 digipog to ${socket.request.session.username}`)
+                //                         } catch (err) {
+                //                             logger.log('error', err.stack);
+                //                         }
+                //                     })
+                //                 } catch (err) {
+                //                     logger.log('error', err.stack);
+                //                 }
+                //             })
+                //             classroom.students[socket.request.session.username].pogMeter = 0
+                //         }
+                //     }
+                // }
                 logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
 
                 socketUpdates.classPermissionUpdate()

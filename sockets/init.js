@@ -2,7 +2,7 @@ const { SocketUpdates } = require("../modules/socketUpdates");
 const { io } = require("../modules/webServer");
 const fs = require("fs");
 
-// Handles the websocket communications
+// Initializes all the websocket routes
 function initSocketRoutes() {
     io.on('connection', async (socket) => {
         const socketUpdates = new SocketUpdates(socket);
