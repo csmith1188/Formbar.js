@@ -1,5 +1,5 @@
 const { classInformation } = require("../modules/class")
-const { database, dbRun } = require("../modules/database")
+const { database, dbRun, dbGet } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentId } = require("../modules/student")
@@ -8,65 +8,6 @@ const { io } = require("../modules/webServer")
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Leaves the classroom entirely
-        // User is no longer associated with the class
-        socket.on('leaveClassroom', async () => {
-            try {
-                const classId = socket.request.session.classId;
-                const username = socket.request.session.username;
-                const studentId = await getStudentId(username);
-
-                // Remove the user from the class
-                delete classInformation.classrooms[classId].students[username];
-                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId);
-                database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
-
-                // Update the class and play leave sound
-                socketUpdates.classPermissionUpdate();
-                socketUpdates.virtualBarUpdate();
-
-                // Play leave sound and reload the user's page
-                advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
-                userSockets[username].emit('reload');
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        socket.on('votingRightChange', (username, votingRight, studBox) => {
-            try {
-                stewBox = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
-                if (userSockets[username] && studBox) {
-                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
-                    userSockets[username].emit('votingRightChange', votingRight);
-                    socketUpdates.virtualBarUpdate(socket.request.session.classId);
-                } else if (userSockets[username] && username) {
-                    if (stewBox.length > 0) {
-                        userSockets[username].emit('votingRightChange', stewBox.includes(username));
-                    } else userSockets[username].emit('votingRightChange', false);
-                }
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        // Leaves a classroom session
-        // User is still associated with the class
-        socket.on('leaveClass', () => {
-            try {
-                logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const username = socket.request.session.username;
-                const classId = socket.request.session.classId;
-
-                // Kick the user from the classroom entirely if they're a guest
-                // If not, kick them from the session
-                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
         // Starts a classroom session
         socket.on('startClass', () => {
             try {
@@ -91,8 +32,78 @@ module.exports = {
             }
         });
 
-        socket.on('getActiveClass', (api) => {
+        // Leaves a classroom session
+        // User is still associated with the class
+        socket.on('leaveClass', () => {
             try {
+                logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+                const username = socket.request.session.username;
+                const classId = socket.request.session.classId;
+
+                // Kick the user from the classroom entirely if they're a guest
+                // If not, kick them from the session
+                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        // Leaves the classroom entirely
+        // User is no longer associated with the class
+        socket.on('leaveClassroom', async () => {
+            try {
+                const classId = socket.request.session.classId;
+                const username = socket.request.session.username;
+                const studentId = await getStudentId(username);
+
+                // Remove the user from the class
+                delete classInformation.classrooms[classId].students[username];
+                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId);
+                classInformation.users[username].classPermissions = null;
+                database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
+
+                // If the owner of the classroom leaves, then delete the classroom
+                const owner = (await dbGet('SELECT owner FROM classroom WHERE id=?', classId)).owner;
+                if (owner == studentId) {
+                    await dbRun('DELETE FROM classroom WHERE id=?', classId);
+                }
+
+                // Update the class and play leave sound
+                socketUpdates.classPermissionUpdate();
+                socketUpdates.virtualBarUpdate();
+
+                // Play leave sound and reload the user's page
+                advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
+                userSockets[username].emit('reload');
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        socket.on('votingRightChange', (username, votingRight, studBox) => {
+            try {
+                const studentBoxes = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
+
+                if (userSockets[username] && studBox) {
+                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
+                    userSockets[username].emit('votingRightChange', votingRight);
+                    socketUpdates.virtualBarUpdate(socket.request.session.classId);
+                } else if (userSockets[username] && username) {
+                    if (studentBoxes.length > 0) {
+                        userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
+                    } else {
+                        userSockets[username].emit('votingRightChange', false);
+                    }
+                }
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
+
+        socket.on('getActiveClass', () => {
+            try {
+                const api = socket.request.session.api;
                 logger.log('info', `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 for (const username in classInformation.users) {
@@ -102,16 +113,17 @@ module.exports = {
                         return;
                     }
                 }
+
+                // If no class is found, set the class to null
+                setClassOfApiSockets(api, null);
             } catch (err) {
                 logger.log('error', err.stack)
             }
         });
 
-        const validSettings = ["mute"]
         socket.on("setClassSetting", (setting, value) => {
             try {
                 const classId = socket.request.session.classId;
-                if (!validSettings.includes(setting)) return;
                 
                 // Update the setting in the classInformation and in the database
                 classInformation.classrooms[classId].settings[setting] = value;

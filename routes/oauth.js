@@ -1,5 +1,5 @@
 const { compare } = require('../modules/crypto');
-const { classInformation, getClassIDFromCode } = require('../modules/class');
+const { classInformation } = require('../modules/class');
 const { logNumbers } = require('../modules/config');
 const { database } = require('../modules/database');
 const { logger } = require('../modules/logger');

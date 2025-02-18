@@ -33,7 +33,6 @@ module.exports = {
                         return
                     }
 
-
                     database.run(`UPDATE ip_${type} set ip=? WHERE id=?`, [ip, id], (err) => {
                         if (err) {
                             logger.log('error', err)

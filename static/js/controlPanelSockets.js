@@ -12,7 +12,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 		studentTags = studentTags.split(",")
 		for (let tag of studentTags) {
-			if (!currentTags.includes(tag) && tag != "") {
+			if (!currentTags.includes(tag) && tag != "" && tag !="Offline") {
 				currentTags.push(tag)
 			}
 		}
@@ -390,6 +390,7 @@ socket.on('customPollUpdate', (
 
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			for (let student of students) {
+				if (student.permissions >= TEACHER_PERMISSIONS) continue
 				// Combines the students tags and their poll responses
 				let tempStudTags = []
 				if (student.tags == null) {

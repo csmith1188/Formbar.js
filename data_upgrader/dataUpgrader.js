@@ -31,6 +31,26 @@ function getDatabaseVersion(db) {
     });
 }
 
+// Create a table in the database based on the table in the template database
+// This is used for creating new tables in the database
+function createTable(tableName) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Get columns from the table in the template database
+            const columns = await dbGetAll(`PRAGMA table_info(${tableName})`, [], databaseTemplate);
+            const columnDefinitions = columns
+                .map(column => `${column.name} ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
+                .join(', ');
+
+            // Create the table with the new columns
+            await dbRun(`CREATE TABLE ${tableName} (${columnDefinitions})`, []);
+            resolve();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
 // Grab the table in the latest database-template and recreate it
 // Creates a temporary table with the new columns then copies the data over
 // Drops the old table and renames the temporary table to the old table name
@@ -43,7 +63,9 @@ function recreateTable(tableName) {
                 .map(column => `${column.name} ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
                 .join(', ');
 
+            // Check if the temporary table already exists and drop it if it does
             // Create a temporary table with the new columns
+            await dbRun(`DROP TABLE IF EXISTS ${tableName}_temp`, []);
             await dbRun(`CREATE TABLE ${tableName}_temp (${columnDefinitions})`, []);
 
             // Get old and new columns
@@ -99,7 +121,7 @@ async function upgradeDatabase() {
             await dbRun('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)', []);
 
             // Recreate the users table
-            recreateTable('users');
+            await recreateTable('users');
 
             // Update passwords from encrypted to hashed and add new fields
             database.all('SELECT * FROM users', async (err, rows) => {
@@ -117,18 +139,27 @@ async function upgradeDatabase() {
                     database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, row.id]);
                 }
             });
-
-            await dbRun('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)');
-            await dbRun('INSERT INTO stats VALUES ("dbVersion", "1")');
-        case "1": // Upgrade to version 2
-            await recreateTable('users'); // Due to an issue with version 1
-            await recreateTable('classroom');
-
-            await dbRun('UPDATE stats SET value="2" WHERE key="dbVersion"', []);
-        case "2":
-            await recreateTable('users');
     }
 
+    // Recreate all the tables in the database
+    const tables = await dbGetAll('SELECT name FROM sqlite_master WHERE type="table"', [], database);
+    for (const table of tables) {
+        if (table.name == "sqlite_sequence" || table.name.endsWith('_temp')) continue; // Skip sqlite_sequence table and temporary tables
+        await recreateTable(table.name);
+    }
+
+    // If there is a new table in the template database that is not in the current database, create it
+    const templateTables = await dbGetAll('SELECT name FROM sqlite_master WHERE type="table"', [], databaseTemplate);
+    for (const table of templateTables) {
+        const tableExists = await dbGetAll('SELECT name FROM sqlite_master WHERE type="table" AND name=?', [table.name], database);
+        if (tableExists.length == 0) {
+            await createTable(table.name);
+        }
+    }
+
+    // Update the database version
+    await dbRun('CREATE TABLE IF NOT EXISTS "stats" (key TEXT NOT NULL, value TEXT)');
+    await dbRun(`UPDATE stats SET value="${currentVersion}" WHERE key="dbVersion"`, []);
     console.log(`Database upgraded to version ${currentVersion}!`);
 }
 

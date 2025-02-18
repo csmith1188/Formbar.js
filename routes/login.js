@@ -1,5 +1,5 @@
 const { hash, compare } = require('../modules/crypto');
-const { database } = require("../modules/database");
+const { database, dbRun, dbGet } = require("../modules/database");
 const { classInformation, getClassIDFromCode } = require("../modules/class");
 const { logNumbers } = require("../modules/config");
 const { logger } = require("../modules/logger");
@@ -7,6 +7,7 @@ const { Student } = require("../modules/student");
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions");
 const { managerUpdate } = require("../modules/socketUpdates");
 const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -17,26 +18,20 @@ const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
 
 module.exports = {
     run(app) {
-        app.get('/login', (req, res) => {
+        app.get('/login', async (req, res) => {
             try {
+                // If a code is provided, look for the matching token in the database
+                const code = req.query.code;
+                let token;
+                if (code) {
+                    token = (await dbGet('SELECT token FROM temp_user_creation_data WHERE secret=?', [code])).token;
+                }
+
                 // If the user is not logged in, render the login page
                 if (req.session.email !== undefined) {
-                    res.render('pages/message', {
-                        message: 'You are already logged in.',
-                        title: 'Login'
-                    });
+                    res.redirect('/');
                     return;
-                // If the session 
-                } else if (!req.session.createData) {
-                    logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                    res.render('pages/login', {
-                        title: 'Login',
-                        redirectURL: undefined,
-                        route: 'login'
-                    });
-                    return;
-                } else if (!req.query.code) { 
-                    req.session.createData = undefined;
+                } else if (!token) {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
@@ -45,17 +40,18 @@ module.exports = {
                     });
                     return;
                 } else {
-                    // Assign the create data to a variable for easier access
-                    const user = req.session.createData;
+                    // Decode the user account data from the stored token
+                    const user = jwt.decode(token);
+
                     // If the codes don't match, wipe the create data and render a message saying the codes don't match
-                    if (req.query.code !== user.newSecret) {
-                        req.session.createData = undefined;
+                    if (code !== user.newSecret) {
                         res.render('pages/message', {
                             message: 'Invalid verification code. Please try again.',
                             title: 'Error'
                         });
                         return;
                     };
+
                     database.run(
                         'INSERT INTO users(username, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
                         [
@@ -93,6 +89,9 @@ module.exports = {
                                         req.session.displayName = userData.displayName;
                                         req.session.email = userData.email;
                                         req.session.verified = 1
+
+                                        // Remove the account creation data from the database
+                                        dbRun('DELETE FROM temp_user_creation_data WHERE secret=?', [user.newSecret]);
                     
                                         logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                         logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
@@ -159,7 +158,7 @@ module.exports = {
 
                 // Check whether user is logging in or signing up
                 if (user.loginType == 'login') {
-                    logger.log('verbose', '[post /login] User is logging in')
+                    logger.log('verbose', '[post /login] User is logging in');
 
                     // Get the users login in data to verify password
                     database.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.username=?', [user.username], async (err, userData) => {
@@ -173,6 +172,19 @@ module.exports = {
                                 });
                                 return;
                             };
+
+                            // Compare password hashes and check if it is correct
+                            const passwordMatches = await compare(user.password, userData.password);
+                            if (!passwordMatches) {
+                                logger.log('verbose', '[post /login] Incorrect password')
+                                res.render('pages/message', {
+                                    message: 'Incorrect password',
+                                    title: 'Login'
+                                })
+                                return
+                            }
+
+                            // If the user does not have a display name, set it to their username
                             if (!userData.displayName) {
                                 database.run("UPDATE users SET displayName = ? WHERE username = ?", [userData.username, userData.username]), (err) => {
                                     try {
@@ -187,20 +199,9 @@ module.exports = {
                                     };
                                 };
                             };
-                            // Compare password hashes and check if it is correct
-                            const passwordMatches = await compare(user.password, userData.password);
-                            if (!passwordMatches) {
-                                logger.log('verbose', '[post /login] Incorrect password')
-                                res.render('pages/message', {
-                                    message: 'Incorrect password',
-                                    title: 'Login'
-                                })
-                                return
-                            }
 
                             let loggedIn = false
                             let classId = ''
-
                             for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
                                     for (let username of Object.keys(classData.students)) {
@@ -242,13 +243,14 @@ module.exports = {
                             // Log the login post
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
+
                             // If the user was logging in from the consent page, redirect them back to the consent page
                             if (req.body.route === 'transfer') {
                                 res.redirect(req.body.redirectURL);
                                 return;
                             };
-                            console.log(req.body.route)
-                            // Otherwise, redirect them to the home page
+
+                            // Redirect the user to the home page to be redirected to the correct spot
                             res.redirect('/')
                         } catch (err) {
                             logger.log('error', err.stack);
@@ -283,7 +285,10 @@ module.exports = {
                             let newAPI
                             let newSecret
 
-                            if (users.length == 0) permissions = MANAGER_PERMISSIONS
+                            // If there are no users in the database, the first user is a manager
+                            if (users.length == 0) {
+                                permissions = MANAGER_PERMISSIONS
+                            }
 
                             for (let dbUser of users) {
                                 existingAPIs.push(dbUser.API)
@@ -350,7 +355,7 @@ module.exports = {
                                                     req.session.classId = null
                                                     req.session.displayName = userData.displayName;
                                                     req.session.email = userData.email;
-                                                    req.session.verified
+                                                    req.session.verified = 1;
                                 
                                                     logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                                     logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
@@ -390,20 +395,29 @@ module.exports = {
                                     });
                                 return;
                             };
+
                             // Set the creation data for the user
-                            req.session.createData = user;
-                            req.session.createData.newAPI = newAPI;
-                            req.session.createData.newSecret = newSecret;
-                            req.session.createData.hashedPassword = hashedPassword;
-                            req.session.createData.permissions = permissions;
-                            // Process LOCATION from the .env file
+                            const accountCreationData = user;
+                            accountCreationData.newAPI = newAPI;
+                            accountCreationData.newSecret = newSecret;
+                            accountCreationData.hashedPassword = hashedPassword;
+                            accountCreationData.permissions = permissions;
+
+                            // Create JWT token with this information then store it in the temp_user_creation_data in the database
+                            // This will be used to finish creating the account once the email is verified
+                            const token = jwt.sign(accountCreationData, newSecret, { expiresIn: '1h' });
+                            await dbRun('INSERT INTO temp_user_creation_data(token, secret) VALUES(?, ?)', [token, newSecret]);
+
+                            // Get the web address for Formbar from the env file
                             const location = process.env.LOCATION;
+
                             // Create the HTML content for the email
                             const html = `
                             <h1>Verify your email</h1>
                             <p>Click the link below to verify your email address with Formbar</p>
                                 <a href='${location}/login?code=${newSecret}'>Verify Email</a>
                             `;
+
                             // Send the email
                             sendMail(user.email, 'Formbar Verification', html);
                             if (limitStore.has(user.email) && (Date.now() - limitStore.get(user.email) < RATE_LIMIT)) {
@@ -413,7 +427,7 @@ module.exports = {
                                 });
                             } else {
                                 res.render('pages/message', {
-                                    message: 'Verification email sent. Please check your email. Please close this tab.',
+                                    message: 'Verification email sent. Please check your email.',
                                     title: 'Verification'
                                 });
                             };

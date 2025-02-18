@@ -467,9 +467,54 @@
 				}
 			}
 
+			// Handle settings
 			const settings = <%- settings %>;
+			
+			// Handle sorting and filtering
+			// They're stored by their name then a hyphen before the sorting value it is
+			// 0 = off, 1 = descending, 2 = ascending
+			if (settings.sort) {
+				const [ sortName, sortValue ] = settings.sort.split('-');				
+				const allSorts = document.querySelectorAll('.sort');
+				const sortButton = document.getElementById(sortName);
+
+				// Set the correct sort to on
+				Object.keys(sort).forEach(key => sort[key] = 0);
+				sort[sortName] = parseInt(sortValue);
+
+				// Remove arrow from all sorts
+				allSorts.forEach(button => {
+					button.textContent = SortState[button.id][sort[button.id]]
+					button.classList.remove('pressed')
+				});
+
+				// Set the correct sort to pressed
+				sortButton.classList.add('pressed');
+				sortButton.textContent = `${SortState[sortName][sortValue]}`;
+			}
+
+			if (settings.filter) {
+				const [ filterName, filterValue ] = settings.filter.split('-');
+				const allFilters = document.querySelectorAll('.filter');
+				const filterButton = document.getElementById(filterName);
+
+				// Set the correct filter to on
+				Object.keys(filter).forEach(key => filter[key] = 0);
+				filter[filterName] = parseInt(filterValue);
+
+				// Remove arrow from all filters
+				allFilters.forEach(button => {
+					button.textContent = FilterState[button.id][filter[button.id]]
+					button.classList.remove('pressed')
+				});
+
+				// Set the correct filter to pressed
+				filterButton.classList.add('pressed');
+				filterButton.textContent = `${FilterState[filterName][filterValue]}`;
+			}
+
+			// Handle mute button 
 			let mute = settings.mute;
-			console.log(settings);
 			setMuteSound(mute)
 
 			function setMuteSound(isMuted) {

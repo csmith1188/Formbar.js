@@ -4,40 +4,6 @@ const { logger } = require("../modules/logger")
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('saveTags', (studentId, tags, username) => {
-            //Save the tags to the students tag element in their object
-            //Then save their tags to the database
-            try {
-                logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
-                classInformation.classrooms[socket.request.session.classId].students[username].tags = tags.toString()
-                database.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
-                    if (err) {
-                        logger.log('error', err)
-                        socket.emit('message', 'There was a server error try again.')
-                        return
-                    }
-                    if (row) {
-                        // Row exists, update it
-                        database.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
-                            if (err) {
-                                logger.log('error', err)
-                                socket.emit('message', 'There was a server error try again.')
-                                return
-                            } else {
-                                socket.emit('reload')
-                            }
-                        });
-                    } else {
-                        socket.send('message', 'User not found')
-                    }
-                });
-            }
-            catch (err) {
-                logger.log('error', err.stack)
-            }
-        })
-
         socket.on('newTag', (tagName) => {
             // Add a new tag to the database
             try {
@@ -148,5 +114,39 @@ module.exports = {
                 logger.log('error', err.stack);
             }
         });
+
+        socket.on('saveTags', (studentId, tags, username) => {
+            // Save the tags to the students tag element in their object
+            // Then save their tags to the database
+            try {
+                logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+                classInformation.classrooms[socket.request.session.classId].students[username].tags = tags.toString()
+                database.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
+                    if (err) {
+                        logger.log('error', err)
+                        socket.emit('message', 'There was a server error try again.')
+                        return
+                    }
+                    if (row) {
+                        // Row exists, update it
+                        database.run('UPDATE users SET tags=? WHERE id=?', [tags.toString(), studentId], (err) => {
+                            if (err) {
+                                logger.log('error', err)
+                                socket.emit('message', 'There was a server error try again.')
+                                return
+                            } else {
+                                socket.emit('reload')
+                            }
+                        });
+                    } else {
+                        socket.send('message', 'User not found')
+                    }
+                });
+            }
+            catch (err) {
+                logger.log('error', err.stack)
+            }
+        })
     }
 }

@@ -62,14 +62,14 @@ module.exports = {
         })
 
         // Changes the class mode
-        socket.on('modechange', (mode) => {
+        socket.on('modeChange', (mode) => {
             try {
-                logger.log('info', `[modechange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[modechange] mode=(${mode})`)
+                logger.log('info', `[modeChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[modeChange] mode=(${mode})`)
 
                 classInformation.classrooms[socket.request.session.classId].mode = mode
 
-                logger.log('verbose', `[modechange] classData=(${classInformation.classrooms[socket.request.session.classId]})`)
+                logger.log('verbose', `[modeChange] classData=(${classInformation.classrooms[socket.request.session.classId]})`)
 
                 socketUpdates.modeUpdate()
             } catch (err) {
