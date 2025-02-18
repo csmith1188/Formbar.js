@@ -35,7 +35,8 @@ module.exports = {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
-                        redirectURL: undefined
+                        redirectURL: undefined,
+                        route: 'login'
                     });
                     return;
                 } else {
@@ -239,12 +240,18 @@ module.exports = {
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
                             req.session.email = userData.email;
-
+                            // Log the login post
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
 
+                            // If the user was logging in from the consent page, redirect them back to the consent page
+                            if (req.body.route === 'transfer') {
+                                res.redirect(req.body.redirectURL);
+                                return;
+                            };
+
                             // Redirect the user to the home page to be redirected to the correct spot
-                            res.redirect('/');
+                            res.redirect('/')
                         } catch (err) {
                             logger.log('error', err.stack);
                             res.render('pages/message', {

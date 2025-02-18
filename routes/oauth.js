@@ -82,7 +82,8 @@ module.exports = {
                     // Render the login page and pass the redirectURL
                     res.render('pages/login', {
                         title: 'Oauth',
-                        redirectURL: redirectURL
+                        redirectURL: redirectURL,
+                        route: 'oauth'
                     });
                 };          
             } catch (err) {
