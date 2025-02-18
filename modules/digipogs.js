@@ -20,23 +20,29 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
             };
         });
     });
+    // Remove the digipogs from the sender
     database.run(`UPDATE users SET digipogs = digipogs - ${amount} WHERE id = '${from}'`, (err) => {
         if (err) {
             console.error(err);
         };
     });
-    if (full !== 1 || permissions < TEACHER_PERMISSIONS) {
+    // If the full flag is not set, or the flag is not set and the the permissions of the sender are below a teacher, give half the amount
+    if (full !== 1 ) {
+        amount = Math.ceil(amount / 2);
+    } else if (permissions < TEACHER_PERMISSIONS) {
         amount = Math.ceil(amount / 2);
     };
+    // Add the digipogs to the receiver
     database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE id = '${to}'`, (err) => {
         if (err) {
             console.error(err);
         };
     });
-    database.run(`INSERT INTO transactions (from, to, digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)`, [
+    // Log the transaction
+    database.run(`INSERT INTO transactions ("from", "to", digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)`, [
         from,
         to,
-        amount,
+        full !== 1 || permissions < TEACHER_PERMISSIONS ? amount : amount * 2,
         app,
         reason,
         // MM/DD/YYYY HH:MM:SS AM/PM EST

@@ -53,35 +53,43 @@ module.exports = {
                     data: req.query.data,
                     route: 'consent'
                 };
-                return res.status(401).send(JSON.stringify(payload));
+                res.status(401).send(JSON.stringify(payload));
             } else if (req.body.consent === 'accept') {
-                if (permissions >= TEACHER_PERMISSIONS) data.reason = `Teacher: [${data.reason || 'Transfer'}]`;
+                // If the user's permissions are greater than or equal to a teacher, add a prefix to the reason
+                if (permissions >= TEACHER_PERMISSIONS) data.reason = `[Teacher]: ${data.reason || 'Transfer'}`;
+                // Transfer the digipogs
                 transferDigipogs(req.session.userId, req.query.to, data.amount, name, data.reason);
-                res.status(200).send('Transfer successful');
+                // Send a success message
+                fetch(data.redirect, {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify({ status: 'success' })
+                })
+                .catch(error => console.error(error));
             } else {
-                database.run(`INSERT INTO transactions (from, to, digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)`, [
+                database.run(`INSERT INTO transactions ("from", "to", digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)`, [
                     req.session.userId,
-                    req.query.to,
+                    +req.query.to,
                     0,
                     name,
-                    `Declined: [${data.reason}] Amount: [${data.amount}]`,
+                    `Declined (${data.reason}) amount of: ${data.amount}`,
                     // MM/DD/YYYY HH:MM:SS AM/PM EST
                     new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
                 ], (err) => {
                     if (err) {
-                        console.log(
-                            req.session.userId,
-                            +req.query.to,
-                            0,
-                            name,
-                            `Declined: [${data.reason}] Amount: [${data.amount}]`,
-                            // MM/DD/YYYY HH:MM:SS AM/PM EST
-                            new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
-                        )
                         console.error(err);
                     };
                 });
-                res.status(200).send('Transfer declined');
+                fetch(data.redirect, {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify({ status: 'declined' })
+                })
+                .catch(error => console.error(error));
             };
         });
         app.get('/transfer', async (req, res) => {
