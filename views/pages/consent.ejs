@@ -1,11 +1,11 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/formbar_header') %>
-    <form id='consent-form' action='<%=redirect%>' method='post'>
+    <form id='consent-form' action='<%=redirect%>' method='get'>
         <div id='consent-text'>
-            <p>An app (<%= name %>) is asking to transfer <%= digipogs %> digipogs from your account.</p>
+            <p><%= receiverText %> has requested to transfer <%= amount %> digipogs from your account.</p>
             <p>Reason: <%= reason %></p>
         </div>
-        <button type='submit' name='consent' value='accept'>Accept</button>
-        <button type='submit' name='consent' value='decline'>Decline</button>
+        <button type='submit' name='consent' value='true'>Accept</button>
+        <button type='submit' name='consent' value='false'>Decline</button>
     </form>
 <%- include('../partials/footer_content') %>
