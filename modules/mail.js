@@ -1,6 +1,4 @@
-// Import the nodemailer module
 const nodemailer = require('nodemailer');
-// Import the dotenv module
 require('dotenv').config();
 
 // Create a map to store the email rate limits
@@ -21,6 +19,7 @@ const sendMail = (recipient, subject, html) => {
         console.log(`Email rejected: ${recipient} exceeded rate limit`);
         return;
     }
+
     // Configure the SMTP transport
     const smtpConfig = {
         service: 'dreamhost',
@@ -33,8 +32,10 @@ const sendMail = (recipient, subject, html) => {
             pass: emailPassword 
         }
     };
+
     // Create the transporter using the smtpConfig
     const transporter = nodemailer.createTransport(smtpConfig);
+
     // Create a mailOptions object
     // This object will contain the information for the email
     const mailOptions = {
@@ -43,6 +44,7 @@ const sendMail = (recipient, subject, html) => {
         subject: subject,
         html: html
     };
+
     // Sends the mail through the transporter, and adds the recipient to the limitStore
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {

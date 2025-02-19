@@ -78,6 +78,7 @@ async function setClassOfApiSockets(api, classId) {
         socket.request.session.classId = classId
 		socket.request.session.save()
 
+        // Emit the setClass event to the socket
 		socket.join(`class-${classId}`)
 		socket.emit('setClass', socket.request.session.classId)
 	}
@@ -540,6 +541,7 @@ class SocketUpdates {
         if (classId) {
             className = classInformation.classrooms[classId].className
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
+            classInformation.users[username].classPermissions = null;
         }
 
         this.socket.request.session.destroy((err) => {
@@ -662,8 +664,10 @@ class SocketUpdates {
             logger.log('info', `[startClass] classId=(${classId})`);
             await advancedEmitToClass('startClassSound', classId, { api: true });
 
-            // Activate the class
+            // Activate the class and send the class active event
             classInformation.classrooms[classId].isActive = true;
+            advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
+
             logger.log('verbose', `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);
@@ -675,8 +679,10 @@ class SocketUpdates {
             logger.log('info', `[endClass] classId=(${classId})`);
             await advancedEmitToClass('endClassSound', classId, { api: true });
 
-            // Deactivate the class
+            // Deactivate the class and send the class active event
             classInformation.classrooms[classId].isActive = false;
+            advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
+
             logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
         } catch (err) {
             logger.log('error', err.stack);

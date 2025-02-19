@@ -1,5 +1,5 @@
 const { compare } = require('../modules/crypto');
-const { classInformation, getClassIDFromCode } = require('../modules/class');
+const { classInformation } = require('../modules/class');
 const { logNumbers } = require('../modules/config');
 const { database } = require('../modules/database');
 const { logger } = require('../modules/logger');
@@ -82,7 +82,8 @@ module.exports = {
                     // Render the login page and pass the redirectURL
                     res.render('pages/login', {
                         title: 'Oauth',
-                        redirectURL: redirectURL
+                        redirectURL: redirectURL,
+                        route: 'oauth'
                     });
                 };          
             } catch (err) {
