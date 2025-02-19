@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 module.exports = {
     run(app) {
         app.get('/transfer', async (req, res) => {
+            console.log(req.query);
             const API = await new Promise((resolve, reject) => {
                 database.get('SELECT API FROM users WHERE id = ?', [req.query.to], (err, row) => {
                     if (err) {
