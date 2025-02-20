@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 module.exports = {
     run(app) {
         app.get('/transfer', async (req, res) => {
-            console.log(req.query);
             const API = await new Promise((resolve, reject) => {
                 database.get('SELECT API FROM users WHERE id = ?', [req.query.to], (err, row) => {
                     if (err) {
@@ -33,32 +32,26 @@ module.exports = {
                     route: 'transfer',
                     redirectURL: req.originalUrl 
                 });
-            } else if (!req.body.consent) {
+            } else if (!req.query.consent) {
                 res.render('pages/consent', { 
                     title: 'Consent', 
-                    redirect: req.originalUrl,
+                    data: req.query.data,
+                    to: req.query.to,
+                    redirect: req.query.redirect,
                     receiverText: receiverText,
                     reason: reason,
                     amount: amount 
                 });
-            } else if (req.body.consent === 'true') {
-                transferDigipogs(req.session.userId, to, amount, app, reason).then(result => {
-                    if (result) {
-                        fetch(req.query.redirect, {
-                            method: 'POST',
-                            body: jwt.sign({ consent: true }, API)
-                        });
-                    } else {
-                        fetch(req.query.redirect, {
-                            method: 'POST',
-                            body: jwt.sign({ consent: false }, API)
-                        });
-                    };
+            } else if (req.query.consent === 'true') {
+                transferDigipogs(req.session.userId, req.query.to, amount, app, reason).then(result => {
+                    // If the transfer was successful, redirect back with consent true
+                    if (result) res.redirect(`${req.query.redirect}?consent=${jwt.sign({ consent: true }, API)}`)
+                    else res.redirect(`${req.query.redirect}?consent=${jwt.sign({ consent: false }, API)}`);
                 });
             } else {
                 database.run('INSERT INTO transactions ("from", "to", digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)', [
                     req.session.userId,
-                    to,
+                    req.query.to,
                     0,
                     app,
                     `Declined: ${reason} [Amount of: ${amount}]`,
@@ -67,10 +60,7 @@ module.exports = {
                     if (err) {
                         console.error(err);
                     };
-                });
-                fetch(req.query.redirect, {
-                    method: 'POST',
-                    body: jwt.sign({ consent: false }, API)
+                    res.redirect(`${req.query.redirect}?consent=${jwt.sign({ consent: false }, API)}`);
                 });
             };
         });

@@ -61,7 +61,7 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
     database.run(`INSERT INTO transactions ("from", "to", digipogs, app, reason, date) VALUES (?, ?, ?, ?, ?, ?)`, [
         from,
         to,
-        full !== 1 || permissions < TEACHER_PERMISSIONS ? amount : amount * 2,
+        amount,
         app,
         reason,
         // MM/DD/YYYY HH:MM:SS AM/PM EST
