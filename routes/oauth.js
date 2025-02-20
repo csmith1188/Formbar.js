@@ -78,6 +78,28 @@ module.exports = {
                             };
                         });
                     });
+                } else if (req.session.userId) {
+                    database.get('SELECT * FROM refresh_tokens WHERE user_id=?', [req.session.userId], (err, refreshTokenData) => {
+                        if (err) throw err;
+                        if (refreshTokenData) {
+                            // Check if refresh token is past expiration date
+                            const decodedRefreshToken = jwt.decode(refreshTokenData.refresh_token);
+                            const currentTime = Math.floor(Date.now() / 1000);
+                            if (decodedRefreshToken.exp < currentTime) {
+                                // Generate new refresh token
+                                const refreshToken = generateRefreshToken(req.session.userId);
+                                storeRefreshToken(req.session.userId, refreshToken);
+                                return;
+                            };
+                            const classId = getUserClass(req.session.username);
+                            // Generate access token
+                            const accessToken = generateAccessToken(req.session.userId, classId, refreshTokenData.refresh_token);
+                            res.redirect(`${redirectURL}?token=${accessToken}`);
+                        } else {
+                            // Invalid refresh token
+                            res.redirect(`/oauth?redirectURL=${redirectURL}`);
+                        };
+                    });
                 } else {
                     // Render the login page and pass the redirectURL
                     res.render('pages/login', {
