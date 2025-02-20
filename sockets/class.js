@@ -39,6 +39,19 @@ module.exports = {
                 logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
                 const username = socket.request.session.username;
 
+                // Check if the user is in the class to prevent people from joining classes just from the class ID
+                if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[username]) {
+                    socket.emit('joinClass', 'You are not in that class.');
+                    return;
+                } else if (!classInformation.classrooms[classId]) {
+                    const studentId = await getStudentId(username);
+                    const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
+                    if (!classUsers) {
+                        socket.emit('joinClass', 'You are not in that class.');
+                        return;
+                    }
+                }
+
                 // Retrieve the class code either from memory or the database
                 let classCode;
                 if (classInformation.classrooms[classId]) {
@@ -52,15 +65,19 @@ module.exports = {
                 socket.emit('joinClass', response);
             } catch (err) {
                 logger.log('error', err.stack);
-                socket.emit('joinClass', new Error('There was a server error. Please try again.'));
+                socket.emit('joinClass', 'There was a server error. Please try again');
             }
         });
 
         socket.on("joinClassroom", async (classCode) => {
             try {
-
+                logger.log('info', `[joinClassroom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classCode=${classCode}`);
+                
+                const response = joinClass(classCode, socket.request.session);
+                socket.emit("joinClass", response);
             } catch (err) {
-
+                logger.log('error', err.stack);
+                socket.emit('joinClass', 'There was a server error. Please try again');
             }
         });
 
