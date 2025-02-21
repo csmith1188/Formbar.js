@@ -62,11 +62,15 @@ module.exports = {
                         database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
                             if (err) throw err;
                             if (userData) {
-                                // Get class code and class permissions
+                                // Get class id, permissions, and settings for user
                                 const classId = getUserClass(userData.username);
                                 userData.classPermissions = null;
+                                userData.classroomPermissions = null;
+                                userData.classroomSettings = null;
                                 if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
                                     userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+                                    userData.classroomPermissions = classInformation.classrooms[classId].permissions;
+                                    userData.classroomSettings = classInformation.classrooms[classId].settings;
                                 }
                                 
                                 // Generate new access token
