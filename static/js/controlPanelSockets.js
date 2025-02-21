@@ -3,12 +3,17 @@ let currentTags = []
 let students = []
 socket.on('cpUpdate', (newClassroom) => {
 	currentTags = []
+	let Offline = 0
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
-		student.pollRes.time = new Date(student.pollRes.time)
+		student.pollRes.time = new Date(student.pollRestime)
 		let studentTags = student.tags
 		if (student.tags == null || student.tags == "") {
 			studentTags = ""
+		}
+		if (studentTags.includes("Offline")) {
+			Offline++
+			continue
 		}
 		studentTags = studentTags.split(",")
 		for (let tag of studentTags) {
@@ -43,15 +48,16 @@ socket.on('cpUpdate', (newClassroom) => {
 			students.push(student)
 		}
 	}
-
+	
+	className.textContent = `Class Name: ${newClassroom.className}`
 	classCode.textContent = `Class Code: ${newClassroom.key}`
-	classId.textContent = `Class ID: ${newClassroom.id}`
+	// classId.textContent = `Class ID: ${newClassroom.id}`
 
 	document.getElementById('nextStep').onclick = () => {
 		doStep(classroom.currentStep)
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 	if (newClassroom.poll.prompt != "") {
 		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
 	} else {
@@ -88,7 +94,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		studentElement.replaceWith(buildStudent(newClassroom, newStudentData))
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 
 	for (let studentElement of document.getElementsByClassName('student')) {
 		if (!newClassroom.students[studentElement.id.replace('student-', '')]) {
@@ -96,15 +102,16 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
-		bannedTabButton.style.display = ''
-	} else {
-		bannedTabButton.style.display = 'none'
+	// Commented because the banned tab is not used/functioning
+	// if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
+	// 	bannedTabButton.style.display = ''
+	// } else {
+	// 	bannedTabButton.style.display = 'none'
 
-		if (bannedTabButton.classList.contains('pressed')) {
-			changeTab('usersMenu', 'mainTabs')
-		}
-	}
+	// 	if (bannedTabButton.classList.contains('pressed')) {
+	// 		changeTab('usersMenu', 'mainTabs')
+	// 	}
+	// }
 
 	if (currentUser.classPermissions >= newClassroom.permissions.controlPolls) {
 		pollsTabButton.style.display = ''
