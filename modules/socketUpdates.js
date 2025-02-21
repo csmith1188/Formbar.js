@@ -134,9 +134,15 @@ class SocketUpdates {
     virtualBarUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
-            if (!classId) return;
+            if (!classId) return; // If a class id is not provided then deny the request
 
             let classData = structuredClone(classInformation.classrooms[classId])
+            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+            
+            let totalResponses = 0;
+            let totalResponders = 0
+            let totalStudentsIncluded = []
+            let totalStudentsExcluded = []
             let responses = {}
 
             if (Object.keys(classData.poll.responses).length > 0) {
@@ -167,116 +173,82 @@ class SocketUpdates {
                 }
             }
 
-            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) polls=(${JSON.stringify(responses)}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
 
-            let totalResponses = 0;
-            let totalResponders = 0
-            let totalStudentsIncluded = []
-            let totalStudentsExcluded = []
-            let totalLastResponses = classData.poll.lastResponse
+            for (let student of Object.values(classData.students)) {
+                // If the student is a teacher, do not include or exclude them
+                // if (student.classPermissions >= TEACHER_PERMISSIONS) {
+                //     continue;
+                // };
 
-            // Add to the included array, then add to the excluded array, then remove from the included array. Do not add the same student to either array
-            if (totalLastResponses.length > 0) {
-                totalResponses = totalLastResponses.length
-                totalStudentsIncluded = totalLastResponses
-            } else {
-                for (let student of Object.values(classData.students)) {
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS) continue;
-                    let included = false;
-                    let excluded = false;
+                // Store whether the student is included or excluded
+                let included = false;
+                let excluded = false;
 
-                    // Check if the student passes the tags test
-                    if (classData.poll.requiredTags.length > 0) {
-                        let studentTags = student.tags.split(",");
-                        if (classData.poll.requiredTags[0][0] == "0") {
-                            if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-                                included = true;
-                            } else {
-                                excluded = true;
-                            }
-                        } else if (classData.poll.requiredTags[0][0] == "1") {
-                            let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
-                            if (correctTags == classData.poll.requiredTags.length - 1) {
-                                included = true;
-                            } else {
-                                excluded = true;
-                            }
+                // Check if the student passes the tags test
+                if (classData.poll.requiredTags.length > 0) {
+                    let studentTags = student.tags.split(",");
+                    if (classData.poll.requiredTags[0][0] == "0") {
+                        if (classData.poll.requiredTags.slice(1).join() == student.tags) {
+                            included = true;
+                        } else {
+                            excluded = true;
+                        }
+                    } else if (classData.poll.requiredTags[0][0] == "1") {
+                        let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
+                        if (correctTags == classData.poll.requiredTags.length - 1) {
+                            included = true;
+                        } else {
+                            excluded = true;
                         }
                     }
-    
-                    // Check if the student's checkbox was checked
-                    if (classData.poll.studentBoxes.includes(student.username)) {
-                        included = true;
-                    } else {
-                        excluded = true;
-                    }
-    
-                    // Check if they should be in the excluded array
-                    if (student.break) {
-                        excluded = true;
-                    }
-    
-                    if (classData.poll.studentIndeterminate.includes(student.username)) {
-                        excluded = true;
-                    }
-
-                    // Prevent students from being included if they are offline
-                    if (student.tags && student.tags.includes('Offline')) {
-                        excluded = true;
-                        included = false;
-                    }
-    
-                    // Update the included and excluded lists
-                    if (excluded) {
-                        totalStudentsExcluded.push(student.username);
-                    }
-                    if (included) totalStudentsIncluded.push(student.username);
                 }
-                totalStudentsIncluded = new Set(totalStudentsIncluded)
-                totalStudentsIncluded = Array.from(totalStudentsIncluded)
-                totalStudentsExcluded = new Set(totalStudentsExcluded)
-                totalStudentsExcluded = Array.from(totalStudentsExcluded)
+
+                // Check if the student's checkbox was checked
+                if (classData.poll.studentBoxes.includes(student.username)) {
+                    included = true;
+                } else {
+                    excluded = true;
+                }
+
+                // Check if they should be in the excluded array
+                if (student.break) {
+                    excluded = true;
+                }
+
+                // Prevent students from being included if they are offline
+                if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
+                    excluded = false;
+                    included = false;
+                }
+
+                // Update the included and excluded lists
+                if (excluded) {
+                    totalStudentsExcluded.push(student.username);
+                }
+
+                if (included) {
+                    totalStudentsIncluded.push(student.username);
+                }
             }
 
             totalResponses = totalStudentsIncluded.length
             if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
                 // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-                totalResponders = totalLastResponses - totalStudentsExcluded.length;
+                totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length;
             } else if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
-                    let student = totalStudentsIncluded[i];
-                    if (classData.students[student].classPermissions >= TEACHER_PERMISSIONS || classData.students[student].classPermissions == GUEST_PERMISSIONS) {
+                    const studentName = totalStudentsIncluded[i];
+                    const student = classData.students[studentName];
+                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags.includes("Offline")) {
                         totalStudentsIncluded.splice(i, 1);
                     }
                 }
 
                 totalResponders = totalStudentsIncluded.length;
             }
-            
-            if (classInformation.classrooms[classId].poll.multiRes) {
-                for (let value of Object.values(classData.students)) {
-                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
-                        if (value.pollRes.buttonRes.length == 2) {
-                            totalResponses -= value.pollRes.buttonRes.length - 1
-                        } else {
-                            totalResponses--;
-                        }
-                    }
-                }
-            } else {
-                for (let value of Object.values(classData.students)) {
-                    if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "" && (value.classPermissions >= TEACHER_PERMISSIONS || value.classPermissions == GUEST_PERMISSIONS)) {
-                        totalResponses--;
-                    }
-                }
-            }
-            totalResponses *= -1
 
-            // Get rid of students whos permissions are teacher or above or guest
-            excludedStudents = totalStudentsExcluded
-            classInformation.classrooms[classId].poll.allowedResponses = totalStudentsIncluded
-            classInformation.classrooms[classId].poll.unallowedResponses = totalStudentsExcluded
+            totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length - 1;
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
                 totalResponders: totalResponders,
@@ -653,7 +625,6 @@ class SocketUpdates {
             blind: false,
             requiredTags: [],
             studentBoxes: [],
-            studentIndeterminate: [],
             lastResponse: [],
             allowedResponses: [],
         };
