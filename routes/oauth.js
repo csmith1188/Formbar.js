@@ -46,7 +46,13 @@ module.exports = {
             try {
                 const redirectURL = req.query.redirectURL;
                 const refreshToken = req.query.refreshToken;
-
+                if (!redirectURL) {
+                    res.render('pages/message', {
+                        message: 'No redirectURL provided',
+                        title: 'Error'
+                    });
+                    return;
+                };
                 logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL}) refreshToken=(${refreshToken})`);
 
@@ -79,25 +85,38 @@ module.exports = {
                         });
                     });
                 } else if (req.session.userId) {
-                    database.get('SELECT * FROM refresh_tokens WHERE user_id=?', [req.session.userId], (err, refreshTokenData) => {
+                    database.get('SELECT * FROM users WHERE id=?', [req.session.userId], (err, userData) => {
                         if (err) throw err;
-                        if (refreshTokenData) {
-                            // Check if refresh token is past expiration date
-                            const decodedRefreshToken = jwt.decode(refreshTokenData.refresh_token);
-                            const currentTime = Math.floor(Date.now() / 1000);
-                            if (decodedRefreshToken.exp < currentTime) {
-                                // Generate new refresh token
-                                const refreshToken = generateRefreshToken(req.session.userId);
-                                storeRefreshToken(req.session.userId, refreshToken);
-                                return;
-                            };
-                            const classId = getUserClass(req.session.username);
-                            // Generate access token
-                            const accessToken = generateAccessToken(req.session.userId, classId, refreshTokenData.refresh_token);
-                            res.redirect(`${redirectURL}?token=${accessToken}`);
+                        if (userData) {
+                            database.get('SELECT * FROM refresh_tokens WHERE user_id=?', [req.session.userId], async (err, refreshTokenData) => {
+                                if (err) throw err;
+                                if (refreshTokenData) {
+                                    // Check if refresh token is past expiration date
+                                    const decodedRefreshToken = jwt.decode(refreshTokenData.refresh_token);
+                                    const currentTime = Math.floor(Date.now() / 1000);
+                                    if (decodedRefreshToken.exp < currentTime) {
+                                        // Generate new refresh token
+                                        const refreshToken = generateRefreshToken(req.session.userId);
+                                        storeRefreshToken(req.session.userId, refreshToken);
+                                        return;
+                                    };
+                                    const classId = getUserClass(req.session.username);
+                                    // Generate access token
+                                    const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
+                                    res.redirect(`${redirectURL}?token=${accessToken}`);
+                                } else {
+                                    const refreshToken = generateRefreshToken(userData);
+                                    storeRefreshToken(req.session.userId, refreshToken);
+                                    // Invalid refresh token
+                                    res.redirect(`/oauth?redirectURL=${redirectURL}`);
+                                };
+                            });
                         } else {
-                            // Invalid refresh token
-                            res.redirect(`/oauth?redirectURL=${redirectURL}`);
+                            // Invalid user
+                            res.render('pages/message', {
+                                title: 'Error',
+                                message: 'Invalid user'
+                            });
                         };
                     });
                 } else {
