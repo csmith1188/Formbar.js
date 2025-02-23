@@ -170,8 +170,8 @@
         }
 
         function loginWithGoogle() {
-            window.location.href = '/auth/google';
-        }
+            redirect.value ? window.location.href = `/auth/google?redirect=${redirect.value}` : window.location.href = '/auth/google';
+        };
 
         usernameBox.oninput = checkIfBlank;
         passwordBox.oninput = checkIfBlank;
