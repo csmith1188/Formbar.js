@@ -412,16 +412,21 @@
 			});
 
 			function changeClassText(isActive) {
+				const startClassButton = document.getElementById('startClass');
+				const endClassButton = document.getElementById('endClass');
+
 				if (isActive) {
-					const startClassButton = document.getElementById('startClass');
-					startClassButton.innerText = 'End Class';
-					startClassButton.onclick = endClass;
-					startClassButton.id = 'endClass';
+					if (startClassButton) {
+						startClassButton.innerText = 'End Class';
+						startClassButton.onclick = endClass;
+						startClassButton.id = 'endClass';
+					}
 				} else {
-					const endClassButton = document.getElementById('endClass');
-					endClassButton.innerText = 'Start Class';
-					endClassButton.onclick = startClass;
-					endClassButton.id = 'startClass';
+					if (endClassButton) {
+						endClassButton.innerText = 'Start Class';
+						endClassButton.onclick = startClass;
+						endClassButton.id = 'startClass';
+					}
 				}
 			}
 
@@ -430,9 +435,11 @@
 				changeClassText(true);
 
 				const startClassButton = document.getElementById('startClass')
-				startClassButton.innerText = 'End Class'
-				startClassButton.onclick = endClass
-				startClassButton.id = 'endClass'
+				if (startClassButton) {
+					startClassButton.innerText = 'End Class'
+					startClassButton.onclick = endClass
+					startClassButton.id = 'endClass'
+				}
 			}
 
 			function endClass() {
