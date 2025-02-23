@@ -39,11 +39,11 @@ function createTable(tableName) {
             // Get columns from the table in the template database
             const columns = await dbGetAll(`PRAGMA table_info(${tableName})`, [], databaseTemplate);
             const columnDefinitions = columns
-                .map(column => `${column.name} ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
+                .map(column => `"${column.name}" ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
                 .join(', ');
 
             // Create the table with the new columns
-            await dbRun(`CREATE TABLE ${tableName} (${columnDefinitions})`, []);
+            await dbRun(`CREATE TABLE "${tableName}" (${columnDefinitions})`, []);
             resolve();
         } catch (error) {
             reject(error);
@@ -66,7 +66,7 @@ function recreateTable(tableName) {
             // Check if the temporary table already exists and drop it if it does
             // Create a temporary table with the new columns
             await dbRun(`DROP TABLE IF EXISTS ${tableName}_temp`, []);
-            await dbRun(`CREATE TABLE ${tableName}_temp (${columnDefinitions})`, []);
+            await dbRun(`CREATE TABLE "${tableName}_temp" (${columnDefinitions})`, []);
 
             // Get old and new columns
             // Match them with the original columns to check which ones they have in common
