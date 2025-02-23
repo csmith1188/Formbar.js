@@ -15,6 +15,15 @@ function checkEnv(req, res, next) {
 	}
 }
 
+function checkRedirect(req, res, next) {
+	if (req.query.redirect) {
+		req.session.redirect = req.query.redirect;
+	} else if (req.session.redirect) {
+		req.query.redirect = req.session.redirect;
+	};
+	next();
+};
+
 module.exports = {
 	run(app) {
 		// Use the passport middleware
@@ -22,11 +31,12 @@ module.exports = {
 		app.use(passport.session());
 
 		// Use the Passport strategy to authenticate the user through Google
-		app.get('/auth/google', checkEnv, passport.authenticate('google', { scope: ['profile', 'email'] }));
+		app.get('/auth/google', checkEnv, checkRedirect, passport.authenticate('google', { scope: ['profile', 'email'] }));
 		
 		// Handle the callback after Google has authenticated the user
 		// If the authentication fails, redirect the user back to the home page
-		app.get('/auth/google/callback', checkEnv, passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+		app.get('/auth/google/callback', checkEnv, checkRedirect, passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+			if (req.query.redirect) req.session.redirect = req.query.redirect;
 			// Get the user by their email
 			database.get(`SELECT * FROM users WHERE email=?`, [req.user.emails[0].value], (err, user) => {
 				if (err) throw err;
@@ -82,7 +92,11 @@ module.exports = {
 								
 								// Update the manager and redirect the user to the home page
 								managerUpdate();
-								res.redirect('/');
+								if (req.session.redirect) {
+									res.redirect(req.session.redirect);
+								} else {
+									res.redirect('/');
+								};
 							});
 						});
 
@@ -120,7 +134,12 @@ module.exports = {
 
 								// Update the manager and redirect the user to the home page
 								managerUpdate();
-								res.redirect('/');
+								if (req.session.redirect) {
+									res.redirect(req.session.redirect);
+								} else {
+									console.log(req.session.redirect);
+									res.redirect('/');
+								};
 							});
 						});
 					} else {
@@ -153,7 +172,12 @@ module.exports = {
 
 							// Update the manager and redirect the user to the home page
 							managerUpdate();
-							res.redirect('/');
+							if (req.session.redirect) {
+								res.redirect(req.session.redirect);
+							} else {
+								console.log(req.session.redirect);
+								res.redirect('/');
+							};
 						});
 					};
 				});
