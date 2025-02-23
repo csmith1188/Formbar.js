@@ -117,8 +117,9 @@ class SocketUpdates {
     classPermissionUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
+            const classData = classInformation.classrooms[classId]
+            if (!classData) return; // If the class is not loaded, then do not update the class permissions
 
-            let classData = classInformation.classrooms[classId]
             let cpPermissions = Math.min(
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
@@ -176,9 +177,6 @@ class SocketUpdates {
 
             for (let student of Object.values(classData.students)) {
                 // If the student is a teacher, do not include or exclude them
-                // if (student.classPermissions >= TEACHER_PERMISSIONS) {
-                //     continue;
-                // };
 
                 // Store whether the student is included or excluded
                 let included = false;
@@ -240,7 +238,7 @@ class SocketUpdates {
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
                     const studentName = totalStudentsIncluded[i];
                     const student = classData.students[studentName];
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags.includes("Offline")) {
+                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags.includes('Offline')) {
                         totalStudentsIncluded.splice(i, 1);
                     }
                 }
@@ -460,11 +458,14 @@ class SocketUpdates {
             // Remove user from class session
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
             setClassOfApiSockets(classInformation.users[username].API, null);            
             
-            // Mark the user as offline in the class
-            classInformation.classrooms[classId].students[username].tags = "Offline";
+            // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
+            if (classInformation.classrooms[classId]) {
+                const student = classInformation.classrooms[classId].students[username];
+                student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+            }
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
             // If exitClass is true, then remove the user from the classroom entirely
@@ -527,8 +528,9 @@ class SocketUpdates {
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
                     // Remove user from being active in the class
-                    classInformation.classrooms[classId].students[username].activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-                    classInformation.classrooms[classId].students[username].tags = "Offline"
+                    const student = classInformation.classrooms[classId].students[username];
+                    student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                    student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
                     
                     // Update class permissions and virtual bar
                     this.classPermissionUpdate(classId)

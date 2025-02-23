@@ -42,6 +42,11 @@ module.exports = {
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.classId}`)
                                 socket.emit('setClass', socket.request.session.classId)
+                                socket.on('disconnect', () => {
+                                    if (!userSockets[socket.request.session.username]) {
+                                        socketUpdates.classKickUser(socket.request.session.username, socket.request.session.classId, false)
+                                    }
+                                })
 
                                 resolve()
                             } catch (err) {
