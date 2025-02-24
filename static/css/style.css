@@ -517,7 +517,6 @@ input[type="radio"]:focus {
 
 #VBDiv {
 	display: flex;
-	align-items: center;
 	justify-content: center;
 	margin-bottom: 2vh;
 }
