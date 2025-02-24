@@ -141,10 +141,9 @@ class SocketUpdates {
             logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
             
             let totalResponses = 0;
-            let totalResponders = 0
-            let totalStudentsIncluded = []
-            let totalStudentsExcluded = []
-            let responses = {}
+            let totalStudentsIncluded = [];
+            let totalStudentsExcluded = [];
+            let responses = {};
 
             if (Object.keys(classData.poll.responses).length > 0) {
                 for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
@@ -159,17 +158,24 @@ class SocketUpdates {
                         continue;
                     }
 
+                    // Count student as responded if they have any valid response
+                    if (Array.isArray(studentData.pollRes.buttonRes)) {
+                        if (studentData.pollRes.buttonRes.length > 0) {
+                            totalResponses++;
+                        }
+                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
+                        totalResponses++;
+                    }
+
+                    // Existing response counting logic
                     if (Array.isArray(studentData.pollRes.buttonRes)) {
                         for (let response of studentData.pollRes.buttonRes) {
-                            if (
-                                studentData &&
-                                Object.keys(responses).includes(response)
-                            ) {
-                                responses[response].responses++
+                            if (studentData && Object.keys(responses).includes(response)) {
+                                responses[response].responses++;
                             }
                         }
                     } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes)) {
-                        responses[studentData.pollRes.buttonRes].responses++
+                        responses[studentData.pollRes.buttonRes].responses++;
                     }
                 }
             }
@@ -215,7 +221,7 @@ class SocketUpdates {
 
                 // Prevent students from being included if they are offline
                 if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
-                    excluded = false;
+                    excluded = true;
                     included = false;
                 }
 
@@ -229,27 +235,20 @@ class SocketUpdates {
                 }
             }
 
-            totalResponses = totalStudentsIncluded.length
-            if (totalResponses == 0 && totalStudentsExcluded.length > 0) {
-                // Make total students be equal to the total number of students in the class minus the number of students who failed the perm check
-                totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length;
-            } else if (totalResponses == 0) {
+            if (totalResponses == 0) {
                 totalStudentsIncluded = Object.keys(classData.students)
                 for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
                     const studentName = totalStudentsIncluded[i];
                     const student = classData.students[studentName];
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags.includes('Offline')) {
+                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
                         totalStudentsIncluded.splice(i, 1);
                     }
                 }
-
-                totalResponders = totalStudentsIncluded.length;
             }
 
-            totalResponders = Object.keys(classData.students).length - totalStudentsExcluded.length - 1;
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
-                totalResponders: totalResponders,
+                totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,
                 totalResponses: totalResponses,
                 polls: responses,
                 textRes: classData.poll.textRes,
