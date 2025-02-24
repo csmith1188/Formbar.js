@@ -1,7 +1,7 @@
 const { compare } = require('../modules/crypto');
 const { classInformation } = require('../modules/class');
 const { logNumbers } = require('../modules/config');
-const { database } = require('../modules/database');
+const { database, dbGetAll } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
 const jwt = require('jsonwebtoken');
@@ -12,6 +12,8 @@ function generateAccessToken(userData, classId, refreshToken) {
         username: userData.username,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
+        classrooms: userData.classrooms,
+        activeClasses: userData.activeClasses,
         class: classId,
         refreshToken
     }, userData.secret, { expiresIn: '30m' });
@@ -65,12 +67,16 @@ module.exports = {
                             return;
                         };
                         
-                        database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
+                        database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], async (err, userData) => {
                             if (err) throw err;
                             if (userData) {
-                                // Get class code and class permissions
+                                // Get class id, permissions, and settings for user
                                 const classId = getUserClass(userData.username);
+                                const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
                                 userData.classPermissions = null;
+                                userData.classrooms = classroomData;
+                                userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
+
                                 if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
                                     userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
                                 }
@@ -176,7 +182,8 @@ module.exports = {
                         };
 
                         // Hashes users password
-                        if (compare(JSON.parse(userData.password), password)) {
+                        const passwordMatches = await compare(password, userData.password);
+                        if (!passwordMatches) {
                             logger.log('verbose', '[post /oauth] Incorrect password')
                             res.render('pages/message', {
                                 message: 'Incorrect password',
@@ -187,7 +194,10 @@ module.exports = {
 
                         // Get class code and class permissions
                         const classId = getUserClass(userData.username);
+                        const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
                         userData.classPermissions = null;
+                        userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
+                        userData.classrooms = classroomData;
                         if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
                             userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
                         }
