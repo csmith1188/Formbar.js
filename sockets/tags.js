@@ -119,7 +119,6 @@ module.exports = {
             // Save the tags to the students tag element in their object
             // Then save their tags to the database
             try {
-                console.log(tags);
                 logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 

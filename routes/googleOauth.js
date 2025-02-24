@@ -137,7 +137,6 @@ module.exports = {
 								if (req.session.redirect) {
 									res.redirect(req.session.redirect);
 								} else {
-									console.log(req.session.redirect);
 									res.redirect('/');
 								};
 							});
@@ -175,7 +174,6 @@ module.exports = {
 							if (req.session.redirect) {
 								res.redirect(req.session.redirect);
 							} else {
-								console.log(req.session.redirect);
 								res.redirect('/');
 							};
 						});
