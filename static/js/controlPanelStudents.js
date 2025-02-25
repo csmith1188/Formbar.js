@@ -334,6 +334,19 @@ function buildStudent(room, studentData) {
         newStudent.appendChild(toggleDialog)
         newStudent.appendChild(permissionSwitch)
         newStudent.append(' ')
+        let awardDigipogsButton = document.createElement('button');
+        awardDigipogsButton.className = 'awardDigipogs quickButton';
+        awardDigipogsButton.setAttribute('data-userid', studentData.id);
+        awardDigipogsButton.textContent = 'Award Digipogs';
+        awardDigipogsButton.onclick = (event) => {
+            let digipogs = +prompt('How many digipogs would you like to award?');
+            if (digipogs) {
+                if (isNaN(digipogs) || digipogs < 0) return;
+                const transferData = {from: currentUser.id, to: studentData.id, amount: digipogs, app: 'None', reason: 'Class Reward' };
+                socket.emit('awardDigipogs', transferData);
+            };
+        };
+        newStudent.appendChild(awardDigipogsButton);
         let banStudentButton = document.createElement('button')
         banStudentButton.className = 'banStudent quickButton'
         banStudentButton.setAttribute('data-user', studentData.username)
