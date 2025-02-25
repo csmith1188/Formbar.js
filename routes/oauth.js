@@ -37,6 +37,27 @@ function storeRefreshToken(userId, refreshToken) {
     });
 };
 
+// Retrieves extra data and adds it to the user data provided
+async function createUserData(userData) {
+    const classId = getUserClass(userData.username);
+    const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
+    for (const classroomName in classroomData) {
+        // Retrieve all students in the class
+        const classroom = classroomData[classroomName];
+        const classUsers = await dbGetAll('SELECT * FROM classusers WHERE classId=', [classroom.id]);
+        classroom.students = classUsers;
+    }
+    
+    userData.classPermissions = null;
+    userData.classrooms = classroomData;
+    userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
+    if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+        userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+    }
+    
+    return userData;
+}
+
 module.exports = {
     run(app) {
         /* 
@@ -70,16 +91,7 @@ module.exports = {
                         database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], async (err, userData) => {
                             if (err) throw err;
                             if (userData) {
-                                // Get class id, permissions, and settings for user
-                                const classId = getUserClass(userData.username);
-                                const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
-                                userData.classPermissions = null;
-                                userData.classrooms = classroomData;
-                                userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
-
-                                if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
-                                    userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
-                                }
+                                userData = createUserData(userData);
                                 
                                 // Generate new access token
                                 const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
@@ -192,15 +204,7 @@ module.exports = {
                             return;
                         };
 
-                        // Get class code and class permissions
-                        const classId = getUserClass(userData.username);
-                        const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
-                        userData.classPermissions = null;
-                        userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
-                        userData.classrooms = classroomData;
-                        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
-                            userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
-                        }
+                        userData = createUserData(userData);
 
                         // Retrieve or generate refresh token
                         database.get('SELECT * from refresh_tokens WHERE user_id=?', [userData.id], (err, refreshTokenData) => {
