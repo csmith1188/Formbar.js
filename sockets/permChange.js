@@ -1,4 +1,4 @@
-const { classInformation, getClassIDFromCode } = require("../modules/class")
+const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")

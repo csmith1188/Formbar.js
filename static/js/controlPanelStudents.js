@@ -226,8 +226,7 @@ function buildStudent(room, studentData) {
             let allTags = []
             let checkboxForm = document.getElementById(studentData.username + 'tags')
             let checkboxes = checkboxForm.getElementsByTagName('input')
-            for (let i = 0; i < checkboxes.length; i++) {
-                let checkbox = checkboxes[i]
+            for (const checkbox of checkboxes) {
                 // Check if the checkbox is checked
                 if (checkbox.type === 'checkbox') {
                     if (checkbox.checked) {

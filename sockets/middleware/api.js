@@ -1,7 +1,8 @@
-const { getClassIDFromCode } = require("../../modules/class")
+const { classInformation } = require("../../modules/class")
 const { database } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 const { userSockets } = require("../../modules/socketUpdates")
+const { Student } = require("../../modules/student")
 const { getUserClass } = require("../../modules/user")
 
 module.exports = {
@@ -12,7 +13,7 @@ module.exports = {
             if (api) {
                 await new Promise((resolve, reject) => {
                     database.get(
-                        'SELECT id, username FROM users WHERE API=?',
+                        'SELECT * FROM users WHERE API=?',
                         [api],
                         async (err, userData) => {
                             try {
@@ -22,6 +23,17 @@ module.exports = {
                                     throw 'Not a valid API key'
                                 }
 
+                                classInformation.users[userData.username] = new Student(
+                                    userData.username,
+                                    userData.id,
+                                    userData.permissions,
+                                    userData.API,
+                                    null,
+                                    null,
+                                    userData.tags,
+                                    userData.displayName,
+                                    false
+                                )
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username
@@ -30,6 +42,11 @@ module.exports = {
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.classId}`)
                                 socket.emit('setClass', socket.request.session.classId)
+                                socket.on('disconnect', () => {
+                                    if (!userSockets[socket.request.session.username]) {
+                                        socketUpdates.classKickUser(socket.request.session.username, socket.request.session.classId, false)
+                                    }
+                                })
 
                                 resolve()
                             } catch (err) {
