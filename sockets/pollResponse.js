@@ -24,7 +24,7 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const username = socket.request.session.username
                 const classroom = classInformation.classrooms[classId]
-                if (!classroom.poll.studentBoxes.includes(username)) {
+                if (!classroom.poll.studentBoxes.includes(username) && res != 'remove') {
                     return; // If the user is not included in the poll, do not allow them to respond
                 }
 
