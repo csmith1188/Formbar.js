@@ -1,7 +1,7 @@
 const { database } = require('./database');
 const { TEACHER_PERMISSIONS } = require('./permissions');
 // The percentage of digipogs lost during a transfer
-// For example, if the loss rate is 0.3, then 30% of the digipogs transferred will be lost. Should always be less than 1 and greater than 0.
+// For example, if the loss rate is 0.3, a user will only recieve 30% of the transferred pogs. Should always be less than 1 and greater than 0.
 const DIGIPOG_LOSS_RATE = 0.5;
 
 async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transfer') {
