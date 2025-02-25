@@ -158,7 +158,8 @@ module.exports = {
                 for (const username in classInformation.users) {
                     const user = classInformation.users[username];
                     if (user.API == api) {
-                        setClassOfApiSockets(api, user.activeClasses[0]);
+                        // setClassOfApiSockets(api, user.activeClasses[0]);
+                        socket.emit('setClass', user.activeClasses[0]);
                         return;
                     }
                 }
