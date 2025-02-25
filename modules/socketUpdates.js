@@ -125,6 +125,14 @@ class SocketUpdates {
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
+
+            console.log("Checking for guests");
+            for (const studentName in classData.students) {
+                const student = classData.students[studentName]
+                if (student.isGuest) {
+                    console.log("Found guest user");
+                }
+            }
     
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {

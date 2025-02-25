@@ -451,19 +451,11 @@ module.exports = {
                     logger.log('verbose', '[post /login] Logging in as guest');
 
                     // Create a temporary guest user
+                    console.log('Display Name:', user.displayName)
                     const username = 'guest' + crypto.randomBytes(4).toString('hex');
-                    const userData = {
-                        username,
-                        id: username,
-                        email: null,
-                        tags: [],
-                        displayName: user.displayName,
-                        verified: false
-                    };
-
-                    classInformation.users[userData.username] = new Student(
+                    const student =  new Student(
                         username, // Username
-                        userData.id, // Id
+                        9999, // Id
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls
@@ -472,17 +464,18 @@ module.exports = {
                         user.displayName,
                         true
                     );
+                    classInformation.users[student.username] = student;
 
                     // Set their current class to no class
                     req.session.classId = null;
 
                     // Add a cookie to transfer user credentials across site
-                    req.session.userId = userData.id;
-                    req.session.username = userData.username;
-                    req.session.email = userData.email;
-                    req.session.tags = userData.tags;
-                    req.session.displayName = userData.displayName;
-                    req.session.verified = userData.verified;
+                    req.session.userId = student.id;
+                    req.session.username = student.username;
+                    req.session.email = student.email;
+                    req.session.tags = student.tags;
+                    req.session.displayName = student.displayName;
+                    req.session.verified = student.verified;
                     res.redirect('/');
                 }
             } catch (err) {
