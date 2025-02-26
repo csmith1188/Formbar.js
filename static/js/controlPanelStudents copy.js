@@ -14,42 +14,35 @@ const userBreak = []
 // Create a student in the user list
 function buildStudent(room, studentData) {
     let newStudent
-    let cloneDiv = document.getElementById('student-fake')
 
+    // Creation of the user element
     if (studentData.classPermissions < currentUser.classPermissions) {
-        newStudent = cloneDiv.cloneNode(true)
-        document.getElementById('users').appendChild(newStudent)
+        newStudent = document.createElement("details");
         for (student of room.poll.studentBoxes) {
             if (student == studentData.username) {
                 newStudent.open = true
             }
         }
+        newStudent.classList.add("student");
 
-        newStudent.id = `student-${studentData.username}`
-        let summary = newStudent.querySelector('summary')
-        let helpSpan = newStudent.querySelector('#help')
-        let helpReason = newStudent.querySelector('#helpReason')
-        let breakSpan = newStudent.querySelector('#break')
-        let breakReason = newStudent.querySelector('#breakReason')
-        let studBox = newStudent.querySelector('input[type="checkbox"]')
-        let pollBox = newStudent.querySelector('#response')
-        let studTagsSpan = newStudent.querySelector('#studentTags')
-        let permDiv = newStudent.querySelector('#permissions')
-        
-        newStudent.querySelector('#username').textContent = studentData.displayName
-        studBox.id = 'checkbox_' + studentData.username
-        studBox.checked = room.poll.studentBoxes.includes(studentData.username)
+        let studentElement = document.createElement("summary");
+        studentElement.innerText = studentData.displayName;
 
+        let space = document.createElement('span')
+        space.textContent = ' '
+        studentElement.appendChild(space)
         for (let eachResponse in room.poll.responses) {
-            if (eachResponse == room.poll.responses) {
-                newStudent.style.color = room.poll.responses[eachResponse].color
+            if (eachResponse == studentData.pollRes.buttonRes) {
+                studentElement.style.color = room.poll.responses[eachResponse].color
             }
         }
-
+        
         if (studentData.tags && studentData.tags.includes("Offline")) {
             // Add offline icon
-            summary.textContent += `💤`
+            let offlineDisplay = document.createElement('span')
+            offlineDisplay.textContent = `💤`
             newStudent.classList.add('offline')
+            studentElement.appendChild(offlineDisplay)
 
             // Lower the opacity to indicate offline status
             newStudent.style.opacity = 0.65;
@@ -58,12 +51,24 @@ function buildStudent(room, studentData) {
         }
 
         if (studentData.help) {
-            helpSpan.textContent = '❗'
+            let helpDisplay = document.createElement('span')
+            helpDisplay.textContent = `❗`
             newStudent.classList.add('help')
-            helpSpan.classList.add('help')
+            studentElement.appendChild(helpDisplay)
+
+            let help = document.createElement('div')
+            help.classList.add('help')
+            help.textContent = 'Needs Help'
+
             if (studentData.help.reason) {
-                helpReason.textContent = studentData.help.reason += ` at ${studentData.help.time.toLocaleTimeString()}`
+                let helpReason = document.createElement('p')
+                helpReason.textContent = `Reason: ${studentData.help.reason} `
+                help.appendChild(helpReason)
             }
+
+            let helpTimeDisplay = document.createElement('p')
+            helpTimeDisplay.textContent = `at ${studentData.help.time.toLocaleTimeString()} `
+            help.appendChild(helpTimeDisplay)
 
             let deleteTicketButton = document.createElement('button')
             deleteTicketButton.classList.add('quickButton')
@@ -74,66 +79,86 @@ function buildStudent(room, studentData) {
             }
             deleteTicketButton.textContent = 'Delete Ticket'
 
-            helpReason.appendChild(deleteTicketButton)
-           
+            help.appendChild(deleteTicketButton)
+            newStudent.appendChild(help)
             helpSound()
-
         }
 
         if (studentData.break == true) {
             userBreak.push(studentData.username)
-            breakSpan.textContent = '⏸️'
-        }
-        else if (studentData.break) {
-            breakSpan.textContent = '⏸️'
-            newStudent.classList.add('break')
-            breakSpan.classList.add('break')
-            if (studentData.break.reason) {
-                breakReason.textContent = studentData.break.reason += ` at ${studentData.break.time.toLocaleTimeString()}`
-            }
+            let breakText = document.createElement('p')
+            breakText.textContent += 'taking a break'
+            newStudent.appendChild(breakText)
+        } else if (studentData.break) {
+            let breakDiv = document.createElement('div')
+            breakDiv.classList.add('break')
 
-            let approveBreakButton = document.createElement('button')
-            approveBreakButton.classList.add('quickButton')
-            approveBreakButton.dataset.studentName = studentData.username
-            approveBreakButton.onclick = (event) => {
+            let breakNeeded = document.createElement('p')
+            breakNeeded.textContent = 'Needs a Break'
+            breakDiv.appendChild(breakNeeded)
+
+            let breakReason = document.createElement('p')
+            breakReason.textContent = `Reason: ${studentData.break} `
+            breakDiv.appendChild(breakReason)
+            
+            let breakApprove = document.createElement('button')
+            breakApprove.classList.add('quickButton')
+            breakApprove.onclick = () => {
                 approveBreak(true, studentData.username)
-                breakSoundPlayed = false;
+                breakSoundPlayed = false
             }
-            approveBreakButton.textContent = 'Approve Break'
 
-            let denyBreakButton = document.createElement('button')
-            denyBreakButton.classList.add('quickButton')
-            denyBreakButton.dataset.studentName = studentData.username
-            denyBreakButton.onclick = (event) => {
+            breakApprove.textContent = 'Approve'
+            breakDiv.appendChild(breakApprove)
+            
+            let breakDeny = document.createElement('button')
+            breakDeny.classList.add('quickButton')
+            breakDeny.onclick = () => {
                 approveBreak(false, studentData.username)
+                breakSoundPlayed = false
             }
-            denyBreakButton.textContent = 'Deny Break'
-
-            breakReason.appendChild(approveBreakButton)
-            breakReason.appendChild(denyBreakButton)
-
-            breakSound()
+            
+            breakDeny.textContent = 'Deny'
+            breakDiv.appendChild(breakDeny)
+            newStudent.appendChild(breakDiv)
         }
         if (studentData.break) {
-            breakSpan.textContent = '⏱'
+            let breakDisplay = document.createElement('span')
+            breakDisplay.textContent = `⏱`
             newStudent.classList.add('break')
+            studentElement.appendChild(breakDisplay)
             breakSound()
+
+        }
+        newStudent.appendChild(studentElement);
+        let permissionSwitch = document.createElement("select");
+        permissionSwitch.setAttribute("name", "permSwitch");
+        permissionSwitch.setAttribute("class", "permSwitch");
+        permissionSwitch.setAttribute("data-username", studentData.username);
+        permissionSwitch.onchange = (event) => {
+            socket.emit('classPermChange', event.target.dataset.username, Number(event.target.value))
         }
 
-        for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
-            let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
-            strPerms = strPerms[permission - 1]
-            let permSwitch = document.createElement('button')
-            permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch");
-            permSwitch.setAttribute("data-username", studentData.username);
-            permSwitch.onclick = (event) => {
-            socket.emit('classPermChange', studentData.username, Number(permission))
-            }
-            permSwitch.innerHTML = strPerms
-            permDiv.appendChild(permSwitch)
-        }
-        
+        permissionSwitch.add(buildOption(
+            TEACHER_PERMISSIONS,
+            'Teacher',
+            studentData.classPermissions == TEACHER_PERMISSIONS
+        ))
+        permissionSwitch.add(buildOption(
+            MOD_PERMISSIONS,
+            'Mod',
+            studentData.classPermissions == MOD_PERMISSIONS
+        ))
+        permissionSwitch.add(buildOption(
+            STUDENT_PERMISSIONS,
+            'Student',
+            studentData.classPermissions == STUDENT_PERMISSIONS
+        ))
+        permissionSwitch.add(buildOption(
+            GUEST_PERMISSIONS,
+            'Guest',
+            studentData.classPermissions == GUEST_PERMISSIONS
+        ))
         //Create a button for each student box to open their tags' form
         let toggleDialog = document.createElement('button')
         toggleDialog.textContent = 'Tags'
@@ -284,8 +309,87 @@ function buildStudent(room, studentData) {
         })
         studentTags.appendChild(newTagButton);
         studentTags.appendChild(newTagForm);
-        studTagsSpan.appendChild(toggleDialog)
-}
+
+        // Create a checkbox for the student
+        let studentCheckbox = document.createElement("input");
+        for (student of room.poll.studentBoxes) {
+            if (student == studentData.username) {
+                studentCheckbox.checked = true
+            }
+        }
+        studentCheckbox.type = "checkbox";
+        studentCheckbox.id = "checkbox_" + studentData.username;
+        studentCheckbox.name = "studentCheckbox";
+        studentCheckbox.addEventListener("contextmenu", function () {
+            event.preventDefault();
+            studentCheckbox.indeterminate = !studentCheckbox.indeterminate
+        });
+        studentCheckbox.addEventListener("click", function () {
+            if (room.students[studentData.username].break) {
+                studentCheckbox.checked = false
+            }
+        });
+
+        newStudent.appendChild(studentCheckbox)
+        studentTags.appendChild(closeButton)
+        newStudent.appendChild(toggleDialog)
+        newStudent.appendChild(permissionSwitch)
+        newStudent.append(' ')
+        let banStudentButton = document.createElement('button')
+        banStudentButton.className = 'banStudent quickButton'
+        banStudentButton.setAttribute('data-user', studentData.username)
+        banStudentButton.textContent = 'Ban User'
+        banStudentButton.onclick = (event) => {
+            if (confirm(`Are you sure you want to ban ${studentData.username}?`)) {
+                socket.emit('classBanUser', studentData.username)
+            }
+        }
+        newStudent.appendChild(banStudentButton)
+        let kickUserButton = document.createElement('button')
+        kickUserButton.className = 'kickUser quickButton'
+        kickUserButton.setAttribute('data-userid', studentData.username)
+        kickUserButton.onclick = (event) => {
+            if (confirm(`Are you sure you want to kick ${studentData.username}?`)) {
+                socket.emit('classKickUser', studentData.username)
+            }
+        }
+        kickUserButton.textContent = 'Kick User'
+        newStudent.appendChild(kickUserButton)
+    } else if (studentData.id != currentUser.id) {
+        newStudent = document.createElement("div");
+        let studentElement = document.createElement("p");
+        studentElement.innerText = studentData.username;
+        newStudent.appendChild(studentElement);
+    }
+
+    if (!newStudent) return
+
+    newStudent.setAttribute('id', `student-${studentData.username}`);
+    //newStudent.setAttribute('style', "color: black");
+    if (studentData.pollTextRes) {
+        let pollTextResponse = document.createElement('p')
+        pollTextResponse.textContent = `Poll Text: ${studentData.pollRes.textRes} `
+        newStudent.appendChild(pollTextResponse)
+    }
+    if (studentData.pollRes.buttonRes) {
+        let pollResponse = document.createElement('p')
+        pollResponse.textContent = `Poll: ${studentData.pollRes.buttonRes} `
+        for (let eachResponse in room.poll.responses) {
+            if (eachResponse == studentData.pollRes.buttonRes) {
+                pollResponse.style.color = room.poll.responses[eachResponse].color
+                responseSound()
+            }
+        }
+        newStudent.appendChild(pollResponse)
+    }
+    if (studentData.pollRes.textRes) {
+        let textResponse = document.createElement('p')
+        textResponse.textContent = `Text Response: ${studentData.pollRes.textRes}`
+        newStudent.appendChild(textResponse)
+        responseSound()
+    }
+
+    return newStudent
 }
 
 // filters and sorts students

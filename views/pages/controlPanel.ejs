@@ -30,11 +30,21 @@
 					<div id='VBDiv'>
 						<%- include('../partials/virtual_bar.ejs') %>
 							<div id='VBOptions'>
+								<div id='userSelectBoxes' class='options'>
+									<h2 class='headerText'>Select</h2>
+									<div class='headBox' id="selectPoll">
+									</div>
+								</div>
 								<div id='userFilterBoxes' class='options'>
 									<h2 class='headerText'>Filter</h2>
 									<div class='headBox'>
 										<button type='button' id='alert' class='filter'>Alerts</button>
 										<button type='button' id='polls' class='filter'>Polls</button>
+									</div>
+								</div>
+								<div id='userFastPollBoxes' class='options'>
+									<h2 class='headerText'>Fast Poll</h2>
+									<div class='headBox' id='quickPoll'>
 									</div>
 								</div>
 								<div id='userSortBoxes' class='options'>
@@ -45,16 +55,6 @@
 										<button type='button' id='pollTime' class='sort'>Poll Time</button>
 										<button type='button' id='helpTime' class='sort'>Help Time</button>
 										<button type='button' id='permissions' class='sort pressed'>Permissions 🡇</button>
-									</div>
-								</div>
-								<div id='userSelectBoxes' class='options'>
-									<h2 class='headerText'>Select</h2>
-									<div class='headBox' id="selectPoll">
-									</div>
-								</div>
-								<div id='userFastPollBoxes' class='options'>
-									<h2 class='headerText'>Fast Poll</h2>
-									<div class='headBox' id='quickPoll'>
 									</div>
 								</div>
 							</div>
@@ -210,6 +210,21 @@
 				<p><b id='pollCounter'></b></p>
 				<p id='responsesCounter'></p>
 				<div id='users'>
+					<details id="student-fake" style="opacity: 0.65; order: 9997;">
+						<summary><span id="username"></span>
+							<span id="help"></span>
+							<span id="break"></span>
+							<span>
+								<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
+							</span>
+							<span id="studentTags"></span>
+							<span id="response">response</span>
+						</summary>
+						<div id="helpReason"></div>
+						<div id="breakReason"></div>
+						<div id="permissions"></div>
+						<div id="extraButtons"></div>
+					</details>
 				</div>
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
