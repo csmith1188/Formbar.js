@@ -319,25 +319,32 @@ socket.on('customPollUpdate', (
 		}
 	};
 	selectPollDiv.innerHTML = ''
+	
 	// Creation of switchAll button
 	let switchAll = document.createElement('button')
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
-	switchAll.onclick = () => {
-		let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
 
-		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) elem.click()
+	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
+	switchAll.onclick = () => {
+		switchState = !switchState
+		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
+			elem.click()
+		}
+
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
+			if (student.break) {
+				continue;
+			}
 
 			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
-			if (studCheck.checked == switchState) {
+			if (studCheck.checked != switchState) {
 				studCheck.click()
 			}
-			if (studCheck.checked) studElem.open = true
-			else studElem.open = false
+			studElem.open = studCheck.checked
 		}
 	};
 	if (selectPollDiv.children[0]) {
