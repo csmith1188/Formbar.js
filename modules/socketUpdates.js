@@ -1,7 +1,7 @@
 const { whitelistedIps, blacklistedIps } = require("./authentication");
 const { classInformation } = require("./class");
 const { settings } = require("./config");
-const { database, dbGetAll } = require("./database");
+const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
@@ -500,7 +500,7 @@ class SocketUpdates {
     classKickStudents(classId) {
         try {
             logger.log('info', `[classKickStudents] classId=(${classId})`)
-    
+
             for (let username of Object.keys(classInformation.classrooms[classId].students)) {
                 if (classInformation.classrooms[classId].students[username].classPermissions < TEACHER_PERMISSIONS) {
                     this.classKickUser(username, classId);
@@ -524,13 +524,13 @@ class SocketUpdates {
             classInformation.users[username].classPermissions = null;
         }
 
-        this.socket.request.session.destroy((err) => {
+        socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
     
                 delete userSockets[username]
-                this.socket.leave(`class-${classId}`)
-                this.socket.emit('reload')
+                socket.leave(`class-${classId}`)
+                socket.emit('reload')
 
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
@@ -746,9 +746,8 @@ class SocketUpdates {
             if (classrooms.length == 0) return
 
             await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
-
             for (let classroom of classrooms) {
-                if (classInformation.classrooms[classId]) {
+                if (classInformation.classrooms[classroom.id]) {
                     this.endClass(classroom.key. classroom.id)
                 }
 
