@@ -16,11 +16,8 @@ function checkEnv(req, res, next) {
 }
 
 function checkRedirect(req, res, next) {
-	if (req.query.redirect) {
-		req.session.redirect = req.query.redirect;
-	} else if (req.session.redirect) {
-		req.query.redirect = req.session.redirect;
-	};
+	if (!req.session.redirect) req.session.redirect = req.query.redirect;
+	else if (!req.query.redirect) req.query.redirect = req.session.redirect;
 	next();
 };
 
