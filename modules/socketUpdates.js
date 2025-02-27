@@ -125,14 +125,6 @@ class SocketUpdates {
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
-
-            console.log("Checking for guests");
-            for (const studentName in classData.students) {
-                const student = classData.students[studentName]
-                if (student.isGuest) {
-                    console.log("Found guest user");
-                }
-            }
     
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {
@@ -465,13 +457,19 @@ class SocketUpdates {
             // Remove user from class session
             classInformation.users[username].classPermissions = null;
             classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            setClassOfApiSockets(classInformation.users[username].API, null);            
+            setClassOfApiSockets(classInformation.users[username].API, null);
             
             // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
             if (classInformation.classrooms[classId]) {
+                // If the student is a guest, then remove them from the classroom entirely
                 const student = classInformation.classrooms[classId].students[username];
-                student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-                student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                if (student.isGuest) {
+                    console.log("removing guest")
+                    delete classInformation.classrooms[classId].students[username];
+                } else {
+                    student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                    student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                }
             }
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
@@ -534,10 +532,16 @@ class SocketUpdates {
 
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
-                    // Remove user from being active in the class
                     const student = classInformation.classrooms[classId].students[username];
-                    student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
-                    student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                    if (!student) return;
+                    if (student.isGuest) {
+                        // Remove the guest from the class
+                        delete classInformation.classrooms[classId].students[username];
+                    } else {
+                        // Mark the student as offline
+                        student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                        student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                    }
                     
                     // Update class permissions and virtual bar
                     this.classPermissionUpdate(classId)

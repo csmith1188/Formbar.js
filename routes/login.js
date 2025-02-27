@@ -451,7 +451,6 @@ module.exports = {
                     logger.log('verbose', '[post /login] Logging in as guest');
 
                     // Create a temporary guest user
-                    console.log('Display Name:', user.displayName)
                     const username = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student =  new Student(
                         username, // Username
@@ -460,7 +459,7 @@ module.exports = {
                         null, // API key
                         [], // Owned polls
                         [], // Shared polls
-                        [], // Tags
+                        "", // Tags
                         user.displayName,
                         true
                     );

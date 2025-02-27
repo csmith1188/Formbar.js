@@ -1,3 +1,4 @@
+const { classInformation } = require("./class");
 const { database } = require("./database")
 const { STUDENT_PERMISSIONS } = require("./permissions")
 
@@ -39,16 +40,93 @@ class Student {
 	};
 };
 
+/**
+ * Retrieves the students in a class from the database.
+ * Creates an actual student class for each student rather than just returning their data.
+ * @param {integer} id - The user object.
+ * @returns {Promise|Object} A promise that resolves to the class users or an error object.
+ */
+async function getStudentsInClass(classId) {
+	// Grab students associated with the class
+	const studentIdsAndPermissions = await new Promise((resolve, reject) => {
+		database.all('SELECT studentId, permissions FROM classusers WHERE classId = ?', [classId], (err, rows) => {
+			if (err) {
+				logger.log('error', err.stack);
+				return reject(err);
+			}
+
+			const studentIdsAndPermissions = rows.map(row => ({
+				id: row.studentId,
+				permissions: row.permissions
+			}));
+
+			resolve(studentIdsAndPermissions);
+		});
+	});
+
+
+	// Get student ids in the class user data
+	const studentIds = studentIdsAndPermissions.map(student => student.id);
+	const studentsData = await new Promise((resolve, reject) => {
+		database.all('SELECT * FROM users WHERE id IN (' + studentIds.map(() => '?').join(',') + ')', studentIds, (err, rows) => {
+			if (err) {
+				logger.log('error', err.stack);
+				return reject(err);
+			}
+
+			const studentData = {};
+			for (const row of rows) {
+				studentData[row.username] = row;
+			}
+
+			resolve(studentData);
+		});
+	});
+
+	// Create student class and return the data
+	const students = {};
+	for (const username in studentsData) {
+		const userData = studentsData[username];
+		const studentPermissions = studentIdsAndPermissions.find(student => student.id === userData.id).permissions;
+		students[username] = new Student(
+			username,
+			userData.id,
+			userData.permissions,
+			userData.API,
+			[],
+			[],
+			userData.tags,
+			displayName = userData.displayName,
+			false
+		);
+		
+		students[username].classPermissions = studentPermissions;
+	};
+
+	return students;
+}
+
 function getStudentId(username) {
-	return new Promise((resolve, reject) => {
-		database.get('SELECT id FROM users WHERE username=?', username, (err, row) => {
-			if (err) return reject(err)
-			resolve(row.id)
+	try {
+		// If the user is already loded, return the id
+		if (classInformation.users[username]) {
+			return classInformation.users[username].id
+		}
+	
+		// If the user isn't loaded, get the id from the database
+		return new Promise((resolve, reject) => {
+			database.get('SELECT id FROM users WHERE username=?', username, (err, row) => {
+				if (err) return reject(err)
+				resolve(row.id)
+			})
 		})
-	})
+	} catch (err) {
+		logger.log('error', err.stack)
+	}
 }
 
 module.exports = {
 	Student,
+	getStudentsInClass,
 	getStudentId
 }

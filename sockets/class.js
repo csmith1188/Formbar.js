@@ -134,7 +134,6 @@ module.exports = {
             try {
                 const classId = socket.request.session.classId;
                 const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-                console.log(username);
 
                 if (userSockets[username] && studBox) {
                     classInformation.classrooms[classId].poll.studentBoxes = studBox;

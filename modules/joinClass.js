@@ -117,11 +117,13 @@ async function joinClass(code, session) {
 
 			// Grab the user from the users list
 			const classData = classInformation.classrooms[classroom.id];
-			const currentUser = classInformation.users[username];
-			currentUser.classPermissions = classData.permissions.userDefaults;
+			const currentUser = classInformation.users[username]
+			currentUser.classPermissions = classData.permissions.userDefaults
+			currentUser.activeClasses.push(classroom.id)
 
-			// Add the student to the class
-			classData.students[username] = currentUser;
+			// Add the student to the newly created class
+			classData.students[username] = currentUser
+			classInformation.users[username].activeClasses.push(classroom.id)
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,
