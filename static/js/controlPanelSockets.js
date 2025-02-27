@@ -59,13 +59,25 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	let responseCount = 0;
-	for (let [key, value] of Object.entries(newClassroom.students)) {
-		if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+	let totalResponders = 0;
+	for (let [studentName, student] of Object.entries(newClassroom.students)) {
+		// If the student is offline, on break, a guest, or a teacher, do not include them as a potential responder
+		if ((!student.tags || !student.tags.includes("Offline")) 
+			&& !student.break 
+			&& student.permissions > GUEST_PERMISSIONS 
+			&& student.permissions < TEACHER_PERMISSIONS
+			&& newClassroom.poll.studentBoxes.includes(student.username)
+		) {
+			totalResponders++;
+		}
+
+		// If the student has responded to the poll, increment the response count
+		if (student.pollRes.buttonRes != "" || student.pollRes.textRes != "") {
 			responseCount++;
 		}
 	}
 
-	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
+	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
 		let studentElement = document.getElementById(`student-${username}`)

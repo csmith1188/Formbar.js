@@ -327,6 +327,8 @@ function buildStudent(room, studentData) {
             if (room.students[studentData.username].break == true) {
                 studentCheckbox.checked = false
             }
+            socket.emit('cpUpdate');
+            console.log('sending cpupdate event')
         });
 
         newStudent.appendChild(studentCheckbox)
