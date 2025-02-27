@@ -18,29 +18,19 @@
 			<body>
 				<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 					<div id="lessonContent">
-						<%if(lesson.content !=undefined){%>
-							<h3 id="headerText">
-								<%- lesson.date %>
-							</h3>
-							<% for (let i=0; i < lesson.content.length; i++) { %>
+						<% if (lesson.content !== undefined) { %>
+							<h3 id="headerText"><%- lesson.date %></h3>
+							<% for (let i = 0; i < lesson.content.length; i++) { %>
 								<u>
-									<h2 id="headerText">
-										<%-lesson.content[i][0]%>
-									</h2>
+									<h2 id="headerText"><%- lesson.content[i][0] %></h2>
 								</u>
-								<% for (let u=1; u < lesson.content[i].length; u++) { %>
-									<b id="headerText">
-										<%- lesson.content[i][u]%>
-									</b><br>
-									<% } %>
-										<% } %>
-											<br>
-											<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-											<% } else { %>
-												<h1 id="headerText" class="textColorContent">No active lesson</h1>
-												<a href="/previousLessons" class="quickButton">Go To A Previous
-													Lesson</a>
-												<% } %>
+								<% for (let u = 1; u < lesson.content[i].length; u++) { %>
+									<b id="headerText"><%- lesson.content[i][u] %></b><br>
+								<% } %>
+							<% } %>
+							<br>
+							<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
+						<% } %>
 					</div>
 					<% } %>
 
