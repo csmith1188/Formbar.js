@@ -334,9 +334,6 @@ socket.on('customPollUpdate', (
 
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
-			if (student.break) {
-				continue;
-			}
 
 			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)

@@ -132,12 +132,17 @@ module.exports = {
 
         socket.on('votingRightChange', (username, votingRight, studBox) => {
             try {
-                const studentBoxes = classInformation.classrooms[socket.request.session.classId].poll.studentBoxes;
+                const classId = socket.request.session.classId;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                console.log(username);
 
                 if (userSockets[username] && studBox) {
-                    classInformation.classrooms[socket.request.session.classId].poll.studentBoxes = studBox;
+                    classInformation.classrooms[classId].poll.studentBoxes = studBox;
+                    classInformation.classrooms[classId].students[username].pollRes.buttonRes = "";
+                    classInformation.classrooms[classId].students[username].pollRes.textRes = "";
+
                     userSockets[username].emit('votingRightChange', votingRight);
-                    socketUpdates.virtualBarUpdate(socket.request.session.classId);
+                    socketUpdates.virtualBarUpdate(classId);
                 } else if (userSockets[username] && username) {
                     if (studentBoxes.length > 0) {
                         userSockets[username].emit('votingRightChange', studentBoxes.includes(username));

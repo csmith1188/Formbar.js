@@ -275,7 +275,6 @@
 						if (vr) {
 							updatePage()
 						} else {
-							socket.emit('pollResp', "remove")
 							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 						}
 					})
