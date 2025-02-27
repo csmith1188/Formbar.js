@@ -663,16 +663,49 @@ div .tabContent {
 	margin-bottom: 1vi;
 	width: 25%;
 	font-size: larger;
-	min-width: 250px;
-	max-width: 300px;
 	margin: 5vh;
 	margin-top: 2.5vh;
 	height: fit-content;
 	background-color: var(--bg-light-blue);
 }
 
+#studentTags {
+	margin: 1%;
+	border-left: 3px var(--light-blue) solid;
+}
+
+#studentTags span{
+	border: 3px var(--theme-color) solid;
+	font-size: 1cqw;
+	text-align: center;
+	margin: 1px;
+}
+
 div.break {
 	margin-bottom: 3%;
+}
+
+#users details[id^="student"][open] {
+	padding-bottom: 2vh;
+}
+
+#users details[id^="student"] summary {
+	padding: 5%;
+	cursor: pointer;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	text-align: center;
+	align-items: center;
+}
+
+#users details[id^="student"] summary * {
+	height: max-content;
+}
+
+#users details[id^="student"][open] summary {
+	border-bottom: 3px var(--theme-color) solid;
+	margin-bottom: 2.5%;
 }
 
 .break,
@@ -690,18 +723,6 @@ div.break {
 	border-color: var(--dark-gray) !important;
 }
 
-#users details[id^="student"][open] {
-	padding-bottom: 2vh;
-}
-
-#users details[id^="student"] summary {
-	cursor: pointer;
-}
-
-#users details[id^="student"][open] summary {
-	border-bottom: 3px var(--theme-color) solid;
-	margin-bottom: 2.5%;
-}
 
 #permissionsList {
 	display: flex;

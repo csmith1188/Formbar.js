@@ -18,6 +18,8 @@ function buildStudent(room, studentData) {
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         newStudent = cloneDiv.cloneNode(true)
+        newStudent.hidden = false
+        newStudent.style.display = 'flex'
         document.getElementById('users').appendChild(newStudent)
         for (student of room.poll.studentBoxes) {
             if (student == studentData.username) {
@@ -34,15 +36,22 @@ function buildStudent(room, studentData) {
         let studBox = newStudent.querySelector('input[type="checkbox"]')
         let pollBox = newStudent.querySelector('#response')
         let studTagsSpan = newStudent.querySelector('#studentTags')
+        let roomTagDiv = newStudent.querySelector('#roomTags')
         let permDiv = newStudent.querySelector('#permissions')
-        
+
         newStudent.querySelector('#username').textContent = studentData.displayName
         studBox.id = 'checkbox_' + studentData.username
         studBox.checked = room.poll.studentBoxes.includes(studentData.username)
 
         for (let eachResponse in room.poll.responses) {
-            if (eachResponse == room.poll.responses) {
-                newStudent.style.color = room.poll.responses[eachResponse].color
+            if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
+                pollBox.style.color = room.poll.responses[eachResponse].color
+                pollBox.textContent = eachResponse
+            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.includes(eachResponse)) {
+                let tempElem = document.createElement('span')
+                tempElem.textContent = eachResponse + ' '
+                tempElem.style.color = room.poll.responses[eachResponse].color
+                pollBox.appendChild(tempElem)
             }
         }
 
@@ -75,7 +84,7 @@ function buildStudent(room, studentData) {
             deleteTicketButton.textContent = 'Delete Ticket'
 
             helpReason.appendChild(deleteTicketButton)
-           
+
             helpSound()
 
         }
@@ -128,164 +137,57 @@ function buildStudent(room, studentData) {
             permSwitch.setAttribute("class", "permSwitch");
             permSwitch.setAttribute("data-username", studentData.username);
             permSwitch.onclick = (event) => {
-            socket.emit('classPermChange', studentData.username, Number(permission))
+                socket.emit('classPermChange', studentData.username, Number(permission))
             }
             permSwitch.innerHTML = strPerms
             permDiv.appendChild(permSwitch)
         }
-        
-        //Create a button for each student box to open their tags' form
-        let toggleDialog = document.createElement('button')
-        toggleDialog.textContent = 'Tags'
-        toggleDialog.addEventListener('click', function () {
-            studentTags.showModal()
-        })
 
-        let studentTags = document.createElement('dialog');
-        studentTags.innerHTML = '<p>' + studentData.username + '</p>';
-
-        let closeButton = document.createElement('button');
-        closeButton.textContent = 'Save';
-
-        let newTagButton = document.createElement('button');
-        newTagButton.textContent = 'Edit Tags';
-
-        // Create a form to add new tags or remove existing tags from the database
-        let newTagForm = document.createElement('form');
-        newTagForm.setAttribute('hidden', true);
-
-        let newTagTextBox = document.createElement('input');
-        newTagTextBox.setAttribute('type', 'text');
-        newTagTextBox.setAttribute('id', 'tagBox');
-        newTagTextBox.setAttribute('hidden', true);
-        newTagForm.appendChild(newTagTextBox);
-
-        let newTagSaveButton = document.createElement('button');
-        newTagSaveButton.textContent = 'Save Tag';
-        newTagSaveButton.setAttribute('hidden', true);
-
-        let removeTagButton = document.createElement('button');
-        removeTagButton.textContent = 'Remove Tag';
-        removeTagButton.setAttribute('hidden', true);
-        newTagForm.appendChild(newTagSaveButton);
-        newTagForm.appendChild(removeTagButton);
-
-        let tagForm = document.createElement('form');
-        tagForm.setAttribute('id', studentData.username + "tags");
-
+        console.log(studentData.tags)
         // Add each tag as a checkbox to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
-            let checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
+            let tag = room.tagNames[i]
+            if (tag == 'Offline') continue
+            let checkbox = document.createElement('button');
+            checkbox.innerHTML = tag
             checkbox.name = `checkbox${room.tagNames[i]}`;
             checkbox.value = room.tagNames[i];
             if (studentData.tags != null && studentData.tags != undefined) {
-                studentData.tags.split(",").forEach(tag => {
-                    if (tag == room.tagNames[i]) {
-                        checkbox.checked = true;
+                checkbox.onclick = function () {
+                    console.log(`,${tag}`)
+                    let tags = studentData.tags.split(",")
+                    if (!checkbox.classList.contains('pressed')) {
+                        checkbox.classList.add('pressed')
+                        let span = document.createElement('span');
+                        span.textContent = tag;
+                        span.setAttribute('id', tag);
+                        studTagsSpan.appendChild(span);
+                        tags.push(tag)
+                    } else {
+                        checkbox.classList.remove('pressed')
+                        tags = tags.filter(fTag => fTag != tag)
+                        studTagsSpan.querySelector(`#${tag}`).remove()
                     }
-                })
-            };
-            let label = document.createElement('label');
-            label.textContent = room.tagNames[i];
-            label.setAttribute('for', `checkbox${i}`);
-
-            tagForm.appendChild(checkbox);
-            tagForm.appendChild(label);
-            tagForm.appendChild(document.createElement('br'));
-        }
-
-        studentTags.appendChild(tagForm)
-        document.body.appendChild(studentTags)
-        closeButton.addEventListener('click', function () {
-            studentData.tags = []
-            let allTags = []
-            let checkboxForm = document.getElementById(studentData.username + 'tags')
-            let checkboxes = checkboxForm.getElementsByTagName('input')
-            for (let i = 0; i < checkboxes.length; i++) {
-                let checkbox = checkboxes[i]
-                // Check if the checkbox is checked
-                if (checkbox.type === 'checkbox') {
-                    if (checkbox.checked) {
-                        // Add the checkbox value to the studentData.tags array
-                        allTags.push(checkbox.value)
-                    }
+                    studentData.tags = tags.toString()
                 }
-            }
-            studentData.tags = allTags;
-            studentData.tags.sort()
+                if (studentData.tags.includes(tag)) {
+                    checkbox.classList.add('pressed')
+                    let span = document.createElement('span');
+                    span.textContent = tag;
+                    span.setAttribute('id', tag);
+                    studTagsSpan.appendChild(span);
+                }
+                roomTagDiv.appendChild(checkbox);
+            };
+        }
+        let saveButton = document.createElement('button')
+        saveButton.innerHTML = 'Save'
+        saveButton.onclick = () => {
             //Update the users tags in the database and class data
             socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
-            studentTags.close()
-        })
-
-        newTagButton.addEventListener('click', function () {
-            newTagForm.removeAttribute('hidden');
-            newTagTextBox.removeAttribute('hidden');
-            newTagSaveButton.removeAttribute('hidden');
-            removeTagButton.removeAttribute('hidden');
-            newTagButton.setAttribute('hidden', true);
-        });
-
-        newTagSaveButton.addEventListener('click', function () {
-            //event.preventDefault prevents the page from refreshing when the form is submitted
-            event.preventDefault();
-            newTagButton.removeAttribute('hidden');
-            socket.emit('newTag', newTagTextBox.value);
-            //update tagform to show new tag
-            let checkboxForm = document.getElementById(studentData.username + 'tags')
-            let checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = `checkbox${newTagTextBox.value}`;
-            checkbox.value = newTagTextBox.value;
-            checkbox.checked = false;
-            let label = document.createElement('label');
-            label.textContent = newTagTextBox.value;
-            label.setAttribute('for', `checkbox${newTagTextBox.value}`);
-            checkboxForm.appendChild(checkbox);
-            checkboxForm.appendChild(label);
-            checkboxForm.appendChild(document.createElement('br'));
-            newTagTextBox.value = '';
-        })
-
-        removeTagButton.addEventListener('click', function () {
-            event.preventDefault();
-            newTagButton.removeAttribute('hidden');
-            socket.emit('removeTag', newTagTextBox.value);
-            //update tagform to remove tag
-            let checkboxForm = document.getElementById(studentData.username + 'tags')
-            let checkboxes = checkboxForm.getElementsByTagName('input')
-            for (let i = 0; i < checkboxes.length; i++) {
-                let checkbox = checkboxes[i]
-                if (checkbox.type === 'checkbox') {
-                    if (checkbox.value == newTagTextBox.value) {
-                        checkboxForm.removeChild(checkbox.nextSibling)
-                        checkboxForm.removeChild(checkbox)
-                        //checkboxForm.removeChild(checkbox.nextSibling)
-                    }
-                }
-            }
-            newTagTextBox.value = '';
-
-            // Remove broken line break
-            // for all elements in the form, if there are 2 line breaks in a row, remove the first one
-            for (let i = 0; i < checkboxForm.children.length; i++) {
-                if (checkboxForm.children[0].nodeName == 'BR') {
-                    checkboxForm.removeChild(checkboxForm.children[0])
-                    i--;
-                    continue
-                }
-                if (checkboxForm.children[i].nodeName == 'BR' && checkboxForm.children[i + 1].nodeName == 'BR') {
-                    checkboxForm.removeChild(checkboxForm.children[i])
-                    i--;
-                    continue
-                }
-            }
-        })
-        studentTags.appendChild(newTagButton);
-        studentTags.appendChild(newTagForm);
-        studTagsSpan.appendChild(toggleDialog)
-}
+        }
+        roomTagDiv.appendChild(saveButton)
+    }
 }
 
 // filters and sorts students
@@ -471,10 +373,10 @@ for (let sortElement of document.getElementsByClassName('sort')) {
             sort[sortElement.id] = 0
         } else if (sort[sortElement.id] > 2) {
             sort[sortElement.id] = 0
-        }        
+        }
 
         if (sort[sortElement.id] == 0) {
-            sortElement.classList.remove('pressed') 
+            sortElement.classList.remove('pressed')
         } else {
             sortElement.classList.add('pressed')
         }

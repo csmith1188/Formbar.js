@@ -209,22 +209,23 @@
 				<!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
 				<p><b id='pollCounter'></b></p>
 				<p id='responsesCounter'></p>
+				<details id="student-fake" style="opacity: 0.65; order: 9997;" style="display: none;" hidden>
+					<summary><span id="username"></span>
+						<span id="help"></span>
+						<span id="break"></span>
+						<span>
+							<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
+						</span>
+						<span id="studentTags"></span>
+						<span id="response"></span>
+					</summary>
+					<div id="helpReason"></div>
+					<div id="breakReason"></div>
+					<div id="permissions"></div>
+					<div id="roomTags"></div>
+					<div id="extraButtons"></div>
+				</details>
 				<div id='users'>
-					<details id="student-fake" style="opacity: 0.65; order: 9997;">
-						<summary><span id="username"></span>
-							<span id="help"></span>
-							<span id="break"></span>
-							<span>
-								<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
-							</span>
-							<span id="studentTags"></span>
-							<span id="response">response</span>
-						</summary>
-						<div id="helpReason"></div>
-						<div id="breakReason"></div>
-						<div id="permissions"></div>
-						<div id="extraButtons"></div>
-					</details>
 				</div>
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
