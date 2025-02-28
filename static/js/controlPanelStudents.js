@@ -328,7 +328,6 @@ function buildStudent(room, studentData) {
                 studentCheckbox.checked = false
             }
             socket.emit('cpUpdate');
-            console.log('sending cpupdate event')
         });
 
         newStudent.appendChild(studentCheckbox)

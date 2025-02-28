@@ -461,7 +461,6 @@ class SocketUpdates {
                 // If the student is a guest, then remove them from the classroom entirely
                 const student = classInformation.classrooms[classId].students[username];
                 if (student.isGuest) {
-                    console.log("removing guest")
                     delete classInformation.classrooms[classId].students[username];
                 } else {
                     student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
