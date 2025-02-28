@@ -733,6 +733,28 @@ div.break {
 	font-size: 1.5cqw;
 }
 
+#reasons {
+	position: absolute;
+	transform: translateY(-15vh);
+	background-color: #f0f0f0;
+	border: 2px solid var(--theme-color);
+	border-radius: 5px;
+	padding: 5px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+	z-index: 10;
+	width: max-content;
+	text-align: center;
+}
+#helpReason {
+	border: 2px solid #ff0000;
+	border-radius: 5px;
+	margin-bottom: 5px;
+}
+#breakReason {
+	border: 2px solid #ffff00;
+	border-radius: 5px;
+}
+
 /* news page */
 article {
 	margin: 0 auto;

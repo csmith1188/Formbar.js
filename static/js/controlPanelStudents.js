@@ -38,6 +38,7 @@ function buildStudent(room, studentData) {
         let studTagsSpan = newStudent.querySelector('#studentTags')
         let roomTagDiv = newStudent.querySelector('#roomTags')
         let permDiv = newStudent.querySelector('#permissions')
+        let reasonsDiv = newStudent.querySelector('#reasons')
 
         newStudent.querySelector('#username').textContent = studentData.displayName
         studBox.id = 'checkbox_' + studentData.username
@@ -129,6 +130,12 @@ function buildStudent(room, studentData) {
             breakSound()
         }
 
+        if (studentData.break || studentData.help) {
+            reasonsDiv.setAttribute('style', 'display: absolute;')
+        } else {
+            reasonsDiv.setAttribute('style', 'display: none;')
+        }
+
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
@@ -138,12 +145,21 @@ function buildStudent(room, studentData) {
             permSwitch.setAttribute("data-username", studentData.username);
             permSwitch.onclick = (event) => {
                 socket.emit('classPermChange', studentData.username, Number(permission))
+                permSwitch.classList.add('pressed')
+                permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
+                    if (perm != permSwitch) {
+                        perm.classList.remove('pressed')
+                    }
+                })
             }
             permSwitch.innerHTML = strPerms
+            if (studentData.classPermissions == permission) {
+                permSwitch.classList.add('pressed')
+            }
             permDiv.appendChild(permSwitch)
         }
 
-        console.log(studentData.tags)
+        
         // Add each tag as a checkbox to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
