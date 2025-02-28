@@ -20,6 +20,7 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
+        console.log(newStudent)
         document.getElementById('users').appendChild(newStudent)
         for (student of room.poll.studentBoxes) {
             if (student == studentData.username) {
@@ -131,7 +132,7 @@ function buildStudent(room, studentData) {
         }
 
         if (studentData.break || studentData.help) {
-            reasonsDiv.setAttribute('style', 'display: absolute;')
+            reasonsDiv.setAttribute('style', 'display: flex;')
         } else {
             reasonsDiv.setAttribute('style', 'display: none;')
         }

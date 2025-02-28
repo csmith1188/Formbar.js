@@ -528,7 +528,6 @@ input[type="radio"]:focus {
 }
 
 #VBDiv #vbContainer {
-	display: absolute;
 	width: 50%;
 	height: 50vh;
 }
@@ -558,19 +557,22 @@ hr {
 
 .headBox {
 	display: flex;
-	justify-content: space-evenly;
+	justify-content: center;
 	flex-wrap: wrap;
 	padding: 1vh;
 	max-height: 25vh;
 	overflow-y: auto;
+	gap: 1vh;
 }
 
 .headBox button {
-	width: max-content;
-	min-width: 12.5%;
-	height: max-content;
-	margin: 1vi;
+	width: auto;
+	min-width: 100px;
+	height: auto;
+	margin: 1vh;
 	font-size: 1.5cqw;
+	padding: 0.25em 1em;
+	border-radius: 5px;
 }
 
 .ongoingPollOptions {
@@ -671,7 +673,6 @@ div .tabContent {
 
 #studentTags {
 	margin: 1%;
-	border-left: 3px var(--light-blue) solid;
 }
 
 #studentTags span{
@@ -697,10 +698,6 @@ div.break {
 	justify-content: center;
 	text-align: center;
 	align-items: center;
-}
-
-#users details[id^="student"] summary * {
-	height: max-content;
 }
 
 #users details[id^="student"][open] summary {
@@ -734,25 +731,40 @@ div.break {
 }
 
 #reasons {
+	display: flex;
+	align-items: center;
 	position: absolute;
+	justify-content: center;
 	transform: translateY(-15vh);
 	background-color: #f0f0f0;
-	border: 2px solid var(--theme-color);
 	border-radius: 5px;
 	padding: 5px;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-	z-index: 10;
-	width: max-content;
+	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.781);
 	text-align: center;
+	max-height: 200px;
+	overflow-y: auto;
+}
+#helpReason, #breakReason {
+	display: inline-block;
+	overflow-wrap: break-word;
+	text-align: center;
+	border-radius: 5px;
+	max-width: 400px;
+	height: 100%;
+	margin: 5px;
+}
+#helpReason p, #breakReason p {
+	font-size: 1.1cqw;
 }
 #helpReason {
-	border: 2px solid #ff0000;
-	border-radius: 5px;
-	margin-bottom: 5px;
+	border: 2px solid #cfcfcf;
 }
 #breakReason {
-	border: 2px solid #ffff00;
-	border-radius: 5px;
+	border: 2px solid #cfcfcf;
+}
+
+#helpReason:empty, #breakReason:empty {
+	display: none;
 }
 
 /* news page */
