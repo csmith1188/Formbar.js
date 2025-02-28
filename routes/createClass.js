@@ -1,10 +1,11 @@
 const { isLoggedIn, permCheck } = require("../modules/authentication")
-const { classInformation, Classroom, getClassStudents } = require("../modules/class")
+const { classInformation, Classroom } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
 const { setClassOfApiSockets } = require("../modules/socketUpdates")
+const { getStudentsInClass } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 
 module.exports = {
@@ -62,7 +63,7 @@ module.exports = {
                         classInformation.users[req.session.username].activeClasses.push(id)
                         classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
 
-                        const classStudents = await getClassStudents(id);
+                        const classStudents = await getStudentsInClass(id);
                         for (const username in classStudents) {
                             // If the student is the teacher or already in the class, skip
                             if (username == req.session.username) continue;
@@ -71,7 +72,10 @@ module.exports = {
                             const student = classStudents[username];
                             if (student.tags) {
                                 student.tags = student.tags.includes("Offline") ? student.tags : "Offline," + student.tags;
+                            } else {
+                                student.tags = "Offline";
                             }
+
                             student.displayName = student.displayName || student.username;
                             classInformation.users[username] = student;
                             classInformation.classrooms[id].students[username] = student;
