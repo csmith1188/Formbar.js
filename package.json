@@ -5,14 +5,14 @@
 	"main": "app.js",
 	"scripts": {
 		"dev": "nodemon app",
-		"start": "node app"
+		"start": "node app",
+		"test": "jest"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/csmith1188/Formbar.js.git"
 	},
-	"author": "",
-	"license": "ISC",
+	"license": "YCSTEL-1.0",
 	"bugs": {
 		"url": "https://github.com/csmith1188/Formbar.js/issues"
 	},
@@ -48,6 +48,8 @@
 		"winston-daily-rotate-file": "^4.7.1"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.5.14",
+		"jest": "^29.7.0",
 		"nodemon": "^3.0.1"
 	}
 }
