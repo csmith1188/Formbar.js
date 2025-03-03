@@ -115,7 +115,7 @@ button,
 }
 
 /*Pop-out effect*/
-:is(button, .quickButton):not(.unselectable):where(:hover, :focus-visible),
+:is(button, .quickButton):not(.unselectable, .pressed):where(:hover, :focus-visible),
 :is(button.tab.unselectable, .quickButton.tab.unselectable):where(:hover, :focus-visible) {
 	transform: translate(3px, -3px);
 	box-shadow: -1.5px 1.5px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%), -3px 3px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%);
@@ -132,6 +132,8 @@ button,
 button.pressed,
 .quickButton.pressed {
 	background-color: var(--theme-color);
+	border: 2px solid #000000;
+	box-shadow: inset 0 0 5px rgb(0, 0, 0);
 	color: white;
 }
 
@@ -483,9 +485,50 @@ input[type="radio"]:focus {
 
 
 /* --- CONTROL PANEL --- */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes alertWiggle {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	25% {
+		transform: rotate(5deg) scale(2);
+	}
+
+	50% {
+		transform: rotate(-5deg) scale(2);
+	}
+
+	75% {
+		transform: rotate(5deg) scale(2);
+	}
+
+	100% {
+		transform: rotate(0deg) scale(1);
+	}
+}
+
+details {
+	max-height: 4rem;
+	overflow: hidden;
+	transition: max-height 250ms ease-in-out;
+}
+
+details[open] {
+	max-height: 100vh;
+}
+
 #quickMenu {
-	padding-left: 1vw;
-	padding-right: 1vw;
+	padding: .1vh 1vw;
 	font-size: 1cqw;
 	display: flex;
 	justify-content: space-between;
@@ -588,8 +631,7 @@ hr {
 }
 
 .options .headBox {
-	padding-top: 1vh;
-	padding-bottom: 1vh;
+	padding: 1vh 0;
 	color: var(--theme-color);
 	font-weight: bold;
 	border-left: 3px solid var(--theme-color);
@@ -601,8 +643,7 @@ hr {
 }
 
 .ongoingPollOptions #timeDiv {
-	padding-top: 1vh;
-	padding-bottom: 1vh;
+	padding: 1vh 0;
 	width: 30%;
 	color: var(--theme-color);
 	font-weight: bold;
@@ -669,6 +710,7 @@ div .tabContent {
 	margin-top: 2.5vh;
 	height: fit-content;
 	background-color: var(--bg-light-blue);
+	min-width: 300px;
 }
 
 #studentTags {
@@ -686,12 +728,8 @@ div.break {
 	margin-bottom: 3%;
 }
 
-#users details[id^="student"][open] {
-	padding-bottom: 2vh;
-}
-
 #users details[id^="student"] summary {
-	padding: 5%;
+	padding: 1vh;
 	cursor: pointer;
 	display: flex;
 	flex-wrap: wrap;
@@ -702,16 +740,78 @@ div.break {
 
 #users details[id^="student"][open] summary {
 	border-bottom: 3px var(--theme-color) solid;
-	margin-bottom: 2.5%;
+}
+
+#users details[id^="student"] #alerts {
+	position: absolute;
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+	transform: translateY(-5vh);
+	width: 25%;
+}
+
+#users details[id^="student"] #alerts * {
+	animation-name: alertWiggle;
+	animation-duration: 0.5s;
+}
+
+#users div:not(#reasons, #reasons *, #alerts *) {
+	padding: 1vh 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	border-bottom: 3px var(--theme-color) solid;
+}
+
+#users div:last-child:not(#reasons, #reasons *, #alerts *) {
+	border-bottom: none;
+}
+
+
+#users span:empty, #users div:empty {
+	display: none;
+}
+
+#users #roomTags {
+	display: flex;
+	flex-flow: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+#users #roomTags #saveButton {
+	background-color: var(--light-green);
+	width: 90%;
+	margin-top: 10px;
+}
+
+#users #roomTags button:not(#saveButton, .pressed) {
+	background-color: #ffd8a5;
+	font-weight: 600;
+}
+
+#users #roomTags button.pressed {
+	background-color: #cf8d37;
+	border: 2px solid #000000;
+	box-shadow: inset 0 0 5px rgb(0, 0, 0);
+	color: white;
+}
+
+.banUser, .kickUser {
+	--theme-color: hsl(0, 100%, 12%);
+	background-color: hsl(0, 94%, 74%);
 }
 
 .break,
-.break summary {
+.break summary, 
+#breakReason {
 	border-color: #ffff00 !important;
 }
 
 .help,
-.help summary {
+.help summary, 
+#helpReason {
 	border-color: #ff0000 !important;
 }
 
@@ -731,19 +831,22 @@ div.break {
 }
 
 #reasons {
+	position: absolute;
 	display: flex;
 	align-items: center;
-	position: absolute;
 	justify-content: center;
-	transform: translateY(-15vh);
 	background-color: #f0f0f0;
 	border-radius: 5px;
 	padding: 5px;
+	transform: translateY(5vh);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.781);
 	text-align: center;
 	max-height: 200px;
 	overflow-y: auto;
+	animation-name: fadeIn;
+	animation-duration: 0.5s;
 }
+
 #helpReason, #breakReason {
 	display: inline-block;
 	overflow-wrap: break-word;
@@ -753,6 +856,7 @@ div.break {
 	height: 100%;
 	margin: 5px;
 }
+
 #helpReason p, #breakReason p {
 	font-size: 1.1cqw;
 }

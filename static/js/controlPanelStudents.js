@@ -20,19 +20,18 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        console.log(newStudent)
+        console.log(studentData, newStudent)
         document.getElementById('users').appendChild(newStudent)
         for (student of room.poll.studentBoxes) {
             if (student == studentData.username) {
                 newStudent.open = true
             }
         }
-
+        
         newStudent.id = `student-${studentData.username}`
         let summary = newStudent.querySelector('summary')
-        let helpSpan = newStudent.querySelector('#help')
+        let alertSpan = newStudent.querySelector('#alerts')
         let helpReason = newStudent.querySelector('#helpReason')
-        let breakSpan = newStudent.querySelector('#break')
         let breakReason = newStudent.querySelector('#breakReason')
         let studBox = newStudent.querySelector('input[type="checkbox"]')
         let pollBox = newStudent.querySelector('#response')
@@ -40,6 +39,7 @@ function buildStudent(room, studentData) {
         let roomTagDiv = newStudent.querySelector('#roomTags')
         let permDiv = newStudent.querySelector('#permissions')
         let reasonsDiv = newStudent.querySelector('#reasons')
+        let extraButtons = newStudent.querySelector('#extraButtons')
 
         newStudent.querySelector('#username').textContent = studentData.displayName
         studBox.id = 'checkbox_' + studentData.username
@@ -69,9 +69,11 @@ function buildStudent(room, studentData) {
         }
 
         if (studentData.help) {
-            helpSpan.textContent = '❗'
+            let div = document.createElement('div')
+            div.textContent = '❗'
+            alertSpan.appendChild(div)
             newStudent.classList.add('help')
-            helpSpan.classList.add('help')
+            alertSpan.classList.add('help')
             if (studentData.help.reason) {
                 helpReason.textContent = studentData.help.reason += ` at ${studentData.help.time.toLocaleTimeString()}`
             }
@@ -93,12 +95,10 @@ function buildStudent(room, studentData) {
 
         if (studentData.break == true) {
             userBreak.push(studentData.username)
-            breakSpan.textContent = '⏸️'
         }
         else if (studentData.break) {
-            breakSpan.textContent = '⏸️'
             newStudent.classList.add('break')
-            breakSpan.classList.add('break')
+            alertSpan.classList.add('break')
             if (studentData.break.reason) {
                 breakReason.textContent = studentData.break.reason += ` at ${studentData.break.time.toLocaleTimeString()}`
             }
@@ -126,7 +126,9 @@ function buildStudent(room, studentData) {
             breakSound()
         }
         if (studentData.break) {
-            breakSpan.textContent = '⏱'
+            let div = document.createElement('div')
+            div.textContent = '⏱'
+            alertSpan.appendChild(div)
             newStudent.classList.add('break')
             breakSound()
         }
@@ -161,49 +163,71 @@ function buildStudent(room, studentData) {
         }
 
         
-        // Add each tag as a checkbox to the tag form
+        // Add each tag as a button to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
             if (tag == 'Offline') continue
-            let checkbox = document.createElement('button');
-            checkbox.innerHTML = tag
-            checkbox.name = `checkbox${room.tagNames[i]}`;
-            checkbox.value = room.tagNames[i];
+            let button = document.createElement('button');
+            button.innerHTML = tag
+            button.name = `button${room.tagNames[i]}`;
+            button.value = room.tagNames[i];
             if (studentData.tags != null && studentData.tags != undefined) {
-                checkbox.onclick = function () {
-                    console.log(`,${tag}`)
+                button.onclick = function () {
                     let tags = studentData.tags.split(",")
-                    if (!checkbox.classList.contains('pressed')) {
-                        checkbox.classList.add('pressed')
+                    if (!button.classList.contains('pressed')) {
+                        button.classList.add('pressed')
                         let span = document.createElement('span');
                         span.textContent = tag;
                         span.setAttribute('id', tag);
                         studTagsSpan.appendChild(span);
                         tags.push(tag)
                     } else {
-                        checkbox.classList.remove('pressed')
+                        button.classList.remove('pressed')
                         tags = tags.filter(fTag => fTag != tag)
                         studTagsSpan.querySelector(`#${tag}`).remove()
                     }
                     studentData.tags = tags.toString()
                 }
                 if (studentData.tags.includes(tag)) {
-                    checkbox.classList.add('pressed')
+                    button.classList.add('pressed')
                     let span = document.createElement('span');
                     span.textContent = tag;
                     span.setAttribute('id', tag);
                     studTagsSpan.appendChild(span);
                 }
-                roomTagDiv.appendChild(checkbox);
+                roomTagDiv.appendChild(button);
             };
         }
         let saveButton = document.createElement('button')
         saveButton.innerHTML = 'Save'
+        saveButton.id = 'saveButton'
         saveButton.onclick = () => {
             //Update the users tags in the database and class data
             socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
         }
         roomTagDiv.appendChild(saveButton)
+
+        // Ban and Kick buttons
+        let banStudentButton = document.createElement('button')
+        banStudentButton.className = 'banUser quickButton'
+        banStudentButton.setAttribute('data-user', studentData.username)
+        banStudentButton.textContent = 'Ban User'
+        banStudentButton.onclick = (event) => {
+            if (confirm(`Are you sure you want to ban ${studentData.username}?`)) {
+                socket.emit('classBanUser', studentData.username)
+            }
+        }
+        extraButtons.appendChild(banStudentButton)
+        let kickUserButton = document.createElement('button')
+        kickUserButton.className = 'kickUser quickButton'
+        kickUserButton.setAttribute('data-userid', studentData.username)
+        kickUserButton.onclick = (event) => {
+            if (confirm(`Are you sure you want to kick ${studentData.username}?`)) {
+                socket.emit('classKickUser', studentData.username)
+            }
+        }
+        kickUserButton.textContent = 'Kick User'
+        extraButtons.appendChild(kickUserButton)
     }
 }
 
