@@ -43,7 +43,7 @@ class Student {
 /**
  * Retrieves the students in a class from the database.
  * Creates an actual student class for each student rather than just returning their data.
- * @param {integer} id - The user object.
+ * @param {integer} id - The class id.
  * @returns {Promise|Object} A promise that resolves to the class users or an error object.
  */
 async function getStudentsInClass(classId) {
