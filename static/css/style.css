@@ -813,15 +813,21 @@ div.break {
 }
 
 .break,
-.break summary, 
-#breakReason {
+.break summary {
 	border-color: #ffff00 !important;
 }
 
+#breakReason button {
+	border: 3px solid #ffff00 !important;
+}
+
 .help,
-.help summary, 
-#helpReason {
+.help summary {
 	border-color: #ff0000 !important;
+}
+
+#helpReason button {
+	border: 3px solid #ff0000 !important;
 }
 
 .offline,
@@ -868,12 +874,6 @@ div.break {
 
 #helpReason p, #breakReason p {
 	font-size: 1.1cqw;
-}
-#helpReason {
-	border: 2px solid #cfcfcf;
-}
-#breakReason {
-	border: 2px solid #cfcfcf;
 }
 
 #helpReason:empty, #breakReason:empty {
