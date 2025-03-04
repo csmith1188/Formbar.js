@@ -17,7 +17,9 @@ const PAGE_PERMISSIONS = {
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	logs: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 // Defines the default permissions for people in a class

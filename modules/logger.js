@@ -80,7 +80,7 @@ function createLogger() {
             createLoggerTransport("error"),
             createLoggerTransport("info"),
             createLoggerTransport("verbose"),
-            new winston.transports.Console({ level: 'error' })
+            new winston.transports.Console({ handlelevel: 'error', handleExceptions: true })
         ],
     })
 }
