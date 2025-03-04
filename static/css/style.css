@@ -758,6 +758,7 @@ div.break {
 	align-items: center;
 	transform: translateY(-150%);
 	width: 25%;
+	font-size: 2cqw;
 }
 
 #users details[id^="student"] #alerts * {
