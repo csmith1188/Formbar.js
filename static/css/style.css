@@ -527,6 +527,14 @@ details[open] {
 	max-height: 100vh;
 }
 
+details[open] #reasons {
+	transform: translateY(-80%);
+}
+
+#reasons {
+	transition: transform 250ms ease-in-out;
+}
+
 #quickMenu {
 	padding: .1vh 1vw;
 	font-size: 1cqw;
@@ -736,6 +744,7 @@ div.break {
 	justify-content: center;
 	text-align: center;
 	align-items: center;
+	list-style-type: '';
 }
 
 #users details[id^="student"][open] summary {
@@ -747,7 +756,7 @@ div.break {
 	display: flex;
 	justify-content: space-evenly;
 	align-items: center;
-	transform: translateY(-5vh);
+	transform: translateY(-150%);
 	width: 25%;
 }
 
@@ -838,7 +847,7 @@ div.break {
 	background-color: #f0f0f0;
 	border-radius: 5px;
 	padding: 5px;
-	transform: translateY(5vh);
+	transform: translateY(80%);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.781);
 	text-align: center;
 	max-height: 200px;
