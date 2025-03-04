@@ -78,18 +78,15 @@ socket.on('cpUpdate', (newClassroom) => {
 		let oldStudentData = null
 		let newStudentData = newClassroom.students[username]
 
-		if (classroom.students && classroom.students[username])
-			oldStudentData = classroom.students[username]
-
+		if (classroom.students && classroom.students[username]) oldStudentData = classroom.students[username]
+		
 		if (!studentElement) {
 			let builtStudent = buildStudent(newClassroom, newStudentData)
 			if (builtStudent) usersDiv.appendChild(builtStudent)
 			continue
 		}
 
-		if (deepObjectEqual(oldStudentData, newStudentData)) {
-			continue
-		}
+		if (deepObjectEqual(oldStudentData, newStudentData)) continue
 
 		studentElement.replaceWith(buildStudent(newClassroom, newStudentData))
 	}
@@ -356,7 +353,6 @@ socket.on('customPollUpdate', (
 	for (let student of Object.values(students)) {
 		if (student.permissions >= TEACHER_PERMISSIONS) continue
 
-		let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
 		studCheck.onclick = () => {
@@ -387,7 +383,8 @@ socket.on('customPollUpdate', (
 			} else {
 				tagPoll.className = 'tagPoll'
 			}
-			for (let tag of document.getElementsByClassName('pressed')) {
+			for (let tag of document.querySelectorAll('#studentTags')) {
+				tag = tag.textContent
 				if (tempTags.includes(tag.name) || tag.name == "") {
 					continue
 				}

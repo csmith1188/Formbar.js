@@ -20,13 +20,7 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        console.log(studentData, newStudent)
         document.getElementById('users').appendChild(newStudent)
-        for (student of room.poll.studentBoxes) {
-            if (student == studentData.username) {
-                newStudent.open = true
-            }
-        }
         
         newStudent.id = `student-${studentData.username}`
         let summary = newStudent.querySelector('summary')
@@ -229,6 +223,8 @@ function buildStudent(room, studentData) {
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
     }
+
+    return newStudent
 }
 
 // filters and sorts students
