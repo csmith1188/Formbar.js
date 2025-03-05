@@ -52,7 +52,6 @@ module.exports = {
                                 console.log(`Error adding ${amount} digipogs to ${username}`);
                                 console.error(err);
                             };
-                            console.log(`Added ${amount} digipogs to ${username}`);
                         });
                         earnedDigipogs[username] = username;
                     };
