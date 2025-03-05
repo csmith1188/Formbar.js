@@ -1,6 +1,6 @@
 const { isLoggedIn, permCheck } = require("../modules/authentication");
 const { logger } = require("../modules/logger");
-const {logNumbers} = require("../modules/config");
+const { logNumbers } = require("../modules/config");
 
 module.exports = {
     run(app) {
