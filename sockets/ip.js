@@ -156,10 +156,23 @@ module.exports = {
                 logger.log('critical', 'invalid type')
                 socket.emit('message', 'Invalid Ip type')
                 return
-            }
+            };
 
             settings[`${type}Active`] = !settings[`${type}Active`]
-            fs.writeFileSync('./settings.json', JSON.stringify(settings))
+            fs.readFileSync('./.env', 'utf8', (err, data) => {
+                if (err) {
+                    logger.log('error', err.stack)
+                    socket.emit('message', 'There was a server error try again.')
+                    return
+                };
+
+                const newEnv = data.replace(`${type.toUpperCase()}_ACTIVE=${!settings[`${type}Active`]}`, `${type.toUpperCase()}_ACTIVE=${settings[`${type}Active`]}`)
+                fs.writeFileSync('./.env', newEnv);
+            });
+
+            // Old code in case the .env code doesn't work or causes issues
+            // settings[`${type}Active`] = !settings[`${type}Active`]
+            // fs.writeFileSync('./settings.json', JSON.stringify(settings))
 
             let ipList
             if (type == 'whitelist') {

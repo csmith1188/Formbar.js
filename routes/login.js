@@ -314,7 +314,7 @@ module.exports = {
                             // Hash the provided password
                             const hashedPassword = await hash(user.password);
 
-                            if (!fs.existsSync('.env')) {
+                            if (!settings.emailEnabled) {
                                 user.newAPI = newAPI;
                                 user.newSecret = newSecret;
                                 user.hashedPassword = hashedPassword;
@@ -408,8 +408,8 @@ module.exports = {
                             const token = jwt.sign(accountCreationData, newSecret, { expiresIn: '1h' });
                             await dbRun('INSERT INTO temp_user_creation_data(token, secret) VALUES(?, ?)', [token, newSecret]);
 
-                            // Get the web address for Formbar from the env file
-                            const location = process.env.LOCATION;
+                            // Get the web address for Formbar to send in the email
+                            const location = `${req.protocol}://${req.get('host')}`;
 
                             // Create the HTML content for the email
                             const html = `
