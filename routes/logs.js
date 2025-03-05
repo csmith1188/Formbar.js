@@ -26,17 +26,16 @@ module.exports = {
             try {
                 logger.log('info', `[get /logs/:log] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-                const log = req.params.log;
-                console.log('log');
-                if (!fs.existsSync(`./logs/${log}`)) {
-                    res.render('pages/message', {
-                        message: `Error: Log file ${log} not found.`,
+                const logFileName = req.params.log;
+                if (!fs.existsSync(`./logs/${logFileName}`)) {
+                    return res.render('pages/message', {
+                        message: `Error: Log file ${logFileName} not found.`,
                         title: 'Error'
                     })
                 }
 
-                const content = fs.readFileSync(`./logs/${log}`, 'utf8');
-                res.render('pages/log', { log, content });
+                const content = fs.readFileSync(`./logs/${logFileName}`, 'utf8');
+                res.render('pages/logs', { content: content });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {

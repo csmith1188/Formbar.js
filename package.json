@@ -38,6 +38,7 @@
 		"google-auth-library": "^9.15.0",
 		"init": "^0.1.2",
 		"jsonwebtoken": "^9.0.0",
+		"monaco-editor": "^0.52.2",
 		"multer": "^1.4.5-lts.1",
 		"nodemailer": "^6.9.16",
 		"passport": "^0.7.0",

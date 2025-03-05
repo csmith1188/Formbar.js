@@ -37,7 +37,7 @@
                 <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
             </div>
             <br/>
-            <button type="button">View Logs</button>
+            <button type="button" onclick="location.href = '/logs'">View Logs</button>
             <button type="button" onclick="downloadDatabase()">Download Database</button>
             <%- include('../partials/body_content') %>
     </body>
@@ -226,11 +226,27 @@
 
         // Makes an API request to download the database
         function downloadDatabase() {
-            fetch('/api/downloadDatabase', {
+            fetch('/downloadDatabase', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 }
+            }).then(response => response.blob()).then(blob => {
+                // Create a link with the blob to download the database
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = 'database.db';
+
+                // Append the link and click it to activate the download
+                document.body.appendChild(link);
+                link.click();
+
+                // Remove the download link
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(link);
+            }).catch(error => {
+                console.error('Error downloading the file:', error);
             });
         }
 

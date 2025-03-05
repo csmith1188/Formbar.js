@@ -5,16 +5,48 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/js/monaco-loader.js"></script>
     <title>Logs</title>
+    <style>
+        #formbarHeader {
+            position: relative;
+        }
+
+        body {
+            <% if (locals.content !== undefined) { %>
+                text-align: left;
+                overflow: hidden;
+            <% } %>
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
-<body id="colorContent">
-    <% if (locals.content) { %>
-        <% document.write(content) %>
-    <% } else {%>
+
+<body id="colorContent" style="padding: 0">
+<%- include('../partials/formbar_header') %>
+    <% if (locals.logs) {%>
         <% for (let i=0; i < logs.length; i++) { %>
             <a href="/logs/<%- logs[i] %>" class="quickButton">View <%- logs[i] %></a>
             <br>
         <% } %>
+    <% } else if (locals.content !== undefined) { %>
+        <div id="container" style="width:100%; height:100vh; border:1px solid grey"></div>
     <% } %>
 </body>
+<script>
+    <% if (locals.content !== undefined) {%>
+        require.config({ paths: { vs: "/js/vs" } });
+        require(["vs/editor/editor.main"], function () {
+            monaco.editor.create(document.getElementById("container"), {
+                value: `<%- JSON.stringify(content).slice(1, -1) %>`, // JSON.stringify to escape special characters and slice to remove quotes
+                language: "text",
+                automaticLayout: true,
+                readOnly: true
+            });
+
+            monaco.editor.setTheme('vs-dark');
+        });
+    <% } %>
+</script>
 </html>
