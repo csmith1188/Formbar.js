@@ -76,13 +76,8 @@
             doughnutChart.data.datasets[0].data = []
             doughnutChart.data.labels = []
 
-            let totalStudents = newPollsData.totalStudents
-            let totalResponses = 0
-
-            // add up all poll responses
-            for (const poll of Object.values(newPollsData.polls)) {
-                totalResponses += poll.responses
-            }
+            let totalStudents = newPollsData.totalResponders
+            let totalResponses = newPollsData.totalResponses;
 
             // make the polls blind unless all students answered
             if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {

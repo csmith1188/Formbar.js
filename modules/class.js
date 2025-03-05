@@ -1,7 +1,6 @@
 const { database } = require("./database")
 const { logger } = require("./logger")
 const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("./permissions");
-const { Student } = require("./student");
 
 const classInformation = createClassInformation();
 
@@ -24,7 +23,6 @@ class Classroom {
 			blind: false,
 			requiredTags: [],
 			studentBoxes: [],
-			studentIndeterminate: [],
 			lastResponse: [],
 			allowedResponses: []
 		}
@@ -172,72 +170,6 @@ async function getClassUsers(user, key) {
 	}
 }
 
-/**
- * Retrieves the students in a class from the database.
- * Creates an actual student class for each student rather than just returning their data.
- * @param {integer} id - The user object.
- * @returns {Promise|Object} A promise that resolves to the class users or an error object.
- */
-async function getClassStudents(classId) {
-	// Grab students associated with the class
-	const studentIdsAndPermissions = await new Promise((resolve, reject) => {
-		database.all('SELECT studentId, permissions FROM classusers WHERE classId = ?', [classId], (err, rows) => {
-			if (err) {
-				logger.log('error', err.stack);
-				return reject(err);
-			}
-
-			const studentIdsAndPermissions = rows.map(row => ({
-				id: row.studentId,
-				permissions: row.permissions
-			}));
-
-			resolve(studentIdsAndPermissions);
-		});
-	});
-
-
-	// Get student ids in the class user data
-	const studentIds = studentIdsAndPermissions.map(student => student.id);
-	const studentsData = await new Promise((resolve, reject) => {
-		database.all('SELECT * FROM users WHERE id IN (' + studentIds.map(() => '?').join(',') + ')', studentIds, (err, rows) => {
-			if (err) {
-				logger.log('error', err.stack);
-				return reject(err);
-			}
-
-			const studentData = {};
-			for (const row of rows) {
-				studentData[row.username] = row;
-			}
-
-			resolve(studentData);
-		});
-	});
-
-	// Create student class and return the data
-	const students = {};
-	for (const username in studentsData) {
-		const userData = studentsData[username];
-		const studentPermissions = studentIdsAndPermissions.find(student => student.id === userData.id).permissions;
-		students[username] = new Student(
-			username,
-			userData.id,
-			userData.permissions,
-			userData.API,
-			[],
-			[],
-			userData.tags,
-			displayName = userData.displayName,
-			false
-		);
-		
-		students[username].classPermissions = studentPermissions;
-	};
-
-	return students;
-}
-
 const classCache = {}
 function getClassIDFromCode(code) {
 	if (classCache[code]) {
@@ -265,7 +197,6 @@ function getClassIDFromCode(code) {
 module.exports = {
     Classroom,
     getClassUsers,
-	getClassStudents,
 	getClassIDFromCode,
 
     // classInformation stores all of the information on classes and students

@@ -61,6 +61,7 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 // Check if an IP is banned
 app.use((req, res, next) => {
 	let ip = req.ip
+	if (!ip) return next();
 	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
 
 	const isIPBanned = authentication.checkIPBanned()
