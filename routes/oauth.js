@@ -1,7 +1,7 @@
 const { compare } = require('../modules/crypto');
 const { classInformation } = require('../modules/class');
 const { logNumbers } = require('../modules/config');
-const { database } = require('../modules/database');
+const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
 const jwt = require('jsonwebtoken');
@@ -12,6 +12,8 @@ function generateAccessToken(userData, classId, refreshToken) {
         username: userData.username,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
+        classrooms: userData.classrooms,
+        activeClasses: userData.activeClasses,
         class: classId,
         refreshToken
     }, userData.secret, { expiresIn: '30m' });
@@ -34,6 +36,41 @@ function storeRefreshToken(userId, refreshToken) {
         if (err) throw err;
     });
 };
+
+// Retrieves extra data and adds it to the user data provided
+async function createUserData(userData) {
+    const classId = getUserClass(userData.username);
+    const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
+    for (const classroomName in classroomData) {
+        // Retrieve all students in the class
+        const classroom = classroomData[classroomName];
+        const classUsers = await dbGetAll('SELECT * FROM classusers WHERE classId=?', [classroom.id]);
+
+        // Add student information from users table
+        for (const student of classUsers) {
+            const studentData = await dbGet('SELECT * FROM users WHERE id=?', [student.studentId]);
+            student.username = studentData.username;
+            student.displayName = studentData.displayName;
+            student.digipogs = studentData.digipogs;
+            student.tags = studentData.tags;
+            student.verified = studentData.verified;
+
+            classUsers[student.username] = student;
+        }
+
+        // Add students to classroom
+        classroom.students = classUsers;
+    }
+    
+    userData.classPermissions = null;
+    userData.classrooms = classroomData;
+    userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
+    if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
+        userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+    }
+    
+    return userData;
+}
 
 module.exports = {
     run(app) {
@@ -65,15 +102,10 @@ module.exports = {
                             return;
                         };
                         
-                        database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], (err, userData) => {
+                        database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], async (err, userData) => {
                             if (err) throw err;
                             if (userData) {
-                                // Get class code and class permissions
-                                const classId = getUserClass(userData.username);
-                                userData.classPermissions = null;
-                                if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
-                                    userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
-                                }
+                                userData = await createUserData(userData);
                                 
                                 // Generate new access token
                                 const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
@@ -100,8 +132,11 @@ module.exports = {
                                         storeRefreshToken(req.session.userId, refreshToken);
                                         return;
                                     };
-                                    const classId = getUserClass(req.session.username);
+
+                                    userData = await createUserData(userData);
+
                                     // Generate access token
+                                    const classId = getUserClass(req.session.username);
                                     const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
                                     res.redirect(`${redirectURL}?token=${accessToken}`);
                                 } else {
@@ -176,7 +211,8 @@ module.exports = {
                         };
 
                         // Hashes users password
-                        if (compare(JSON.parse(userData.password), password)) {
+                        const passwordMatches = await compare(password, userData.password);
+                        if (!passwordMatches) {
                             logger.log('verbose', '[post /oauth] Incorrect password')
                             res.render('pages/message', {
                                 message: 'Incorrect password',
@@ -185,12 +221,7 @@ module.exports = {
                             return;
                         };
 
-                        // Get class code and class permissions
-                        const classId = getUserClass(userData.username);
-                        userData.classPermissions = null;
-                        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
-                            userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
-                        }
+                        userData = await createUserData(userData);
 
                         // Retrieve or generate refresh token
                         database.get('SELECT * from refresh_tokens WHERE user_id=?', [userData.id], (err, refreshTokenData) => {
@@ -215,6 +246,7 @@ module.exports = {
                             };
 
                             // Generate access token
+                            const classId = getUserClass(userData.username);
                             const accessToken = generateAccessToken(userData, classId, refreshToken);
                                                 
                             logger.log('verbose', '[post /oauth] Successfully Logged in with oauth');

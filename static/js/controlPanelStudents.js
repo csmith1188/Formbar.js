@@ -86,7 +86,7 @@ function buildStudent(room, studentData) {
         if (studentData.break == true) {
             userBreak.push(studentData.username)
             let breakText = document.createElement('p')
-            breakText.textContent += 'taking a break'
+            breakText.textContent += 'Taking a break'
             newStudent.appendChild(breakText)
         } else if (studentData.break) {
             let breakDiv = document.createElement('div')
@@ -226,8 +226,7 @@ function buildStudent(room, studentData) {
             let allTags = []
             let checkboxForm = document.getElementById(studentData.username + 'tags')
             let checkboxes = checkboxForm.getElementsByTagName('input')
-            for (let i = 0; i < checkboxes.length; i++) {
-                let checkbox = checkboxes[i]
+            for (const checkbox of checkboxes) {
                 // Check if the checkbox is checked
                 if (checkbox.type === 'checkbox') {
                     if (checkbox.checked) {
@@ -285,7 +284,6 @@ function buildStudent(room, studentData) {
                     if (checkbox.value == newTagTextBox.value) {
                         checkboxForm.removeChild(checkbox.nextSibling)
                         checkboxForm.removeChild(checkbox)
-                        //checkboxForm.removeChild(checkbox.nextSibling)
                     }
                 }
             }
@@ -316,6 +314,7 @@ function buildStudent(room, studentData) {
                 studentCheckbox.checked = true
             }
         }
+
         studentCheckbox.type = "checkbox";
         studentCheckbox.id = "checkbox_" + studentData.username;
         studentCheckbox.name = "studentCheckbox";
@@ -323,10 +322,12 @@ function buildStudent(room, studentData) {
             event.preventDefault();
             studentCheckbox.indeterminate = !studentCheckbox.indeterminate
         });
+
         studentCheckbox.addEventListener("click", function () {
-            if (room.students[studentData.username].break) {
+            if (room.students[studentData.username].break == true) {
                 studentCheckbox.checked = false
             }
+            socket.emit('cpUpdate');
         });
 
         newStudent.appendChild(studentCheckbox)
@@ -334,6 +335,7 @@ function buildStudent(room, studentData) {
         newStudent.appendChild(toggleDialog)
         newStudent.appendChild(permissionSwitch)
         newStudent.append(' ')
+
         let awardDigipogsButton = document.createElement('button');
         awardDigipogsButton.className = 'awardDigipogs quickButton';
         awardDigipogsButton.setAttribute('data-userid', studentData.id);
@@ -347,6 +349,7 @@ function buildStudent(room, studentData) {
             };
         };
         newStudent.appendChild(awardDigipogsButton);
+
         let banStudentButton = document.createElement('button')
         banStudentButton.className = 'banStudent quickButton'
         banStudentButton.setAttribute('data-user', studentData.username)
@@ -357,6 +360,7 @@ function buildStudent(room, studentData) {
             }
         }
         newStudent.appendChild(banStudentButton)
+      
         let kickUserButton = document.createElement('button')
         kickUserButton.className = 'kickUser quickButton'
         kickUserButton.setAttribute('data-userid', studentData.username)

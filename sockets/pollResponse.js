@@ -24,6 +24,17 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const username = socket.request.session.username
                 const classroom = classInformation.classrooms[classId]
+                if (!classroom.poll.studentBoxes.includes(username) && res != 'remove') {
+                    return; // If the user is not included in the poll, do not allow them to respond
+                }
+
+                // Check if the response provided is a valid response
+                if (!Object.keys(classroom.poll.responses).includes(res) && res != 'remove') {
+                    return;
+                }
+
+                // If the users response is different from the previous response, play a sound
+                // If the user is removing their response, play a different sound
                 if (classroom.students[username].pollRes.buttonRes != res || classroom.students[username].pollRes.textRes != textRes) {
                     if (res == 'remove') {
                         advancedEmitToClass('removePollSound', classId, { api: true })
