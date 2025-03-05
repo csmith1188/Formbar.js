@@ -129,6 +129,30 @@ function buildStudent(room, studentData) {
             breakSound()
 
         }
+
+        if(studentData.convertDigipogs) {
+            let convertDigipogsApprove = document.createElement('button')
+            convertDigipogsApprove.classList.add('quickButton')
+            convertDigipogsApprove.onclick = () => {
+                socket.emit('approveConversion', studentData.id)
+            };
+            convertDigipogsApprove.textContent = 'Approve Conversion';
+            newStudent.appendChild(convertDigipogsApprove);
+
+            let convertDigipogsDeny = document.createElement('button')
+            convertDigipogsDeny.classList.add('quickButton')
+            convertDigipogsDeny.onclick = () => {
+                socket.emit('denyConversion', studentData.id)
+            };
+            convertDigipogsDeny.textContent = 'Deny Conversion';
+            newStudent.appendChild(convertDigipogsDeny);
+            
+            let convertDigipogsDisplay = document.createElement('span')
+            convertDigipogsDisplay.textContent = `🏅`
+            newStudent.classList.add('convertDigipogs')
+            studentElement.appendChild(convertDigipogsDisplay)
+        }
+
         newStudent.appendChild(studentElement);
         let permissionSwitch = document.createElement("select");
         permissionSwitch.setAttribute("name", "permSwitch");
@@ -348,6 +372,7 @@ function buildStudent(room, studentData) {
                 socket.emit('awardDigipogs', transferData);
             };
         };
+
         newStudent.appendChild(awardDigipogsButton);
 
         let banStudentButton = document.createElement('button')
@@ -359,6 +384,7 @@ function buildStudent(room, studentData) {
                 socket.emit('classBanUser', studentData.username)
             }
         }
+
         newStudent.appendChild(banStudentButton)
       
         let kickUserButton = document.createElement('button')
