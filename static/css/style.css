@@ -85,7 +85,6 @@ input[type="checkbox"] {
 
 button,
 .quickButton {
-	padding: 3px 6px;
 	border-radius: 8px;
 	font-size: inherit;
 	font-family: inherit;
@@ -95,11 +94,10 @@ button,
 	margin: 2px 1px;
 	cursor: pointer;
 	transition-duration: 0.2s;
-	transition-property: transform, box-shadow;
+	transition-property: width, transform, box-shadow, background-color, color;
 }
 
 .breakButton {
-	padding: 3px 6px;
 	border-radius: 8px;
 	font-size: 150%;
 	font-family: inherit;
@@ -109,7 +107,7 @@ button,
 	margin: 2px 1px;
 	cursor: pointer;
 	transition-duration: 0.2s;
-	transition-property: transform, box-shadow;
+	transition-property: width, transform, box-shadow, background-color, color;
 	width: 200px;
 	height: 100px;
 }
@@ -786,7 +784,7 @@ div.break {
 #users #roomTags {
 	display: flex;
 	flex-flow: wrap;
-	justify-content: space-between;
+	justify-content: space-evenly;
 	align-items: flex-start;
 }
 
@@ -796,16 +794,23 @@ div.break {
 	margin-top: 10px;
 }
 
-#users #roomTags button:not(#saveButton, .pressed) {
-	background-color: #ffd8a5;
+#users #roomTags button:not(#saveButton) {
+	background-color: #cf8d37;
+	color: #f0f0f0;
 	font-weight: 600;
+	min-width: 100px;
+	box-shadow: inset 0 0 5px rgb(0, 0, 0);
+}
+
+#users #roomTags button:not(#saveButton) {
+	padding-bottom: 6px;
 }
 
 #users #roomTags button.pressed {
-	background-color: #cf8d37;
-	border: 2px solid #000000;
-	box-shadow: inset 0 0 5px rgb(0, 0, 0);
-	color: white;
+	background-color: #ffd8a5 !important;
+	color: white !important;
+	box-shadow: 0 0 5px rgb(255, 255, 255) !important;
+	border: 2px solid #ffffff;
 }
 
 .banUser, .kickUser {

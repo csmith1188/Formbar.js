@@ -20,7 +20,6 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        document.getElementById('users').appendChild(newStudent)
         
         newStudent.id = `student-${studentData.username}`
         let summary = newStudent.querySelector('summary')
@@ -180,7 +179,7 @@ function buildStudent(room, studentData) {
                         tags = tags.filter(fTag => fTag != tag)
                         studTagsSpan.querySelector(`#${tag}`).remove()
                     }
-                    studentData.tags = tags.toString()
+                    studentData.tags = tags.sort().toString()
                 }
                 if (studentData.tags.includes(tag)) {
                     button.classList.add('pressed')

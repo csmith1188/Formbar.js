@@ -141,15 +141,16 @@
 							<h2 class='headerText'>Settings</h2>
 							<button id='permissions' class='quickButton tab pressed'
 								data-tab-group='settingsTabs'>Permissions</button>
-							<button id='plugins' class='quickButton tab' data-tab-group='settingsTabs'>Plugins</button>
+							<button id="tags" class="quickButton tab" data-tab-group="settingsTabs">Tags</button>
 						</div>
 						<div id='permissions' class='tabContent default' data-tab-group='settingsTabs'>
 							<h2>Permissions</h2>
 							<div id='permissionsList'></div>
 						</div>
-						<div id='plugins' class='tabContent' data-tab-group='settingsTabs'>
-							<div id='pluginsForm'></div>
-							<div id='installedPlugins'></div>
+						<div id='tags' class='tabContent' data-tab-group='settingsTabs'>
+							<h2>Tags</h2>
+							<div id='tagsList'></div>
+							<div id="tagOptions"></div>
 						</div>
 						<div id="settingsFunc">
 							<input type="checkbox" id="playSound" placeholder="Play Sound">Play Sound</input>
@@ -382,9 +383,6 @@
 			let responsesDiv = document.getElementById('responses')
 			let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
 			let resetColorsButton = document.getElementById('resetColors')
-			let pluginsDiv = document.getElementById('installedPlugins');
-			let pluginsMenu = document.querySelector('.tabContent#plugins');
-			let pluginsForm = document.getElementById('pluginsForm');
 			let toPollsButton = document.getElementById('toPolls')
 			let toPollHistoryButton = document.getElementById('toPollHistory')
 			let blindCheck = document.getElementById('blind')
@@ -399,6 +397,8 @@
 			let sharePollUserInput = document.getElementById('sharePollUserInput')
 			let sharePollClassInput = document.getElementById('sharePollClassInput')
 			let permissionsDiv = document.querySelector('#permissionsList')
+			let tagsDiv = document.querySelector('#tagsList');
+			let tagOptionsDiv = document.querySelector('#tagOptions');
 			let bannedTabButton = document.querySelector('.tab#bannedMenu')
 			let pollsTabButton = document.querySelector('.tab#pollsMenu')
 			let settingsTabButton = document.querySelector('.tab#settingsMenu')
