@@ -46,11 +46,10 @@ module.exports = {
                     classInformation.classrooms[classId].poll.studentBoxes = []
                 }
 
-                // @TODO: Deadcode, remove later
                 if (indeterminate) {
-                    // classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
+                    classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
                 } else {
-                    // classInformation.classrooms[classId].poll.studentIndeterminate = []
+                    classInformation.classrooms[classId].poll.studentIndeterminate = []
                 }
 
                 if (lastResponse) {

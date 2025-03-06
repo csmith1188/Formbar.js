@@ -156,17 +156,28 @@ module.exports = {
                 logger.log('critical', 'invalid type')
                 socket.emit('message', 'Invalid Ip type')
                 return
-            }
+            };
 
+            // Sets the typeActive to the opposite of what it currently is and flips it in the .env file
             settings[`${type}Active`] = !settings[`${type}Active`]
-            fs.writeFileSync('./settings.json', JSON.stringify(settings))
+            fs.readFile('./.env', 'utf8', (err, data) => {
+                if (err) {
+                    logger.log('error', err.stack)
+                    socket.emit('message', 'There was a server error try again.')
+                    return
+                };
+
+                const newEnv = data.replace(`${type.toUpperCase()}_ENABLED='${!settings[`${type}Active`]}'`, `${type.toUpperCase()}_ENABLED='${settings[`${type}Active`]}'`)
+                fs.writeFileSync('./.env', newEnv);
+            });
+
+            // Old code in case the .env code doesn't work or causes issues
+            // settings[`${type}Active`] = !settings[`${type}Active`]
+            // fs.writeFileSync('./settings.json', JSON.stringify(settings))
 
             let ipList
-            if (type == 'whitelist') {
-                ipList = whitelistedIps
-            } else if (type == 'blacklist')  {
-                ipList = blacklistedIps
-            }
+            if (type == 'whitelist') ipList = whitelistedIps;
+            else if (type == 'blacklist') ipList = blacklistedIps;
 
             for (let ip of Object.values(ipList)) {
                 socketUpdates.reloadPageByIp(type != 'whitelist', ip.ip)

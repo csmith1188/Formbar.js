@@ -23,17 +23,19 @@ module.exports = {
                                     throw 'Not a valid API key'
                                 }
 
-                                classInformation.users[userData.username] = new Student(
-                                    userData.username,
-                                    userData.id,
-                                    userData.permissions,
-                                    userData.API,
-                                    null,
-                                    null,
-                                    userData.tags,
-                                    userData.displayName,
-                                    false
-                                )
+                                if (!classInformation.users[userData.username]) {
+                                    classInformation.users[userData.username] = new Student(
+                                        userData.username,
+                                        userData.id,
+                                        userData.permissions,
+                                        userData.API,
+                                        null,
+                                        null,
+                                        userData.tags,
+                                        userData.displayName,
+                                        false
+                                    )
+                                }
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
                                 socket.request.session.username = userData.username

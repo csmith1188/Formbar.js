@@ -115,14 +115,22 @@ async function joinClass(code, session) {
 				logger.log('info', '[joinClass] Added user to classusers')
 			}
 
-			// Grab the user from tthe users list
+			// Grab the user from the users list
+			const classData = classInformation.classrooms[classroom.id];
 			const currentUser = classInformation.users[username]
-			currentUser.classPermissions = classInformation.classrooms[classroom.id].permissions.userDefaults
+			currentUser.classPermissions = classData.permissions.userDefaults
+			currentUser.activeClasses.push(classroom.id)
 
 			// Add the student to the newly created class
-			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classData.students[username] = currentUser
 			classInformation.users[username].activeClasses.push(classroom.id)
+			let cpPermissions = Math.min(
+				classData.permissions.controlPolls,
+				classData.permissions.manageStudents,
+				classData.permissions.manageClass
+			)
 
+			advancedEmitToClass('cpUpdate', classroom.id, { classPermissions: cpPermissions }, classData);
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		}
