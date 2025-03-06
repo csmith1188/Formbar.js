@@ -10,7 +10,7 @@ function getConfig() {
         fs.copyFileSync('.env-template', '.env');
     };
     settings = {
-        'port': +process.env.PORT,
+        'port': +process.env.PORT || 420,
         'whitelistActive': process.env.WHITELIST_ENABLED === 'true',
         'blacklistActive': process.env.BLACKLIST_ENABLED === 'true',
         'emailEnabled': process.env.EMAIL_ENABLED === 'true',
