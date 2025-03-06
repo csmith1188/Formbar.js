@@ -179,6 +179,7 @@ function buildStudent(room, studentData) {
                         studTagsSpan.querySelector(`#${tag}`).remove()
                     }
                     studentData.tags = tags.sort().toString()
+                    console.log(studentData.id, studentData.tags, studentData.username)
                 }
                 if (studentData.tags.includes(tag)) {
                     button.classList.add('pressed')
