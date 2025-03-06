@@ -38,14 +38,37 @@
     <% if (locals.content !== undefined) {%>
         require.config({ paths: { vs: "/js/vs" } });
         require(["vs/editor/editor.main"], function () {
+            monaco.languages.register({ id: "logViewer" });
+
+            monaco.languages.setMonarchTokensProvider("logViewer", {
+                tokenizer: {
+                    root: [
+                        [/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z]/, "timestamp"], // Match timestamp pattern
+                    ]
+                }
+            });
+
+            // Define a custom dark theme
+            monaco.editor.defineTheme('logviewer-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    {
+                        token: "timestamp",
+                        foreground: "#9CDCFE"
+                    }
+                ],
+                colors: {}
+            });
+
             monaco.editor.create(document.getElementById("container"), {
                 value: `<%- JSON.stringify(content).slice(1, -1) %>`, // JSON.stringify to escape special characters and slice to remove quotes
-                language: "text",
+                language: "logViewer",
                 automaticLayout: true,
                 readOnly: true
             });
 
-            monaco.editor.setTheme('vs-dark');
+            monaco.editor.setTheme('logviewer-dark');
         });
     <% } %>
 </script>
