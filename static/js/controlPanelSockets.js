@@ -225,7 +225,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		for (let tag of newClassroom.tagNames) addTagElement(tag)
 		
 		let newTagDiv = document.createElement('div')
-		let newTag = document.createElement('input')
+		let newTag = document.createElement('textarea')
 		newTag.type = 'text'
 		newTag.placeholder = 'Add Tag, Or Multiple'
 

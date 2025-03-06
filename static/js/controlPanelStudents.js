@@ -172,21 +172,19 @@ function buildStudent(room, studentData) {
                         span.textContent = tag;
                         span.setAttribute('id', tag);
                         studTagsSpan.appendChild(span);
-                        tags.push(tag)
                     } else {
                         button.classList.remove('pressed')
-                        tags = tags.filter(fTag => fTag != tag)
                         studTagsSpan.querySelector(`#${tag}`).remove()
                     }
-                    studentData.tags = tags.sort().toString()
-                    console.log(studentData.id, studentData.tags, studentData.username)
                 }
-                if (studentData.tags.includes(tag)) {
-                    button.classList.add('pressed')
-                    let span = document.createElement('span');
-                    span.textContent = tag;
-                    span.setAttribute('id', tag);
-                    studTagsSpan.appendChild(span);
+                for (ttag of studentData.tags.split(",")) {
+                    if (ttag == tag) {
+                        button.classList.add('pressed')
+                        let span = document.createElement('span');
+                        span.textContent = tag;
+                        span.setAttribute('id', tag);
+                        studTagsSpan.appendChild(span);
+                    }
                 }
                 roomTagDiv.appendChild(button);
             };
@@ -196,7 +194,9 @@ function buildStudent(room, studentData) {
         saveButton.id = 'saveButton'
         saveButton.onclick = () => {
             //Update the users tags in the database and class data
-            socket.emit('saveTags', studentData.id, studentData.tags, studentData.username)
+            let tags = []
+            for (let tag of studTagsSpan.children) tags.push(tag.textContent)
+            socket.emit('saveTags', studentData.id, tags, studentData.username)
         }
         roomTagDiv.appendChild(saveButton)
 

@@ -656,12 +656,25 @@ hr {
 	border-right: 3px solid var(--theme-color);
 }
 
+
+
 .ongoingPollOptions #timeDiv p,
 .ongoingPollOptions #timeDiv input {
 	display: inline;
 	color: var(--theme-color);
 	font-weight: bold;
 	text-align: center;
+}
+
+#settingsMenu textarea, #settingsMenu input {
+	color: var(--theme-color);
+	height: 2cqw;
+	resize: vertical;
+	font-weight: bold;
+	white-space: normal;
+	text-align: justify;
+	-moz-text-align-last: center;
+	text-align-last: center;
 }
 
 .ongoingPollOptions #timeDiv input::-webkit-outer-spin-button,
@@ -721,6 +734,16 @@ div .tabContent {
 
 #studentTags {
 	margin: 1%;
+}
+
+#tagOptions div {
+	display: flex;
+	justify-content: center;
+}
+
+#settingsFunc div {
+	display: flex;
+	justify-content: center;
 }
 
 #studentTags span{
@@ -788,9 +811,9 @@ div.break {
 	align-items: flex-start;
 }
 
-#users #roomTags #saveButton {
+#saveButton {
 	background-color: var(--light-green);
-	width: 90%;
+	width: 310px;
 	margin-top: 10px;
 }
 
