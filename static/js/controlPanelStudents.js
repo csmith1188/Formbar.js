@@ -130,14 +130,17 @@ function buildStudent(room, studentData) {
 
         }
 
-        if(studentData.convertDigipogs) {
+        if(studentData.requestConversion) {
+            let requestDiv = document.createElement('div');
+            requestDiv.classList.add('request');
+            
             let convertDigipogsApprove = document.createElement('button')
             convertDigipogsApprove.classList.add('quickButton')
             convertDigipogsApprove.onclick = () => {
                 socket.emit('approveConversion', studentData.id)
             };
             convertDigipogsApprove.textContent = 'Approve Conversion';
-            newStudent.appendChild(convertDigipogsApprove);
+            requestDiv.appendChild(convertDigipogsApprove);
 
             let convertDigipogsDeny = document.createElement('button')
             convertDigipogsDeny.classList.add('quickButton')
@@ -145,12 +148,12 @@ function buildStudent(room, studentData) {
                 socket.emit('denyConversion', studentData.id)
             };
             convertDigipogsDeny.textContent = 'Deny Conversion';
-            newStudent.appendChild(convertDigipogsDeny);
+            requestDiv.appendChild(convertDigipogsDeny);
             
             let convertDigipogsDisplay = document.createElement('span')
             convertDigipogsDisplay.textContent = `🏅`
-            newStudent.classList.add('convertDigipogs')
-            studentElement.appendChild(convertDigipogsDisplay)
+            requestDiv.classList.add('convertDigipogs')
+            studentElement.appendChild(requestDiv)
         }
 
         newStudent.appendChild(studentElement);
