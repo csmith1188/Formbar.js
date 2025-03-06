@@ -7,7 +7,6 @@ const { logNumbers } = require('../modules/config.js');
 
 module.exports = {
     run(app) {
-        const location = process.env.LOCATION;
         app.get('/changepassword', async (req, res) => {
             try {
                 // If there is no token, render the normal change password page
@@ -76,6 +75,7 @@ module.exports = {
                 });
                 if (req.body.email) {
                     // Send an email to the user with the password change link
+                    const location = `${req.protocol}://${req.get('host')}`;
                     sendMail(req.body.email, 'Formbar Password Change', `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>

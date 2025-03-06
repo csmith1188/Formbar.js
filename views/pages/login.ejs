@@ -11,7 +11,9 @@
                     account</button>
                 <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
                 <br><br>
+                <!-- The route to post to after redirecting. Only used if the redirect url is specified -->
                 <form id="login" action="login" method="post" style="margin-bottom: 16px;">
+                    <input type="hidden" id="route" name="route" value="<%-route%>">
                     <!-- Carries over and submits the redirectURL specified by the user. -->
                     <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
                     <!-- Login Inputs -->
@@ -84,14 +86,16 @@
         const forgotPassword = document.getElementById('forgotPassword');
         const submitButton = document.getElementById('submitButton');
 
-        // If a redirect value is given...
-        if (redirect.value) {
-            // Change the form action to 'oauth' and hide the buttons to change the login type
-            form.action = 'oauth';
+        // If the route is not login...
+        if (route.value !== 'login') {
+            // Hide the buttons to change the login type
             loginButton.style.display = 'none';
             newAccountButton.style.display = 'none';
             guestButton.style.display = 'none';
         }
+        // If the route is oauth, change the form action to oauth
+        if (route.value === 'oauth') form.action = 'oauth';
+        
 
         function changeloginType(el) {
             [loginButton, newAccountButton, guestButton].forEach(button =>
@@ -166,8 +170,8 @@
         }
 
         function loginWithGoogle() {
-            window.location.href = '/auth/google';
-        }
+            redirect.value ? window.location.href = `/auth/google?redirect=${redirect.value}` : window.location.href = '/auth/google';
+        };
 
         usernameBox.oninput = checkIfBlank;
         passwordBox.oninput = checkIfBlank;

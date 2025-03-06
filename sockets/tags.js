@@ -68,6 +68,15 @@ module.exports = {
             try {
                 logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
+
+                // If the student has the offline tag while they are active in the class, remove it
+                // If the student is not active in the class, add the offline tag
+                if (classInformation.users[username].activeClasses.includes(socket.request.session.classId)) {
+                    tags = tags.filter(tag => tag !== 'Offline');
+                } else if (!tags.includes('Offline')) {
+                    tags.push('Offline');
+                }
+
                 classInformation.classrooms[socket.request.session.classId].students[username].tags = tags.toString()
                 database.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
                     if (err) {

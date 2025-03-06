@@ -3,16 +3,13 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const fs = require('fs');
 
 function setupGooglePassport() {
-    // If the .env file does not exist, skip
-    if (!fs.existsSync('.env') || !process.env.GOOGLE_CLIENT_ID) {
-        return;
-    };
-
+    // Check if google oauth is enabled
+    if (!settings.googleOauthEnabled) return;
     // Set up the google strategy using information from the .env file
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: `${process.env.LOCATION}/auth/google/callback`
+        callbackURL: '/auth/google/callback'
     }, (accessToken, refreshToken, profile, done) => {
         // This is called when the user is authenticated
         return done(null, profile);

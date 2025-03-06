@@ -48,6 +48,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	saveTags: TEACHER_PERMISSIONS,
 	setTags: TEACHER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS,
+	joinClass: GUEST_PERMISSIONS,
+	joinClassroom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 }
 
@@ -74,6 +76,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	timer: TEACHER_PERMISSIONS,
 	timerOn: TEACHER_PERMISSIONS,
 	votingRightChange: STUDENT_PERMISSIONS,
+	awardDigipogs: TEACHER_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions
@@ -109,6 +112,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
+	awardDigipogs: 'awardDigipogs'
 }
 
 module.exports = {

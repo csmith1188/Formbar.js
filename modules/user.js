@@ -1,4 +1,4 @@
-const { classInformation, getClassIDFromCode } = require('./class')
+const { classInformation } = require('./class')
 const { database } = require('./database')
 const { logger } = require('./logger')
 const { io } = require('./webServer')

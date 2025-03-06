@@ -4,11 +4,16 @@ const { logger } = require("../modules/logger")
 const { userSockets } = require("../modules/socketUpdates")
 const { generateColors } = require("../modules/util")
 
+let earnedObject = {
+    earnedDigipogs: []
+};
+
 module.exports = {
     run(socket, socketUpdates) {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
         socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
             try {
+                earnedObject.earnedDigipogs = [];
                 // Get class id and check if the class is active before continuing
                 const classId = socket.request.session.classId;
                 if (!classInformation.classrooms[classId].isActive) {
@@ -192,5 +197,6 @@ module.exports = {
                 logger.log('error', err.stack);
             }
         })
-    }
+    },
+    earnedObject
 }

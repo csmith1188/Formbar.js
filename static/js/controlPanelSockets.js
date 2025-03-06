@@ -65,13 +65,25 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	let responseCount = 0;
-	for (let [key, value] of Object.entries(newClassroom.students)) {
-		if (value.pollRes.buttonRes != "" || value.pollRes.textRes != "") {
+	let totalResponders = 0;
+	for (let [studentName, student] of Object.entries(newClassroom.students)) {
+		// If the student is offline, on break, a guest, or a teacher, do not include them as a potential responder
+		if ((!student.tags || !student.tags.includes("Offline")) 
+			&& !student.break 
+			&& student.permissions > GUEST_PERMISSIONS 
+			&& student.permissions < TEACHER_PERMISSIONS
+			&& newClassroom.poll.studentBoxes.includes(student.username)
+		) {
+			totalResponders++;
+		}
+
+		// If the student has responded to the poll, increment the response count
+		if (student.pollRes.buttonRes != "" || student.pollRes.textRes != "") {
 			responseCount++;
 		}
 	}
 
-	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${newClassroom.poll.allowedResponses.length}`;
+	responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
 	for (const username of Object.keys(newClassroom.students)) {
 		let studentElement = document.getElementById(`student-${username}`)
@@ -380,25 +392,29 @@ socket.on('customPollUpdate', (
 		}
 	};
 	selectPollDiv.innerHTML = ''
+	
 	// Creation of switchAll button
 	let switchAll = document.createElement('button')
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
-	switchAll.onclick = () => {
-		let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
 
-		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) elem.click()
+	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
+	switchAll.onclick = () => {
+		switchState = !switchState
+		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
+			elem.click()
+		}
+
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
 
 			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
-			if (studCheck.checked == switchState) {
+			if (studCheck.checked != switchState) {
 				studCheck.click()
 			}
-			if (studCheck.checked) studElem.open = true
-			else studElem.open = false
+			studElem.open = studCheck.checked
 		}
 	};
 	if (selectPollDiv.children[0]) {

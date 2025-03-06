@@ -88,8 +88,7 @@ function buildStudent(room, studentData) {
 
         if (studentData.break == true) {
             userBreak.push(studentData.username)
-        }
-        else if (studentData.break) {
+        } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
             if (studentData.break.reason) {
@@ -118,6 +117,7 @@ function buildStudent(room, studentData) {
 
             breakSound()
         }
+
         if (studentData.break) {
             let div = document.createElement('div')
             div.textContent = '⏱'
@@ -154,7 +154,6 @@ function buildStudent(room, studentData) {
             }
             permDiv.appendChild(permSwitch)
         }
-
         
         // Add each tag as a button to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
