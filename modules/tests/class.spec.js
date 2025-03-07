@@ -27,24 +27,48 @@ const { database } = require("../database");
 //     const classUsers = getClassUsers()
 // });
 
-test('Successfully retrieve class id from code', async () => {
-    const key = 'abcd';
+describe("Get class ID from code", () => {
+    test('Class ID found', async () => {
+        const key = 'abcd';
 
-    // Mock return values for database.get
-    database.get.mockImplementation((query, params, callback) => {
-        if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
-            if (params[0] !== key) {
-                // Simulate no class found
-                callback(null, null);
+        // Mock return values for database.get
+        database.get.mockImplementation((query, params, callback) => {
+            if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
+                if (params[0] !== key) {
+                    // Simulate no class found
+                    callback(null, null);
+                } else {
+                    // Simulate returning the class id
+                    callback(null, { id: 1 });
+                }
             } else {
-                // Simulate returning the class id
-                callback(null, { id: 1 });
+                callback(new Error('Unexpected query'));
             }
-        } else {
-            callback(new Error('Unexpected query'));
-        }
+        });
+
+        const classId = await getClassIDFromCode(key);
+        expect(classId).toBe(1);
     });
 
-    const classId = await getClassIDFromCode(key);
-    expect(classId).toBe(1);
+    test('Invalid key provided', async () => {
+        const key = 'abcd';
+
+        // Mock return values for database.get
+        database.get.mockImplementation((query, params, callback) => {
+            if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
+                if (params[0] !== key) {
+                    // Simulate no class found
+                    callback(null, null);
+                } else {
+                    // Simulate returning the class id
+                    callback(null, { id: 1 });
+                }
+            } else {
+                callback(new Error('Unexpected query'));
+            }
+        });
+
+        const classId = await getClassIDFromCode('invalidkey');
+        expect(classId).toBe(null);
+    });
 });
