@@ -5,6 +5,7 @@ const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
+const { log } = require('console');
 
 const runningTimers = {}
 const rateLimits = {}
@@ -136,6 +137,8 @@ class SocketUpdates {
             logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
             if (!classId) return; // If a class id is not provided then deny the request
 
+            log('here')
+
             const classData = structuredClone(classInformation.classrooms[classId])
             logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
             
@@ -243,6 +246,7 @@ class SocketUpdates {
                 }
             }
 
+            log('made it here')
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
                 totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,

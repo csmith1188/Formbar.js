@@ -1,50 +1,36 @@
-// Replace calls to the database
-jest.mock('../database');
-
 const { joinClass } = require('../joinClass');
 const { database } = require('../database');
-const { classInformation } = require('../class');
-const { Student } = require('../student');
-
-function mockDatabaseQueries(validCode, validUsername) {
-    database.get.mockImplementation((query, params, callback) => {
-        if (query.includes('SELECT * FROM classroom WHERE key=?')) {
-            // Return class info if the code matches, otherwise return null
-            callback(null, params[0] === validCode ?
-                { id: 1, key: validCode, name: 'Test', permissions: {}, sharedPolls: [], pollHistory: [], tags: '' }
-                : null);
-        } else if (query.includes('SELECT id FROM users WHERE username=?')) {
-            // Return user if username matches
-            callback(null, params[0] === validUsername ? { id: 1, username: validUsername } : null);
-        } else if (query.includes('SELECT * FROM classusers')) {
-            // Simulate user not being in the class
-            callback(null, null);
-        } else {
-            callback(new Error('Unexpected query'));
-        }
-    });
-
-    database.run.mockImplementation((query, params, callback) => {
-        callback(null);
-    });
-}
-
-function setupTestData(username) {
-    classInformation.users[username] = new Student(username, 1, 1, 0, [], [], '', '', false);
-}
+const { testData, createTestUser } = require("./testData");
 
 describe('Joining a classroom', () => {
-    const validCode = '123456';
-    const username = 'user123';
-    const session = { username };
+    const session = { username: testData.username };
 
     beforeEach(() => {
-        setupTestData(username);
-        mockDatabaseQueries(validCode, username);
+        createTestUser(testData.username);
+        jest.resetAllMocks();
+
+        database.get.mockImplementation((query, params, callback) => {
+            if (query.includes('SELECT * FROM classroom WHERE key=?')) {
+                // Return class info if the code matches, otherwise return null
+                callback(null, params[0] === testData.code ? { id: 1, key: testData.code, name: 'Test', permissions: {}, sharedPolls: [], pollHistory: [], tags: '' } : null);
+            } else if (query.includes('SELECT id FROM users WHERE username=?')) {
+                // Return user if username matches
+                callback(null, params[0] === testData.username ? { id: 1, username: testData.username } : null);
+            } else if (query.includes('SELECT * FROM classusers')) {
+                // Simulate user not being in the class
+                callback(null, null);
+            } else {
+                callback(new Error('Unexpected query'));
+            }
+        });
+
+        database.run.mockImplementation((query, params, callback) => {
+            callback(null);
+        });
     });
 
     test('Success', async () => {
-        const result = await joinClass(validCode, session);
+        const result = await joinClass(testData.code, session);
         expect(result).toBe(true);
     });
 
