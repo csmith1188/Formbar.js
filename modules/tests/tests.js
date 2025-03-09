@@ -11,15 +11,18 @@ const testData = {
  * Creates a test user with the given username
  * @param {string} username - The username of the test user
  * @param {string} [classId=null] - The class id to add the user to
+ * @param {number} [permissions=5] - The permissions level of the user
  */
-function createTestUser(username, classId) {
-    const student = new Student(username, 1, 1, 0, [], [], '', '', false);;
+function createTestUser(username, classId, permissions = 5) {
+    const student = new Student(username, 1, permissions, 0, [], [], '', '', false);;
     classInformation.users[username] = student;
 
     // If a class id is provided, also create the student in the class
     if (classId) {
+        student.classPermissions = student.permissions;
         classInformation.classrooms[classId].students[username] = student;
     }
+    return student;
 }
 
 /**
@@ -38,10 +41,30 @@ function createTestClass(code, name) {
         [],
         []
     );
+    return classInformation.classrooms[code];
+}
+
+// Mock socket information for simulating socket.io
+function createSocket() {
+    socket = {
+        on: jest.fn(),
+        emit: jest.fn(),
+        request: {
+            session: {
+                classId: testData.code,
+                username: testData.username
+            }
+        },
+        handshake: {
+            address: '127.0.0.1'
+        }
+    };
+    return socket;
 }
 
 module.exports = {
     testData,
     createTestUser,
-    createTestClass
+    createTestClass,
+    createSocket
 }

@@ -1,8 +1,8 @@
 const { joinClass } = require('../joinClass');
 const { database } = require('../database');
-const { testData, createTestUser } = require("./testData");
+const { testData, createTestUser } = require("./tests");
 
-describe('Joining a classroom', () => {
+describe('joinClass', () => {
     const session = { username: testData.username };
 
     beforeEach(() => {
@@ -29,12 +29,12 @@ describe('Joining a classroom', () => {
         });
     });
 
-    test('Success', async () => {
+    test('should join the class successfully', async () => {
         const result = await joinClass(testData.code, session);
         expect(result).toBe(true);
     });
 
-    test('Invalid code', async () => {
+    test('should return an error for an invalid code', async () => {
         const result = await joinClass('wrongCode', session);
         expect(result).toBe('No class with that code');
     });

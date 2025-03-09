@@ -1,8 +1,8 @@
 const { getClassIDFromCode, getClassUsers, classInformation} = require('../class');
 const { database } = require("../database");
-const { testData } = require("./testData");
+const { testData } = require("./tests");
 
-test('Getting class users', async () => {
+test('should get class users', async () => {
     database.get.mockImplementation((query, params, callback) => {
         if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
             if (params[0] !== testData.code) {
@@ -16,7 +16,6 @@ test('Getting class users', async () => {
     });
 
     database.all.mockImplementation((query, params, callback) => {
-        // Check if the query is the one that retrieves users of a class
         if (query.includes('SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?')) {
             if (params[0] !== testData.code) {
                 // Simulate that the class does not exist by returning null
@@ -30,10 +29,7 @@ test('Getting class users', async () => {
         }
     });
 
-    // Call the function under test
     const classUsers = await getClassUsers(testData.username, testData.code);
-
-    // Check the expected result format, assuming `getClassUsers` returns an object with user details
     expect(classUsers).toStrictEqual({
         user123: {
             loggedIn: false,
@@ -50,7 +46,7 @@ test('Getting class users', async () => {
 });
 
 
-describe("Get class ID from code", () => {
+describe("getClassIdFromCode", () => {
     beforeEach(() => {
         jest.resetAllMocks();
 
@@ -69,12 +65,12 @@ describe("Get class ID from code", () => {
         });
     })
 
-    test('Class ID found', async () => {
+    test('should find class id with valid class code', async () => {
         const classId = await getClassIDFromCode(testData.code);
         expect(classId).toBe(1);
     });
 
-    test('Invalid key provided', async () => {
+    test('should return null for invalid class code', async () => {
         const classId = await getClassIDFromCode('invalidkey');
         expect(classId).toBe(null);
     });
