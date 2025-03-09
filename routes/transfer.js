@@ -21,12 +21,9 @@ module.exports = {
             };
             const { amount, reason, app } = data;
             let receiverText;
-            if (app === 'None') {
-                receiverText = `User ${req.query.to}`
-            } else {
-                receiverText = `App (${app})`
-            };
+            app === 'None' ? receiverText = `User ${req.query.to}` : receiverText = `App ${app}`;
             if (!req.session.userId) {
+                req.session.redirect = req.originalUrl;
                 res.render('pages/login', { 
                     title: 'Login', 
                     route: 'transfer',

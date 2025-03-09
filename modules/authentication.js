@@ -45,8 +45,8 @@ function isVerified(req, res, next) {
 		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 		
-		// If the user is verified or there is no .env file set up...
-		if (req.session.verified || !fs.existsSync('.env') || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
+		// If the user is verified or email functionality is disabled...
+		if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
 			next();
 		} else {
 			// Redirect to the login page
@@ -153,7 +153,7 @@ function checkIPBanned() {
 			return true;
 		}
 	}
-
+	
 	if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
 		const isBlacklisted = Object.values(blacklistedIps).some(value => ip.startsWith(value.ip))
 		if (isBlacklisted) {
