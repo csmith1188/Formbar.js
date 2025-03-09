@@ -93,11 +93,40 @@ function createLogger() {
             createLoggerTransport("error"),
             createLoggerTransport("info"),
             createLoggerTransport("verbose"),
-            new winston.transports.Console({ handlelevel: 'error', handleExceptions: true })
+            new winston.transports.Console({ handleExceptions: true })
         ],
     })
 }
 
+// Create a new logger instance using the winston library
+const logger = createLogger();
+
+/**
+ * Gracefully exit after flushing logs.
+ * @param {Error} error The error that caused the exit.
+ */
+async function handleExit(error) {
+    if (error) {
+        logger.error(error.stack || error.toString());
+    }
+
+    // Close Winston transports to ensure logs are written
+    console.log("Flushing logs before exit...");
+    logger.close();
+}
+
+// Catch uncaught exceptions
+process.on("uncaughtException", async (err) => {
+    console.error("Uncaught Exception:", err);
+    await handleExit(err);
+});
+
+// Catch unhandled promise rejections
+process.on("unhandledRejection", async (reason) => {
+    console.error("Unhandled Promise Rejection:", reason);
+    await handleExit(reason);
+});
+
 module.exports = {
-    logger: createLogger() // Create a new logger instance using the winston library
+    logger
 }
