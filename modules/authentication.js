@@ -103,6 +103,11 @@ function permCheck(req, res, next) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
 			}
 
+			// Check for a second / in the url and remove it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('/'))
+			}
+
 			if (!classInformation.users[username]) {
 				req.session.classId = null
 			}
