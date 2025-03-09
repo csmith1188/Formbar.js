@@ -1,8 +1,6 @@
 const { createTestClass, testData, createTestUser, createSocket} = require("../../modules/tests/tests")
 const { run } = require("../help");
 
-let socket = createSocket();
-
 describe("help", () => {
     let socket;
     let socketUpdates;
