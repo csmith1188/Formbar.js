@@ -1,4 +1,5 @@
 <%- include('../partials/header_content') %>
+<%- include('../partials/sockets') %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,67 +10,120 @@
     <title>Logs</title>
     <style>
         #formbarHeader {
+        <% if (locals.content !== undefined) { %>
             position: relative;
+        <% } %>
         }
 
         body {
-            <% if (locals.content !== undefined) { %>
-                text-align: left;
-                overflow: hidden;
-            <% } %>
+        <% if (locals.content !== undefined) { %>
+            text-align: left;
+            overflow: hidden;
+        <% } %>
             margin: 0;
             padding: 0;
         }
+
+        <% if (locals.content === undefined) {%>
+        .content-container {
+            margin-top: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        <% } %>
     </style>
 </head>
 
-<body id="colorContent" style="padding: 0">
+<body id="colorContent" style="padding: 0;">
 <%- include('../partials/formbar_header') %>
-    <% if (locals.logs) {%>
-        <% for (let i=0; i < logs.length; i++) { %>
-            <a href="/logs/<%- logs[i] %>" class="quickButton">View <%- logs[i] %></a>
-            <br>
+
+<div class="content-container">
+    <% if (locals.logs) {
+        logs.sort((a, b) => {
+            const extractDate = (filename) => {
+                const match = filename.match(/(\d{4}-\d{2}-\d{2}-\d{2})/);
+                return match ? new Date(match[1].replace(/-/g, ':')) : new Date(0);
+            };
+            return extractDate(b) - extractDate(a); // Sort newest first
+        });
+    %>
+
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 600px;">
+        <% for (let i = 0; i < logs.length; i++) { %>
+            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton"
+                    style="width: 180px; height: 75px; text-align: center;">
+                View <%- logs[i] %>
+            </button>
         <% } %>
+    </div>
     <% } else if (locals.content !== undefined) { %>
         <div id="container" style="width:100%; height:100vh; border:1px solid grey"></div>
     <% } %>
+</div>
+
 </body>
 <script>
     <% if (locals.content !== undefined) {%>
-        require.config({ paths: { vs: "/js/vs" } });
-        require(["vs/editor/editor.main"], function () {
-            monaco.languages.register({ id: "logViewer" });
+    require.config({ paths: { vs: "/js/vs" } });
+    require(["vs/editor/editor.main"], function () {
+        monaco.languages.register({ id: "logViewer" });
 
-            monaco.languages.setMonarchTokensProvider("logViewer", {
-                tokenizer: {
-                    root: [
-                        [/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z]/, "timestamp"], // Match timestamp pattern
-                    ]
-                }
-            });
-
-            // Define a custom dark theme
-            monaco.editor.defineTheme('logviewer-dark', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [
-                    {
-                        token: "timestamp",
-                        foreground: "#9CDCFE"
-                    }
-                ],
-                colors: {}
-            });
-
-            monaco.editor.create(document.getElementById("container"), {
-                value: `<%- JSON.stringify(content).slice(1, -1) %>`, // JSON.stringify to escape special characters and slice to remove quotes
-                language: "logViewer",
-                automaticLayout: true,
-                readOnly: true
-            });
-
-            monaco.editor.setTheme('logviewer-dark');
+        monaco.languages.setMonarchTokensProvider("logViewer", {
+            tokenizer: {
+                root: [
+                    [/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z]/, "timestamp"], // Match timestamp pattern
+                ]
+            }
         });
+
+        // Define a custom light and dark theme for the log viewer
+        monaco.editor.defineTheme('logviewer-light', {
+            base: 'vs',
+            inherit: true,
+            rules: [
+                {
+                    token: "timestamp",
+                    foreground: "#007ACC"
+                }
+            ],
+            colors: {}
+        });
+
+        monaco.editor.defineTheme('logviewer-dark', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [
+                {
+                    token: "timestamp",
+                    foreground: "#9CDCFE"
+                }
+            ],
+            colors: {}
+        });
+
+        monaco.editor.create(document.getElementById("container"), {
+            value: `<%- JSON.stringify(content).slice(1, -1) %>`, // JSON.stringify to escape special characters and slice to remove quotes
+            language: "logViewer",
+            automaticLayout: true,
+            readOnly: true
+        });
+
+        function updateMonacoTheme(isDark) {
+            monaco.editor.setTheme(isDark ? 'logviewer-dark' : 'logviewer-light');
+        }
+
+        let lastTheme = getCookie("theme");
+        updateMonacoTheme(lastTheme === "dark");
+
+        setInterval(() => {
+            const currentTheme = getCookie("theme");
+            if (currentTheme !== lastTheme) {
+                lastTheme = currentTheme;
+                updateMonacoTheme(currentTheme === "dark");
+            }
+        }, 250);
+    });
     <% } %>
 </script>
 </html>
