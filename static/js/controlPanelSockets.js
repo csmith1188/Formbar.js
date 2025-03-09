@@ -3,12 +3,17 @@ let currentTags = []
 let students = []
 socket.on('cpUpdate', (newClassroom) => {
 	currentTags = []
+	let Offline = 0
 	for (let student of Object.values(newClassroom.students)) {
 		student.help.time = new Date(student.help.time)
-		student.pollRes.time = new Date(student.pollRes.time)
+		student.pollRes.time = new Date(student.pollRestime)
 		let studentTags = student.tags
 		if (student.tags == null || student.tags == "") {
 			studentTags = ""
+		}
+		if (studentTags.includes("Offline")) {
+			Offline++
+			continue
 		}
 		studentTags = studentTags.split(",")
 		for (let tag of studentTags) {
@@ -43,15 +48,16 @@ socket.on('cpUpdate', (newClassroom) => {
 			students.push(student)
 		}
 	}
-
+	
+	className.textContent = `Class Name: ${newClassroom.className}`
 	classCode.textContent = `Class Code: ${newClassroom.key}`
-	classId.textContent = `Class ID: ${newClassroom.id}`
+	// classId.textContent = `Class ID: ${newClassroom.id}`
 
 	document.getElementById('nextStep').onclick = () => {
 		doStep(classroom.currentStep)
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 	if (newClassroom.poll.prompt != "") {
 		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
 	} else {
@@ -84,23 +90,20 @@ socket.on('cpUpdate', (newClassroom) => {
 		let oldStudentData = null
 		let newStudentData = newClassroom.students[username]
 
-		if (classroom.students && classroom.students[username])
-			oldStudentData = classroom.students[username]
-
+		if (classroom.students && classroom.students[username]) oldStudentData = classroom.students[username]
+		
 		if (!studentElement) {
 			let builtStudent = buildStudent(newClassroom, newStudentData)
 			if (builtStudent) usersDiv.appendChild(builtStudent)
 			continue
 		}
 
-		if (deepObjectEqual(oldStudentData, newStudentData)) {
-			continue
-		}
+		if (deepObjectEqual(oldStudentData, newStudentData)) continue
 
 		studentElement.replaceWith(buildStudent(newClassroom, newStudentData))
 	}
 
-	totalUsers.innerText = `Total Users: ${Object.keys(newClassroom.students).length - 1}`
+	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 
 	for (let studentElement of document.getElementsByClassName('student')) {
 		if (!newClassroom.students[studentElement.id.replace('student-', '')]) {
@@ -108,15 +111,16 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
-		bannedTabButton.style.display = ''
-	} else {
-		bannedTabButton.style.display = 'none'
+	// Commented because the banned tab is not used/functioning
+	// if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
+	// 	bannedTabButton.style.display = ''
+	// } else {
+	// 	bannedTabButton.style.display = 'none'
 
-		if (bannedTabButton.classList.contains('pressed')) {
-			changeTab('usersMenu', 'mainTabs')
-		}
-	}
+	// 	if (bannedTabButton.classList.contains('pressed')) {
+	// 		changeTab('usersMenu', 'mainTabs')
+	// 	}
+	// }
 
 	if (currentUser.classPermissions >= newClassroom.permissions.controlPolls) {
 		pollsTabButton.style.display = ''
@@ -203,6 +207,61 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
+	function addTagElement(tag) {
+		if (tag == "" || tag == "Offline" || tag == null) return
+		let tagOption = document.createElement('div')
+		tagOption.value = tag
+		tagOption.textContent = tag
+		let removeButton = document.createElement('button')
+		removeButton.textContent = '✖'
+		removeButton.onclick = () => {
+			tagsDiv.removeChild(tagOption)
+		}
+		tagOption.appendChild(removeButton)
+		tagsDiv.appendChild(tagOption)
+	}
+
+	if (!deepObjectEqual(classroom?.tagNames, newClassroom.tagNames)) {
+		for (let tag of newClassroom.tagNames) addTagElement(tag)
+		
+		let newTagDiv = document.createElement('div')
+		let newTag = document.createElement('textarea')
+		newTag.type = 'text'
+		newTag.placeholder = 'Add Tag, Or Multiple'
+
+		let addTagButton = document.createElement('button')
+		addTagButton.textContent = '✔'
+		addTagButton.onclick = () => {
+			if (newTag.value.includes(',')) {
+				let tags = newTag.value.split(',')
+
+				for (let tag of tags) {
+					addTagElement(tag.trim())
+				}
+			} else {
+				addTagElement(newTag.value)
+			}
+			newTag.value = ''
+		}
+
+		newTagDiv.appendChild(newTag)
+		newTagDiv.appendChild(addTagButton)
+
+		let saveTags = document.createElement('button')
+		saveTags.textContent = 'Save'
+		saveTags.id = 'saveButton'
+		saveTags.onclick = () => {
+			let tags = []
+			for (let tag of tagsDiv.children) {
+				if (tag.value == "" || tag.value == "Offline") continue
+				tags.push(tag.value)
+			}
+			socket.emit('setTags', tags)
+		}
+		tagOptionsDiv.appendChild(newTagDiv)
+		tagOptionsDiv.appendChild(saveTags)
+	}
+
 	filterSortChange(newClassroom)
 
 	classroom = newClassroom
@@ -210,92 +269,94 @@ socket.on('cpUpdate', (newClassroom) => {
 	socket.emit('customPollUpdate')
 })
 
-socket.emit('pluginUpdate')
-socket.on('pluginUpdate', (plugins) => {
-	pluginsDiv.innerHTML = ''
-	for (let plugin of plugins) {
-		let pluginDiv = document.createElement('div')
-		pluginDiv.id = plugin.id
-		pluginDiv.className = 'plugin'
-		let pluginName = document.createElement('input')
-		pluginName.type = 'text'
-		pluginName.value = plugin.name
-		pluginName.placeholder = 'Name'
-		pluginName.onchange = (event) => {
-			socket.emit(
-				'changePlugin',
-				event.target.parentElement.id,
-				event.target.value,
-				null
-			)
-		}
-		pluginDiv.appendChild(pluginName)
-		let pluginURL = document.createElement('input')
-		pluginURL.type = 'url'
-		pluginURL.value = plugin.url
-		pluginURL.placeholder = 'URL'
-		pluginURL.onchange = (event) => {
-			let pluginURL = event.target
+// Old Plugins Stuff
 
-			if (!event.target.checkValidity()) {
-				event.target.reportValidity()
-				return
-			}
+// socket.emit('pluginUpdate')
+// socket.on('pluginUpdate', (plugins) => {
+// 	pluginsDiv.innerHTML = ''
+// 	for (let plugin of plugins) {
+// 		let pluginDiv = document.createElement('div')
+// 		pluginDiv.id = plugin.id
+// 		pluginDiv.className = 'plugin'
+// 		let pluginName = document.createElement('input')
+// 		pluginName.type = 'text'
+// 		pluginName.value = plugin.name
+// 		pluginName.placeholder = 'Name'
+// 		pluginName.onchange = (event) => {
+// 			socket.emit(
+// 				'changePlugin',
+// 				event.target.parentElement.id,
+// 				event.target.value,
+// 				null
+// 			)
+// 		}
+// 		pluginDiv.appendChild(pluginName)
+// 		let pluginURL = document.createElement('input')
+// 		pluginURL.type = 'url'
+// 		pluginURL.value = plugin.url
+// 		pluginURL.placeholder = 'URL'
+// 		pluginURL.onchange = (event) => {
+// 			let pluginURL = event.target
 
-			socket.emit(
-				'changePlugin',
-				pluginURL.parentElement.id,
-				null,
-				pluginURL.value
-			)
-		}
-		pluginDiv.appendChild(pluginURL)
-		let removePlugin = document.createElement('button')
-		removePlugin.className = 'quickButton'
-		removePlugin.textContent = 'Remove Plugin'
-		removePlugin.onclick = (event) => {
-			socket.emit(
-				'removePlugin',
-				event.target.parentElement.id
-			)
-		}
-		pluginDiv.appendChild(removePlugin)
-		pluginsDiv.appendChild(pluginDiv)
-	}
+// 			if (!event.target.checkValidity()) {
+// 				event.target.reportValidity()
+// 				return
+// 			}
 
-	let addPluginForm = document.createElement('div')
-	addPluginForm.id = 'addPluginForm'
-	let newPluginName = document.createElement('input')
-	newPluginName.id = 'newPluginName'
-	newPluginName.type = 'text'
-	newPluginName.placeholder = 'Name'
-	addPluginForm.append(newPluginName)
-	let newPluginURL = document.createElement('input')
-	newPluginURL.id = 'newPluginURL'
-	newPluginURL.type = 'url'
-	newPluginURL.placeholder = 'URL'
-	addPluginForm.append(newPluginURL)
-	let submitPlugin = document.createElement('button')
-	submitPlugin.className = 'quickButton'
-	submitPlugin.textContent = 'Add Plug-in'
-	submitPlugin.onclick = () => {
-		let newPluginName = document.getElementById('newPluginName')
-		let newPluginURL = document.getElementById('newPluginURL')
+// 			socket.emit(
+// 				'changePlugin',
+// 				pluginURL.parentElement.id,
+// 				null,
+// 				pluginURL.value
+// 			)
+// 		}
+// 		pluginDiv.appendChild(pluginURL)
+// 		let removePlugin = document.createElement('button')
+// 		removePlugin.className = 'quickButton'
+// 		removePlugin.textContent = 'Remove Plugin'
+// 		removePlugin.onclick = (event) => {
+// 			socket.emit(
+// 				'removePlugin',
+// 				event.target.parentElement.id
+// 			)
+// 		}
+// 		pluginDiv.appendChild(removePlugin)
+// 		pluginsDiv.appendChild(pluginDiv)
+// 	}
 
-		if (!newPluginURL.checkValidity()) {
-			newPluginURL.reportValidity()
-			return
-		}
+// 	let addPluginForm = document.createElement('div')
+// 	addPluginForm.id = 'addPluginForm'
+// 	let newPluginName = document.createElement('input')
+// 	newPluginName.id = 'newPluginName'
+// 	newPluginName.type = 'text'
+// 	newPluginName.placeholder = 'Name'
+// 	addPluginForm.append(newPluginName)
+// 	let newPluginURL = document.createElement('input')
+// 	newPluginURL.id = 'newPluginURL'
+// 	newPluginURL.type = 'url'
+// 	newPluginURL.placeholder = 'URL'
+// 	addPluginForm.append(newPluginURL)
+// 	let submitPlugin = document.createElement('button')
+// 	submitPlugin.className = 'quickButton'
+// 	submitPlugin.textContent = 'Add Plug-in'
+// 	submitPlugin.onclick = () => {
+// 		let newPluginName = document.getElementById('newPluginName')
+// 		let newPluginURL = document.getElementById('newPluginURL')
 
-		socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
-	}
-	addPluginForm.append(submitPlugin)
-	if (!pluginsMenu.querySelector('#addPluginForm')) {
-		pluginsMenu.append(addPluginForm)
-	} else {
-		return;
-	};
-})
+// 		if (!newPluginURL.checkValidity()) {
+// 			newPluginURL.reportValidity()
+// 			return
+// 		}
+
+// 		socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
+// 	}
+// 	addPluginForm.append(submitPlugin)
+// 	if (!pluginsMenu.querySelector('#addPluginForm')) {
+// 		pluginsMenu.append(addPluginForm)
+// 	} else {
+// 		return;
+// 	};
+// })
 
 socket.emit('customPollUpdate')
 socket.on('customPollUpdate', (
@@ -365,7 +426,6 @@ socket.on('customPollUpdate', (
 	for (let student of Object.values(students)) {
 		if (student.permissions >= TEACHER_PERMISSIONS) continue
 
-		let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
 
 		studCheck.onclick = () => {
@@ -396,7 +456,8 @@ socket.on('customPollUpdate', (
 			} else {
 				tagPoll.className = 'tagPoll'
 			}
-			for (let tag of document.getElementsByClassName('pressed')) {
+			for (let tag of document.querySelectorAll('#studentTags')) {
+				tag = tag.textContent
 				if (tempTags.includes(tag.name) || tag.name == "") {
 					continue
 				}

@@ -4,7 +4,8 @@ const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
 const fs = require('fs')
 const authentication = require('./modules/authentication.js')
-const dotenv = require('dotenv')
+require('dotenv').config(); // For environment variables
+// Custom modules
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
 const { classInformation } = require('./modules/class.js')
@@ -13,7 +14,6 @@ const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
 const { SocketUpdates, userSockets } = require('./modules/socketUpdates.js')
-dotenv.config()
 
 // Upgrade the database if it's not up to date
 upgradeDatabase();
@@ -77,11 +77,6 @@ app.use((req, res, next) => {
 	next()
 })
 
-// Check if the .env file is set up
-if(!fs.existsSync('.env')) {
-	console.log('Warning: No .env file found. Email verification or Google OAuth2 login will not work. Please refer to the Formbar Wiki, under github.com/csmith1188/Formbar.js/wiki/Hosting-Formbar-Locally, for information on setting up the .env file.') 
-}
-
 // Add currentUser and permission constants to all pages
 // Additionally, handle session expiration
 app.use((req, res, next) => {
@@ -120,9 +115,12 @@ initSocketRoutes();
 // Import 404 error page
 require('./routes/404.js').run(app);
 
-http.listen(420, async () => {
-	authentication.whitelistedIps = await getIpAccess('whitelist')
-	authentication.blacklistedIps = await getIpAccess('blacklist')
-	console.log('Running on port: 420')
-	logger.log('info', 'Start')
-})
+http.listen(settings.port, async () => {
+	authentication.whitelistedIps = await getIpAccess('whitelist');
+	authentication.blacklistedIps = await getIpAccess('blacklist');
+	console.log(`Running on port: ${settings.port}`);
+	if (!settings.emailEnabled) console.log('Email functionality is disabled.');
+	if (!settings.googleOauthEnabled) console.log('Google Oauth functionality is disabled.');
+	if (!settings.emailEnabled || !settings.googleOauthEnabled) console.log('To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki')
+	logger.log('info', 'Start');
+});
