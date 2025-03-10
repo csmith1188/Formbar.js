@@ -1,7 +1,7 @@
 const fs = require("fs")
 const winston = require("winston")
-const dailyfile = require('winston-daily-rotate-file');
 const { logNumbers } = require("./config");
+require('winston-daily-rotate-file');
 
 /**
  * Creates a new logger transport with a daily rotation.
@@ -13,7 +13,7 @@ const { logNumbers } = require("./config");
 function createLoggerTransport(level) {
 	// Create a new daily rotate file transport for Winston
 	let transport = new winston.transports.DailyRotateFile({
-		//This sets the filename pattern, date pattern, maximum number of log files to keep, and log level for the transport.
+		// This sets the filename pattern, date pattern, maximum number of log files to keep, and log level for the transport.
 		filename: `logs/application-${level}-%DATE%.log`, // The filename pattern to use
 		datePattern: "YYYY-MM-DD-HH", // The date pattern to use in the filename
 		maxFiles: "30d", // The maximum number of log files to keep
@@ -24,13 +24,15 @@ function createLoggerTransport(level) {
 	transport.on("rotate", function (oldFilename, newFilename) {
 		// Reset the error log count
 		logNumbers.error = 0;
-		// Convert the log numbers to a string
+
+		// Write the new log numbers to a file
 		logNumbersString = JSON.stringify(logNumbers);
-		// Write the log numbers to a file
 		fs.writeFileSync("logNumbers.json", logNumbersString);
-		// Delete the old log file
+
+        // Delete empty log files and the old log file
+        deleteEmptyLogFiles();
 		fs.unlink(oldFilename, (err) => {
-			//If there's an error deleting the old log file, it logs the error. Otherwise, it logs that the file was deleted.
+			// If there's an error deleting the old log file, it logs the error. Otherwise, it logs that the file was deleted.
 			if (err) {
 				// If an error occurred, log it
 				logger.log('error', err.stack);
@@ -42,10 +44,21 @@ function createLoggerTransport(level) {
 	});
 
 	return transport;
-};
+}
+
+// Delete empty log files to avoid clutter
+function deleteEmptyLogFiles() {
+    fs.readdirSync("logs").forEach((file) => {
+        if (fs.statSync(`logs/${file}`).size == 0) {
+            fs.unlinkSync(`logs/${file}`);
+        }
+    });
+}
 
 // Create a new logger instance using the winston library
 function createLogger() {
+    deleteEmptyLogFiles();
+
     return winston.createLogger({
         // This block defines the logging levels. The lower the number, the higher the serverity. For example, critical is more severe than error.
         levels: {
@@ -80,11 +93,40 @@ function createLogger() {
             createLoggerTransport("error"),
             createLoggerTransport("info"),
             createLoggerTransport("verbose"),
-            new winston.transports.Console({ level: 'error' })
+            new winston.transports.Console({ handleExceptions: true })
         ],
     })
 }
 
+// Create a new logger instance using the winston library
+const logger = createLogger();
+
+/**
+ * Gracefully exit after flushing logs.
+ * @param {Error} error The error that caused the exit.
+ */
+async function handleExit(error) {
+    if (error) {
+        logger.error(error.stack || error.toString());
+    }
+
+    // Close Winston transports to ensure logs are written
+    console.log("Flushing logs before exit...");
+    logger.close();
+}
+
+// Catch uncaught exceptions
+process.on("uncaughtException", async (err) => {
+    console.error("Uncaught Exception:", err);
+    await handleExit(err);
+});
+
+// Catch unhandled promise rejections
+process.on("unhandledRejection", async (reason) => {
+    console.error("Unhandled Promise Rejection:", reason);
+    await handleExit(reason);
+});
+
 module.exports = {
-    logger: createLogger() // Create a new logger instance using the winston library
+    logger
 }

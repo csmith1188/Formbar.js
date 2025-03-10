@@ -7,7 +7,6 @@ const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates")
 async function joinClass(code, session) {
 	const username = session.username;
 	try {
-	
 		logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
 
 		// Find the id of the class from the database

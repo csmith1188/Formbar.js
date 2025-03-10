@@ -27,12 +27,12 @@
                             <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button>
                           <% } %>
                             <button href="/" id="logoutButton" onclick="logout()">
-                              <img id="logoutIcon" src="img/logout.svg" title="Logout">
+                              <img id="logoutIcon" src="/img/logout.svg" title="Logout">
                             </button>
                             <% } %>
                             <p id="version">v 1.0.0</p>
                             <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM">
-                              <img id="lmdmIcon" src="img/sun.svg">
+                              <img id="lmdmIcon" src="/img/sun.svg">
                             </button>
                             <!-- <button id="muteButton" onclick="muteSound()"><img id="muteIcon" src="img/mute.svg"></button> -->
                             <!-- <button id="unmuteButton" onclick="unmuteSound()" hidden><img id="unmuteIcon" src="img/volume.svg"></button> -->
@@ -42,33 +42,33 @@
 
   //document.body.style.backgroundColor = getCookie("theme")
   if (getCookie("theme") == "white") {
-    document.getElementById('lmdm').href = 'css/lightmode.css';
-    lmdmIcon.src = "img/moon.svg"
+    document.getElementById('lmdm').href = '/css/lightmode.css';
+    lmdmIcon.src = "/img/moon.svg"
   } else if (getCookie("theme") == "dark") {
-    document.getElementById('lmdm').href = 'css/darkmode.css';
-    lmdmIcon.src = "img/sun.svg"
+    document.getElementById('lmdm').href = '/css/darkmode.css';
+    lmdmIcon.src = "/img/sun.svg"
   }
 
   function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length >= 2) return parts.pop().split(';').shift();
   }
 
   var nextYear = new Date().getFullYear() + 1;
 
   function toggleTheme() {
     let theme = getCookie("theme");
-    if (theme == "white") {
-      document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
-      document.getElementById('lmdm').href = 'css/darkmode.css';
-      lmdmIcon.src = "img/sun.svg"
+    if (!theme) theme = "white"; // If no theme cookie, default to white
+    if (theme === "white") {
+      document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
+      document.getElementById('lmdm').href = '/css/darkmode.css';
+      lmdmIcon.src = "/img/sun.svg"
     } else {
-      document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT";
-      document.getElementById('lmdm').href = 'css/lightmode.css';
-      lmdmIcon.src = "img/moon.svg"
+      document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
+      document.getElementById('lmdm').href = '/css/lightmode.css';
+      lmdmIcon.src = "/img/moon.svg";
     }
-    console.log(document.getElementById('lmdm'))
   }
 
   function logout() {

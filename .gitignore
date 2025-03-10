@@ -2,6 +2,7 @@ node_modules/
 database/database.db
 database/*.bak
 .vscode/
+.idea/
 uploads/
 .env
 

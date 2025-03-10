@@ -47,6 +47,8 @@ app.use('/js/chart.js', express.static(__dirname + '/node_modules/chart.js/dist/
 app.use('/js/iro.js', express.static(__dirname + '/node_modules/@jaames/iro/dist/iro.min.js'))
 app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js'))
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
+app.use('/js/monaco-loader.js', express.static(__dirname + '/node_modules/monaco-editor/min/vs/loader.js'))
+app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs'))
 
 // Get the current poll id
 database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {

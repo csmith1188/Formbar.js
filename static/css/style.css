@@ -47,15 +47,6 @@ body {
 	transition: background-color 0.5s, color 0.5s;
 }
 
-h1 {
-	text-align: center;
-	margin-top: 12px;
-}
-
-h2 {
-	margin-top: 32px;
-}
-
 a {
 	text-decoration: none;
 }
@@ -94,21 +85,19 @@ input[type="checkbox"] {
 
 button,
 .quickButton {
-	padding: 3px 6px;
 	border-radius: 8px;
 	font-size: inherit;
 	font-family: inherit;
 	background-color: var(--bg-light-blue);
 	color: var(--theme-color);
-	border: 2px solid var(--theme-color);
+	border: .3vh solid var(--theme-color);
 	margin: 2px 1px;
 	cursor: pointer;
 	transition-duration: 0.2s;
-	transition-property: transform, box-shadow;
+	transition-property: width, transform, box-shadow, background-color, color;
 }
 
 .breakButton {
-	padding: 3px 6px;
 	border-radius: 8px;
 	font-size: 150%;
 	font-family: inherit;
@@ -118,17 +107,13 @@ button,
 	margin: 2px 1px;
 	cursor: pointer;
 	transition-duration: 0.2s;
-	transition-property: transform, box-shadow;
+	transition-property: width, transform, box-shadow, background-color, color;
 	width: 200px;
 	height: 100px;
 }
 
-.quickButton {
-	display: inline-block;
-}
-
 /*Pop-out effect*/
-:is(button, .quickButton):not(.unselectable):where(:hover, :focus-visible),
+:is(button, .quickButton):not(.unselectable, .pressed):where(:hover, :focus-visible),
 :is(button.tab.unselectable, .quickButton.tab.unselectable):where(:hover, :focus-visible) {
 	transform: translate(3px, -3px);
 	box-shadow: -1.5px 1.5px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%), -3px 3px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%);
@@ -145,6 +130,8 @@ button,
 button.pressed,
 .quickButton.pressed {
 	background-color: var(--theme-color);
+	border: 2px solid #000000;
+	box-shadow: inset 0 0 5px rgb(0, 0, 0);
 	color: white;
 }
 
@@ -232,6 +219,8 @@ dialog {
 #formbarHeader {
 	position: fixed;
 	width: 110%;
+	height: fit-content;
+	align-items: center;
 	z-index: 1;
 	top: 0;
 	left: -5%;
@@ -248,8 +237,7 @@ dialog {
 
 #lmdmBtn {
 	position: fixed;
-	right: 20px;
-	margin-top: 0.75vh;
+	right: 1%;
 	border-radius: 100%;
 	width: 45px;
 	height: 45px;
@@ -286,7 +274,7 @@ dialog {
 
 a.headerTab {
 	padding: 12px 16px;
-	font-size: 21px;
+	font-size: 1.5vi;
 	color: white;
 	cursor: pointer;
 
@@ -294,7 +282,7 @@ a.headerTab {
 
 .headerTab {
 	padding: 12px 16px;
-	font-size: 21px;
+	font-size: 1.5vi;
 	cursor: pointer;
 }
 
@@ -306,8 +294,7 @@ a.headerTab {
 
 #logoutButton {
 	position: fixed;
-	right: 70px;
-	margin-top: 0.75vh;
+	left: 1%;
 	border-radius: 100%;
 	width: 45px;
 	height: 45px;
@@ -496,162 +483,222 @@ input[type="radio"]:focus {
 
 
 /* --- CONTROL PANEL --- */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
 
-#quickmenu {
-	text-align: center;
-	margin: auto;
-	margin-bottom: 16px;
+	to {
+		opacity: 1;
+	}
 }
 
-#quickmenu .quickButton {
-	width: 200px;
-	margin: 0 5px;
-	border-radius: 9999px;
-	font-size: 20px;
-	border-width: 2px;
-	padding: 3px;
+@keyframes alertWiggle {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	25% {
+		transform: rotate(5deg) scale(2);
+	}
+
+	50% {
+		transform: rotate(-5deg) scale(2);
+	}
+
+	75% {
+		transform: rotate(5deg) scale(2);
+	}
+
+	100% {
+		transform: rotate(0deg) scale(1);
+	}
 }
 
-#users {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(200px, 1fr));
-	user-select: none;
-	gap: 1rem;
+details {
+	max-height: 4rem;
+	overflow: hidden;
+	transition: max-height 250ms ease-in-out;
 }
 
-
-#users details[id^="student"],
-#users div[id^="student"] {
-	margin-left: 30%;
-	margin-right: 30%;
-	box-shadow: 0 0 0px black;
-	border: 3px var(--theme-color) solid;
-	border-radius: 10px;
-	margin-bottom: 1vi;
-	height: fit-content;
-	background-color: var(--bg-light-blue);
+details[open] {
+	max-height: 100vh;
 }
 
-div.break {
-	margin-bottom: 3%;
+details[open] #reasons {
+	transform: translateY(-80%);
 }
 
-.break,
-.break summary {
-	border-color: #ffff00 !important;
+#reasons {
+	transition: transform 250ms ease-in-out;
 }
 
-.help,
-.help summary {
-	border-color: #ff0000 !important;
+#quickMenu {
+	padding: .1vh 1vw;
+	font-size: 1cqw;
+	display: flex;
+	justify-content: space-between;
+	width: 50%;
+	margin-left: 25%;
+	border: .3vh var(--theme-color) solid;
+	margin-bottom: 2vh;
+	align-items: center;
 }
 
-.offline,
-.offline summary {
-	border-color: var(--dark-gray) !important;
-}
-
-#users details[id^="student"][open] {
-	padding-bottom: 2.5%;
-}
-
-#users details[id^="student"] summary {
-	cursor: pointer;
-}
-
-#users details[id^="student"][open] summary {
-	border-bottom: 3px var(--theme-color) solid;
-	margin-bottom: 2.5%;
-}
-
-#users div[id^="student"] p {
+#quickMenu p {
 	margin: 0;
+	color: var(--theme-color);
+	font-weight: bold;
+}
+
+#quickMenu #settingsMenu {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 100%;
+	width: 2.5cqw;
+	height: 2.5cqw;
+}
+
+#quickMenu #settingsMenu img {
+	width: 1.5cqw;
+	height: 1.5cqw;
+	pointer-events: none;
+}
+
+#quickMenu p {
+	display: inline;
 }
 
 #VBDiv {
 	display: flex;
-	flex-direction: row;
-	width: 100%;
+	justify-content: center;
+	margin-bottom: 2vh;
+}
+
+#VBDiv #vbContainer {
+	width: 50%;
+	height: 50vh;
 }
 
 #VBOptions {
 	display: flex;
-	flex-direction: column;
-	width: 100%;
+	flex-wrap: wrap;
+	justify-content: center;
+	border: none;
 }
 
-#VBOptions .options {
-	display: flex;
-	justify-content: start;
-	border: 3px var(--theme-color) solid;
-	padding: .7vi;
+.options {
+	justify-content: space-evenly;
 	border-radius: 10px;
+	margin: 1vh;
 	width: 100%;
 }
 
-#VBOptions .options .headBox {
+hr {
+	border: 0;
+	border-top: 5px solid var(--theme-color);
+}
+
+.headerText {
+	margin: 0;
+}
+
+.headBox {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	padding: 1vh;
+	max-height: 25vh;
+	overflow-y: auto;
+	gap: 1vh;
+}
+
+.headBox button {
+	width: auto;
+	min-width: 100px;
+	height: auto;
+	margin: 1vh;
+	font-size: 1.5cqw;
+	padding: 0.25em 1em;
+	border-radius: 5px;
+}
+
+.ongoingPollOptions {
+	margin-bottom: 2vh;
+}
+
+.ongoingPollOptions,
+.options {
+	display: flex;
+	align-items: center;
+	font-size: 1.5cqw;
+	border: var(--theme-color), 3px, solid;
+}
+
+.options .headBox {
+	padding: 1vh 0;
+	color: var(--theme-color);
+	font-weight: bold;
+	border-left: 3px solid var(--theme-color);
+}
+
+.options h2 {
+	font-size: 2cqw;
+	width: 10cqw;
+}
+
+.ongoingPollOptions #timeDiv {
+	padding: 1vh 0;
+	width: 30%;
+	color: var(--theme-color);
+	font-weight: bold;
+	border-right: 3px solid var(--theme-color);
+}
+
+
+
+.ongoingPollOptions #timeDiv p,
+.ongoingPollOptions #timeDiv input {
+	display: inline;
+	color: var(--theme-color);
+	font-weight: bold;
+	text-align: center;
+}
+
+#settingsMenu textarea, #settingsMenu input {
+	color: var(--theme-color);
+	height: 2cqw;
+	resize: vertical;
+	font-weight: bold;
+	white-space: normal;
+	text-align: justify;
+	-moz-text-align-last: center;
+	text-align-last: center;
+}
+
+.ongoingPollOptions #timeDiv input::-webkit-outer-spin-button,
+.ongoingPollOptions #timeDiv input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.ongoingPollOptions .ongoingButtons,
+.options .headBox {
+	width: 100%;
 	display: flex;
 	justify-content: space-evenly;
-	width: 80%;
 }
 
-#VBOptions #userFilterBoxes .options {
-	position: absolute;
-	left: 10vi;
-}
-
-#vbContainer {
-	min-width: 250px;
-	min-height: 250px;
-	width: 25vi;
-	height: 25vi;
-	margin-left: 8vw;
-	margin-right: 8vw;
-}
-
-#vbContainer p {
+#pollOptions {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: center;
-	margin-bottom: 0;
+	margin-bottom: 5vh;
 }
 
-#users {
-	display: flex;
-	flex-direction: column;
-}
-
-#bannedMenu.tabContent {
-	display: grid;
-	width: 40%;
-	margin-left: 30%;
-	gap: 1rem;
-	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-	justify-content: center;
-}
-
-.bannedStudent {
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	max-width: 50%;
-}
-
-.bannedStudent button {
-	height: fit-content;
-}
-
-.filter,
-.sort {
-	line-height: 1.25;
-	margin: 5px 2px;
-}
-
-#startPollForm {
-	line-height: 2;
-}
-
-#deleteStudents {
-	margin-top: 15px;
+div .tabContent {
+	padding-bottom: 5vh;
 }
 
 #startClass {
@@ -659,267 +706,207 @@ div.break {
 	background-color: hsl(120, 94%, 74%);
 }
 
-#deleteStudents,
-#endClass,
-.deleteStudent,
-#delete-poll,
-.delete-poll,
-.banStudent {
+#endClass {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);
 }
 
-#responses {
-	display: grid;
-	width: 40%;
-	margin-left: 30%;
-	gap: 0.25rem;
-}
-
-.colorPickerButton {
-	display: inline-block;
-	width: 1.25em;
-	height: 1.25em;
-	border: 3px solid hsl(0, 0%, 60%);
-	border-radius: 100%;
-	margin: 0 2px 5px;
-	vertical-align: middle;
-}
-
-.colorPicker {
-	position: absolute;
-	background-color: hsl(0, 100%, 100%);
-	border: 3px solid hsl(0, 0%, 60%);
-	border-radius: 10%;
-	padding: 20px;
-	inset: unset;
-	display: none;
-	width: max-content;
-	top: 0;
-	left: 0;
-	gap: 10px;
-}
-
-.colorPicker .colorsDiv {
-	grid-column: 1;
-	grid-row: 1 / 3;
-}
-
-.colorPicker .IroColorPicker {
-	grid-column: 2;
-	grid-row: 1;
-}
-
-.colorPicker .hexLabel {
-	grid-column: 2;
-	grid-row: 2;
-}
-
-.hexInput {
-	width: 60px;
-}
-
-.colorPicker .buttonsDiv {
-	grid-column: 1 / 3;
-	grid-row: 3;
+#users {
 	display: flex;
-	justify-content: space-around;
-	gap: 10px;
-}
-
-.oldColor,
-.newColor {
-	height: 50%;
-	width: 70%;
-}
-
-#startPoll {
-	font-size: 18px;
-	margin-top: 8px;
-}
-
-#clearPoll,
-#endPoll {
-	font-size: 18px;
-	margin: auto;
-}
-
-.options {
-	display: flex;
-	justify-content: center;
-	gap: 1rem;
-	margin-bottom: 2%;
-}
-
-.options * {
-	margin: 0;
-}
-
-#pollOptions {
-	margin-bottom: 50px;
-}
-
-.customPoll {
-	display: grid;
-	min-width: 30%;
-	width: fit-content;
-	margin: auto;
-	gap: 1.5rem;
-	/* grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); */
-	grid-template-columns: repeat(auto-fit, minmax(1fr));
-}
-
-.customPoll * {
-	min-width: 100px;
-	width: fit-content;
-}
-
-#pollShares {
-	display: grid;
+	flex-wrap: wrap;
 	justify-content: center;
 }
 
-.pollShare {
-	display: flex;
-}
-
-.pollShare button {
-	height: fit-content;
-}
-
-#plugins input,
-#plugins button {
-	margin: 4px;
-	vertical-align: middle;
-}
-
-#plugins button {
-	font-size: 14px;
-	width: 110px;
-}
-
-#settingsMenu #permissionsList {
-	display: grid;
-	width: 40%;
-	margin-left: 30%;
-	gap: 1rem;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.permissionSelect {
-	margin-left: 0.5rem;
-}
-
-/* --- VIRTUAL BAR --- */
-
-#studentVBar {
-	display: flex;
-}
-
-#vbContainer {
-	width: 50vi;
-}
-
-#studentVBar:has(#vbContainer[style*="display: none"]),
-#VBOptions {
-	justify-content: center;
-}
-
-#studentVBar #helpBreak {
-	margin-top: 5vi;
-	width: 50%;
-	align-items: center;
-}
-
-#pixBox {
-	width: 100%;
-	height: 64px;
-	box-sizing: border-box;
-	border: 1px solid white;
-	display: flex;
-	justify-content: space-around;
-	user-select: none;
-}
-
-#text {
-	width: 10ch;
-	padding: 0 4px;
-	border: 1px white;
-	border-style: solid solid none;
-	background: black;
-	font: 32px monospace;
-	text-transform: uppercase;
-	overflow: hidden;
-}
-
-hr {
+#users details[id^="student"],
+#users div[id^="student"] {
+	box-shadow: 0 0 0px black;
+	border: 3px var(--theme-color) solid;
+	border-radius: 5px;
+	margin-bottom: 1vi;
 	width: 25%;
-	border-bottom: 3px solid var(--theme-color);
-	border-radius: 20%;
-}
-
-/* --- BGM & SFX --- */
-
-#playStop .quickButton {
-	position: absolute;
-	top: 50%;
-	left: 50%;
+	font-size: larger;
+	margin: 5vh;
+	margin-top: 2.5vh;
+	height: fit-content;
 	background-color: var(--bg-light-blue);
-	color: var(--theme-color);
+	min-width: 300px;
 }
 
-#nowPlaying {
+#studentTags {
+	margin: 1%;
+}
+
+#tagOptions div {
+	display: flex;
+	justify-content: center;
+}
+
+#settingsFunc div {
+	display: flex;
+	justify-content: center;
+}
+
+#studentTags span{
+	border: 3px var(--theme-color) solid;
+	font-size: 1cqw;
 	text-align: center;
-	color: var(--theme-color);
+	margin: 1px;
 }
 
-.studentList {
-
-	/* width */
-	::-webkit-scrollbar {
-		width: 20px;
-	}
-
-	/* Track */
-	::-webkit-scrollbar-track {
-		box-shadow: inset 0 0 5px grey;
-		border-radius: 10px;
-	}
-
-	/* Handle */
-	::-webkit-scrollbar-thumb {
-		background: red;
-		border-radius: 10px;
-	}
-
-	/* Handle on hover */
-	::-webkit-scrollbar-thumb:hover {
-		background: #b30000;
-	}
+div.break {
+	margin-bottom: 3%;
 }
 
-.studentButton {
-	border: 1px solid black;
+#users details[id^="student"] summary {
+	padding: 1vh;
+	cursor: pointer;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	text-align: center;
+	align-items: center;
+	list-style-type: '';
 }
 
-.helpBox {
-	background-color: white;
+#users details[id^="student"][open] summary {
+	border-bottom: 3px var(--theme-color) solid;
 }
 
-#pollBox {
-	background-color: white;
+#users details[id^="student"] #alerts {
+	position: absolute;
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+	transform: translateY(-150%);
+	width: 25%;
+	font-size: 2cqw;
 }
 
-#resNumber {
-	background-color: white;
+#users details[id^="student"] #alerts * {
+	animation-name: alertWiggle;
+	animation-duration: 0.5s;
 }
 
-.permissionselect {
-	background-color: white;
+#users div:not(#reasons, #reasons *, #alerts *) {
+	padding: 1vh 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	border-bottom: 3px var(--theme-color) solid;
 }
 
-#ticket {
-	background-color: white;
+#users div:last-child:not(#reasons, #reasons *, #alerts *) {
+	border-bottom: none;
+}
+
+
+#users span:empty, #users div:empty {
+	display: none;
+}
+
+#users #roomTags {
+	display: flex;
+	flex-flow: wrap;
+	justify-content: space-evenly;
+	align-items: flex-start;
+}
+
+#saveButton {
+	background-color: var(--light-green);
+	width: 310px;
+	margin-top: 10px;
+}
+
+#users #roomTags button:not(#saveButton) {
+	background-color: #cf8d37;
+	color: #f0f0f0;
+	font-weight: 600;
+	min-width: 100px;
+	box-shadow: inset 0 0 5px rgb(0, 0, 0);
+}
+
+#users #roomTags button:not(#saveButton) {
+	padding-bottom: 6px;
+}
+
+#users #roomTags button.pressed {
+	background-color: #ffd8a5 !important;
+	color: white !important;
+	box-shadow: 0 0 5px rgb(255, 255, 255) !important;
+	border: 2px solid #ffffff;
+}
+
+.banUser, .kickUser {
+	--theme-color: hsl(0, 100%, 12%);
+	background-color: hsl(0, 94%, 74%);
+}
+
+.break,
+.break summary {
+	border-color: #ffff00 !important;
+}
+
+#breakReason button {
+	border: 3px solid #ffff00 !important;
+}
+
+.help,
+.help summary {
+	border-color: #ff0000 !important;
+}
+
+#helpReason button {
+	border: 3px solid #ff0000 !important;
+}
+
+.offline,
+.offline summary {
+	border-color: var(--dark-gray) !important;
+}
+
+
+#permissionsList {
+	display: flex;
+	justify-content: space-evenly;
+	border-radius: 10px;
+	margin: 1vh;
+	width: 100%;
+	font-size: 1.5cqw;
+}
+
+#reasons {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #f0f0f0;
+	border-radius: 5px;
+	padding: 5px;
+	transform: translateY(80%);
+	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.781);
+	text-align: center;
+	max-height: 200px;
+	overflow-y: auto;
+	animation-name: fadeIn;
+	animation-duration: 0.5s;
+}
+
+#helpReason, #breakReason {
+	display: inline-block;
+	overflow-wrap: break-word;
+	text-align: center;
+	border-radius: 5px;
+	max-width: 400px;
+	height: 100%;
+	margin: 5px;
+}
+
+#helpReason p, #breakReason p {
+	font-size: 1.1cqw;
+}
+
+#helpReason:empty, #breakReason:empty {
+	display: none;
 }
 
 /* news page */
