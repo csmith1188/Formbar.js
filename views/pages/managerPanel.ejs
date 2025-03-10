@@ -36,17 +36,9 @@
                 <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
                 <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
             </div>
-            <!-- <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
-                <div class="options">
-                    <button id="permissions" class="quickButton tab pressed" data-tab-group="settingsTabs">Permissions</button>
-                    <button id="plugins" class="quickButton tab" data-tab-group="settingsTabs">Plugins</button>
-                </div>
-                <div id="permissions" class="tabContent default" data-tab-group="settingsTabs">
-                    <h2>Permissions</h2>
-                    <div id="permissionsList"></div>
-                </div>
-            </div> -->
-            <!-- <button onclick="socket.emit('sharePollToClass', 5 , 'npm5')">click me</button> -->
+            <br/>
+            <button type="button" onclick="location.href = '/logs'">View Logs</button>
+            <button type="button" onclick="downloadDatabase()">Download Database</button>
             <%- include('../partials/body_content') %>
     </body>
 
@@ -230,6 +222,32 @@
             for (const user of Object.values(users)) {
                 usersDiv.appendChild(buildUser(user))
             }
+        }
+
+        // Makes an API request to download the database
+        function downloadDatabase() {
+            fetch('/downloadDatabase', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.blob()).then(blob => {
+                // Create a link with the blob to download the database
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = 'database.db';
+
+                // Append the link and click it to activate the download
+                document.body.appendChild(link);
+                link.click();
+
+                // Remove the download link
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(link);
+            }).catch(error => {
+                console.error('Error downloading the file:', error);
+            });
         }
 
         // sets filters

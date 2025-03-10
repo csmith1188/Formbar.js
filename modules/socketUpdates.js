@@ -138,7 +138,7 @@ class SocketUpdates {
 
             const classData = structuredClone(classInformation.classrooms[classId])
             logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
-            
+
             let totalResponses = 0;
             let totalStudentsIncluded = [];
             let totalStudentsExcluded = [];
