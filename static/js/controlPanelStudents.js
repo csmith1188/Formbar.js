@@ -181,6 +181,10 @@ function buildStudent(room, studentData) {
                     const tags = []
                     for (let tag of studTagsSpan.children) tags.push(tag.textContent)
                     socket.emit('saveTags', studentData.id, tags, studentData.username)
+
+                    // Update the tags in the select box
+                    currentTags = tags;
+                    createTagSelectButtons();
                 }
 
                 for (ttag of studentData.tags.split(",")) {

@@ -112,6 +112,7 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	// Commented because the banned tab is not used/functioning
+	// @TODO: Fix the banned tab
 	// if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
 	// 	bannedTabButton.style.display = ''
 	// } else {
@@ -247,19 +248,7 @@ socket.on('cpUpdate', (newClassroom) => {
 		newTagDiv.appendChild(newTag)
 		newTagDiv.appendChild(addTagButton)
 
-		let saveTags = document.createElement('button')
-		saveTags.textContent = 'Save'
-		saveTags.id = 'saveButton'
-		saveTags.onclick = () => {
-			let tags = []
-			for (let tag of tagsDiv.children) {
-				if (tag.value == "" || tag.value == "Offline") continue
-				tags.push(tag.value)
-			}
-			socket.emit('setTags', tags)
-		}
 		tagOptionsDiv.appendChild(newTagDiv)
-		tagOptionsDiv.appendChild(saveTags)
 	}
 
 	filterSortChange(newClassroom)
@@ -269,176 +258,14 @@ socket.on('cpUpdate', (newClassroom) => {
 	socket.emit('customPollUpdate')
 })
 
-// Old Plugins Stuff
+const selectPollDiv = document.querySelector('div#selectPoll')
 
-// socket.emit('pluginUpdate')
-// socket.on('pluginUpdate', (plugins) => {
-// 	pluginsDiv.innerHTML = ''
-// 	for (let plugin of plugins) {
-// 		let pluginDiv = document.createElement('div')
-// 		pluginDiv.id = plugin.id
-// 		pluginDiv.className = 'plugin'
-// 		let pluginName = document.createElement('input')
-// 		pluginName.type = 'text'
-// 		pluginName.value = plugin.name
-// 		pluginName.placeholder = 'Name'
-// 		pluginName.onchange = (event) => {
-// 			socket.emit(
-// 				'changePlugin',
-// 				event.target.parentElement.id,
-// 				event.target.value,
-// 				null
-// 			)
-// 		}
-// 		pluginDiv.appendChild(pluginName)
-// 		let pluginURL = document.createElement('input')
-// 		pluginURL.type = 'url'
-// 		pluginURL.value = plugin.url
-// 		pluginURL.placeholder = 'URL'
-// 		pluginURL.onchange = (event) => {
-// 			let pluginURL = event.target
-
-// 			if (!event.target.checkValidity()) {
-// 				event.target.reportValidity()
-// 				return
-// 			}
-
-// 			socket.emit(
-// 				'changePlugin',
-// 				pluginURL.parentElement.id,
-// 				null,
-// 				pluginURL.value
-// 			)
-// 		}
-// 		pluginDiv.appendChild(pluginURL)
-// 		let removePlugin = document.createElement('button')
-// 		removePlugin.className = 'quickButton'
-// 		removePlugin.textContent = 'Remove Plugin'
-// 		removePlugin.onclick = (event) => {
-// 			socket.emit(
-// 				'removePlugin',
-// 				event.target.parentElement.id
-// 			)
-// 		}
-// 		pluginDiv.appendChild(removePlugin)
-// 		pluginsDiv.appendChild(pluginDiv)
-// 	}
-
-// 	let addPluginForm = document.createElement('div')
-// 	addPluginForm.id = 'addPluginForm'
-// 	let newPluginName = document.createElement('input')
-// 	newPluginName.id = 'newPluginName'
-// 	newPluginName.type = 'text'
-// 	newPluginName.placeholder = 'Name'
-// 	addPluginForm.append(newPluginName)
-// 	let newPluginURL = document.createElement('input')
-// 	newPluginURL.id = 'newPluginURL'
-// 	newPluginURL.type = 'url'
-// 	newPluginURL.placeholder = 'URL'
-// 	addPluginForm.append(newPluginURL)
-// 	let submitPlugin = document.createElement('button')
-// 	submitPlugin.className = 'quickButton'
-// 	submitPlugin.textContent = 'Add Plug-in'
-// 	submitPlugin.onclick = () => {
-// 		let newPluginName = document.getElementById('newPluginName')
-// 		let newPluginURL = document.getElementById('newPluginURL')
-
-// 		if (!newPluginURL.checkValidity()) {
-// 			newPluginURL.reportValidity()
-// 			return
-// 		}
-
-// 		socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
-// 	}
-// 	addPluginForm.append(submitPlugin)
-// 	if (!pluginsMenu.querySelector('#addPluginForm')) {
-// 		pluginsMenu.append(addPluginForm)
-// 	} else {
-// 		return;
-// 	};
-// })
-
-socket.emit('customPollUpdate')
-socket.on('customPollUpdate', (
-	newPublicCustomPolls,
-	newClassroomCustomPolls,
-	newUserCustomPolls,
-	newCustomPolls
-) => {
-	publicCustomPolls = newPublicCustomPolls
-	classroomCustomPolls = newClassroomCustomPolls
-	userCustomPolls = newUserCustomPolls
-	customPolls = newCustomPolls
-	let publicPollsDiv = document.querySelector('div#publicPolls')
-	let classPollsDiv = document.querySelector('div#classPolls')
-	let userPollsDiv = document.querySelector('div#userPolls')
-	let fastPollDiv = document.querySelector('div#quickPoll')
-	let selectPollDiv = document.querySelector('div#selectPoll')
-
-	// Creation of quick poll buttons in Fast Poll
-	for (let i = 1; i <= 4; i++) {
-		let customPoll = customPolls[i]
-		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
-		startButton.style.gridColumn = 3
-		startButton.textContent = customPoll.name
-		startButton.onclick = () => {
-			startPoll(i);
-		};
-		if (fastPollDiv.children[i - 1]) {
-			fastPollDiv.children[i - 1].replaceWith(startButton);
-		} else {
-			fastPollDiv.appendChild(startButton);
-		}
-	};
-	selectPollDiv.innerHTML = ''
-	
-	// Creation of switchAll button
-	let switchAll = document.createElement('button')
-	switchAll.className = 'switchAll'
-	switchAll.textContent = 'Switch All'
-
-	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
-	switchAll.onclick = () => {
-		switchState = !switchState
-		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
-			elem.click()
-		}
-
-		for (let student of Object.values(students)) {
-			if (student.permissions >= TEACHER_PERMISSIONS) continue
-
-			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
-			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
-
-			if (studCheck.checked != switchState) {
-				studCheck.click()
-			}
-			studElem.open = studCheck.checked
-		}
-	};
-	if (selectPollDiv.children[0]) {
-		selectPollDiv.children[0].replaceWith(switchAll);
-	} else {
-		selectPollDiv.appendChild(switchAll);
-	}
-
-	for (let student of Object.values(students)) {
-		if (student.permissions >= TEACHER_PERMISSIONS) continue
-
-		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
-
-		studCheck.onclick = () => {
-			let votingRight = studCheck.checked
-			let studBox = classroom.poll.studentBoxes
-			if (studCheck.checked) {
-				if (!studBox.includes(student.username)) studBox.push(student.username)
-			} else {
-				studBox = studBox.filter((box) => box != student.username)
-			}
-			studBox = studBox.sort()
-			socket.emit('votingRightChange', student.username, votingRight, studBox)
-		}
+// Creates the tag buttons in the select box
+function createTagSelectButtons() {
+	// Clear every tag in the select box
+	for (const tag of selectPollDiv.children) {
+		if (tag.className === 'switchAll') continue;
+		tag.remove();
 	}
 
 	// Creation of tag buttons in the select box
@@ -508,6 +335,91 @@ socket.on('customPollUpdate', (
 			selectPollDiv.appendChild(tagPoll);
 		}
 	}
+}
+
+socket.emit('customPollUpdate')
+socket.on('customPollUpdate', (
+	newPublicCustomPolls,
+	newClassroomCustomPolls,
+	newUserCustomPolls,
+	newCustomPolls
+) => {
+	publicCustomPolls = newPublicCustomPolls
+	classroomCustomPolls = newClassroomCustomPolls
+	userCustomPolls = newUserCustomPolls
+	customPolls = newCustomPolls
+	let publicPollsDiv = document.querySelector('div#publicPolls')
+	let classPollsDiv = document.querySelector('div#classPolls')
+	let userPollsDiv = document.querySelector('div#userPolls')
+	let fastPollDiv = document.querySelector('div#quickPoll')
+
+	// Creation of quick poll buttons in Fast Poll
+	for (let i = 1; i <= 4; i++) {
+		let customPoll = customPolls[i]
+		let startButton = document.createElement('button')
+		startButton.className = 'start-custom-poll'
+		startButton.style.gridColumn = 3
+		startButton.textContent = customPoll.name
+		startButton.onclick = () => {
+			startPoll(i);
+		};
+		if (fastPollDiv.children[i - 1]) {
+			fastPollDiv.children[i - 1].replaceWith(startButton);
+		} else {
+			fastPollDiv.appendChild(startButton);
+		}
+	}
+	selectPollDiv.innerHTML = ''
+	
+	// Creation of switchAll button
+	let switchAll = document.createElement('button')
+	switchAll.className = 'switchAll'
+	switchAll.textContent = 'Switch All'
+
+	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
+	switchAll.onclick = () => {
+		switchState = !switchState
+		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
+			elem.click()
+		}
+
+		for (let student of Object.values(students)) {
+			if (student.permissions >= TEACHER_PERMISSIONS) continue
+
+			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+
+			if (studCheck.checked != switchState) {
+				studCheck.click()
+			}
+			studElem.open = studCheck.checked
+		}
+	};
+	if (selectPollDiv.children[0]) {
+		selectPollDiv.children[0].replaceWith(switchAll);
+	} else {
+		selectPollDiv.appendChild(switchAll);
+	}
+
+	for (let student of Object.values(students)) {
+		if (student.permissions >= TEACHER_PERMISSIONS) continue
+
+		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+
+		studCheck.onclick = () => {
+			let votingRight = studCheck.checked
+			let studBox = classroom.poll.studentBoxes
+			if (studCheck.checked) {
+				if (!studBox.includes(student.username)) studBox.push(student.username)
+			} else {
+				studBox = studBox.filter((box) => box != student.username)
+			}
+			studBox = studBox.sort()
+			socket.emit('votingRightChange', student.username, votingRight, studBox)
+		}
+	}
+
+	createTagSelectButtons();
 
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
