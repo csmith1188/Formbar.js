@@ -159,13 +159,13 @@ function buildStudent(room, studentData) {
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
             if (tag == 'Offline') continue
+
             let button = document.createElement('button');
             button.innerHTML = tag
             button.name = `button${room.tagNames[i]}`;
             button.value = room.tagNames[i];
             if (studentData.tags != null && studentData.tags != undefined) {
                 button.onclick = function () {
-                    let tags = studentData.tags.split(",")
                     if (!button.classList.contains('pressed')) {
                         button.classList.add('pressed')
                         let span = document.createElement('span');
@@ -176,7 +176,13 @@ function buildStudent(room, studentData) {
                         button.classList.remove('pressed')
                         studTagsSpan.querySelector(`#${tag}`).remove()
                     }
+
+                    // When someone clicks on a tag, save the tags to the server
+                    const tags = []
+                    for (let tag of studTagsSpan.children) tags.push(tag.textContent)
+                    socket.emit('saveTags', studentData.id, tags, studentData.username)
                 }
+
                 for (ttag of studentData.tags.split(",")) {
                     if (ttag == tag) {
                         button.classList.add('pressed')
@@ -189,16 +195,6 @@ function buildStudent(room, studentData) {
                 roomTagDiv.appendChild(button);
             };
         }
-        let saveButton = document.createElement('button')
-        saveButton.innerHTML = 'Save'
-        saveButton.id = 'saveButton'
-        saveButton.onclick = () => {
-            //Update the users tags in the database and class data
-            let tags = []
-            for (let tag of studTagsSpan.children) tags.push(tag.textContent)
-            socket.emit('saveTags', studentData.id, tags, studentData.username)
-        }
-        roomTagDiv.appendChild(saveButton)
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')

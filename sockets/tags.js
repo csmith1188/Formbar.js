@@ -30,8 +30,6 @@ module.exports = {
                             database.run('UPDATE users SET tags = ? WHERE username = ?', [studentTags.toString(), student.username], (err) => {
                                 if (err) {
                                     logger.log(err.stack);
-                                } else {
-                                    socket.emit('reload');
                                 }
                             });
                         } else {
@@ -44,17 +42,16 @@ module.exports = {
                     if (err) {
                         logger.log(err.stack);
                     }
+
                     if (row) {
                         database.run('UPDATE classroom SET tags = ? WHERE name = ?', [tags.toString(), classInformation.classrooms[socket.request.session.classId].className], (err) => {
                             if (err) {
                                 logger.log(err.stack);
-                            } else {
-                                socket.emit('reload');
                             }
                         });
                     } else {
                         socket.send('message', 'Class not found')
-                    };
+                    }
                 });
             }
             catch (err) {
@@ -95,8 +92,6 @@ module.exports = {
                                 logger.log('error', err)
                                 socket.emit('message', 'There was a server error try again.')
                                 return
-                            } else {
-                                socket.emit('reload')
                             }
                         });
                     } else {
