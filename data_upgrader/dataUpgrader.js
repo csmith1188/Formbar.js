@@ -121,7 +121,7 @@ async function upgradeDatabase() {
             await dbRun('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)', []);
 
             // Recreate the users table
-            // await recreateTable('users');
+            await recreateTable('users');
 
             // Update passwords from encrypted to hashed and add new fields
             database.all('SELECT * FROM users', async (err, rows) => {
