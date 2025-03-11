@@ -208,15 +208,49 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
+	function getTags() {
+		const tags = [];
+		for (let tag of tagsDiv.children) {
+			if (tag.value === "" || tag.value === "Offline") continue;
+			tags.push(tag.value);
+		}
+		return tags;
+	}
+
+	// Sends the tags to the server
+	function sendTags() {
+		const tags = getTags();
+		socket.emit('setTags', tags);
+	}
+
+	function updateStudentTags() {
+		const tags = getTags();
+		for (const student of usersDiv.children) {
+			// Clear room tags
+			const roomTags = student.querySelectorAll('#roomTags')[0];
+			roomTags.innerHTML = '';
+
+			for (const tag of tags) {
+				const tagElement = document.createElement('div');
+				tagElement.textContent = tag;
+				tagElement.name = tag;
+				roomTags.appendChild(tagElement);
+			}
+		}
+	}
+
+	// Creates a tag element in the tag div
 	function addTagElement(tag) {
 		if (tag == "" || tag == "Offline" || tag == null) return
 		let tagOption = document.createElement('div')
 		tagOption.value = tag
 		tagOption.textContent = tag
+
 		let removeButton = document.createElement('button')
 		removeButton.textContent = '✖'
 		removeButton.onclick = () => {
 			tagsDiv.removeChild(tagOption)
+			sendTags()
 		}
 		tagOption.appendChild(removeButton)
 		tagsDiv.appendChild(tagOption)
@@ -243,6 +277,10 @@ socket.on('cpUpdate', (newClassroom) => {
 				addTagElement(newTag.value)
 			}
 			newTag.value = ''
+
+			// When a new tag is added, send the new tags to the server
+			sendTags()
+			updateStudentTags()
 		}
 
 		newTagDiv.appendChild(newTag)

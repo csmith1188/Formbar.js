@@ -154,7 +154,7 @@ function buildStudent(room, studentData) {
             }
             permDiv.appendChild(permSwitch)
         }
-        
+
         // Add each tag as a button to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
@@ -197,7 +197,7 @@ function buildStudent(room, studentData) {
                     }
                 }
                 roomTagDiv.appendChild(button);
-            };
+            }
         }
 
         // Ban and Kick buttons
