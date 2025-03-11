@@ -60,7 +60,7 @@ function recreateTable(tableName) {
             // Get columns from the table in the template database
             const columns = await dbGetAll(`PRAGMA table_info(${tableName})`, [], databaseTemplate);
             const columnDefinitions = columns
-                .map(column => `${column.name} ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
+                .map(column => `"${column.name}" ${column.type} ${column.notnull ? 'NOT NULL' : ''} ${column.pk ? 'PRIMARY KEY' : ''} ${column.dflt_value ? `DEFAULT ${column.dflt_value}` : ''} ${column.pk ? 'AUTOINCREMENT' : ''}`)
                 .join(', ');
 
             // Check if the temporary table already exists and drop it if it does
@@ -76,7 +76,7 @@ function recreateTable(tableName) {
 
             // Copy the data over only from columns that they have in common
             // This is to support columns being removed
-            const rows = await dbGetAll(`SELECT ${commonColumns.join(', ')} FROM ${tableName}`, []);
+            const rows = await dbGetAll(`SELECT ${commonColumns.map(col => `"${col}"`).join(', ')} FROM ${tableName}`, []);
             for (const row of rows) {
                 const values = newColumns.map(column => {
                     const columnInfo = columns.find(col => col.name === column);
@@ -121,7 +121,7 @@ async function upgradeDatabase() {
             await dbRun('CREATE TABLE IF NOT EXISTS "refresh_tokens" (user_id INTEGER, refresh_token TEXT NOT NULL UNIQUE, exp INTEGER NOT NULL)', []);
 
             // Recreate the users table
-            await recreateTable('users');
+            // await recreateTable('users');
 
             // Update passwords from encrypted to hashed and add new fields
             database.all('SELECT * FROM users', async (err, rows) => {
