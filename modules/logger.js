@@ -48,11 +48,14 @@ function createLoggerTransport(level) {
 
 // Delete empty log files to avoid clutter
 function deleteEmptyLogFiles() {
-    fs.readdirSync("logs").forEach((file) => {
-        if (fs.statSync(`logs/${file}`).size == 0) {
-            fs.unlinkSync(`logs/${file}`);
-        }
-    });
+    try {
+        fs.readdirSync("logs").forEach((file) => {
+            const currentDate = new Date().toISOString().split('T')[0];
+            if (fs.statSync(`logs/${file}`).size === 0 && !file.includes(currentDate)) {
+                fs.unlinkSync(`logs/${file}`);
+            }
+        });
+    } catch {}
 }
 
 // Create a new logger instance using the winston library
