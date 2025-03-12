@@ -13,7 +13,7 @@
 			<script src='/js/deepObjectEqual.js'></script>
 		</head>
 
-		<body onload="load(<%= pollStatus %>)">
+		<body onload="load(<%= pollStatus %>)" style="margin-bottom: 10cqh;">
 			<%- include('../partials/formbar_header') %>
 				<header id='quickMenu'>
 					<p id='className'>Class Name:</p>
@@ -202,6 +202,7 @@
 					<div class="ongoingButtons">
 						<button id='pollsMenu' class='quickButton tab'
 							data-tab-group='mainTabs'>Edit Poll</button>
+						<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
 						<button id='clearPoll' onclick='clearPollFunc()'>Clear Poll</button>
 						<button  id='endPoll' onclick='endPollFunc()'>End Poll</button>
 					</div>
@@ -214,15 +215,15 @@
 				<details id="student-fake" style="opacity: 0.65; order: 9997;" style="display: none;" hidden>
 					<summary>
 						<span id="alerts"></span>
-						<span id="username"></span>
 						<span>
 							<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
 						</span>
+						<span id="username"></span>
 						<span id="studentTags"></span>
-						<span id="response"></span>
 						<div id="reasons">
 							<div id="helpReason"></div>
 							<div id="breakReason"></div>
+							<div id="response"></div>
 						</div>
 					</summary>
 					<div id="permissions"></div>

@@ -39,7 +39,10 @@ function buildStudent(room, studentData) {
         studBox.checked = room.poll.studentBoxes.includes(studentData.username)
 
         for (let eachResponse in room.poll.responses) {
-            if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
+            if (studentData.pollRes.textRes) {
+                pollBox.style.color = room.poll.responses[eachResponse].color
+                pollBox.textContent = studentData.pollRes.textRes
+            } else if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
                 pollBox.style.color = room.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
             } else if (room.poll.multiRes && studentData.pollRes.buttonRes.includes(eachResponse)) {
@@ -126,7 +129,7 @@ function buildStudent(room, studentData) {
             breakSound()
         }
 
-        if (studentData.break || studentData.help) {
+        if (studentData.break || studentData.help || studentData.pollRes) {
             reasonsDiv.setAttribute('style', 'display: flex;')
         } else {
             reasonsDiv.setAttribute('style', 'display: none;')
