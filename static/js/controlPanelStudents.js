@@ -361,12 +361,6 @@ function filterSortChange(classroom) {
     }
 }
 
-function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
-}
-
 // sets filters
 for (let filterElement of document.getElementsByClassName('filter')) {
     filterElement.onclick = (event) => {
@@ -425,11 +419,6 @@ for (let sortElement of document.getElementsByClassName('sort')) {
 
 function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
-}
-
-function doStep(id) {
-    alert('Step ' + id + ' activated')
-    socket.emit('doStep', id)
 }
 
 function makeLesson() {

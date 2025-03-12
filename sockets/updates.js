@@ -15,18 +15,6 @@ module.exports = {
             socketUpdates.modeUpdate()
         })
 
-        socket.on('quizUpdate', () => {
-            logger.log('info', `[quizUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-            socketUpdates.quizUpdate()
-        })
-
-        socket.on('lessonUpdate', () => {
-            logger.log('info', `[lessonUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-            socketUpdates.lessonUpdate()
-        })
-
         // Sends poll and student response data to client side virtual bar
         socket.on('vbUpdate', () => {
             logger.log('info', `[virtualBarUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
