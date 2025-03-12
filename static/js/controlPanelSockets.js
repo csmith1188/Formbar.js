@@ -53,10 +53,6 @@ socket.on('cpUpdate', (newClassroom) => {
 	classCode.textContent = `Class Code: ${newClassroom.key}`
 	// classId.textContent = `Class ID: ${newClassroom.id}`
 
-	document.getElementById('nextStep').onclick = () => {
-		doStep(classroom.currentStep)
-	}
-
 	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 	if (newClassroom.poll.prompt != "") {
 		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
