@@ -172,18 +172,28 @@ function buildStudent(room, studentData) {
                         span.textContent = tag;
                         span.setAttribute('id', tag);
                         studTagsSpan.appendChild(span);
+
+                        // Add to current tags
+                        if (!currentTags.includes(span.textContent)) {
+                            currentTags.push(span.textContent);
+                        }
                     } else {
                         button.classList.remove('pressed')
-                        studTagsSpan.querySelector(`#${tag}`).remove()
+                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+
+                        // Remove from current tags
+                        const index = currentTags.indexOf(tagSpan.textContent);
+                        if (index > -1) {
+                            currentTags.splice(index, 1);
+                        }
+                        tagSpan.remove();
                     }
 
                     // When someone clicks on a tag, save the tags to the server
                     const tags = []
-                    for (let tag of studTagsSpan.children) tags.push(tag.textContent)
+                    for (let tag of studTagsSpan.children) tags.push(tag.textContent);
                     socket.emit('saveTags', studentData.id, tags, studentData.username)
 
-                    // Update the tags in the select box
-                    currentTags = tags;
                     createTagSelectButtons();
                 }
 
