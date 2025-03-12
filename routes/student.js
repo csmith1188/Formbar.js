@@ -26,6 +26,15 @@ module.exports = {
                 if (answer) {
                     classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes = answer
                 }
+
+                // Render the student page with the user's information
+                logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes) myTextRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes) lesson = (classInformation.classrooms[req.session.classId].lesson)`)
+                res.render('pages/student', {
+                    title: 'Student',
+                    user: JSON.stringify(user),
+                    myRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes,
+                    myTextRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes
+                })
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
