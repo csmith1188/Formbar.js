@@ -24,6 +24,16 @@ function buildStudent(room, studentData) {
         newStudent.hidden = false
         newStudent.style.display = 'flex'
         newStudent.id = `student-${studentData.username}`
+        newStudent.open = opendetails.indexOf(studentData.username) != -1
+
+        newStudent.addEventListener('click', () => {
+            if (newStudent.open) {
+                opendetails.splice(opendetails.indexOf(studentData.username), 1)
+            } else {
+                opendetails.push(studentData.username)
+            }
+        })
+        
         let summary = newStudent.querySelector('summary')
         let alertSpan = newStudent.querySelector('#alerts')
         let helpReason = newStudent.querySelector('#helpReason')
@@ -178,7 +188,7 @@ function buildStudent(room, studentData) {
                     studTagsSpan.appendChild(span);
 
                     // Add to current tags
-                    if (!currentTags.includes(span.textContent)) {
+                    if (!currentTags.indexOf(span.textContent) != -1) {
                         currentTags.push(span.textContent);
                     }
                 } else {

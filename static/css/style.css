@@ -792,6 +792,12 @@ div.break {
 	border-bottom: 3px var(--theme-color) solid;
 }
 
+#users details[id^="student"] summary *:not(#studentTags *, #reasons *, #reasons) {
+	margin: 0;
+	margin-left: 1cqw;
+	margin-right: 1cqw;
+}
+
 #users details[id^="student"] #alerts {
 	position: absolute;
 	display: flex;
