@@ -246,8 +246,9 @@ function buildStudent(room, studentData) {
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
 
-        if (helpReason.textContent == '' && breakReason.textContent == '' && pollBox.textContent == '') reasonsDiv.style.display = 'none'
-
+        if (pollBox.textContent == '' && helpReason.textContent == '' && breakReason.textContent == '') {
+            reasonsDiv.style.display = 'none'
+        }
         return newStudent
     }
 }
