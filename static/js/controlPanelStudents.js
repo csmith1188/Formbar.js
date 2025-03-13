@@ -154,11 +154,12 @@ function buildStudent(room, studentData) {
             }
             permDiv.appendChild(permSwitch)
         }
-        
+
         // Add each tag as a button to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
             if (tag == 'Offline') continue
+
             let button = document.createElement('button');
             button.innerHTML = tag
             button.name = `button${room.tagNames[i]}`;
@@ -171,11 +172,31 @@ function buildStudent(room, studentData) {
                         span.textContent = tag;
                         span.setAttribute('id', tag);
                         studTagsSpan.appendChild(span);
+
+                        // Add to current tags
+                        if (!currentTags.includes(span.textContent)) {
+                            currentTags.push(span.textContent);
+                        }
                     } else {
                         button.classList.remove('pressed')
-                        studTagsSpan.querySelector(`#${tag}`).remove()
+                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+
+                        // Remove from current tags
+                        const index = currentTags.indexOf(tagSpan.textContent);
+                        if (index > -1) {
+                            currentTags.splice(index, 1);
+                        }
+                        tagSpan.remove();
                     }
+
+                    // When someone clicks on a tag, save the tags to the server
+                    const tags = []
+                    for (let tag of studTagsSpan.children) tags.push(tag.textContent);
+                    socket.emit('saveTags', studentData.id, tags, studentData.username)
+
+                    createTagSelectButtons();
                 }
+
                 for (ttag of studentData.tags.split(",")) {
                     if (ttag == tag) {
                         button.classList.add('pressed')
@@ -185,18 +206,10 @@ function buildStudent(room, studentData) {
                         studTagsSpan.appendChild(span);
                     }
                 }
-            roomTagDiv.appendChild(button);
+
+                roomTagDiv.appendChild(button);
+            }
         }
-        let saveButton = document.createElement('button')
-        saveButton.innerHTML = 'Save'
-        saveButton.id = 'saveButton'
-        saveButton.onclick = () => {
-            //Update the users tags in the database and class data
-            let tags = []
-            for (let tag of studTagsSpan.children) tags.push(tag.textContent)
-            socket.emit('saveTags', studentData.id, tags, studentData.username)
-        }
-        roomTagDiv.appendChild(saveButton)
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
@@ -359,12 +372,6 @@ function filterSortChange(classroom) {
     }
 }
 
-function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
-}
-
 // sets filters
 for (let filterElement of document.getElementsByClassName('filter')) {
     filterElement.onclick = (event) => {
@@ -423,11 +430,6 @@ for (let sortElement of document.getElementsByClassName('sort')) {
 
 function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
-}
-
-function doStep(id) {
-    alert('Step ' + id + ' activated')
-    socket.emit('doStep', id)
 }
 
 function makeLesson() {
