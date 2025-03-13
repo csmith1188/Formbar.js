@@ -317,30 +317,33 @@ function createTagSelectButtons() {
 			} else {
 				tagPoll.className = 'tagPoll'
 			}
-			for (let tag of document.querySelectorAll('#studentTags')) {
+			for (let tag of document.querySelectorAll('#selectPoll button.pressed')) {
 				tag = tag.textContent
-				if (tempTags.includes(tag.name) || tag.name == "") {
+				if (tag == "") {
 					continue
 				}
-				tempTags.push(tag.name);
+				tempTags.push(tag);
 			}
 			tempTags = tempTags.sort().join();
 
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			for (let student of students) {
+        let studElem = document.querySelector(`details[id="student-${student.username}"]`)
 				if (student.permissions >= TEACHER_PERMISSIONS) continue
 				// Combines the students tags and their poll responses
 				let tempStudTags = []
 				if (student.tags == null) {
 					continue
 				}
-				for (let tag of student.tags.split(",")) {
+				for (let tag of studElem.querySelectorAll('#studentTags span')) {
+					tag = tag.textContent
 					if (tag == "") {
 						continue
 					}
 					tempStudTags.push(tag)
 				}
-				for (let tag of student.pollRes.buttonRes.split(",")) {
+				for (let tag of studElem.querySelectorAll('#response')) {
+					tag = tag.textContent
 					if (tag == "" || tag == "remove") {
 						continue
 					}
@@ -348,14 +351,13 @@ function createTagSelectButtons() {
 				}
 				tempStudTags = tempStudTags.sort().join();
 
-				studentElement = document.getElementById(`student-${student.username}`)
-				let checkbox = studentElement.querySelector('input[type="checkbox"]')
+				let checkbox = studElem.querySelector('input[type="checkbox"]')
 
 				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
-					studentElement.open = true
+					studElem.open = true
 					if (!checkbox.checked) checkbox.click()
 				} else {
-					studentElement.open = false
+					studElem.open = false
 					if (checkbox.checked) checkbox.click()
 				}
 
@@ -413,9 +415,6 @@ socket.on('customPollUpdate', (
 	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
 	switchAll.onclick = () => {
 		switchState = !switchState
-		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
-			elem.click()
-		}
 
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue

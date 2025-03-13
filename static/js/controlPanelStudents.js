@@ -164,7 +164,7 @@ function buildStudent(room, studentData) {
             button.innerHTML = tag
             button.name = `button${room.tagNames[i]}`;
             button.value = room.tagNames[i];
-            if (studentData.tags != null && studentData.tags != undefined) {
+            if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
                 button.onclick = function () {
                     if (!button.classList.contains('pressed')) {
                         button.classList.add('pressed')
@@ -206,6 +206,7 @@ function buildStudent(room, studentData) {
                         studTagsSpan.appendChild(span);
                     }
                 }
+
                 roomTagDiv.appendChild(button);
             }
         }
