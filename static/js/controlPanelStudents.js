@@ -20,7 +20,7 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        
+
         newStudent.id = `student-${studentData.username}`
         let summary = newStudent.querySelector('summary')
         let alertSpan = newStudent.querySelector('#alerts')
@@ -60,7 +60,6 @@ function buildStudent(room, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
-
         if (studentData.help) {
             let div = document.createElement('div')
             div.textContent = '❗'
@@ -165,50 +164,49 @@ function buildStudent(room, studentData) {
             button.name = `button${room.tagNames[i]}`;
             button.value = room.tagNames[i];
             if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
-                button.onclick = function () {
-                    if (!button.classList.contains('pressed')) {
-                        button.classList.add('pressed')
-                        let span = document.createElement('span');
-                        span.textContent = tag;
-                        span.setAttribute('id', tag);
-                        studTagsSpan.appendChild(span);
+            button.onclick = function () {
+                if (!button.classList.contains('pressed')) {
+                    button.classList.add('pressed')
+                    let span = document.createElement('span');
+                    span.textContent = tag;
+                    span.setAttribute('id', tag);
+                    studTagsSpan.appendChild(span);
 
-                        // Add to current tags
-                        if (!currentTags.includes(span.textContent)) {
-                            currentTags.push(span.textContent);
-                        }
-                    } else {
-                        button.classList.remove('pressed')
-                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
-
-                        // Remove from current tags
-                        const index = currentTags.indexOf(tagSpan.textContent);
-                        if (index > -1) {
-                            currentTags.splice(index, 1);
-                        }
-                        tagSpan.remove();
+                    // Add to current tags
+                    if (!currentTags.includes(span.textContent)) {
+                        currentTags.push(span.textContent);
                     }
+                } else {
+                    button.classList.remove('pressed')
+                    const tagSpan = studTagsSpan.querySelector(`#${tag}`);
 
-                    // When someone clicks on a tag, save the tags to the server
-                    const tags = []
-                    for (let tag of studTagsSpan.children) tags.push(tag.textContent);
-                    socket.emit('saveTags', studentData.id, tags, studentData.username)
-
-                    createTagSelectButtons();
+                    // Remove from current tags
+                    const index = currentTags.indexOf(tagSpan.textContent);
+                    if (index > -1) {
+                        currentTags.splice(index, 1);
+                    }
+                    tagSpan.remove();
                 }
 
-                for (ttag of studentData.tags.split(",")) {
-                    if (ttag == tag) {
-                        button.classList.add('pressed')
-                        let span = document.createElement('span');
-                        span.textContent = tag;
-                        span.setAttribute('id', tag);
-                        studTagsSpan.appendChild(span);
-                    }
-                }
+                // When someone clicks on a tag, save the tags to the server
+                const tags = []
+                for (let tag of studTagsSpan.children) tags.push(tag.textContent);
+                socket.emit('saveTags', studentData.id, tags, studentData.username)
 
-                roomTagDiv.appendChild(button);
+                createTagSelectButtons();
             }
+
+            for (ttag of studentData.tags.split(",")) {
+                if (ttag == tag) {
+                    button.classList.add('pressed')
+                    let span = document.createElement('span');
+                    span.textContent = tag;
+                    span.setAttribute('id', tag);
+                    studTagsSpan.appendChild(span);
+                }
+            }
+
+            roomTagDiv.appendChild(button);
         }
 
         // Ban and Kick buttons
@@ -232,9 +230,8 @@ function buildStudent(room, studentData) {
         }
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
+        return newStudent
     }
-
-    return newStudent
 }
 
 // filters and sorts students
