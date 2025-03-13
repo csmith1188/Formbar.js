@@ -7,6 +7,12 @@ module.exports = {
         socket.on('setTags', (tags) => {
             // Set the tags for the class
             try {
+                // Make sure the offline tag is always present
+                if (!tags.includes("Offline")) {
+                    tags.push("Offline")
+                }
+
+                // Save the tags to the class object
                 tags = tags.sort();
                 classInformation.classrooms[socket.request.session.classId].tagNames = tags;
 
