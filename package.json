@@ -1,6 +1,6 @@
 {
 	"name": "formbar",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Javascript rewrite of Formbar, an open source classroom management tool",
 	"main": "app.js",
 	"scripts": {
