@@ -11,6 +11,9 @@ function buildOption(value, text, selected = false) {
 // Holds users that are taking a break
 const userBreak = []
 
+// Stores the currently opened student elements
+let opendetails = []
+
 // Create a student in the user list
 function buildStudent(room, studentData) {
     let newStudent
@@ -20,6 +23,16 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
+        newStudent.open = opendetails.indexOf(studentData.username) != -1
+
+        newStudent.addEventListener('click', () => {
+            if (newStudent.open) {
+                opendetails.splice(opendetails.indexOf(studentData.username), 1)
+            } else {
+                opendetails.push(studentData.username)
+            }
+        })
+
         
         newStudent.id = `student-${studentData.username}`
         let summary = newStudent.querySelector('summary')
@@ -36,7 +49,7 @@ function buildStudent(room, studentData) {
 
         newStudent.querySelector('#username').textContent = studentData.displayName
         studBox.id = 'checkbox_' + studentData.username
-        studBox.checked = room.poll.studentBoxes.includes(studentData.username)
+        studBox.checked = room.poll.studentBoxes.indexOf(studentData.username) != -1
 
         for (let eachResponse in room.poll.responses) {
             if (studentData.pollRes.textRes) {
@@ -45,7 +58,7 @@ function buildStudent(room, studentData) {
             } else if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
                 pollBox.style.color = room.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
-            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.includes(eachResponse)) {
+            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement('span')
                 tempElem.textContent = eachResponse + ' '
                 tempElem.style.color = room.poll.responses[eachResponse].color
@@ -53,7 +66,7 @@ function buildStudent(room, studentData) {
             }
         }
 
-        if (studentData.tags && studentData.tags.includes("Offline")) {
+        if (studentData.tags && studentData.tags.indexOf('Offline') != -1) {
             // Add offline icon
             summary.textContent += `💤`
             newStudent.classList.add('offline')
@@ -222,6 +235,10 @@ function buildStudent(room, studentData) {
         }
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
+
+        if (pollBox.textContent == '' && helpReason.textContent == '' && breakReason.textContent == '') {
+            reasonsDiv.style.display = 'none'
+        }
     }
 
     return newStudent
