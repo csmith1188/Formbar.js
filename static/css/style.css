@@ -534,6 +534,7 @@ details[open] #reasons {
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
 	text-align: center;
 	overflow-y: auto;
+	overflow-x: hidden;
 	animation: fadeIn 0.5s;
 	position: absolute;
 	border-radius: 5px;
@@ -547,6 +548,7 @@ details[open] #reasons {
 	font-weight: bold;
 	font-size: 1vi;
 	max-width: 25cqw;
+	max-height: 150px;
 }
 
 #response {

@@ -82,7 +82,7 @@ function buildStudent(room, studentData) {
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
             if (studentData.help.reason) {
-                helpReason.textContent = studentData.help.reason += ` at ${studentData.help.time.toLocaleTimeString()}`
+                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()} `
             }
 
             let deleteTicketButton = document.createElement('button')
@@ -105,8 +105,8 @@ function buildStudent(room, studentData) {
         } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
-            if (studentData.break.reason) {
-                breakReason.textContent = studentData.break.reason += ` at ${studentData.break.time.toLocaleTimeString()}`
+            if (studentData.break) {
+                breakReason.textContent = `"${studentData.break}"`
             }
 
             let approveBreakButton = document.createElement('button')
@@ -140,11 +140,6 @@ function buildStudent(room, studentData) {
             breakSound()
         }
 
-        if (studentData.break || studentData.help || studentData.pollRes) {
-            reasonsDiv.setAttribute('style', 'display: flex;')
-        } else {
-            reasonsDiv.setAttribute('style', 'display: none;')
-        }
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
