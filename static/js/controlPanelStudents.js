@@ -188,19 +188,21 @@ function buildStudent(room, studentData) {
                     studTagsSpan.appendChild(span);
 
                     // Add to current tags
-                    if (!currentTags.indexOf(span.textContent) != -1) {
+                    if (!currentTags.includes(span.textContent)) {
                         currentTags.push(span.textContent);
                     }
                 } else {
                     button.classList.remove('pressed')
-                    const tagSpan = studTagsSpan.querySelector(`#${tag}`);
 
-                    // Remove from current tags
-                    const index = currentTags.indexOf(tagSpan.textContent);
-                    if (index > -1) {
-                        currentTags.splice(index, 1);
+                    // Remove from current tags if no other user has the tag
+                    if (currentTags.includes(tag) && !document.querySelector(`button[value="${tag}"].pressed`)) {
+                        currentTags.splice(currentTags.indexOf(tag), 1);
                     }
-                    tagSpan.remove();
+
+                    if (studTagsSpan) {
+                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+                        tagSpan.remove();
+                    }
                 }
 
                 // When someone clicks on a tag, save the tags to the server
