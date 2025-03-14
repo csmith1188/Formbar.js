@@ -784,20 +784,30 @@ div.break {
 	cursor: pointer;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
-	text-align: center;
+	justify-content: flex-start;
 	align-items: center;
+	text-align: center;
 	list-style-type: '';
+}
+
+#users details[id^="student"] summary:not(:first-child:nth-child(2)){
+	justify-content: center;
+}
+
+#checkbox_student {
+	order: 1;
+	margin-right: 10px;
+}
+
+#studentTags {
+	order: 3;
+	display: flex;
+	justify-content: center;
+	margin-left: auto;
 }
 
 #users details[id^="student"][open] summary {
 	border-bottom: 3px var(--theme-color) solid;
-}
-
-#users details[id^="student"] summary *:not(#studentTags *, #reasons *, #reasons) {
-	margin: 0;
-	margin-left: 1cqw;
-	margin-right: 1cqw;
 }
 
 #users details[id^="student"] #alerts {
