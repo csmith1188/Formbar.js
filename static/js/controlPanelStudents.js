@@ -187,6 +187,13 @@ function buildStudent(room, studentData) {
                     span.setAttribute('id', tag);
                     studTagsSpan.appendChild(span);
 
+                    // If the studentData does not have tags, add the tag
+                    if (studentData.tags) {
+                        studentData.tags = `${studentData.tags},${tag}`;
+                    } else {
+                        studentData.tags = tag;
+                    }
+
                     // Add to current tags
                     if (!currentTags.includes(span.textContent)) {
                         currentTags.push(span.textContent);
@@ -199,6 +206,11 @@ function buildStudent(room, studentData) {
                         currentTags.splice(currentTags.indexOf(tag), 1);
                     }
 
+                    // Remove the tag from the studentData tags
+                    if (studentData) {
+                        studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+                    }
+
                     if (studTagsSpan) {
                         const tagSpan = studTagsSpan.querySelector(`#${tag}`);
                         tagSpan.remove();
@@ -206,9 +218,13 @@ function buildStudent(room, studentData) {
                 }
 
                 // When someone clicks on a tag, save the tags to the server
-                const tags = []
-                for (let tag of studTagsSpan.children) tags.push(tag.textContent);
-                socket.emit('saveTags', studentData.id, tags, studentData.username)
+                const tags = [];
+                if (roomTagDiv) {
+                    for (let tagButton of roomTagDiv.querySelectorAll('button.pressed')) {
+                        tags.push(tagButton.textContent);
+                    }
+                    socket.emit('saveTags', studentData.id, tags, studentData.username);
+                }
 
                 createTagSelectButtons();
             }
