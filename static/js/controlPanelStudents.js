@@ -182,26 +182,44 @@ function buildStudent(room, studentData) {
                     span.setAttribute('id', tag);
                     studTagsSpan.appendChild(span);
 
+                    // If the studentData does not have tags, add the tag
+                    if (studentData.tags) {
+                        studentData.tags = `${studentData.tags},${tag}`;
+                    } else {
+                        studentData.tags = tag;
+                    }
+
                     // Add to current tags
-                    if (!currentTags.indexOf(span.textContent) != -1) {
+                    if (!currentTags.includes(span.textContent)) {
                         currentTags.push(span.textContent);
                     }
                 } else {
                     button.classList.remove('pressed')
-                    const tagSpan = studTagsSpan.querySelector(`#${tag}`);
 
-                    // Remove from current tags
-                    const index = currentTags.indexOf(tagSpan.textContent);
-                    if (index > -1) {
-                        currentTags.splice(index, 1);
+                    // Remove from current tags if no other user has the tag
+                    if (currentTags.includes(tag) && !document.querySelector(`button[value="${tag}"].pressed`)) {
+                        currentTags.splice(currentTags.indexOf(tag), 1);
                     }
-                    tagSpan.remove();
+
+                    // Remove the tag from the studentData tags
+                    if (studentData) {
+                        studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+                    }
+
+                    if (studTagsSpan) {
+                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+                        tagSpan.remove();
+                    }
                 }
 
                 // When someone clicks on a tag, save the tags to the server
-                const tags = []
-                for (let tag of studTagsSpan.children) tags.push(tag.textContent);
-                socket.emit('saveTags', studentData.id, tags, studentData.username)
+                const tags = [];
+                if (roomTagDiv) {
+                    for (let tagButton of roomTagDiv.querySelectorAll('button.pressed')) {
+                        tags.push(tagButton.textContent);
+                    }
+                    socket.emit('saveTags', studentData.id, tags, studentData.username);
+                }
 
                 createTagSelectButtons();
             }
