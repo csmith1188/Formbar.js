@@ -754,8 +754,19 @@ div .tabContent {
 	min-width: 300px;
 }
 
+#users details[id^="student"][open] #studentTags {
+	width: 100%;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+	max-height: max-content;
+}
+
 #studentTags {
-	margin: 1%;
+	order: 3;
+	display: flex;
+	justify-content: space-evenly;
+	margin-left: auto;
+	width: 70%;
 }
 
 #tagOptions div {
@@ -797,13 +808,6 @@ div.break {
 #checkbox_student {
 	order: 1;
 	margin-right: 10px;
-}
-
-#studentTags {
-	order: 3;
-	display: flex;
-	justify-content: center;
-	margin-left: auto;
 }
 
 #users details[id^="student"][open] summary {
