@@ -530,7 +530,30 @@ details[open] #reasons {
 }
 
 #reasons {
+	transform: translateY(80%);
+	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
+	text-align: center;
+	overflow-y: auto;
+	overflow-x: hidden;
+	animation: fadeIn 0.5s;
+	position: absolute;
+	border-radius: 5px;
+	padding: 5px;
 	transition: transform 250ms ease-in-out;
+	display: flex;
+	background-color: #f0f0f0;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 1vi;
+	max-width: 25cqw;
+	max-height: 150px;
+}
+
+#response {
+	width: 100%;
+	word-break: break-all;
 }
 
 #quickMenu {
@@ -656,8 +679,6 @@ hr {
 	border-right: 3px solid var(--theme-color);
 }
 
-
-
 .ongoingPollOptions #timeDiv p,
 .ongoingPollOptions #timeDiv input {
 	display: inline;
@@ -714,7 +735,7 @@ div .tabContent {
 #users {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
+	justify-content: space-evenly;
 }
 
 #users details[id^="student"],
@@ -722,18 +743,30 @@ div .tabContent {
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 5px;
-	margin-bottom: 1vi;
 	width: 25%;
 	font-size: larger;
-	margin: 5vh;
 	margin-top: 2.5vh;
+	margin-left: 2.5vw;
+	margin-right: 2.5vw;
+	margin-bottom: 15cqh;
 	height: fit-content;
 	background-color: var(--bg-light-blue);
 	min-width: 300px;
 }
 
+#users details[id^="student"][open] #studentTags {
+	width: 100%;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+	max-height: max-content;
+}
+
 #studentTags {
-	margin: 1%;
+	order: 3;
+	display: flex;
+	justify-content: space-evenly;
+	margin-left: auto;
+	width: 70%;
 }
 
 #tagOptions div {
@@ -762,10 +795,19 @@ div.break {
 	cursor: pointer;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
-	text-align: center;
+	justify-content: flex-start;
 	align-items: center;
+	text-align: center;
 	list-style-type: '';
+}
+
+#users details[id^="student"] summary:not(:first-child:nth-child(2)){
+	justify-content: center;
+}
+
+#checkbox_student {
+	order: 1;
+	margin-right: 10px;
 }
 
 #users details[id^="student"][open] summary {
@@ -801,7 +843,7 @@ div.break {
 
 
 #users span:empty, #users div:empty {
-	display: none;
+	display: none !important;
 }
 
 #users #roomTags {
@@ -874,23 +916,6 @@ div.break {
 	font-size: 1.5cqw;
 }
 
-#reasons {
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: #f0f0f0;
-	border-radius: 5px;
-	padding: 5px;
-	transform: translateY(80%);
-	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.781);
-	text-align: center;
-	max-height: 200px;
-	overflow-y: auto;
-	animation-name: fadeIn;
-	animation-duration: 0.5s;
-}
-
 #helpReason, #breakReason {
 	display: inline-block;
 	overflow-wrap: break-word;
@@ -905,8 +930,8 @@ div.break {
 	font-size: 1.1cqw;
 }
 
-#helpReason:empty, #breakReason:empty {
-	display: none;
+#helpReason:empty, #breakReason:empty, #response:empty {
+	display: none !important;
 }
 
 /* news page */
