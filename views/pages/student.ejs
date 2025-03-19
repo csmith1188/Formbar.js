@@ -22,19 +22,18 @@
 
 							<br>
 							<div id="helpBreak">
-								<h1>Need Help?</h1>
-								<form id="eventForm">
-									<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
-										placeholder="Reason (optional)"></textarea>
-									<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
-								</form>
-								<button onclick="help()" class="quickButton">Send Ticket</button>
-								<br>
-								<h1>Need a Break?</h1>
-								<button class="breakButton"
-									onclick="{document.getElementById('requestBreakDialog').showModal()}">
-									Take Break
-								</button>
+								<div id="studHelp">
+									<h1>Need Help?</h1>
+									<button onclick="{document.getElementById('requestHelpDialog').showModal()}" class="quickButton helpButton">Send Ticket</button>
+									<br>
+								</div>
+								<div id="studBreak">
+									<h1>Need a Break?</h1>
+									<button class="breakButton"
+										onclick="{document.getElementById('requestBreakDialog').showModal()}">
+										Take Break
+									</button>
+								</div>
 								<div id="pollContent">
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
 									<div id="poll">
@@ -71,6 +70,21 @@
 								<button class="quickButton" id="cancel" type="button"
 									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
 								<button class="quickButton" type="submit">Take Break</button>
+							</div>
+						</form>
+					</dialog>
+					<dialog id="requestHelpDialog" class="contentBox">
+						<form onsubmit="help()">
+							<h3 style="margin-top: 0;">Request Help</h3>
+							<div id="eventForm">
+								<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
+									placeholder="Reason (optional)"></textarea>
+								<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
+							</div>
+							
+							<div id="takeHelp" class="hCentered">
+								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();">Cancel</button>
+								<button class="quickButton" type="submit">Request Help</button>
 							</div>
 						</form>
 					</dialog>
@@ -247,6 +261,7 @@
 
 					function help() {
 						let reason = document.getElementById('ticket').value
+						console.log('help')
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
 					}
