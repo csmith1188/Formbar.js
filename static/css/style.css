@@ -523,9 +523,14 @@ input[type="radio"]:focus {
 
 #studentVBar {
 	display: flex;
-	justify-content: space-evenly;
+	justify-content: center;
 	margin-bottom: 2vh;
 	align-items: center;
+}
+
+#studentVBar #vbContainer {
+	width: 50% !important;
+	height: 85vh !important;
 }
 
 #helpBreak {
@@ -624,8 +629,8 @@ details[open] #reasons {
 }
 
 #VBDiv #vbContainer {
-	width: 50%;
-	height: 50vh;
+	width: 25% !important;
+	height: auto !important;
 }
 
 #VBOptions {
