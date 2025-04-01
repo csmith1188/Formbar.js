@@ -1,3 +1,5 @@
+const { request } = require("express")
+
 // Permissions range from highest to lowest
 const MANAGER_PERMISSIONS = 5
 const TEACHER_PERMISSIONS = 4
@@ -17,7 +19,9 @@ const PAGE_PERMISSIONS = {
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
-	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	logs: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
 // Defines the default permissions for people in a class
@@ -46,8 +50,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	changeIp: MANAGER_PERMISSIONS,
 	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
-	newTag: TEACHER_PERMISSIONS,
-	removeTag: TEACHER_PERMISSIONS,
+	setTags: TEACHER_PERMISSIONS,
 	passwordUpdate: MANAGER_PERMISSIONS,
 	joinClass: GUEST_PERMISSIONS,
 	joinClassroom: GUEST_PERMISSIONS,
@@ -78,6 +81,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	timerOn: TEACHER_PERMISSIONS,
 	votingRightChange: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
+	requestConversion: STUDENT_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions
@@ -113,7 +117,8 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
-	awardDigipogs: 'awardDigipogs'
+	awardDigipogs: 'awardDigipogs',
+	requestConversion: 'requestConversion'
 }
 
 module.exports = {

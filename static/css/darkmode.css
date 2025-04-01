@@ -45,19 +45,19 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-	color: var(--color-white);
+	color: var(--bg-light-blue) !important;
 }
 
 h1.headertext, h2.headertext {
-	color: var(--color-blue);
+	color: var(--bg-light-blue) !important;
 }
 
-h1#noPoll.textColorContent {
-	color: var(--light-cyan);
+h1#noPoll.textColorContent, h1#headerText.textColorContent {
+	color: var(--light-cyan) !important;
 }
 
 p {
-	color: var(--color-white);
+	color: var(--bg-light-blue) !important;
 }
 
 input {

@@ -124,7 +124,7 @@ class SocketUpdates {
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
-    
+            
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {
             logger.log('error', err.stack);
@@ -138,7 +138,7 @@ class SocketUpdates {
 
             const classData = structuredClone(classInformation.classrooms[classId])
             logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
-            
+
             let totalResponses = 0;
             let totalStudentsIncluded = [];
             let totalStudentsExcluded = [];
@@ -818,6 +818,16 @@ class SocketUpdates {
             }, classData.timer);
         } catch (err) {
             logger.log('error', err.stack);
+        }
+    }
+
+    userUpdate(info) {
+        try {
+            if (info === 'apiRefresh') {
+                user.socket.emit('apiRefresh')
+            }
+        } catch (err) {
+            logger.log('error', err.stack)
         }
     }
 }

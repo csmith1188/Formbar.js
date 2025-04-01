@@ -44,14 +44,18 @@ function isVerified(req, res, next) {
 	try {
 		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		
-		// If the user is verified or email functionality is disabled...
-		if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
-			next();
+		if (req.session.username) {
+			// If the user is verified or email functionality is disabled...
+			if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
+				next();
+			} else {
+				// Redirect to the login page
+				res.redirect('/login');
+			};
 		} else {
-			// Redirect to the login page
+			// If there is no session, redirect to the login page
 			res.redirect('/login');
-		};
+		}
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -101,6 +105,11 @@ function permCheck(req, res, next) {
 			// Check for ?(urlParams) and removes it from the string
 			if (urlPath.indexOf('?') != -1) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('?'))
+			}
+
+			// Check for a second / in the url and remove it from the string
+			if (urlPath.indexOf('/') != -1) {
+				urlPath = urlPath.slice(0, urlPath.indexOf('/'))
 			}
 
 			if (!classInformation.users[username]) {
