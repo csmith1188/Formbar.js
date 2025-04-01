@@ -11,6 +11,16 @@ const rateLimits = {}
 const userSockets = {}
 let currentPoll = 0
 
+// Get the current poll id
+database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
+    if (err) {
+        logger.log('error', err.stack)
+    } else {
+        // Set the current poll id to the maximum id minus one since the database starts poll ids at 1
+        currentPoll = pollHistory['MAX(id)'] - 1
+    }
+})
+
 // Socket update events
 const PASSIVE_SOCKETS = [
 	'pollUpdate',
@@ -123,7 +133,8 @@ class SocketUpdates {
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
-    
+
+            console.log(classData);
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {
             logger.log('error', err.stack);

@@ -1,13 +1,5 @@
 // Creates student elements for the user list inside the control panel
 
-function buildOption(value, text, selected = false) {
-    let option = document.createElement('option')
-    option.value = value
-    option.selected = selected
-    option.textContent = text
-    return option
-}
-
 // Holds users that are taking a break
 const userBreak = []
 
@@ -15,12 +7,11 @@ const userBreak = []
 let opendetails = []
 
 // Create a student in the user list
-function buildStudent(room, studentData) {
-    let newStudent
-    let cloneDiv = document.getElementById('student-fake')
+function buildStudent(classroom, studentData) {
+    const studentTemplateDiv = document.getElementById('student-fake')
 
     if (studentData.classPermissions < currentUser.classPermissions) {
-        newStudent = cloneDiv.cloneNode(true)
+        const newStudent = studentTemplateDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
         newStudent.id = `student-${studentData.username}`
@@ -33,12 +24,12 @@ function buildStudent(room, studentData) {
                 opendetails.push(studentData.username)
             }
         })
-        
+
         let summary = newStudent.querySelector('summary')
         let alertSpan = newStudent.querySelector('#alerts')
         let helpReason = newStudent.querySelector('#helpReason')
         let breakReason = newStudent.querySelector('#breakReason')
-        let studBox = newStudent.querySelector('input[type="checkbox"]')
+        let studentBox = newStudent.querySelector('input[type="checkbox"]')
         let pollBox = newStudent.querySelector('#response')
         let studTagsSpan = newStudent.querySelector('#studentTags')
         let roomTagDiv = newStudent.querySelector('#roomTags')
@@ -47,20 +38,21 @@ function buildStudent(room, studentData) {
         let extraButtons = newStudent.querySelector('#extraButtons')
 
         newStudent.querySelector('#username').textContent = studentData.displayName
-        studBox.id = 'checkbox_' + studentData.username
-        studBox.checked = room.poll.studentBoxes.indexOf(studentData.username) != -1
+        studentBox.id = 'checkbox_' + studentData.username
+        console.log('poll:', classroom.poll)
+        studentBox.checked = classroom.poll.studentBoxes.indexOf(studentData.username) != -1
 
-        for (let eachResponse in room.poll.responses) {
+        for (let eachResponse in classroom.poll.responses) {
             if (studentData.pollRes.textRes) {
-                pollBox.style.color = room.poll.responses[eachResponse].color
+                pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = studentData.pollRes.textRes
-            } else if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
-                pollBox.style.color = room.poll.responses[eachResponse].color
+            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.multiRes) {
+                pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
-            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (classroom.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement('span')
                 tempElem.textContent = eachResponse + ' '
-                tempElem.style.color = room.poll.responses[eachResponse].color
+                tempElem.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.appendChild(tempElem)
             }
         }
@@ -165,14 +157,14 @@ function buildStudent(room, studentData) {
         }
 
         // Add each tag as a button to the tag form
-        for (let i = 0; i < room.tagNames.length; i++) {
-            let tag = room.tagNames[i]
+        for (let i = 0; i < classroom.tagNames.length; i++) {
+            let tag = classroom.tagNames[i]
             if (tag == 'Offline') continue
 
             let button = document.createElement('button');
             button.innerHTML = tag
-            button.name = `button${room.tagNames[i]}`;
-            button.value = room.tagNames[i];
+            button.name = `button${classroom.tagNames[i]}`;
+            button.value = classroom.tagNames[i];
             if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
             button.onclick = function () {
                 if (!button.classList.contains('pressed')) {
@@ -461,13 +453,6 @@ function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
 }
 
-function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    let dueAssigns = document.getElementById('dueAssigns')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
-}
-
 function approveBreak(breakApproval, username) {
     socket.emit('approveBreak', breakApproval, username)
 }
@@ -493,30 +478,4 @@ function breakSound() {
             breakSoundPlayed = true;
         }
     }
-}
-
-function responseSound() {
-    let responsePing = new Audio('/sfx/TUTD.wav');
-
-    // plays the sounds
-    function playResponseSound() {
-        if (mute == false) {
-            responsePing.play();
-        }
-    }
-
-    //creates a mutation observer to watch for changes in the DOM
-
-    const observer = new MutationObserver((mutationsList, observer) => {
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                playResponseSound()
-            }
-        }
-    })
-
-    //starts the observer and targets the node for configured mutations
-    const targetNode = document.body
-    const config = { childList: true }
-    observer.observe(targetNode, config)
 }

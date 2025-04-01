@@ -59,8 +59,8 @@ module.exports = {
                 }
 
                 // Creates an object for every answer possible the teacher is allowing
+                const letterString = 'abcdefghijklmnopqrstuvwxyz'
                 for (let i = 0; i < resNumber; i++) {
-                    let letterString = 'abcdefghijklmnopqrstuvwxyz'
                     let answer = letterString[i]
                     let weight = 1
                     let color = generatedColors[i]
