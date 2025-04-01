@@ -11,6 +11,9 @@ function buildOption(value, text, selected = false) {
 // Holds users that are taking a break
 const userBreak = []
 
+// Stores the currently opened student elements
+let opendetails = []
+
 // Create a student in the user list
 function buildStudent(room, studentData) {
     let newStudent
@@ -20,8 +23,17 @@ function buildStudent(room, studentData) {
         newStudent = cloneDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        
         newStudent.id = `student-${studentData.username}`
+        newStudent.open = opendetails.indexOf(studentData.username) != -1
+
+        newStudent.addEventListener('click', () => {
+            if (newStudent.open) {
+                opendetails.splice(opendetails.indexOf(studentData.username), 1)
+            } else {
+                opendetails.push(studentData.username)
+            }
+        })
+        
         let summary = newStudent.querySelector('summary')
         let alertSpan = newStudent.querySelector('#alerts')
         let helpReason = newStudent.querySelector('#helpReason')
@@ -36,13 +48,16 @@ function buildStudent(room, studentData) {
 
         newStudent.querySelector('#username').textContent = studentData.displayName
         studBox.id = 'checkbox_' + studentData.username
-        studBox.checked = room.poll.studentBoxes.includes(studentData.username)
+        studBox.checked = room.poll.studentBoxes.indexOf(studentData.username) != -1
 
         for (let eachResponse in room.poll.responses) {
-            if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
+            if (studentData.pollRes.textRes) {
+                pollBox.style.color = room.poll.responses[eachResponse].color
+                pollBox.textContent = studentData.pollRes.textRes
+            } else if (eachResponse == studentData.pollRes.buttonRes && !room.poll.multiRes) {
                 pollBox.style.color = room.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
-            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.includes(eachResponse)) {
+            } else if (room.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement('span')
                 tempElem.textContent = eachResponse + ' '
                 tempElem.style.color = room.poll.responses[eachResponse].color
@@ -50,7 +65,7 @@ function buildStudent(room, studentData) {
             }
         }
 
-        if (studentData.tags && studentData.tags.includes("Offline")) {
+        if (studentData.tags && studentData.tags.indexOf('Offline') != -1) {
             // Add offline icon
             summary.textContent += `💤`
             newStudent.classList.add('offline')
@@ -60,7 +75,6 @@ function buildStudent(room, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
-
         if (studentData.help) {
             let div = document.createElement('div')
             div.textContent = '❗'
@@ -68,7 +82,7 @@ function buildStudent(room, studentData) {
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
             if (studentData.help.reason) {
-                helpReason.textContent = studentData.help.reason += ` at ${studentData.help.time.toLocaleTimeString()}`
+                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()} `
             }
 
             let deleteTicketButton = document.createElement('button')
@@ -91,8 +105,8 @@ function buildStudent(room, studentData) {
         } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
-            if (studentData.break.reason) {
-                breakReason.textContent = studentData.break.reason += ` at ${studentData.break.time.toLocaleTimeString()}`
+            if (studentData.break) {
+                breakReason.textContent = `"${studentData.break}"`
             }
 
             let approveBreakButton = document.createElement('button')
@@ -162,11 +176,6 @@ function buildStudent(room, studentData) {
             breakSound()
         }
 
-        if (studentData.break || studentData.help) {
-            reasonsDiv.setAttribute('style', 'display: flex;')
-        } else {
-            reasonsDiv.setAttribute('style', 'display: none;')
-        }
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
@@ -190,51 +199,79 @@ function buildStudent(room, studentData) {
             }
             permDiv.appendChild(permSwitch)
         }
-        
+
         // Add each tag as a button to the tag form
         for (let i = 0; i < room.tagNames.length; i++) {
             let tag = room.tagNames[i]
             if (tag == 'Offline') continue
+
             let button = document.createElement('button');
             button.innerHTML = tag
             button.name = `button${room.tagNames[i]}`;
             button.value = room.tagNames[i];
-            if (studentData.tags != null && studentData.tags != undefined) {
-                button.onclick = function () {
-                    let tags = studentData.tags.split(",")
-                    if (!button.classList.contains('pressed')) {
-                        button.classList.add('pressed')
-                        let span = document.createElement('span');
-                        span.textContent = tag;
-                        span.setAttribute('id', tag);
-                        studTagsSpan.appendChild(span);
+            if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
+            button.onclick = function () {
+                if (!button.classList.contains('pressed')) {
+                    button.classList.add('pressed')
+                    let span = document.createElement('span');
+                    span.textContent = tag;
+                    span.setAttribute('id', tag);
+                    studTagsSpan.appendChild(span);
+
+                    // If the studentData does not have tags, add the tag
+                    if (studentData.tags) {
+                        studentData.tags = `${studentData.tags},${tag}`;
                     } else {
-                        button.classList.remove('pressed')
-                        studTagsSpan.querySelector(`#${tag}`).remove()
+                        studentData.tags = tag;
+                    }
+
+                    // Add to current tags
+                    if (!currentTags.includes(span.textContent)) {
+                        currentTags.push(span.textContent);
+                    }
+                } else {
+                    button.classList.remove('pressed')
+
+                    // Remove from current tags if no other user has the tag
+                    if (currentTags.includes(tag) && !document.querySelector(`button[value="${tag}"].pressed`)) {
+                        currentTags.splice(currentTags.indexOf(tag), 1);
+                    }
+
+                    // Remove the tag from the studentData tags
+                    if (studentData) {
+                        studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+                    }
+
+                    if (studTagsSpan) {
+                        const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+                        tagSpan.remove();
                     }
                 }
-                for (ttag of studentData.tags.split(",")) {
-                    if (ttag == tag) {
-                        button.classList.add('pressed')
-                        let span = document.createElement('span');
-                        span.textContent = tag;
-                        span.setAttribute('id', tag);
-                        studTagsSpan.appendChild(span);
+
+                // When someone clicks on a tag, save the tags to the server
+                const tags = [];
+                if (roomTagDiv) {
+                    for (let tagButton of roomTagDiv.querySelectorAll('button.pressed')) {
+                        tags.push(tagButton.textContent);
                     }
+                    socket.emit('saveTags', studentData.id, tags, studentData.username);
                 }
-                roomTagDiv.appendChild(button);
-            };
+
+                createTagSelectButtons();
+            }
+
+            for (ttag of studentData.tags.split(",")) {
+                if (ttag == tag) {
+                    button.classList.add('pressed')
+                    let span = document.createElement('span');
+                    span.textContent = tag;
+                    span.setAttribute('id', tag);
+                    studTagsSpan.appendChild(span);
+                }
+            }
+
+            roomTagDiv.appendChild(button);
         }
-        let saveButton = document.createElement('button')
-        saveButton.innerHTML = 'Save'
-        saveButton.id = 'saveButton'
-        saveButton.onclick = () => {
-            //Update the users tags in the database and class data
-            let tags = []
-            for (let tag of studTagsSpan.children) tags.push(tag.textContent)
-            socket.emit('saveTags', studentData.id, tags, studentData.username)
-        }
-        roomTagDiv.appendChild(saveButton)
 
         studentCheckbox.type = "checkbox";
         studentCheckbox.id = "checkbox_" + studentData.username;
@@ -293,9 +330,12 @@ function buildStudent(room, studentData) {
         }
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
-    }
 
-    return newStudent
+        if (pollBox.textContent == '' && helpReason.textContent == '' && breakReason.textContent == '') {
+            reasonsDiv.style.display = 'none'
+        }
+        return newStudent
+    }
 }
 
 // filters and sorts students
@@ -433,12 +473,6 @@ function filterSortChange(classroom) {
     }
 }
 
-function makeLesson() {
-    let learningObj = document.getElementById('learningObj')
-    socket.emit('lessonStart', learningObj.value)
-    alert('Lesson Created')
-}
-
 // sets filters
 for (let filterElement of document.getElementsByClassName('filter')) {
     filterElement.onclick = (event) => {
@@ -497,11 +531,6 @@ for (let sortElement of document.getElementsByClassName('sort')) {
 
 function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
-}
-
-function doStep(id) {
-    alert('Step ' + id + ' activated')
-    socket.emit('doStep', id)
 }
 
 function makeLesson() {

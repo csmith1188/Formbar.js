@@ -13,7 +13,7 @@
 			<script src='/js/deepObjectEqual.js'></script>
 		</head>
 
-		<body onload="load(<%= pollStatus %>)">
+		<body onload="load(<%= pollStatus %>)" style="margin-bottom: 10cqh;">
 			<%- include('../partials/formbar_header') %>
 				<header id='quickMenu'>
 					<p id='className'>Class Name:</p>
@@ -30,21 +30,11 @@
 					<div id='VBDiv'>
 						<%- include('../partials/virtual_bar.ejs') %>
 							<div id='VBOptions'>
-								<div id='userSelectBoxes' class='options'>
-									<h2 class='headerText'>Select</h2>
-									<div class='headBox' id="selectPoll">
-									</div>
-								</div>
 								<div id='userFilterBoxes' class='options'>
 									<h2 class='headerText'>Filter</h2>
 									<div class='headBox'>
 										<button type='button' id='alert' class='filter'>Alerts</button>
 										<button type='button' id='polls' class='filter'>Polls</button>
-									</div>
-								</div>
-								<div id='userFastPollBoxes' class='options'>
-									<h2 class='headerText'>Fast Poll</h2>
-									<div class='headBox' id='quickPoll'>
 									</div>
 								</div>
 								<div id='userSortBoxes' class='options'>
@@ -55,6 +45,16 @@
 										<button type='button' id='pollTime' class='sort'>Poll Time</button>
 										<button type='button' id='helpTime' class='sort'>Help Time</button>
 										<button type='button' id='permissions' class='sort pressed'>Permissions 🡇</button>
+									</div>
+								</div>
+								<div id='userSelectBoxes' class='options'>
+									<h2 class='headerText'>Select</h2>
+									<div class='headBox' id="selectPoll">
+									</div>
+								</div>
+								<div id='userFastPollBoxes' class='options'>
+									<h2 class='headerText'>Fast Poll</h2>
+									<div class='headBox' id='quickPoll'>
 									</div>
 								</div>
 							</div>
@@ -188,7 +188,6 @@
 						</p>
 						<div id='classPollShares'></div>
 					</dialog>
-					<!-- <button onclick='socket.emit('sharePollToClass', 5 , 'npm5')'>click me</button> -->
 					<%- include('../partials/body_content') %>
 				</div>
 				<div class="ongoingPollOptions">
@@ -202,6 +201,7 @@
 					<div class="ongoingButtons">
 						<button id='pollsMenu' class='quickButton tab'
 							data-tab-group='mainTabs'>Edit Poll</button>
+						<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
 						<button id='clearPoll' onclick='clearPollFunc()'>Clear Poll</button>
 						<button  id='endPoll' onclick='endPollFunc()'>End Poll</button>
 					</div>
@@ -214,15 +214,15 @@
 				<details id="student-fake" style="opacity: 0.65; order: 9997;" style="display: none;" hidden>
 					<summary>
 						<span id="alerts"></span>
-						<span id="username"></span>
 						<span>
 							<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
 						</span>
+						<span id="username"></span>
 						<span id="studentTags"></span>
-						<span id="response"></span>
 						<div id="reasons">
 							<div id="helpReason"></div>
 							<div id="breakReason"></div>
+							<div id="response"></div>
 						</div>
 					</summary>
 					<div id="permissions"></div>

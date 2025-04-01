@@ -13,7 +13,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 		if (studentTags.includes("Offline")) {
 			Offline++
-			continue
 		}
 		studentTags = studentTags.split(",")
 		for (let tag of studentTags) {
@@ -53,10 +52,6 @@ socket.on('cpUpdate', (newClassroom) => {
 	classCode.textContent = `Class Code: ${newClassroom.key}`
 	// classId.textContent = `Class ID: ${newClassroom.id}`
 
-	document.getElementById('nextStep').onclick = () => {
-		doStep(classroom.currentStep)
-	}
-
 	totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - Offline - 1}`
 	if (newClassroom.poll.prompt != "") {
 		pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
@@ -90,8 +85,17 @@ socket.on('cpUpdate', (newClassroom) => {
 		let oldStudentData = null
 		let newStudentData = newClassroom.students[username]
 
+		// Add any selected tags to the current tags list
+		// This will allow the teacher to filter students by tags
+		if (newStudentData.tags) {
+			for (const tag of newStudentData.tags.split(',')) {
+				if (!currentTags.includes(tag) && tag !== "" && tag !== "Offline") {
+					currentTags.push(tag)
+				}
+			}
+		}
+
 		if (classroom.students && classroom.students[username]) oldStudentData = classroom.students[username]
-		
 		if (!studentElement) {
 			let builtStudent = buildStudent(newClassroom, newStudentData)
 			if (builtStudent) usersDiv.appendChild(builtStudent)
@@ -112,6 +116,7 @@ socket.on('cpUpdate', (newClassroom) => {
 	}
 
 	// Commented because the banned tab is not used/functioning
+	// @TODO: Fix the banned tab
 	// if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
 	// 	bannedTabButton.style.display = ''
 	// } else {
@@ -207,20 +212,6 @@ socket.on('cpUpdate', (newClassroom) => {
 		}
 	}
 
-	function addTagElement(tag) {
-		if (tag == "" || tag == "Offline" || tag == null) return
-		let tagOption = document.createElement('div')
-		tagOption.value = tag
-		tagOption.textContent = tag
-		let removeButton = document.createElement('button')
-		removeButton.textContent = '✖'
-		removeButton.onclick = () => {
-			tagsDiv.removeChild(tagOption)
-		}
-		tagOption.appendChild(removeButton)
-		tagsDiv.appendChild(tagOption)
-	}
-
 	if (!deepObjectEqual(classroom?.tagNames, newClassroom.tagNames)) {
 		for (let tag of newClassroom.tagNames) addTagElement(tag)
 		
@@ -242,121 +233,238 @@ socket.on('cpUpdate', (newClassroom) => {
 				addTagElement(newTag.value)
 			}
 			newTag.value = ''
+
+			// When a new tag is added, send the new tags to the server
+			sendTags()
+			updateStudentTags()
 		}
 
 		newTagDiv.appendChild(newTag)
 		newTagDiv.appendChild(addTagButton)
 
-		let saveTags = document.createElement('button')
-		saveTags.textContent = 'Save'
-		saveTags.id = 'saveButton'
-		saveTags.onclick = () => {
-			let tags = []
-			for (let tag of tagsDiv.children) {
-				if (tag.value == "" || tag.value == "Offline") continue
-				tags.push(tag.value)
-			}
-			socket.emit('setTags', tags)
-		}
 		tagOptionsDiv.appendChild(newTagDiv)
-		tagOptionsDiv.appendChild(saveTags)
 	}
 
 	filterSortChange(newClassroom)
 
 	classroom = newClassroom
-
 	socket.emit('customPollUpdate')
 })
 
-// Old Plugins Stuff
+function getTags() {
+	const tags = [];
+	for (let tag of tagsDiv.children) {
+		if (tag.value === "" || tag.value === "Offline") continue;
+		tags.push(tag.value);
+	}
+	return tags;
+}
 
-// socket.emit('pluginUpdate')
-// socket.on('pluginUpdate', (plugins) => {
-// 	pluginsDiv.innerHTML = ''
-// 	for (let plugin of plugins) {
-// 		let pluginDiv = document.createElement('div')
-// 		pluginDiv.id = plugin.id
-// 		pluginDiv.className = 'plugin'
-// 		let pluginName = document.createElement('input')
-// 		pluginName.type = 'text'
-// 		pluginName.value = plugin.name
-// 		pluginName.placeholder = 'Name'
-// 		pluginName.onchange = (event) => {
-// 			socket.emit(
-// 				'changePlugin',
-// 				event.target.parentElement.id,
-// 				event.target.value,
-// 				null
-// 			)
-// 		}
-// 		pluginDiv.appendChild(pluginName)
-// 		let pluginURL = document.createElement('input')
-// 		pluginURL.type = 'url'
-// 		pluginURL.value = plugin.url
-// 		pluginURL.placeholder = 'URL'
-// 		pluginURL.onchange = (event) => {
-// 			let pluginURL = event.target
+// Sends the tags to the server
+function sendTags() {
+	const tags = getTags();
+	socket.emit('setTags', tags);
+}
 
-// 			if (!event.target.checkValidity()) {
-// 				event.target.reportValidity()
-// 				return
-// 			}
+// Creates a tag element in the tag div
+function addTagElement(tag) {
+	if (tag == "" || tag == "Offline" || tag == null) return
+	let tagOption = document.createElement('div')
+	tagOption.value = tag
+	tagOption.textContent = tag
 
-// 			socket.emit(
-// 				'changePlugin',
-// 				pluginURL.parentElement.id,
-// 				null,
-// 				pluginURL.value
-// 			)
-// 		}
-// 		pluginDiv.appendChild(pluginURL)
-// 		let removePlugin = document.createElement('button')
-// 		removePlugin.className = 'quickButton'
-// 		removePlugin.textContent = 'Remove Plugin'
-// 		removePlugin.onclick = (event) => {
-// 			socket.emit(
-// 				'removePlugin',
-// 				event.target.parentElement.id
-// 			)
-// 		}
-// 		pluginDiv.appendChild(removePlugin)
-// 		pluginsDiv.appendChild(pluginDiv)
-// 	}
+	let removeButton = document.createElement('button')
+	removeButton.textContent = '✖'
+	removeButton.onclick = () => {
+		tagsDiv.removeChild(tagOption)
+		sendTags()
+		updateStudentTags()
+	}
+	tagOption.appendChild(removeButton)
+	tagsDiv.appendChild(tagOption)
+}
 
-// 	let addPluginForm = document.createElement('div')
-// 	addPluginForm.id = 'addPluginForm'
-// 	let newPluginName = document.createElement('input')
-// 	newPluginName.id = 'newPluginName'
-// 	newPluginName.type = 'text'
-// 	newPluginName.placeholder = 'Name'
-// 	addPluginForm.append(newPluginName)
-// 	let newPluginURL = document.createElement('input')
-// 	newPluginURL.id = 'newPluginURL'
-// 	newPluginURL.type = 'url'
-// 	newPluginURL.placeholder = 'URL'
-// 	addPluginForm.append(newPluginURL)
-// 	let submitPlugin = document.createElement('button')
-// 	submitPlugin.className = 'quickButton'
-// 	submitPlugin.textContent = 'Add Plug-in'
-// 	submitPlugin.onclick = () => {
-// 		let newPluginName = document.getElementById('newPluginName')
-// 		let newPluginURL = document.getElementById('newPluginURL')
+// Update the tag buttons for each student
+function updateStudentTags() {
+	const tags = getTags();
+	for (const student of usersDiv.children) {
+		// Get student tag elements
+		const roomTags = student.querySelector('#roomTags');
+		const studTagsSpan = student.querySelector('#studentTags');
+		const username = student.id.split('-')[1];
+		const studentData = students.find((student) => student.username === username);
 
-// 		if (!newPluginURL.checkValidity()) {
-// 			newPluginURL.reportValidity()
-// 			return
-// 		}
+		// Get tags selected before the update
+		const oldTags = [];
+		if (roomTags) {
+			for (let tagButton of roomTags.querySelectorAll('button.pressed')) {
+				oldTags.push(tagButton.textContent);
+			}
+		}
 
-// 		socket.emit('addPlugin', newPluginName.value, newPluginURL.value)
-// 	}
-// 	addPluginForm.append(submitPlugin)
-// 	if (!pluginsMenu.querySelector('#addPluginForm')) {
-// 		pluginsMenu.append(addPluginForm)
-// 	} else {
-// 		return;
-// 	};
-// })
+		// Clear room tags
+		if (studTagsSpan) studTagsSpan.innerHTML = '';
+		roomTags.innerHTML = '';
+
+		// If the student has tags, check if it's a valid tag in tagsDiv children
+		// If it's not, then remove the tag from the studentData tags
+		if (studentData && studentData.tags) {
+			for (const tag of studentData.tags.split(',')) {
+				const tagElement = Array.from(tagsDiv.children).find((tagElement) => tagElement.value === tag);
+				if (!tagElement) {
+					studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+				}
+			}
+		}
+
+		for (const tag of tags) {
+			let button = document.createElement('button');
+			button.innerHTML = tag
+			button.name = `button${tag}`;
+			button.value = tag;
+			button.onclick = function () {
+				if (!button.classList.contains('pressed')) {
+					console.log('called pressed')
+					button.classList.add('pressed')
+					let span = document.createElement('span');
+					span.textContent = tag;
+					span.setAttribute('id', tag);
+					if (studTagsSpan) studTagsSpan.appendChild(span);
+
+					// If the studentData does not have tags, add the tag
+					if (studentData.tags) {
+						studentData.tags = `${studentData.tags},${tag}`;
+					} else {
+						studentData.tags = tag;
+					}
+
+					// Add to current tags
+					if (!currentTags.includes(span.textContent)) {
+						currentTags.push(span.textContent);
+					}
+				} else {
+					console.log('called not pressed')
+					button.classList.remove('pressed')
+
+					// Remove from current tags if no other user has the tag
+					if (currentTags.includes(tag) && !document.querySelector(`button[value="${tag}"].pressed`)) {
+						currentTags.splice(currentTags.indexOf(tag), 1);
+					}
+
+					// Remove the tag from the studentData tags
+					if (studentData) {
+						studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+					}
+
+					if (studTagsSpan) {
+						const tagSpan = studTagsSpan.querySelector(`#${tag}`);
+						tagSpan.remove();
+					}
+				}
+
+				// When someone clicks on a tag, save the tags to the server
+				const tags = [];
+				if (roomTags) {
+					for (let tagButton of roomTags.querySelectorAll('button.pressed')) {
+						tags.push(tagButton.textContent);
+					}
+					socket.emit('saveTags', studentData.id, tags, studentData.username);
+				}
+
+				createTagSelectButtons();
+			}
+
+			for (const oldTag of oldTags) {
+				if (oldTag == tag) {
+					button.classList.add('pressed')
+				}
+			}
+
+			roomTags.appendChild(button);
+		}
+	}
+}
+
+const selectPollDiv = document.querySelector('div#selectPoll')
+
+// Creates the tag buttons in the select box
+function createTagSelectButtons() {
+	// Clear every tag in the select box
+	for (const tag of selectPollDiv.children) {
+		if (tag.className === 'switchAll') continue;
+		tag.remove();
+	}
+
+	// Creation of tag buttons in the select box
+	for (let i = 1; i <= currentTags.length; i++) {
+		let tagPoll = document.createElement('button');
+		tagPoll.className = 'tagPoll';
+		tagPoll.textContent = currentTags[i - 1];
+		tagPoll.name = currentTags[i - 1];
+
+		// With every click creates an array with all clicked tags to compare with users
+		tagPoll.onclick = () => {
+			let tempTags = []
+			if (tagPoll.className == 'tagPoll') {
+				tagPoll.className = 'pressed';
+			} else {
+				tagPoll.className = 'tagPoll'
+			}
+			for (let tag of document.querySelectorAll('#selectPoll button.pressed')) {
+				tag = tag.textContent
+				if (tag == "") {
+					continue
+				}
+				tempTags.push(tag);
+			}
+			tempTags = tempTags.sort().join();
+
+			// If the student has any of the selected tags, check the checkbox and open their menu
+			for (let student of students) {
+				let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+				if (student.permissions >= TEACHER_PERMISSIONS) continue
+				// Combines the students tags and their poll responses
+				let tempStudTags = []
+				if (student.tags == null) {
+					continue
+				}
+				for (let tag of studElem.querySelectorAll('#studentTags span')) {
+					tag = tag.textContent
+					if (tag == "") {
+						continue
+					}
+					tempStudTags.push(tag)
+				}
+				for (let tag of studElem.querySelectorAll('#response')) {
+					tag = tag.textContent
+					if (tag == "" || tag == "remove") {
+						continue
+					}
+					tempStudTags.push(tag)
+				}
+				tempStudTags = tempStudTags.sort().join();
+
+				let checkbox = studElem.querySelector('input[type="checkbox"]')
+
+				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
+					studElem.open = true
+					if (!checkbox.checked) checkbox.click()
+				} else {
+					studElem.open = false
+					if (checkbox.checked) checkbox.click()
+				}
+
+				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)
+			}
+		};
+
+		if (selectPollDiv.children[i]) {
+			selectPollDiv.children[i].replaceWith(tagPoll);
+		} else {
+			selectPollDiv.appendChild(tagPoll);
+		}
+	}
+}
 
 socket.emit('customPollUpdate')
 socket.on('customPollUpdate', (
@@ -373,7 +481,6 @@ socket.on('customPollUpdate', (
 	let classPollsDiv = document.querySelector('div#classPolls')
 	let userPollsDiv = document.querySelector('div#userPolls')
 	let fastPollDiv = document.querySelector('div#quickPoll')
-	let selectPollDiv = document.querySelector('div#selectPoll')
 
 	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
@@ -390,7 +497,7 @@ socket.on('customPollUpdate', (
 		} else {
 			fastPollDiv.appendChild(startButton);
 		}
-	};
+	}
 	selectPollDiv.innerHTML = ''
 	
 	// Creation of switchAll button
@@ -401,9 +508,6 @@ socket.on('customPollUpdate', (
 	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
 	switchAll.onclick = () => {
 		switchState = !switchState
-		for (let elem of document.querySelectorAll(`button[class="pressed"]`)) {
-			elem.click()
-		}
 
 		for (let student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue
@@ -427,7 +531,7 @@ socket.on('customPollUpdate', (
 		if (student.permissions >= TEACHER_PERMISSIONS) continue
 
 		let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
-
+		if (!studCheck) continue;
 		studCheck.onclick = () => {
 			let votingRight = studCheck.checked
 			let studBox = classroom.poll.studentBoxes
@@ -441,74 +545,7 @@ socket.on('customPollUpdate', (
 		}
 	}
 
-	// Creation of tag buttons in the select box
-	for (let i = 1; i <= currentTags.length; i++) {
-		let tagPoll = document.createElement('button');
-		tagPoll.className = 'tagPoll';
-		tagPoll.textContent = currentTags[i - 1];
-		tagPoll.name = currentTags[i - 1];
-
-		// With every click creates an array with all clicked tags to compare with users
-		tagPoll.onclick = () => {
-			let tempTags = []
-			if (tagPoll.className == 'tagPoll') {
-				tagPoll.className = 'pressed';
-			} else {
-				tagPoll.className = 'tagPoll'
-			}
-			for (let tag of document.querySelectorAll('#studentTags')) {
-				tag = tag.textContent
-				if (tempTags.includes(tag.name) || tag.name == "") {
-					continue
-				}
-				tempTags.push(tag.name);
-			}
-			tempTags = tempTags.sort().join();
-
-			// If the student has any of the selected tags, check the checkbox and open their menu
-			for (let student of students) {
-				if (student.permissions >= TEACHER_PERMISSIONS) continue
-				// Combines the students tags and their poll responses
-				let tempStudTags = []
-				if (student.tags == null) {
-					continue
-				}
-				for (let tag of student.tags.split(",")) {
-					if (tag == "") {
-						continue
-					}
-					tempStudTags.push(tag)
-				}
-				for (let tag of student.pollRes.buttonRes.split(",")) {
-					if (tag == "" || tag == "remove") {
-						continue
-					}
-					tempStudTags.push(tag)
-				}
-				tempStudTags = tempStudTags.sort().join();
-
-				studentElement = document.getElementById(`student-${student.username}`)
-				let checkbox = studentElement.querySelector('input[type="checkbox"]')
-
-				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
-					studentElement.open = true
-					if (!checkbox.checked) checkbox.click()
-				} else {
-					studentElement.open = false
-					if (checkbox.checked) checkbox.click()
-				}
-
-				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)
-			}
-		};
-
-		if (selectPollDiv.children[i]) {
-			selectPollDiv.children[i].replaceWith(tagPoll);
-		} else {
-			selectPollDiv.appendChild(tagPoll);
-		}
-	}
-
+	createTagSelectButtons();
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')
 	insertCustomPolls(userCustomPolls, userPollsDiv, 'You have no custom polls.')

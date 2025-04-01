@@ -27,11 +27,6 @@ class Classroom {
 			allowedResponses: []
 		}
 		this.key = key
-		this.lesson = {}
-		this.activeLesson = false
-		this.steps
-		this.currentStep = 0
-		this.quiz = false
 		this.mode = 'poll'
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []

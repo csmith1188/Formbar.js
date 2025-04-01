@@ -16,92 +16,84 @@
 			</head>
 
 			<body>
-				<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-					<div id="lessonContent">
-						<% if (lesson.content !== undefined) { %>
-							<h3 id="headerText"><%- lesson.date %></h3>
-							<% for (let i = 0; i < lesson.content.length; i++) { %>
-								<u>
-									<h2 id="headerText"><%- lesson.content[i][0] %></h2>
-								</u>
-								<% for (let u = 1; u < lesson.content[i].length; u++) { %>
-									<b id="headerText"><%- lesson.content[i][u] %></b><br>
-								<% } %>
-							<% } %>
+				<div id="studentVBar">
+					<%- include("../partials/virtual_bar.ejs") %>
+						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+
 							<br>
-							<a href="/previousLessons" class="quickButton">Go To A Previous Lesson</a>
-						<% } %>
-					</div>
-					<% } %>
-
-						<div id="studentVBar">
-							<%- include("../partials/virtual_bar.ejs") %>
-								<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-
+							<div id="helpBreak">
+								<div id="studHelp">
+									<h1>Need Help?</h1>
+									<button onclick="{document.getElementById('requestHelpDialog').showModal()}" class="quickButton helpButton">Send Ticket</button>
 									<br>
-									<div id="helpBreak">
-										<h1>Need Help?</h1>
-										<form id="eventForm">
-											<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
-												placeholder="Reason (optional)"></textarea>
-											<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
-										</form>
-										<button onclick="help()" class="quickButton">Send Ticket</button>
-										<br>
-										<h1>Need a Break?</h1>
-										<button class="breakButton"
-											onclick="{document.getElementById('requestBreakDialog').showModal()}">
-											Take Break
-										</button>
+								</div>
+								<div id="studBreak">
+									<h1>Need a Break?</h1>
+									<button class="breakButton"
+										onclick="{document.getElementById('requestBreakDialog').showModal()}">
+										Take Break
+									</button>
+								</div>
 										<br>
 										<br>
 										<div id='requestConvert'>
 											<button onclick='convertDigipogs()' class='quickButton'>Request Real Pogs</button>
 										</div>
-										<div id="pollContent">
-											<h1 id="noPoll" class="textColorContent">No active poll</h1>
-											<div id="poll">
-												<u>
-													<h2 id="pollPrompt">
+								<div id="pollContent">
+									<h1 id="noPoll" class="textColorContent">No active poll</h1>
+									<div id="poll">
+										<u>
+											<h2 id="pollPrompt">
 
-													</h2>
-												</u>
-												<form id="pollForm"></form>
-												<br>
-											</div>
-										</div>
-										<div id="quizContent">
-											<form id="quizForm" method="post" action="/student">
-											</form>
-										</div>
+											</h2>
+										</u>
+										<form id="pollForm"></form>
+										<br>
 									</div>
-						</div>
-						<%- include('../partials/body_content') %>
+								</div>
+							</div>
+				</div>
+				<%- include('../partials/body_content') %>
 
-							<dialog id="requestBreakDialog" class="contentBox">
-								<form
-									onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
-									<h3 style="margin-top: 0;">Take a break</h3>
-									<div id="breakInputs" class="centered">
-										<label class="form-control" id="pollControl" for="bathroom">
-											<input type="radio" name="option" id="bathroom" value="Bathroom" required>
-											Bathroom
-										</label>
-										<label class="form-control" id="pollControl" for="other">
-											<input type="radio" name="option" id="other" value="other">
-											Other
-										</label>
-										<textarea class="hidden" id="otherText" cols="25" rows="3"
-											maxlength="150"></textarea>
-									</div>
-									<div id="takeBreak" class="hCentered">
-										<button class="quickButton" id="cancel" type="button"
-											onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
-										<button class="quickButton" type="submit">Take Break</button>
-									</div>
-								</form>
-							</dialog>
-							<% } %>
+					<dialog id="requestBreakDialog" class="contentBox">
+						<form
+							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
+							<h3 style="margin-top: 0;">Take a break</h3>
+							<div id="breakInputs" class="centered">
+								<label class="form-control" id="pollControl" for="bathroom">
+									<input type="radio" name="option" id="bathroom" value="Bathroom" required>
+									Bathroom
+								</label>
+								<label class="form-control" id="pollControl" for="other">
+									<input type="radio" name="option" id="other" value="other">
+									Other
+								</label>
+								<textarea class="hidden" id="otherText" cols="25" rows="3"
+									maxlength="150"></textarea>
+							</div>
+							<div id="takeBreak" class="hCentered">
+								<button class="quickButton" id="cancel" type="button"
+									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
+								<button class="quickButton" type="submit">Take Break</button>
+							</div>
+						</form>
+					</dialog>
+					<dialog id="requestHelpDialog" class="contentBox">
+						<form onsubmit="help()">
+							<h3 style="margin-top: 0;">Request Help</h3>
+							<div id="eventForm">
+								<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
+									placeholder="Reason (optional)"></textarea>
+								<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
+							</div>
+							
+							<div id="takeHelp" class="hCentered">
+								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();">Cancel</button>
+								<button class="quickButton" type="submit">Request Help</button>
+							</div>
+						</form>
+					</dialog>
+					<% } %>
 			</body>
 
 			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
@@ -110,11 +102,10 @@
 					let resTextBox = document.getElementById('resTextBox')
 					let pollForm = document.getElementById('pollForm')
 					let pollContent = document.getElementById('pollContent')
-					let quizContent = document.getElementById('quizContent')
-					let lessonContent = document.getElementById('lessonContent')
-					noPoll = document.getElementById('noPoll')
 					let pollDiv = document.getElementById('poll')
 					let pollPromptDisplay = document.getElementById('pollPrompt')
+					noPoll = document.getElementById('noPoll')
+
 					//stores the answer type that will be used in the student form
 					//
 					let multiAnswer = ""
@@ -141,8 +132,6 @@
 						}
 						if (mode == 'poll' && votingRight) {
 							pollContent.style.display = 'block'
-							quizContent.style.display = 'none'
-							lessonContent.style.display = 'none'
 
 							if (poll.status) {
 								noPoll.style.display = 'none'
@@ -180,27 +169,7 @@
 							if (oldLettRes && document.getElementById(oldLettRes)) {
 								document.getElementById(oldLettRes).checked = true
 							}
-						} else if (mode == 'quiz') {
-							pollContent.style.display = 'none'
-							quizContent.style.display = 'block'
-							lessonContent.style.display = 'none'
-							let correctAnswerIndex = []
-							let quizForm = document.getElementById('quizForm')
-
-							for (let i = 0; i < quiz.questions.length; i++) {
-								quizForm.innerHTML += `</br><br><b class="textColorContent">${quiz.questions[i][0]}</b>`
-								correctAnswerIndex.push(quiz.questions[i][1])
-								for (let u = 2; u < quiz.questions[i].length; u++) {
-									quizForm.innerHTML += `</br><input type="checkbox" name="question" value="${u - 1}"> ${quiz.questions[i][u]}`
-								}
-							}
-							quizForm.innerHTML += `</br><br><button type="submit" class="quickButton">Submit Answers</button>`
-						} else if (mode == 'lesson') {
-							pollContent.style.display = 'none'
-							quizContent.style.display = 'none'
-							lessonContent.style.display = 'block'
 						}
-						pollContent.style.display = 'block'
 					}
 					function updatePage() {
 						if (poll.allowedResponses.length > 0) {
@@ -297,6 +266,7 @@
 
 					function help() {
 						let reason = document.getElementById('ticket').value
+						console.log('help')
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
 					}
