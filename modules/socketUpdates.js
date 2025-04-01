@@ -820,6 +820,16 @@ class SocketUpdates {
             logger.log('error', err.stack);
         }
     }
+
+    userUpdate(info) {
+        try {
+            if (info === 'apiRefresh') {
+                user.socket.emit('apiRefresh')
+            }
+        } catch (err) {
+            logger.log('error', err.stack)
+        }
+    }
 }
 
 module.exports = {
