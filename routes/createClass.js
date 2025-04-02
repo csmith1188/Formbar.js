@@ -55,6 +55,7 @@ module.exports = {
                             classInformation.classrooms[id].sharedPolls = sharedPolls
                             classInformation.classrooms[id].pollHistory = pollHistory
                             classInformation.classrooms[id].tags = tags
+                            // classInformation.classrooms[id].owner =
                         }
 
                         // Add the teacher to the newly created class

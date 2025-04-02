@@ -130,27 +130,41 @@ module.exports = {
             }
         });
 
-        socket.on('votingRightChange', (username, votingRight, studBox) => {
-            try {
-                const classId = socket.request.session.classId;
-                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+        // socket.on('votingRightChange', (username, votingRight, studentBox) => {
+        //     console.log('VOTINGRIGHTCHANGE:', username, votingRight, studentBox)
+        //     try {
+        //         const classId = socket.request.session.classId;
+        //         const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+        //
+        //         if (userSockets[username] && studentBox) {
+        //             classInformation.classrooms[classId].poll.studentBoxes = studentBox;
+        //             classInformation.classrooms[classId].students[username].pollRes.buttonRes = "";
+        //             classInformation.classrooms[classId].students[username].pollRes.textRes = "";
+        //
+        //             userSockets[username].emit('votingRightChange', votingRight);
+        //             socketUpdates.virtualBarUpdate(classId);
+        //         } else if (userSockets[username] && username) {
+        //             if (studentBoxes.length > 0) {
+        //                 userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
+        //             } else {
+        //                 userSockets[username].emit('votingRightChange', false);
+        //             }
+        //         }
+        //     } catch (err) {
+        //         logger.log('error', err.stack)
+        //     }
+        // });
 
-                if (userSockets[username] && studBox) {
-                    classInformation.classrooms[classId].poll.studentBoxes = studBox;
-                    classInformation.classrooms[classId].students[username].pollRes.buttonRes = "";
-                    classInformation.classrooms[classId].students[username].pollRes.textRes = "";
-
+        /**
+         * Changes the voting rights of a user or multiple users
+         */
+        socket.on('changeCanVote', (votingData) => {
+            for (const username in votingData) {
+                const votingRight = votingData[username];
+                if (userSockets[username]) {
                     userSockets[username].emit('votingRightChange', votingRight);
                     socketUpdates.virtualBarUpdate(classId);
-                } else if (userSockets[username] && username) {
-                    if (studentBoxes.length > 0) {
-                        userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
-                    } else {
-                        userSockets[username].emit('votingRightChange', false);
-                    }
                 }
-            } catch (err) {
-                logger.log('error', err.stack)
             }
         });
 

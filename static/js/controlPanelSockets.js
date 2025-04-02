@@ -117,24 +117,43 @@ socket.on('customPollUpdate', (
 	selectPollDiv.innerHTML = ''
 	
 	// Creation of switchAll button
-	let switchAll = document.createElement('button')
+	const switchAll = document.createElement('button')
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
 
-	let switchState = document.querySelector(`input[name="studentCheckbox"]`).checked
+	// Check if the majority of student checkboxes are checked or unchecked
+	const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
+	let studentsChecked = 0;
+	let studentsUnchecked = 0;
+	for (const studentCheckbox of studentCheckboxes) {
+		if (studentCheckbox.id == "checkbox_fake") {
+			continue;
+		}
+
+		if (studentCheckbox.checked) {
+			studentsChecked++;
+		} else {
+			studentsUnchecked--;
+		}
+	}
+
+	// Set the switch state to whether the majority of students are checked or unchecked
+	let switchState = studentsChecked > studentsUnchecked;
 	switchAll.onclick = () => {
-		switchState = !switchState
+		switchState = !switchState;
 
-		for (let student of Object.values(students)) {
-			if (student.permissions >= TEACHER_PERMISSIONS) continue
+		for (const student of Object.values(students)) {
+			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
-			let studElem = document.querySelector(`details[id="student-${student.username}"]`)
-			let studCheck = document.querySelector(`input[id="checkbox_${student.username}"]`)
+			const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
+			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
 
-			if (studCheck.checked != switchState) {
-				studCheck.click()
-			}
-			studElem.open = studCheck.checked
+			// Get each
+			const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
+			const studentsChecked = Array.from(studentCheckboxes).filter((checkbox) => checkbox.checked);
+
+			socket.emit('votingRightChange', student.username, switchState, studentsChecked.map((checkbox) => checkbox.id.split('_')[1]));
+			studentElement.open = studentCheckbox.checked;
 		}
 	}
 
