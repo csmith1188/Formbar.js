@@ -224,11 +224,16 @@
 						if (deepObjectEqual(poll, newPoll)) return
 
 						poll = newPoll
-						if (poll.status) socket.emit('votingRightChange', currentUser.username)
+						if (poll.status) {
+							socket.emit('votingRightChange', currentUser.username)
+						}
 						updatePage()
 					})
 
-					if (poll.status) socket.emit('votingRightChange', currentUser.username)
+					if (poll.status) {
+						socket.emit('votingRightChange', currentUser.username)
+					}
+
 					socket.on('votingRightChange', (vr) => {
 						votingRight = vr
 						if (vr) {
@@ -261,7 +266,6 @@
 
 					function help() {
 						let reason = document.getElementById('ticket').value
-						console.log('help')
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
 					}

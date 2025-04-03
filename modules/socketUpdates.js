@@ -134,7 +134,6 @@ class SocketUpdates {
                 classData.permissions.manageClass
             )
 
-            console.log(classData);
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {
             logger.log('error', err.stack);

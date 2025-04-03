@@ -35,7 +35,7 @@ function createTagSelectButtons() {
 
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			for (let student of students) {
-				let studElem = document.querySelector(`details[id="student-${student.username}"]`)
+				let studentElement = document.querySelector(`details[id="student-${student.username}"]`)
 				if (student.permissions >= TEACHER_PERMISSIONS) continue
 				// Combines the students tags and their poll responses
 				let tempStudTags = []
@@ -43,7 +43,7 @@ function createTagSelectButtons() {
 					continue
 				}
 
-				for (let tag of studElem.querySelectorAll('#studentTags span')) {
+				for (let tag of studentElement.querySelectorAll('#studentTags span')) {
 					tag = tag.textContent
 					if (tag == "") {
 						continue
@@ -51,7 +51,7 @@ function createTagSelectButtons() {
 					tempStudTags.push(tag)
 				}
 
-				for (let tag of studElem.querySelectorAll('#response')) {
+				for (let tag of studentElement.querySelectorAll('#response')) {
 					tag = tag.textContent
 					if (tag == "" || tag == "remove") {
 						continue
@@ -60,17 +60,22 @@ function createTagSelectButtons() {
 				}
 				tempStudTags = tempStudTags.sort().join();
 
-				let checkbox = studElem.querySelector('input[type="checkbox"]')
-
+				const checkbox = studentElement.querySelector('input[type="checkbox"]')
 				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
-					studElem.open = true
-					if (!checkbox.checked) checkbox.click()
+					studentElement.open = true;
+					if (!checkbox.checked) {
+						checkbox.click();
+					}
 				} else {
-					studElem.open = false
-					if (checkbox.checked) checkbox.click()
+					studentElement.open = false;
+					if (checkbox.checked) {
+						checkbox.click();
+					}
 				}
 
-				socket.emit('votingRightChange', student.username, votingRight = checkbox.checked)
+				socket.emit('changeCanVote', {
+					[student.username]: checkbox.checked
+				});
 			}
 		};
 
@@ -133,7 +138,7 @@ socket.on('customPollUpdate', (
 		if (studentCheckbox.checked) {
 			studentsChecked++;
 		} else {
-			studentsUnchecked--;
+			studentsUnchecked++;
 		}
 	}
 
@@ -142,19 +147,20 @@ socket.on('customPollUpdate', (
 	switchAll.onclick = () => {
 		switchState = !switchState;
 
+		const votingData = {};
 		for (const student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
 			const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
 			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
 
-			// Get each
-			const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
-			const studentsChecked = Array.from(studentCheckboxes).filter((checkbox) => checkbox.checked);
-
-			socket.emit('votingRightChange', student.username, switchState, studentsChecked.map((checkbox) => checkbox.id.split('_')[1]));
-			studentElement.open = studentCheckbox.checked;
+			if (studentCheckbox) {
+				studentCheckbox.checked = switchState;
+				votingData[student.username] = switchState;
+				studentElement.open = studentCheckbox.checked;
+			}
 		}
+		socket.emit('changeCanVote', votingData)
 	}
 
 	if (selectPollDiv.children[0]) {
@@ -182,9 +188,9 @@ socket.on('customPollUpdate', (
 				studentCheckboxes.push(student.username);
 			}
 
-			console.log("emitting")
-			studentCheckboxes = studentCheckboxes.filter((box) => box != student.username);
-			socket.emit('votingRightChange', student.username, canStudentVote, studentCheckboxes);
+			socket.emit('changeCanVote', {
+				[student.username]: canStudentVote
+			});
 		}
 	}
 

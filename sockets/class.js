@@ -130,42 +130,45 @@ module.exports = {
             }
         });
 
-        // socket.on('votingRightChange', (username, votingRight, studentBox) => {
-        //     console.log('VOTINGRIGHTCHANGE:', username, votingRight, studentBox)
-        //     try {
-        //         const classId = socket.request.session.classId;
-        //         const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-        //
-        //         if (userSockets[username] && studentBox) {
-        //             classInformation.classrooms[classId].poll.studentBoxes = studentBox;
-        //             classInformation.classrooms[classId].students[username].pollRes.buttonRes = "";
-        //             classInformation.classrooms[classId].students[username].pollRes.textRes = "";
-        //
-        //             userSockets[username].emit('votingRightChange', votingRight);
-        //             socketUpdates.virtualBarUpdate(classId);
-        //         } else if (userSockets[username] && username) {
-        //             if (studentBoxes.length > 0) {
-        //                 userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
-        //             } else {
-        //                 userSockets[username].emit('votingRightChange', false);
-        //             }
-        //         }
-        //     } catch (err) {
-        //         logger.log('error', err.stack)
-        //     }
-        // });
+        /**
+         * Retrieves the voting rights of a user
+         * @param {String} username - Username of the user to check.
+         */
+        socket.on('getCanVote', (username) => {
+            logger.log('info', `[getCanVote] username=(${username}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+            const classId = socket.request.session.classId;
+            const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+            const canVote = studentBoxes.indexOf(username) > -1;
+            socket.emit('getCanVote', canVote);
+        });
 
         /**
          * Changes the voting rights of a user or multiple users
+         * @param {Object} votingData - An object containing the usernames and their voting rights.
+         *                              This should only include usernames which should be changed.
          */
         socket.on('changeCanVote', (votingData) => {
+            logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
+            const classId = socket.request.session.classId;
+            const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
             for (const username in votingData) {
                 const votingRight = votingData[username];
+                if (votingRight) {
+                    if (!studentBoxes[username]) {
+                        studentBoxes.push(username);
+                    }
+                } else {
+                    // Remove all instances of the username from the studentBoxes array
+                    studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
+                }
+
                 if (userSockets[username]) {
-                    userSockets[username].emit('votingRightChange', votingRight);
-                    socketUpdates.virtualBarUpdate(classId);
+                    userSockets[username].emit('changeCanVote', votingRight);
                 }
             }
+            socketUpdates.virtualBarUpdate(classId);
         });
 
         socket.on('getActiveClass', () => {

@@ -39,7 +39,6 @@ function buildStudent(classroom, studentData) {
 
         newStudent.querySelector('#username').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.username
-        console.log('poll:', classroom.poll)
         studentBox.checked = classroom.poll.studentBoxes.indexOf(studentData.username) != -1
 
         for (let eachResponse in classroom.poll.responses) {
