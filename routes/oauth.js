@@ -1,6 +1,6 @@
 const { compare } = require('../modules/crypto');
 const { classInformation } = require('../modules/class');
-const { logNumbers } = require('../modules/config');
+const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
@@ -16,7 +16,7 @@ function generateAccessToken(userData, classId, refreshToken) {
         activeClasses: userData.activeClasses,
         class: classId,
         refreshToken
-    }, userData.secret, { expiresIn: '30m' });
+    }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
 
     return token;
 };
@@ -25,14 +25,14 @@ function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
         username: userData.username
-    }, userData.secret, { expiresIn: '14d' });
+    }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 
     return token;
 };
 
 function storeRefreshToken(userId, refreshToken) {
-    const decodedRefreshToken = jwt.decode(refreshToken)
-    database.run('INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)', [userId, refreshToken, decodedRefreshToken.exp], (err) => {
+    const decodedRefreshToken = jwt.verify(refreshToken, privateKey, { algorithms: ['RS256'] });
+    database.run('INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)', [userId, refreshToken, decodedRefreshToken.iat], (err) => {
         if (err) throw err;
     });
 };
