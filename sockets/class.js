@@ -135,12 +135,16 @@ module.exports = {
          * @param {String} username - Username of the user to check.
          */
         socket.on('getCanVote', (username) => {
-            logger.log('info', `[getCanVote] username=(${username}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+            try {
+                logger.log('info', `[getCanVote] username=(${username}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            const classId = socket.request.session.classId;
-            const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-            const canVote = studentBoxes.indexOf(username) > -1;
-            socket.emit('getCanVote', canVote);
+                const classId = socket.request.session.classId;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                const canVote = studentBoxes.indexOf(username) > -1;
+                socket.emit('getCanVote', canVote);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
         });
 
         /**
@@ -149,26 +153,30 @@ module.exports = {
          *                              This should only include usernames which should be changed.
          */
         socket.on('changeCanVote', (votingData) => {
-            logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+            try {
+                logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            const classId = socket.request.session.classId;
-            const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-            for (const username in votingData) {
-                const votingRight = votingData[username];
-                if (votingRight) {
-                    if (!studentBoxes[username]) {
-                        studentBoxes.push(username);
+                const classId = socket.request.session.classId;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                for (const username in votingData) {
+                    const votingRight = votingData[username];
+                    if (votingRight) {
+                        if (!studentBoxes[username]) {
+                            studentBoxes.push(username);
+                        }
+                    } else {
+                        // Remove all instances of the username from the studentBoxes array
+                        studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
                     }
-                } else {
-                    // Remove all instances of the username from the studentBoxes array
-                    studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
-                }
 
-                if (userSockets[username]) {
-                    userSockets[username].emit('changeCanVote', votingRight);
+                    if (userSockets[username]) {
+                        userSockets[username].emit('changeCanVote', votingRight);
+                    }
                 }
+                socketUpdates.virtualBarUpdate(classId);
+            } catch(err) {
+                logger.log('error', err.stack)
             }
-            socketUpdates.virtualBarUpdate(classId);
         });
 
         socket.on('getActiveClass', () => {
