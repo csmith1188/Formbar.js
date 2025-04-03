@@ -180,7 +180,10 @@ module.exports = {
                 logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`);
 
+                console.log(1)
+
                 if (!username) {
+                    console.log(2)
                     res.render('pages/message', {
                         message: 'Please enter a username',
                         title: 'Login'
@@ -189,6 +192,7 @@ module.exports = {
                 };
 
                 if (!password) {
+                    console.log(3)
                     res.render('pages/message', {
                         message: 'Please enter a password',
                         title: 'Login'
@@ -198,6 +202,7 @@ module.exports = {
 
                 database.get('SELECT * FROM users WHERE username=?', [username], async (err, userData) => {
                     try {
+                        console.log(4)
                         if (err) throw err;
 
                         // Check if the user exists
@@ -212,6 +217,7 @@ module.exports = {
 
                         // Hashes users password
                         const passwordMatches = await compare(password, userData.password);
+                        console.log(5)
                         if (!passwordMatches) {
                             logger.log('verbose', '[post /oauth] Incorrect password')
                             res.render('pages/message', {
@@ -225,10 +231,12 @@ module.exports = {
 
                         // Retrieve or generate refresh token
                         database.get('SELECT * from refresh_tokens WHERE user_id=?', [userData.id], (err, refreshTokenData) => {
+                            console.log(6)
                             if (err) throw err;
                             
                             let refreshToken = null;
                             if (refreshTokenData) {
+                                console.log(7)
                                 // Check if refresh token is past expiration date
                                 const decodedRefreshToken = jwt.decode(refreshTokenData.refresh_token);
                                 const currentTime = Math.floor(Date.now() / 1000);
@@ -236,15 +244,15 @@ module.exports = {
                                     // Generate new refresh token
                                     refreshToken = generateRefreshToken(userData);
                                     storeRefreshToken(userData.id, refreshToken);
-                                    return;
                                 };
 
                                 refreshToken = refreshTokenData.refresh_token;
                             } else {
+                                console.log(8)
                                 refreshToken = generateRefreshToken(userData);
                                 storeRefreshToken(userData.id, refreshToken);
                             };
-
+                            console.log(11)
                             // Generate access token
                             const classId = getUserClass(userData.username);
                             const accessToken = generateAccessToken(userData, classId, refreshToken);
@@ -253,6 +261,7 @@ module.exports = {
                             res.redirect(`${redirectURL}?token=${accessToken}`);
                         });
                     } catch (err) {
+                        console.log(9)
                         logger.log('error', err.stack);
                         res.render('pages/message', {
                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
@@ -261,6 +270,7 @@ module.exports = {
                     };
                 });
             } catch (err) {
+                console.log(10)
                 logger.log('error', err.stack);
                 res.render('pages/message', {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,

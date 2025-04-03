@@ -32,12 +32,13 @@
             </div>
         </body>
         <script>
+            let apiKeyValue = '<%- API %>';
+
             function revealApiKey() {
                 let apiKey = document.getElementById('apiKey');
                 let apiKeyButton = document.getElementById('apiKeyButton');
-                apiKey.innerHTML = '<span style="color: var(--bg-light-blue);"><strong>API Key:</strong> <%- API %></span>';
+                apiKey.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '<p>';
                 apiKeyButton.innerHTML = '<button onclick="hideApiKey()" style="padding: 10px 20px">Hide API Key</button>';
-                apiKeyButton.style.margin = '20px 0'; // Add margin to the button
             }
 
             function hideApiKey() {
@@ -45,7 +46,6 @@
                 let apiKeyButton = document.getElementById('apiKeyButton');
                 apiKey.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
                 apiKeyButton.innerHTML = '<button onclick="revealApiKey()" style="padding: 10px 20px">Reveal API Key</button>';
-                apiKeyButton.style.margin = '20px 0'; // Add margin to the button
             }
 
             function refreshApiKey() {
@@ -67,6 +67,17 @@
                 refreshDiv.appendChild(denyButton);
                 refreshDiv.appendChild(confirmButton);
             }
-
-
+            
+            socket.on('apiKeyUpdated', (data) => {
+                apiKeyValue = data;
+                const apiKey = document.getElementById('apiKey');
+                const refreshDiv = document.getElementById('refreshDiv');
+                refreshDiv.innerHTML = '<button id="apiRefresh" onclick="refreshApiKey()" style="padding: 10px 20px; background-color: #ff8484">Refresh API Key</button>';
+                const apiKeyButton = document.getElementById('apiKeyButton');
+                if (apiKeyButton.innerHTML.includes('Hide API Key')) {
+                    apiKey.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '</p>';
+                } else {
+                    apiKey.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
+                }
+            });
         </script>

@@ -116,8 +116,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
 	awardDigipogs: 'awardDigipogs',
-	requestConversion: 'requestConversion',
-	refreshApiKey: 'refreshApiKey'
+	requestConversion: 'requestConversion'
 }
 
 module.exports = {
