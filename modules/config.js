@@ -1,6 +1,34 @@
 const fs = require('fs');
+const crypto = require('crypto');
 
 function getConfig() {
+    // If publicKey.pem or privateKey.pem doesn't exist, create them
+    if (!fs.existsSync('publicKey.pem') || !fs.existsSync('privateKey.pem')) {
+        /*
+            Private and public keys are to be used to make Formbar OAuth more secure.
+            The public key is used to encrypt the data, and the private key is used to decrypt it.
+            The public key is shared with the client, and the private key is kept secret on the server.
+            This way, users' applications can verify the identity of the server and encrypt data that only the server can decrypt.
+            This is a common practice in OAuth implementations to ensure secure communication between the client and server.
+            jack black
+        */
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048, // Key size in bits
+            publicKeyEncoding: {
+                type: 'spki',
+                format: 'pem',
+            },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem',
+            },
+        });
+        fs.writeFileSync('publicKey.pem', publicKey);
+        fs.writeFileSync('privateKey.pem', privateKey);
+    } else {
+        publicKey = fs.readFileSync('publicKey.pem', 'utf8');
+        privateKey = fs.readFileSync('privateKey.pem', 'utf8');
+    }
     // If logNumber.json doesn't exist, create it
     if (!fs.existsSync('logNumbers.json')) {
         fs.copyFileSync('logNumbers-template.json', 'logNumbers.json');
@@ -19,7 +47,9 @@ function getConfig() {
     
     return {
         logNumbers: JSON.parse(fs.readFileSync('logNumbers.json')),
-        settings: settings
+        settings: settings,
+        publicKey: publicKey,
+        privateKey: privateKey
     };
 };
 
