@@ -34,6 +34,11 @@
 										Take Break
 									</button>
 								</div>
+										<br>
+										<br>
+										<div id='requestConvert'>
+											<button onclick='convertDigipogs()' class='quickButton'>Request Real Pogs</button>
+										</div>
 								<div id="pollContent">
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
 									<div id="poll">
@@ -269,6 +274,10 @@
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
 					}
+
+					function convertDigipogs() {
+						socket.emit('requestConversion');
+					};
 
 					let options = document.getElementsByName('option')
 					for (let option of options) {

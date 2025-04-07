@@ -303,7 +303,7 @@ module.exports = {
                             }
 
                             do {
-                                newAPI = crypto.randomBytes(64).toString('hex')
+                                newAPI = crypto.randomBytes(32).toString('hex')
                             } while (existingAPIs.includes(newAPI))
 
                             do {

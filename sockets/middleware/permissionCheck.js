@@ -23,6 +23,8 @@ module.exports = {
 
                 // If the class provided by the user is not loaded into memory, avoid going further to avoid errors
                 if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
+                    logger.log('info', '[socket permission check] Class does not exist in memory')
+                    socket.emit('message', 'Class does not exist in memory')
                     return;
                 }
 

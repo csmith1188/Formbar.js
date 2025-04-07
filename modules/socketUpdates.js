@@ -26,6 +26,7 @@ const PASSIVE_SOCKETS = [
 	'pollUpdate',
 	'modeUpdate',
 	'quizUpdate',
+	'lessonUpdate',
 	'managerUpdate',
 	'ipUpdate',
 	'vbUpdate',
@@ -303,7 +304,39 @@ class SocketUpdates {
             logger.log('error', err.stack);
         }
     }
-
+    
+    quizUpdate(classId = this.socket.request.session.classId) {
+        try {
+            logger.log('info', `[quizUpdate] classId=(${classId})`)
+            logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(classInformation.classrooms[classId].quiz)})`)
+    
+            advancedEmitToClass(
+                'quizUpdate',
+                classId,
+                { classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
+                classInformation.classrooms[classId].quiz
+            )
+        } catch (err) {
+            logger.log('error', err.stack);
+        }
+    }
+    
+    lessonUpdate(classId = this.socket.request.session.classId) {
+        try {
+            logger.log('info', `[lessonUpdate] classId=(${classId})`)
+            logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(classInformation.classrooms[classId].lesson)})`)
+    
+            advancedEmitToClass(
+                'lessonUpdate',
+                classId,
+                { classPermissions: CLASS_SOCKET_PERMISSIONS.lessonUpdate },
+                classInformation.classrooms[classId].lesson
+            )
+        } catch (err) {
+            logger.log('error', err.stack);
+        }
+    }
+    
     pluginUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[pluginUpdate] classId=(${classId})`)
