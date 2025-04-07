@@ -43,7 +43,7 @@ module.exports = {
                 if (boxes) {
                     classInformation.classrooms[classId].poll.studentBoxes = boxes
                 } else {
-                    classInformation.classrooms[classId].poll.studentBoxes = []
+                    classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
                 }
 
                 if (indeterminate) {
