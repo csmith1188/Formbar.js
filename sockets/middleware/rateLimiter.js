@@ -9,10 +9,10 @@ module.exports = {
             try {
                 const username = socket.request.session.username
                 const currentTime = Date.now()
-                var limit = 5
                 const timeFrame = 5000
                 const blockTime = 5000
                 const limitedRequests = ['pollResp', 'help', 'break']
+                let limit = 5
 
                 logger.log('info', `[rate limiter] username=(${username}) currentTime=(${currentTime})`)
                 if (!rateLimits[username]) {

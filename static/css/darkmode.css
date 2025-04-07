@@ -49,7 +49,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1.headertext, h2.headertext {
-	color: var(--bg-light-blue) !important;
+	color: var(--theme-color) !important;
 }
 
 h1#noPoll.textColorContent, h1#headerText.textColorContent {

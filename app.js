@@ -3,8 +3,8 @@ const express = require('express')
 const session = require('express-session') // For storing client login data
 const crypto = require('crypto')
 const fs = require('fs')
-const authentication = require('./modules/authentication.js')
 require('dotenv').config(); // For environment variables
+
 // Custom modules
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
@@ -13,7 +13,8 @@ const { database } = require('./modules/database.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
-const { SocketUpdates, userSockets } = require('./modules/socketUpdates.js')
+const authentication = require('./modules/authentication.js')
+const { settings } = require('./modules/config.js')
 
 // Upgrade the database if it's not up to date
 upgradeDatabase();
@@ -49,16 +50,6 @@ app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@fl
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 app.use('/js/monaco-loader.js', express.static(__dirname + '/node_modules/monaco-editor/min/vs/loader.js'))
 app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs'))
-
-// Get the current poll id
-database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
-	if (err) {
-		logger.log('error', err.stack)
-	} else {
-		// Set the current poll id to the maximum id minus one since the database starts poll ids at 1
-		currentPoll = pollHistory['MAX(id)'] - 1
-	}
-})
 
 // Check if an IP is banned
 app.use((req, res, next) => {
@@ -98,7 +89,6 @@ app.use((req, res, next) => {
 
 // Import HTTP routes
 const routeFiles = fs.readdirSync('./routes/').filter(file => file.endsWith('.js'));
-
 for (const routeFile of routeFiles) {
 	// Skip for now as it will be handled later
 	if (routeFile == '404.js') {

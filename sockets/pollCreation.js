@@ -43,7 +43,7 @@ module.exports = {
                 if (boxes) {
                     classInformation.classrooms[classId].poll.studentBoxes = boxes
                 } else {
-                    classInformation.classrooms[classId].poll.studentBoxes = []
+                    classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
                 }
 
                 if (indeterminate) {
@@ -59,8 +59,8 @@ module.exports = {
                 }
 
                 // Creates an object for every answer possible the teacher is allowing
+                const letterString = 'abcdefghijklmnopqrstuvwxyz'
                 for (let i = 0; i < resNumber; i++) {
-                    let letterString = 'abcdefghijklmnopqrstuvwxyz'
                     let answer = letterString[i]
                     let weight = 1
                     let color = generatedColors[i]

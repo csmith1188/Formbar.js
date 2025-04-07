@@ -130,26 +130,51 @@ module.exports = {
             }
         });
 
-        socket.on('votingRightChange', (username, votingRight, studBox) => {
+        /**
+         * Retrieves the voting rights of a user
+         * @param {String} username - Username of the user to check.
+         */
+        socket.on('getCanVote', (username) => {
             try {
+                logger.log('info', `[getCanVote] username=(${username}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
                 const classId = socket.request.session.classId;
                 const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                const canVote = studentBoxes.indexOf(username) > -1;
+                socket.emit('getCanVote', canVote);
+            } catch (err) {
+                logger.log('error', err.stack)
+            }
+        });
 
-                if (userSockets[username] && studBox) {
-                    classInformation.classrooms[classId].poll.studentBoxes = studBox;
-                    classInformation.classrooms[classId].students[username].pollRes.buttonRes = "";
-                    classInformation.classrooms[classId].students[username].pollRes.textRes = "";
+        /**
+         * Changes the voting rights of a user or multiple users
+         * @param {Object} votingData - An object containing the usernames and their voting rights.
+         *                              This should only include usernames which should be changed.
+         */
+        socket.on('changeCanVote', (votingData) => {
+            try {
+                logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                    userSockets[username].emit('votingRightChange', votingRight);
-                    socketUpdates.virtualBarUpdate(classId);
-                } else if (userSockets[username] && username) {
-                    if (studentBoxes.length > 0) {
-                        userSockets[username].emit('votingRightChange', studentBoxes.includes(username));
+                const classId = socket.request.session.classId;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                for (const username in votingData) {
+                    const votingRight = votingData[username];
+                    if (votingRight) {
+                        if (!studentBoxes[username]) {
+                            studentBoxes.push(username);
+                        }
                     } else {
-                        userSockets[username].emit('votingRightChange', false);
+                        // Remove all instances of the username from the studentBoxes array
+                        studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
+                    }
+
+                    if (userSockets[username]) {
+                        userSockets[username].emit('changeCanVote', votingRight);
                     }
                 }
-            } catch (err) {
+                socketUpdates.virtualBarUpdate(classId);
+            } catch(err) {
                 logger.log('error', err.stack)
             }
         });
