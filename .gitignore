@@ -11,3 +11,5 @@ settings.json
 
 logs/
 logNumbers.json
+
+*.pem

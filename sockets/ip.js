@@ -171,10 +171,6 @@ module.exports = {
                 fs.writeFileSync('./.env', newEnv);
             });
 
-            // Old code in case the .env code doesn't work or causes issues
-            // settings[`${type}Active`] = !settings[`${type}Active`]
-            // fs.writeFileSync('./settings.json', JSON.stringify(settings))
-
             let ipList
             if (type == 'whitelist') ipList = whitelistedIps;
             else if (type == 'blacklist') ipList = blacklistedIps;
