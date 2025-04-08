@@ -6,9 +6,9 @@ function getConfig() {
     if (!fs.existsSync('publicKey.pem') || !fs.existsSync('privateKey.pem')) {
         /*
             Private and public keys are to be used to make Formbar OAuth more secure.
-            The public key is used to encrypt the data, and the private key is used to decrypt it.
+            The public key is used to decrypt the data, and the private key is used to encrypt it.
             The public key is shared with the client, and the private key is kept secret on the server.
-            This way, users' applications can verify the identity of the server and encrypt data that only the server can decrypt.
+            This way, users' applications can verify the identity of the server and decrypt data that only the server can encrypt.
             This is a common practice in OAuth implementations to ensure secure communication between the client and server.
             jack black
         */
