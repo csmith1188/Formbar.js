@@ -121,7 +121,7 @@ async function getUser(api) {
 }
 
 /**
- * Retrieves the class code for a given user.
+ * Retrieves the class id for a given user.
  *
  * @param {string} username - The username of the user.
  * @returns {string|null|Error} The class id if the user is found, null if the user is not found, or an Error object if an error occurs.
@@ -139,7 +139,7 @@ function getUserClass(username) {
                 logger.log('verbose', `[getUserClass] classId=(${classInformation.id})`);
 
                 // Return the class code
-                return classInformation.id;
+                return classroom.id;
             }
         }
 
