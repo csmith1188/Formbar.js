@@ -101,10 +101,26 @@
 					let pollPromptDisplay = document.getElementById('pollPrompt')
 					noPoll = document.getElementById('noPoll')
 
+					document.addEventListener('keydown', (event) => {
+						for (let i = 0; i < pollForm.children.length; i++) {
+							if (event.key == pollForm.children[i].id) {
+								pollForm.children[i].click()
+							}
+						}
+					});
+
 					//stores the answer type that will be used in the student form
 					//
 					let multiAnswer = ""
 
+					document.addEventListener('keydown', (event) => {
+						for (let i = 0; i < pollForm.children.length; i++) {
+							if (event.key == pollForm.children[i].id) {
+								pollForm.children[i].click()
+							}
+						}
+						console.log(event.key)
+					});
 
 					let oldLettRes = '<%- myRes %>'
 					let oldTextRes = '<%- myTextRes %>'
@@ -224,19 +240,14 @@
 						if (deepObjectEqual(poll, newPoll)) return
 
 						poll = newPoll
-						if (poll.status) {
-							socket.emit('getCanVote', currentUser.username)
-						}
+						if (poll.status) socket.emit('votingRightChange', currentUser.username)
 						updatePage()
 					})
 
-					if (poll.status) {
-						socket.emit('getCanVote', currentUser.username)
-					}
-
-					socket.on('getCanVote', (newVotingRight) => {
-						votingRight = newVotingRight
-						if (newVotingRight) {
+					if (poll.status) socket.emit('votingRightChange', currentUser.username)
+					socket.on('votingRightChange', (vr) => {
+						votingRight = vr
+						if (vr) {
 							updatePage()
 						} else {
 							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
@@ -266,6 +277,7 @@
 
 					function help() {
 						let reason = document.getElementById('ticket').value
+						console.log('help')
 						socket.emit('help', reason)
 						document.getElementById('ticket').value = ''
 					}

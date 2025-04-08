@@ -121,6 +121,15 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(denyBreakButton)
 
             breakSound()
+
+        }
+        
+        let permissionSwitch = document.createElement("select");
+        permissionSwitch.setAttribute("name", "permSwitch");
+        permissionSwitch.setAttribute("class", "permSwitch");
+        permissionSwitch.setAttribute("data-username", studentData.username);
+        permissionSwitch.onchange = (event) => {
+            socket.emit('classPermChange', event.target.dataset.username, Number(event.target.value))
         }
 
         if (studentData.break) {
@@ -227,6 +236,43 @@ function buildStudent(classroom, studentData) {
 
             roomTagDiv.appendChild(button);
         }
+
+        let studentCheckbox = document.createElement('input');
+        studentCheckbox.type = "checkbox";
+        studentCheckbox.id = "checkbox_" + studentData.username;
+        studentCheckbox.name = "studentCheckbox";
+        studentCheckbox.addEventListener("contextmenu", function () {
+            event.preventDefault();
+            studentCheckbox.indeterminate = !studentCheckbox.indeterminate
+        });
+
+        studentCheckbox.addEventListener("click", function () {
+            if (classroom.students[studentData.username].break == true) {
+                studentCheckbox.checked = false
+            }
+            socket.emit('cpUpdate');
+        });
+
+        newStudent.appendChild(studentCheckbox)
+        // studentTags.appendChild(closeButton)
+        // newStudent.appendChild(toggleDialog)
+        newStudent.appendChild(permissionSwitch)
+        newStudent.append(' ')
+
+        let awardDigipogsButton = document.createElement('button');
+        awardDigipogsButton.className = 'awardDigipogs quickButton';
+        awardDigipogsButton.setAttribute('data-userid', studentData.id);
+        awardDigipogsButton.textContent = 'Award Digipogs';
+        awardDigipogsButton.onclick = (event) => {
+            let digipogs = +prompt('How many digipogs would you like to award?');
+            if (digipogs) {
+                if (isNaN(digipogs) || digipogs < 0) return;
+                const transferData = {from: currentUser.id, to: studentData.id, amount: digipogs, app: 'None', reason: 'Class Reward' };
+                socket.emit('awardDigipogs', transferData);
+            };
+        };
+
+        newStudent.appendChild(awardDigipogsButton);
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
