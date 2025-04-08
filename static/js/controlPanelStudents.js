@@ -121,42 +121,6 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(denyBreakButton)
 
             breakSound()
-
-        }
-
-        if(studentData.requestConversion) {
-            let requestDiv = document.createElement('div');
-            requestDiv.classList.add('request');
-            
-            let convertDigipogsApprove = document.createElement('button')
-            convertDigipogsApprove.classList.add('quickButton')
-            convertDigipogsApprove.onclick = () => {
-                socket.emit('approveConversion', studentData.id)
-            };
-            convertDigipogsApprove.textContent = 'Approve Conversion';
-            requestDiv.appendChild(convertDigipogsApprove);
-
-            let convertDigipogsDeny = document.createElement('button')
-            convertDigipogsDeny.classList.add('quickButton')
-            convertDigipogsDeny.onclick = () => {
-                socket.emit('denyConversion', studentData.id)
-            };
-            convertDigipogsDeny.textContent = 'Deny Conversion';
-            requestDiv.appendChild(convertDigipogsDeny);
-            
-            let convertDigipogsDisplay = document.createElement('span')
-            convertDigipogsDisplay.textContent = `🏅`
-            requestDiv.classList.add('convertDigipogs')
-            studentElement.appendChild(requestDiv)
-        }
-
-        newStudent.appendChild(studentElement);
-        let permissionSwitch = document.createElement("select");
-        permissionSwitch.setAttribute("name", "permSwitch");
-        permissionSwitch.setAttribute("class", "permSwitch");
-        permissionSwitch.setAttribute("data-username", studentData.username);
-        permissionSwitch.onchange = (event) => {
-            socket.emit('classPermChange', event.target.dataset.username, Number(event.target.value))
         }
 
         if (studentData.break) {
@@ -264,42 +228,6 @@ function buildStudent(classroom, studentData) {
             roomTagDiv.appendChild(button);
         }
 
-        studentCheckbox.type = "checkbox";
-        studentCheckbox.id = "checkbox_" + studentData.username;
-        studentCheckbox.name = "studentCheckbox";
-        studentCheckbox.addEventListener("contextmenu", function () {
-            event.preventDefault();
-            studentCheckbox.indeterminate = !studentCheckbox.indeterminate
-        });
-
-        studentCheckbox.addEventListener("click", function () {
-            if (room.students[studentData.username].break == true) {
-                studentCheckbox.checked = false
-            }
-            socket.emit('cpUpdate');
-        });
-
-        newStudent.appendChild(studentCheckbox)
-        studentTags.appendChild(closeButton)
-        newStudent.appendChild(toggleDialog)
-        newStudent.appendChild(permissionSwitch)
-        newStudent.append(' ')
-
-        let awardDigipogsButton = document.createElement('button');
-        awardDigipogsButton.className = 'awardDigipogs quickButton';
-        awardDigipogsButton.setAttribute('data-userid', studentData.id);
-        awardDigipogsButton.textContent = 'Award Digipogs';
-        awardDigipogsButton.onclick = (event) => {
-            let digipogs = +prompt('How many digipogs would you like to award?');
-            if (digipogs) {
-                if (isNaN(digipogs) || digipogs < 0) return;
-                const transferData = {from: currentUser.id, to: studentData.id, amount: digipogs, app: 'None', reason: 'Class Reward' };
-                socket.emit('awardDigipogs', transferData);
-            };
-        };
-
-        newStudent.appendChild(awardDigipogsButton);
-
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
         banStudentButton.className = 'banUser quickButton'
@@ -363,7 +291,7 @@ function filterSortChange(classroom) {
             let studentElement = document.getElementById(`student-${username}`);
             if (
                 (filter.polls == 1 && (
-                    !classroom.students[username].pollRes.buttonRes && !classroom.students[username].pollRes.textRes)
+                        !classroom.students[username].pollRes.buttonRes && !classroom.students[username].pollRes.textRes)
                 ) ||
                 (filter.polls == 2 &&
                     (classroom.students[username].pollRes.buttonRes || classroom.students[username].pollRes.textRes)
