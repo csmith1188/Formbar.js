@@ -3,7 +3,6 @@ const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { userSockets } = require("../modules/socketUpdates")
 const { generateColors } = require("../modules/util")
-const { normalizeArguments } = require("../modules/arguments");
 
 let earnedObject = {
     earnedDigipogs: []
@@ -12,10 +11,9 @@ let earnedObject = {
 module.exports = {
     run(socket, socketUpdates) {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
-        socket.on('startPoll', async (...args) => {
+        socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
+            console.log(resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes);
             try {
-                const [resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = normalizeArguments(args);
-
                 earnedObject.earnedDigipogs = [];
                 // Get class id and check if the class is active before continuing
                 const classId = socket.request.session.classId;
