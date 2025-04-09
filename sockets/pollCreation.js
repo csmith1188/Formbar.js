@@ -12,7 +12,6 @@ module.exports = {
     run(socket, socketUpdates) {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
         socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
-            console.log(resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes);
             try {
                 earnedObject.earnedDigipogs = [];
                 // Get class id and check if the class is active before continuing
