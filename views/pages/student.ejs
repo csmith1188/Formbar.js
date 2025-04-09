@@ -233,7 +233,6 @@
 					if (poll.status) {
 						socket.emit('getCanVote', currentUser.username)
 					}
-
 					socket.on('getCanVote', (newVotingRight) => {
 						votingRight = newVotingRight
 						if (newVotingRight) {

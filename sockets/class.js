@@ -169,8 +169,9 @@ module.exports = {
                         studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
                     }
 
+                    // Emit the voting right to the user
                     if (userSockets[username]) {
-                        userSockets[username].emit('changeCanVote', votingRight);
+                        userSockets[username].emit('getCanVote', votingRight);
                     }
                 }
                 socketUpdates.virtualBarUpdate(classId);
