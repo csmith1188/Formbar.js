@@ -53,7 +53,8 @@
 
     // Calls for data
     socket.emit('vbUpdate')
-    // Gets data from server and send it the function
+
+    // Gets data from server
     socket.on('vbUpdate', (newPollsData) => {
         if (deepObjectEqual(newPollsData, pollsData)) return
 

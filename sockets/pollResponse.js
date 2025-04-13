@@ -1,7 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets} = require("../modules/socketUpdates")
 const { earnedObject } = require('./pollCreation');
 
 let earnedDigipogs = earnedObject.earnedDigipogs;
@@ -63,6 +63,10 @@ module.exports = {
                     }
                 }
                 logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
+
+                if (userSockets[username]) {
+                    userSockets[username].emit('pollResp', { res, textRes });
+                }
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()

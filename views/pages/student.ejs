@@ -201,7 +201,6 @@
 						let textarea = document.getElementById("resTextBox")
 						let lettRes = []
 						let textRes = ''
-						//make something
 
 						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
 						for (let i = 0; i < radios.length; i++) {
@@ -238,6 +237,30 @@
 						}
 						updatePage()
 					})
+
+					socket.on('pollResp', (voteData) => {
+						const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')
+						const oldLetterElement = document.querySelector(`#pollControl input[value="${voteData.res}"]`);
+
+						// Set all responses to unchecked
+						allResponses.forEach((response) => {
+							if (response.type == 'radio' || response.type == 'checkbox') {
+								response.checked = false;
+							}
+						});
+
+						// Set the correct response to checked
+						if (oldLetterElement && !oldLetterElement.checked) {
+							oldLetterElement.checked = true;
+						}
+
+						if (voteData.textRes) {
+							const resTextBox = document.getElementById("resTextBox");
+							if (resTextBox) {
+								resTextBox.value = voteData.textRes;
+							}
+						}
+					});
 
 					if (poll.status) {
 						socket.emit('getCanVote', currentUser.username)
