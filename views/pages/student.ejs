@@ -106,7 +106,7 @@
 					let multiAnswer = ""
 
 
-					let oldLettRes = '<%- myRes %>'
+					let oldLetterRes = '<%- myRes %>'
 					let oldTextRes = '<%- myTextRes %>'
 
 					let poll = {}
@@ -161,11 +161,19 @@
 								pollDiv.style.display = 'none'
 							}
 
-							if (oldLettRes && document.getElementById(oldLettRes)) {
-								document.getElementById(oldLettRes).checked = true
+							// If the user has responded before on this poll, put their previous responses in the form
+							const oldLetterElement = document.getElementById(oldLetterRes)
+							const resTextBox = document.getElementById("resTextBox")
+							if (oldLetterRes && oldLetterElement) {
+								oldLetterElement.checked = true
+							}
+
+							if (oldTextRes && resTextBox) {
+								resTextBox.value = oldTextRes
 							}
 						}
 					}
+
 					function updatePage() {
 						if (poll.allowedResponses.length > 0) {
 							for (let eachAllowedResponse of poll.allowedResponses) {
@@ -193,7 +201,6 @@
 						let textarea = document.getElementById("resTextBox")
 						let lettRes = []
 						let textRes = ''
-						//make something
 
 						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
 						for (let i = 0; i < radios.length; i++) {
@@ -206,13 +213,14 @@
 								lettRes.push(radios[i].value)
 							}
 						}
+
 						if (lettRes.length == 1) {
 							lettRes = lettRes[0]
 						}
 
-
-						if (textarea)
+						if (textarea) {
 							textRes = textarea.value
+						}
 
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
@@ -229,6 +237,30 @@
 						}
 						updatePage()
 					})
+
+					socket.on('pollResp', (voteData) => {
+						const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')
+						const oldLetterElement = document.querySelector(`#pollControl input[value="${voteData.res}"]`);
+
+						// Set all responses to unchecked
+						allResponses.forEach((response) => {
+							if (response.type == 'radio' || response.type == 'checkbox') {
+								response.checked = false;
+							}
+						});
+
+						// Set the correct response to checked
+						if (oldLetterElement && !oldLetterElement.checked) {
+							oldLetterElement.checked = true;
+						}
+
+						if (voteData.textRes) {
+							const resTextBox = document.getElementById("resTextBox");
+							if (resTextBox) {
+								resTextBox.value = voteData.textRes;
+							}
+						}
+					});
 
 					if (poll.status) {
 						socket.emit('getCanVote', currentUser.username)
@@ -299,8 +331,5 @@
 				</script>
 				<% } %>
 
-
-
-					<%- include('../partials/footer_content') %>
-
+				<%- include('../partials/footer_content') %>
 </html>

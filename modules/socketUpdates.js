@@ -154,42 +154,6 @@ class SocketUpdates {
             let totalStudentsExcluded = [];
             let responses = {};
 
-            // Count the number of responses for each poll option
-            if (Object.keys(classData.poll.responses).length > 0) {
-                for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
-                    responses[resKey] = {
-                        ...resValue,
-                        responses: 0
-                    }
-                }
-
-                for (let studentData of Object.values(classData.students)) {
-                    if (studentData.break == true) {
-                        continue;
-                    }
-
-                    // Count student as responded if they have any valid response
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        if (studentData.pollRes.buttonRes.length > 0) {
-                            totalResponses++;
-                        }
-                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
-                        totalResponses++;
-                    }
-
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        for (let response of studentData.pollRes.buttonRes) {
-                            if (studentData && Object.keys(responses).includes(response)) {
-                                responses[response].responses++;
-                            }
-                        }
-                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes)) {
-                        responses[studentData.pollRes.buttonRes].responses++;
-                    }
-                }
-            }
-
-
             for (let student of Object.values(classData.students)) {
                 // Store whether the student is included or excluded
                 let included = false;
@@ -221,6 +185,11 @@ class SocketUpdates {
                     excluded = true;
                 }
 
+                // Check if they are a guest
+                if (student.classPermissions == GUEST_PERMISSIONS) {
+                    excluded = true;
+                }
+
                 // Check if they should be in the excluded array
                 if (student.break == true) {
                     excluded = true;
@@ -239,6 +208,41 @@ class SocketUpdates {
 
                 if (included) {
                     totalStudentsIncluded.push(student.username);
+                }
+            }
+
+            // Count the number of responses for each poll option
+            if (Object.keys(classData.poll.responses).length > 0) {
+                for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
+                    responses[resKey] = {
+                        ...resValue,
+                        responses: 0
+                    }
+                }
+
+                for (const studentData of Object.values(classData.students)) {
+                    if (studentData.break == true || totalStudentsExcluded.includes(studentData.username)) {
+                        continue;
+                    }
+
+                    // Count student as responded if they have any valid response and aren't excluded
+                    if (Array.isArray(studentData.pollRes.buttonRes)) {
+                        if (studentData.pollRes.buttonRes.length > 0) {
+                            totalResponses++;
+                        }
+                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
+                        totalResponses++;
+                    }
+
+                    if (Array.isArray(studentData.pollRes.buttonRes)) {
+                        for (let response of studentData.pollRes.buttonRes) {
+                            if (studentData && Object.keys(responses).includes(response)) {
+                                responses[response].responses++;
+                            }
+                        }
+                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.username)) {
+                        responses[studentData.pollRes.buttonRes].responses++;
+                    }
                 }
             }
 
