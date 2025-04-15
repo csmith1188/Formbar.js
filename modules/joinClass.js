@@ -86,7 +86,8 @@ async function joinClass(code, session) {
 			}
 
 			// Add the student to the newly created class
-			classInformation.classrooms[classroom.id].students[username] = currentUser			
+			classInformation.classrooms[classroom.id].students[username] = currentUser
+			classInformation.classrooms[classroom.id].poll.studentBoxes.push(username)
 			classInformation.users[username].activeClasses.push(classroom.id)
 			advancedEmitToClass('joinSound', classroom.id, { api: true })
 
@@ -122,6 +123,7 @@ async function joinClass(code, session) {
 
 			// Add the student to the newly created class
 			classData.students[username] = currentUser
+			classData.poll.studentBoxes.push(username)
 			classInformation.users[username].activeClasses.push(classroom.id)
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,

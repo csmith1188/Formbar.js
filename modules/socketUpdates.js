@@ -11,11 +11,22 @@ const rateLimits = {}
 const userSockets = {}
 let currentPoll = 0
 
+// Get the current poll id
+database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
+    if (err) {
+        logger.log('error', err.stack)
+    } else {
+        // Set the current poll id to the maximum id minus one since the database starts poll ids at 1
+        currentPoll = pollHistory['MAX(id)'] - 1
+    }
+})
+
 // Socket update events
 const PASSIVE_SOCKETS = [
 	'pollUpdate',
 	'modeUpdate',
 	'quizUpdate',
+	'lessonUpdate',
 	'managerUpdate',
 	'ipUpdate',
 	'vbUpdate',
@@ -123,7 +134,7 @@ class SocketUpdates {
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
-    
+
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
         } catch (err) {
             logger.log('error', err.stack);
@@ -142,42 +153,6 @@ class SocketUpdates {
             let totalStudentsIncluded = [];
             let totalStudentsExcluded = [];
             let responses = {};
-
-            // Count the number of responses for each poll option
-            if (Object.keys(classData.poll.responses).length > 0) {
-                for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
-                    responses[resKey] = {
-                        ...resValue,
-                        responses: 0
-                    }
-                }
-
-                for (let studentData of Object.values(classData.students)) {
-                    if (studentData.break == true) {
-                        continue;
-                    }
-
-                    // Count student as responded if they have any valid response
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        if (studentData.pollRes.buttonRes.length > 0) {
-                            totalResponses++;
-                        }
-                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
-                        totalResponses++;
-                    }
-
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        for (let response of studentData.pollRes.buttonRes) {
-                            if (studentData && Object.keys(responses).includes(response)) {
-                                responses[response].responses++;
-                            }
-                        }
-                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes)) {
-                        responses[studentData.pollRes.buttonRes].responses++;
-                    }
-                }
-            }
-
 
             for (let student of Object.values(classData.students)) {
                 // Store whether the student is included or excluded
@@ -210,6 +185,11 @@ class SocketUpdates {
                     excluded = true;
                 }
 
+                // Check if they are a guest
+                if (student.classPermissions == GUEST_PERMISSIONS) {
+                    excluded = true;
+                }
+
                 // Check if they should be in the excluded array
                 if (student.break == true) {
                     excluded = true;
@@ -228,6 +208,41 @@ class SocketUpdates {
 
                 if (included) {
                     totalStudentsIncluded.push(student.username);
+                }
+            }
+
+            // Count the number of responses for each poll option
+            if (Object.keys(classData.poll.responses).length > 0) {
+                for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
+                    responses[resKey] = {
+                        ...resValue,
+                        responses: 0
+                    }
+                }
+
+                for (const studentData of Object.values(classData.students)) {
+                    if (studentData.break == true || totalStudentsExcluded.includes(studentData.username)) {
+                        continue;
+                    }
+
+                    // Count student as responded if they have any valid response and aren't excluded
+                    if (Array.isArray(studentData.pollRes.buttonRes)) {
+                        if (studentData.pollRes.buttonRes.length > 0) {
+                            totalResponses++;
+                        }
+                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
+                        totalResponses++;
+                    }
+
+                    if (Array.isArray(studentData.pollRes.buttonRes)) {
+                        for (let response of studentData.pollRes.buttonRes) {
+                            if (studentData && Object.keys(responses).includes(response)) {
+                                responses[response].responses++;
+                            }
+                        }
+                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.username)) {
+                        responses[studentData.pollRes.buttonRes].responses++;
+                    }
                 }
             }
 
@@ -293,7 +308,39 @@ class SocketUpdates {
             logger.log('error', err.stack);
         }
     }
-
+    
+    quizUpdate(classId = this.socket.request.session.classId) {
+        try {
+            logger.log('info', `[quizUpdate] classId=(${classId})`)
+            logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(classInformation.classrooms[classId].quiz)})`)
+    
+            advancedEmitToClass(
+                'quizUpdate',
+                classId,
+                { classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
+                classInformation.classrooms[classId].quiz
+            )
+        } catch (err) {
+            logger.log('error', err.stack);
+        }
+    }
+    
+    lessonUpdate(classId = this.socket.request.session.classId) {
+        try {
+            logger.log('info', `[lessonUpdate] classId=(${classId})`)
+            logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(classInformation.classrooms[classId].lesson)})`)
+    
+            advancedEmitToClass(
+                'lessonUpdate',
+                classId,
+                { classPermissions: CLASS_SOCKET_PERMISSIONS.lessonUpdate },
+                classInformation.classrooms[classId].lesson
+            )
+        } catch (err) {
+            logger.log('error', err.stack);
+        }
+    }
+    
     pluginUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[pluginUpdate] classId=(${classId})`)

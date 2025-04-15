@@ -97,7 +97,8 @@ button,
 	transition-property: width, transform, box-shadow, background-color, color;
 }
 
-.breakButton {
+.breakButton,
+.helpButton {
 	border-radius: 8px;
 	font-size: 150%;
 	font-family: inherit;
@@ -446,24 +447,29 @@ input[type="radio"]:focus {
 	height: 300px;
 }
 
+#requestHelpDialog {
+	overflow: hidden;
+	height: 350px;
+}
+
 #otherText {
 	font-size: 14px;
 	margin-top: 15px;
 }
 
-#takeBreak {
+#takeBreak, #takeHelp {
 	position: absolute;
 	width: 100%;
 	bottom: 20px;
 }
 
-#takeBreak #cancel {
+#takeBreak #cancel, #takeHelp #cancel {
 	--theme-color: hsl(0, 0%, 20%);
 	background-color: white;
 	margin-right: 10px;
 }
 
-#takeBreak #cancel:active {
+#takeBreak #cancel:active, #takeHelp #cancel:active {
 	background-color: var(--theme-color);
 }
 
@@ -513,6 +519,29 @@ input[type="radio"]:focus {
 	100% {
 		transform: rotate(0deg) scale(1);
 	}
+}
+
+#studentVBar {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 2vh;
+	align-items: center;
+}
+
+#studentVBar #vbContainer {
+	width: 50% !important;
+	height: 85vh !important;
+}
+
+#helpBreak {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	width: 100%;
+}
+
+#pollContent {
+	width: 100%;
 }
 
 details {
@@ -600,8 +629,8 @@ details[open] #reasons {
 }
 
 #VBDiv #vbContainer {
-	width: 50%;
-	height: 50vh;
+	width: 25% !important;
+	height: auto !important;
 }
 
 #VBOptions {

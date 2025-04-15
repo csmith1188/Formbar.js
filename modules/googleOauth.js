@@ -1,6 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const fs = require('fs');
+const { settings } = require("./config")
 
 function setupGooglePassport() {
     // Check if google oauth is enabled

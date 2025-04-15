@@ -1,7 +1,7 @@
 const { hash, compare } = require('../modules/crypto');
 const { database, dbRun, dbGet } = require("../modules/database");
 const { classInformation } = require("../modules/class");
-const { logNumbers } = require("../modules/config");
+const { settings, logNumbers } = require("../modules/config");
 const { logger } = require("../modules/logger");
 const { Student } = require("../modules/student");
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions");
@@ -9,7 +9,6 @@ const { managerUpdate } = require("../modules/socketUpdates");
 const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const fs = require('fs');
 
 // Regex to test if the username, password, and display name are valid
 const usernameRegex = /^[a-zA-Z0-9_]{5,20}$/;
@@ -304,7 +303,7 @@ module.exports = {
                             }
 
                             do {
-                                newAPI = crypto.randomBytes(64).toString('hex')
+                                newAPI = crypto.randomBytes(32).toString('hex')
                             } while (existingAPIs.includes(newAPI))
 
                             do {

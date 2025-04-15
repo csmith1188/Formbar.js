@@ -1,3 +1,5 @@
+const { request } = require("express")
+
 // Permissions range from highest to lowest
 const MANAGER_PERMISSIONS = 5
 const TEACHER_PERMISSIONS = 4
@@ -53,6 +55,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinClass: GUEST_PERMISSIONS,
 	joinClassroom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
+	refreshApiKey: STUDENT_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
@@ -75,8 +78,10 @@ const CLASS_SOCKET_PERMISSIONS = {
 	classPoll: MOD_PERMISSIONS,
 	timer: TEACHER_PERMISSIONS,
 	timerOn: TEACHER_PERMISSIONS,
-	votingRightChange: STUDENT_PERMISSIONS,
+	getCanVote: STUDENT_PERMISSIONS,
+	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
+	requestConversion: STUDENT_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions
@@ -111,7 +116,8 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
-	awardDigipogs: 'awardDigipogs'
+	awardDigipogs: 'awardDigipogs',
+	requestConversion: 'requestConversion'
 }
 
 module.exports = {

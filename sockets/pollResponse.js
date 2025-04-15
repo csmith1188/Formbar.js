@@ -1,7 +1,7 @@
 const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets} = require("../modules/socketUpdates")
 const { earnedObject } = require('./pollCreation');
 
 let earnedDigipogs = earnedObject.earnedDigipogs;
@@ -11,13 +11,7 @@ module.exports = {
         // /poll websockets for updating the database
         socket.on('pollResp', (res, textRes) => {
             try {
-                let resLength;
-                try {
-                    resLength = textRes.length
-                } catch (err) {
-                    resLength = 0
-                    
-                };
+                const resLength = textRes != null ? textRes.length : 0;
                 logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`)
                 
@@ -54,7 +48,8 @@ module.exports = {
                     let amount = 0;
                     for (let i = 0; i <= resLength; i++) {
                         amount++;
-                    };
+                    }
+
                     amount = Math.ceil(amount/4);
                     amount = amount > 5 ? 5 : amount;
                     if (Number.isInteger(amount)) {
@@ -62,12 +57,16 @@ module.exports = {
                             if (err) {
                                 console.log(`Error adding ${amount} digipogs to ${username}`);
                                 console.error(err);
-                            };
+                            }
                         });
                         earnedDigipogs[username] = username;
-                    };
+                    }
                 }
                 logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
+
+                if (userSockets[username]) {
+                    userSockets[username].emit('pollResp', { res, textRes });
+                }
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()
