@@ -6,7 +6,9 @@
 	"scripts": {
 		"dev": "nodemon app",
 		"start": "node app",
-		"test": "jest"
+		"test": "jest",
+		"init-db": "node database/init.js",
+		"migrate": "node database/migrate.js"
 	},
 	"repository": {
 		"type": "git",

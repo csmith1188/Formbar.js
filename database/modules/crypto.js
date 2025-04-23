@@ -1,8 +1,6 @@
 // Main branch crypto module
 // Used for decrypting passwords from pre-v1 database and hashing them
-
 const crypto = require('crypto');
-
 const algorithm = 'aes-256-ctr';
 const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzfr3';
 
