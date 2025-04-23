@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { settings } = require('./config');
 
 // Create a map to store the email rate limits
 const limitStore = new Map();
