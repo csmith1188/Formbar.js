@@ -411,8 +411,8 @@ function clearPollFunc() {
 
 function endPollFunc() {
 	socket.emit('endPoll')
-
 }
+
 // Starts a new poll that allows students to submit answers
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
@@ -493,7 +493,7 @@ function startPoll(customPollId) {
 		changeTab('mainPolls', 'polls')
 
 		let generatedColors = generateColors(customPoll.answers.length)
-		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
+		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, false)
 	} else {
 		let blind = blindCheck.checked
 
