@@ -760,7 +760,6 @@ document.addEventListener('click', (event) => {
 
 let time = document.getElementsByClassName('inputtedTime')[0]
 let timeS = document.getElementsByClassName('inputtedTime')[1]
-let sound = document.getElementById('playSound')
 
 let timerButton = document.getElementById('timerButton')
 timerButton.addEventListener('click', function () {
@@ -768,11 +767,10 @@ timerButton.addEventListener('click', function () {
 		alert('Please enter a time')
 		return
 	}
-	socket.emit("timer", time.value * 60 + Number(timeS.value), true, sound.checked)
+	socket.emit("timer", time.value * 60 + Number(timeS.value), true)
 	timerButton.hidden = true
 	time.hidden = true
 	timeS.hidden = true
-	sound.hidden = true
 	timerStopButton.hidden = false
 })
 
@@ -783,7 +781,6 @@ timerStopButton.addEventListener('click', function () {
 	timeS.value = ''
 	time.hidden = false
 	timeS.hidden = false
-	sound.hidden = false
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
@@ -795,13 +792,11 @@ socket.on('timerOn', function (time) {
 		timerButton.hidden = true
 		document.getElementsByClassName('inputtedTime')[0].hidden = true
 		document.getElementsByClassName('inputtedTime')[1].hidden = true
-		document.getElementById('playSound').hidden = true
 		timerStopButton.hidden = false
 	} else {
 		timerButton.hidden = false
 		document.getElementsByClassName('inputtedTime')[0].hidden = false
 		document.getElementsByClassName('inputtedTime')[1].hidden = false
-		document.getElementById('playSound').hidden = false
 		timerStopButton.hidden = true
 	}
 })
