@@ -14,6 +14,7 @@ const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
 const authentication = require('./modules/authentication.js')
 const { settings } = require('./modules/config.js')
+const { plugins } = require('./modules/plugins.js')
 
 // Upgrade the database if it's not up to date
 upgradeDatabase();

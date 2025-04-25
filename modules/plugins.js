@@ -5,37 +5,43 @@ const { logNumbers } = require('./config');
 
 function configPlugins() {
     let plugins = {};
-    for (let i = 0; i < fs.readdirSync('./plugins').length; i++) {
-        let pluginDir = fs.readdirSync('./plugins')[i];
-        // Check if the file is a directory and not a zip file
-        if (fs.readdirSync(pluginDir).endsWith('.zip')) {
+    const pluginDirs = fs.readdirSync('plugins');
+
+    for (let i = 0; i < pluginDirs.length; i++) {
+        let pluginDir = pluginDirs[i];
+        const pluginPath = `${'plugins'}/${pluginDir}`;
+
+        // Check if the file is a zip file
+        if (pluginDir.endsWith('.zip')) {
             // Create a read stream for the zip file and pipe it to unzipper
-            fs.createReadStream(`./plugins/${pluginDir}`)
-                .pipe(unzipper.Extract({ path: './plugins' }))
+            fs.createReadStream(pluginPath)
+                .pipe(unzipper.Extract({ path: 'plugins' }))
                 .on('error', (err) => logger.error(`Error extracting ${pluginDir}: ${err}`))
                 .on('close', () => logger.log(`Extracted: ${pluginDir}`));
         }
-        const pluginPath = `./plugins/${pluginDir}`;
+
         // Check if the plugin directory exists and contains app.js
-        if (fs.lstatSync(pluginPath).isDirectory() && fs.existsSync(pluginPath + '/app.js')) {
+        if (fs.lstatSync(pluginPath).isDirectory() && fs.existsSync(`${pluginPath}/app.js`)) {
             try {
-                let plugin = require(pluginPath + '/app.js').plugin;
+                // Dynamically import the plugin module
+                const plugin = require(`../${pluginPath}/app.js`);
                 // Attempt to initialize the plugin
                 if (typeof plugin.init === 'function') {
                     plugin.init();
-                    logger.log(`Initialized plugin: ${plugin.name}`);
+                    logger.log('info', `Initialized plugin: ${plugin.name}`);
                     plugins[plugin.name] = plugin;
                 } else {
                     logger.warning(`No init function found in plugin: ${plugin.name}`);
                 }
             } catch (err) {
-                logger.error(`Error initializing plugin ${plugin.name}: ${err}`);
+                logger.error(`Error initializing ${pluginDir}: ${err}`);
             }
         } else {
             logger.warning(`Plugin ${pluginDir} is not a valid directory or does not contain app.js`);
-            continue;
         }
     }
+
+    logger.log('info', `Loaded ${Object.keys(plugins).length} plugin(s).`);
     return plugins;
 }
 
