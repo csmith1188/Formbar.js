@@ -3,8 +3,8 @@ const unzipper = require('unzipper');
 const { logger } = require('./logger');
 const { logNumbers } = require('./config');
 
+let plugins = {};
 function configPlugins() {
-    let plugins = {};
     const pluginDirs = fs.readdirSync('plugins');
 
     for (let i = 0; i < pluginDirs.length; i++) {
@@ -45,4 +45,4 @@ function configPlugins() {
     return plugins;
 }
 
-module.exports = configPlugins();
+module.exports = configPlugins(), plugins;

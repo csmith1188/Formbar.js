@@ -1,6 +1,7 @@
 const { isVerified } = require('../modules/authentication');
 const { logger } = require('../modules/logger');
 const { logNumbers } = require('../modules/config');
+const { plugins } = require('../modules/plugins');
 
 module.exports = {
     run(app) {
@@ -10,10 +11,7 @@ module.exports = {
                 logger.log('info', `[get /plugins] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 const pluginName = req.params.pluginName;
                 if (!pluginName) {
-                    return res.render('pages/plugins', {
-                        title: 'Plugins',
-                        plugins: Object.keys(plugins),
-                    });
+                    return res.send(plugins);
                 }
                 const plugin = plugins[pluginName];
                 if (!plugin) {
