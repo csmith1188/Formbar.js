@@ -34,6 +34,9 @@ function initializeDatabase() {
                     console.log('Database initialized successfully.');
                     resolve();
                 });
+
+                // Run the migrations after initialization
+                require('./migrate.js');
             });
         });
     });
