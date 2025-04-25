@@ -20,7 +20,6 @@ module.exports = {
                     });
                 }
                 const { displayName, email, digipogs, API } = userData;
-                console.log(userData);
                 res.render('pages/profile', {
                     title: 'Profile',
                     displayName: displayName,
@@ -29,7 +28,6 @@ module.exports = {
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
                 });
-                console.log(req.session.userId, req.params.userId, req.session.userId == req.params.userId);
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
