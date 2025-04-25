@@ -225,8 +225,6 @@ class SocketUpdates {
                         continue;
                     }
 
-                    studentData.pollRes.buttonRes = studentData.pollRes.buttonRes.replaceAll('|/comma/|', ',')
-
                     // Count student as responded if they have any valid response and aren't excluded
                     if (Array.isArray(studentData.pollRes.buttonRes)) {
                         if (studentData.pollRes.buttonRes.length > 0) {
