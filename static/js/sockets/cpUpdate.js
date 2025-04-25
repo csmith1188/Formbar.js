@@ -36,6 +36,9 @@ socket.on('cpUpdate', (newClassroom) => {
                 tempArr = student.pollRes.buttonRes
             } else {
                 tempArr = student.pollRes.buttonRes.split(",")
+                for (i in tempArr) {
+                    tempArr[i] = tempArr[i].replaceAll('|/comma/|', ',')
+                }
             }
 
             for (let res of tempArr) {

@@ -68,6 +68,9 @@ module.exports = {
                     userSockets[username].emit('pollResp', { res, textRes });
                 }
 
+                // Replace commas if there is one in the response name
+                classroom.students[username].pollRes.buttonRes = classroom.students[username].pollRes.buttonRes.replace(',', '|/comma/|')
+
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()
             } catch (err) {
