@@ -1,0 +1,47 @@
+const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+
+initializeDatabase();
+function initializeDatabase() {
+    new Promise((resolve, reject) => {
+        if (!fs.existsSync('./database/init.sql')) {
+            console.log('SQL initialization file not found.');
+            process.exit(1);
+        }
+
+        const initSQL = fs.readFileSync('./database/init.sql', 'utf8');
+        const database = new sqlite3.Database('./database/database.db');
+        database.serialize(() => {
+            database.run('BEGIN TRANSACTION');
+
+            // Execute initialization SQL
+            database.exec(initSQL, (err) => {
+                if (err) {
+                    console.error('Error executing initialization SQL:', err);
+                    database.run('ROLLBACK');
+                    database.close();
+                    process.exit(1);
+                }
+
+                database.run('COMMIT', (err) => {
+                    if (err) {
+                        console.error('Error committing initialization SQL:', err);
+                        database.run('ROLLBACK');
+                        database.close();
+                        process.exit(1);
+                    }
+
+                    console.log('Database initialized successfully.');
+                    resolve();
+                });
+
+                // Run the migrations after initialization
+                require('./migrate.js');
+            });
+        });
+    });
+}
+
+module.exports = {
+    initializeDatabase
+};
