@@ -534,33 +534,12 @@
 						}
 					}
 				} catch (err) {
-					console.log(err)
 					// Set the default filter settings
 					socket.emit('setClassSetting', 'filter', JSON.stringify({
 						alert: 0,
 						polls: 0
 					}));
 				}
-				if (typeof settings.filter === String) {
-					console.log("wrong type")
-				}
-				// const [ filterName, filterValue ] = settings.filter.split('-');
-				// const allFilters = document.querySelectorAll('.filter');
-				// const filterButton = document.getElementById(filterName);
-				//
-				// // Set the correct filter to on
-				// Object.keys(filter).forEach(key => filter[key] = 0);
-				// filter[filterName] = parseInt(filterValue);
-				//
-				// // Remove arrow from all filters
-				// allFilters.forEach(button => {
-				// 	button.textContent = FilterState[button.id][filter[button.id]]
-				// 	button.classList.remove('pressed')
-				// });
-				//
-				// // Set the correct filter to pressed
-				// filterButton.classList.add('pressed');
-				// filterButton.textContent = `${FilterState[filterName][filterValue]}`;
 			}
 
 			// Handle mute button 
