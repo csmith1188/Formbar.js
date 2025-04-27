@@ -9,7 +9,8 @@ require('dotenv').config();
  * The public key is shared with the client, and the private key is kept secret on the server.
  * This way, users' applications can verify the JWT signature using the public key, while the server can sign the JWT with its private key.
  * This is a common practice in OAuth implementations to ensure secure communication between the client and server.
- *
+ * jack black
+ * 
  * @returns {Object} An object containing the generated public and private keys.
  */
 function generateKeyPair() {

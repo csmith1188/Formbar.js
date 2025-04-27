@@ -9,6 +9,7 @@ module.exports = {
                 res.render('pages/message', {
                     title: 'Certs',
                     message: fs.readFileSync('publicKey.pem', 'utf8'),
+                    excluded: true
                 })
             });
         } catch (err) {
