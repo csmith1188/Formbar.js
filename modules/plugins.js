@@ -9,7 +9,7 @@ function configPlugins() {
 
     for (let i = 0; i < pluginDirs.length; i++) {
         let pluginDir = pluginDirs[i];
-        const pluginPath = `${'plugins'}/${pluginDir}`;
+        const pluginPath = `plugins/${pluginDir}`;
 
         // Check if the file is a zip file
         if (pluginDir.endsWith('.zip')) {
@@ -27,6 +27,7 @@ function configPlugins() {
                 const plugin = require(`../${pluginPath}/app.js`);
                 // Attempt to initialize the plugin
                 if (typeof plugin.init === 'function') {
+                    
                     plugin.init();
                     logger.log('info', `Initialized plugin: ${plugin.name}`);
                     plugins[plugin.name] = plugin;
