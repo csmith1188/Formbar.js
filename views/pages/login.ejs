@@ -17,19 +17,15 @@
                     <!-- Carries over and submits the redirectURL specified by the user. -->
                     <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
                     <!-- Login Inputs -->
-                    <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value=""
-                        autocomplete="off" pattern="[a-zA-Z0-9_]+" minlength="5" maxlength="20"
-                        title='Username must be 5-20 characters and contain only letters, numbers, and underscores'
-                        required>
+                    <input type="text" id="displayNameBox" name="displayName" class="loginBox"
+                           placeholder="Display Name" value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20"
+                           title='Display name must be 5-20 characters and contain only letters, numbers, and underscores'
+                           required>
                     <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
                     <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password"
                         value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\" ~?/\|\\]+"
                         title='Password must be 5-20 characters and contain only letters, numbers, and certain special characters'
                         minlength="5" maxlength="20" required>
-                    <input type="text" id="displayNameBox" name="displayName" class="loginBox"
-                        placeholder="Display Name" value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20"
-                        title='Display name must be 5-20 characters and contain only letters, numbers, and underscores'
-                        required>
                     <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
                     <!-- User and Login Type -->
                     <input type="hidden" id="loginTypeBox" name="loginType" value="login">
@@ -78,7 +74,6 @@
         const loginButton = document.getElementById('logInButton');
         const newAccountButton = document.getElementById('newAccountButton');
         const guestButton = document.getElementById('guestButton');
-        const usernameBox = document.getElementById('usernameBox');
         const emailBox = document.getElementById('emailBox');
         const passwordBox = document.getElementById('passwordBox');
         const displayNameBox = document.getElementById('displayNameBox');
@@ -109,9 +104,8 @@
                     passwordBox.required = true;
                     forgotPassword.classList.remove('hidden');
                     displayNameBox.classList.add('hidden');
-                    usernameBox.classList.remove('hidden');
-                    emailBox.classList.add('hidden');
-                    emailBox.required = false;
+                    emailBox.classList.remove('hidden');
+                    emailBox.required = true;
                     displayNameBox.required = false;
                     submitButton.value = 'Log in';
                     loginTypeBox.value = 'login';
@@ -121,7 +115,6 @@
                     passwordBox.required = true;
                     forgotPassword.classList.add('hidden');
                     displayNameBox.classList.remove('hidden');
-                    usernameBox.classList.remove('hidden');
                     emailBox.classList.remove('hidden');
                     emailBox.required = true;
                     displayNameBox.required = true;
@@ -129,8 +122,6 @@
                     loginTypeBox.value = 'new';
                     break;
                 case guestButton:
-                    usernameBox.value = null;
-                    usernameBox.classList.add('hidden');
                     passwordBox.value = null;
                     passwordBox.classList.add('hidden');
                     passwordBox.required = false;
@@ -144,15 +135,12 @@
                     break;
             }
             // Set if the inputs are required based on if they are visible
-            usernameBox.required = !usernameBox.classList.contains('hidden');
             emailBox.required = !emailBox.classList.contains('hidden');
             displayNameBox.required = !displayNameBox.classList.contains('hidden');
             passwordBox.required = !passwordBox.classList.contains('hidden');
 
             // Focus on the first visible input
-            if (!usernameBox.classList.contains('hidden')) {
-                usernameBox.focus();
-            } else if (!displayNameBox.classList.contains('hidden')) {
+            if (!displayNameBox.classList.contains('hidden')) {
                 displayNameBox.focus();
             }
 
@@ -160,7 +148,7 @@
         }
 
         function checkIfBlank() {
-            if ((usernameBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value.trim() !== '' || loginTypeBox.value === 'login')) {
+            if ((emailBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value.trim() !== '' || loginTypeBox.value === 'login')) {
                 submitButton.classList.remove('unselectable');
                 submitButton.onsubmit = () => true;
             } else {
@@ -173,7 +161,6 @@
             redirect.value ? window.location.href = `/auth/google?redirect=${redirect.value}` : window.location.href = '/auth/google';
         };
 
-        usernameBox.oninput = checkIfBlank;
         passwordBox.oninput = checkIfBlank;
         displayNameBox.oninput = checkIfBlank;
 
