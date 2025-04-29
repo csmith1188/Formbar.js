@@ -1,3 +1,4 @@
+const { plugins } = require('../modules/plugins')
 const { classInformation } = require("../modules/class")
 const { database, dbRun, dbGet } = require("../modules/database")
 const { joinClass } = require("../modules/joinClass")
@@ -6,6 +7,7 @@ const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../m
 const { getStudentId } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
+const { app } = require('../app')
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -13,7 +15,12 @@ module.exports = {
         socket.on('startClass', () => {
             try {
                 logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
+                // Enable all plugins
+                for (const p of Object.keys(plugins)) {
+                    const plugin = plugins[p]
+                    if (typeof plugin.onEnable == 'function')  plugin.onEnable()
+                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
+                }
                 const classId = socket.request.session.classId
                 socketUpdates.startClass(classId)
             } catch (err) {
@@ -25,7 +32,12 @@ module.exports = {
         socket.on('endClass', () => {
             try {
                 logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
+                // Disable all plugins
+                for (const p of Object.keys(plugins)) {
+                    const plugin = plugins[p]
+                    if (typeof plugin.onEnable == 'function')  plugin.onDisable()
+                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
+                }
                 const classId = socket.request.session.classId
                 socketUpdates.endClass(classId)
             } catch (err) {

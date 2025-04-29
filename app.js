@@ -101,7 +101,7 @@ for (const routeFile of routeFiles) {
 	route.run(app);
 }
 
-// Initialize plugins
+// Initialize plugin routes
 configPlugins(app);
 
 // Initialize websocket routes
