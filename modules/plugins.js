@@ -28,10 +28,9 @@ function configPlugins(app) {
                 // Attempt to initialize the plugin
                 if (typeof plugin.init === 'function') {
                     plugin.init(app);
-                    logger.log('info', `Initialized plugin: ${plugin.name}`);
                     plugins[plugin.name] = plugin;
                 } else {
-                    logger.warning(`No init function found in plugin: ${plugin.name}`);
+                    logger.warning(`No init function found in plugin: ${plugin.name || pluginDir}`);
                 }
             } catch (err) {
                 logger.error(`Error initializing ${pluginDir}: ${err}`);
