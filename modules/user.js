@@ -126,15 +126,15 @@ async function getUser(api) {
  * @param {string} username - The username of the user.
  * @returns {string|null|Error} The class id if the user is found, null if the user is not found, or an Error object if an error occurs.
  */
-function getUserClass(username) {
+function getUserClass(email) {
 	try {
 		// Log the username
-		logger.log('info', `[getUserClass] username=(${username})`);
+		logger.log('info', `[getUserClass] email=(${email})`);
 
         // Iterate over the classrooms to find which class the user is in
         for (const classroomId in classInformation.classrooms) {
             const classroom = classInformation.classrooms[classroomId];
-            if (classroom.students[username]) {
+            if (classroom.students[email]) {
                 // Log the class id
                 logger.log('verbose', `[getUserClass] classId=(${classInformation.id})`);
 
