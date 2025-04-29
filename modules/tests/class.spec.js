@@ -2,7 +2,7 @@ const { getClassIDFromCode, getClassUsers, classInformation} = require('../class
 const { database } = require("../database");
 const { testData } = require("./tests");
 
-test('should get class users', async () => {
+it('should get class users', async () => {
     database.get.mockImplementation((query, params, callback) => {
         if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
             if (params[0] !== testData.code) {
@@ -65,12 +65,12 @@ describe("getClassIdFromCode", () => {
         });
     })
 
-    test('should find class id with valid class code', async () => {
+    it('should find class id with valid class code', async () => {
         const classId = await getClassIDFromCode(testData.code);
         expect(classId).toBe(1);
     });
 
-    test('should return null for invalid class code', async () => {
+    it('should return null for invalid class code', async () => {
         const classId = await getClassIDFromCode('invalidkey');
         expect(classId).toBe(null);
     });

@@ -1,20 +1,15 @@
 const sqlite3 = require('sqlite3');
 const fs = require('fs');
 const database = getDatabase();
-const databaseTemplate = getDatabaseTemplate();
 
 function getDatabase() {
-    // If the database file doesn't exist, copy the template
-    if (!fs.existsSync('database/database.db')) {
-        fs.copyFileSync('database/database-template.db', 'database/database.db')
-    };
+    // // If the database file doesn't exist, copy the template
+    // if (!fs.existsSync('database/database.db')) {
+    //     initializeDatabase()
+    // }
 
     // Establishes the connection to the database file
     return new sqlite3.Database('database/database.db')
-}
-
-function getDatabaseTemplate() {
-    return new sqlite3.Database('database/database-template.db')
 }
 
 function dbGet(query, params, db = database) {
@@ -43,10 +38,8 @@ function dbGetAll(query, params, db = database) {
         });
     });
 }
-
 module.exports = {
     database,
-    databaseTemplate,
     dbGet,
     dbRun,
     dbGetAll,

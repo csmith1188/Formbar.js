@@ -262,6 +262,7 @@ module.exports = {
 
         socket.on('changeClassName', (name) => {
             try {
+                logger.log('info', `[changeClassName] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 if (!name) {
                     socket.emit('message', 'Class name cannot be empty.');
                     return;
@@ -273,7 +274,8 @@ module.exports = {
                         if (err) throw err;
 
                         // Update the class name in the class information
-                        classInformation.classrooms[socket.request.session.classId].name = name;
+                        classInformation.classrooms[socket.request.session.classId].className = name;
+                        socket.emit('changeClassName', name);
                         socket.emit('message', 'Class name updated.');
                     } catch (err) {
                         logger.log('error', err.stack);

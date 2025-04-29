@@ -14,11 +14,11 @@ module.exports = {
 
                 let students = classInformation.classrooms[req.session.classId].students
                 let keys = Object.keys(students)
-                let allStuds = []
+                let allStudents = []
 
                 for (let i = 0; i < keys.length; i++) {
                     const val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-                    allStuds.push(val)
+                    allStudents.push(val)
                 }
 
                 /* Uses EJS to render the template and display the information for the class.

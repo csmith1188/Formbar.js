@@ -6,7 +6,9 @@
 	"scripts": {
 		"dev": "nodemon app",
 		"start": "node app",
-		"test": "jest"
+		"test": "jest",
+		"init-db": "node database/init.js",
+		"migrate": "node database/migrate.js"
 	},
 	"repository": {
 		"type": "git",
@@ -50,6 +52,7 @@
 	"devDependencies": {
 		"@types/jest": "^29.5.14",
 		"jest": "^29.7.0",
-		"nodemon": "^3.0.1"
+		"nodemon": "^3.0.1",
+		"supertest": "^7.1.0"
 	}
 }

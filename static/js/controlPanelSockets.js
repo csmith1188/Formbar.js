@@ -236,6 +236,10 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 	}
 })
 
+socket.on("changeClassName", (name) => {
+	className.textContent = `Class Name: ${name}`;
+})
+
 socket.on("classPollSave", (pollId) => {
 	const classId = classId.textContent.split(": ")[1];
 	socket.emit("sharePollToClass", pollId, classId);
