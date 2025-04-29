@@ -4,7 +4,7 @@ const { logger } = require('./logger');
 const { logNumbers } = require('./config');
 
 let plugins = {};
-function configPlugins() {
+function configPlugins(app) {
     const pluginDirs = fs.readdirSync('plugins');
 
     for (let i = 0; i < pluginDirs.length; i++) {
@@ -27,8 +27,7 @@ function configPlugins() {
                 const plugin = require(`../${pluginPath}/app.js`);
                 // Attempt to initialize the plugin
                 if (typeof plugin.init === 'function') {
-                    
-                    plugin.init();
+                    plugin.init(app);
                     logger.log('info', `Initialized plugin: ${plugin.name}`);
                     plugins[plugin.name] = plugin;
                 } else {
@@ -46,4 +45,7 @@ function configPlugins() {
     return plugins;
 }
 
-module.exports = configPlugins(), plugins;
+module.exports = {
+    configPlugins,
+    plugins,
+}

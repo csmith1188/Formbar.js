@@ -20,10 +20,7 @@ module.exports = {
                         title: 'Error'
                     });
                 }
-                res.render('pages/plugin', {
-                    title: plugin.name,
-                    plugin: plugin,
-                });
+                res.send(plugin);
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {

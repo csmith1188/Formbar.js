@@ -1,13 +1,15 @@
+function run(app) {
+    app.get('/party', (req, res) => {
+        res.send('Party Plugin is running!');
+    })
+}
+
 module.exports = {
     name: 'PartyPlugin',
-    description: 'A plugin for party functionality',
+    description: 'Parties, for the party life.',
     version: '1.0.0',
-    init() {
-        console.log('Party Plugin initialized!');
+    author: 'Jesse Bailey-Motts',
+    init(app) {
+        run(app);
     },
-    run(app) {
-        app.get('/party', (req, res) => {
-            res.send('Party Plugin is working!');
-        });
-    }
 }

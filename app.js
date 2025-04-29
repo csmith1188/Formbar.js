@@ -14,8 +14,9 @@ const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { upgradeDatabase } = require('./data_upgrader/dataUpgrader.js')
 const authentication = require('./modules/authentication.js')
 const { settings } = require('./modules/config.js');
+const { configPlugins, plugins } = require('./modules/plugins.js')
 const { dir } = require('console');
-// const { plugins } = require('./modules/plugins.js')
+const { config } = require('dotenv');
 
 // Upgrade the database if it's not up to date
 upgradeDatabase();
@@ -100,25 +101,8 @@ for (const routeFile of routeFiles) {
 	route.run(app);
 }
 
-// Import plugin routes
-const pluginsDir = fs.readdirSync('plugins');
-for (const pluginDir of pluginsDir) {
-	try {
-		if (fs.existsSync(`./plugins/${pluginDir}/routes`)) {
-			const pluginRoutes = fs.readdirSync(`./plugins/${pluginDir}/routes`).filter(file => file.endsWith('.js'));
-			for (const routeFile of pluginRoutes) {
-				const route = require(`./plugins/${pluginDir}/routes/${routeFile}`);
-				route.run(app);
-			}
-		} else {
-			const plugin = require(`./plugins/${pluginDir}/app`);
-			if (typeof plugin.run === 'function') 
-				plugin.run(app);
-		}
-	} catch (err) {
-		logger.error(`Error initializing ${pluginDir}: ${err}`);
-	}
-}
+// Initialize plugins
+configPlugins(app);
 
 // Initialize websocket routes
 initSocketRoutes();
