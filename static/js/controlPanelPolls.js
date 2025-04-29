@@ -431,8 +431,8 @@ function startPoll(customPollId) {
 			weight: pollResponse.weight,
 			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
 		}
-		pollAnswer.answer = pollAnswer.answer.replaceAll('"', 'ʺ')
-		pollAnswer.answer = pollAnswer.answer.replaceAll(',', 'ˏ')
+		pollAnswer.answer = pollAnswer.answer.replaceAll('"', '“')
+		pollAnswer.answer = pollAnswer.answer.replaceAll(',', '‚')
 		pollAnswers.push(pollAnswer)
 	}
 	let multiRes = document.getElementById("multiRes")
