@@ -113,26 +113,38 @@ socket.on('customPollUpdate', (
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
 
-	// Check if the majority of student checkboxes are checked or unchecked
-	const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
-	let studentsChecked = 0;
-	let studentsUnchecked = 0;
-	for (const studentCheckbox of studentCheckboxes) {
-		if (studentCheckbox.id == "checkbox_fake") {
-			continue;
+	function getStudentVotingEligibility() {
+		const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
+		let studentsChecked = 0;
+		let studentsUnchecked = 0;
+		for (const studentCheckbox of studentCheckboxes) {
+			// Skip the template checkbox
+			if (studentCheckbox.id == "checkbox_fake") {
+				continue;
+			}
+
+			if (studentCheckbox.checked) {
+				studentsChecked++;
+			} else {
+				studentsUnchecked++;
+			}
 		}
 
-		if (studentCheckbox.checked) {
-			studentsChecked++;
-		} else {
-			studentsUnchecked++;
-		}
+		return { studentsChecked, studentsUnchecked };
 	}
 
 	// Set the switch state to whether the majority of students are checked or unchecked
-	let switchState = studentsChecked > studentsUnchecked;
 	switchAll.onclick = () => {
+		const { studentsChecked, studentsUnchecked } = getStudentVotingEligibility();
+		let switchState = studentsChecked > studentsUnchecked; // Check if the majority of student checkboxes are checked or unchecked
 		switchState = !switchState;
+
+		// Unselect all select tags
+		for (const tag of selectPollDiv.children) {
+			if (tag.className === 'pressed') {
+				tag.className = "tagPoll";
+			}
+		}
 
 		const votingData = {};
 		for (const student of Object.values(students)) {
