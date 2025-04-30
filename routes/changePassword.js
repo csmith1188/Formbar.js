@@ -2,7 +2,6 @@ const { logger } = require('../modules/logger');
 const { sendMail } = require('../modules/mail.js');
 const { database } = require('../modules/database.js');
 const { hash } = require('../modules/crypto.js');
-const crypto = require('crypto');
 const { logNumbers } = require('../modules/config.js');
 
 module.exports = {
