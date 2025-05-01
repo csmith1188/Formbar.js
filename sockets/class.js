@@ -35,7 +35,7 @@ module.exports = {
                 for (const p of Object.keys(plugins)) {
                     const plugin = plugins[p]
                     if (typeof plugin.onDisable == 'function')  plugin.onDisable()
-                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onDisable function.`)
+                    else logger.log('warning', `[endClass] Plugin ${plugin.name} does not have an onDisable function.`)
                 }
                 const classId = socket.request.session.classId
                 socketUpdates.endClass(classId)
