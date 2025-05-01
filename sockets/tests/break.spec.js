@@ -18,7 +18,7 @@ describe('break', () => {
         endBreakHandler = socket.on.mock.calls.find(call => call[0] === 'endBreak')[1];
     });
 
-    test("should fail if class isn't active", async () => {
+    it("should fail if class isn't active", async () => {
         const classData = createTestClass(testData.code, 'Test Class');
         createTestUser(testData.username, testData.code, 3);
 
@@ -28,7 +28,7 @@ describe('break', () => {
         expect(classData.students[testData.username].break).toBe(false);
     })
 
-    test("should set the break reason", async () => {
+    it("should set the break reason", async () => {
         const classData = createTestClass(testData.code, 'Test Class');
         createTestUser(testData.username, testData.code, 3);
 
@@ -38,7 +38,7 @@ describe('break', () => {
         expect(classData.students[testData.username].break).toBe("reason");
     })
 
-    test("should approve break ticket", async () => {
+    it("should approve break ticket", async () => {
         const classData = createTestClass(testData.code, 'Test Class');
         const userData = createTestUser(testData.username, testData.code, 3);
 
@@ -49,7 +49,7 @@ describe('break', () => {
         expect(classData.students[testData.username].break).toBe(true);
     });
 
-    test("should deny break ticket", async () => {
+    it("should deny break ticket", async () => {
         const classData = createTestClass(testData.code, 'Test Class');
         const userData = createTestUser(testData.username, testData.code, 3);
 
@@ -60,7 +60,7 @@ describe('break', () => {
         expect(classData.students[testData.username].break).toBe(false);
     })
 
-    test("should delete break ticket", async () => {
+    it("should delete break ticket", async () => {
         const classData = createTestClass(testData.code, 'Test Class');
         const userData = createTestUser(testData.username, testData.code, 3);
 

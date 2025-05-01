@@ -105,6 +105,15 @@
 					//
 					let multiAnswer = ""
 
+					// For answering polls using only the keyboard
+					document.addEventListener('keydown', (event) => {
+						const key = +event.key - 1
+						try {
+							pollForm.children[key].children[0].click()
+						} catch (err) {
+							// Do nothing, this is just to prevent errors when the user presses a key that does not correspond to a poll response
+						}
+					});
 
 					let oldLetterRes = '<%- myRes %>'
 					let oldTextRes = '<%- myTextRes %>'

@@ -226,7 +226,7 @@ socket.on('cpUpdate', (newClassroom) => {
             for (const permissionOption of permissionOptions) {
                 const option = document.createElement('option');
                 option.value = permissionOption.permissionLevel;
-                option.selected = permissionLevel === permissionOption.permissionLevel;
+                option.selected = permissionLevel == permissionOption.permissionLevel;
                 option.innerText = permissionOption.name;
                 permissionSelect.appendChild(option)
             }

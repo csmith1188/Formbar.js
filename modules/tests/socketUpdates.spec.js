@@ -30,7 +30,7 @@ describe("Socket Updates", () => {
     });
 
     describe("virtualBarUpdate", () => {
-        test("should handle no active poll", async () => {
+        it("should handle no active poll", async () => {
             createTestClass(testData.code, 'Test Class');
             createTestUser(testData.username, testData.code, 3);
             await socketUpdates.virtualBarUpdate(testData.code);
@@ -52,7 +52,7 @@ describe("Socket Updates", () => {
             });
         });
 
-        test("should handle active poll with responses", async () => {
+        it("should handle active poll with responses", async () => {
             const classData = createTestClass(testData.code, 'Test Class');
             const userData = createTestUser(testData.username, testData.code, 3);
 
@@ -85,7 +85,7 @@ describe("Socket Updates", () => {
             });
         });
 
-        test("should handle students on break", async () => {
+        it("should handle students on break", async () => {
             const classData = createTestClass(testData.code, 'Test Class');
             const userData = createTestUser(testData.username, testData.code, 3);
 

@@ -408,7 +408,12 @@ for (let filterElement of document.getElementsByClassName('filter')) {
         }
 
         filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]]
-        socket.emit("setClassSetting", "filter", `${filterElement.id}-${filter[filterElement.id]}`)
+
+        // Update the filter settings in the database
+        socket.emit("setClassSetting", "filter", JSON.stringify({
+            alert: filter["alert"],
+            polls: filter["polls"]
+        }))
         filterSortChange(classroom)
     }
 }

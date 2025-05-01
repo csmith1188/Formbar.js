@@ -153,11 +153,6 @@
 							<div id="tagOptions"></div>
 						</div>
 						<div id="settingsFunc">
-							<input type="checkbox" id="playSound" placeholder="Play Sound">Play Sound</input>
-							<br>
-							<button id="muteButton" onclick="toggleMuteSound()">Mute</button>
-							<button id="unmuteButton" onclick="toggleMuteSound()" hidden>Unmute</button>
-							<br>
 							<button id="kickUsers" onclick="kickAll()">
 								Kick All Students
 							</button>
@@ -515,23 +510,31 @@
 			}
 
 			if (settings.filter) {
-				const [ filterName, filterValue ] = settings.filter.split('-');
-				const allFilters = document.querySelectorAll('.filter');
-				const filterButton = document.getElementById(filterName);
+				try {
+					// Get all filters from settings
+					const filters = JSON.parse(settings.filter);
+					Object.keys(filter).forEach(key => filter[key] = 0);
 
-				// Set the correct filter to on
-				Object.keys(filter).forEach(key => filter[key] = 0);
-				filter[filterName] = parseInt(filterValue);
-
-				// Remove arrow from all filters
-				allFilters.forEach(button => {
-					button.textContent = FilterState[button.id][filter[button.id]]
-					button.classList.remove('pressed')
-				});
-
-				// Set the correct filter to pressed
-				filterButton.classList.add('pressed');
-				filterButton.textContent = `${FilterState[filterName][filterValue]}`;
+					// Set the correct filters to on
+					for (const filterName in filters) {
+						const filterValue = filters[filterName];
+						const filterButton = document.getElementById(filterName);
+						if (filterValue === 0) {
+							filterButton.classList.remove('pressed');
+							filterButton.textContent = FilterState[filterName][0];
+						} else {
+							filter[filterName] = parseInt(filterValue);
+							filterButton.classList.add('pressed');
+							filterButton.textContent = FilterState[filterName][filterValue];
+						}
+					}
+				} catch (err) {
+					// Set the default filter settings
+					socket.emit('setClassSetting', 'filter', JSON.stringify({
+						alert: 0,
+						polls: 0
+					}));
+				}
 			}
 
 			// Handle mute button 

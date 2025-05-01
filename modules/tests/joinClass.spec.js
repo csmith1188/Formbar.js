@@ -29,12 +29,12 @@ describe('joinClass', () => {
         });
     });
 
-    test('should join the class successfully', async () => {
+    it('should join the class successfully', async () => {
         const result = await joinClass(testData.code, session);
         expect(result).toBe(true);
     });
 
-    test('should return an error for an invalid code', async () => {
+    it('should return an error for an invalid code', async () => {
         const result = await joinClass('wrongCode', session);
         expect(result).toBe('No class with that code');
     });
