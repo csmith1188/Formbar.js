@@ -220,13 +220,14 @@ socket.on('cpUpdate', (newClassroom) => {
             permissionSelect.id = permission
             permissionSelect.onchange = (event) => {
                 let select = event.target
+                console.log(select.id, select.options[select.selectedIndex].value)
                 socket.emit('setClassPermissionSetting', select.id, select.options[select.selectedIndex].value)
             }
 
             for (const permissionOption of permissionOptions) {
                 const option = document.createElement('option');
                 option.value = permissionOption.permissionLevel;
-                option.selected = permissionLevel === permissionOption.permissionLevel;
+                option.selected = permissionLevel == permissionOption.permissionLevel;
                 option.innerText = permissionOption.name;
                 permissionSelect.appendChild(option)
             }
