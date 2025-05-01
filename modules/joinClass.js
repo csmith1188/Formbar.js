@@ -34,7 +34,7 @@ async function joinClass(code, session) {
 
 		// Load the classroom into the classInformation object if it's not already loaded
 		if (!classInformation.classrooms[classroom.id]) {
-			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
+			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags, classroom.plugins)
 		}
 
 		// Find the id of the user who is trying to join the class

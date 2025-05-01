@@ -7,7 +7,6 @@ const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../m
 const { getStudentId } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
-const { app } = require('../app')
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -35,8 +34,8 @@ module.exports = {
                 // Disable all plugins
                 for (const p of Object.keys(plugins)) {
                     const plugin = plugins[p]
-                    if (typeof plugin.onEnable == 'function')  plugin.onDisable()
-                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
+                    if (typeof plugin.onDisable == 'function')  plugin.onDisable()
+                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onDisable function.`)
                 }
                 const classId = socket.request.session.classId
                 socketUpdates.endClass(classId)
