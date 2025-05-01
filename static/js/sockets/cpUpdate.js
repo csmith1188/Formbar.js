@@ -220,7 +220,6 @@ socket.on('cpUpdate', (newClassroom) => {
             permissionSelect.id = permission
             permissionSelect.onchange = (event) => {
                 let select = event.target
-                console.log(select.id, select.options[select.selectedIndex].value)
                 socket.emit('setClassPermissionSetting', select.id, select.options[select.selectedIndex].value)
             }
 
