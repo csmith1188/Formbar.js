@@ -32,7 +32,7 @@ async function isEnabled(req, res, next) {
 }
 
 let plugins = {};
-function configPlugins(app) {
+async function configPlugins(app) {
     const pluginDirs = fs.readdirSync('plugins');
 
     for (let i = 0; i < pluginDirs.length; i++) {
@@ -58,7 +58,7 @@ function configPlugins(app) {
                     plugin.init(app);
                     plugins[plugin.name] = plugin;
                     const pluginName = plugin.name.replace(/\s+/g, '');
-                    const pluginData = new Promise((resolve, reject) => {
+                    const pluginData = await new Promise((resolve, reject) => {
                         database.get('SELECT * FROM plugins WHERE name=?', [pluginName], (err, row) => {
                             if (err) {
                                 logger.error(`Error retrieving plugin data: ${err}`);
