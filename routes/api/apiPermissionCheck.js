@@ -35,14 +35,13 @@ module.exports = {
 					return
 				}
 
+				// Check if there is a class id set for the user
 				if (!user.class) {
 					res.status(403).json({ reason: 'User is not in a class.' })
 					return
 				}
 
-				const classroomId = getClassIDFromCode(user.class)
-				const classroom = classInformation.classrooms[classroomId]
-
+				const classroom = classInformation.classrooms[user.class]
 				permissionTypes.games = classroom.permissions.games
 				permissionTypes.lights = classroom.permissions.lights
 				permissionTypes.sounds = classroom.permissions.sounds
