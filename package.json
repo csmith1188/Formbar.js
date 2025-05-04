@@ -45,6 +45,7 @@
 		"passport-google-oauth20": "^2.0.0",
 		"socket.io": "^4.5.4",
 		"sqlite3": "^5.1.6",
+		"unzipper": "^0.12.3",
 		"winston": "^3.11.0",
 		"winston-daily-rotate-file": "^4.7.1"
 	},

@@ -23,7 +23,7 @@ module.exports = {
                 logger.log('info', `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                 logger.log('verbose', `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`)
 
-                async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags) {
+                async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags, plugins = {}) {
                     try {
                         // Get the teachers session data ready to transport into new class
                         const user = classInformation.users[req.session.username]
@@ -49,12 +49,13 @@ module.exports = {
 
                         // Create classroom
                         if (!classInformation.classrooms[id]) {
-                            classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags)
+                            classInformation.classrooms[id] = new Classroom(id, className, key, permissions, sharedPolls, pollHistory, tags, plugins)
                         } else {
                             classInformation.classrooms[id].permissions = permissions
                             classInformation.classrooms[id].sharedPolls = sharedPolls
                             classInformation.classrooms[id].pollHistory = pollHistory
                             classInformation.classrooms[id].tags = tags
+                            classInformation.classrooms[id].plugins = plugins
                             // classInformation.classrooms[id].owner =
                         }
 
@@ -105,7 +106,7 @@ module.exports = {
 
                             logger.log('verbose', '[post /createClass] Added classroom to database')
 
-                            database.get('SELECT id, name, key, permissions, tags FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
+                            database.get('SELECT id, name, key, permissions, tags, plugins FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
                                 try {
                                     if (err) throw err
 
@@ -124,7 +125,8 @@ module.exports = {
                                         classroom.key,
                                         JSON.parse(classroom.permissions),
                                         [],
-                                        classroom.tags
+                                        classroom.tags,
+                                        JSON.parse(classroom.plugins)
                                     );
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
@@ -148,14 +150,14 @@ module.exports = {
                         }
                     })
                 } else {
-                    database.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
+                    database.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, classroom.plugins, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
                         try {
                             if (err) throw err
 
                             if (!classroom) {
                                 logger.log('critical', 'Class does not exist')
                                 res.render('pages/message', {
-                                    message: 'Class does not exist (Please contact the programmer)',
+                                    message: 'Class does not exist (Please contact support)',
                                     title: 'Login'
                                 })
                                 return
@@ -164,6 +166,7 @@ module.exports = {
                             classroom.permissions = JSON.parse(classroom.permissions)
                             classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
                             classroom.pollHistory = JSON.parse(classroom.pollHistory)
+                            classroom.plugins = JSON.parse(classroom.plugins)
 
                             if (classroom.tags) {
                                 classroom.tags = classroom.tags.split(",");
@@ -186,7 +189,8 @@ module.exports = {
                                 classroom.permissions,
                                 classroom.sharedPolls,
                                 classroom.pollHistory,
-                                classroom.tags
+                                classroom.tags,
+                                classroom.plugins
                             )
 
                             if (makeClassStatus instanceof Error)  {
