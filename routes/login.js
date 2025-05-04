@@ -69,8 +69,8 @@ module.exports = {
                                 database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
                                     try {
                                         if (err) throw err;
-                                        classInformation.users[userData.username] = new Student(
-                                            userData.username,
+                                        classInformation.users[userData.email] = new Student(
+                                            userData.email,
                                             userData.id,
                                             userData.permissions,
                                             userData.API,
@@ -220,8 +220,8 @@ module.exports = {
                                 logger.log('verbose', '[post /login] User is already logged in')
                                 req.session.classId = classId
                             } else {
-                                classInformation.users[userData.username] = new Student(
-                                    userData.username,
+                                classInformation.users[userData.email] = new Student(
+                                    userData.email,
                                     userData.id,
                                     userData.permissions,
                                     userData.API,
@@ -340,8 +340,8 @@ module.exports = {
                                             database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
                                                 try {
                                                     if (err) throw err;
-                                                    classInformation.users[userData.username] = new Student(
-                                                        userData.username,
+                                                    classInformation.users[userData.email] = new Student(
+                                                        userData.email,
                                                         userData.id,
                                                         userData.permissions,
                                                         userData.API,

@@ -23,9 +23,9 @@ module.exports = {
                                     throw 'Not a valid API key'
                                 }
 
-                                if (!classInformation.users[userData.username]) {
-                                    classInformation.users[userData.username] = new Student(
-                                        userData.username,
+                                if (!classInformation.users[userData.email]) {
+                                    classInformation.users[userData.email] = new Student(
+                                        userData.email,
                                         userData.id,
                                         userData.permissions,
                                         userData.API,

@@ -88,7 +88,6 @@ describe("Change Password Route", () => {
 
     describe('POST /changepassword', () => {
         it('should send password reset email when email is provided', async () => {
-            console.log("before")
             const response = await request(app)
                 .post('/changepassword')
                 .send({ email: mockEmail })

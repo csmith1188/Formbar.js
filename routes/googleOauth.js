@@ -61,8 +61,8 @@ module.exports = {
 								// Log the user in
 								database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 									if (err) throw err;
-									classInformation.users[userData.username] = new Student(
-										userData.username,
+									classInformation.users[userData.email] = new Student(
+										userData.email,
 										userData.id,
 										userData.permissions,
 										userData.API,
@@ -100,8 +100,8 @@ module.exports = {
 								database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 									if (err) throw err;
 
-									classInformation.users[userData.username] = new Student(
-										userData.username,
+									classInformation.users[userData.email] = new Student(
+										userData.email,
 										userData.id,
 										userData.permissions,
 										userData.API,
@@ -135,7 +135,7 @@ module.exports = {
 							database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 								if (err) throw err;
 								classInformation.users[userData.email] = new Student(
-									userData.username,
+									userData.email,
 									userData.id,
 									userData.permissions,
 									userData.API,
