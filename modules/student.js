@@ -90,7 +90,7 @@ async function getStudentsInClass(classId) {
 		const userData = studentsData[username];
 		const studentPermissions = studentIdsAndPermissions.find(student => student.id === userData.id).permissions;
 		students[username] = new Student(
-			username,
+			userData.email,
 			userData.id,
 			userData.permissions,
 			userData.API,

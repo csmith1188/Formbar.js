@@ -26,6 +26,7 @@ describe('Certs Route', () => {
             expect(response.body.view).toBe('pages/message');
             expect(response.body.options).toEqual({
                 title: 'Certs',
+                excluded: true,
                 message: fs.readFileSync('publicKey.pem', 'utf8'),
             });
         });

@@ -33,51 +33,38 @@ function createTagSelectButtons() {
 			}
 			tempTags = tempTags.sort().join();
 
+			const selectedTags = Object.values(document.getElementById('selectPoll').children).filter(tag => tag.className === 'pressed')
+			const selectedTagTexts = new Set(selectedTags.map(tag => tag.textContent));
+
 			// If the student has any of the selected tags, check the checkbox and open their menu
-			for (let student of students) {
-				let studentElement = document.querySelector(`details[id="student-${student.username}"]`)
-				if (student.permissions >= TEACHER_PERMISSIONS) continue
-				// Combines the students tags and their poll responses
-				let tempStudTags = []
-				if (student.tags == null) {
-					continue
-				}
+			const selectedStudents = []; // Stores the selected students
+			for (const student of students) {
+				const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
+				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
+				if (selectedTags.length === 0) continue;
+				if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
-				for (let tag of studentElement.querySelectorAll('#studentTags span')) {
-					tag = tag.textContent
-					if (tag == "") {
-						continue
-					}
-					tempStudTags.push(tag)
-				}
-
-				for (let tag of studentElement.querySelectorAll('#response')) {
-					tag = tag.textContent
-					if (tag == "" || tag == "remove") {
-						continue
-					}
-					tempStudTags.push(tag)
-				}
-				tempStudTags = tempStudTags.sort().join();
-
-				const checkbox = studentElement.querySelector('input[type="checkbox"]')
-				if (!student.break && (tempStudTags == tempTags || tempTags == "")) {
-					studentElement.open = true;
-					if (!checkbox.checked) {
-						checkbox.click();
-					}
-				} else {
-					studentElement.open = false;
-					if (checkbox.checked) {
-						checkbox.click();
+				for (const studentTag of studentTags) {
+					if (selectedTagTexts.has(studentTag.textContent)) {
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
+						studentElement.open = true;
+						studentCheckbox.checked = true;
+						selectedStudents.push(student.username);
+						break;
 					}
 				}
-
-				socket.emit('changeCanVote', {
-					[student.username]: checkbox.checked
-				});
 			}
-		};
+
+			// If the student is not selected, then unselect them
+			for (const student of students) {
+				if (selectedStudents.indexOf(student.username) === -1) {
+					const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
+					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
+					studentElement.open = false;
+					studentCheckbox.checked = false;
+				}
+			}
+		}
 
 		if (selectPollDiv.children[i]) {
 			selectPollDiv.children[i].replaceWith(tagPoll);
@@ -126,26 +113,38 @@ socket.on('customPollUpdate', (
 	switchAll.className = 'switchAll'
 	switchAll.textContent = 'Switch All'
 
-	// Check if the majority of student checkboxes are checked or unchecked
-	const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
-	let studentsChecked = 0;
-	let studentsUnchecked = 0;
-	for (const studentCheckbox of studentCheckboxes) {
-		if (studentCheckbox.id == "checkbox_fake") {
-			continue;
+	function getStudentVotingEligibility() {
+		const studentCheckboxes = document.querySelectorAll('input[name="studentCheckbox"]');
+		let studentsChecked = 0;
+		let studentsUnchecked = 0;
+		for (const studentCheckbox of studentCheckboxes) {
+			// Skip the template checkbox
+			if (studentCheckbox.id == "checkbox_fake") {
+				continue;
+			}
+
+			if (studentCheckbox.checked) {
+				studentsChecked++;
+			} else {
+				studentsUnchecked++;
+			}
 		}
 
-		if (studentCheckbox.checked) {
-			studentsChecked++;
-		} else {
-			studentsUnchecked++;
-		}
+		return { studentsChecked, studentsUnchecked };
 	}
 
 	// Set the switch state to whether the majority of students are checked or unchecked
-	let switchState = studentsChecked > studentsUnchecked;
 	switchAll.onclick = () => {
+		const { studentsChecked, studentsUnchecked } = getStudentVotingEligibility();
+		let switchState = studentsChecked > studentsUnchecked; // Check if the majority of student checkboxes are checked or unchecked
 		switchState = !switchState;
+
+		// Unselect all select tags
+		for (const tag of selectPollDiv.children) {
+			if (tag.className === 'pressed') {
+				tag.className = "tagPoll";
+			}
+		}
 
 		const votingData = {};
 		for (const student of Object.values(students)) {
