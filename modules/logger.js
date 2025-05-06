@@ -3,6 +3,9 @@ const winston = require("winston")
 const { logNumbers } = require("./config");
 require('winston-daily-rotate-file');
 
+// These are the levels that will be logged to the console
+const loggingLevels = ["critical", "error", "warning"];
+
 /**
  * Creates a new logger transport with a daily rotation.
  * This function creates a new daily rotating file transport for a given log level.
@@ -96,7 +99,15 @@ function createLogger() {
             createLoggerTransport("error"),
             createLoggerTransport("info"),
             createLoggerTransport("verbose"),
-            new winston.transports.Console({ handleExceptions: true })
+            new winston.transports.Console({
+                handleExceptions: true,
+                format: winston.format.combine(
+                    winston.format((info) => {
+                        return loggingLevels.includes(info.level) ? info : false;
+                    })(),
+                    winston.format.simple()
+                )
+            })
         ],
     })
 }
