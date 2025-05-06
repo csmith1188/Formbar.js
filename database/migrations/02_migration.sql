@@ -7,16 +7,17 @@ CREATE TABLE IF NOT EXISTS "classroom_temp"
     "permissions" TEXT    NOT NULL,
     "tags"        TEXT,
     "settings"    TEXT,
-    "plugins"    TEXT,
+    "plugins"    TEXT     DEFAULT  '{}',
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
+
+ALTER TABLE classroom ADD COLUMN plugins DEFAULT '{}';
 
 INSERT INTO classroom_temp (
     id, name, owner, key, permissions, tags, settings, plugins
 )
 SELECT
-    id, name, owner, key, permissions, tags, settings,
-    COALESCE(plugins, '{}') AS plugins
+    id, name, owner, key, permissions, tags, settings, plugins
 FROM classroom;
 
 DROP TABLE classroom;

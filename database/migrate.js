@@ -18,7 +18,14 @@ const backupPath = backupNumber == 0 ? 'database/database.bak' : `database/datab
 fs.copyFileSync('database/database.db', backupPath);
 
 // Run migration files
-for (const migrationFileName of migrationFiles) {
+function executeMigration(index) {
+    // When there are no more migration files, return
+    if (index >= migrationFiles.length) {
+        database.close();
+        return;
+    }
+
+    const migrationFileName = migrationFiles[index];
     const migrationSQL = fs.readFileSync(`./database/migrations/${migrationFileName}`, 'utf8');
     console.log(`Running migration: ${migrationFileName}`);
 
@@ -28,22 +35,29 @@ for (const migrationFileName of migrationFiles) {
         // Execute migration SQL
         database.exec(migrationSQL, (err) => {
             if (err) {
-                console.error(`Error executing migration ${migrationFileName}:`, err);
                 database.run('ROLLBACK');
-                database.close();
-                process.exit(1);
-            }
-
-            database.run('COMMIT', (err) => {
-                if (err) {
-                    console.error(`Error committing migration ${migrationFileName}:`, err);
-                    database.run('ROLLBACK');
+                if (err.message.includes("duplicate column name")) {
+                    console.log("Unable to complete migration as this migration has already been run. Continuing to next migration.");
+                    executeMigration(index + 1);
+                } else {
+                    console.error(`Error executing migration ${migrationFileName}:`, err);
                     database.close();
                     process.exit(1);
                 }
 
-                console.log(`Completed migration: ${migrationFileName}`);
-            });
+            } else {
+                database.run('COMMIT', (err) => {
+                    if (err) {
+                        console.error(`Error committing migration ${migrationFileName}:`, err);
+                        database.run('ROLLBACK');
+                        database.close();
+                        process.exit(1);
+                    }
+
+                    console.log(`Completed migration: ${migrationFileName}`);
+                    executeMigration(index + 1);
+                });
+            }
         });
     });
 
@@ -64,3 +78,6 @@ for (const migrationFileName of migrationFiles) {
         });
     }
 }
+
+// Begin migrations
+executeMigration(0);
