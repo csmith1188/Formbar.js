@@ -18,13 +18,21 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const username = socket.request.session.username
                 const classroom = classInformation.classrooms[classId]
-                if (!classroom.poll.studentBoxes.includes(username) && res != 'remove') {
+                if (!classroom.poll.studentBoxes.includes(username) && res != 'remove' && res != []) {
                     return; // If the user is not included in the poll, do not allow them to respond
                 }
 
                 // Check if the response provided is a valid response
-                if (!Object.keys(classroom.poll.responses).includes(res) && res != 'remove') {
-                    return;
+                if (!classroom.poll.multiRes) {
+                    if (!Object.keys(classroom.poll.responses).includes(res) && res != 'remove') {
+                        return;
+                    }
+                } else {
+                    for (const response of res) {
+                        if (!Object.keys(classroom.poll.responses).includes(response)) {
+                            return;
+                        }
+                    }
                 }
 
                 // If the users response is different from the previous response, play a sound
@@ -63,10 +71,6 @@ module.exports = {
                     }
                 }
                 logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
-
-                if (userSockets[username]) {
-                    userSockets[username].emit('pollResp', { res, textRes });
-                }
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()
