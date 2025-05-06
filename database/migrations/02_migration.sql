@@ -16,7 +16,7 @@ INSERT INTO classroom_temp (
 )
 SELECT
     id, name, owner, key, permissions, tags, settings,
-    '{}' AS plugins -- default placeholder
+    COALESCE(plugins, '{}') AS plugins
 FROM classroom;
 
 DROP TABLE classroom;
