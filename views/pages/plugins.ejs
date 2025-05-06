@@ -1,53 +1,50 @@
 <%- include('../partials/header_content') %>
-    <%- include('../partials/sockets') %>
-        <!DOCTYPE html>
-        <html lang="en">
-
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                #otherText {
-                    margin-top: 1rem;
-                    margin-bottom: 1rem;
-                }
-            </style>
-        </head>
-
-        <body>
-            <%- include('../partials/formbar_header') %>
-                <h1 class="headerText">Plugins</h1>
-                <div id="plugins">
+<%- include('../partials/formbar_header') %>
+    <body>
+        <% plugins.forEach((plugin) => { %>
+            <div class='plugin-container' id='plugin-<%= plugin.id %>' >
+                <h2><%= plugin.name %></h2>
+                <p><strong>Description:</strong> <%= plugin.description %></p>
+                <p><strong>Version:</strong> <%= plugin.version %></p>
+                <div class='plugin-container' id='plugin-<%= plugin.id %>' >
+                    <h2><%= plugin.name %></h2>
+                    <p><strong>Description:</strong> <%= plugin.description %></p>
+                    <p><strong>Version:</strong> <%= plugin.version %></p>
+                    <% if (classPlugins[plugin.id] && Object.keys(classPlugins).length > 0) { %>
+                        <% if (classPlugins[plugin.id] == false) { %>
+                            <button onclick='handlePluginAction(swap)' class='btn btn-success'>Enable</button>
+                        <% } else if (classPlugins[plugin.id] == true) { %>
+                            <button onclick='handlePluginAction(swap)' class='btn btn-warning'>Disable</button>
+                        <% } %>
+                        <button onclick='handlePluginAction(uninstall)' class='btn btn-danger'>Uninstall</button>
+                    <% } else if (!classPlugins[plugin.id] && Object.keys(classPlugins).length > 0) { %>
+                        <button onclick='handlePluginAction(install)' class='btn btn-primary'>Install</button>
+                    <% } %>
                 </div>
+            </div>
+            <% if (Object.keys(classPlugins).length > 0) { %>
 
-                <%- include('../partials/body_content') %>
-        </body>
-
-        </html>
-
-        <script type="text/javascript">
-            let pluginsDiv = document.getElementById('plugins')
-
-            socket.emit('pluginUpdate')
-            socket.on('pluginUpdate', (plugins) => {
-                let br = document.createElement('br')
-                pluginsDiv.innerHTML = ''
-
-                if (plugins.length == 0) {
-                    pluginsDiv.innerHTML = '<p style="font-size: 18px;">No plugins installed</p>'
-                    return
-                }
-
-                for (let plugin of plugins) {
-                    let pluginLink = document.createElement('a')
-                    pluginLink.className = 'quickButton'
-                    pluginLink.href = plugin.url
-                    pluginLink.target = '_blank'
-                    pluginLink.innerText = plugin.name
-                    pluginsDiv.append(pluginLink)
-                    pluginsDiv.append(br.cloneNode(true))
-                }
-            })
-        </script>
-        <%- include('../partials/footer_content') %>
+            <% } %>
+        <% }); %>
+    </body>
+    <script>
+        const plugins = '<%= plugins %>';
+        const classPlugins = '<%= classPlugins %>';
+        function handlePluginAction(action) {
+            const pluginId = this.id.split('-')[1];
+            const pluginName = plugins[pluginId].name;
+            socket.emit(`${action}Plugin`, {
+            pluginId: pluginId,
+            pluginName: pluginName,
+            });
+        }
+        socket.on('pluginInstalled', (data) => {
+            const pluginContainer = document.getElementById(`plugin-${data.pluginId}`);
+            pluginContainer.innerHTML = `<h2>${data.pluginName}</h2><p><strong>Description:</strong> ${data.pluginDescription}</p><p><strong>Version:</strong> ${data.pluginVersion}</p><button onclick='uninstall()' class='btn btn-danger'>Uninstall</button>`;
+        });
+        socket.on('pluginUninstalled', (data) => {
+            const pluginContainer = document.getElementById(`plugin-${data.pluginId}`);
+            pluginContainer.innerHTML = `<h2>${data.pluginName}</h2><p><strong>Description:</strong> ${data.pluginDescription}</p><p><strong>Version:</strong> ${data.pluginVersion}</p><button onclick='install()' class='btn btn-primary'>Install</button>`;
+        });
+    </script>
+<%- include('../partials/footer_content') %>

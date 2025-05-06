@@ -25,8 +25,8 @@ function onDisable() {
 module.exports = {
     name: name,
     description: 'This is an example plugin.',
-    author: 'Jesse Bailey-Motts',
-    version: '1.0.0',
+    authors: [1],
+    version: '1.0',
     init,
     onEnable,
     onDisable

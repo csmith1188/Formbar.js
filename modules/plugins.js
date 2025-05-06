@@ -56,8 +56,9 @@ async function configPlugins(app) {
                 // Attempt to initialize the plugin
                 if (typeof plugin.init === 'function') {
                     plugin.init(app);
-                    plugins[plugin.name] = plugin;
                     const pluginName = plugin.name.replace(/\s+/g, '');
+                    plugins[pluginName] = plugin;
+                    plugin.authors = plugin.authors.join(',');
                     const pluginData = await new Promise((resolve, reject) => {
                         database.get('SELECT * FROM plugins WHERE name=?', [pluginName], (err, row) => {
                             if (err) {
@@ -69,11 +70,19 @@ async function configPlugins(app) {
                         });
                     });
                     if (!pluginData) {
-                        database.run('INSERT INTO plugins (name, author) VALUES (?, ?)', [pluginName, plugin.author], (err) => {
+                        database.run('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version], (err) => {
                             if (err) {
                                 logger.error(`Error inserting plugin data: ${err}`);
                             } else {
                                 logger.log('info', `Plugin ${plugin.name} added to database.`);
+                            }
+                        });
+                    } else if (pluginData.version != plugin.version) {
+                        database.run('UPDATE plugins SET (name, authors, description, version) = (?, ?, ?, ?) WHERE id = ?', [pluginName, plugin.authors, plugin.description, plugin.version, pluginData.id], (err) => {
+                            if (err) {
+                                logger.error(`Error updating plugin data: ${err}`);
+                            } else {
+                                logger.log('info', `Plugin ${plugin.name} updated in database.`);
                             }
                         });
                     }
