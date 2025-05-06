@@ -27,9 +27,9 @@ INSERT INTO users_temp (
 )
 SELECT
     id, username, password, permissions, API, secret, tags, displayName,
-    '' AS email,         -- default placeholder for new column
-    0 AS digipogs,       -- default value (as defined in schema)
-    0 AS verified        -- default value (as defined in schema)
+    COALESCE(email, username || '_' || id || '@placeholder.com') AS email,  -- keep existing email if present, otherwise use placeholder
+    COALESCE(digipogs, 0) AS digipogs,
+    COALESCE(verified, 0) AS verified
 FROM users;
 
 DROP TABLE users;
