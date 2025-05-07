@@ -125,6 +125,7 @@ module.exports = {
                                         classroom.key,
                                         JSON.parse(classroom.permissions),
                                         [],
+                                        [],
                                         classroom.tags,
                                         JSON.parse(classroom.plugins)
                                     );
