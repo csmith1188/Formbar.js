@@ -246,7 +246,10 @@ module.exports = {
                             socket.emit('message', 'There is no class with that code.')
                             return
                         }
-
+                        console.log();
+                        console.log(pollId);
+                        console.log();
+                        
                         database.get('SELECT * FROM custom_polls WHERE id=?', pollId, (err, poll) => {
                             try {
                                 if (err) throw err

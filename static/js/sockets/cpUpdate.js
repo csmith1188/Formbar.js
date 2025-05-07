@@ -1,9 +1,11 @@
 let currentTags = []
 let students = []
+let classId = null
 
 // Ask for classroom update and listen for the response
 socket.emit('cpUpdate')
 socket.on('cpUpdate', (newClassroom) => {
+    classId = newClassroom.id
     currentTags = []
     let studentsOffline = 0
     for (let student of Object.values(newClassroom.students)) {
@@ -242,7 +244,8 @@ socket.on('cpUpdate', (newClassroom) => {
         let newTagDiv = document.createElement('div')
         let newTag = document.createElement('textarea')
         newTag.type = 'text'
-        newTag.placeholder = 'Add Tag, Or Multiple'
+        newTag.placeholder = 'Add Tag (Seperate With Comma for Multiple)'
+        newTag.style.height = "5.5vh"
 
         let addTagButton = document.createElement('button')
         addTagButton.textContent = '✔'

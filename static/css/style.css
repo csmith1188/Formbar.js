@@ -211,6 +211,7 @@ dialog {
 	border-radius: 10px;
 	padding: 20px !important;
 	font-size: 20px;
+	z-index: 99;
 }
 
 .contentBox h1 {
@@ -646,6 +647,27 @@ details[open] #reasons {
 	width: 100%;
 }
 
+#settingsTab {
+	display: flex;
+	padding: 1.5vh;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+	border-radius: 10px;
+	margin: 1vh;
+	width: 100%;
+	border: 3px solid var(--theme-color);
+}
+
+#settingsTab h2 {
+	width: 100%;
+	font-size: 2cqw;
+}
+
+#settingsTab button {
+	width: 25%;
+	height: 5vh;
+}
+
 hr {
 	border: 0;
 	border-top: 5px solid var(--theme-color);
@@ -699,6 +721,40 @@ hr {
 	width: 10cqw;
 }
 
+#save-poll {
+	background-color: hsl(120, 94%, 74%);
+	border-color: black;
+	color: black;
+}
+
+#resetAnswerNames {
+	background-color: yellow;
+	border-color: black;
+	color: black;
+}
+
+#resetColors {
+	background-color: yellow;
+	border-color: black;
+	color: black;
+}
+
+#userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
+	display: grid;
+	padding: 0;
+	border: solid 3px var(--theme-color);
+	grid-template-columns: auto auto auto;
+}
+
+.customPoll {
+	border: 3px solid var(--theme-color);
+	padding-bottom: 2vh;
+}
+
+.headerText input {
+	transform: scale(1.25);
+}
+
 .ongoingPollOptions #timeDiv {
 	padding: 1vh 0;
 	width: 30%;
@@ -742,8 +798,18 @@ hr {
 #pollOptions {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
+	justify-content: space-evenly;
 	margin-bottom: 5vh;
+	padding: 1.5vh;
+}
+
+#pollOptions h2 {
+	width: 100%;
+}
+
+#pollOptions button {
+	width: 25%;
+	height: 5vh;
 }
 
 div .tabContent {

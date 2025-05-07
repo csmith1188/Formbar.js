@@ -24,7 +24,6 @@ class Classroom {
 			blind: false,
 			requiredTags: [],
 			studentBoxes: [],
-			lastResponse: [],
 			allowedResponses: []
 		}
 		this.plugins = plugins

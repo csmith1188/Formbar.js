@@ -240,7 +240,6 @@ socket.on("changeClassName", (name) => {
 })
 
 socket.on("classPollSave", (pollId) => {
-	const classId = classId.textContent.split(": ")[1];
 	socket.emit("sharePollToClass", pollId, classId);
 })
 

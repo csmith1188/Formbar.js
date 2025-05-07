@@ -18,7 +18,6 @@
 				<header id='quickMenu'>
 					<p id='className'>Class Name:</p>
 					<p id='classCode'>Class Code:</p>
-					<!-- <p id='classID'>Class ID:</p> -->
 					<p id='totalUsers'></p>
 					<!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
 					<!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
@@ -65,16 +64,16 @@
 					<div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
 						<div id='pollOptions' class='options'>
 							<h2 class='headerText'>Custom Polls</h2>
-							<button id='publicPolls' class='quickButton tab unselectable' data-tab-group='polls'>Public
+							<button id='publicPolls' class='quickButton tab' data-tab-group='polls'>Public
 								Polls</button>
-							<button id='classPolls' class='quickButton tab unselectable' data-tab-group='polls'>Class
+							<button id='classPolls' class='quickButton tab' data-tab-group='polls'>Class
 								Polls</button>
-							<button id='userPolls' class='quickButton tab unselectable' data-tab-group='polls'>Your
+							<button id='userPolls' class='quickButton tab' data-tab-group='polls'>Your
 								Polls</button>
 						</div>
-						<h2 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
 						<div id='startPollForm'>
-							<label for='pollBox'>Prompt for the poll?</label>
+							<h1 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
+							<label for='pollBox'>Poll Prompt</label>
 							<input type='text' id='pollBox' placeholder='Prompt'>
 							<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
 							<br>
@@ -82,29 +81,54 @@
 							<button class='quickButton' onclick='addAnswer()'>+</button>
 							<br>
 							<br>
-							<button id='generalOptionsButton' onclick='showGeneralOptions()'>General Options</button>
-							<div id='generalOptions' hidden>
-								<label for='multiRes'>Multiple answer poll?</label>
-								<input type='checkbox' id='multiRes'>
-								<br>
-								<label for='resTextBox'>Would like to accept text responses?</label>
-								<input type='checkbox' id='resTextBox' onclick='resTextChange()'>
-								<br>
-								<button id='resetAnswerNames' class='quickButton'>Reset Names</button>
-								<button id='resetColors' class='quickButton'>Reset Colors</button>
-								<label for='changeNames'>Specify Tags?</label>
-								<input type='button' id='changeNames' value='Tags' onclick='selectTags.showModal()'
-									class='quickButton'>
-								<br>
-								<label for='blind'>Blind poll? (Responses won't be visible until everyone has
-									answered)</label>
-								<input type='checkbox' id='blind'>
-								<br>
-								<label for='lastResponse'>Send Poll To Students With Same Response</label>
-								<input type='checkbox' id='lastResponse'>
-								<select name='basedOnResponse' id='basedOnResponse'></select>
-								<br>
+							<div id='generalOptions' style="width: 50%; margin-left: 25%;">
+								<div class="options">
+									<div class="headBox" style="border: none;">
+										<button id='resetAnswerNames' class='quickButton'>Reset Names</button>
+										<button id='resetColors' class='quickButton'>Reset Colors</button>
+									</div>
+								</div>
+								<div class="options">
+									<h2 class="headerText">
+										<input type='checkbox' id='multiRes'>
+									</h2>
+									<div class="headBox">
+										Multiple Answer Poll
+									</div>
+								</div>
+								<div class="options">
+									<h2 class="headerText">
+										<input type='checkbox' id='resTextBox' onclick='resTextChange()'>
+									</h2>
+									<div class="headBox">
+										Text Responses
+									</div>
+								</div>
+								<div class="options">
+									<h2 class="headerText">
+										<input type='checkbox' id='blind'>
+									</h2>
+									<div class="headBox">
+										Blind Poll (Responses won't be visible until everyone has answered)
+									</div>
+								</div>
+								<div class="options">
+									<div class="headBox" style="border: none;">
+										<button id="save-poll" onclick="savePollAs('user')">Save</button>
+										<button id="save-poll" onclick="savePollAs('class')">Save as Class Poll</button>
+									</div>
+								</div>
 							</div>
+							<dialog id="editPollDialog" class="contentBox">
+								<button id="unload-poll" onclick="unloadPoll()">Close</button>
+								<button id="delete-poll" onclick="deletePoll()">Delete Poll</button>
+							</dialog>
+						</div>
+						<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
+						</div>
+						<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
+						</div>
+						<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
 						</div>
 
 					</div>
@@ -137,7 +161,7 @@
 						</form>
 					</div>
 					<div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-						<div class='options'>
+						<div id='settingsTab'>
 							<h2 class='headerText'>Settings</h2>
 							<button id='permissions' class='quickButton tab pressed'
 								data-tab-group='settingsTabs'>Permissions</button>
@@ -195,7 +219,7 @@
 					</div>
 					<div class="ongoingButtons">
 						<button id='pollsMenu' class='quickButton tab'
-							data-tab-group='mainTabs'>Edit Poll</button>
+							data-tab-group='mainTabs'>Custom Polls</button>
 						<button id='startPoll' onclick='pollCheck()'>Start Poll</button>
 						<button id='clearPoll' onclick='clearPollFunc()'>Clear Poll</button>
 						<button  id='endPoll' onclick='endPollFunc()'>End Poll</button>
@@ -228,13 +252,6 @@
 				</div>
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
-				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
 					<form method='post' enctype='multipart/form-data'>
 						<input name='spreadsheet' type='file'>
@@ -258,13 +275,6 @@
 					</div>
 				</div>
 				<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
-				<div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				<div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-				</div>
-				</div>
 				<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
 					<form method='post' enctype='multipart/form-data'>
 						<input name='spreadsheet' type='file'>
@@ -385,11 +395,9 @@
 			let blindCheck = document.getElementById('blind')
 			let className = document.getElementById('className')
 			let classCode = document.getElementById('classCode')
-			let classId = document.getElementById("classId")
 			let mainPolls = document.getElementById('menuPolls')
-			let unloadPollButton = document.getElementById('unload-poll')
 			let savePollButton = document.getElementById('save-poll')
-			let deletePollButton = document.getElementById('delete-poll')
+			let editPollDialog = document.getElementById('editPollDialog')
 			let sharePollDialog = document.getElementById('sharePollDialog')
 			let sharePollUserInput = document.getElementById('sharePollUserInput')
 			let sharePollClassInput = document.getElementById('sharePollClassInput')
