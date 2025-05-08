@@ -3,11 +3,6 @@ const fs = require('fs');
 const database = getDatabase();
 
 function getDatabase() {
-    // // If the database file doesn't exist, copy the template
-    // if (!fs.existsSync('database/database.db')) {
-    //     initializeDatabase()
-    // }
-
     // Establishes the connection to the database file
     return new sqlite3.Database('database/database.db')
 }

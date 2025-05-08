@@ -82,6 +82,9 @@ const CLASS_SOCKET_PERMISSIONS = {
 	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	requestConversion: STUDENT_PERMISSIONS,
+	installPlugin: TEACHER_PERMISSIONS,
+	uninstallPlugin: TEACHER_PERMISSIONS,
+	swapPlugin: TEACHER_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions
@@ -116,8 +119,11 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBannedUsersUpdate: 'manageStudents',
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
-	awardDigipogs: 'awardDigipogs',
-	requestConversion: 'requestConversion'
+	awardDigipogs: 'userDefaults',
+	requestConversion: 'userDefaults',
+	installPlugin: 'manageClass',
+	uninstallPlugin: 'manageClass',
+	swapPlugin: 'manageClass',
 }
 
 module.exports = {

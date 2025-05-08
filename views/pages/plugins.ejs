@@ -1,50 +1,80 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/formbar_header') %>
-    <body>
+<%- include('../partials/sockets') %>
+<body>
         <% plugins.forEach((plugin) => { %>
             <div class='plugin-container' id='plugin-<%= plugin.id %>' >
                 <h2><%= plugin.name %></h2>
                 <p><strong>Description:</strong> <%= plugin.description %></p>
                 <p><strong>Version:</strong> <%= plugin.version %></p>
-                <div class='plugin-container' id='plugin-<%= plugin.id %>' >
-                    <h2><%= plugin.name %></h2>
-                    <p><strong>Description:</strong> <%= plugin.description %></p>
-                    <p><strong>Version:</strong> <%= plugin.version %></p>
-                    <% if (classPlugins[plugin.id] && Object.keys(classPlugins).length > 0) { %>
-                        <% if (classPlugins[plugin.id] == false) { %>
-                            <button onclick='handlePluginAction(swap)' class='btn btn-success'>Enable</button>
-                        <% } else if (classPlugins[plugin.id] == true) { %>
-                            <button onclick='handlePluginAction(swap)' class='btn btn-warning'>Disable</button>
-                        <% } %>
-                        <button onclick='handlePluginAction(uninstall)' class='btn btn-danger'>Uninstall</button>
-                    <% } else if (!classPlugins[plugin.id] && Object.keys(classPlugins).length > 0) { %>
-                        <button onclick='handlePluginAction(install)' class='btn btn-primary'>Install</button>
+                <div class='plugin-container' id='plugin-<%= plugin.id %>-buttons' >
+                <% if (classPlugins[plugin.id]) { %>
+                    <% if (classPlugins[plugin.id].enabled == false) { %>
+                <button id='plugin-swap-<%= plugin.id %>' onclick='handlePluginAction("swap", "<%= plugin.id %>")' class='btn btn-success'>Enable</button><br>
+                    <% } else if (classPlugins[plugin.id].enabled == true) { %>
+                <button id='plugin-swap-<%= plugin.id %>' onclick='handlePluginAction("swap", "<%= plugin.id %>")' class='btn btn-warning'>Disable</button><br>
                     <% } %>
+                <button id='plugin-uninstall-<%= plugin.id %>' onclick='handlePluginAction("uninstall", "<%= plugin.id %>")' class='btn btn-danger'>Uninstall</button>
+                <% } else if (!classPlugins[plugin.id]) { %>
+                <button id='plugin-install-<%= plugin.id %>' onclick='handlePluginAction("install", "<%= plugin.id %>")' class='btn btn-primary'>Install</button>
+                <% } %>
                 </div>
             </div>
-            <% if (Object.keys(classPlugins).length > 0) { %>
-
-            <% } %>
         <% }); %>
     </body>
     <script>
         const plugins = '<%= plugins %>';
         const classPlugins = '<%= classPlugins %>';
-        function handlePluginAction(action) {
-            const pluginId = this.id.split('-')[1];
+        function handlePluginAction(action, pluginId) {
             const pluginName = plugins[pluginId].name;
             socket.emit(`${action}Plugin`, {
-            pluginId: pluginId,
-            pluginName: pluginName,
+                pluginId: pluginId, // oh me oh my !!
+                pluginName: pluginName,
             });
         }
-        socket.on('pluginInstalled', (data) => {
-            const pluginContainer = document.getElementById(`plugin-${data.pluginId}`);
-            pluginContainer.innerHTML = `<h2>${data.pluginName}</h2><p><strong>Description:</strong> ${data.pluginDescription}</p><p><strong>Version:</strong> ${data.pluginVersion}</p><button onclick='uninstall()' class='btn btn-danger'>Uninstall</button>`;
+        socket.on('pluginInstalled', (pluginId) => {
+            const installButton = document.getElementById(`plugin-install-${pluginId}`);
+            if (installButton) {
+                installButton.innerHTML = 'Uninstall';
+                installButton.classList.remove('btn-primary');
+                installButton.classList.add('btn-danger');
+                installButton.setAttribute('onclick', `handlePluginAction("uninstall", "${pluginId}")`);
+                installButton.setAttribute('id', `plugin-uninstall-${pluginId}`);
+            }
+            const swapButton = document.createElement('button');
+            swapButton.id = `plugin-swap-${pluginId}`;
+            swapButton.innerHTML = 'Enable';
+            swapButton.classList.add('btn', 'btn-warning');
+            swapButton.setAttribute('onclick', `handlePluginAction("swap", "${pluginId}")`);
+            const pluginContainer = document.getElementById(`plugin-${pluginId}-buttons`);
+            pluginContainer.insertBefore(document.createElement('br'), pluginContainer.firstChild);
+            pluginContainer.insertBefore(swapButton, pluginContainer.firstChild);
         });
-        socket.on('pluginUninstalled', (data) => {
-            const pluginContainer = document.getElementById(`plugin-${data.pluginId}`);
-            pluginContainer.innerHTML = `<h2>${data.pluginName}</h2><p><strong>Description:</strong> ${data.pluginDescription}</p><p><strong>Version:</strong> ${data.pluginVersion}</p><button onclick='install()' class='btn btn-primary'>Install</button>`;
+        socket.on('pluginUninstalled', (pluginId) => {
+            const uninstallButton = document.getElementById(`plugin-uninstall-${pluginId}`);
+            if (uninstallButton) {
+                uninstallButton.innerHTML = 'Install';
+                uninstallButton.classList.remove('btn-danger');
+                uninstallButton.classList.add('btn-primary');
+                uninstallButton.setAttribute('onclick', `handlePluginAction("install", "${pluginId}")`);
+                uninstallButton.setAttribute('id', `plugin-install-${pluginId}`);
+            }
+            document.getElementById(`plugin-swap-${pluginId}`).remove();
+            document.querySelector(`#plugin-${pluginId}-buttons`).querySelector('br').remove();
+        });
+        socket.on('pluginSwapped', (pluginId, swap) => {
+            const swapButton = document.getElementById(`plugin-swap-${pluginId}`);
+            if (swapButton) {
+                if (swap) {
+                    swapButton.innerHTML = 'Disable';
+                    swapButton.classList.remove('btn-success');
+                    swapButton.classList.add('btn-warning');
+                } else {
+                    swapButton.innerHTML = 'Enable';
+                    swapButton.classList.remove('btn-warning');
+                    swapButton.classList.add('btn-success');
+                }
+            }
         });
     </script>
 <%- include('../partials/footer_content') %>

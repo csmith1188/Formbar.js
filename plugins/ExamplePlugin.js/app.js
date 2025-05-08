@@ -1,3 +1,4 @@
+// Middleware to be used in every route for plugins
 const { isEnabled } = require('../../modules/plugins');
 const name = 'ExamplePlugin';
 
@@ -23,10 +24,13 @@ function onDisable() {
 }
 
 module.exports = {
+    // Plugin information
     name: name,
     description: 'This is an example plugin.',
-    authors: [1],
+    authors: [0],
     version: '1.0',
+    // Plugin functions
+    // These functions will be called when the plugin is initialized, enabled, or disabled
     init,
     onEnable,
     onDisable
