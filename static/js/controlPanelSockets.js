@@ -321,13 +321,10 @@ socket.on('classBannedUsersUpdate', (bannedStudents) => {
 })
 
 socket.on('startPoll', () => {
-	responsesDiv.style.display = 'none'
-	startPollForm.style.display = 'none'
 	endPoll.style.display = 'block'
 	changeTab('usersMenu', 'mainTabs')
 })
 
 socket.on('endPoll', () => {
-	startPollForm.style.display = 'block'
 	endPoll.style.display = 'none'
 })

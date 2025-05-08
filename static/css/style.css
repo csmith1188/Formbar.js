@@ -207,6 +207,7 @@ dialog {
 }
 
 .contentBox {
+	position: absolute;
 	border: solid 2px black;
 	border-radius: 10px;
 	padding: 20px !important;
@@ -740,15 +741,45 @@ hr {
 }
 
 #userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
-	display: grid;
+	display: flex;
 	padding: 0;
-	border: solid 3px var(--theme-color);
-	grid-template-columns: auto auto auto;
+	justify-content: space-evenly;
 }
 
 .customPoll {
 	border: 3px solid var(--theme-color);
-	padding-bottom: 2vh;
+	padding: 0 10cqw 2vh 10cqw;
+	border-radius: 10px;
+}
+
+#pollResForm {
+	display: flex;
+	text-align: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	font-size: 1cqw;
+}
+
+#pollResForm button {
+	width: 2cqw;
+	text-align: center;
+}
+
+#pollResForm #pollBox {
+	width: 225px;
+}
+
+#pollResForm .response {
+	display: flex;
+	justify-content: center;
+}
+
+#pollResForm input {
+	text-align: center;
+}
+
+#pollResForm div, #pollResForm h1 {
+	width: 100%;
 }
 
 .headerText input {
@@ -799,7 +830,6 @@ hr {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-evenly;
-	margin-bottom: 5vh;
 	padding: 1.5vh;
 }
 

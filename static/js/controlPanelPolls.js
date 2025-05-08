@@ -1,10 +1,8 @@
 function load(pollStatus) {
 	if (pollStatus) {
-		startPollForm.style.display = 'none'
 		clearPoll.style.display = 'block'
 		endPoll.style.display = 'block'
 	} else {
-		startPollForm.style.display = 'block'
 		clearPoll.style.display = 'none'
 		endPoll.style.display = 'none'
 	}
@@ -323,7 +321,6 @@ function responseAmountChange() {
 		pollResponses[i].defaultColor = generatedColors[i]
 		if (!pollResponses[i].color) {
 			colorPickerButton.style.backgroundColor = generatedColors[i]
-			colorPickerButton.style.height = "2.25vh"
 			oldColor.style.backgroundColor = generatedColors[i]
 		}
 		let hsv = hexToHSV(generatedColors[i])
@@ -406,7 +403,6 @@ function modeChange() {
 // Ends the poll and reloads the users page to stop any more submission
 function clearPollFunc() {
 	socket.emit('clearPoll')
-	startPollForm.style.display = 'block'
 	clearPoll.style.display = 'none'
 }
 
@@ -478,8 +474,6 @@ function startPoll(customPollId) {
 
 		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, multiRes.checked)
 	}
-	responsesDiv.style.display = 'none'
-	startPollForm.style.display = 'none'
 	clearPoll.style.display = 'block'
 	endPoll.style.display = 'block'
 	changeTab('usersMenu', 'mainTabs')

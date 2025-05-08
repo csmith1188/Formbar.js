@@ -72,15 +72,15 @@
 								Polls</button>
 						</div>
 						<div id='startPollForm'>
-							<h1 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
-							<label for='pollBox'>Poll Prompt</label>
-							<input type='text' id='pollBox' placeholder='Prompt'>
-							<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
-							<br>
-							<div id='responses'></div>
-							<button class='quickButton' onclick='addAnswer()'>+</button>
-							<br>
-							<br>
+							<div id="pollResForm">
+								<h1 class='headerText' style='margin-top: 0;'>Start/Clear Poll</h2>
+								<input type='text' id='pollBox' placeholder='Prompt'>
+								<div>
+									<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
+									<div id='responses'></div>
+								</div>
+								<button class='quickButton' onclick='addAnswer()'>+</button>
+							</div>
 							<div id='generalOptions' style="width: 50%; margin-left: 25%;">
 								<div class="options">
 									<div class="headBox" style="border: none;">
@@ -109,7 +109,7 @@
 										<input type='checkbox' id='blind'>
 									</h2>
 									<div class="headBox">
-										Blind Poll (Responses won't be visible until everyone has answered)
+										Blind Poll until everyone has answered
 									</div>
 								</div>
 								<div class="options">

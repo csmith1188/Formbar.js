@@ -178,12 +178,8 @@ socket.on('cpUpdate', (newClassroom) => {
 
     if (classroom?.poll?.status != newClassroom.poll.status) {
         if (newClassroom.poll.status) {
-            responsesDiv.style.display = 'none'
-            startPollForm.style.display = 'none'
             endPoll.style.display = 'block'
         } else {
-            responsesDiv.style.display = ''
-            startPollForm.style.display = ''
             endPoll.style.display = 'none'
         }
     }
