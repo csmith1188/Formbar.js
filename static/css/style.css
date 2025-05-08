@@ -724,8 +724,8 @@ hr {
 
 #save-poll {
 	background-color: hsl(120, 94%, 74%);
-	border-color: black;
-	color: black;
+	border-color: hsl(120, 100%, 12%);
+	color: hsl(120, 100%, 12%);
 }
 
 #resetAnswerNames {
@@ -743,13 +743,20 @@ hr {
 #userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
 	display: flex;
 	padding: 0;
+	flex-wrap: wrap;
 	justify-content: space-evenly;
 }
 
 .customPoll {
 	border: 3px solid var(--theme-color);
-	padding: 0 10cqw 2vh 10cqw;
+	width: 15cqw;
+	padding-bottom: 2vh;
 	border-radius: 10px;
+	margin-bottom: 1vh;
+}
+
+.customPoll button {
+	width: 5cqw;
 }
 
 #pollResForm {
@@ -766,10 +773,24 @@ hr {
 	font-size: 1cqw;
 }
 
+#pollResForm .response button {
+	background-color: hsl(0, 94%, 74%);
+	color: hsl(0, 100%, 12%);
+	border-color: hsl(0, 100%, 12%);
+}
+
 #pollResForm button {
 	width: 2.2cqw;
 	font-size: 1.5cqw;
 	text-align: center;
+}
+
+#pollResForm #addPollRes {
+	font-family:'Times New Roman', Times, serif;
+	font-weight:900;
+	background-color: hsl(120, 94%, 74%);
+	color: hsl(120, 100%, 12%);
+	border-color: hsl(120, 100%, 12%);
 }
 
 #pollResForm #pollBox {

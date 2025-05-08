@@ -263,7 +263,7 @@ function responseAmountChange() {
 
 		let removeAnswerButton = document.createElement("button");
 		removeAnswerButton.className = "quickButton";
-		removeAnswerButton.textContent = "-";
+		removeAnswerButton.textContent = "X";
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
 

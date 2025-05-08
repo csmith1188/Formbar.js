@@ -78,7 +78,7 @@
 									<input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
 									<div id='responses'></div>
 								</div>
-								<button class='quickButton' onclick='addAnswer()'>+</button>
+								<button id="addPollRes" class='quickButton' onclick='addAnswer()'>+</button>
 							</div>
 							<div id='generalOptions' style="width: 50%; margin-left: 25%;">
 								<div class="options">
@@ -412,6 +412,7 @@
 
 			let totalUsers = document.getElementById('totalUsers')
 			let responseDivs = document.getElementsByClassName('response');
+
 			// Function runs on page load
 			// Checks if poll is active or not and displays correct output
 			let rooms;
