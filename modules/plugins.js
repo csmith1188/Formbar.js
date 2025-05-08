@@ -15,7 +15,7 @@ async function isEnabled(req, res, next) {
     console.log(classInformation.classrooms[req.session.classId].plugins);
     const pluginName = req.url.split('/')[1].replace(/\s+/g, '');
     const classPlugins = classInformation.classrooms[req.session.classId].plugins;
-    const pluginId = dbGet('SELECT id FROM plugins WHERE name=?', [pluginName])
+    const pluginId = await dbGet('SELECT id FROM plugins WHERE name=?', [pluginName]);
     const plugin = classPlugins[pluginId];
     if (!plugin || !pluginId) {
         res.render('pages/message', {
