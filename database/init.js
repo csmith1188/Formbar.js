@@ -4,6 +4,11 @@ const fs = require('fs');
 initializeDatabase();
 function initializeDatabase() {
     new Promise((resolve, reject) => {
+        if (fs.existsSync('./database/database.db')) {
+            console.log("Database already exists. Skipping initialization.");
+            process.exit(1);
+        }
+
         if (!fs.existsSync('./database/init.sql')) {
             console.log('SQL initialization file not found.');
             process.exit(1);
