@@ -23,8 +23,8 @@
         <% }); %>
     </body>
     <script>
-        const plugins = <%- JSON.stringify(plugins) %>;
-        const classPlugins = <%- JSON.stringify(classPlugins) %>;
+        const plugins =' <%- JSON.stringify(plugins) %>';
+        const classPlugins = '<%- JSON.stringify(classPlugins) %>';
         function handlePluginAction(action, pluginId) {
             const pluginName = plugins[pluginId].name;
             socket.emit(`${action}Plugin`, {
