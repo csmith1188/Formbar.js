@@ -207,10 +207,12 @@ dialog {
 }
 
 .contentBox {
+	position: absolute;
 	border: solid 2px black;
 	border-radius: 10px;
 	padding: 20px !important;
 	font-size: 20px;
+	z-index: 99;
 }
 
 .contentBox h1 {
@@ -646,6 +648,27 @@ details[open] #reasons {
 	width: 100%;
 }
 
+#settingsTab {
+	display: flex;
+	padding: 1.5vh;
+	justify-content: space-evenly;
+	flex-wrap: wrap;
+	border-radius: 10px;
+	margin: 1vh;
+	width: 100%;
+	border: 3px solid var(--theme-color);
+}
+
+#settingsTab h2 {
+	width: 100%;
+	font-size: 2cqw;
+}
+
+#settingsTab button {
+	width: 25%;
+	height: 5vh;
+}
+
 hr {
 	border: 0;
 	border-top: 5px solid var(--theme-color);
@@ -699,6 +722,93 @@ hr {
 	width: 10cqw;
 }
 
+#save-poll {
+	background-color: hsl(120, 94%, 74%);
+	border-color: hsl(120, 100%, 12%);
+	color: hsl(120, 100%, 12%);
+}
+
+#resetAnswerNames {
+	background-color: yellow;
+	border-color: black;
+	color: black;
+}
+
+#resetColors {
+	background-color: yellow;
+	border-color: black;
+	color: black;
+}
+
+#userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
+	display: flex;
+	padding: 0;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+}
+
+.customPoll {
+	border: 3px solid var(--theme-color);
+	width: 15cqw;
+	padding-bottom: 2vh;
+	border-radius: 10px;
+	margin-bottom: 1vh;
+}
+
+.customPoll button {
+	width: 5cqw;
+}
+
+#pollResForm {
+	display: flex;
+	text-align: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	font-size: 2cqw;
+}
+
+#pollResForm .response {
+	display: flex;
+	justify-content: center;
+	font-size: 1cqw;
+}
+
+#pollResForm .response button {
+	background-color: hsl(0, 94%, 74%);
+	color: hsl(0, 100%, 12%);
+	border-color: hsl(0, 100%, 12%);
+}
+
+#pollResForm button {
+	width: 2.2cqw;
+	font-size: 1.5cqw;
+	text-align: center;
+}
+
+#pollResForm #addPollRes {
+	font-family:'Times New Roman', Times, serif;
+	font-weight:900;
+	background-color: hsl(120, 94%, 74%);
+	color: hsl(120, 100%, 12%);
+	border-color: hsl(120, 100%, 12%);
+}
+
+#pollResForm #pollBox {
+	width: 300px;
+}
+
+#pollResForm input {
+	text-align: center;
+}
+
+#pollResForm div, #pollResForm h1 {
+	width: 100%;
+}
+
+.headerText input {
+	transform: scale(1.25);
+}
+
 .ongoingPollOptions #timeDiv {
 	padding: 1vh 0;
 	width: 30%;
@@ -742,8 +852,17 @@ hr {
 #pollOptions {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
-	margin-bottom: 5vh;
+	justify-content: space-evenly;
+	padding: 1.5vh;
+}
+
+#pollOptions h2 {
+	width: 100%;
+}
+
+#pollOptions button {
+	width: 25%;
+	height: 5vh;
 }
 
 div .tabContent {

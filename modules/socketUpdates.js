@@ -648,7 +648,6 @@ class SocketUpdates {
             blind: false,
             requiredTags: [],
             studentBoxes: [],
-            lastResponse: [],
             allowedResponses: [],
         };
     }

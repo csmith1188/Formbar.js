@@ -11,7 +11,7 @@ let earnedObject = {
 module.exports = {
     run(socket, socketUpdates) {
         // Starts a new poll. Takes the number of responses and whether or not their are text responses
-        socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes) => {
+        socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes) => {
             try {
                 earnedObject.earnedDigipogs = [];
                 // Get class id and check if the class is active before continuing
@@ -50,12 +50,6 @@ module.exports = {
                     classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
                 } else {
                     classInformation.classrooms[classId].poll.studentIndeterminate = []
-                }
-
-                if (lastResponse) {
-                    classInformation.classrooms[classId].poll.lastResponse = lastResponse
-                } else {
-                    classInformation.classrooms[classId].poll.lastResponse = []
                 }
 
                 // Creates an object for every answer possible the teacher is allowing
@@ -97,6 +91,46 @@ module.exports = {
                 socket.emit('startPoll')
             } catch (err) {
                 logger.log('error', err.stack);
+            }
+        })
+
+        socket.on("classPoll", (poll) => {
+            try {
+                let userId = socket.request.session.userId
+                database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
+                    try {
+                        if (err) throw err
+                        if (!nextPollId) logger.log('critical', '[savePoll] nextPollId not found')
+
+                        nextPollId = nextPollId.nextPollId + 1
+
+                        database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+                            userId,
+                            poll.name,
+                            poll.prompt,
+                            JSON.stringify(poll.answers),
+                            poll.textRes,
+                            poll.blind,
+                            poll.weight,
+                            poll.public
+                        ], (err) => {
+                            try {
+                                if (err) throw err
+
+                                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                socket.emit('message', 'Poll saved successfully!')
+                                socketUpdates.customPollUpdate(socket.request.session.username)
+                                socket.emit("classPollSave", nextPollId);
+                            } catch (err) {
+                                logger.log('error', err.stack);
+                            }
+                        })
+                    } catch (err) {
+                        logger.log('error', err.stack);
+                    }
+                })
+            } catch (err) {
+                logger.log("error", err.stack);
             }
         })
 

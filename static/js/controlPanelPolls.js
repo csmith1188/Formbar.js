@@ -1,10 +1,8 @@
 function load(pollStatus) {
 	if (pollStatus) {
-		startPollForm.style.display = 'none'
 		clearPoll.style.display = 'block'
 		endPoll.style.display = 'block'
 	} else {
-		startPollForm.style.display = 'block'
 		clearPoll.style.display = 'none'
 		endPoll.style.display = 'none'
 	}
@@ -265,7 +263,7 @@ function responseAmountChange() {
 
 		let removeAnswerButton = document.createElement("button");
 		removeAnswerButton.className = "quickButton";
-		removeAnswerButton.textContent = "-";
+		removeAnswerButton.textContent = "X";
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
 
@@ -405,7 +403,6 @@ function modeChange() {
 // Ends the poll and reloads the users page to stop any more submission
 function clearPollFunc() {
 	socket.emit('clearPoll')
-	startPollForm.style.display = 'block'
 	clearPoll.style.display = 'none'
 }
 
@@ -436,75 +433,47 @@ function startPoll(customPollId) {
 		pollAnswers.push(pollAnswer)
 	}
 	let multiRes = document.getElementById("multiRes")
-	let lastResponses = document.getElementById('lastResponse')
-	let basedOnResponse = document.getElementById('basedOnResponse')
-	let lastResponseToUse = []
-	let defaultValue = basedOnResponse.value
-	for (let i = basedOnResponse.length; i >= 0; i--) {
-		basedOnResponse.remove(i)
-	}
-	for (let [key, value] of Object.entries(pollAnswers)) {
-		let eachOption = document.createElement('option')
-		eachOption.innerText = value.answer
-		eachOption.value = value.answer
-		basedOnResponse.appendChild(eachOption)
-	}
-	basedOnResponse.value = defaultValue
-	if (lastResponses.checked) {
-		for (let [key, value] of Object.entries(rooms.students)) {
-			if (value.classPermissions >= 5 || value.classPermissions <= 1) {
-				continue
-			}
-			if (basedOnResponse.value == value.pollRes.buttonRes) {
-				lastResponseToUse.push(value.username)
-			}
-			//lastResponseToUse.push()
+	let selectTagForm = document.getElementsByName('selectTagForm')
+	let allCheckboxes = document.getElementsByName('studentCheckbox')
+	for (let eachTagForm of selectTagForm[0]) {
+		if (eachTagForm.checked) {
+			//for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
+			userTags.push(eachTagForm.value)
 		}
 	}
-	else {
-		let selectTagForm = document.getElementsByName('selectTagForm')
-		let allCheckboxes = document.getElementsByName('studentCheckbox')
-		for (let eachTagForm of selectTagForm[0]) {
-			if (eachTagForm.checked) {
-				//for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
-				userTags.push(eachTagForm.value)
-			}
+
+	for (let eachBox of allCheckboxes) {
+		if (eachBox.checked && !eachBox.indeterminate) {
+			let boxId = eachBox.id.split('_')[1]
+			userBoxesChecked.push(boxId)
 		}
-
-		for (let eachBox of allCheckboxes) {
-			if (eachBox.checked && !eachBox.indeterminate) {
-				let boxId = eachBox.id.split('_')[1]
-				userBoxesChecked.push(boxId)
-			}
-			if (eachBox.indeterminate) {
-				let boxId = eachBox.id.split('_')[1]
-				userIndeterminate.push(boxId)
-			}
+		if (eachBox.indeterminate) {
+			let boxId = eachBox.id.split('_')[1]
+			userIndeterminate.push(boxId)
 		}
-
-
-		userTags.sort()
-		userBoxesChecked.sort()
-		userIndeterminate.sort()
-		userBreak.sort()
 	}
+
+
+	userTags.sort()
+	userBoxesChecked.sort()
+	userIndeterminate.sort()
+	userBreak.sort()
+
 	if (customPollId) {
 		let customPoll = customPolls[customPollId]
 
 		changeTab('mainPolls', 'polls')
 
 		let generatedColors = generateColors(customPoll.answers.length)
-		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, false)
+		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, false)
 	} else {
 		let blind = blindCheck.checked
 
 
 		let generatedColors = generateColors(resNumber.value)
 
-		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, lastResponseToUse, multiRes.checked)
+		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, multiRes.checked)
 	}
-	responsesDiv.style.display = 'none'
-	startPollForm.style.display = 'none'
 	clearPoll.style.display = 'block'
 	endPoll.style.display = 'block'
 	changeTab('usersMenu', 'mainTabs')
@@ -514,13 +483,8 @@ function editCustomPoll(customPollId) {
 	editingPollId = customPollId
 	let customPoll = customPolls[editingPollId]
 
-	unloadPollButton.style.display = ''
 	if (customPoll.owner == currentUser.id) {
-		deletePollButton.style.display = ''
-		savePollButton.style.display = ''
-	} else {
-		deletePollButton.style.display = 'none'
-		savePollButton.style.display = 'none'
+		editPollDialog.open = true
 	}
 
 	blindCheck.checked = customPoll.blind
@@ -542,15 +506,10 @@ function editCustomPoll(customPollId) {
 
 		pollResponses[pollIndex].weight = answer.weight
 	}
-
-	changeTab('mainPolls', 'polls')
-	showResponses()
 }
 
 function unloadPoll() {
-	unloadPollButton.style.display = 'none'
-	savePollButton.style.display = 'none'
-	deletePollButton.style.display = 'none'
+	editPollDialog.open = false
 
 	pollPrompt.value = ''
 	resTextBox.checked = false
@@ -611,11 +570,8 @@ function savePollAs(pollType) {
 		}
 		customPoll.answers = pollAnswers
 
-		if (pollType == "user") {
-			socket.emit('savePoll', customPoll);
-		} else if (pollType == "class") {
-			socket.emit("classPoll", customPoll);
-		};
+		if (pollType == 'user') socket.emit('savePoll', customPoll);
+		else if (pollType == 'class') socket.emit('classPoll', customPoll);
 	};
 }
 
@@ -638,6 +594,11 @@ function sharePoll(type) {
 }
 
 function deletePoll(pollId) {
+	let elems = document.querySelectorAll(`.custom-poll-name`)
+	for (elem of elems) {
+		if (elem.innerHTML == customPolls[editingPollId].name) elem.parentElement.remove()
+	}
+
 	if (!pollId && !editingPollId) {
 		alert('No poll selected')
 		return
@@ -700,29 +661,22 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		customPollDiv.appendChild(startButton)
 
 		if (customPoll.owner == currentUser.id) {
-			let shareButton = document.createElement('button')
-			shareButton.className = 'share-button'
-			shareButton.style.gridColumn = 4
-			shareButton.textContent = 'Share'
-			shareButton.onclick = () => { openSharePoll(customPollId) }
-			customPollDiv.appendChild(shareButton)
+			// let shareButton = document.createElement('button')
+			// shareButton.className = 'share-button'
+			// shareButton.style.gridColumn = 4
+			// shareButton.textContent = 'Share'
+			// shareButton.onclick = () => { openSharePoll(customPollId) }
+			// customPollDiv.appendChild(shareButton)
 
-			let publicButton = document.createElement('button')
-			publicButton.className = 'public-button'
-			publicButton.style.gridColumn = 5
-			if (customPoll.public)
-				publicButton.textContent = 'Make Private'
-			else
-				publicButton.textContent = 'Make Public'
-			publicButton.onclick = () => { publicToggle(customPollId) }
-			customPollDiv.appendChild(publicButton)
-
-			let deleteButton = document.createElement('button')
-			deleteButton.className = 'delete-poll'
-			deleteButton.style.gridColumn = 6
-			deleteButton.textContent = 'Delete'
-			deleteButton.onclick = () => { deletePoll(customPollId) }
-			customPollDiv.appendChild(deleteButton)
+			// let publicButton = document.createElement('button')
+			// publicButton.className = 'public-button'
+			// publicButton.style.gridColumn = 5
+			// if (customPoll.public)
+			// 	publicButton.textContent = 'Make Private'
+			// else
+			// 	publicButton.textContent = 'Make Public'
+			// publicButton.onclick = () => { publicToggle(customPollId) }
+			// customPollDiv.appendChild(publicButton)
 		}
 
 		customPollsDiv.appendChild(customPollDiv)
