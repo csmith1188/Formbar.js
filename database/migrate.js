@@ -6,6 +6,7 @@ const { hash } = require('../modules/crypto'); // New crypto module
 // Retrieve the database and migration files
 const database = new sqlite3.Database('./database/database.db');
 const migrationFiles = fs.readdirSync('./database/migrations').filter(file => file.endsWith('.sql')).sort();
+const jsMigrationFiles = fs.readdirSync('./database/migrations/JSMigrations').filter(file => file.endsWith('.js')).sort();
 
 // Backup the database
 // If there's already a backup, denote it with a number
