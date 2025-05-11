@@ -72,6 +72,7 @@ module.exports = {
                         }
                     });
                 });
+
                 if (req.body.email) {
                     // Send an email to the user with the password change link
                     const location = `${req.protocol}://${req.get('host')}`;

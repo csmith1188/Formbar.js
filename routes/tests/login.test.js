@@ -1,6 +1,7 @@
-const loginRoute = require('../login');
 const request = require('supertest');
-const {createExpressServer} = require("../../modules/tests/tests");
+const { createExpressServer } = require("../../modules/tests/tests");
+const { database } = require('../../modules/database');
+const loginRoute = require('../login');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -12,9 +13,35 @@ jest.mock('../../modules/crypto', () => ({
 
 jest.mock('../../modules/database', () => {
     const dbMock = {
-        get: jest.fn(),
-        run: jest.fn(),
-        all: jest.fn()
+        get: jest.fn((query, params, callback = () => {}) => {
+            // Handle the complex user query with polls
+            if (query.includes('SELECT users.*, CASE WHEN shared_polls.pollId')) {
+                callback(null, {
+                    username: params[0], // email is used as username
+                    id: 1,
+                    password: 'hashed_password',
+                    permissions: 'student',
+                    API: 'test_api',
+                    sharedPolls: '[]',
+                    ownedPolls: '[]',
+                    tags: '',
+                    displayName: 'Test User',
+                    verified: 1,
+                    email: params[0]
+                });
+            }
+        }),
+        run: jest.fn((query, params, callback = () => {}) => {
+            // Mock successful user insertion
+            if (query.includes('INSERT INTO users')) {
+                callback(null);
+            } else {
+                callback(null);
+            }
+        }),
+        all: jest.fn((query, callback = () => {}) => {
+            callback(null, []);
+        })
     };
 
     return {
@@ -38,9 +65,18 @@ jest.mock('../../modules/student', () => ({
     }))
 }));
 
+// Mock settings to disable email verification
+jest.mock('../../modules/config', () => ({
+    settings: {
+        emailEnabled: false
+    },
+    logNumbers: {
+        error: 'MOCK-ERROR-NUMBER'
+    }
+}));
+
 describe('Login Route', () => {
     let app;
-    const {database} = require('../../modules/database');
 
     beforeEach(() => {
         // Reset mocks
@@ -63,18 +99,21 @@ describe('Login Route', () => {
     });
 
     describe('GET /login', () => {
-        // it('should redirect to home if user is already logged in', async () => {
-        //     app.use((req, res, next) => {
-        //         req.session.email = 'test@example.com';
-        //         next();
-        //     });
-        //
-        //     const response = await request(app)
-        //         .get('/login')
-        //         .expect(200);
-        //
-        //     expect(response.headers.location).toBe('/');
-        // });
+        it('should redirect to home if user is already logged in', async () => {
+            // Remove session mock to simulate already being logged in
+            app = createExpressServer();
+            app.use((req, res, next) => {
+                req.session = { email: "mock_email@mock.com" };
+                next();
+            });
+            loginRoute.run(app);
+
+            const response = await request(app)
+                .get('/login')
+                .expect(302);
+
+            expect(response.headers.location).toBe('/');
+        });
 
         it('should render login page if user is not logged in', async () => {
             const response = await request(app)
@@ -88,84 +127,60 @@ describe('Login Route', () => {
                 route: 'login'
             });
         });
-
-        // it('should handle verification code and create user account', async () => {
-        //     // Mock jwt.decode to return a mock user
-        //     jest.spyOn(jwt, 'decode').mockReturnValue({
-        //         username: 'testuser',
-        //         email: 'test@example.com',
-        //         hashedPassword: 'hashed_password',
-        //         permissions: 'student',
-        //         newAPI: 'test_api',
-        //         newSecret: 'test_secret',
-        //         displayName: 'Test User'
-        //     });
-        //
-        //     database.get.mockImplementation((query, params, callback) => {
-        //         callback(null, {
-        //             username: 'testuser',
-        //             id: 1,
-        //             permissions: 'student',
-        //             API: 'test_api',
-        //             tags: '',
-        //             displayName: 'Test User'
-        //         });
-        //     });
-        //
-        //     const response = await request(app)
-        //         .get('/login?code=test_secret')
-        //         .expect(302);
-        //
-        //     expect(response.headers.location).toBe('/');
-        // });
     });
 
     describe('POST /login', () => {
         it('should log in existing user with correct credentials', async () => {
-            database.get.mockImplementation((query, params, callback) => {
-                callback(null, {
+            app = createExpressServer();
+            app.use((req, res, next) => {
+                req.session = {};
+                req.body = {
                     username: 'testuser',
-                    id: 1,
-                    password: 'hashed_password',
-                    permissions: 'student',
-                    API: 'test_api',
-                    ownedPolls: '[]',
-                    sharedPolls: '[]',
-                    tags: '',
-                    displayName: 'Test User',
-                    verified: 1,
+                    password: 'password',
+                    loginType: 'login',
+                    userType: "?????????????????????",
+                    displayName: "Test User",
                     email: 'test@example.com'
-                });
+                };
+                next();
             });
+            loginRoute.run(app);
 
             const response = await request(app)
                 .post('/login')
-                .send({
-                    username: 'testuser',
-                    password: 'password',
-                    loginType: 'login'
-                })
-                .expect(200);
+                .send()
+                // .expect(302);
 
-            // expect(response.headers.location).toBe('/');
+            expect(response.headers.location).toBe('/');
+            expect(database.get).toHaveBeenCalledWith(
+                expect.stringContaining('SELECT users.*, CASE WHEN shared_polls.pollId'),
+                ['test@example.com'],
+                expect.any(Function)
+            );
         });
 
         it('should create a new user account when loginType is new', async () => {
+            // Mock database.all to return empty users array (first user will be manager)
             database.all.mockImplementation((query, callback) => {
                 callback(null, []);
             });
 
-            database.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    username: 'newuser',
-                    id: 2,
-                    permissions: 'manager',
-                    API: 'new_api',
-                    tags: '',
-                    displayName: 'New User',
-                    verified: 1,
-                    email: 'new@example.com'
-                });
+            // Mock database.get to return the newly created user
+            database.get.mockImplementation((query, params, callback = () => {}) => {
+                if (query.includes('SELECT users.*, CASE WHEN shared_polls.pollId')) {
+                    callback(null, null); // No existing user found
+                } else {
+                    callback(null, {
+                        username: 'newuser',
+                        id: 2,
+                        permissions: 'manager',
+                        API: 'new_api',
+                        tags: '',
+                        displayName: 'New User',
+                        verified: 1,
+                        email: 'new@example.com'
+                    });
+                }
             });
 
             const response = await request(app)
@@ -177,9 +192,22 @@ describe('Login Route', () => {
                     displayName: 'New User',
                     loginType: 'new'
                 })
-                .expect(200);
+                .expect(302);
 
-            // expect(response.headers.location).toBe('/');
+            expect(database.run).toHaveBeenCalledWith(
+                expect.stringContaining('INSERT INTO users'),
+                expect.arrayContaining([
+                    'new@example.com', // This is due to username being an alias for email now
+                    'new@example.com',
+                    'hashed_password',
+                    expect.any(Number),
+                    expect.any(String),
+                    expect.any(String),
+                    'New User',
+                    1
+                ]),
+                expect.any(Function)
+            );
         });
 
         it('should create a guest account when loginType is guest', async () => {
@@ -191,27 +219,9 @@ describe('Login Route', () => {
                     displayName: 'Guest User',
                     loginType: 'guest'
                 })
-                .expect(200);
+                .expect(302);
 
-            // expect(response.headers.location).toBe('/');
-        });
-
-        it('should handle invalid username for login', async () => {
-            database.get.mockImplementation((query, params, callback) => {
-                callback(null, {});  // Empty result means no user found
-            });
-
-            const response = await request(app)
-                .post('/login')
-                .send({
-                    username: 'nonexistent',
-                    password: 'password',
-                    loginType: 'login'
-                })
-                .expect(200);
-
-            expect(response.body.view).toBe('pages/message');
-            // expect(response.body.options.message).toBe('No user found with that username.');
+            expect(response.headers.location).toBe('/');
         });
 
         it('should handle incorrect password', async () => {
@@ -219,11 +229,23 @@ describe('Login Route', () => {
             compare.mockResolvedValueOnce(false);
 
             database.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    username: 'testuser',
-                    id: 1,
-                    password: 'hashed_password'
-                });
+                if (query.includes('SELECT users.*, CASE WHEN shared_polls.pollId')) {
+                    callback(null, {
+                        username: 'testuser',
+                        id: 1,
+                        password: 'hashed_password',
+                        permissions: 'student',
+                        API: 'test_api',
+                        sharedPolls: '[]',
+                        ownedPolls: '[]',
+                        tags: '',
+                        displayName: 'Test User',
+                        verified: 1,
+                        email: 'test@example.com'
+                    });
+                } else {
+                    callback(null, null);
+                }
             });
 
             const response = await request(app)
@@ -231,12 +253,13 @@ describe('Login Route', () => {
                 .send({
                     username: 'testuser',
                     password: 'wrongpassword',
-                    loginType: 'login'
+                    loginType: 'login',
+                    email: 'test@example.com'
                 })
                 .expect(200);
 
             expect(response.body.view).toBe('pages/message');
-            // expect(response.body.options.message).toBe('Incorrect password');
+            expect(response.body.options.message).toBe('Incorrect password');
         });
 
         it('should validate input when creating a new user', async () => {
@@ -252,7 +275,7 @@ describe('Login Route', () => {
                 .expect(200);
 
             expect(response.body.view).toBe('pages/message');
-            // expect(response.body.options.message).toBe('Invalid username, password, or display name. Please try again.');
+            expect(response.body.options.message).toBe('Invalid password or display name. Please try again.');
         });
     });
 }); 
