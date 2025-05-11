@@ -144,7 +144,7 @@ class SocketUpdates {
     virtualBarUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
-            if (!classId) return; // If a class id is not provided then deny the request
+            if (!classId) return; // If a class id is not provided then deny the
 
             const classData = structuredClone(classInformation.classrooms[classId])
             logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
@@ -263,6 +263,7 @@ class SocketUpdates {
                 totalResponses: totalResponses,
                 polls: responses,
                 textRes: classData.poll.textRes,
+                multiRes: classData.poll.multiRes,
                 prompt: classData.poll.prompt,
                 weight: classData.poll.weight,
                 blind: classData.poll.blind,

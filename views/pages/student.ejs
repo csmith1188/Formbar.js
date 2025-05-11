@@ -171,11 +171,24 @@
 							}
 
 							// If the user has responded before on this poll, put their previous responses in the form
-							const oldLetterElement = document.getElementById(oldLetterRes)
 							const resTextBox = document.getElementById("resTextBox")
-							if (oldLetterRes && oldLetterElement) {
-								oldLetterElement.checked = true
+							if (!poll.multiRes) {
+								// If the poll isn't multi-res, handle it normally
+								const oldLetterElement = document.getElementById(oldLetterRes)
+								if (oldLetterRes && oldLetterElement) {
+									oldLetterElement.checked = true
+								}
+							} else {
+								// If the poll is multi-res, split the response and check all of them
+								const splitLetterRes = oldLetterRes.split(',')
+								for (const splitLetter of splitLetterRes) {
+									const oldLetterElement = document.getElementById(splitLetter)
+									if (oldLetterElement) {
+										oldLetterElement.checked = true
+									}
+								}
 							}
+
 
 							if (oldTextRes && resTextBox) {
 								resTextBox.value = oldTextRes
@@ -223,7 +236,8 @@
 							}
 						}
 
-						if (lettRes.length == 1) {
+						// If the poll isn't multi-res, extract the single response from the array
+						if (lettRes.length == 1 && !poll.multiRes) {
 							lettRes = lettRes[0]
 						}
 

@@ -6,7 +6,7 @@ module.exports = {
     run(router) {
         router.get('/apiPermissionCheck', async (req, res) => {
 			try {
-				let { api, permissionType } = req.query
+				let { api, permissionType, classId } = req.query
 
 				let permissionTypes = {
 					games: null,
@@ -21,6 +21,11 @@ module.exports = {
 
 				if (!permissionType) {
 					res.status(400).json({ error: 'No permissionType provided.' })
+					return
+				}
+
+				if (!classId) {
+					res.status(400).json({ error: 'No classId provided.' })
 					return
 				}
                 
@@ -38,6 +43,12 @@ module.exports = {
 				// Check if there is a class id set for the user
 				if (!user.class) {
 					res.status(403).json({ reason: 'User is not in a class.' })
+					return
+				}
+
+				// Check if the user is in the requested class
+				if (user.class != classId) {
+					res.status(403).json({ reason: 'User is not in the requested class.' })
 					return
 				}
 

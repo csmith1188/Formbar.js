@@ -18,36 +18,71 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const username = socket.request.session.username
                 const classroom = classInformation.classrooms[classId]
-                if (!classroom.poll.studentBoxes.includes(username) && res != 'remove') {
+                console.log('check1')
+                // Check if user is allowed to respond
+                const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
+                if (!classroom.poll.studentBoxes.includes(username) && !isRemoving) {
                     return; // If the user is not included in the poll, do not allow them to respond
                 }
 
+                console.log('res', res)
+
                 // Check if the response provided is a valid response
-                if (!Object.keys(classroom.poll.responses).includes(res) && res != 'remove') {
-                    return;
+                if (!classroom.poll.multiRes) {
+                    // For normal polls, response must be either 'remove' or a valid response key
+                    if (res !== 'remove' && !Object.keys(classroom.poll.responses).includes(res)) {
+                        return;
+                    }
+                } else {
+                    // For multires polls, validate that all responses are valid
+                    if (isRemoving) {
+                        // Allow removal
+                    } else if (!Array.isArray(res)) {
+                        return; // Must be an array for multires polls
+                    } else {
+                        // Check that all responses in the array are valid
+                        const validResponses = Object.keys(classroom.poll.responses);
+                        const allValid = res.every(response => validResponses.includes(response));
+                        if (!allValid) {
+                            return;
+                        }
+                    }
                 }
 
                 // If the users response is different from the previous response, play a sound
-                // If the user is removing their response, play a different sound
-                if (classroom.students[username].pollRes.buttonRes != res || classroom.students[username].pollRes.textRes != textRes) {
-                    if (res == 'remove') {
+                const prevRes = classroom.students[username].pollRes.buttonRes;
+                const hasChanged = classroom.poll.multiRes ? 
+                    JSON.stringify(prevRes) !== JSON.stringify(res) : 
+                    prevRes !== res;
+                
+                if (hasChanged || classroom.students[username].pollRes.textRes !== textRes) {
+                    if (isRemoving) {
                         advancedEmitToClass('removePollSound', classId, { api: true })
                     } else {
                         advancedEmitToClass('pollSound', classId, { api: true })
                     }
                 }
                 
-                // If the users response is to remove their response, set the response to an empty string
-                // Also, set the time of the response to the current time
-                classroom.students[username].pollRes.buttonRes = res == "remove" ? "" : res
-                classroom.students[username].pollRes.textRes = res == "remove" ? "" : textRes
+                // Handle response storage
+                if (isRemoving) {
+                    classroom.students[username].pollRes.buttonRes = classroom.poll.multiRes ? [] : "";
+                    classroom.students[username].pollRes.textRes = "";
+                } else {
+                    classroom.students[username].pollRes.buttonRes = res;
+                    classroom.students[username].pollRes.textRes = textRes;
+                }
                 classroom.students[username].pollRes.time = new Date()
 
                 // Digipog calculations
-                if (textRes !== 'remove' && earnedDigipogs[username] === undefined) {
+                if (!isRemoving && earnedDigipogs[username] === undefined) {
                     let amount = 0;
-                    for (let i = 0; i <= resLength; i++) {
-                        amount++;
+                    if (classroom.poll.multiRes) {
+                        amount = res.length;
+                    } else {
+                        // For normal polls, count based on text response length
+                        for (let i = 0; i <= resLength; i++) {
+                            amount++;
+                        }
                     }
 
                     amount = Math.ceil(amount/4);
@@ -63,10 +98,6 @@ module.exports = {
                     }
                 }
                 logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
-
-                if (userSockets[username]) {
-                    userSockets[username].emit('pollResp', { res, textRes });
-                }
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()

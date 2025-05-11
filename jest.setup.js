@@ -12,4 +12,7 @@ jest.mock('./modules/database', () => ({
         run: jest.fn(),
         all: jest.fn()
     },
+    dbGet: jest.fn().mockResolvedValue({}),
+    dbRun: jest.fn().mockResolvedValue({}),
+    dbGetAll: jest.fn().mockResolvedValue({})
 }));
