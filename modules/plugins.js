@@ -12,7 +12,7 @@ async function isEnabled(req, res, next) {
             title: 'Error'
         });
     }
-    console.log(classInformation.classrooms[req.session.classId].plugins);
+
     const pluginName = req.url.split('/')[1].replace(/\s+/g, '');
     const classPlugins = classInformation.classrooms[req.session.classId].plugins;
     const pluginId = await dbGet('SELECT id FROM plugins WHERE name=?', [pluginName]);
@@ -60,7 +60,7 @@ async function configPlugins(app) {
                     plugin.init(app);
                     const pluginName = plugin.name.replace(/\s+/g, '');
                     plugin.authors = plugin.authors.join(',');
-                    const pluginData = dbGet('SELECT * FROM plugins WHERE name=?', [pluginName]);
+                    const pluginData = await dbGet('SELECT * FROM plugins WHERE name=?', [pluginName]);
                     if (!pluginData) {
                         dbRun('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version])
                             .then(() => {
