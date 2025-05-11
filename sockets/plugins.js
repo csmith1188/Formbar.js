@@ -1,76 +1,66 @@
-const { database } = require("../modules/database")
-const { logger } = require("../modules/logger")
+const { database, dbRun } = require('../modules/database')
+const { logger } = require('../modules/logger')
+const { logNumbers } = require('../modules/config')
+const { classInformation } = require('../modules/class')
+const { plugins } = require('../modules/plugins')
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('addPlugin', (name, url) => {
-            try {
-                logger.log('info', `[addPlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[addPlugin] name=(${name}) url=(${url})`)
-
-                database.get(
-                    'SELECT * FROM classroom WHERE id=?',
-                    [socket.request.session.classId],
-                    (err, classData) => {
-                        try {
-                            if (err) throw err
-
-                            database.run(
-                                'INSERT INTO plugins(name, url, classId) VALUES(?, ?, ?)',
-                                [name, url, classData.id]
-                            )
-                            socketUpdates.pluginUpdate()
-                        } catch (err) {
-                            logger.log('error', err.stack)
-                        }
-                    }
-                )
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
+        socket.on('installPlugin', async (data) => {
+            const pluginId = data.pluginId;
+            const plugins = classInformation.classrooms[socket.request.session.classId].plugins;
+            plugins[pluginId] = {
+                name: data.pluginName,
+                enabled: false,
+            };
+            dbRun('UPDATE classroom SET plugins=? WHERE id=?', [JSON.stringify(plugins), socket.request.session.classId])
+                .then(() => {
+                    socket.emit('pluginInstalled', pluginId, data.pluginName);
+                })
+                .catch((err) => {
+                    logger.log('error', err.stack);
+                    socket.emit('message', `Error Number ${logNumbers.error}: There was a server error try again.`);
+                });
         });
 
-        socket.on('removePlugin', (id) => {
-            try {
-                logger.log('info', `[removePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[removePlugin] id=(${id})`)
-
-                database.run('DELETE FROM plugins WHERE id=?', [id])
-                socketUpdates.pluginUpdate()
-            } catch (err) {
-                logger.log('error', err.stack)
+        socket.on('uninstallPlugin', async (data) => {
+            const pluginId = data.pluginId;
+            const classPlugins = classInformation.classrooms[socket.request.session.classId].plugins;
+            if (!classPlugins[pluginId]) {
+                return socket.emit('message', `Plugin ${pluginId} does not exist`);
             }
+            delete classPlugins[pluginId];
+            dbRun('UPDATE classroom SET plugins=? WHERE id=?', [JSON.stringify(classPlugins), socket.request.session.classId])
+                .then(() => {
+                    socket.emit('pluginUninstalled', pluginId);
+                })
+                .catch((err) => {
+                    logger.log('error', err.stack);
+                    socket.emit('message', `Error Number ${logNumbers.error}: There was a server error try again.`);
+                });
         });
 
-        socket.on('changePlugin', (id, name, url) => {
-            try {
-                logger.log('info', `[changePlugin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[changePlugin] id=(${id}) name=(${name}) url=(${url})`)
-
-                if (name) {
-                    database.run(
-                        'UPDATE plugins set name=? WHERE id=?',
-                        [name, id],
-                        (err) => {
-                            if (err) {
-                                logger.log('error', err)
-                            } else {
-                                socketUpdates.pluginUpdate()
-                            }
-                        }
-                    )
-                } else if (url) {
-                    database.run('UPDATE plugins set url=? WHERE id=?', [url, id], (err) => {
-                        if (err) {
-                            logger.log('error', err)
-                        } else {
-                            socketUpdates.pluginUpdate()
-                        }
-                    })
-                } else logger.log('critical', 'changePlugin called without name or url')
-            } catch (err) {
-                logger.log('error', err.stack)
+        socket.on('swapPlugin', async (data) => {
+            const pluginId = data.pluginId;
+            const classPlugins = classInformation.classrooms[socket.request.session.classId].plugins;
+            const plugin = classPlugins[pluginId];
+            if (!plugin) {
+                return socket.emit('message', `Plugin ${pluginId} does not exist`);
             }
+            plugin.enabled = !plugin.enabled;
+            classPlugins[pluginId] = plugin;
+            dbRun('UPDATE classroom SET plugins=? WHERE id=?', [JSON.stringify(classPlugins), socket.request.session.classId])
+                .then(() => {
+                    socket.emit('pluginSwapped', pluginId, plugin.enabled);
+                })
+                .catch((err) => {
+                    logger.log('error', err.stack);
+                    socket.emit('message', `Error Number ${logNumbers.error}: There was a server error try again.`);
+                });
+            if (plugin.enabled) 
+                plugins[pluginId].onEnable();
+            else
+                plugins[pluginId].onDisable();
         });
     }
 }
