@@ -79,8 +79,8 @@ function createLogger() {
         format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.printf(({ timestamp, level, message }) => {
-                /*If the log level is error, it increments the error count, saves it to a file, and formats the log message to include the error count. 
-                For other log levels, it simply formats the log message with the timestamp, level, and message.*/
+                /* If the log level is error, it increments the error count, saves it to a file, and formats the log message to include the error count.
+                For other log levels, it simply formats the log message with the timestamp, level, and message. */
                 if (level == "error") {
                     logNumbers.error++;
                     logNumbersString = JSON.stringify(logNumbers);
@@ -103,6 +103,9 @@ function createLogger() {
                 handleExceptions: true,
                 format: winston.format.combine(
                     winston.format((info) => {
+                        if (info.message.includes('com.chrome.devtools.json') || info.message.includes('js/chart.umd.js.map')) {
+                            return; // Ignore 404 errors for unimportant files
+                        }
                         return loggingLevels.includes(info.level) ? info : false;
                     })(),
                     winston.format.simple()
