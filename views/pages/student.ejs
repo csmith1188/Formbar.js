@@ -223,7 +223,8 @@
 							}
 						}
 
-						if (lettRes.length == 1) {
+						// If the poll isn't multi-res, extract the single response from the array
+						if (lettRes.length == 1 && !poll.multiRes) {
 							lettRes = lettRes[0]
 						}
 

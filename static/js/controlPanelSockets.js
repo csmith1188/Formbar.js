@@ -1,4 +1,5 @@
 const selectPollDiv = document.querySelector('div#selectPoll')
+let selectedTagNames = new Set() // Stores selected tags so they don't get reset when select buttons are recreated
 
 // Creates the tag buttons in the select box
 function createTagSelectButtons() {
@@ -11,7 +12,7 @@ function createTagSelectButtons() {
 	// Creation of tag buttons in the select box
 	for (let i = 1; i <= currentTags.length; i++) {
 		let tagPoll = document.createElement('button');
-		tagPoll.className = 'tagPoll';
+		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
@@ -20,8 +21,10 @@ function createTagSelectButtons() {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
 				tagPoll.className = 'pressed';
+				selectedTagNames.add(tagPoll.textContent);
 			} else {
 				tagPoll.className = 'tagPoll'
+				selectedTagNames.delete(tagPoll.textContent);
 			}
 
 			for (let tag of document.querySelectorAll('#selectPoll button.pressed')) {
@@ -39,11 +42,13 @@ function createTagSelectButtons() {
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			const selectedStudents = []; // Stores the selected students
 			for (const student of students) {
+				console.log(student, selectedTagTexts);
 				const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
 				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
 				if (selectedTags.length === 0) continue;
 				if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
+				// Handle tag selections
 				for (const studentTag of studentTags) {
 					if (selectedTagTexts.has(studentTag.textContent)) {
 						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
@@ -53,13 +58,38 @@ function createTagSelectButtons() {
 						break;
 					}
 				}
+
+				// Handle poll response selections
+				if (Array.isArray(student.pollRes.buttonRes)) { // Check if the poll is multi-res
+					// Handle multi-res polls
+					for (const response of student.pollRes.buttonRes) {
+						if (selectedTagTexts.has(response)) {
+							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
+							studentElement.open = true;
+							studentCheckbox.checked = true;
+							selectedStudents.push(student.username);
+							break;
+						}
+					}
+				} else if (typeof student.pollRes.buttonRes === 'string') {
+					// Handle regular polls
+					if (selectedTagTexts.has(student.pollRes.buttonRes)) {
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
+						studentElement.open = true;
+						studentCheckbox.checked = true;
+						selectedStudents.push(student.username);
+					}
+				}
 			}
 
 			// If the student is not selected, then unselect them
 			for (const student of students) {
+				console.log(student)
 				if (selectedStudents.indexOf(student.username) === -1) {
 					const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
 					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
+					if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+
 					studentElement.open = false;
 					studentCheckbox.checked = false;
 				}
@@ -140,6 +170,7 @@ socket.on('customPollUpdate', (
 		switchState = !switchState;
 
 		// Unselect all select tags
+		selectedTagNames.clear();
 		for (const tag of selectPollDiv.children) {
 			if (tag.className === 'pressed') {
 				tag.className = "tagPoll";
