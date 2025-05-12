@@ -28,7 +28,7 @@ module.exports = {
                 userRequests[event] = userRequests[event] || []
                 userRequests[event] = userRequests[event].filter((timestamp) => currentTime - timestamp < timeFrame)
                 logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
-                if (event == 'pollResp' && args[0].length > 1 && !args[0].includes('')) {
+                if (event == 'pollResp') {
                     limit = 15
                 }
 

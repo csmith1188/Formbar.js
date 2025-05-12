@@ -51,6 +51,9 @@ function createExpressServer() {
     app.set('view engine', 'ejs');
     app.set('views', './views');
 
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+
     // Middleware to handle responses in tests
     app.use((req, res, next) => {
         res.render = function(view, options) {

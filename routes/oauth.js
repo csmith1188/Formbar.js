@@ -9,7 +9,8 @@ const jwt = require('jsonwebtoken');
 function generateAccessToken(userData, classId, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
-        username: userData.username,
+        username: userData.email,
+        email: userData.email,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
@@ -19,27 +20,28 @@ function generateAccessToken(userData, classId, refreshToken) {
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
 
     return token;
-};
+}
 
 function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
-        username: userData.username
+        username: userData.username,
+        email: userData.email
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 
     return token;
-};
+}
 
 function storeRefreshToken(userId, refreshToken) {
     const decodedRefreshToken = jwt.verify(refreshToken, privateKey, { algorithms: ['RS256'] });
     database.run('INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)', [userId, refreshToken, decodedRefreshToken.iat], (err) => {
         if (err) throw err;
     });
-};
+}
 
 // Retrieves extra data and adds it to the user data provided
 async function createUserData(userData) {
-    const classId = getUserClass(userData.username);
+    const classId = getUserClass(userData.email);
     const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
     for (const classroomName in classroomData) {
         // Retrieve all students in the class
@@ -49,7 +51,7 @@ async function createUserData(userData) {
         // Add student information from users table
         for (const student of classUsers) {
             const studentData = await dbGet('SELECT * FROM users WHERE id=?', [student.studentId]);
-            student.username = studentData.username;
+            student.username = studentData.email;
             student.displayName = studentData.displayName;
             student.digipogs = studentData.digipogs;
             student.tags = studentData.tags;
@@ -64,9 +66,9 @@ async function createUserData(userData) {
     
     userData.classPermissions = null;
     userData.classrooms = classroomData;
-    userData.activeClasses = classInformation.users[userData.username] ? classInformation.users[userData.username].activeClasses : [];
-    if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.username]) {
-        userData.classPermissions = classInformation.classrooms[classId].students[userData.username].classPermissions;
+    userData.activeClasses = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClasses : [];
+    if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.email]) {
+        userData.classPermissions = classInformation.classrooms[classId].students[userData.email].classPermissions;
     }
     
     return userData;
@@ -136,7 +138,7 @@ module.exports = {
                                     userData = await createUserData(userData);
 
                                     // Generate access token
-                                    const classId = getUserClass(req.session.username);
+                                    const classId = getUserClass(req.session.email);
                                     const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
                                     res.redirect(`${redirectURL}?token=${accessToken}`);
                                 } else {
@@ -175,18 +177,18 @@ module.exports = {
         app.post('/oauth', (req, res) => {
             try {
                 // It saves the username, password, and the redirectURL that is submitted.
-                const { username, password, redirectURL } = req.body;
+                const { email, password, redirectURL } = req.body;
 
                 logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-                logger.log('verbose', `[post /oauth] username=(${username}) redirectURL=(${redirectURL})`);
+                logger.log('verbose', `[post /oauth] email=(${email}) redirectURL=(${redirectURL})`);
 
-                if (!username) {
+                if (!email) {
                     res.render('pages/message', {
-                        message: 'Please enter a username',
+                        message: 'Please enter a an email',
                         title: 'Login'
                     });
                     return;
-                };
+                }
 
                 if (!password) {
                     res.render('pages/message', {
@@ -194,9 +196,9 @@ module.exports = {
                         title: 'Login'
                     });
                     return;
-                };
+                }
 
-                database.get('SELECT * FROM users WHERE username=?', [username], async (err, userData) => {
+                database.get('SELECT * FROM users WHERE email=?', [email], async (err, userData) => {
                     try {
                         if (err) throw err;
 
@@ -204,7 +206,7 @@ module.exports = {
                         if (!userData) {
                             logger.log('verbose', '[post /oauth] User does not exist')
                             res.render('pages/message', {
-                                message: 'No user found with that username.',
+                                message: 'No user found with that email.',
                                 title: 'Login'
                             });
                             return;
@@ -244,7 +246,7 @@ module.exports = {
                                 storeRefreshToken(userData.id, refreshToken);
                             };
                             // Generate access token
-                            const classId = getUserClass(userData.username);
+                            const classId = getUserClass(userData.email);
                             const accessToken = generateAccessToken(userData, classId, refreshToken);
                                                 
                             logger.log('verbose', '[post /oauth] Successfully Logged in with oauth');
@@ -264,7 +266,7 @@ module.exports = {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: 'Error'
                 });
-            };
+            }
         });
     }
 };

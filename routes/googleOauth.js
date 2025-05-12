@@ -5,7 +5,7 @@ const { classInformation } = require('../modules/class');
 const { managerUpdate } = require('../modules/socketUpdates');
 const { Student } = require('../modules/student');
 const { logger } = require('../modules/logger');
-const { logNumbers } = require("../modules/config");
+const { settings, logNumbers } = require("../modules/config");
 const crypto = require('crypto');
 
 function checkEnabled(req, res, next) {
@@ -16,7 +16,7 @@ function checkRedirect(req, res, next) {
 	if (!req.session.redirect) req.session.redirect = req.query.redirect;
 	else if (!req.query.redirect) req.query.redirect = req.session.redirect;
 	next();
-};
+}
 
 module.exports = {
 	run(app) {
@@ -47,7 +47,7 @@ module.exports = {
 						};
 						// If there is no user, insert them into the database
 						if (!user) {
-							database.run(`INSERT INTO users (username, email, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+							database.run(`INSERT INTO users (email, email, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
 								// Set the username to the family name + the given name, while removing spaces and special characters
 								req.user.name.familyName.replace(/[^a-zA-Z]/g, '') + req.user.name.givenName.replace(/[^a-zA-Z]/g, ''),
 								req.user.emails[0].value,
@@ -61,8 +61,8 @@ module.exports = {
 								// Log the user in
 								database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 									if (err) throw err;
-									classInformation.users[userData.username] = new Student(
-										userData.username,
+									classInformation.users[userData.email] = new Student(
+										userData.email,
 										userData.id,
 										userData.permissions,
 										userData.API,
@@ -75,7 +75,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.username;
+									req.session.username = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -100,8 +100,8 @@ module.exports = {
 								database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 									if (err) throw err;
 
-									classInformation.users[userData.username] = new Student(
-										userData.username,
+									classInformation.users[userData.email] = new Student(
+										userData.email,
 										userData.id,
 										userData.permissions,
 										userData.API,
@@ -114,7 +114,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.username;
+									req.session.username = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -134,8 +134,8 @@ module.exports = {
 							// Log the user in
 							database.get('SELECT * FROM users WHERE email=?', [req.user.emails[0].value], (err, userData) => {
 								if (err) throw err;
-								classInformation.users[userData.username] = new Student(
-									userData.username,
+								classInformation.users[userData.email] = new Student(
+									userData.email,
 									userData.id,
 									userData.permissions,
 									userData.API,
@@ -148,7 +148,7 @@ module.exports = {
 
 								// Add the user to the session
 								req.session.userId = userData.id;
-								req.session.username = userData.username;
+								req.session.username = userData.email;
 								req.session.email = userData.email;
 								req.session.classId = null;
 								req.session.displayName = userData.displayName;
@@ -172,7 +172,7 @@ module.exports = {
 			res.render('pages/message', {
 				message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 				title: 'Error'
-			})
+			});
 		}
 	}
 };

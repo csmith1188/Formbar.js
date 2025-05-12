@@ -8,7 +8,7 @@ const classInformation = createClassInformation();
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags, settings) {
+	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags, plugins, settings) {
 		this.id = id
 		this.className = className
 		this.isActive = false
@@ -24,9 +24,9 @@ class Classroom {
 			blind: false,
 			requiredTags: [],
 			studentBoxes: [],
-			lastResponse: [],
 			allowedResponses: []
 		}
+		this.plugins = plugins
 		this.key = key
 		this.mode = 'poll'
 		this.permissions = permissions

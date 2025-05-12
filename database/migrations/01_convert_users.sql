@@ -22,14 +22,18 @@ CREATE TABLE IF NOT EXISTS "users_temp"
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
+ALTER TABLE users ADD COLUMN email DEFAULT NULL;
+ALTER TABLE users ADD COLUMN digipogs DEFAULT 0;
+ALTER TABLE users ADD COLUMN verified DEFAULT 0;
+
 INSERT INTO users_temp (
     id, username, password, permissions, API, secret, tags, displayName, email, digipogs, verified
 )
 SELECT
     id, username, password, permissions, API, secret, tags, displayName,
-    '' AS email,         -- default placeholder for new column
-    0 AS digipogs,       -- default value (as defined in schema)
-    0 AS verified        -- default value (as defined in schema)
+    COALESCE(email, username || '_' || id || '@placeholder.com') AS email,  -- keep existing email if present, otherwise use placeholder
+    digipogs,
+    verified
 FROM users;
 
 DROP TABLE users;

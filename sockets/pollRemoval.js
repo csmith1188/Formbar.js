@@ -5,46 +5,6 @@ const { currentPoll } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on("classPoll", (poll) => {
-            try {
-                let userId = socket.request.session.userId
-                database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
-                    try {
-                        if (err) throw err
-                        if (!nextPollId) logger.log('critical', '[savePoll] nextPollId not found')
-
-                        nextPollId = nextPollId.nextPollId + 1
-
-                        database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-                            userId,
-                            poll.name,
-                            poll.prompt,
-                            JSON.stringify(poll.answers),
-                            poll.textRes,
-                            poll.blind,
-                            poll.weight,
-                            poll.public
-                        ], (err) => {
-                            try {
-                                if (err) throw err
-
-                                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
-                                socket.emit('message', 'Poll saved successfully!')
-                                socketUpdates.customPollUpdate(socket.request.session.username)
-                                socket.emit("classPollSave", nextPollId);
-                            } catch (err) {
-                                logger.log('error', err.stack);
-                            }
-                        })
-                    } catch (err) {
-                        logger.log('error', err.stack);
-                    }
-                })
-            } catch (err) {
-                logger.log("error", err.stack);
-            }
-        })
-        
         socket.on('endPoll', async () => {
             try {
                 await socketUpdates.endPoll();

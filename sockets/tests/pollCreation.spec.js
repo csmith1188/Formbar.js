@@ -41,7 +41,7 @@ describe('startPoll', () => {
     });
 
     it('should start a poll successfully', async () => {
-        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], ['lastResponse1'], true);
+        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], true);
 
         // Check if the poll was started successfully
         expect(socketUpdates.clearPoll).toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('startPoll', () => {
         classInformation.classrooms[testData.code].isActive = false;
 
         // Attempt to start the poll then check if it failed
-        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], ['lastResponse1'], true);
+        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], true);
         expect(socket.emit).toHaveBeenCalledWith('message', 'This class is not currently active.');
     });
 
@@ -66,7 +66,7 @@ describe('startPoll', () => {
         generateColors.mockImplementation(() => { throw new Error('Test Error'); });
 
         // Attempt to start the poll then check if the error was logged
-        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], ['lastResponse1'], true);
+        await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], true);
         expect(logger.log).toHaveBeenCalledWith('error', expect.stringContaining('Test Error'));
     });
 });
