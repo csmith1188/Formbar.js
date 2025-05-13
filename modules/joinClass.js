@@ -71,12 +71,8 @@ async function joinClass(code, session) {
 		}
 
 		if (classUser) {
-			console.log(classUser);
-			
 			// Get the student's session data ready to transport into new class
 			let currentUser = classInformation.users[email]
-			console.log(currentUser);
-			
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'

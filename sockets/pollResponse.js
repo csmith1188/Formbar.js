@@ -18,14 +18,11 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const email = socket.request.session.email
                 const classroom = classInformation.classrooms[classId]
-                console.log('check1')
                 // Check if user is allowed to respond
                 const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
                 if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {
                     return; // If the user is not included in the poll, do not allow them to respond
                 }
-
-                console.log('res', res)
 
                 // Check if the response provided is a valid response
                 if (!classroom.poll.multiRes) {
