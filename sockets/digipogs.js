@@ -1,11 +1,18 @@
 const { transferDigipogs } = require('../modules/digipogs');
 const { classInformation } = require('../modules/class');
 const { database } = require('../modules/database');
+const {logger} = require("../modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {
         try {
-            socket.on('awardDigipogs', (data) => transferDigipogs(data.from, data.to, data.amount, data.app, data.reason));   
+            socket.on('awardDigipogs', (data) => {
+                try {
+                    transferDigipogs(data.from, data.to, data.amount, data.app, data.reason)
+                } catch (err) {
+                    logger.log('error', err.stack)
+                }
+            });
                 
             socket.on('requestConversion', async (data) => {
                 // Get the class id and username from the session
@@ -33,8 +40,8 @@ module.exports = {
                 socketUpdates.classPermissionUpdate();
             });
         } catch (err) {
-            console.error(err);
-        };
+            logger.log('error', err.stack)
+        }
 
         socket.on('convertDigipogs', async (data) => {
             try {
@@ -54,7 +61,7 @@ module.exports = {
                 student.requestConversion = null;
                 socketUpdates.classPermissionUpdate();
             } catch (err) {
-                
+                logger.log('error', err.stack)
             }
         });
     }
