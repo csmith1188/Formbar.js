@@ -3,7 +3,7 @@ const { classInformation, Classroom } = require("../modules/class")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS } = require("../modules/permissions")
+const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS} = require("../modules/permissions")
 const { setClassOfApiSockets } = require("../modules/socketUpdates")
 const { getStudentsInClass } = require("../modules/student")
 const { generateKey } = require("../modules/util")
@@ -151,6 +151,7 @@ module.exports = {
                         }
                     })
                 } else {
+                    console.log('boom')
                     database.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, classroom.plugins, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
                         try {
                             if (err) throw err
@@ -198,7 +199,7 @@ module.exports = {
                                 throw makeClassStatus
                             }
 
-                            if (classInformation.users[req.session.email].permissions == MANAGER_PERMISSIONS) {
+                            if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
                                 res.redirect('/controlPanel')
                             }
                         } catch (err) {
