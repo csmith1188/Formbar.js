@@ -131,7 +131,7 @@ module.exports = {
                                     );
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
-                                    if (classInformation.users[req.session.email].permissions == MANAGER_PERMISSIONS) {
+                                    if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
                                         res.redirect('/controlPanel')
                                     }
                                 } catch (err) {
