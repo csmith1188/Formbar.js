@@ -85,6 +85,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	installPlugin: TEACHER_PERMISSIONS,
 	uninstallPlugin: TEACHER_PERMISSIONS,
 	swapPlugin: TEACHER_PERMISSIONS,
+	getPreviousPolls: TEACHER_PERMISSIONS,
 }
 
 // This associates actions with the permissions of other actions
