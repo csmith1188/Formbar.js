@@ -5,9 +5,9 @@ const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
 async function joinClass(code, session) {
-	const username = session.username;
+	const username = session.email;
 	try {
-		logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
+		logger.log('info', `[joinClass] email=(${username}) classCode=(${code})`)
 
 		// Find the id of the class from the database
 		const classroom = await new Promise((resolve, reject) => {
@@ -39,7 +39,7 @@ async function joinClass(code, session) {
 
 		// Find the id of the user who is trying to join the class
 		let user = await new Promise((resolve, reject) => {
-			database.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
+			database.get('SELECT id FROM users WHERE email=?', [username], (err, user) => {
 				if (err) {
 					reject(err)
 					return
@@ -71,8 +71,12 @@ async function joinClass(code, session) {
 		}
 
 		if (classUser) {
+			console.log(classUser);
+			
 			// Get the student's session data ready to transport into new class
 			let currentUser = classInformation.users[username]
+			console.log(currentUser);
+			
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'
