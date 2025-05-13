@@ -26,7 +26,7 @@ module.exports = {
                 async function makeClass(id, className, key, permissions, sharedPolls = [], pollHistory = [], tags, plugins = {}) {
                     try {
                         // Get the teachers session data ready to transport into new class
-                        const user = classInformation.users[req.session.username]
+                        const user = classInformation.users[req.session.email]
                         logger.log('verbose', `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`)
 
                         if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
@@ -60,15 +60,15 @@ module.exports = {
                         }
 
                         // Add the teacher to the newly created class
-                        classInformation.classrooms[id].students[req.session.username] = user
-                        classInformation.classrooms[id].students[req.session.username].classPermissions = MANAGER_PERMISSIONS
-                        classInformation.users[req.session.username].activeClasses.push(id)
-                        classInformation.users[req.session.username].classPermissions = MANAGER_PERMISSIONS
+                        classInformation.classrooms[id].students[req.session.email] = user
+                        classInformation.classrooms[id].students[req.session.email].classPermissions = MANAGER_PERMISSIONS
+                        classInformation.users[req.session.email].activeClasses.push(id)
+                        classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS
 
                         const classStudents = await getStudentsInClass(id);
                         for (const username in classStudents) {
                             // If the student is the teacher or already in the class, skip
-                            if (username == req.session.username) continue;
+                            if (username == req.session.email) continue;
                             if (classInformation.classrooms[id].students[username]) continue;
 
                             const student = classStudents[username];
@@ -131,7 +131,7 @@ module.exports = {
                                     );
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
-                                    if (classInformation.users[req.session.username].permissions == MANAGER_PERMISSIONS) {
+                                    if (classInformation.users[req.session.email].permissions == MANAGER_PERMISSIONS) {
                                         res.redirect('/controlPanel')
                                     }
                                 } catch (err) {
@@ -198,7 +198,7 @@ module.exports = {
                                 throw makeClassStatus
                             }
 
-                            if (classInformation.users[req.session.username].permissions == MANAGER_PERMISSIONS) {
+                            if (classInformation.users[req.session.email].permissions == MANAGER_PERMISSIONS) {
                                 res.redirect('/controlPanel')
                             }
                         } catch (err) {

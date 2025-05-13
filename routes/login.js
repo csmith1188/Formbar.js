@@ -82,7 +82,7 @@ module.exports = {
                                         );
                                         // Add the user to the session in order to transfer data between each page
                                         req.session.userId = userData.id
-                                        req.session.username = userData.email
+                                        req.session.email = userData.email
                                         req.session.classId = null
                                         req.session.displayName = userData.displayName;
                                         req.session.email = userData.email;
@@ -237,7 +237,7 @@ module.exports = {
 
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
-                            req.session.username = userData.email;
+                            req.session.email = userData.email;
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
@@ -353,7 +353,7 @@ module.exports = {
                                                     );
                                                     // Add the user to the session in order to transfer data between each page
                                                     req.session.userId = userData.id
-                                                    req.session.username = userData.email
+                                                    req.session.email = userData.email
                                                     req.session.classId = null
                                                     req.session.displayName = userData.displayName;
                                                     req.session.email = userData.email;
@@ -473,7 +473,7 @@ module.exports = {
 
                     // Add a cookie to transfer user credentials across site
                     req.session.userId = student.id;
-                    req.session.username = student.email;
+                    req.session.email = student.email;
                     req.session.email = student.email;
                     req.session.tags = student.tags;
                     req.session.displayName = student.displayName;

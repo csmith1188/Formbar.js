@@ -17,6 +17,7 @@ function isAuthenticated(req, res, next) {
 	try {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
+		console.log(classInformation.users[req.session.email])
 		if (req.session.email) {
 			if (classInformation.users[req.session.email].activeClasses.length == 0) {
 				if (classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS || classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {

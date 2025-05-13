@@ -75,7 +75,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.email;
+									req.session.email = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -114,7 +114,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.email;
+									req.session.email = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -148,7 +148,7 @@ module.exports = {
 
 								// Add the user to the session
 								req.session.userId = userData.id;
-								req.session.username = userData.email;
+								req.session.email = userData.email;
 								req.session.email = userData.email;
 								req.session.classId = null;
 								req.session.displayName = userData.displayName;
