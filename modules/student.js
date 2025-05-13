@@ -5,10 +5,10 @@ const { logger } = require("./logger");
 
 // This class is used to create a student to be stored in the sessions data
 class Student {
-	// Needs username, id from the database, and if permissions established already pass the updated value
+	// Needs email, id from the database, and if permissions established already pass the updated value
 	// These will need to be put into the constructor in order to allow the creation of the object
 	constructor(
-		username,
+		email,
 		id,
 		permissions = STUDENT_PERMISSIONS,
 		API,
@@ -18,7 +18,7 @@ class Student {
 		displayName,
 		isGuest = false
 	) {
-		this.username = username;
+		this.email = email;
 		this.id = id;
 		this.activeClasses = [];
 		this.permissions = permissions;
@@ -77,7 +77,7 @@ async function getStudentsInClass(classId) {
 
 			const studentData = {};
 			for (const row of rows) {
-				studentData[row.username] = row;
+				studentData[row.email] = row;
 			}
 
 			resolve(studentData);
@@ -86,10 +86,10 @@ async function getStudentsInClass(classId) {
 
 	// Create student class and return the data
 	const students = {};
-	for (const username in studentsData) {
-		const userData = studentsData[username];
+	for (const email in studentsData) {
+		const userData = studentsData[email];
 		const studentPermissions = studentIdsAndPermissions.find(student => student.id === userData.id).permissions;
-		students[username] = new Student(
+		students[email] = new Student(
 			userData.email,
 			userData.id,
 			userData.permissions,
@@ -101,22 +101,22 @@ async function getStudentsInClass(classId) {
 			false
 		);
 		
-		students[username].classPermissions = studentPermissions;
+		students[email].classPermissions = studentPermissions;
 	};
 
 	return students;
 }
 
-function getStudentId(username) {
+function getStudentId(email) {
 	try {
 		// If the user is already loded, return the id
-		if (classInformation.users[username]) {
-			return classInformation.users[username].id
+		if (classInformation.users[email]) {
+			return classInformation.users[email].id
 		}
 	
 		// If the user isn't loaded, get the id from the database
 		return new Promise((resolve, reject) => {
-			database.get('SELECT id FROM users WHERE username=?', username, (err, row) => {
+			database.get('SELECT id FROM users WHERE email=?', email, (err, row) => {
 				if (err) return reject(err)
 				resolve(row.id)
 			})

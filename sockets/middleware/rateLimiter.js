@@ -7,19 +7,19 @@ module.exports = {
         // Rate limiter
         socket.use(([event, ...args], next) => {
             try {
-                const username = socket.request.session.username
+                const email = socket.request.session.email
                 const currentTime = Date.now()
                 const timeFrame = 5000
                 const blockTime = 5000
                 const limitedRequests = ['pollResp', 'help', 'break']
                 let limit = 5
 
-                logger.log('info', `[rate limiter] username=(${username}) currentTime=(${currentTime})`)
-                if (!rateLimits[username]) {
-                    rateLimits[username] = {}
+                logger.log('info', `[rate limiter] email=(${email}) currentTime=(${currentTime})`)
+                if (!rateLimits[email]) {
+                    rateLimits[email] = {}
                 }
 
-                const userRequests = rateLimits[username]
+                const userRequests = rateLimits[email]
                 if (!limitedRequests.includes(event)) {
                     next()
                     return

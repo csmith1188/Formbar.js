@@ -89,7 +89,7 @@ function isLoggedIn(req, res, next) {
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
 	try {
-		const username = req.session.email
+		const email = req.session.email
 
 		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
 
@@ -112,7 +112,7 @@ function permCheck(req, res, next) {
 				urlPath = urlPath.slice(0, urlPath.indexOf('/'))
 			}
 
-			if (!classInformation.users[username]) {
+			if (!classInformation.users[email]) {
 				req.session.classId = null
 			}
 
@@ -129,9 +129,9 @@ function permCheck(req, res, next) {
 			}
 
 			// Checks if users permissions are high enough
-			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+			if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
-			} else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[username].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+			} else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
 				next()
 			} else {
 				logger.log('info', '[permCheck] Not enough permissions')

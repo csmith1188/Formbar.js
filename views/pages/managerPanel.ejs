@@ -89,7 +89,7 @@
         function buildUser(userData) {
             var newUser = document.createElement("div")
             newUser.classList.add("user")
-            newUser.setAttribute("id", userData.username);
+            newUser.setAttribute("id", userData.email);
             let userElement = document.createElement("p")
             userElement.innerText += userData.displayName
             
@@ -98,7 +98,7 @@
                 let permissionSwitch = document.createElement("select")
                 permissionSwitch.setAttribute("name", "permSwitch")
                 permissionSwitch.setAttribute("class", "permSwitch")
-                permissionSwitch.setAttribute("data-userid", userData.username)
+                permissionSwitch.setAttribute("data-userid", userData.email)
                 permissionSwitch.onchange = (event) => {
                     socket.emit('permChange', event.target.dataset.userid, event.target.value)
                 }

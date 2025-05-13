@@ -25,7 +25,7 @@ module.exports = {
         socket.on('customPollUpdate', () => {
             logger.log('info', `[customPollUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            socketUpdates.customPollUpdate(socket.request.session.username)
+            socketUpdates.customPollUpdate(socket.request.session.email)
         })
 
         socket.on('pluginUpdate', () => {

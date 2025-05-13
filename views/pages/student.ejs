@@ -199,13 +199,13 @@
 					function updatePage() {
 						if (poll.allowedResponses.length > 0) {
 							for (let eachAllowedResponse of poll.allowedResponses) {
-								if (eachAllowedResponse == currentUser.username) {
+								if (eachAllowedResponse == currentUser.email) {
 									updatePageLoop()
 									return
 								}
 							}
 							for (let eachUnallowedResponse of poll.unallowedResponses) {
-								if (eachUnallowedResponse == currentUser.username) {
+								if (eachUnallowedResponse == currentUser.email) {
 									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 								}
 							}
@@ -256,7 +256,7 @@
 
 						poll = newPoll
 						if (poll.status) {
-							socket.emit('getCanVote', currentUser.username)
+							socket.emit('getCanVote', currentUser.email)
 						}
 						updatePage()
 					})
@@ -286,7 +286,7 @@
 					});
 
 					if (poll.status) {
-						socket.emit('getCanVote', currentUser.username)
+						socket.emit('getCanVote', currentUser.email)
 					}
 					socket.on('getCanVote', (newVotingRight) => {
 						votingRight = newVotingRight

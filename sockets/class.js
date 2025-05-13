@@ -48,14 +48,14 @@ module.exports = {
         socket.on('joinClass', async (classId) => {
             try {
                 logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
-                const username = socket.request.session.username;
+                const email = socket.request.session.email;
 
                 // Check if the user is in the class to prevent people from joining classes just from the class ID
-                if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[username]) {
+                if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
                     socket.emit('joinClass', 'You are not in that class.');
                     return;
                 } else if (!classInformation.classrooms[classId]) {
-                    const studentId = await getStudentId(username);
+                    const studentId = await getStudentId(email);
                     const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
                     if (!classUsers) {
                         socket.emit('joinClass', 'You are not in that class.');
@@ -98,12 +98,12 @@ module.exports = {
             try {
                 logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const username = socket.request.session.username;
+                const email = socket.request.session.email;
                 const classId = socket.request.session.classId;
 
                 // Kick the user from the classroom entirely if they're a guest
                 // If not, kick them from the session
-                socketUpdates.classKickUser(username, classId, classInformation.users[username].isGuest);
+                socketUpdates.classKickUser(email, classId, classInformation.users[email].isGuest);
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -114,13 +114,13 @@ module.exports = {
         socket.on('leaveClassroom', async () => {
             try {
                 const classId = socket.request.session.classId;
-                const username = socket.request.session.username;
-                const studentId = await getStudentId(username);
+                const email = socket.request.session.email;
+                const studentId = await getStudentId(email);
 
                 // Remove the user from the class
-                delete classInformation.classrooms[classId].students[username];
-                classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((c) => c != classId);
-                classInformation.users[username].classPermissions = null;
+                delete classInformation.classrooms[classId].students[email];
+                classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((c) => c != classId);
+                classInformation.users[email].classPermissions = null;
                 database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
 
                 // If the owner of the classroom leaves, then delete the classroom
@@ -135,7 +135,7 @@ module.exports = {
 
                 // Play leave sound and reload the user's page
                 advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
-                userSockets[username].emit('reload');
+                userSockets[email].emit('reload');
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -143,15 +143,15 @@ module.exports = {
 
         /**
          * Retrieves the voting rights of a user
-         * @param {String} username - Username of the user to check.
+         * @param {String} email - email of the user to check.
          */
-        socket.on('getCanVote', (username) => {
+        socket.on('getCanVote', (email) => {
             try {
-                logger.log('info', `[getCanVote] username=(${username}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[getCanVote] email=(${email}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
                 const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-                const canVote = studentBoxes.indexOf(username) > -1;
+                const canVote = studentBoxes.indexOf(email) > -1;
                 socket.emit('getCanVote', canVote);
             } catch (err) {
                 logger.log('error', err.stack)
@@ -160,8 +160,8 @@ module.exports = {
 
         /**
          * Changes the voting rights of a user or multiple users
-         * @param {Object} votingData - An object containing the usernames and their voting rights.
-         *                              This should only include usernames which should be changed.
+         * @param {Object} votingData - An object containing the emails and their voting rights.
+         *                              This should only include emails which should be changed.
          */
         socket.on('changeCanVote', (votingData) => {
             try {
@@ -169,20 +169,20 @@ module.exports = {
 
                 const classId = socket.request.session.classId;
                 const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
-                for (const username in votingData) {
-                    const votingRight = votingData[username];
+                for (const email in votingData) {
+                    const votingRight = votingData[email];
                     if (votingRight) {
-                        if (!studentBoxes[username]) {
-                            studentBoxes.push(username);
+                        if (!studentBoxes[email]) {
+                            studentBoxes.push(email);
                         }
                     } else {
-                        // Remove all instances of the username from the studentBoxes array
-                        studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== username));
+                        // Remove all instances of the email from the studentBoxes array
+                        studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== email));
                     }
 
                     // Emit the voting right to the user
-                    if (userSockets[username]) {
-                        userSockets[username].emit('getCanVote', votingRight);
+                    if (userSockets[email]) {
+                        userSockets[email].emit('getCanVote', votingRight);
                     }
                 }
                 socketUpdates.virtualBarUpdate(classId);
@@ -196,8 +196,8 @@ module.exports = {
                 const api = socket.request.session.api;
                 logger.log('info', `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                for (const username in classInformation.users) {
-                    const user = classInformation.users[username];
+                for (const email in classInformation.users) {
+                    const user = classInformation.users[email];
                     if (user.API == api) {
                         setClassOfApiSockets(api, user.activeClasses[0]);
                         return;
@@ -306,7 +306,7 @@ module.exports = {
                             database.run('DELETE FROM poll_history WHERE class=?', classroom.id)
                         }
 
-                        socketUpdates.getOwnedClasses(socket.request.session.username)
+                        socketUpdates.getOwnedClasses(socket.request.session.email)
                     } catch (err) {
                         logger.log('error', err.stack)
                     }
@@ -317,13 +317,13 @@ module.exports = {
         })
 
         // Kicks a user from the class
-        socket.on('classKickUser', (username) => {
+        socket.on('classKickUser', (email) => {
             try {
                 logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[classKickUser] username=(${username})`)
+                logger.log('info', `[classKickUser] email=(${email})`)
 
                 const classId = socket.request.session.classId
-                socketUpdates.classKickUser(username, classId)
+                socketUpdates.classKickUser(email, classId)
                 socketUpdates.classPermissionUpdate(classId)
                 socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('leaveSound', classId, { api: true })
@@ -362,12 +362,12 @@ module.exports = {
                 }
 
                 if (!user) {
-                    logger.log('critical', '[ban] No username provided.')
-                    socket.emit('message', 'No username provided. (Please contact the programmer)')
+                    logger.log('critical', '[ban] No email provided.')
+                    socket.emit('message', 'No email provided. (Please contact the programmer)')
                     return
                 }
 
-                database.run('UPDATE classusers SET permissions = 0 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE username=?)', [
+                database.run('UPDATE classusers SET permissions = 0 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE email=?)', [
                     classId,
                     user
                 ], (err) => {
@@ -409,12 +409,12 @@ module.exports = {
                 }
 
                 if (!user) {
-                    logger.log('critical', '[unban] no username provided.')
-                    socket.emit('message', 'No username provided. (Please contact the programmer)')
+                    logger.log('critical', '[unban] no email provided.')
+                    socket.emit('message', 'No email provided. (Please contact the programmer)')
                     return
                 }
 
-                database.run('UPDATE classusers SET permissions = 1 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE username=?)', [
+                database.run('UPDATE classusers SET permissions = 1 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE email=?)', [
                     classId,
                     user
                 ], (err) => {

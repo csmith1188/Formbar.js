@@ -5,11 +5,11 @@ const { userSockets, managerUpdate } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('getOwnedClasses', (username) => {
+        socket.on('getOwnedClasses', (email) => {
             logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-            logger.log('info', `[getOwnedClasses] username=(${username})`)
+            logger.log('info', `[getOwnedClasses] email=(${email})`)
 
-            socketUpdates.getOwnedClasses(username)
+            socketUpdates.getOwnedClasses(email)
         })
 
         socket.on('deleteUser', async (userId) => {
@@ -28,8 +28,8 @@ module.exports = {
                     return
                 }
 
-                if (userSockets[user.username]) {
-                    socketUpdates.logout(userSockets[user.username])
+                if (userSockets[user.email]) {
+                    socketUpdates.logout(userSockets[user.email])
                 }
 
                 try {

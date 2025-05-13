@@ -12,11 +12,11 @@ module.exports = {
 
                 logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`)
 
-                if (socket.request.session.username) {
+                if (socket.request.session.email) {
                     next()
                 } else if (api) {
                     database.get(
-                        'SELECT id, username FROM users WHERE API = ?',
+                        'SELECT id, email FROM users WHERE API = ?',
                         [api],
                         (err, userData) => {
                             try {
@@ -29,7 +29,7 @@ module.exports = {
 
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
-                                socket.request.session.username = userData.username
+                                socket.request.session.email = userData.email
                                 socket.request.session.classId = null
 
                                 next()
@@ -41,7 +41,7 @@ module.exports = {
                 } else if (event == 'reload') {
                     next()
                 } else {
-                    logger.log('info', '[socket authentication] Missing username or api')
+                    logger.log('info', '[socket authentication] Missing email or api')
                     next(new Error('Missing API key'))
                 }
             } catch (err) {

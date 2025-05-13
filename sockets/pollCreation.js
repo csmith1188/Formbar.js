@@ -27,7 +27,7 @@ module.exports = {
 
                 await socketUpdates.clearPoll()
                 let generatedColors = generateColors(resNumber)
-                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]})`)
+                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]})`)
                 if (generatedColors instanceof Error) throw generatedColors
 
                 classInformation.classrooms[classId].mode = 'poll'
@@ -117,9 +117,9 @@ module.exports = {
                             try {
                                 if (err) throw err
 
-                                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email].ownedPolls.push(nextPollId)
                                 socket.emit('message', 'Poll saved successfully!')
-                                socketUpdates.customPollUpdate(socket.request.session.username)
+                                socketUpdates.customPollUpdate(socket.request.session.email)
                                 socket.emit("classPollSave", nextPollId);
                             } catch (err) {
                                 logger.log('error', err.stack);
@@ -164,7 +164,7 @@ module.exports = {
                                     if (err) throw err
 
                                     socket.emit('message', 'Poll saved successfully!')
-                                    socketUpdates.customPollUpdate(socket.request.session.username)
+                                    socketUpdates.customPollUpdate(socket.request.session.email)
                                 } catch (err) {
                                     logger.log('error', err.stack);
                                 }
@@ -194,9 +194,9 @@ module.exports = {
                                 try {
                                     if (err) throw err
 
-                                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username].ownedPolls.push(nextPollId)
+                                    classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email].ownedPolls.push(nextPollId)
                                     socket.emit('message', 'Poll saved successfully!')
-                                    socketUpdates.customPollUpdate(socket.request.session.username)
+                                    socketUpdates.customPollUpdate(socket.request.session.email)
                                 } catch (err) {
                                     logger.log('error', err.stack);
                                 }
@@ -221,7 +221,7 @@ module.exports = {
                         if (err) throw err
 
                         for (let userSocket of Object.values(userSockets)) {
-                            socketUpdates.customPollUpdate(userSocket.request.session.username)
+                            socketUpdates.customPollUpdate(userSocket.request.session.email)
                         }
                     } catch (err) {
                         logger.log('error', err.stack);

@@ -7,7 +7,7 @@ const fs = require('fs')
 module.exports = {
     run(socket, socketUpdates) {
         socket.on('ipUpdate', () => {
-            socketUpdates.ipUpdate(null, socket.request.session.username)
+            socketUpdates.ipUpdate(null, socket.request.session.email)
         })
 
         socket.on('changeIp', (type, id, ip) => {

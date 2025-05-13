@@ -66,21 +66,21 @@ module.exports = {
                         classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS
 
                         const classStudents = await getStudentsInClass(id);
-                        for (const username in classStudents) {
+                        for (const email in classStudents) {
                             // If the student is the teacher or already in the class, skip
-                            if (username == req.session.email) continue;
-                            if (classInformation.classrooms[id].students[username]) continue;
+                            if (email == req.session.email) continue;
+                            if (classInformation.classrooms[id].students[email]) continue;
 
-                            const student = classStudents[username];
+                            const student = classStudents[email];
                             if (student.tags) {
                                 student.tags = student.tags.includes("Offline") ? student.tags : "Offline," + student.tags;
                             } else {
                                 student.tags = "Offline";
                             }
 
-                            student.displayName = student.displayName || student.username;
-                            classInformation.users[username] = student;
-                            classInformation.classrooms[id].students[username] = student;
+                            student.displayName = student.displayName || student.email;
+                            classInformation.users[email] = student;
+                            classInformation.classrooms[id].students[email] = student;
                         }
 
                         // Add class into the session data

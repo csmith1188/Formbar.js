@@ -50,7 +50,7 @@ socket.on('cpUpdate', (newClassroom) => {
 
         if (students.length > 0) {
             for (let i = 0; i < students.length; i++) {
-                if (students[i].username == student.username) {
+                if (students[i].email == student.email) {
                     students[i] = student
                     break
                 }
@@ -86,7 +86,7 @@ socket.on('cpUpdate', (newClassroom) => {
         if (!student.break
             && student.permissions > GUEST_PERMISSIONS
             && student.permissions < TEACHER_PERMISSIONS
-            && newClassroom.poll.studentBoxes.includes(student.username)
+            && newClassroom.poll.studentBoxes.includes(student.email)
         ) {
             totalResponders++;
         }
@@ -99,10 +99,10 @@ socket.on('cpUpdate', (newClassroom) => {
 
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
-    for (const username of Object.keys(newClassroom.students)) {
-        let studentElement = document.getElementById(`student-${username}`)
+    for (const email of Object.keys(newClassroom.students)) {
+        let studentElement = document.getElementById(`student-${email}`)
         let oldStudentData = null
-        let newStudentData = newClassroom.students[username]
+        let newStudentData = newClassroom.students[email]
 
         // Add any selected tags to the current tags list
         // This will allow the teacher to filter students by tags
@@ -114,7 +114,7 @@ socket.on('cpUpdate', (newClassroom) => {
             }
         }
 
-        if (classroom.students && classroom.students[username]) oldStudentData = classroom.students[username]
+        if (classroom.students && classroom.students[email]) oldStudentData = classroom.students[email]
         if (!studentElement) {
             let builtStudent = buildStudent(newClassroom, newStudentData)
             if (builtStudent) usersDiv.appendChild(builtStudent)

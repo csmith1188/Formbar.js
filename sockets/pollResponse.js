@@ -16,12 +16,12 @@ module.exports = {
                 logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`)
                 
                 const classId = socket.request.session.classId
-                const username = socket.request.session.username
+                const email = socket.request.session.email
                 const classroom = classInformation.classrooms[classId]
                 console.log('check1')
                 // Check if user is allowed to respond
                 const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
-                if (!classroom.poll.studentBoxes.includes(username) && !isRemoving) {
+                if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {
                     return; // If the user is not included in the poll, do not allow them to respond
                 }
 
@@ -50,12 +50,12 @@ module.exports = {
                 }
 
                 // If the users response is different from the previous response, play a sound
-                const prevRes = classroom.students[username].pollRes.buttonRes;
+                const prevRes = classroom.students[email].pollRes.buttonRes;
                 const hasChanged = classroom.poll.multiRes ? 
                     JSON.stringify(prevRes) !== JSON.stringify(res) : 
                     prevRes !== res;
                 
-                if (hasChanged || classroom.students[username].pollRes.textRes !== textRes) {
+                if (hasChanged || classroom.students[email].pollRes.textRes !== textRes) {
                     if (isRemoving) {
                         advancedEmitToClass('removePollSound', classId, { api: true })
                     } else {
@@ -65,16 +65,16 @@ module.exports = {
                 
                 // Handle response storage
                 if (isRemoving) {
-                    classroom.students[username].pollRes.buttonRes = classroom.poll.multiRes ? [] : "";
-                    classroom.students[username].pollRes.textRes = "";
+                    classroom.students[email].pollRes.buttonRes = classroom.poll.multiRes ? [] : "";
+                    classroom.students[email].pollRes.textRes = "";
                 } else {
-                    classroom.students[username].pollRes.buttonRes = res;
-                    classroom.students[username].pollRes.textRes = textRes;
+                    classroom.students[email].pollRes.buttonRes = res;
+                    classroom.students[email].pollRes.textRes = textRes;
                 }
-                classroom.students[username].pollRes.time = new Date()
+                classroom.students[email].pollRes.time = new Date()
 
                 // Digipog calculations
-                if (!isRemoving && earnedDigipogs[username] === undefined) {
+                if (!isRemoving && earnedDigipogs[email] === undefined) {
                     let amount = 0;
                     if (classroom.poll.multiRes) {
                         amount = res.length;
@@ -88,16 +88,16 @@ module.exports = {
                     amount = Math.ceil(amount/4);
                     amount = amount > 5 ? 5 : amount;
                     if (Number.isInteger(amount)) {
-                        database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE username = '${username}'`, (err) => {
+                        database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE email = '${email}'`, (err) => {
                             if (err) {
-                                console.log(`Error adding ${amount} digipogs to ${username}`);
+                                console.log(`Error adding ${amount} digipogs to ${email}`);
                                 console.error(err);
                             }
                         });
-                        earnedDigipogs[username] = username;
+                        earnedDigipogs[email] = email;
                     }
                 }
-                logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.username]})`)
+                logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()

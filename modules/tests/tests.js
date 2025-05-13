@@ -5,23 +5,23 @@ const express = require('express');
 // Common test data
 const testData = {
     code: '123456',
-    username: 'user123'
+    email: 'user123'
 }
 
 /**
- * Creates a test user with the given username
- * @param {string} username - The username of the test user
+ * Creates a test user with the given email
+ * @param {string} email - The email of the test user
  * @param {string} [classId=null] - The class id to add the user to
  * @param {number} [permissions=5] - The permissions level of the user
  */
-function createTestUser(username, classId, permissions = 5) {
-    const student = new Student(username, 1, permissions, 0, [], [], '', '', false);;
-    classInformation.users[username] = student;
+function createTestUser(email, classId, permissions = 5) {
+    const student = new Student(email, 1, permissions, 0, [], [], '', '', false);;
+    classInformation.users[email] = student;
 
     // If a class id is provided, also create the student in the class
     if (classId) {
         student.classPermissions = student.permissions;
-        classInformation.classrooms[classId].students[username] = student;
+        classInformation.classrooms[classId].students[email] = student;
     }
     return student;
 }
@@ -76,7 +76,7 @@ function createSocket() {
         request: {
             session: {
                 classId: testData.code,
-                username: testData.username
+                email: testData.email
             }
         },
         handshake: {

@@ -12,17 +12,17 @@ async function getUser(api) {
         // Log the request details
         logger.log('info', `[getUser]`)
 
-        // Get the username associated with the API key in the request headers
-        let username = await getUsername(api)
+        // Get the email associated with the API key in the request headers
+        let email = await getemail(api)
 
-        // If the username is an instance of Error, throw the error
-        if (username instanceof Error) throw username
+        // If the email is an instance of Error, throw the error
+        if (email instanceof Error) throw email
         
         // If an error occurs, return the error
-        if (username.error) return username
+        if (email.error) return email
 
         // Get the class code of the user
-        let classId = getUserClass(username)
+        let classId = getUserClass(email)
 
         // If the class code is an instance of Error, throw the error
         if (classId instanceof Error) throw classId
@@ -33,8 +33,8 @@ async function getUser(api) {
             if (!classId) {
                 // Query the database for the user's data
                 database.get(
-                    'SELECT id, username, permissions, NULL AS classPermissions FROM users WHERE username = ?',
-                    [username],
+                    'SELECT id, email, permissions, NULL AS classPermissions FROM users WHERE email = ?',
+                    [email],
                     (err, dbUser) => {
                         try {
                             // If an error occurs, throw the error
@@ -59,8 +59,8 @@ async function getUser(api) {
 
             // If the user is in a class, query the database for the user's data and class permissions
             database.get(
-                'SELECT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.id = ? AND users.username = ?',
-                [classId, username],
+                'SELECT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.id = ? AND users.email = ?',
+                [classId, email],
                 (err, dbUser) => {
                     try {
                         // If an error occurs, throw the error
@@ -97,8 +97,8 @@ async function getUser(api) {
         }
 
         // If the user is in a class and is logged in
-        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[dbUser.username]) {
-            let cdUser = classInformation.classrooms[classId].students[dbUser.username]
+        if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[dbUser.email]) {
+            let cdUser = classInformation.classrooms[classId].students[dbUser.email]
             if (cdUser) {
                 // Update the user's data with the data from the class
                 userData.loggedIn = true
@@ -123,12 +123,12 @@ async function getUser(api) {
 /**
  * Retrieves the class id for a given user.
  *
- * @param {string} username - The username of the user.
+ * @param {string} email - The email of the user.
  * @returns {string|null|Error} The class id if the user is found, null if the user is not found, or an Error object if an error occurs.
  */
 function getUserClass(email) {
 	try {
-		// Log the username
+		// Log the email
 		logger.log('info', `[getUserClass] email=(${email})`);
 
         // Iterate over the classrooms to find which class the user is in
@@ -155,19 +155,19 @@ function getUserClass(email) {
 }
 
 /**
- * Asynchronous function to get the username associated with a given API key.
+ * Asynchronous function to get the email associated with a given API key.
  * @param {string} api - The API key.
- * @returns {Promise<string|Object>} A promise that resolves to the username or an error object.
+ * @returns {Promise<string|Object>} A promise that resolves to the email or an error object.
  */
-async function getUsername(api) {
+async function getemail(api) {
     try {
         // If no API key is provided, return an error
         if (!api) return { error: 'missing api' }
 
-        // Query the database for the username associated with the API key
+        // Query the database for the email associated with the API key
         let user = await new Promise((resolve, reject) => {
             database.get(
-                'SELECT username FROM users WHERE api = ?',
+                'SELECT email FROM users WHERE api = ?',
                 [api],
                 (err, user) => {
                     try {
@@ -193,8 +193,8 @@ async function getUsername(api) {
         // If an error occurred, return the error
         if (user.error) return user
 
-        // If no error occurred, return the username
-        return user.username
+        // If no error occurred, return the email
+        return user.email
     } catch (err) {
         // If an error occurs, return the error
         return err
@@ -205,5 +205,5 @@ async function getUsername(api) {
 module.exports = {
     getUser,
     getUserClass,
-    getUsername
+    getemail
 }

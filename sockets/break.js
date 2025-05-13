@@ -8,10 +8,10 @@ module.exports = {
         // Sends a break ticket
         socket.on('requestBreak', (reason) => {
             try {
-                // Get the class id and username from the session
+                // Get the class id and email from the session
                 // Check if the class is inactive before continuing
                 const classId = socket.request.session.classId;
-                const username = socket.request.session.username;
+                const email = socket.request.session.email;
                 if (!classInformation.classrooms[classId].isActive) {
                     socket.emit('message', 'This class is not currently active.');
                     return;
@@ -21,11 +21,11 @@ module.exports = {
                 logger.log('info', `[requestBreak] reason=(${reason})`);
 
                 // Get the student, play the break sound, and set the break reason
-                const student = classInformation.classrooms[classId].students[username];
+                const student = classInformation.classrooms[classId].students[email];
                 advancedEmitToClass('breakSound', classId, { api: true });
                 student.break = reason;
 
-                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[username])})`);
+                logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
                 socketUpdates.classPermissionUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
@@ -33,17 +33,17 @@ module.exports = {
         });
 
         // Approves the break ticket request
-        socket.on('approveBreak', (breakApproval, username) => {
+        socket.on('approveBreak', (breakApproval, email) => {
             try {
                 logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) username=(${username})`)
+                logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`)
 
-                const student = classInformation.classrooms[socket.request.session.classId].students[username]
+                const student = classInformation.classrooms[socket.request.session.classId].students[email]
                 student.break = breakApproval
 
-                logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[username])})`)
+                logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
 
-                if (breakApproval) io.to(`user-${username}`).emit('break')
+                if (breakApproval) io.to(`user-${email}`).emit('break')
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()
             } catch (err) {
@@ -56,10 +56,10 @@ module.exports = {
             try {
                 logger.log('info', `[endBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-                const student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username]
+                const student = classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]
                 student.break = false
 
-                logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.username])})`)
+                logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email])})`)
 
                 socketUpdates.classPermissionUpdate()
                 socketUpdates.virtualBarUpdate()
