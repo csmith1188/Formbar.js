@@ -73,7 +73,7 @@ module.exports = {
                                 }
 
                                 if (updatePolls) {
-                                    socketUpdates.customPollUpdate(user.username)
+                                    socketUpdates.customPollUpdate(user.email)
                                 }
                             }
                         }

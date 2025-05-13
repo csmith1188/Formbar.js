@@ -27,7 +27,7 @@ describe("Change Password Route", () => {
         // Add session mock
         app.use((req, res, next) => {
             req.session = {
-                username: "testuser",
+                email: "testuser",
                 email: mockEmail
             };
             next();

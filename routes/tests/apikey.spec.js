@@ -8,7 +8,7 @@ const { classInformation } = require("../../modules/class");
 jest.mock('../../modules/authentication', () => ({
     isLoggedIn: (req, res, next) => {
         req.session = req.session || {};
-        req.session.username = 'testuser';
+        req.session.email = 'testuser';
         next();
     },
     permCheck: (req, res, next) => {

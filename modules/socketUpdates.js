@@ -40,7 +40,7 @@ const PASSIVE_SOCKETS = [
  * Emits an event to sockets based on user permissions
  * @param {string} event - The event to emit
  * @param {string} classId - The id of the class
- * @param {{permissions?: number, classPermissions?: number, api?: boolean, username?: string}} options - The options object
+ * @param {{permissions?: number, classPermissions?: number, api?: boolean, email?: string}} options - The options object
  * @param  {...any} data - Additional data to emit with the event
  */
 async function advancedEmitToClass(event, classId, options, ...data) {
@@ -48,13 +48,13 @@ async function advancedEmitToClass(event, classId, options, ...data) {
 	const sockets = await io.in(`class-${classId}`).fetchSockets()
 
 	for (const socket of sockets) {
-		const user = classData.students[socket.request.session.username]
+		const user = classData.students[socket.request.session.email]
 		let hasAPI = false
 		if (!user) continue
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
-		if (options.username && user.username != options.username) continue
+		if (options.email && user.email != options.email) continue
 
 		for (let room of socket.rooms) {
 			if (room.startsWith('api-')) {
@@ -96,11 +96,11 @@ async function setClassOfApiSockets(api, classId) {
 async function managerUpdate() {
     let [users, classrooms] = await Promise.all([
         new Promise((resolve, reject) => {
-            database.all('SELECT id, username, permissions, displayName FROM users', (err, users) => {
+            database.all('SELECT id, email, permissions, displayName FROM users', (err, users) => {
                 if (err) reject(new Error(err))
                 else {
                     users = users.reduce((tempUsers, tempUser) => {
-                        tempUsers[tempUser.username] = tempUser
+                        tempUsers[tempUser.email] = tempUser
                         return tempUsers
                     }, {})
                     resolve(users)
@@ -179,7 +179,7 @@ class SocketUpdates {
                 }
 
                 // Check if the student's checkbox was checked
-                if (classData.poll.studentBoxes.includes(student.username)) {
+                if (classData.poll.studentBoxes.includes(student.email)) {
                     included = true;
                 } else {
                     excluded = true;
@@ -203,11 +203,11 @@ class SocketUpdates {
 
                 // Update the included and excluded lists
                 if (excluded) {
-                    totalStudentsExcluded.push(student.username);
+                    totalStudentsExcluded.push(student.email);
                 }
 
                 if (included) {
-                    totalStudentsIncluded.push(student.username);
+                    totalStudentsIncluded.push(student.email);
                 }
             }
 
@@ -221,7 +221,7 @@ class SocketUpdates {
                 }
 
                 for (const studentData of Object.values(classData.students)) {
-                    if (studentData.break == true || totalStudentsExcluded.includes(studentData.username)) {
+                    if (studentData.break == true || totalStudentsExcluded.includes(studentData.email)) {
                         continue;
                     }
 
@@ -240,7 +240,7 @@ class SocketUpdates {
                                 responses[response].responses++;
                             }
                         }
-                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.username)) {
+                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.email)) {
                         responses[studentData.pollRes.buttonRes].responses++;
                     }
                 }
@@ -371,12 +371,12 @@ class SocketUpdates {
         }
     }
     
-    customPollUpdate(username) {
+    customPollUpdate(email) {
         try {
-            logger.log('info', `[customPollUpdate] username=(${username})`)
-            let userSession = userSockets[username].request.session
-            let userSharedPolls = classInformation.classrooms[userSession.classId].students[userSession.username].sharedPolls
-            let userOwnedPolls = classInformation.classrooms[userSession.classId].students[userSession.username].ownedPolls
+            logger.log('info', `[customPollUpdate] email=(${email})`)
+            let userSession = userSockets[email].request.session
+            let userSharedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].sharedPolls
+            let userOwnedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].ownedPolls
             let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
             let classroomPolls = structuredClone(classInformation.classrooms[userSession.classId].sharedPolls)
             let publicPolls = []
@@ -415,7 +415,7 @@ class SocketUpdates {
     
                         logger.log('verbose', `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`)
     
-                        io.to(`user-${username}`).emit(
+                        io.to(`user-${email}`).emit(
                             'customPollUpdate',
                             publicPolls,
                             classroomPolls,
@@ -438,11 +438,11 @@ class SocketUpdates {
             logger.log('info', `[classBannedUsersUpdate] classId=(${classId})`);
             if (!classId) return;
     
-            database.all('SELECT users.username FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
+            database.all('SELECT users.email FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
                 try {
                     if (err) throw err
     
-                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.username)
+                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.email)
     
                     advancedEmitToClass(
                         'classBannedUsersUpdate',
@@ -462,23 +462,23 @@ class SocketUpdates {
     // Kicks a user from a class
     // If exitClass is set to true, then it will fully remove the user from the class;
     // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
-    classKickUser(username, classId = this.socket.request.session.classId, exitClass = true) {
+    classKickUser(email, classId = this.socket.request.session.classId, exitClass = true) {
         try {
-            logger.log('info', `[classKickUser] username=(${username}) classId=(${classId}) exitClass=${exitClass}`);
+            logger.log('info', `[classKickUser] email=(${email}) classId=(${classId}) exitClass=${exitClass}`);
 
             // Remove user from class session
-            classInformation.users[username].classPermissions = null;
-            classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            setClassOfApiSockets(classInformation.users[username].API, null);
+            classInformation.users[email].classPermissions = null;
+            classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((activeClass) => activeClass != classId);
+            setClassOfApiSockets(classInformation.users[email].API, null);
             
             // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
             if (classInformation.classrooms[classId]) {
                 // If the student is a guest, then remove them from the classroom entirely
-                const student = classInformation.classrooms[classId].students[username];
+                const student = classInformation.classrooms[classId].students[email];
                 if (student.isGuest) {
-                    delete classInformation.classrooms[classId].students[username];
+                    delete classInformation.classrooms[classId].students[email];
                 } else {
-                    student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                    student.activeClasses = classInformation.classrooms[classId].students[email].activeClasses.filter((activeClass) => activeClass != classId);
                     student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
                 }
             }
@@ -486,8 +486,8 @@ class SocketUpdates {
 
             // If exitClass is true, then remove the user from the classroom entirely
             if (exitClass) {
-                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[username].id, classId], (err) => {});
-                delete classInformation.classrooms[classId].students[username];
+                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], (err) => {});
+                delete classInformation.classrooms[classId].students[email];
             }
 
             // Update the control panel
@@ -495,11 +495,11 @@ class SocketUpdates {
             this.virtualBarUpdate(classId);
 
             // If the user is logged in, then handle the user's session
-            if (userSockets[username]) {
-                userSockets[username].leave(`class-${classId}`);
-                userSockets[username].request.session.classId = null;
-                userSockets[username].request.session.save();
-                userSockets[username].emit('reload');
+            if (userSockets[email]) {
+                userSockets[email].leave(`class-${classId}`);
+                userSockets[email].request.session.classId = null;
+                userSockets[email].request.session.save();
+                userSockets[email].emit('reload');
             }            
         } catch (err) {
             logger.log('error', err.stack);
@@ -510,9 +510,9 @@ class SocketUpdates {
         try {
             logger.log('info', `[classKickStudents] classId=(${classId})`)
 
-            for (let username of Object.keys(classInformation.classrooms[classId].students)) {
-                if (classInformation.classrooms[classId].students[username].classPermissions < TEACHER_PERMISSIONS) {
-                    this.classKickUser(username, classId);
+            for (let email of Object.keys(classInformation.classrooms[classId].students)) {
+                if (classInformation.classrooms[classId].students[email].classPermissions < TEACHER_PERMISSIONS) {
+                    this.classKickUser(email, classId);
                 }
             }
         } catch (err) {
@@ -521,7 +521,7 @@ class SocketUpdates {
     }
     
     logout(socket) {
-        const username = socket.request.session.username
+        const email = socket.request.session.email
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId
 
@@ -529,28 +529,28 @@ class SocketUpdates {
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
-            classInformation.users[username].activeClasses = classInformation.users[username].activeClasses.filter((activeClass) => activeClass != classId);
-            classInformation.users[username].classPermissions = null;
+            classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((activeClass) => activeClass != classId);
+            classInformation.users[email].classPermissions = null;
         }
 
         socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
     
-                delete userSockets[username]
+                delete userSockets[email]
                 socket.leave(`class-${classId}`)
                 socket.emit('reload')
 
                 // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
                 if (className) {
-                    const student = classInformation.classrooms[classId].students[username];
+                    const student = classInformation.classrooms[classId].students[email];
                     if (!student) return;
                     if (student.isGuest) {
                         // Remove the guest from the class
-                        delete classInformation.classrooms[classId].students[username];
+                        delete classInformation.classrooms[classId].students[email];
                     } else {
                         // Mark the student as offline
-                        student.activeClasses = classInformation.classrooms[classId].students[username].activeClasses.filter((activeClass) => activeClass != classId);
+                        student.activeClasses = classInformation.classrooms[classId].students[email].activeClasses.filter((activeClass) => activeClass != classId);
                         student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
                     }
                     
@@ -591,7 +591,7 @@ class SocketUpdates {
             data.prompt = classInformation.classrooms[classId].poll.prompt
     
             for (const key in classInformation.classrooms[classId].students) {
-                data.names.push(classInformation.classrooms[classId].students[key].username)
+                data.names.push(classInformation.classrooms[classId].students[key].email)
                 data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
                 data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
             }
@@ -683,18 +683,18 @@ class SocketUpdates {
         }
     }
     
-    getOwnedClasses(username) {
+    getOwnedClasses(email) {
         try {
-            logger.log('info', `[getOwnedClasses] username=(${username})`)
+            logger.log('info', `[getOwnedClasses] email=(${email})`)
     
             database.all('SELECT name, id FROM classroom WHERE owner=?',
-                [userSockets[username].request.session.userId], (err, ownedClasses) => {
+                [userSockets[email].request.session.userId], (err, ownedClasses) => {
                     try {
                         if (err) throw err
     
                         logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
     
-                        io.to(`user-${username}`).emit('getOwnedClasses', ownedClasses)
+                        io.to(`user-${email}`).emit('getOwnedClasses', ownedClasses)
                     } catch (err) {
                         logger.log('error', err.stack);
                     }
@@ -710,7 +710,7 @@ class SocketUpdates {
             logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
     
             database.all(
-                'SELECT pollId, userId, username FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
+                'SELECT pollId, userId, email FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
                 pollId,
                 (err, userPollShares) => {
                     try {
@@ -777,9 +777,9 @@ class SocketUpdates {
         }
     }
     
-    ipUpdate(type, username) {
+    ipUpdate(type, email) {
         try {
-            logger.log('info', `[ipUpdate] username=(${username})`)
+            logger.log('info', `[ipUpdate] email=(${email})`)
     
             let ipList = {}
             if (type == 'whitelist') {
@@ -789,11 +789,11 @@ class SocketUpdates {
             }
     
             if (type) {
-                if (username) io.to(`user-${username}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
+                if (email) io.to(`user-${email}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
                 else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
             } else {
-                this.ipUpdate('whitelist', username)
-                this.ipUpdate('blacklist', username)
+                this.ipUpdate('whitelist', email)
+                this.ipUpdate('blacklist', email)
             }
         } catch (err) {
             logger.log('error', err.stack);

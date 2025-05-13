@@ -70,7 +70,7 @@ app.use((req, res, next) => {
 // Additionally, handle session expiration
 app.use((req, res, next) => {
 	if (req.session.classId || req.session.classId === null) {
-		res.locals.currentUser = classInformation.users[req.session.username];
+		res.locals.currentUser = classInformation.users[req.session.email];
 	}
 
 	res.locals = {

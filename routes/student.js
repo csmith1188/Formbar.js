@@ -14,7 +14,7 @@ module.exports = {
             try {
                 // Poll Setup
                 let user = {
-                    name: req.session.username,
+                    name: req.session.email,
                     class: req.session.classId,
                     tags: req.session.tags
                 }
@@ -24,16 +24,16 @@ module.exports = {
                 logger.log('verbose', `[get /student] question=(${JSON.stringify(req.query.question)}) answer=(${req.query.letter})`)
 
                 if (answer) {
-                    classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes = answer
+                    classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.buttonRes = answer
                 }
 
                 // Render the student page with the user's information
-                logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes) myTextRes = (classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes) lesson = (classInformation.classrooms[req.session.classId].lesson)`)
+                logger.log('verbose', `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.textRes) lesson = (classInformation.classrooms[req.session.classId].lesson)`)
                 res.render('pages/student', {
                     title: 'Student',
                     user: JSON.stringify(user),
-                    myRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes,
-                    myTextRes: classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.textRes
+                    myRes: classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.buttonRes,
+                    myTextRes: classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.textRes
                 })
             } catch (err) {
                 logger.log('error', err.stack);
@@ -56,7 +56,7 @@ module.exports = {
                 if (req.query.poll) {
                     const answer = req.body.poll
                     if (answer) {
-                        classInformation.classrooms[req.session.classId].students[req.session.username].pollRes.buttonRes = answer
+                        classInformation.classrooms[req.session.classId].students[req.session.email].pollRes.buttonRes = answer
                     }
                     res.redirect('/poll')
                 }

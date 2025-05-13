@@ -13,8 +13,8 @@ module.exports = {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
                 database.all(
-                    'SELECT classroom.name, classroom.id FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.username=?',
-                    [req.session.username],
+                    'SELECT classroom.name, classroom.id FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.email=?',
+                    [req.session.email],
                     (err, joinedClasses) => {
                         try {
                             if (err) throw err
@@ -51,7 +51,7 @@ module.exports = {
 				if (!classCode) {
 					// Check if the user is in the class with the class id provided
 					const userInClass = await new Promise((resolve, reject) => {
-						database.get('SELECT * FROM users JOIN classusers ON users.id = classusers.studentId WHERE users.username=? AND classusers.classId=?', [req.session.username, classId], (err, user) => {
+						database.get('SELECT * FROM users JOIN classusers ON users.id = classusers.studentId WHERE users.email=? AND classusers.classId=?', [req.session.email, classId], (err, user) => {
 							try {
 								if (err) {
 									reject(err)
@@ -147,7 +147,7 @@ module.exports = {
 
                 advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
 				req.session.classId = classId
-                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.username].API, classId)
+                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.email].API, classId)
         
                 res.redirect('/')
             } catch (err) {

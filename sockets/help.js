@@ -9,10 +9,10 @@ module.exports = {
         // Sends a help ticket
         socket.on('help', (reason) => {
             try {
-                // Get the class id and username from the session
+                // Get the class id and email from the session
                 // Check if the class is inactive before continuing
                 const classId = socket.request.session.classId;
-                const username = socket.request.session.username;
+                const email = socket.request.session.email;
                 if (!classInformation.classrooms[classId].isActive) {
                     socket.emit('message', 'This class is not currently active.');
                     return;
@@ -21,7 +21,7 @@ module.exports = {
                 logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
                 const time = new Date();
-                const student = classInformation.classrooms[classId].students[username];
+                const student = classInformation.classrooms[classId].students[email];
                 logger.log('info', `[help] reason=(${reason}) time=(${time})`);
                 if (student.help.reason != reason) {
                     socket.emit('helpSuccess');

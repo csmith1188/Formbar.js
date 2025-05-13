@@ -30,7 +30,7 @@ module.exports = {
 				let user = req.session.user;
 
 				// If the user is not in the class, return an error
-				if (!classData.students[user.username]) {
+				if (!classData.students[user.email]) {
 					logger.log('verbose', `[get api/class/${key}] user is not logged in`);
 					res.status(403).json({ error: 'User is not logged into the selected class' });
 					return;

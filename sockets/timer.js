@@ -7,11 +7,11 @@ module.exports = {
     run(socket, socketUpdates) {
         socket.on('vbTimer', () => {
             let classData = classInformation.classrooms[socket.request.session.classId];
-            let username = socket.request.session.username
+            let email = socket.request.session.email
 
             advancedEmitToClass('vbTimer', socket.request.session.classId, {
                 classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
-                username
+                email
             }, classData.timer);
         })
 

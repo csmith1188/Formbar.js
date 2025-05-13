@@ -38,15 +38,15 @@ module.exports = {
                                 }
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
-                                socket.request.session.username = userData.username
-                                socket.request.session.classId = getUserClass(userData.username);
+                                socket.request.session.email = userData.email
+                                socket.request.session.classId = getUserClass(userData.email);
 
                                 socket.join(`api-${socket.request.session.api}`)
                                 socket.join(`class-${socket.request.session.classId}`)
                                 socket.emit('setClass', socket.request.session.classId)
                                 socket.on('disconnect', () => {
-                                    if (!userSockets[socket.request.session.username]) {
-                                        socketUpdates.classKickUser(socket.request.session.username, socket.request.session.classId, false)
+                                    if (!userSockets[socket.request.session.email]) {
+                                        socketUpdates.classKickUser(socket.request.session.email, socket.request.session.classId, false)
                                     }
                                 })
 
@@ -61,11 +61,11 @@ module.exports = {
                         throw err
                     }
                 })
-            } else if (socket.request.session.username) {
+            } else if (socket.request.session.email) {
                 socket.join(`class-${socket.request.session.classId}`)
-                socket.join(`user-${socket.request.session.username}`)
+                socket.join(`user-${socket.request.session.email}`)
 
-                userSockets[socket.request.session.username] = socket
+                userSockets[socket.request.session.email] = socket
             }
         } catch (err) {
             logger.log('error', err.stack);

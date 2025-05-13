@@ -11,10 +11,10 @@ module.exports = {
         // Permission check
         socket.use(async ([event, ...args], next) => {
             try {
-                const username = socket.request.session.username;
+                const email = socket.request.session.email;
                 const classId = socket.request.session.classId;
 
-                logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassId=(${classId})`)
+                logger.log('info', `[socket permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`)
                 if (!classInformation.classrooms[classId] && classId != null) {
                     logger.log('info', '[socket permission check] Class does not exist')
                     socket.emit('message', 'Class does not exist')
@@ -28,10 +28,10 @@ module.exports = {
                     return;
                 }
 
-                let userData = classInformation.users[username];
-                if (!classInformation.users[username]) {
+                let userData = classInformation.users[email];
+                if (!classInformation.users[email]) {
                     // Get the user data from the database
-                    userData = await dbGet('SELECT * FROM users WHERE username=?', [username]);
+                    userData = await dbGet('SELECT * FROM users WHERE email=?', [email]);
                     userData.classPermissions = await dbGet('SELECT permissions FROM classUsers WHERE studentId=? AND classId=?', [userData.id, classId]);
                 }
 
