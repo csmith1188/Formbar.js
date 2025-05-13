@@ -15,7 +15,13 @@ async function isEnabled(req, res, next) {
 
     const pluginName = req.url.split('/')[1].replace(/\s+/g, '');
     const classPlugins = classInformation.classrooms[req.session.classId].plugins;
-    const pluginId = await dbGet('SELECT id FROM plugins WHERE name=?', [pluginName]);
+    const pluginId = await dbGet('SELECT id FROM plugins WHERE name=?', [pluginName]).then((row) => {
+        if (row) {
+            return row.id;
+        } else {
+            return null;
+        }
+    });
     const plugin = classPlugins[pluginId];
     if (!plugin || !pluginId) {
         res.render('pages/message', {
@@ -23,6 +29,11 @@ async function isEnabled(req, res, next) {
             title: 'Error'
         });
     }
+    console.log(classPlugins);
+    console.log(plugin);
+    console.log(classPlugins[pluginId.toString()]);
+    console.log(pluginId);
+    console.log(plugin.enabled);
     if (plugin.enabled == true && classInformation.classrooms[req.session.classId].isActive) {
         return next();
     } else {
@@ -60,28 +71,20 @@ async function configPlugins(app) {
                     plugin.init(app);
                     const pluginName = plugin.name.replace(/\s+/g, '');
                     plugin.authors = plugin.authors.join(',');
+
                     const pluginData = await dbGet('SELECT * FROM plugins WHERE name=?', [pluginName]);
                     if (!pluginData) {
-                        dbRun('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version])
-                            .then(() => {
-                                logger.log('info', `Plugin ${plugin.name} added to database.`);
-                            })
-                            .catch((err) => {
-                                logger.error(`Error adding plugin to database: ${err}`);
-                            });
+                        await dbRun('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version]);
+                        logger.log('info', `Plugin ${plugin.name} added to database.`);
                     } else if (pluginData.version != plugin.version) {
-                        database.run('UPDATE plugins SET (name, authors, description, version) = (?, ?, ?, ?) WHERE id = ?', [pluginName, plugin.authors, plugin.description, plugin.version, pluginData.id], (err) => {
-                            if (err) {
-                                logger.error(`Error updating plugin data: ${err}`);
-                            } else {
-                                logger.log('info', `Plugin ${plugin.name} updated in database.`);
-                            }
-                        });
+                        await dbRun('UPDATE plugins SET name=?, authors=?, description=?, version=? WHERE id=?', [pluginName, plugin.authors, plugin.description, plugin.version, pluginData.id]);
+                        logger.log('info', `Plugin ${plugin.name} updated in database.`);
                     }
-                    dbGet('SELECT id FROM plugins WHERE name=?', [pluginName])
-                        .then((row) => {
-                            plugins[row.id] = plugin;
-                        });
+
+                    const pluginIdRow = await dbGet('SELECT id FROM plugins WHERE name=?', [pluginName]);
+                    if (pluginIdRow) {
+                        plugins[pluginIdRow.id] = plugin;
+                    }
                 } else {
                     logger.warning(`No init function found in plugin: ${plugin.name || pluginDir}`);
                 }
