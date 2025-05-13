@@ -17,9 +17,9 @@ function isAuthenticated(req, res, next) {
 	try {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (req.session.username) {
-			if (classInformation.users[req.session.username].activeClasses.length == 0) {
-				if (classInformation.users[req.session.username].permissions >= MANAGER_PERMISSIONS || classInformation.users[req.session.username].permissions >= TEACHER_PERMISSIONS) {
+		if (req.session.email) {
+			if (classInformation.users[req.session.email].activeClasses.length == 0) {
+				if (classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS || classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
 					res.render("pages/news");
 				} else {
 					res.redirect('/selectClass')
@@ -44,9 +44,9 @@ function isVerified(req, res, next) {
 	try {
 		// Log that the function is being called with the ip and the session of the user
 		logger.log('info', `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		if (req.session.username) {
+		if (req.session.email) {
 			// If the user is verified or email functionality is disabled...
-			if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.username].permissions == GUEST_PERMISSIONS) {
+			if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
 				next();
 			} else {
 				// Redirect to the login page
@@ -72,7 +72,7 @@ function isVerified(req, res, next) {
 function isLoggedIn(req, res, next) {
 	try {
 		logger.log('info', `[isLoggedIn] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		if (req.session.username) {
+		if (req.session.email) {
 			next()
 		} else {
 			res.redirect('/login')
@@ -89,7 +89,7 @@ function isLoggedIn(req, res, next) {
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
 	try {
-		const username = req.session.username
+		const username = req.session.email
 
 		logger.log('info', `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`)
 

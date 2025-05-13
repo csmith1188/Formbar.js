@@ -11,7 +11,7 @@ module.exports = {
         // Permission check
         socket.use(async ([event, ...args], next) => {
             try {
-                const username = socket.request.session.username;
+                const username = socket.request.session.email;
                 const classId = socket.request.session.classId;
 
                 logger.log('info', `[socket permission check] Event=(${event}), Username=(${username}), ClassId=(${classId})`)
@@ -31,7 +31,7 @@ module.exports = {
                 let userData = classInformation.users[username];
                 if (!classInformation.users[username]) {
                     // Get the user data from the database
-                    userData = await dbGet('SELECT * FROM users WHERE username=?', [username]);
+                    userData = await dbGet('SELECT * FROM users WHERE email=?', [username]);
                     userData.classPermissions = await dbGet('SELECT permissions FROM classUsers WHERE studentId=? AND classId=?', [userData.id, classId]);
                 }
 
