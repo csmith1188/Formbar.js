@@ -69,8 +69,12 @@ async function configPlugins(app) {
 
                     const pluginData = await dbGet('SELECT * FROM plugins WHERE name=?', [pluginName]);
                     if (!pluginData) {
-                        await dbRun('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version]);
-                        logger.log('info', `Plugin ${plugin.name} added to database.`);
+                        try {
+                            await dbRun('INSERT INTO plugins (name, authors, description, version) VALUES (?, ?, ?, ?)', [pluginName, plugin.authors, plugin.description, plugin.version]);
+                            logger.log('info', `Plugin ${plugin.name} added to database.`);
+                        } catch (err) {
+                            logger.error(`Error inserting plugin ${plugin.name} into database: ${err}`);
+                        }
                     } else if (pluginData.version != plugin.version) {
                         await dbRun('UPDATE plugins SET name=?, authors=?, description=?, version=? WHERE id=?', [pluginName, plugin.authors, plugin.description, plugin.version, pluginData.id]);
                         logger.log('info', `Plugin ${plugin.name} updated in database.`);
