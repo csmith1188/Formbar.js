@@ -29,11 +29,6 @@ async function isEnabled(req, res, next) {
             title: 'Error'
         });
     }
-    console.log(classPlugins);
-    console.log(plugin);
-    console.log(classPlugins[pluginId.toString()]);
-    console.log(pluginId);
-    console.log(plugin.enabled);
     if (plugin.enabled == true && classInformation.classrooms[req.session.classId].isActive) {
         return next();
     } else {
