@@ -132,8 +132,8 @@ CREATE TABLE IF NOT EXISTS "transactions"
 CREATE TABLE IF NOT EXISTS "users"
 (
     "id"          INTEGER NOT NULL UNIQUE,
-    "email"    TEXT    NOT NULL,
-    "email"       TEXT    NOT NULL UNIQUE,
+    "username"    TEXT    NOT NULL,
+    "email"       TEXT    NOT NULL,
     "password"    TEXT,
     "permissions" INTEGER,
     "API"         TEXT    NOT NULL UNIQUE,
