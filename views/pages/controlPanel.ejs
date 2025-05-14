@@ -141,12 +141,15 @@
         <div id='pollOptions' class='options'>
             <h2 class='headerText'>Previous Polls</h2>
 
-            <details id="previousPoll-template" style="opacity: 0.65; order: 9997; margin: 20px display: none" hidden>
+            <details id="previousPoll-template" style="opacity: 0.65; order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
                 <summary style="margin: 20px">
                     <span id="name"></span>
+                    <span id="response-template" style="display: none"></span>
                 </summary>
             </details>
             <div id="previousPolls"></div>
+            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><--</button>
+            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'>--></button>
         </div>
     </div>
 </div>
@@ -461,12 +464,14 @@
         }
     }
 
+    // Check if the class is currently active and change the "Start Class" button depending on state
     socket.emit("isClassActive")
     socket.on("isClassActive", (isActive) => {
-        changeClassText(isActive);
+        setClassActiveState(isActive);
     });
 
-    function changeClassText(isActive) {
+    // Changes the text for the "Start Class" button depending on the state of the class
+    function setClassActiveState(isActive) {
         const startClassButton = document.getElementById('startClass');
         const endClassButton = document.getElementById('endClass');
 
@@ -487,13 +492,13 @@
 
     function startClass() {
         socket.emit('startClass')
-        changeClassText(true);
+        setClassActiveState(true);
     }
 
     function endClass() {
         if (confirm('Are you sure you want to end the class?')) {
             socket.emit('endClass')
-            changeClassText(false);
+            setClassActiveState(false);
         }
     }
 
@@ -517,19 +522,75 @@
         }
     }
 
-    // Loads previous polls from an index
     const previousPollsDiv = document.getElementById('previousPolls');
+    const previousPollTemplate = document.getElementById('previousPoll-template');
+    const previousPollBackButton = document.getElementById('previousPollBackward');
+    const previousPollForwardButton = document.getElementById("previousPollForward");
+    let currentPreviousPollIndex = 0; // Used to keep track of which page of previous polls we're on
+    let totalPreviousPolls = 0; // Used to keep track of how many previous polls there are. This is set at the getPreviousPolls socket event.
+
+    // Loads previous polls from an index
+    // This index will decide which page of previous polls to load
+    // Each page has 20 previous polls, so to go to the second page, you would do socket.emit('getPreviousPolls', 20)
+    // This might want to be simplified to handle the number previous polls on a page on the server in the future
     function loadPreviousPolls(index) {
         socket.emit('getPreviousPolls', index);
     }
 
-    loadPreviousPolls(0);
+    // Scrolls previous polls page forward and backward
+    // Shows 20 previous polls at a time to prevent sending too much data over websockets
+    function scrollPreviousPolls(direction) {
+        if (direction === "forward") {
+            // Prevent currentPreviousPollIndex from going over the total number of previous polls
+            if (currentPreviousPollIndex + 20 > totalPreviousPolls) {
+                currentPreviousPollIndex = Math.max(0, totalPreviousPolls - 20);
+            } else {
+                currentPreviousPollIndex += 20;
+            }
+        } else {
+            // Check if we're at the beginning and if currentPreviousPollIndex - 20 is below 0, set it to zero
+            if (currentPreviousPollIndex - 20 < 0) {
+                currentPreviousPollIndex = 0;
+            } else {
+                currentPreviousPollIndex -= 20;
+            }
+        }
 
-    socket.on('getPreviousPolls', (previousPolls) => {
+        // Request the previous poll data from the server
+        loadPreviousPolls(currentPreviousPollIndex);
+    }
+
+    // Load the initial previous polls
+    // Begins at index 0
+    loadPreviousPolls(currentPreviousPollIndex);
+
+    // When new data is retrieved, display it
+    socket.on('getPreviousPolls', (previousPolls, total) => {
+        // Set the total number of previous polls
+        totalPreviousPolls = total;
+
+        // Remove all the previous polls from the div
+        while (previousPollsDiv.firstChild) {
+            previousPollsDiv.removeChild(previousPollsDiv.firstChild);
+        }
+
+        // If currentPreviousPollIndex is zero, hide the back button
+        // If currentPreviousPollIndex is greater than or equal to totalPreviousPolls - 20, hide the forward button
+        previousPollBackButton.hidden = currentPreviousPollIndex === 0;
+        previousPollForwardButton.hidden = currentPreviousPollIndex >= totalPreviousPolls - 20;
+
+        // Build each previous poll
         for (const previousPoll of previousPolls) {
-            const previousPollClone = document.getElementById('previousPoll-template').cloneNode(true);
+            const previousPollData = JSON.parse(previousPoll.data);
+            const previousPollClone = previousPollTemplate.cloneNode(true);
+            const pollNameElement = previousPollClone.querySelector('#name');
+            const responseElement = previousPollClone.querySelector('#response-template');
+
+            pollNameElement.innerText = `${previousPoll.date.replaceAll(' ', '')} - ${previousPollData.prompt}`;
+
+            // Display the previous poll div
             previousPollClone.style.display = "block";
-            previousPollClone.appendChild(previousPollClone);
+            previousPollsDiv.appendChild(previousPollClone);
         }
     });
 
@@ -559,6 +620,8 @@
         sortButton.textContent = `${SortState[sortName][sortValue]}`;
     }
 
+    // If there are filters provided, parse them and set the correct filters
+    // This is to preserve filters between page loads
     if (settings.filter) {
         try {
             // Get all filters from settings

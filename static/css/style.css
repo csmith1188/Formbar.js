@@ -908,6 +908,12 @@ div .tabContent {
 	max-height: max-content;
 }
 
+#previousPolls {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+}
+
 #studentTags {
 	order: 3;
 	display: flex;

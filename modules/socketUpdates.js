@@ -586,7 +586,7 @@ class SocketUpdates {
             currentPoll += 1
     
             let dateConfig = new Date()
-            let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+            let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     
             data.prompt = classInformation.classrooms[classId].poll.prompt
     
