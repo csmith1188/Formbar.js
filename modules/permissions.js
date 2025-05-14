@@ -72,7 +72,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	leaveClassroom: GUEST_PERMISSIONS,
 	setClassSetting: TEACHER_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
-	previousPollDisplay: TEACHER_PERMISSIONS,
 	pluginUpdate: STUDENT_PERMISSIONS,
 	setClassPermissionSetting: MANAGER_PERMISSIONS,
 	classPoll: MOD_PERMISSIONS,
