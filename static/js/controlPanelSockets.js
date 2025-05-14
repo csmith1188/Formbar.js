@@ -42,7 +42,6 @@ function createTagSelectButtons() {
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			const selectedStudents = []; // Stores the selected students
 			for (const student of students) {
-				console.log(student, selectedTagTexts);
 				const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
 				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
 				if (selectedTags.length === 0) continue;
@@ -84,7 +83,6 @@ function createTagSelectButtons() {
 
 			// If the student is not selected, then unselect them
 			for (const student of students) {
-				console.log(student)
 				if (selectedStudents.indexOf(student.username) === -1) {
 					const studentElement = document.querySelector(`details[id="student-${student.username}"]`);
 					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.username}"]`);
