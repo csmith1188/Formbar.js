@@ -49,7 +49,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1.headertext, h2.headertext {
-	color: var(--theme-color) !important;
+	color: white !important;
 }
 
 h1#noPoll.textColorContent, h1#headerText.textColorContent {
@@ -62,6 +62,11 @@ p {
 
 input {
 	background-color: #323232;
+	color: #ffffff;
+}
+
+.contentBox {
+	background-color: #484848 !important;
 	color: #ffffff;
 }
 
@@ -84,7 +89,7 @@ input {
 	color: #000000;
 }
 
-#usernameBox, #passwordBox, #displayNameBox, #joinKey, #emailBox {
+#passwordBox, #displayNameBox, #joinKey, #emailBox {
 	background-color: #ffffff;
 	color: #000000;
 }

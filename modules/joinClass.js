@@ -80,6 +80,7 @@ async function joinClass(code, session) {
 
 			// Set class permissions and remove the user's Offline tag if their tags aren't null
 			currentUser.classPermissions = classUser.permissions
+			currentUser.activeClasses.push(classroom.id);
 			if (currentUser.tags) {
 				currentUser.tags = currentUser.tags.replace('Offline', '');	
 				classInformation.users[email].tags = classInformation.users[email].tags.replace('Offline', '')
