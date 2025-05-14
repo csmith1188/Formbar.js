@@ -10,7 +10,7 @@ function generateAccessToken(userData, classId, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
         email: userData.email,
-        email: userData.email,
+        username: userData.email,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
