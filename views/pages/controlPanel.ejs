@@ -144,8 +144,9 @@
             <details id="previousPoll-template" style="opacity: 0.65; order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
                 <summary style="margin: 20px">
                     <span id="name"></span>
-                    <span id="response-template" style="display: none"></span>
                 </summary>
+                <span class="previousPollResponse" id="response-template" style="display: none"></span>
+                <button id="loadPoll" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
             <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><--</button>
@@ -526,6 +527,7 @@
     const previousPollTemplate = document.getElementById('previousPoll-template');
     const previousPollBackButton = document.getElementById('previousPollBackward');
     const previousPollForwardButton = document.getElementById("previousPollForward");
+    let currentPreviousPolls = []; // Holds the current page of previous poll data
     let currentPreviousPollIndex = 0; // Used to keep track of which page of previous polls we're on
     let totalPreviousPolls = 0; // Used to keep track of how many previous polls there are. This is set at the getPreviousPolls socket event.
 
@@ -535,6 +537,14 @@
     // This might want to be simplified to handle the number previous polls on a page on the server in the future
     function loadPreviousPolls(index) {
         socket.emit('getPreviousPolls', index);
+    }
+
+    function loadPoll(button) {
+        const previousPoll = button.parentElement;
+        const pollId = previousPoll.id;
+        console.log(pollId)
+        console.log(currentPreviousPolls)
+        const previousPollData = currentPreviousPolls.find(poll => poll.id === pollId);
     }
 
     // Scrolls previous polls page forward and backward
@@ -568,6 +578,7 @@
     socket.on('getPreviousPolls', (previousPolls, total) => {
         // Set the total number of previous polls
         totalPreviousPolls = total;
+        currentPreviousPolls = previousPolls;
 
         // Remove all the previous polls from the div
         while (previousPollsDiv.firstChild) {
@@ -584,13 +595,49 @@
             const previousPollData = JSON.parse(previousPoll.data);
             const previousPollClone = previousPollTemplate.cloneNode(true);
             const pollNameElement = previousPollClone.querySelector('#name');
-            const responseElement = previousPollClone.querySelector('#response-template');
+            const responseTemplate = previousPollClone.querySelector('#response-template');
+            const loadPoll = previousPollClone.querySelector('#loadPoll');
 
-            pollNameElement.innerText = `${previousPoll.date.replaceAll(' ', '')} - ${previousPollData.prompt}`;
+            // Set the poll name
+            const fixedDate = previousPoll.date.replaceAll(' ', ''); // Remove spaces from date due to an issue with the way they were being stored
+            pollNameElement.innerText = `${fixedDate} - ${previousPollData.prompt}`;
+
+            // Create a response div for each user response
+            for (const nameIndex in previousPollData.names) {
+                const name = previousPollData.names[nameIndex];
+                const userTextResponse = previousPollData.text[nameIndex];
+                let userLetterResponse = previousPollData.letter[nameIndex];
+
+                // If the response data exists, use it to color the user's response
+                if (previousPollData.responses) {
+                    userLetterResponse = `<span style='color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : "black"}'>${userLetterResponse || "No response"}</span>`;
+                }
+
+                // Create a new response div
+                const responseDiv = responseTemplate.cloneNode(true);
+                responseDiv.id = `response-${name}`;
+                responseDiv.innerHTML = userLetterResponse ? `${name}: ${userLetterResponse}` : `${name}: No response`;
+                responseDiv.style.display = `block`;
+
+                // If there is a text response, add it to the response div
+                if (userTextResponse) {
+                    const textResponseDiv = document.createElement('div');
+                    textResponseDiv.innerText = `Text response: ${userTextResponse}`;
+                    responseDiv.appendChild(textResponseDiv);
+                }
+
+                // Append the response div to the previous poll clone
+                previousPollClone.id = previousPoll.id;
+                previousPollClone.insertBefore(responseDiv, loadPoll);
+            }
+
 
             // Display the previous poll div
             previousPollClone.style.display = "block";
             previousPollsDiv.appendChild(previousPollClone);
+            if (previousPollData.responses) {
+                console.log(previousPollData)
+            }
         }
     });
 

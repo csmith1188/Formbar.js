@@ -589,6 +589,7 @@ class SocketUpdates {
             let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     
             data.prompt = classInformation.classrooms[classId].poll.prompt
+            data.responses = classInformation.classrooms[classId].poll.responses
     
             for (const key in classInformation.classrooms[classId].students) {
                 data.names.push(classInformation.classrooms[classId].students[key].username)
@@ -606,7 +607,7 @@ class SocketUpdates {
                         } else {
                             logger.log('verbose', '[endPoll] saved poll to history');
                             resolve();
-                        };
+                        }
                     }
                 );
             });
