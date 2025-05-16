@@ -592,7 +592,7 @@ class SocketUpdates {
             data.responses = classInformation.classrooms[classId].poll.responses
             data.multiRes = classInformation.classrooms[classId].poll.multiRes
             data.blind = classInformation.classrooms[classId].poll.blind
-            data.text = classInformation.classrooms[classId].poll.text
+            data.isTextResponse = classInformation.classrooms[classId].poll.text
 
             for (const key in classInformation.classrooms[classId].students) {
                 data.names.push(classInformation.classrooms[classId].students[key].email)

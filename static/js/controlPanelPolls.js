@@ -469,7 +469,6 @@ function startPoll(customPollId) {
 		changeTab('mainPolls', 'polls')
 
 		let generatedColors = generateColors(customPoll.answers.length)
-		console.log('beginning poll here')
 		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, false)
 	} else {
 		let blind = blindCheck.checked
