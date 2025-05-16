@@ -141,8 +141,8 @@
         <div id='pollOptions' class='options'>
             <h2 class='headerText'>Previous Polls</h2>
 
-            <details id="previousPoll-template" style="opacity: 0.65; order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
-                <summary style="margin: 20px">
+            <details id="previousPoll-template" style="order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
+                <summary style="margin: 20px; cursor: pointer;">
                     <span id="name"></span>
                 </summary>
                 <span class="previousPollResponse" id="response-template" style="display: none"></span>
@@ -527,6 +527,9 @@
     const previousPollTemplate = document.getElementById('previousPoll-template');
     const previousPollBackButton = document.getElementById('previousPollBackward');
     const previousPollForwardButton = document.getElementById("previousPollForward");
+    const customPollPromptElement = document.getElementById('pollBox');
+    const customPollsButton = document.querySelector('.quickButton.tab[data-tab-group="mainTabs"]#pollsMenu');
+    const addResponseButton = document.getElementById('addPollRes');
     let currentPreviousPolls = []; // Holds the current page of previous poll data
     let currentPreviousPollIndex = 0; // Used to keep track of which page of previous polls we're on
     let totalPreviousPolls = 0; // Used to keep track of how many previous polls there are. This is set at the getPreviousPolls socket event.
@@ -539,19 +542,22 @@
         socket.emit('getPreviousPolls', index);
     }
 
-    function loadPoll(button) {
+    async function loadPoll(button) {
         const previousPollElement = button.parentElement;
         const pollId = previousPollElement.id;
         const previousPoll = currentPreviousPolls.find(poll => poll.id == pollId);
-        const previousPollData = JSON.parse(previousPoll.data)
-        let responses = [];
+        const previousPollData = JSON.parse(previousPoll.data);
+        const responses = []; // Holds all possible responses for the poll
+        let customPollResponseChildren = responsesDiv.children;
 
         // Check if previous poll data has responses
         // Legacy polls do not have this data, which makes loading poll less reliable as the
         // possible responses were never stored. Only student's responses were stored.
-        console.log(previousPollData)
         if (previousPollData.responses) {
-            responses = previousPollData.responses;
+            for (const response in previousPollData.responses) {
+                const responseData = previousPollData.responses[response];
+                responses.push(responseData);
+            }
         } else {
             // Loop through student responses and add them to responses list
             for (const letterResponse of previousPollData.letter) {
@@ -561,7 +567,38 @@
             }
         }
 
-        console.log(responses)
+        // Get all responses by id removeAnswer
+        const removeAnswerButtons = document.querySelectorAll('[id=removeAnswer]');
+        for (const removeAnswerButton of removeAnswerButtons) {
+            console.log('boom')
+            removeAnswerButton.click();
+        }
+
+        // Open custom polls tab and input the poll data
+        customPollsButton.click();
+        customPollPromptElement.value = previousPollData.prompt;
+        for (const responseIndex in responses) {
+            // Add a new response input
+            addResponseButton.click();
+            customPollResponseChildren = responsesDiv.children;
+
+            const response = responses[responseIndex];
+            const responseInput = customPollResponseChildren[responseIndex].querySelector('.answerName');
+            const hexInput = responseInput.parentElement.querySelector('.hexInput');
+            if (Array.isArray(response)) {
+                // If it's a legacy poll, treat it like just an array of text
+                responseInput.value = response;
+            } else {
+                // If it's not a legacy poll, use the data available
+                hexInput.value = response.color;
+                responseInput.value = response.answer;
+            }
+
+            // Trigger the onchange events to update the inputs
+            responseInput.onchange?.({ target: responseInput }); // Trigger the onchange event to update the response answer
+            hexInput.onchange?.({ target: hexInput, preventDefault() { } });
+
+        }
     }
 
     // Scrolls previous polls page forward and backward
@@ -652,9 +689,6 @@
             // Display the previous poll div
             previousPollClone.style.display = "block";
             previousPollsDiv.appendChild(previousPollClone);
-            if (previousPollData.responses) {
-                console.log(previousPollData)
-            }
         }
     });
 
