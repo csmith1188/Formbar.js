@@ -1,5 +1,12 @@
 const { logger } = require("./logger");
 
+/**
+ * Converts HSL color values to Hex color values
+ * @param hue
+ * @param saturation
+ * @param lightness
+ * @returns {string}
+ */
 function convertHSLToHex(hue, saturation, lightness) {
 	try {
 		logger.log('info', `[convertHSLToHex] hue=${hue}, saturation=${saturation}, lightness=${lightness}`)
@@ -40,6 +47,11 @@ function convertHSLToHex(hue, saturation, lightness) {
 	}
 }
 
+/**
+ * Generates random colors
+ * @param amount - Amount of colors to generate
+ * @returns {string[]}
+ */
 function generateColors(amount) {
 	try {
 		logger.log('info', `[generateColors] amount=(${amount})`)

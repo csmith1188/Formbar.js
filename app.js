@@ -11,11 +11,9 @@ const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PER
 const { classInformation } = require('./modules/class.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
-const authentication = require('./modules/authentication.js')
 const { settings } = require('./modules/config.js');
-const { configPlugins, plugins } = require('./modules/plugins.js')
-const { dir } = require('console');
-const { config } = require('dotenv');
+const { configurePlugins } = require('./modules/plugins.js')
+const authentication = require('./modules/authentication.js')
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -98,7 +96,7 @@ for (const routeFile of routeFiles) {
 }
 
 // Initialize plugin routes
-configPlugins(app);
+configurePlugins(app);
 
 // Initialize websocket routes
 initSocketRoutes();
