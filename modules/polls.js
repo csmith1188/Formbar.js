@@ -25,12 +25,10 @@ function getPollResponses(classData) {
     // For each student in the class
     for (let student of Object.values(classData.students)) {
         // If the student exists and has responded to the poll
-        if (
-            student &&
-            Object.keys(tempPolls).includes(student.pollRes.buttonRes)
-        )
+        if (student && Object.keys(tempPolls).includes(student.pollRes.buttonRes)) {
             // Increment the count of responses for the student's response
             tempPolls[student.pollRes.buttonRes].responses++
+        }
     }
 
     // Return the tempPolls object

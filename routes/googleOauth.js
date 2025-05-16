@@ -8,13 +8,19 @@ const { logger } = require('../modules/logger');
 const { settings, logNumbers } = require("../modules/config");
 const crypto = require('crypto');
 
+// Ensure that Google OAuth is enabled
 function checkEnabled(req, res, next) {
 	settings.googleOauthEnabled ? next() : res.redirect('/');
 }
 
+// Ensure that a redirect is set
 function checkRedirect(req, res, next) {
-	if (!req.session.redirect) req.session.redirect = req.query.redirect;
-	else if (!req.query.redirect) req.query.redirect = req.session.redirect;
+	if (!req.session.redirect) {
+		req.session.redirect = req.query.redirect;
+	} else if (!req.query.redirect) {
+		req.query.redirect = req.session.redirect;
+	}
+
 	next();
 }
 
@@ -76,7 +82,6 @@ module.exports = {
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
 									req.session.email = userData.email;
-									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
 									req.session.verified = 1;
@@ -87,8 +92,11 @@ module.exports = {
 
 									// Update the manager and redirect the user to the home page
 									managerUpdate();
-									if (req.session.redirect) res.redirect(req.session.redirect);
-									else res.redirect('/');
+									if (req.session.redirect) {
+										res.redirect(req.session.redirect);
+									} else {
+										res.redirect('/');
+									}
 								});
 							});
 
@@ -114,7 +122,6 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.email = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -149,7 +156,6 @@ module.exports = {
 								// Add the user to the session
 								req.session.userId = userData.id;
 								req.session.email = userData.email;
-								req.session.email = userData.email;
 								req.session.classId = null;
 								req.session.displayName = userData.displayName;
 								req.session.verified = 1;
@@ -160,8 +166,11 @@ module.exports = {
 
 								// Update the manager and redirect the user to the home page
 								managerUpdate();
-								if (req.session.redirect) res.redirect(req.session.redirect);
-								else res.redirect('/');
+								if (req.session.redirect) {
+									res.redirect(req.session.redirect);
+								} else {
+									res.redirect('/');
+								}
 							});
 						};
 					});

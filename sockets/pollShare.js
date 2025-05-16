@@ -6,23 +6,6 @@ const { getUserClass } = require("../modules/user")
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Displays previous polls
-        socket.on('previousPollDisplay', (pollIndex) => {
-            try {
-                logger.log('info', `[previousPollDisplay] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[previousPollDisplay] pollIndex=(${pollIndex})`)
-
-                advancedEmitToClass(
-                    'previousPollData',
-                    socket.request.session.classId,
-                    { classPermissions: classInformation.classrooms[socket.request.session.classId].permissions.controlPolls },
-                    classInformation.classrooms[socket.request.session.classId].pollHistory[pollIndex].data
-                )
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        })
-
         socket.on('sharePollToUser', (pollId, email) => {
             try {
                 logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -246,7 +229,7 @@ module.exports = {
                             socket.emit('message', 'There is no class with that code.')
                             return
                         }
-                        
+
                         database.get('SELECT * FROM custom_polls WHERE id=?', pollId, (err, poll) => {
                             try {
                                 if (err) throw err
