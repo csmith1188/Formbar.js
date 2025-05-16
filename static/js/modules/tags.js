@@ -39,8 +39,8 @@ function updateStudentTags() {
         // Get student tag elements
         const roomTags = student.querySelector('#roomTags');
         const studTagsSpan = student.querySelector('#studentTags');
-        const username = student.id.split('-')[1];
-        const studentData = students.find((student) => student.username === username);
+        const email = student.id.split('-')[1];
+        const studentData = students.find((student) => student.email === email);
 
         // Get tags selected before the update
         const oldTags = [];
@@ -114,7 +114,7 @@ function updateStudentTags() {
                     for (let tagButton of roomTags.querySelectorAll('button.pressed')) {
                         tags.push(tagButton.textContent);
                     }
-                    socket.emit('saveTags', studentData.id, tags, studentData.username);
+                    socket.emit('saveTags', studentData.id, tags, studentData.email);
                 }
 
                 createTagSelectButtons();

@@ -17,7 +17,7 @@ jest.mock('../../modules/database', () => {
             // Handle the complex user query with polls
             if (query.includes('SELECT users.*, CASE WHEN shared_polls.pollId')) {
                 callback(null, {
-                    username: params[0], // email is used as username
+                    email: params[0], // email is used as email
                     id: 1,
                     password: 'hashed_password',
                     permissions: 'student',
@@ -52,8 +52,8 @@ jest.mock('../../modules/database', () => {
 });
 
 jest.mock('../../modules/student', () => ({
-    Student: jest.fn().mockImplementation((username, id, permissions, api, ownedPolls, sharedPolls, tags, displayName, guest) => ({
-        username,
+    Student: jest.fn().mockImplementation((email, id, permissions, api, ownedPolls, sharedPolls, tags, displayName, guest) => ({
+        email,
         id,
         permissions,
         API: api,
@@ -135,7 +135,7 @@ describe('Login Route', () => {
             app.use((req, res, next) => {
                 req.session = {};
                 req.body = {
-                    username: 'testuser',
+                    email: 'testuser',
                     password: 'password',
                     loginType: 'login',
                     userType: "?????????????????????",
@@ -171,7 +171,7 @@ describe('Login Route', () => {
                     callback(null, null); // No existing user found
                 } else {
                     callback(null, {
-                        username: 'newuser',
+                        email: 'newuser',
                         id: 2,
                         permissions: 'manager',
                         API: 'new_api',
@@ -186,7 +186,7 @@ describe('Login Route', () => {
             const response = await request(app)
                 .post('/login')
                 .send({
-                    username: 'newuser',
+                    email: 'newuser',
                     password: 'password123',
                     email: 'new@example.com',
                     displayName: 'New User',
@@ -197,7 +197,7 @@ describe('Login Route', () => {
             expect(database.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO users'),
                 expect.arrayContaining([
-                    'new@example.com', // This is due to username being an alias for email now
+                    'new@example.com', // This is due to email being an alias for email now
                     'new@example.com',
                     'hashed_password',
                     expect.any(Number),
@@ -231,7 +231,7 @@ describe('Login Route', () => {
             database.get.mockImplementation((query, params, callback) => {
                 if (query.includes('SELECT users.*, CASE WHEN shared_polls.pollId')) {
                     callback(null, {
-                        username: 'testuser',
+                        email: 'testuser',
                         id: 1,
                         password: 'hashed_password',
                         permissions: 'student',
@@ -251,7 +251,7 @@ describe('Login Route', () => {
             const response = await request(app)
                 .post('/login')
                 .send({
-                    username: 'testuser',
+                    email: 'testuser',
                     password: 'wrongpassword',
                     loginType: 'login',
                     email: 'test@example.com'
@@ -266,7 +266,7 @@ describe('Login Route', () => {
             const response = await request(app)
                 .post('/login')
                 .send({
-                    username: 'inv', // Too short
+                    email: 'inv', // Too short
                     password: 'pass',
                     email: 'new@example.com',
                     displayName: 'New User',

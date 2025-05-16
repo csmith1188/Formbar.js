@@ -51,9 +51,9 @@ module.exports = {
                     };
 
                     database.run(
-                        'INSERT INTO users(username, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                        'INSERT INTO users(email, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
                         [
-                            user.username,
+                            user.email,
                             user.email,
                             user.hashedPassword,
                             user.permissions,
@@ -66,7 +66,7 @@ module.exports = {
                                 if (err) throw err
                                 logger.log('verbose', '[get /login] Added user to database')
                                 // Find the user in which was just created to get the id of the user
-                                database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                                database.get('SELECT * FROM users WHERE email=?', [user.email], (err, userData) => {
                                     try {
                                         if (err) throw err;
                                         classInformation.users[userData.email] = new Student(
@@ -82,7 +82,7 @@ module.exports = {
                                         );
                                         // Add the user to the session in order to transfer data between each page
                                         req.session.userId = userData.id
-                                        req.session.username = userData.email
+                                        req.session.email = userData.email
                                         req.session.classId = null
                                         req.session.displayName = userData.displayName;
                                         req.session.email = userData.email;
@@ -139,7 +139,7 @@ module.exports = {
 
         // This lets the user log into the server, it uses each element from the database to allow the server to do so
         // This lets users actually log in instead of not being able to log in at all
-        // It uses the usernames, passwords, etc. to verify that it is the user that wants to log in logging in
+        // It uses the emails, passwords, etc. to verify that it is the user that wants to log in logging in
         // This also hashes passwords to make sure people's accounts don't get hacked
         app.post('/login', (req, res) => {
             try {
@@ -151,9 +151,9 @@ module.exports = {
                     displayName: req.body.displayName
                 };
 
-                // Set username to email to avoid breaking things
-                // Username should no longer be used, but it's safe to assume it'll be the same as the email
-                user.username = user.email;
+                // Set email to email to avoid breaking things
+                // email should no longer be used, but it's safe to assume it'll be the same as the email
+                user.email = user.email;
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -186,9 +186,9 @@ module.exports = {
                                 return
                             }
 
-                            // If the user does not have a display name, set it to their username
+                            // If the user does not have a display name, set it to their email
                             if (!userData.displayName) {
-                                database.run("UPDATE users SET displayName = ? WHERE email = ?", [userData.username, userData.email]), (err) => {
+                                database.run("UPDATE users SET displayName = ? WHERE email = ?", [userData.email, userData.email]), (err) => {
                                     try {
                                         if (err) throw err;
                                         logger.log('verbose', '[post /login] Added displayName to database');
@@ -206,8 +206,8 @@ module.exports = {
                             let classId = ''
                             for (let classData of Object.values(classInformation.classrooms)) {
                                 if (classData.key) {
-                                    for (let username of Object.keys(classData.students)) {
-                                        if (username == userData.username) {
+                                    for (let email of Object.keys(classData.students)) {
+                                        if (email == userData.email) {
                                             loggedIn = true
                                             classId = classData.id
                                             break
@@ -237,7 +237,7 @@ module.exports = {
 
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
-                            req.session.username = userData.email;
+                            req.session.email = userData.email;
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
@@ -278,7 +278,7 @@ module.exports = {
 
                     logger.log('verbose', '[post /login] Creating new user')
                     let permissions = STUDENT_PERMISSIONS
-                    database.all('SELECT API, secret, username FROM users', async (err, users) => {
+                    database.all('SELECT API, secret, email FROM users', async (err, users) => {
                         try {
                             if (err) throw err
 
@@ -295,10 +295,10 @@ module.exports = {
                             for (let dbUser of users) {
                                 existingAPIs.push(dbUser.API)
                                 existingSecrets.push(dbUser.secret)
-                                if (dbUser.username == user.username) {
+                                if (dbUser.email == user.email) {
                                     logger.log('verbose', '[post /login] User already exists')
                                     res.render('pages/message', {
-                                        message: 'A user with that username already exists.',
+                                        message: 'A user with that email already exists.',
                                         title: 'Login'
                                     })
                                     return
@@ -322,9 +322,8 @@ module.exports = {
                                 user.hashedPassword = hashedPassword;
                                 user.permissions = permissions;
                                 database.run(
-                                    'INSERT INTO users(username, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                                    'INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)',
                                     [
-                                        user.username,
                                         user.email,
                                         user.hashedPassword,
                                         user.permissions,
@@ -337,7 +336,7 @@ module.exports = {
                                             if (err) throw err
                                             logger.log('verbose', '[get /login] Added user to database')
                                             // Find the user in which was just created to get the id of the user
-                                            database.get('SELECT * FROM users WHERE username=?', [user.username], (err, userData) => {
+                                            database.get('SELECT * FROM users WHERE email=?', [user.email], (err, userData) => {
                                                 try {
                                                     if (err) throw err;
                                                     classInformation.users[userData.email] = new Student(
@@ -353,7 +352,7 @@ module.exports = {
                                                     );
                                                     // Add the user to the session in order to transfer data between each page
                                                     req.session.userId = userData.id
-                                                    req.session.username = userData.email
+                                                    req.session.email = userData.email
                                                     req.session.classId = null
                                                     req.session.displayName = userData.displayName;
                                                     req.session.email = userData.email;
@@ -453,9 +452,9 @@ module.exports = {
                     logger.log('verbose', '[post /login] Logging in as guest');
 
                     // Create a temporary guest user
-                    const username = 'guest' + crypto.randomBytes(4).toString('hex');
+                    const email = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student =  new Student(
-                        username, // Username
+                        email, // email
                         9999, // Id
                         GUEST_PERMISSIONS,
                         null, // API key
@@ -465,7 +464,7 @@ module.exports = {
                         user.displayName,
                         true
                     );
-                    student.email = student.username; // Set email to username for guest users
+                    student.email = student.email; // Set email to email for guest users
                     classInformation.users[student.email] = student;
 
                     // Set their current class to no class
@@ -473,7 +472,7 @@ module.exports = {
 
                     // Add a cookie to transfer user credentials across site
                     req.session.userId = student.id;
-                    req.session.username = student.email;
+                    req.session.email = student.email;
                     req.session.email = student.email;
                     req.session.tags = student.tags;
                     req.session.displayName = student.displayName;

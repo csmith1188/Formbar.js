@@ -223,7 +223,7 @@
         <p>
             <label for='share'>Share to User</label>
             <input type='text' name='share' id='sharePollUserInput' pattern='[a-z0-9]+'
-                   placeholder='Username' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
+                   placeholder='Email' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
         </p>
         <div id='userPollShares'></div>
         <p>
@@ -262,7 +262,7 @@
         <span>
 							<input type="checkbox" id="checkbox_fake" name="studentCheckbox">
 						</span>
-        <span id="username"></span>
+        <span id="email"></span>
         <span id="studentTags"></span>
         <div id="reasons">
             <div id="helpReason"></div>
@@ -289,12 +289,12 @@
     <button type='button' id='timerButton'>Start Timer</button>
     <button type='button' id='timerStopButton' hidden>Stop Timer</button>
     <br>
-    <button id='kickUsers' onclick=`((event)
+    <button id='kickUsers' onclick=`((event)HH
     => {socket.emit('classKickStudents')})()`>
     Kick All Students
     </button>
     <button id='endClass' onclick='endClass()'>
-        End Class
+        End ClassH
     </button>
     <!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
     <p><b id='pollCounter'></b></p>

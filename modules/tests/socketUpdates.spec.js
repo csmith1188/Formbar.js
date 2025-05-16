@@ -14,7 +14,7 @@ describe("Socket Updates", () => {
         mockEmit = jest.fn();
         const mockSockets = [
             {
-                request: { session: { username: testData.username } },
+                request: { session: { email: testData.email } },
                 rooms: new Set([testData.code]),
                 emit: mockEmit,
             }
@@ -32,7 +32,7 @@ describe("Socket Updates", () => {
     describe("virtualBarUpdate", () => {
         it("should handle no active poll", async () => {
             createTestClass(testData.code, 'Test Class');
-            createTestUser(testData.username, testData.code, 3);
+            createTestUser(testData.email, testData.code, 3);
             await socketUpdates.virtualBarUpdate(testData.code);
 
             // Check if emit was called with the expected event and data
@@ -54,7 +54,7 @@ describe("Socket Updates", () => {
 
         it("should handle active poll with responses", async () => {
             const classData = createTestClass(testData.code, 'Test Class');
-            const userData = createTestUser(testData.username, testData.code, 3);
+            const userData = createTestUser(testData.email, testData.code, 3);
 
             // Set up the class and user data
             classData.poll.status = true;
@@ -64,7 +64,7 @@ describe("Socket Updates", () => {
             classData.poll.weight = 2;
             classData.poll.blind = true;
             classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.username];
+            classData.poll.studentBoxes = [userData.email];
             userData.pollRes = { buttonRes: "option1" };
             await socketUpdates.virtualBarUpdate(testData.code);
 
@@ -87,7 +87,7 @@ describe("Socket Updates", () => {
 
         it("should handle students on break", async () => {
             const classData = createTestClass(testData.code, 'Test Class');
-            const userData = createTestUser(testData.username, testData.code, 3);
+            const userData = createTestUser(testData.email, testData.code, 3);
 
             // Set up the class and user data
             classData.poll.status = true;
@@ -97,7 +97,7 @@ describe("Socket Updates", () => {
             classData.poll.weight = 2;
             classData.poll.blind = true;
             classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.username];
+            classData.poll.studentBoxes = [userData.email];
             userData.pollRes = { buttonRes: "option1" };
             userData.break = true;
 

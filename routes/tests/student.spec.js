@@ -6,7 +6,7 @@ const { STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require('../../modules/permis
 
 describe('Student Route', () => {
     let app;
-    const mockUsername = 'testuser';
+    const mockemail = 'testuser';
     const mockClassId = 'testclass123';
 
     beforeEach(() => {
@@ -16,7 +16,7 @@ describe('Student Route', () => {
         // Add session mock
         app.use((req, res, next) => {
             req.session = {
-                username: mockUsername,
+                email: mockemail,
                 classId: mockClassId,
                 tags: []
             };
@@ -26,8 +26,8 @@ describe('Student Route', () => {
 
         // Initialize classInformation with test user and class
         classInformation.users = {
-            [mockUsername]: {
-                username: mockUsername,
+            [mockemail]: {
+                email: mockemail,
                 permissions: STUDENT_PERMISSIONS,
                 activeClasses: [mockClassId],
                 classPermissions: GUEST_PERMISSIONS
@@ -37,8 +37,8 @@ describe('Student Route', () => {
         classInformation.classrooms = {
             [mockClassId]: {
                 students: {
-                    [mockUsername]: {
-                        username: mockUsername,
+                    [mockemail]: {
+                        email: mockemail,
                         permissions: STUDENT_PERMISSIONS,
                         classPermissions: GUEST_PERMISSIONS,
                         pollRes: {

@@ -13,14 +13,14 @@ describe('Manager Route', () => {
         // Add session mock
         app.use((req, res, next) => {
             req.session = {
-                username: 'admin'
+                email: 'admin'
             };
             next();
         });
 
         classInformation.users = {
             admin: {
-                username: 'admin',
+                email: 'admin',
                 permissions: 0
             }
         }

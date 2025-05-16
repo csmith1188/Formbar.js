@@ -74,7 +74,7 @@ async function getClassUsers(user, key) {
 		// Query the database for the users of the class
 		let dbClassUsers = await new Promise((resolve, reject) => {
 			database.all(
-				'SELECT DISTINCT users.id, users.username, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?',
+				'SELECT DISTINCT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?',
 				[key],
 				(err, dbClassUsers) => {
 					try {
@@ -111,7 +111,7 @@ async function getClassUsers(user, key) {
 		// For each user in the class
 		for (let user of dbClassUsers) {
 			// Add the user to the class users object
-			classUsers[user.username] = {
+			classUsers[user.email] = {
 				loggedIn: false,
 				...user,
 				help: null,
@@ -121,37 +121,37 @@ async function getClassUsers(user, key) {
 			}
 
 			// If the user is logged in
-			let cdUser = cDClassUsers[user.username]
+			let cdUser = cDClassUsers[user.email]
 			if (cdUser) {
 				// Update the user's data with the data from the class
-				classUsers[user.username].loggedIn = true
-				classUsers[user.username].help = cdUser.help
-				classUsers[user.username].break = cdUser.break
-				classUsers[user.username].quizScore = cdUser.quizScore
-				classUsers[user.username].pogMeter = cdUser.pogMeter
+				classUsers[user.email].loggedIn = true
+				classUsers[user.email].help = cdUser.help
+				classUsers[user.email].break = cdUser.break
+				classUsers[user.email].quizScore = cdUser.quizScore
+				classUsers[user.email].pogMeter = cdUser.pogMeter
 			}
 
 			// If the user has mod permissions or lower
 			if (classPermissions <= MOD_PERMISSIONS) {
 				// Update the user's help and break data
-				if (classUsers[user.username].help) {
-					classUsers[user.username].help = true
+				if (classUsers[user.email].help) {
+					classUsers[user.email].help = true
 				}
 
-				if (typeof classUsers[user.username].break == 'string') {
-					classUsers[user.username].break = false
+				if (typeof classUsers[user.email].break == 'string') {
+					classUsers[user.email].break = false
 				}
 			}
 
 			// If the user has student permissions or lower
 			if (classPermissions <= STUDENT_PERMISSIONS) {
 				// Remove the user's permissions, class permissions, help, break, quiz score, and pog meter data
-				delete classUsers[user.username].permissions
-				delete classUsers[user.username].classPermissions
-				delete classUsers[user.username].help
-				delete classUsers[user.username].break
-				delete classUsers[user.username].quizScore
-				delete classUsers[user.username].pogMeter
+				delete classUsers[user.email].permissions
+				delete classUsers[user.email].classPermissions
+				delete classUsers[user.email].help
+				delete classUsers[user.email].break
+				delete classUsers[user.email].quizScore
+				delete classUsers[user.email].pogMeter
 			}
 		}
 

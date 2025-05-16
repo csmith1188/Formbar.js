@@ -6,12 +6,12 @@ const { getUserClass } = require("../modules/user")
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('sharePollToUser', (pollId, username) => {
+        socket.on('sharePollToUser', (pollId, email) => {
             try {
                 logger.log('info', `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[sharePollToUser] pollId=(${pollId}) username=(${username})`)
+                logger.log('info', `[sharePollToUser] pollId=(${pollId}) email=(${email})`)
 
-                database.get('SELECT * FROM users WHERE username=?', username, (err, user) => {
+                database.get('SELECT * FROM users WHERE email=?', email, (err, user) => {
                     try {
                         if (err) throw err
 
@@ -43,7 +43,7 @@ module.exports = {
                                             if (err) throw err
 
                                             if (sharePoll) {
-                                                socket.emit('message', `${name} is Already Shared with ${username}`)
+                                                socket.emit('message', `${name} is Already Shared with ${email}`)
                                                 return
                                             }
 
@@ -54,15 +54,15 @@ module.exports = {
                                                     try {
                                                         if (err) throw err
 
-                                                        socket.emit('message', `Shared ${name} with ${username}`)
+                                                        socket.emit('message', `Shared ${name} with ${email}`)
 
                                                         socketUpdates.getPollShareIds(pollId)
 
-                                                        const classId = getUserClass(username)
+                                                        const classId = getUserClass(email)
                                                         if (!classId) return
 
-                                                        classInformation.classrooms[classId].students[user.username].sharedPolls.push(pollId)
-                                                        socketUpdates.customPollUpdate(username)
+                                                        classInformation.classrooms[classId].students[user.email].sharedPolls.push(pollId)
+                                                        socketUpdates.customPollUpdate(email)
                                                     } catch (err) {
                                                         logger.log('error', err.stack);
                                                     }
@@ -124,13 +124,13 @@ module.exports = {
                                                     return
                                                 }
 
-                                                const classId = getUserClass(user.username)
+                                                const classId = getUserClass(user.email)
                                                 if (classId instanceof Error) throw classId
                                                 if (!classId) return
 
-                                                let sharedPolls = classInformation.classrooms[classId].students[user.username].sharedPolls
+                                                let sharedPolls = classInformation.classrooms[classId].students[user.email].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-                                                socketUpdates.customPollUpdate(user.username)
+                                                socketUpdates.customPollUpdate(user.email)
                                             } catch (err) {
                                                 logger.log('error', err.stack);
                                             }
@@ -188,8 +188,8 @@ module.exports = {
 
                                                 let sharedPolls = classInformation.classrooms[classId].sharedPolls
                                                 sharedPolls.splice(sharedPolls.indexOf(pollId), 1)
-                                                for (let username of Object.keys(classInformation.classrooms[classId].students)) {
-                                                    socketUpdates.customPollUpdate(username)
+                                                for (let email of Object.keys(classInformation.classrooms[classId].students)) {
+                                                    socketUpdates.customPollUpdate(email)
                                                 }
                                             } catch (err) {
                                                 logger.log('error', err.stack);
@@ -271,8 +271,8 @@ module.exports = {
                                                         socketUpdates.getPollShareIds(pollId)
 
                                                         classInformation.classrooms[classroom.id].sharedPolls.push(pollId)
-                                                        for (let username of Object.keys(classInformation.classrooms[classroom.id].students)) {
-                                                            socketUpdates.customPollUpdate(username)
+                                                        for (let email of Object.keys(classInformation.classrooms[classroom.id].students)) {
+                                                            socketUpdates.customPollUpdate(email)
                                                         }
                                                     } catch (err) {
                                                         logger.log('error', err.stack)

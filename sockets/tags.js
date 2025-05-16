@@ -28,12 +28,12 @@ module.exports = {
                         }
                     }
                     student.tags = studentTags.toString();
-                    database.get('SELECT * FROM users WHERE username = ?', [student.username], (err, row) => {
+                    database.get('SELECT * FROM users WHERE email = ?', [student.email], (err, row) => {
                         if (err) {
                             logger.log(err.stack);
                         }
                         if (row) {
-                            database.run('UPDATE users SET tags = ? WHERE username = ?', [studentTags.toString(), student.username], (err) => {
+                            database.run('UPDATE users SET tags = ? WHERE email = ?', [studentTags.toString(), student.email], (err) => {
                                 if (err) {
                                     logger.log(err.stack);
                                 }
@@ -65,7 +65,7 @@ module.exports = {
             }
         });
 
-        socket.on('saveTags', (studentId, tags, username) => {
+        socket.on('saveTags', (studentId, tags, email) => {
             // Save the tags to the students tag element in their object
             // Then save their tags to the database
             try {
@@ -74,7 +74,7 @@ module.exports = {
 
                 // If the student has the offline tag while they are active in the class, remove it
                 // If the student is not active in the class, add the offline tag
-                if (classInformation.users[username].activeClasses.includes(socket.request.session.classId)) {
+                if (classInformation.users[email].activeClasses.includes(socket.request.session.classId)) {
                     for (tag of tags) {
                         if (tag == 'Offline' || tag == '') {
                             tags.splice(tags.indexOf(tag), 1);
@@ -84,7 +84,7 @@ module.exports = {
                     tags.push('Offline');
                 }
 
-                classInformation.classrooms[socket.request.session.classId].students[username].tags = tags.toString()
+                classInformation.classrooms[socket.request.session.classId].students[email].tags = tags.toString()
                 database.get('SELECT tags FROM users WHERE id=?', [studentId], (err, row) => {
                     if (err) {
                         logger.log('error', err)

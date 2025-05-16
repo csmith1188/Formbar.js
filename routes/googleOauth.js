@@ -48,7 +48,7 @@ module.exports = {
 						// If there is no user, insert them into the database
 						if (!user) {
 							database.run(`INSERT INTO users (email, email, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-								// Set the username to the family name + the given name, while removing spaces and special characters
+								// Set the email to the family name + the given name, while removing spaces and special characters
 								req.user.name.familyName.replace(/[^a-zA-Z]/g, '') + req.user.name.givenName.replace(/[^a-zA-Z]/g, ''),
 								req.user.emails[0].value,
 								permissions,
@@ -75,7 +75,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.email;
+									req.session.email = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -114,7 +114,7 @@ module.exports = {
 
 									// Add the user to the session in order to transfer data between each page
 									req.session.userId = userData.id;
-									req.session.username = userData.email;
+									req.session.email = userData.email;
 									req.session.email = userData.email;
 									req.session.classId = null;
 									req.session.displayName = userData.displayName;
@@ -148,7 +148,7 @@ module.exports = {
 
 								// Add the user to the session
 								req.session.userId = userData.id;
-								req.session.username = userData.email;
+								req.session.email = userData.email;
 								req.session.email = userData.email;
 								req.session.classId = null;
 								req.session.displayName = userData.displayName;

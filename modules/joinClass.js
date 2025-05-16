@@ -5,9 +5,9 @@ const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
 async function joinClass(code, session) {
-	const username = session.username;
+	const email = session.email;
 	try {
-		logger.log('info', `[joinClass] username=(${username}) classCode=(${code})`)
+		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
 
 		// Find the id of the class from the database
 		const classroom = await new Promise((resolve, reject) => {
@@ -39,7 +39,7 @@ async function joinClass(code, session) {
 
 		// Find the id of the user who is trying to join the class
 		let user = await new Promise((resolve, reject) => {
-			database.get('SELECT id FROM users WHERE username=?', [username], (err, user) => {
+			database.get('SELECT id FROM users WHERE email=?', [email], (err, user) => {
 				if (err) {
 					reject(err)
 					return
@@ -48,11 +48,11 @@ async function joinClass(code, session) {
 			})
 		})
 
-		if (!user && !classInformation.users[username]) {
+		if (!user && !classInformation.users[email]) {
 			logger.log('critical', '[joinClass] User is not in database')
 			return 'user is not in database'
-		} else if (classInformation.users[username] && classInformation.users[username].isGuest) {
-			user = classInformation.users[username];
+		} else if (classInformation.users[email] && classInformation.users[email].isGuest) {
+			user = classInformation.users[email];
 		}
 
 		// If the user is not a guest, then link them to the class
@@ -72,7 +72,7 @@ async function joinClass(code, session) {
 
 		if (classUser) {
 			// Get the student's session data ready to transport into new class
-			let currentUser = classInformation.users[username]
+			let currentUser = classInformation.users[email]
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'
@@ -80,15 +80,16 @@ async function joinClass(code, session) {
 
 			// Set class permissions and remove the user's Offline tag if their tags aren't null
 			currentUser.classPermissions = classUser.permissions
+			currentUser.activeClasses.push(classroom.id);
 			if (currentUser.tags) {
 				currentUser.tags = currentUser.tags.replace('Offline', '');	
-				classInformation.users[username].tags = classInformation.users[username].tags.replace('Offline', '')
+				classInformation.users[email].tags = classInformation.users[email].tags.replace('Offline', '')
 			}
 
 			// Add the student to the newly created class
-			classInformation.classrooms[classroom.id].students[username] = currentUser
-			classInformation.classrooms[classroom.id].poll.studentBoxes.push(username)
-			classInformation.users[username].activeClasses.push(classroom.id)
+			classInformation.classrooms[classroom.id].students[email] = currentUser
+			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
+			classInformation.users[email].activeClasses.push(classroom.id)
 			advancedEmitToClass('joinSound', classroom.id, { api: true })
 
 			// Set session class and classId
@@ -117,14 +118,14 @@ async function joinClass(code, session) {
 
 			// Grab the user from the users list
 			const classData = classInformation.classrooms[classroom.id];
-			const currentUser = classInformation.users[username]
+			const currentUser = classInformation.users[email]
 			currentUser.classPermissions = classData.permissions.userDefaults
 			currentUser.activeClasses.push(classroom.id)
 
 			// Add the student to the newly created class
-			classData.students[username] = currentUser
-			classData.poll.studentBoxes.push(username)
-			classInformation.users[username].activeClasses.push(classroom.id)
+			classData.students[email] = currentUser
+			classData.poll.studentBoxes.push(email)
+			classInformation.users[email].activeClasses.push(classroom.id)
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,

@@ -9,8 +9,8 @@ const jwt = require('jsonwebtoken');
 function generateAccessToken(userData, classId, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
-        username: userData.email,
         email: userData.email,
+        username: userData.email,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
@@ -25,7 +25,7 @@ function generateAccessToken(userData, classId, refreshToken) {
 function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
-        username: userData.username,
+        email: userData.email,
         email: userData.email
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 
@@ -51,13 +51,13 @@ async function createUserData(userData) {
         // Add student information from users table
         for (const student of classUsers) {
             const studentData = await dbGet('SELECT * FROM users WHERE id=?', [student.studentId]);
-            student.username = studentData.email;
+            student.email = studentData.email;
             student.displayName = studentData.displayName;
             student.digipogs = studentData.digipogs;
             student.tags = studentData.tags;
             student.verified = studentData.verified;
 
-            classUsers[student.username] = student;
+            classUsers[student.email] = student;
         }
 
         // Add students to classroom
@@ -176,7 +176,7 @@ module.exports = {
         // This is what happens after the user submits their authentication data.
         app.post('/oauth', (req, res) => {
             try {
-                // It saves the username, password, and the redirectURL that is submitted.
+                // It saves the email, password, and the redirectURL that is submitted.
                 const { email, password, redirectURL } = req.body;
 
                 logger.log('info', `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);

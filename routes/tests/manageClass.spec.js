@@ -6,7 +6,7 @@ const { TEACHER_PERMISSIONS, STUDENT_PERMISSIONS } = require('../../modules/perm
 
 describe('Manage Class Route', () => {
     let app;
-    const mockUsername = 'testuser';
+    const mockemail = 'testuser';
 
     beforeEach(() => {
         app = createExpressServer();
@@ -14,15 +14,15 @@ describe('Manage Class Route', () => {
         // Add session mock
         app.use((req, res, next) => {
             req.session = {
-                username: mockUsername
+                email: mockemail
             };
             next();
         });
 
         // Initialize classInformation with test user
         classInformation.users = {
-            [mockUsername]: {
-                username: mockUsername,
+            [mockemail]: {
+                email: mockemail,
                 permissions: TEACHER_PERMISSIONS,
                 activeClasses: []
             }
@@ -46,7 +46,7 @@ describe('Manage Class Route', () => {
 
         it('should return error when user does not have teacher permissions', async () => {
             // Set user permissions to student level
-            classInformation.users[mockUsername].permissions = STUDENT_PERMISSIONS;
+            classInformation.users[mockemail].permissions = STUDENT_PERMISSIONS;
 
             const response = await request(app)
                 .get('/manageClass')

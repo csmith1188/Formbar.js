@@ -57,9 +57,7 @@ function getConfig() {
     }
 
     // If there is no .env file, create one from the template
-    if (!fs.existsSync('.env')) {
-        fs.copyFileSync('.env-template', '.env');
-    }
+    if (!fs.existsSync('.env')) fs.copyFileSync('.env-template', '.env');
     
     return {
         logNumbers: JSON.parse(fs.readFileSync('logNumbers.json', "utf8")),
