@@ -196,6 +196,7 @@ function responseAmountChange() {
 
 		let saveColorButton = document.createElement('button')
 		saveColorButton.className = 'quickButton'
+		saveColorButton.style.width = "100px"
 		saveColorButton.textContent = 'Save Color'
 		saveColorButton.onclick = () => {
 			saveColor(i)
@@ -204,6 +205,7 @@ function responseAmountChange() {
 
 		let resetColor = document.createElement('button')
 		resetColor.className = 'quickButton'
+		resetColor.style.width = "100px"
 		resetColor.textContent = 'Reset Color'
 		resetColor.onclick = (event) => {
 			event.preventDefault()
@@ -264,6 +266,7 @@ function responseAmountChange() {
 		let removeAnswerButton = document.createElement("button");
 		removeAnswerButton.className = "quickButton";
 		removeAnswerButton.textContent = "X";
+		removeAnswerButton.id = `removeAnswer`;
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
 
@@ -408,6 +411,7 @@ function clearPollFunc() {
 
 function endPollFunc() {
 	socket.emit('endPoll')
+	socket.emit('getPreviousPolls', currentPreviousPollIndex);
 }
 
 // Starts a new poll that allows students to submit answers
@@ -465,6 +469,7 @@ function startPoll(customPollId) {
 		changeTab('mainPolls', 'polls')
 
 		let generatedColors = generateColors(customPoll.answers.length)
+		console.log('beginning poll here')
 		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, false)
 	} else {
 		let blind = blindCheck.checked

@@ -65,13 +65,13 @@ input {
 	color: #ffffff;
 }
 
+.headBox {
+	color: #ffffff !important;
+}
+
 .contentBox {
 	background-color: #484848 !important;
 	color: #ffffff;
-}
-
-#pollbox {
-	color :#000000
 }
 
 #select {
