@@ -540,11 +540,28 @@
     }
 
     function loadPoll(button) {
-        const previousPoll = button.parentElement;
-        const pollId = previousPoll.id;
-        console.log(pollId)
-        console.log(currentPreviousPolls)
-        const previousPollData = currentPreviousPolls.find(poll => poll.id === pollId);
+        const previousPollElement = button.parentElement;
+        const pollId = previousPollElement.id;
+        const previousPoll = currentPreviousPolls.find(poll => poll.id == pollId);
+        const previousPollData = JSON.parse(previousPoll.data)
+        let responses = [];
+
+        // Check if previous poll data has responses
+        // Legacy polls do not have this data, which makes loading poll less reliable as the
+        // possible responses were never stored. Only student's responses were stored.
+        console.log(previousPollData)
+        if (previousPollData.responses) {
+            responses = previousPollData.responses;
+        } else {
+            // Loop through student responses and add them to responses list
+            for (const letterResponse of previousPollData.letter) {
+                // Skip if the response is empty or already in the array
+                if (letterResponse == '' || responses.indexOf(letterResponse) != -1) continue;
+                responses.push(letterResponse);
+            }
+        }
+
+        console.log(responses)
     }
 
     // Scrolls previous polls page forward and backward
