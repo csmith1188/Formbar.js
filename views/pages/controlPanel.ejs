@@ -638,6 +638,11 @@
             previousPollsDiv.removeChild(previousPollsDiv.firstChild);
         }
 
+        // If there are no previous polls, display a message
+        if (previousPolls.length === 0) {
+            previousPollsDiv.innerHTML = "<p style='text-align: center;'>No previous polls to display</p>";
+        }
+
         // If currentPreviousPollIndex is zero, hide the back button
         // If currentPreviousPollIndex is greater than or equal to totalPreviousPolls - 20, hide the forward button
         previousPollBackButton.hidden = currentPreviousPollIndex === 0;
