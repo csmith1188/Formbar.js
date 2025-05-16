@@ -1,5 +1,5 @@
 const { transferDigipogs } = require('../modules/digipogs');
-const { database } = require('../modules/database');
+const { database, dbGet} = require('../modules/database');
 const jwt = require('jsonwebtoken');
 const {logger} = require("../modules/logger");
 const {logNumbers} = require("../modules/config");
@@ -8,14 +8,7 @@ module.exports = {
     run(app) {
         app.get('/transfer', async (req, res) => {
             try {
-                const API = await new Promise((resolve, reject) => {
-                    database.get('SELECT API FROM users WHERE id = ?', [req.query.to], (err, row) => {
-                        if (err) {
-                            reject(err);
-                        }
-                        resolve(row.API);
-                    });
-                });
+                const API = await dbGet('SELECT API FROM users WHERE id = ?', [req.query.to]);
 
                 let data;
                 try {

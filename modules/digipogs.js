@@ -1,4 +1,4 @@
-const { database } = require('./database');
+const { database, dbGet} = require('./database');
 const { TEACHER_PERMISSIONS } = require('./permissions');
 // The percentage of digipogs lost during a transfer
 // For example, if the loss rate is 0.3, a user will only recieve 30% of the transferred pogs. Should always be less than 1 and greater than 0.
@@ -9,24 +9,9 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
         +from;
         +to;
         +amount;
-        const fromBalance = await new Promise((resolve, reject) => {
-            database.get('SELECT digipogs FROM users WHERE id = ?', [from], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row.digipogs);
-                };
-            });
-        });
-        const permissions = await new Promise((resolve, reject) => {
-            database.get('SELECT permissions FROM users WHERE id = ?', [from], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row.permissions);
-                };
-            });
-        });
+        const fromBalance = await dbGet('SELECT digipogs FROM users WHERE id = ?', [from]);
+        const permissions = await dbGet('SELECT permissions FROM users WHERE id = ?', [from]);
+
         // If the user does not have enough digipogs and their permissions are less than a teacher, log the transaction and return false
         if (fromBalance < amount && permissions < TEACHER_PERMISSIONS) {
             // Log the transaction
@@ -79,7 +64,7 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
     } catch (err) {
         logger.log('error', err.stack);
     }
-};
+}
 
 module.exports = {
     transferDigipogs
