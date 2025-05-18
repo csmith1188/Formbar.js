@@ -91,7 +91,8 @@ module.exports = {
                         title: 'Error'
                     });
                     return;
-                };
+                }
+
                 logger.log('info', `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 logger.log('verbose', `[get /oauth] redirectURL=(${redirectURL}) refreshToken=(${refreshToken})`);
 
@@ -102,7 +103,7 @@ module.exports = {
                             // Invalid refresh token
                             res.redirect(`/oauth?redirectURL=${redirectURL}`);
                             return;
-                        };
+                        }
                         
                         database.get('SELECT * FROM users WHERE id=?', [refreshTokenData.user_id], async (err, userData) => {
                             if (err) throw err;
@@ -111,11 +112,12 @@ module.exports = {
                                 
                                 // Generate new access token
                                 const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
-                                res.redirect(`${redirectURL}?token=${accessToken}`);
+                                const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
+                                res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                             } else {
                                 // Invalid user
                                 res.redirect(`/oauth?redirectURL=${redirectURL}`);
-                            };
+                            }
                         });
                     });
                 } else if (req.session.userId) {
@@ -133,20 +135,21 @@ module.exports = {
                                         const refreshToken = generateRefreshToken(req.session.userId);
                                         storeRefreshToken(req.session.userId, refreshToken);
                                         return;
-                                    };
+                                    }
 
                                     userData = await createUserData(userData);
 
                                     // Generate access token
                                     const classId = getUserClass(req.session.email);
                                     const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
-                                    res.redirect(`${redirectURL}?token=${accessToken}`);
+                                    const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
+                                    res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                                 } else {
                                     const refreshToken = generateRefreshToken(userData);
                                     storeRefreshToken(req.session.userId, refreshToken);
                                     // Invalid refresh token
                                     res.redirect(`/oauth?redirectURL=${redirectURL}`);
-                                };
+                                }
                             });
                         } else {
                             // Invalid user
@@ -154,7 +157,7 @@ module.exports = {
                                 title: 'Error',
                                 message: 'Invalid user'
                             });
-                        };
+                        }
                     });
                 } else {
                     // Render the login page and pass the redirectURL
@@ -163,14 +166,14 @@ module.exports = {
                         redirectURL: redirectURL,
                         route: 'oauth'
                     });
-                };          
+                }
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: 'Error'
                 });
-            };
+            }
         });
 
         // This is what happens after the user submits their authentication data.
@@ -210,7 +213,7 @@ module.exports = {
                                 title: 'Login'
                             });
                             return;
-                        };
+                        }
 
                         // Hashes users password
                         const passwordMatches = await compare(password, userData.password);
@@ -221,7 +224,7 @@ module.exports = {
                                 title: 'Login'
                             });
                             return;
-                        };
+                        }
 
                         userData = await createUserData(userData);
 
@@ -250,7 +253,8 @@ module.exports = {
                             const accessToken = generateAccessToken(userData, classId, refreshToken);
                                                 
                             logger.log('verbose', '[post /oauth] Successfully Logged in with oauth');
-                            res.redirect(`${redirectURL}?token=${accessToken}`);
+                            const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
+                            res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                         });
                     } catch (err) {
                         logger.log('error', err.stack);
@@ -258,7 +262,7 @@ module.exports = {
                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                             title: 'Error'
                         });
-                    };
+                    }
                 });
             } catch (err) {
                 logger.log('error', err.stack);
