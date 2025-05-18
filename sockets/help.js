@@ -2,8 +2,6 @@ const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 
-
-
 module.exports = {
     run(socket, socketUpdates) {
         // Sends a help ticket
@@ -25,7 +23,7 @@ module.exports = {
                 logger.log('info', `[help] reason=(${reason}) time=(${time})`);
                 if (student.help.reason != reason) {
                     socket.emit('helpSuccess');
-                    advancedEmitToClass('helpSound', classId, { api: true });
+                    advancedEmitToClass('helpSound', classId, {});
                 }
 
                 student.help = { reason: reason, time: time };

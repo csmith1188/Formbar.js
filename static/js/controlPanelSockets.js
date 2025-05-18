@@ -349,6 +349,7 @@ socket.on('classBannedUsersUpdate', (bannedStudents) => {
 	}
 })
 
+// Handle callback for when a polls are created or ended
 socket.on('startPoll', () => {
 	endPoll.style.display = 'block'
 	changeTab('usersMenu', 'mainTabs')
@@ -357,3 +358,31 @@ socket.on('startPoll', () => {
 socket.on('endPoll', () => {
 	endPoll.style.display = 'none'
 })
+
+
+// Handle sound events
+const socketSounds = {
+	'pollSound': new Audio('/sfx/TUTD.wav'),
+	'removePollSound': new Audio('/sfx/remove.wav'),
+	'breakSound': new Audio('/sfx/break.wav'),
+	'helpSound': new Audio('/sfx/help.wav'),
+	'timerSound': new Audio('/sfx/alarmClock.mp3'),
+	'joinSound': new Audio('/sfx/join.wav'),
+	'leaveSound': new Audio('/sfx/leave.wav')
+};
+
+function playSound(sound) {
+	try {
+		// If the sound isn't muted, play it
+		if (!mute) {
+			sound.play();
+		}
+	} catch (err) {}
+}
+
+for (const socketName in socketSounds) {
+	const sound = socketSounds[socketName];
+	socket.on(socketName, () => {
+		playSound(sound);
+	});
+}

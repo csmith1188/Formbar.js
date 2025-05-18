@@ -103,6 +103,7 @@ module.exports = {
 
                 // Kick the user from the classroom entirely if they're a guest
                 // If not, kick them from the session
+                advancedEmitToClass('leaveSound', socket.request.session.classId, {});
                 socketUpdates.classKickUser(email, classId, classInformation.users[email].isGuest);
             } catch (err) {
                 logger.log('error', err.stack)
@@ -134,7 +135,7 @@ module.exports = {
                 socketUpdates.virtualBarUpdate();
 
                 // Play leave sound and reload the user's page
-                advancedEmitToClass('leaveSound', socket.request.session.classId, { api: true });
+                advancedEmitToClass('leaveSound', socket.request.session.classId, {});
                 userSockets[email].emit('reload');
             } catch (err) {
                 logger.log('error', err.stack)
@@ -326,7 +327,7 @@ module.exports = {
                 socketUpdates.classKickUser(email, classId)
                 socketUpdates.classPermissionUpdate(classId)
                 socketUpdates.virtualBarUpdate(classId)
-                advancedEmitToClass('leaveSound', classId, { api: true })
+                advancedEmitToClass('leaveSound', classId, {})
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -381,7 +382,7 @@ module.exports = {
                         socketUpdates.classKickUser(user)
                         socketUpdates.classBannedUsersUpdate()
                         socketUpdates.classPermissionUpdate()
-                        advancedEmitToClass('leaveSound', classId, { api: true })
+                        advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${user}`)
                     } catch (err) {
                         logger.log('error', err.stack)
