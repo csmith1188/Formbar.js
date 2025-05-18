@@ -90,7 +90,7 @@ async function joinClass(code, session) {
 			classInformation.classrooms[classroom.id].students[email] = currentUser
 			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
 			classInformation.users[email].activeClasses.push(classroom.id)
-			advancedEmitToClass('joinSound', classroom.id, { api: true })
+			advancedEmitToClass('joinSound', classroom.id, {})
 
 			// Set session class and classId
 			session.classId = classroom.id;

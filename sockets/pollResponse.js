@@ -18,6 +18,7 @@ module.exports = {
                 const classId = socket.request.session.classId
                 const email = socket.request.session.email
                 const classroom = classInformation.classrooms[classId]
+
                 // Check if user is allowed to respond
                 const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
                 if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {
@@ -31,7 +32,7 @@ module.exports = {
                         return;
                     }
                 } else {
-                    // For multires polls, validate that all responses are valid
+                    // For multi-res polls, validate that all responses are valid
                     if (isRemoving) {
                         // Allow removal
                     } else if (!Array.isArray(res)) {
@@ -54,9 +55,9 @@ module.exports = {
                 
                 if (hasChanged || classroom.students[email].pollRes.textRes !== textRes) {
                     if (isRemoving) {
-                        advancedEmitToClass('removePollSound', classId, { api: true })
+                        advancedEmitToClass('removePollSound', classId, {})
                     } else {
-                        advancedEmitToClass('pollSound', classId, { api: true })
+                        advancedEmitToClass('pollSound', classId, {})
                     }
                 }
                 

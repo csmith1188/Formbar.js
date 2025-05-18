@@ -263,11 +263,12 @@ dialog {
 }
 
 #muteButton {
-	right: 5%;
+	display: none;
+	margin-right: 55px;
 }
 
 #unmuteButton {
-	right: 5%;
+	margin-right: 55px;
 }
 
 #logoutIcon {

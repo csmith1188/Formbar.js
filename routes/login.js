@@ -34,6 +34,7 @@ module.exports = {
                     res.render('pages/login', {
                         title: 'Login',
                         redirectURL: undefined,
+                        googleOauthEnabled: settings.googleOauthEnabled,
                         route: 'login'
                     });
                     return;
@@ -248,7 +249,7 @@ module.exports = {
                             if (req.body.route === 'transfer') {
                                 res.redirect(req.body.redirectURL);
                                 return;
-                            };
+                            }
 
                             // Redirect the user to the home page to be redirected to the correct spot
                             res.redirect('/')

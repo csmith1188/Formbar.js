@@ -825,10 +825,7 @@ class SocketUpdates {
     
             if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
             if (classData.timer.timeLeft <= 0 && active && sound) {
-                advancedEmitToClass('timerSound', this.socket.request.session.classId, {
-                    classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, classInformation.classrooms[this.socket.request.session.classId].permissions.sounds),
-                    api: true
-                });
+                advancedEmitToClass('timerSound', this.socket.request.session.classId, {});
             }
     
             advancedEmitToClass('vbTimer', this.socket.request.session.classId, {

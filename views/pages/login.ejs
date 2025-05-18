@@ -34,11 +34,11 @@
                     <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in"
                         onsubmit="return false;">
                     <br>
-                    Or
+                    <span id="orText">Or</span>
                     <br>
                 </form>
 
-                <button class="gsi-material-button" onclick="loginWithGoogle()">
+                <button class="gsi-material-button" id="googleOAuthButton" onclick="loginWithGoogle()">
                     <div class="gsi-material-button-state"></div>
                     <div class="gsi-material-button-content-wrapper">
                         <div class="gsi-material-button-icon">
@@ -159,11 +159,18 @@
 
         function loginWithGoogle() {
             redirect.value ? window.location.href = `/auth/google?redirect=${redirect.value}` : window.location.href = '/auth/google';
-        };
+        }
 
         passwordBox.oninput = checkIfBlank;
         displayNameBox.oninput = checkIfBlank;
 
         changeloginType(loginButton);
+
+        <% if (!googleOauthEnabled) { %>
+            const googleOAuthButton = document.getElementById('googleOAuthButton');
+            const orText = document.getElementById('orText')
+            googleOAuthButton.style.display = 'none';
+            orText.style.display = 'none';
+        <% } %>
     </script>
 </html>
