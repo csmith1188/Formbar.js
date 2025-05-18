@@ -30,10 +30,12 @@ module.exports = {
                     res.redirect('/');
                     return;
                 } else if (!token) {
+                    console.log(settings.googleOauthEnabled)
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
                         redirectURL: undefined,
+                        googleOauthEnabled: settings.googleOauthEnabled,
                         route: 'login'
                     });
                     return;
