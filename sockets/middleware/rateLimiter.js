@@ -1,47 +1,38 @@
 const { logger } = require("../../modules/logger")
 const { rateLimits } = require("../../modules/socketUpdates")
+const {TEACHER_PERMISSIONS} = require("../../modules/permissions");
 
 module.exports = {
-    order: 30,
+    order: 0,
     run(socket, socketUpdates) {
         // Rate limiter
         socket.use(([event, ...args], next) => {
             try {
+                if (!socket.request.session || !socket.request.session.email) {
+                    return;
+                }
+
                 const email = socket.request.session.email
                 const currentTime = Date.now()
                 const timeFrame = 5000
-                const blockTime = 5000
-                const limitedRequests = ['pollResp', 'help', 'break']
-                let limit = 5
+                const limit = socket.request.session.permissions >= TEACHER_PERMISSIONS ? 15 : 10
 
-                logger.log('info', `[rate limiter] email=(${email}) currentTime=(${currentTime})`)
                 if (!rateLimits[email]) {
                     rateLimits[email] = {}
                 }
 
                 const userRequests = rateLimits[email]
-                if (!limitedRequests.includes(event)) {
-                    next()
-                    return
-                }
-
                 userRequests[event] = userRequests[event] || []
-                userRequests[event] = userRequests[event].filter((timestamp) => currentTime - timestamp < timeFrame)
-                logger.log('verbose', `[rate limiter] userRequests=(${JSON.stringify(userRequests)})`)
-                if (event == 'pollResp') {
-                    limit = 15
+                while (userRequests[event].length && currentTime - userRequests[event][0] > timeFrame) {
+                    userRequests[event].shift();
+                    userRequests['hasBeenMessaged'] = false;
                 }
 
                 if (userRequests[event].length >= limit) {
-                    socket.emit('message', `You are being rate limited. Please try again in a ${blockTime / 1000} seconds.`)
-                    next(new Error('Rate limited'))
-                    setTimeout(() => {
-                        try {
-                            userRequests[event].shift()
-                        } catch (err) {
-                            logger.log('error', err.stack);
-                        }
-                    }, blockTime)
+                    if (!userRequests['hasBeenMessaged']) {
+                        socket.emit('message', `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.`)
+                    }
+                    userRequests['hasBeenMessaged'] = true;
                 } else {
                     userRequests[event].push(currentTime)
                     next()
