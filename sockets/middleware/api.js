@@ -6,7 +6,7 @@ const { Student } = require("../../modules/student")
 const { getUserClass } = require("../../modules/user")
 
 module.exports = {
-    order: 0,
+    order: 10,
     async run(socket, socketUpdates) {
         try {
             const { api } = socket.request.headers

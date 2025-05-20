@@ -14,12 +14,18 @@ module.exports = {
         socket.on('startClass', () => {
             try {
                 logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
                 // Enable all plugins
-                for (const p of Object.keys(plugins)) {
-                    const plugin = plugins[p]
-                    if (typeof plugin.onEnable == 'function')  plugin.onEnable()
-                    else logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
+                for (const pluginName of Object.keys(plugins)) {
+                    const plugin = plugins[pluginName]
+                    if (typeof plugin.onEnable == 'function') {
+                        plugin.onEnable()
+                    } else {
+                        logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
+                    }
                 }
+
+                // Start the class
                 const classId = socket.request.session.classId
                 socketUpdates.startClass(classId)
             } catch (err) {
@@ -31,12 +37,18 @@ module.exports = {
         socket.on('endClass', () => {
             try {
                 logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+
                 // Disable all plugins
-                for (const p of Object.keys(plugins)) {
-                    const plugin = plugins[p]
-                    if (typeof plugin.onDisable == 'function')  plugin.onDisable()
-                    else logger.log('warning', `[endClass] Plugin ${plugin.name} does not have an onDisable function.`)
+                for (const pluginName of Object.keys(plugins)) {
+                    const plugin = plugins[pluginName]
+                    if (typeof plugin.onDisable == 'function') {
+                        plugin.onDisable()
+                    } else {
+                        logger.log('warning', `[endClass] Plugin ${plugin.name} does not have an onDisable function.`)
+                    }
                 }
+
+                // End the class
                 const classId = socket.request.session.classId
                 socketUpdates.endClass(classId)
             } catch (err) {
@@ -92,8 +104,10 @@ module.exports = {
             }
         });
 
-        // Leaves a classroom session
-        // User is still associated with the class
+        /**
+         * Leaves the classroom session
+         * The user is still associated with the class, but they're not active in it
+         */
         socket.on('leaveClass', () => {
             try {
                 logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -110,8 +124,10 @@ module.exports = {
             }
         });
 
-        // Leaves the classroom entirely
-        // User is no longer associated with the class
+        /**
+         * Leaves the classroom entirely
+         * The user is no longer associated with the class
+         */
         socket.on('leaveClassroom', async () => {
             try {
                 const classId = socket.request.session.classId;
@@ -162,7 +178,7 @@ module.exports = {
         /**
          * Changes the voting rights of a user or multiple users
          * @param {Object} votingData - An object containing the emails and their voting rights.
-         *                              This should only include emails which should be changed.
+         * This should only include emails which should be changed.
          */
         socket.on('changeCanVote', (votingData) => {
             try {
@@ -212,6 +228,11 @@ module.exports = {
             }
         });
 
+        /**
+         * Sets a setting for the classroom
+         * @param {string} setting - A string representing the setting to change.
+         * @param {string} value - The value to set the setting to.
+         */
         socket.on("setClassSetting", (setting, value) => {
             try {
                 const classId = socket.request.session.classId;
@@ -222,22 +243,24 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack)
             }
-            
         });
 
+        /**
+         * Checks if the class the user is currently in is active
+         * Returns true or false on the same event
+         */
         socket.on("isClassActive", () => {
             try {
                 logger.log('info', `[isClassActive] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
                 const classId = socket.request.session.classId;
-                if (classInformation.classrooms[classId].isActive) {
-                    socket.emit("isClassActive", true);
-                }
+                socket.emit("isClassActive", classInformation.classrooms[classId].isActive);
             } catch (err) {
                 logger.log('error', err.stack)
             }
         });
 
+        // Regenerates the class code for the classroom in the teacher's session
         socket.on('regenerateClassCode', () => {
             try {
                 // Generate a new class code
@@ -260,6 +283,10 @@ module.exports = {
             }
         });
 
+        /**
+         * Changes the class name
+         * @param {string} name - The new name of the class.
+         */
         socket.on('changeClassName', (name) => {
             try {
                 logger.log('info', `[changeClassName] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -287,7 +314,10 @@ module.exports = {
             }
         });
 
-        // Deletes a classroom
+        /**
+         * Deletes a classroom
+         * @param {string} classId - The ID of the classroom to delete.
+         */
         socket.on('deleteClass', (classId) => {
             try {
                 logger.log('info', `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -317,7 +347,10 @@ module.exports = {
             }
         })
 
-        // Kicks a user from the class
+        /**
+         * Kicks a user from the classroom
+         * @param {string} email - The email of the user to kick.
+         */
         socket.on('classKickUser', (email) => {
             try {
                 logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -333,7 +366,7 @@ module.exports = {
             }
         })
 
-        // Deletes all students from the class
+        // Removes all students from the class
         socket.on('classKickStudents', () => {
             try {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -348,10 +381,14 @@ module.exports = {
             }
         })
 
-        socket.on('classBanUser', (user) => {
+        /**
+         * Bans a user from the classroom
+         * @param {string} email - The email of the user to ban.
+         */
+        socket.on('classBanUser', (email) => {
             try {
                 logger.log('info', `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[ban] user=(${user})`)
+                logger.log('info', `[ban] user=(${email})`)
 
                 let classId = socket.request.session.classId
                 logger.log('info', `[ban] classId=(${classId})`)
@@ -362,7 +399,7 @@ module.exports = {
                     return
                 }
 
-                if (!user) {
+                if (!email) {
                     logger.log('critical', '[ban] No email provided.')
                     socket.emit('message', 'No email provided. (Please contact the programmer)')
                     return
@@ -370,20 +407,20 @@ module.exports = {
 
                 database.run('UPDATE classusers SET permissions = 0 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE email=?)', [
                     classId,
-                    user
+                    email
                 ], (err) => {
                     try {
                         if (err) throw err
 
-                        if (classInformation.classrooms[socket.request.session.classId].students[user]) {
-                            classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = 0
+                        if (classInformation.classrooms[socket.request.session.classId].students[email]) {
+                            classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = 0
                         }
 
-                        socketUpdates.classKickUser(user)
+                        socketUpdates.classKickUser(email)
                         socketUpdates.classBannedUsersUpdate()
                         socketUpdates.classPermissionUpdate()
                         advancedEmitToClass('leaveSound', classId, {})
-                        socket.emit('message', `Banned ${user}`)
+                        socket.emit('message', `Banned ${email}`)
                     } catch (err) {
                         logger.log('error', err.stack)
                         socket.emit('message', 'There was a server error try again.')
@@ -395,10 +432,14 @@ module.exports = {
             }
         })
 
-        socket.on('classUnbanUser', (user) => {
+        /**
+         * Unbans a user from the classroom
+         * @param {string} email - The email of the user to unban.
+         */
+        socket.on('classUnbanUser', (email) => {
             try {
                 logger.log('info', `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[unban] user=(${user})`)
+                logger.log('info', `[unban] user=(${email})`)
 
                 let classId = socket.request.session.classId
                 logger.log('info', `[unban] classId=(${classId})`)
@@ -409,7 +450,7 @@ module.exports = {
                     return
                 }
 
-                if (!user) {
+                if (!email) {
                     logger.log('critical', '[unban] no email provided.')
                     socket.emit('message', 'No email provided. (Please contact the programmer)')
                     return
@@ -417,16 +458,16 @@ module.exports = {
 
                 database.run('UPDATE classusers SET permissions = 1 WHERE classId = ? AND studentId = (SELECT id FROM users WHERE email=?)', [
                     classId,
-                    user
+                    email
                 ], (err) => {
                     try {
                         if (err) throw err
 
-                        if (classInformation.classrooms[classId].students[user])
-                            classInformation.classrooms[classId].students[user].permissions = 1
+                        if (classInformation.classrooms[classId].students[email])
+                            classInformation.classrooms[classId].students[email].permissions = 1
 
                         socketUpdates.classBannedUsersUpdate()
-                        socket.emit('message', `Unbanned ${user}`)
+                        socket.emit('message', `Unbanned ${email}`)
                     } catch (err) {
                         logger.log('error', err.stack)
                         socket.emit('message', 'There was a server error try again.')
@@ -438,30 +479,37 @@ module.exports = {
             }
         })
 
-        // Changes permission of user. Takes which user and the new permission level
-        socket.on('classPermChange', (user, newPerm) => {
+        /**
+         * Changes permission of user. Takes which user and the new permission level
+         * @param {string} email - The email of the user to change permissions for.
+         * @param {number} newPerm - The new permission level to set.
+         */
+        socket.on('classPermChange', (email, newPerm) => {
             try {
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[classPermChange] user=(${user}) newPerm=(${newPerm})`)
-                classInformation.classrooms[socket.request.session.classId].students[user].classPermissions = newPerm
-                classInformation.users[user].classPermissions = newPerm
+                logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
+                classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
+                classInformation.users[email].classPermissions = newPerm
 
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,
                     classInformation.classrooms[socket.request.session.classId].id,
-                    classInformation.classrooms[socket.request.session.classId].students[user].id
+                    classInformation.classrooms[socket.request.session.classId].students[email].id
                 ])
 
-                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[user])})`)
-                io.to(`user-${user}`).emit('reload')
-
-                // cpUpdate()
-                // Commented Out to fix Issue #231 checkbox 14, tags not updating when permissions are changed and page is not refreshed
+                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
+                io.to(`user-${email}`).emit('reload')
             } catch (err) {
                 logger.log('error', err.stack);
             }
         })
 
+        /**
+         * Sets the permission settings for the classroom
+         * @param {string} permission - The permission to set.
+         * @param {number} level - The level to set the permission to.
+         * This can be 1, 2, 3, 4, 5 with guest permissions being 1.
+         */
         socket.on('setClassPermissionSetting', (permission, level) => {
             try {
                 logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)

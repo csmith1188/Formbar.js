@@ -22,11 +22,11 @@ module.exports = {
                 startTime = Math.round(startTime)
 
                 classData.timer.startTime = startTime
-                classData.timer.timeLeft = startTime + 1
+                classData.timer.timeLeft = startTime
                 classData.timer.active = active
                 classData.timer.sound = sound
-
                 socketUpdates.classPermissionUpdate()
+
                 if (active) {
                     // Run the function once instantly
                     socketUpdates.timer(sound, active)
