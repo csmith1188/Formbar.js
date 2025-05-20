@@ -110,8 +110,9 @@
 						try {
 							const key = +event.key - 1;
 							const pollSelection = pollForm.children[key].children[0];
+
+							// If the response is not already selected, then select it
 							if (!pollSelection.checked) {
-								console.log('selecting')
 								pollSelection.click();
 							}
 						} catch (err) {
