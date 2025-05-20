@@ -136,6 +136,7 @@ class SocketUpdates {
             )
 
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
+            this.customPollUpdate();
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -373,6 +374,12 @@ class SocketUpdates {
     
     customPollUpdate(email) {
         try {
+            // Ignore any requests which do not have an associated socket with the email
+            if (!email) email = this.socket.request.session.email;
+            if (!userSockets[email]) {
+                return;
+            }
+
             logger.log('info', `[customPollUpdate] email=(${email})`)
             let userSession = userSockets[email].request.session
             let userSharedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].sharedPolls

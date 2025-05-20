@@ -271,5 +271,4 @@ socket.on('cpUpdate', (newClassroom) => {
     filterSortChange(newClassroom)
 
     classroom = newClassroom
-    socket.emit('customPollUpdate')
 })

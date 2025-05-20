@@ -15,8 +15,7 @@ module.exports = {
                 const email = socket.request.session.email
                 const currentTime = Date.now()
                 const timeFrame = 5000
-                const limit = socket.request.session.permissions >= TEACHER_PERMISSIONS ? 15 : 10
-
+                const limit = socket.request.session.permissions >= TEACHER_PERMISSIONS ? 15 : 8
                 if (!rateLimits[email]) {
                     rateLimits[email] = {}
                 }
