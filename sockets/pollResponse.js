@@ -2,7 +2,7 @@ const { classInformation } = require("../modules/class")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass, userSockets} = require("../modules/socketUpdates")
-const { earnedObject } = require('./pollCreation');
+const { earnedObject } = require('../modules/polls');
 
 let earnedDigipogs = earnedObject.earnedDigipogs;
 

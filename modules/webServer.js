@@ -18,5 +18,25 @@ async function getIpAccess(type) {
 	}, {})
 }
 
+function createSocketDataFromHttp(requestData) {
+	return {
+		request: {
+			session: requestData.session
+		},
+		handshake: {
+			address: requestData.ip
+		},
+		emit: (event, message) => {
+
+		}
+	}
+}
+
 const { app, io, http } = createServer();
-module.exports = { app, io, http, getIpAccess };
+module.exports = {
+	app,
+	io,
+	http,
+	getIpAccess,
+	createSocketDataFromHttp
+};

@@ -30,5 +30,5 @@ function initSocketRoutes() {
 }
 
 module.exports = {
-    initSocketRoutes
+    initSocketRoutes,
 }

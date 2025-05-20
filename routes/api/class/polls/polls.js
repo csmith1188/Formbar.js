@@ -1,6 +1,6 @@
-const { classInformation } = require("../../../modules/class")
-const { getPollResponses } = require("../../../modules/polls")
-const { logger } = require("../../../modules/logger")
+const { classInformation } = require("../../../../modules/class")
+const { getPollResponses } = require("../../../../modules/polls")
+const { logger } = require("../../../../modules/logger")
 
 module.exports = {
     run(router) {

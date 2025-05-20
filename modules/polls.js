@@ -1,3 +1,101 @@
+const { classInformation } = require("./class");
+const { logger } = require("./logger");
+const { generateColors } = require("./util");
+const { createSocketDataFromHttp } = require("./webServer");
+
+const earnedObject = {
+    earnedDigipogs: []
+};
+
+async function createPoll(pollData, socket, req) {
+    try {
+        const { socketUpdates, resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
+
+        earnedObject.earnedDigipogs = [];
+        if (!socket) {
+            socket = createSocketDataFromHttp(req);
+        }
+
+        // Get class id and check if the class is active before continuing
+        const classId = socket.request.session.classId;
+        if (!classInformation.classrooms[classId] || !classInformation.classrooms[classId].isActive) {
+            socket.emit('message', 'This class is not currently active.');
+            return;
+        }
+
+        // Log poll information
+        logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+        logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
+
+        await socketUpdates.clearPoll()
+        let generatedColors = generateColors(resNumber)
+        logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]})`)
+        if (generatedColors instanceof Error) throw generatedColors
+
+        classInformation.classrooms[classId].mode = 'poll'
+        classInformation.classrooms[classId].poll.blind = blind
+        classInformation.classrooms[classId].poll.status = true
+
+        if (tags) {
+            classInformation.classrooms[classId].poll.requiredTags = tags
+        } else {
+            classInformation.classrooms[classId].poll.requiredTags = []
+        }
+
+        if (boxes) {
+            classInformation.classrooms[classId].poll.studentBoxes = boxes
+        } else {
+            classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
+        }
+
+        if (indeterminate) {
+            classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
+        } else {
+            classInformation.classrooms[classId].poll.studentIndeterminate = []
+        }
+
+        // Creates an object for every answer possible the teacher is allowing
+        const letterString = 'abcdefghijklmnopqrstuvwxyz'
+        for (let i = 0; i < resNumber; i++) {
+            let answer = letterString[i]
+            let weight = 1
+            let color = generatedColors[i]
+
+            if (polls[i].answer)
+                answer = polls[i].answer
+            if (polls[i].weight)
+                weight = polls[i].weight
+            if (polls[i].color)
+                color = polls[i].color
+
+            classInformation.classrooms[classId].poll.responses[answer] = {
+                answer: answer,
+                weight: weight,
+                color: color
+            }
+        }
+
+        classInformation.classrooms[classId].poll.weight = weight
+        classInformation.classrooms[classId].poll.textRes = resTextBox
+        classInformation.classrooms[classId].poll.prompt = pollPrompt
+        classInformation.classrooms[classId].poll.multiRes = multiRes
+
+        for (const key in classInformation.classrooms[socket.request.session.classId].students) {
+            classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
+            classInformation.classrooms[classId].students[key].pollRes.textRes = ''
+        }
+
+        logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
+
+        socketUpdates.pollUpdate()
+        socketUpdates.virtualBarUpdate()
+        socketUpdates.classPermissionUpdate()
+        socket.emit('startPoll')
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
 /**
  * Function to get the poll responses in a class.
  * @param {Object} classData - The data of the class.
@@ -35,4 +133,8 @@ function getPollResponses(classData) {
     return tempPolls
 }
 
-module.exports = { getPollResponses }
+module.exports = {
+    createPoll,
+    getPollResponses,
+    earnedObject
+}
