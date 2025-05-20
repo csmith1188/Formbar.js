@@ -136,6 +136,7 @@ class SocketUpdates {
             )
 
             advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
+            this.customPollUpdate();
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -373,6 +374,12 @@ class SocketUpdates {
     
     customPollUpdate(email) {
         try {
+            // Ignore any requests which do not have an associated socket with the email
+            if (!email) email = this.socket.request.session.email;
+            if (!userSockets[email]) {
+                return;
+            }
+
             logger.log('info', `[customPollUpdate] email=(${email})`)
             let userSession = userSockets[email].request.session
             let userSharedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].sharedPolls
@@ -586,10 +593,14 @@ class SocketUpdates {
             currentPoll += 1
     
             let dateConfig = new Date()
-            let date = `${dateConfig.getMonth() + 1} /${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+            let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     
             data.prompt = classInformation.classrooms[classId].poll.prompt
-    
+            data.responses = classInformation.classrooms[classId].poll.responses
+            data.multiRes = classInformation.classrooms[classId].poll.multiRes
+            data.blind = classInformation.classrooms[classId].poll.blind
+            data.isTextResponse = classInformation.classrooms[classId].poll.text
+
             for (const key in classInformation.classrooms[classId].students) {
                 data.names.push(classInformation.classrooms[classId].students[key].email)
                 data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
@@ -606,7 +617,7 @@ class SocketUpdates {
                         } else {
                             logger.log('verbose', '[endPoll] saved poll to history');
                             resolve();
-                        };
+                        }
                     }
                 );
             });
@@ -821,10 +832,7 @@ class SocketUpdates {
     
             if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
             if (classData.timer.timeLeft <= 0 && active && sound) {
-                advancedEmitToClass('timerSound', this.socket.request.session.classId, {
-                    classPermissions: Math.max(CLASS_SOCKET_PERMISSIONS.vbTimer, classInformation.classrooms[this.socket.request.session.classId].permissions.sounds),
-                    api: true
-                });
+                advancedEmitToClass('timerSound', this.socket.request.session.classId, {});
             }
     
             advancedEmitToClass('vbTimer', this.socket.request.session.classId, {

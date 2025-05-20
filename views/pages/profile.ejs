@@ -14,7 +14,11 @@
             <div id='profileInformation' style='font-family: Arial, sans-serif; margin: 20px; padding: 20px; border: 1px solid #ccc; border-radius: 10px'>
                 <h1 style='text-align: center; color: #333;'><u>Profile Information</u></h1>
                 <p id='displayName''><strong>Display Name:</strong> <%- displayName %></p>
-                <p id='email''><strong>Email:</strong> <%- email %></p>
+
+                <% if (email !== "Hidden") { %> <!-- If the user doesn't have permissions to see the email, don't show it -->
+                    <p id="email"><strong>Email:</strong> <%- email %></p>
+                <% } %>
+
                 <p id='digipogs''><strong>Digipogs:</strong> <%- digipogs %></p>
                 <p id='userId''><strong>ID:</strong> <%- id %></p>
                 <p id='apiKey'><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>

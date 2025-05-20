@@ -6,7 +6,7 @@ const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates")
 const { camelCaseToNormal } = require("../../modules/util")
 
 module.exports = {
-    order: 20,
+    order: 30,
     async run(socket, socketUpdates) {
         // Permission check
         socket.use(async ([event, ...args], next) => {

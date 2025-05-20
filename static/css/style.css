@@ -263,11 +263,12 @@ dialog {
 }
 
 #muteButton {
-	right: 5%;
+	display: none;
+	margin-right: 55px;
 }
 
 #unmuteButton {
-	right: 5%;
+	margin-right: 55px;
 }
 
 #logoutIcon {
@@ -320,6 +321,17 @@ a.headerTab {
 	color: white;
 	text-decoration: underline dotted;
 	cursor: pointer;
+}
+
+.previousPollResponse {
+	display: block;
+	margin: 10px;
+	padding: 10px;
+	border: 1px solid black;
+	border-radius: 5px;
+	background-color: var(--bg-light-blue);
+	color: black;
+	font-weight: bold;
 }
 
 .headerText {
@@ -906,6 +918,12 @@ div .tabContent {
 	justify-content: space-evenly;
 	flex-wrap: wrap;
 	max-height: max-content;
+}
+
+#previousPolls {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
 }
 
 #studentTags {

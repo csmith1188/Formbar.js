@@ -81,14 +81,10 @@ function buildStudent(classroom, studentData) {
             deleteTicketButton.dataset.studentName = studentData.email
             deleteTicketButton.onclick = (event) => {
                 deleteTicket(event.target)
-                helpSoundPlayed = false;
             }
             deleteTicketButton.textContent = 'Delete Ticket'
 
             helpReason.appendChild(deleteTicketButton)
-
-            helpSound()
-
         }
 
         if (studentData.break == true) {
@@ -105,7 +101,6 @@ function buildStudent(classroom, studentData) {
             approveBreakButton.dataset.studentName = studentData.email
             approveBreakButton.onclick = (event) => {
                 approveBreak(true, studentData.email)
-                breakSoundPlayed = false;
             }
             approveBreakButton.textContent = 'Approve Break'
 
@@ -119,8 +114,6 @@ function buildStudent(classroom, studentData) {
 
             breakReason.appendChild(approveBreakButton)
             breakReason.appendChild(denyBreakButton)
-
-            breakSound()
         }
 
         if (studentData.break) {
@@ -128,7 +121,6 @@ function buildStudent(classroom, studentData) {
             div.textContent = '⏱'
             alertSpan.appendChild(div)
             newStudent.classList.add('break')
-            breakSound()
         }
 
 
@@ -459,27 +451,4 @@ function deleteTicket(e) {
 
 function approveBreak(breakApproval, email) {
     socket.emit('approveBreak', breakApproval, email)
-}
-
-let helpSoundPlayed = false;
-let breakSoundPlayed = false;
-
-function helpSound() {
-    if (!helpSoundPlayed) {
-        let helpPing = new Audio('/sfx/help.wav');
-        if (mute == false) {
-            helpPing.play();
-            helpSoundPlayed = true;
-        }
-    }
-}
-
-function breakSound() {
-    if (!breakSoundPlayed) {
-        let breakPing = new Audio('/sfx/break.wav');
-        if (mute == false) {
-            breakPing.play();
-            breakSoundPlayed = true;
-        }
-    }
 }

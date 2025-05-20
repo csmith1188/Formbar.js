@@ -107,6 +107,11 @@ async function getStudentsInClass(classId) {
 	return students;
 }
 
+/**
+ * Retrieves a student's id from their email
+ * @param email
+ * @returns {Promise|Number}
+ */
 function getStudentId(email) {
 	try {
 		// If the user is already loded, return the id

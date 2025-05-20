@@ -5,6 +5,7 @@ const { logNumbers } = require('./config');
 const { database, dbGet, dbRun } = require('./database');
 const { classInformation } = require('./class');
 
+// Middleware to check if the plugin is enabled
 async function isEnabled(req, res, next) {
     if (!req.session.classId || req.session.classId === null) {
         return res.render('pages/message', {
@@ -40,7 +41,7 @@ async function isEnabled(req, res, next) {
 }
 
 let plugins = {};
-async function configPlugins(app) {
+async function configurePlugins(app) {
     const pluginDirs = fs.readdirSync('plugins');
 
     for (let i = 0; i < pluginDirs.length; i++) {
@@ -102,7 +103,7 @@ async function configPlugins(app) {
 }
 
 module.exports = {
-    configPlugins,
+    configurePlugins,
     isEnabled,
     plugins,
 }

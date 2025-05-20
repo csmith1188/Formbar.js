@@ -2,8 +2,6 @@ const { classInformation } = require("../modules/class")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 
-
-
 module.exports = {
     run(socket, socketUpdates) {
         // Sends a help ticket
@@ -20,17 +18,20 @@ module.exports = {
 
                 logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
+                // Set the student's help ticket to an object with the reason and time of the request
                 const time = new Date();
                 const student = classInformation.classrooms[classId].students[email];
+                student.help = { reason: reason, time: time };
+
+                // Emit helpSuccess if the reason is not the same as the previous one
+                // This is to prevent spamming
                 logger.log('info', `[help] reason=(${reason}) time=(${time})`);
                 if (student.help.reason != reason) {
                     socket.emit('helpSuccess');
-                    advancedEmitToClass('helpSound', classId, { api: true });
+                    advancedEmitToClass('helpSound', classId, {});
                 }
 
-                student.help = { reason: reason, time: time };
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
-
                 socketUpdates.classPermissionUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
@@ -43,10 +44,11 @@ module.exports = {
                 logger.log('info', `[deleteTicket] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[deleteTicket] student=(${student})`)
 
+                // Set the student's help ticket to false, indicating that they are no longer requesting help
                 classInformation.classrooms[socket.request.session.classId].students[student].help = false
-
                 logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[student])})`)
 
+                // Call the classPermissionUpdate function to update the class information with this new data
                 socketUpdates.classPermissionUpdate()
             } catch (err) {
                 logger.log('error', err.stack)

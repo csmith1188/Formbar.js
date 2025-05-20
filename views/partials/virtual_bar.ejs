@@ -44,7 +44,13 @@
                         },
                         color: 'grey'
                     }
-
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label;
+                        }
+                    }
                 }
             },
             cutout: '0%',
@@ -154,7 +160,8 @@
             virtualBar.parentElement.style.display = "block";
             if (time > 0) {
                 pieChart.data = [time, timePassed]
-                doughnutChart.data.datasets[1].label = timeString
+                doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
+                doughnutChart.data.label = `${minutes}:${seconds}`
                 pieChart.backgroundColor = ["blue", "white"]
             } else {
                 pieChart.data = [timePassed]

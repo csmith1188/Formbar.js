@@ -2,6 +2,7 @@ const { isVerified } = require('../modules/authentication');
 const { dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger')
 const { logNumbers } = require('../modules/config');
+const { classInformation } = require("../modules/class");
 
 module.exports = {
     run(app) {
@@ -19,11 +20,14 @@ module.exports = {
                         title: 'Error'
                     });
                 }
-                const { displayName, email, digipogs, API } = userData;
+
+                const { id, displayName, email, digipogs, API } = userData;
+                const emailVisible = req.session.userId == id || classInformation.users[req.session.email].permissions >= 5;
+
                 res.render('pages/profile', {
                     title: 'Profile',
                     displayName: displayName,
-                    email: email,
+                    email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
                     digipogs: digipogs,
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,

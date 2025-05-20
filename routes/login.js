@@ -34,6 +34,7 @@ module.exports = {
                     res.render('pages/login', {
                         title: 'Login',
                         redirectURL: undefined,
+                        googleOauthEnabled: settings.googleOauthEnabled,
                         route: 'login'
                     });
                     return;
@@ -85,7 +86,6 @@ module.exports = {
                                         req.session.email = userData.email
                                         req.session.classId = null
                                         req.session.displayName = userData.displayName;
-                                        req.session.email = userData.email;
                                         req.session.verified = 1
 
                                         // Remove the account creation data from the database
@@ -241,7 +241,6 @@ module.exports = {
                             req.session.tags = userData.tags;
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
-                            req.session.email = userData.email;
                             // Log the login post
                             logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                             logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
@@ -250,7 +249,7 @@ module.exports = {
                             if (req.body.route === 'transfer') {
                                 res.redirect(req.body.redirectURL);
                                 return;
-                            };
+                            }
 
                             // Redirect the user to the home page to be redirected to the correct spot
                             res.redirect('/')
@@ -355,7 +354,6 @@ module.exports = {
                                                     req.session.email = userData.email
                                                     req.session.classId = null
                                                     req.session.displayName = userData.displayName;
-                                                    req.session.email = userData.email;
                                                     req.session.verified = 1;
                                 
                                                     logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)

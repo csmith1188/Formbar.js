@@ -2,7 +2,7 @@ const { database } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 
 module.exports = {
-    order: 10,
+    order: 20,
     run(socket, socketUpdates) {
         // Authentication for users and plugins to connect to formbar websockets
         // The user must be logged in order to connect to websockets
