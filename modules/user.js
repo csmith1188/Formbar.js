@@ -1,4 +1,4 @@
-const { classInformation } = require('./class')
+const { classInformation } = require('./class/classroom')
 const { database } = require('./database')
 const { logger } = require('./logger')
 

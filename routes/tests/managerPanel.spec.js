@@ -1,7 +1,7 @@
 const managerRoute = require('../managerPanel');
 const request = require('supertest');
 const { createExpressServer } = require('../../modules/tests/tests');
-const { classInformation } = require('../../modules/class');
+const { classInformation } = require('../../modules/class/classroom');
 
 describe('Manager Route', () => {
     let app;

@@ -1,7 +1,7 @@
 const manageClassRoute = require('../manageClass');
 const request = require('supertest');
 const { createExpressServer } = require('../../modules/tests/tests');
-const { classInformation } = require('../../modules/class');
+const { classInformation } = require('../../modules/class/classroom');
 const { TEACHER_PERMISSIONS, STUDENT_PERMISSIONS } = require('../../modules/permissions');
 
 describe('Manage Class Route', () => {

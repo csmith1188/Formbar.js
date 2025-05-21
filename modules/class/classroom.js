@@ -1,6 +1,6 @@
-const { database } = require("./database")
-const { logger } = require("./logger")
-const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("./permissions");
+const { database, dbGet, dbRun} = require("../database")
+const { logger } = require("../logger")
+const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();
 
@@ -192,7 +192,7 @@ function getClassIDFromCode(code) {
 
 module.exports = {
     Classroom,
-    getClassUsers,
+	getClassUsers,
 	getClassIDFromCode,
 
     // classInformation stores all of the information on classes and students

@@ -1,4 +1,4 @@
-const { classInformation, Classroom} = require('../class');
+const { classInformation, Classroom} = require('../class/classroom');
 const { Student } = require('../student');
 const express = require('express');
 

@@ -1,5 +1,5 @@
 const { logger } = require("../../../modules/logger")
-const { classInformation, getClassUsers } = require("../../../modules/class")
+const { classInformation, getClassUsers } = require("../../../modules/class/classroom")
 
 module.exports = {
     run(router) {

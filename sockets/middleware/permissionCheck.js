@@ -1,4 +1,4 @@
-const { classInformation } = require("../../modules/class")
+const { classInformation } = require("../../modules/class/classroom")
 const { dbGet } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")

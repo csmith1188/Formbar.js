@@ -1,5 +1,5 @@
 const { plugins } = require('../modules/plugins')
-const { classInformation } = require("../modules/class")
+const { classInformation, leaveClass} = require("../modules/class/classroom")
 const { database, dbRun, dbGet } = require("../modules/database")
 const { joinClass } = require("../modules/joinClass")
 const { logger } = require("../modules/logger")
@@ -12,48 +12,12 @@ module.exports = {
     run(socket, socketUpdates) {
         // Starts a classroom session
         socket.on('startClass', () => {
-            try {
-                logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                // Enable all plugins
-                for (const pluginName of Object.keys(plugins)) {
-                    const plugin = plugins[pluginName]
-                    if (typeof plugin.onEnable == 'function') {
-                        plugin.onEnable()
-                    } else {
-                        logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
-                    }
-                }
-
-                // Start the class
-                const classId = socket.request.session.classId
-                socketUpdates.startClass(classId)
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
+            startClass(socket);
         });
 
         // Ends a classroom session
         socket.on('endClass', () => {
-            try {
-                logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                // Disable all plugins
-                for (const pluginName of Object.keys(plugins)) {
-                    const plugin = plugins[pluginName]
-                    if (typeof plugin.onDisable == 'function') {
-                        plugin.onDisable()
-                    } else {
-                        logger.log('warning', `[endClass] Plugin ${plugin.name} does not have an onDisable function.`)
-                    }
-                }
-
-                // End the class
-                const classId = socket.request.session.classId
-                socketUpdates.endClass(classId)
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
+            endClass(socket);
         });
 
         // Join a classroom session
@@ -109,19 +73,7 @@ module.exports = {
          * The user is still associated with the class, but they're not active in it
          */
         socket.on('leaveClass', () => {
-            try {
-                logger.log('info', `[leaveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const email = socket.request.session.email;
-                const classId = socket.request.session.classId;
-
-                // Kick the user from the classroom entirely if they're a guest
-                // If not, kick them from the session
-                advancedEmitToClass('leaveSound', socket.request.session.classId, {});
-                socketUpdates.classKickUser(email, classId, classInformation.users[email].isGuest);
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
+            leaveClass(socket);
         });
 
         /**
@@ -129,33 +81,7 @@ module.exports = {
          * The user is no longer associated with the class
          */
         socket.on('leaveClassroom', async () => {
-            try {
-                const classId = socket.request.session.classId;
-                const email = socket.request.session.email;
-                const studentId = await getStudentId(email);
-
-                // Remove the user from the class
-                delete classInformation.classrooms[classId].students[email];
-                classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((c) => c != classId);
-                classInformation.users[email].classPermissions = null;
-                database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
-
-                // If the owner of the classroom leaves, then delete the classroom
-                const owner = (await dbGet('SELECT owner FROM classroom WHERE id=?', classId)).owner;
-                if (owner == studentId) {
-                    await dbRun('DELETE FROM classroom WHERE id=?', classId);
-                }
-
-                // Update the class and play leave sound
-                socketUpdates.classPermissionUpdate();
-                socketUpdates.virtualBarUpdate();
-
-                // Play leave sound and reload the user's page
-                advancedEmitToClass('leaveSound', socket.request.session.classId, {});
-                userSockets[email].emit('reload');
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
+            leaveClassroom(socket);
         });
 
         /**

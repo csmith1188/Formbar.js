@@ -1,4 +1,4 @@
-const { classInformation } = require("./class");
+const { classInformation } = require("./class/classroom");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
 const { currentPoll } = require("./socketUpdates");
@@ -89,7 +89,12 @@ async function createPoll(pollData, socket) {
         socketUpdates.pollUpdate()
         socketUpdates.virtualBarUpdate()
         socketUpdates.classPermissionUpdate()
-        socket.emit('startPoll', 'Success')
+
+        if (socket.isEmulatedSocket) {
+            socket.res.status(200).json({ message: 'Success' });
+        } else {
+            socket.emit('startPoll')
+        }
     } catch (err) {
         logger.log('error', err.stack);
     }

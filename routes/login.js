@@ -1,6 +1,6 @@
 const { hash, compare } = require('../modules/crypto');
 const { database, dbRun, dbGet } = require("../modules/database");
-const { classInformation } = require("../modules/class");
+const { classInformation } = require("../modules/class/classroom");
 const { settings, logNumbers } = require("../modules/config");
 const { logger } = require("../modules/logger");
 const { Student } = require("../modules/student");

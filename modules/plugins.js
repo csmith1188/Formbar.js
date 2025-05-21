@@ -3,7 +3,7 @@ const unzipper = require('unzipper');
 const { logger } = require('./logger');
 const { logNumbers } = require('./config');
 const { database, dbGet, dbRun } = require('./database');
-const { classInformation } = require('./class');
+const { classInformation } = require('./class/classroom');
 
 // Middleware to check if the plugin is enabled
 async function isEnabled(req, res, next) {

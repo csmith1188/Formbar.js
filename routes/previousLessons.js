@@ -1,5 +1,5 @@
 const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
-const { classInformation } = require("../modules/class")
+const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")

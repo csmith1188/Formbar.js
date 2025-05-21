@@ -1,4 +1,4 @@
-const { classInformation } = require("../../../../modules/class")
+const { classInformation } = require("../../../../modules/class/classroom")
 const { getPollResponses } = require("../../../../modules/polls")
 const { logger } = require("../../../../modules/logger")
 
