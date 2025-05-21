@@ -1,20 +1,15 @@
 const { classInformation } = require("./class");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
-const { createSocketDataFromHttp } = require("./webServer");
 
 const earnedObject = {
     earnedDigipogs: []
 };
 
-async function createPoll(pollData, socket, req) {
+async function createPoll(pollData, socket) {
     try {
         const { socketUpdates, resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
-
         earnedObject.earnedDigipogs = [];
-        if (!socket) {
-            socket = createSocketDataFromHttp(req);
-        }
 
         // Get class id and check if the class is active before continuing
         const classId = socket.request.session.classId;

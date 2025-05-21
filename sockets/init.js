@@ -1,11 +1,15 @@
 const { SocketUpdates } = require("../modules/socketUpdates");
 const { io } = require("../modules/webServer");
 const fs = require("fs");
+const userSocketUpdates = {}; // Stores the socket update events for users
 
 // Initializes all the websocket routes
 function initSocketRoutes() {
     io.on('connection', async (socket) => {
         const socketUpdates = new SocketUpdates(socket);
+        if (socket.request.session.email) {
+            userSocketUpdates[socket.request.session.email] = socketUpdates;
+        }
 
         // Import middleware
         const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter(file => file.endsWith(".js"));
@@ -31,4 +35,5 @@ function initSocketRoutes() {
 
 module.exports = {
     initSocketRoutes,
+    userSocketUpdates
 }

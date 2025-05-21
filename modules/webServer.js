@@ -18,16 +18,16 @@ async function getIpAccess(type) {
 	}, {})
 }
 
-function createSocketDataFromHttp(requestData) {
+function createSocketFromHttp(req, res) {
 	return {
 		request: {
-			session: requestData.session
+			session: req.session.user
 		},
 		handshake: {
-			address: requestData.ip
+			address: req.ip
 		},
 		emit: (event, message) => {
-
+			res.send(message);
 		}
 	}
 }
@@ -38,5 +38,5 @@ module.exports = {
 	io,
 	http,
 	getIpAccess,
-	createSocketDataFromHttp
+	createSocketFromHttp
 };

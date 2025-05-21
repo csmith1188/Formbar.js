@@ -93,7 +93,7 @@ async function getUser(api) {
             break: null,
             quizScore: null,
             pogMeter: null,
-            class: classId
+            classId: classId
         }
 
         // If the user is in a class and is logged in
