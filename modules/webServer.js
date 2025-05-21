@@ -28,7 +28,15 @@ function createSocketFromHttp(req, res) {
 		},
 		emit: (event, message) => {
 			res.send(message);
-		}
+		},
+
+		// Store the original request and response
+		// These can only be used if isEmulatedSocket is true
+		req: req,
+		res: res,
+
+		// Used for indicating that this is not a real socket
+		isEmulatedSocket: true
 	}
 }
 

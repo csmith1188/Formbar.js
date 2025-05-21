@@ -1,6 +1,9 @@
 const { classInformation } = require("./class");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
+const { currentPoll } = require("./socketUpdates");
+const { database } = require("./database");
+const { userSocketUpdates } = require("../sockets/init");
 
 const earnedObject = {
     earnedDigipogs: []
@@ -8,7 +11,8 @@ const earnedObject = {
 
 async function createPoll(pollData, socket) {
     try {
-        const { socketUpdates, resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
+        const { resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
+        const socketUpdates = userSocketUpdates[socket.request.session.email];
         earnedObject.earnedDigipogs = [];
 
         // Get class id and check if the class is active before continuing
@@ -85,7 +89,63 @@ async function createPoll(pollData, socket) {
         socketUpdates.pollUpdate()
         socketUpdates.virtualBarUpdate()
         socketUpdates.classPermissionUpdate()
-        socket.emit('startPoll')
+        socket.emit('startPoll', 'Success')
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
+async function endPoll(socket) {
+    try {
+        const socketUpdates = userSocketUpdates[socket.request.session.email];
+
+        await socketUpdates.endPoll();
+        socketUpdates.pollUpdate();
+        socketUpdates.classPermissionUpdate();
+
+        if (socket.isEmulatedSocket) {
+            socket.res.status(200).json({ message: 'Success' });
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
+async function clearPoll(socket) {
+    try {
+        const socketUpdates = userSocketUpdates[socket.request.session.email];
+        await socketUpdates.clearPoll();
+
+        // Adds data to the previous poll answers table upon clearing the poll
+        for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
+            if (student.classPermissions != 5) {
+                const currentPollId = classInformation.classrooms[socket.request.session.classId].pollHistory[currentPoll].id
+                for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
+                    const studentRes = student.pollRes.buttonRes[i]
+                    const studentId = student.id
+                    database.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
+                        if (err) {
+                            logger.log('error', err.stack)
+                        }
+                    })
+                }
+
+                const studentTextRes = student.pollRes.textRes
+                const studentId = student.id
+                database.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
+                    if (err) {
+                        logger.log('error', err.stack)
+                    }
+                })
+            }
+        }
+
+        socketUpdates.pollUpdate();
+        socketUpdates.virtualBarUpdate();
+        socketUpdates.classPermissionUpdate();
+        if (socket.isEmulatedSocket) {
+            socket.res.status(200).json({ message: 'Success' });
+        }
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -130,6 +190,8 @@ function getPollResponses(classData) {
 
 module.exports = {
     createPoll,
+    endPoll,
+    clearPoll,
     getPollResponses,
     earnedObject
 }
