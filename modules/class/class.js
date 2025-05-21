@@ -116,9 +116,15 @@ async function leaveClassroom(socket) {
     }
 }
 
+function isClassActive(classId) {
+    const classroom = classInformation.classrooms[classId];
+    return classroom && classroom.isActive;
+}
+
 module.exports = {
     startClass,
     endClass,
     leaveClass,
     leaveClassroom,
+    isClassActive
 }

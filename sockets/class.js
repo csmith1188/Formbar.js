@@ -1,5 +1,4 @@
-const { plugins } = require('../modules/plugins')
-const { classInformation, leaveClass} = require("../modules/class/classroom")
+const { classInformation } = require("../modules/class/classroom")
 const { database, dbRun, dbGet } = require("../modules/database")
 const { joinClass } = require("../modules/joinClass")
 const { logger } = require("../modules/logger")
@@ -7,6 +6,7 @@ const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../m
 const { getStudentId } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
+const { startClass, endClass, leaveClass, leaveClassroom, isClassActive} = require("../modules/class/class");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -179,8 +179,8 @@ module.exports = {
             try {
                 logger.log('info', `[isClassActive] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
-                const classId = socket.request.session.classId;
-                socket.emit("isClassActive", classInformation.classrooms[classId].isActive);
+                const isActive = isClassActive(socket.request.session.classId);
+                socket.emit("isClassActive", isActive);
             } catch (err) {
                 logger.log('error', err.stack)
             }
