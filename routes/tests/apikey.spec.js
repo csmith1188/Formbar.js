@@ -2,7 +2,7 @@ const fs = require('fs');
 const apiKeyRoute = require('../apiKey');
 const request = require('supertest');
 const { createExpressServer } = require("../../modules/tests/tests");
-const { classInformation } = require("../../modules/class");
+const { classInformation } = require("../../modules/class/classroom");
 
 // Mock the authentication module to simulate a user being logged in
 jest.mock('../../modules/authentication', () => ({

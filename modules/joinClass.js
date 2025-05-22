@@ -1,5 +1,5 @@
 const { logger } = require("./logger");
-const { Classroom, classInformation } = require("./class");
+const { Classroom, classInformation } = require("./class/classroom");
 const { BANNED_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");

@@ -1,10 +1,10 @@
 const { run } = require('../pollCreation');
-const { classInformation } = require("../../modules/class");
+const { classInformation } = require("../../modules/class/classroom");
 const { logger } = require("../../modules/logger");
 const { generateColors } = require("../../modules/util");
 const { createTestClass, testData, createSocket} = require("../../modules/tests/tests");
 
-jest.mock("../../modules/class");
+jest.mock("../../modules/class/classroom");
 jest.mock("../../modules/logger");
 jest.mock("../../modules/socketUpdates");
 jest.mock("../../modules/util");

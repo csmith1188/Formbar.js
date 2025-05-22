@@ -1,4 +1,4 @@
-const { classInformation } = require('../class');
+const { classInformation } = require('../class/classroom');
 const { SocketUpdates } = require('../socketUpdates');
 const { createTestUser, createTestClass, testData } = require('./tests');
 const { io } = require("../webServer");

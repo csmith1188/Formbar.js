@@ -1,8 +1,9 @@
-const { classInformation, getClassIDFromCode } = require("../../modules/class")
+const { classInformation, getClassIDFromCode } = require("../../modules/class/classroom")
 const { getUser } = require("../../modules/user")
 const { logger } = require("../../modules/logger")
 
 module.exports = {
+	// Used for checking class permissions such as games, lights, and sounds
     run(router) {
         router.get('/apiPermissionCheck', async (req, res) => {
 			try {

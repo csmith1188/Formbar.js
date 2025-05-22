@@ -8,7 +8,7 @@ require('dotenv').config(); // For environment variables
 // Custom modules
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
-const { classInformation } = require('./modules/class.js')
+const { classInformation } = require('./modules/class/classroom.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { settings } = require('./modules/config.js');

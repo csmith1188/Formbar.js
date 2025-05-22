@@ -1,15 +1,13 @@
-const { classInformation } = require("../modules/class")
+const { classInformation } = require("../modules/class/classroom")
 const { database, dbRun } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { currentPoll } = require("../modules/socketUpdates")
+const { endPoll, clearPoll } = require("../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
         socket.on('endPoll', async () => {
             try {
-                await socketUpdates.endPoll();
-                socketUpdates.pollUpdate();
-                socketUpdates.classPermissionUpdate();
+                await endPoll();
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -92,35 +90,7 @@ module.exports = {
         // End the current poll. Does not take any arguments
         socket.on('clearPoll', async () => {
             try {
-                await socketUpdates.clearPoll();
-                
-                // Adds data to the previous poll answers table upon clearing the poll
-                for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
-                    if (student.classPermissions != 5) {
-                        const currentPollId = classInformation.classrooms[socket.request.session.classId].pollHistory[currentPoll].id
-                        for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
-                            const studentRes = student.pollRes.buttonRes[i]
-                            const studentId = student.id
-                            database.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
-                                if (err) {
-                                    logger.log('error', err.stack)
-                                }
-                            })
-                        }
-
-                        const studentTextRes = student.pollRes.textRes
-                        const studentId = student.id
-                        database.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
-                            if (err) {
-                                logger.log('error', err.stack)
-                            }
-                        })
-                    }
-                }
-
-                socketUpdates.pollUpdate();
-                socketUpdates.virtualBarUpdate();
-                socketUpdates.classPermissionUpdate();
+                await clearPoll(socket);
             } catch (err) {
                 logger.log('error', err.stack);
             }

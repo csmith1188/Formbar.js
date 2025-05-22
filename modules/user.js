@@ -1,6 +1,7 @@
-const { classInformation } = require('./class')
-const { database } = require('./database')
+const { classInformation } = require('./class/classroom')
+const { database, dbGetAll, dbGet } = require('./database')
 const { logger } = require('./logger')
+const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -13,7 +14,7 @@ async function getUser(api) {
         logger.log('info', `[getUser]`)
 
         // Get the email associated with the API key in the request headers
-        let email = await getemail(api)
+        let email = await getEmailFromAPIKey(api)
 
         // If the email is an instance of Error, throw the error
         if (email instanceof Error) throw email
@@ -93,7 +94,7 @@ async function getUser(api) {
             break: null,
             quizScore: null,
             pogMeter: null,
-            class: classId
+            classId: classId
         }
 
         // If the user is in a class and is logged in
@@ -118,6 +119,21 @@ async function getUser(api) {
         // If an error occurs, return the error
         return err
     }
+}
+
+/**
+ * Gets the classes a user owns from their email.
+ * @param email
+ * @param socket
+ */
+async function getUserOwnedClasses(email, socket) {
+    logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+    logger.log('info', `[getOwnedClasses] email=(${email})`);
+
+    const userId = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
+    const classes = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
+    console.log(userId, classes)
+    return classes;
 }
 
 /**
@@ -159,10 +175,10 @@ function getUserClass(email) {
  * @param {string} api - The API key.
  * @returns {Promise<string|Object>} A promise that resolves to the email or an error object.
  */
-async function getemail(api) {
+async function getEmailFromAPIKey(api) {
     try {
         // If no API key is provided, return an error
-        if (!api) return { error: 'missing api' }
+        if (!api) return { error: 'Missing API key' }
 
         // Query the database for the email associated with the API key
         let user = await new Promise((resolve, reject) => {
@@ -176,7 +192,7 @@ async function getemail(api) {
 
                         // If no user is found, resolve the promise with an error object
                         if (!user) {
-                            resolve({ error: 'user not found' })
+                            resolve({ error: 'User not found' })
                             return
                         }
 
@@ -204,6 +220,7 @@ async function getemail(api) {
 
 module.exports = {
     getUser,
+    getUserOwnedClasses,
     getUserClass,
-    getemail
+    getEmailFromAPIKey
 }

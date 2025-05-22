@@ -1,5 +1,5 @@
 const { whitelistedIps, blacklistedIps } = require("./authentication");
-const { classInformation } = require("./class");
+const { classInformation } = require("./class/classroom");
 const { settings } = require("./config");
 const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");

@@ -1,4 +1,4 @@
-const { classInformation, getClassUsers } = require("../../../modules/class")
+const { classInformation, getClassUsers } = require("../../../modules/class/classroom")
 const { getPollResponses } = require("../../../modules/polls")
 const { TEACHER_PERMISSIONS } = require("../../../modules/permissions")
 const { logger } = require("../../../modules/logger")

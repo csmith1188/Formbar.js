@@ -1,4 +1,4 @@
-const { getClassIDFromCode, getClassUsers, classInformation} = require('../class');
+const { getClassIDFromCode, getClassUsers, classInformation} = require('../class/classroom');
 const { database } = require("../database");
 const { testData } = require("./tests");
 

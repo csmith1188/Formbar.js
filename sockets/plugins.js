@@ -1,7 +1,7 @@
 const { database, dbRun } = require('../modules/database')
 const { logger } = require('../modules/logger')
 const { logNumbers } = require('../modules/config')
-const { classInformation } = require('../modules/class')
+const { classInformation } = require('../modules/class/classroom')
 const { plugins } = require('../modules/plugins')
 
 module.exports = {

@@ -103,7 +103,7 @@ function createLogger() {
                 handleExceptions: true,
                 format: winston.format.combine(
                     winston.format((info) => {
-                        if (info.message.includes('com.chrome.devtools.json') || info.message.includes('js/chart.umd.js.map')) {
+                        if (info.message && (info.message.includes('com.chrome.devtools.json') || info.message.includes('js/chart.umd.js.map'))) {
                             return; // Ignore 404 errors for unimportant files
                         }
                         return loggingLevels.includes(info.level) ? info : false;

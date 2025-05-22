@@ -1,5 +1,5 @@
 const { logger } = require("./logger")
-const { classInformation } = require("./class")
+const { classInformation } = require("./class/classroom")
 const { logNumbers, settings } = require("./config")
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions")
 const fs = require('fs');

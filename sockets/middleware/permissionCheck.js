@@ -1,4 +1,4 @@
-const { classInformation } = require("../../modules/class")
+const { classInformation } = require("../../modules/class/classroom")
 const { dbGet } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("../../modules/permissions")
@@ -23,8 +23,8 @@ module.exports = {
 
                 // If the class provided by the user is not loaded into memory, avoid going further to avoid errors
                 if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
-                    logger.log('info', '[socket permission check] Class does not exist in memory')
-                    socket.emit('message', 'Class does not exist in memory')
+                    logger.log('info', '[socket permission check] Class is not loaded')
+                    socket.emit('message', 'Class is not loaded')
                     return;
                 }
 

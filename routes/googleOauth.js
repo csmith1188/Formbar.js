@@ -1,7 +1,7 @@
 const { passport } = require('../modules/googleOauth.js');
 const { database } = require('../modules/database.js');
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require('../modules/permissions.js');
-const { classInformation } = require('../modules/class');
+const { classInformation } = require('../modules/class/classroom');
 const { managerUpdate } = require('../modules/socketUpdates');
 const { Student } = require('../modules/student');
 const { logger } = require('../modules/logger');

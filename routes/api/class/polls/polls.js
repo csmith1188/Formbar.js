@@ -1,6 +1,6 @@
-const { classInformation } = require("../../../modules/class")
-const { getPollResponses } = require("../../../modules/polls")
-const { logger } = require("../../../modules/logger")
+const { classInformation } = require("../../../../modules/class/classroom")
+const { getPollResponses } = require("../../../../modules/polls")
+const { logger } = require("../../../../modules/logger")
 
 module.exports = {
     run(router) {
@@ -56,7 +56,7 @@ module.exports = {
 			} catch (err) {
 				// If an error occurs, log the error
 				logger.log('error', err.stack);
-				res.status(500).json({ error: 'There was a server error try again.' });
+				res.status(500).json({ error: 'There was an internal server error. Please try again.' });
 			}
 		})
     }

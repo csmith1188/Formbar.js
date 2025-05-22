@@ -1,5 +1,5 @@
 const { isAuthenticated, isVerified } = require("../modules/authentication")
-const { classInformation } = require("../modules/class")
+const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")

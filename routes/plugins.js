@@ -2,7 +2,7 @@ const { isVerified } = require('../modules/authentication');
 const { logger } = require('../modules/logger');
 const { logNumbers } = require('../modules/config');
 const { database } = require('../modules/database');
-const { classInformation } = require('../modules/class');
+const { classInformation } = require('../modules/class/classroom');
 
 module.exports = {
     run(app) {
