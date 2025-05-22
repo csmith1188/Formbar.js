@@ -1,18 +1,19 @@
 const { createSocketFromHttp } = require("../../../../modules/webServer");
-const { createPoll } = require("../../../../modules/polls");
+const { pollResponse } = require("../../../../modules/polls");
 const { logger } = require("../../../../modules/logger");
 const { httpPermCheck } = require("../../../middleware/permissionCheck");
 const { parseJson } = require("../../../middleware/parseJson");
 
 module.exports = {
     run(router) {
-        // Creates a poll from the data provided
-        router.post('/class/:id/polls/create', httpPermCheck("startPoll"), parseJson, async (req, res) => {
+        // Responds to the current poll running in the class
+        router.post('/class/:id/polls/response', httpPermCheck("pollResp"), parseJson, async (req, res) => {
             try {
-                let { resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = req.body;
+                const { response, textRes } = req.body;
                 const socket = createSocketFromHttp(req, res);
 
-                await createPoll({ resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes }, socket);
+                await pollResponse(response, textRes, socket);
+                res.status(200).json( { message: "Success" });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

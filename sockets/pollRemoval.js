@@ -6,7 +6,11 @@ const { endPoll, clearPoll } = require("../modules/polls");
 module.exports = {
     run(socket, socketUpdates) {
         socket.on('endPoll', async () => {
-            await endPoll();
+            try {
+                await endPoll();
+            } catch (err) {
+                logger.log('error', err.stack);
+            }
         })
 
         socket.on('deletePoll', (pollId) => {
@@ -85,7 +89,11 @@ module.exports = {
 
         // End the current poll. Does not take any arguments
         socket.on('clearPoll', async () => {
-            await clearPoll(socket);
+            try {
+                await clearPoll(socket);
+            } catch (err) {
+                logger.log('error', err.stack);
+            }
         })
     }
 }

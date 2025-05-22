@@ -56,7 +56,7 @@ module.exports = {
 			} catch (err) {
 				// If an error occurs, log the error
 				logger.log('error', err.stack);
-				res.status(500).json({ error: 'There was a server error try again.' });
+				res.status(500).json({ error: 'There was an internal server error. Please try again.' });
 			}
 		})
     }
