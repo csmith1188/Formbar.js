@@ -33,7 +33,7 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
         // If the user's permissions are less than a teacher, remove pogs from the sender and half the amount
         if (permissions < TEACHER_PERMISSIONS) {
             // Remove the digipogs from the sender
-            database.run(`UPDATE users SET digipogs = digipogs - ${amount} WHERE id = '${from}'`, (err) => {
+            database.run(`UPDATE users SET digipogs = digipogs - ? WHERE id = ?`, [amount, from], (err) => {
                 if (err) {
                     console.error(err);
                 };
