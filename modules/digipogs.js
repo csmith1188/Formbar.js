@@ -41,7 +41,7 @@ async function transferDigipogs(from, to, amount, app = 'None', reason = 'Transf
             amount = Math.ceil(amount * DIGIPOG_LOSS_RATE);
         }
         // Add the digipogs to the receiver
-        database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE id = '${to}'`, (err) => {
+        database.run(`UPDATE users SET digipogs = digipogs + ? WHERE id = ?`, [amount, to], (err) => {
             if (err) {
                 console.error(err);
             };
