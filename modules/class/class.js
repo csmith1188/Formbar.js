@@ -5,6 +5,7 @@ const { advancedEmitToClass, userSockets } = require("../socketUpdates");
 const { getStudentId } = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
+const { joinClassroomByCode } = require("../joinClass");
 
 function startClass(socket) {
     try {
@@ -30,6 +31,53 @@ function startClass(socket) {
         }
     } catch (err) {
         logger.log('error', err.stack)
+    }
+}
+
+async function joinClass(socket, classId) {
+    try {
+        logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
+        const email = socket.request.session.email;
+
+        // Check if the user is in the class to prevent people from joining classes just from the class ID
+        if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
+            socket.emit('joinClass', 'You are not in that class.');
+            return;
+        } else if (!classInformation.classrooms[classId]) {
+            const studentId = await getStudentId(email);
+            const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
+            if (!classUsers) {
+                socket.emit('joinClass', 'You are not in that class.');
+                return;
+            }
+        }
+
+        // Retrieve the class code either from memory or the database
+        let classCode;
+        if (classInformation.classrooms[classId]) {
+            classCode = classInformation.classrooms[classId].key;
+        } else {
+            classCode = (await dbGet('SELECT key FROM classroom WHERE id=?', classId)).key;
+        }
+
+        // If there's a class code, then attempt to join the class and emit the response
+        const response = await joinClass(classCode, socket.request.session);
+        socket.emit('joinClass', response);
+    } catch (err) {
+        logger.log('error', err.stack);
+        socket.emit('joinClass', 'There was a server error. Please try again');
+    }
+}
+
+function joinClassroom(socket, classCode) {
+    try {
+        logger.log('info', `[joinClassroom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classCode=${classCode}`);
+
+        const response = joinClassroomByCode(classCode, socket.request.session);
+        socket.emit("joinClass", response);
+    } catch (err) {
+        logger.log('error', err.stack);
+        socket.emit('joinClass', 'There was a server error. Please try again');
     }
 }
 
@@ -124,6 +172,8 @@ function isClassActive(classId) {
 module.exports = {
     startClass,
     endClass,
+    joinClass,
+    joinClassroom,
     leaveClass,
     leaveClassroom,
     isClassActive

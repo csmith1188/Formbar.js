@@ -4,7 +4,7 @@ const { BANNED_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
-async function joinClass(code, session) {
+async function joinClassroomByCode(code, session) {
 	const email = session.email;
 	try {
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
@@ -142,5 +142,5 @@ async function joinClass(code, session) {
 }
 
 module.exports = {
-    joinClass
+    joinClassroomByCode
 }
