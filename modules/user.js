@@ -1,6 +1,9 @@
 const { classInformation } = require('./class/classroom')
-const { database, dbGetAll, dbGet } = require('./database')
+const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
+const { userSockets, managerUpdate, SocketUpdates} = require("./socketUpdates");
+const { logout } = require("passport/lib/http/request");
+const {userSocketUpdates} = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -120,6 +123,55 @@ async function getUser(api) {
     }
 }
 
+async function deleteUser(userId, socket, socketUpdates) {
+    try {
+        logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+        logger.log('info', `[deleteUser] userId=(${userId})`)
+        if (!socketUpdates) {
+            socketUpdates = new SocketUpdates(socket);
+        }
+        console.log('userId:', userId)
+
+        const user = await new Promise((resolve, reject) => {
+            database.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
+                if (err) reject(err)
+                resolve(user)
+            })
+        })
+
+        if (!user) {
+            socket.emit('message', 'User not found')
+            return
+        }
+
+        if (userSockets[user.email]) {
+            logout(userSockets[user.email])
+        }
+
+        try {
+            await dbRun('BEGIN TRANSACTION')
+
+            await Promise.all([
+                dbRun('DELETE FROM users WHERE id=?', userId),
+                dbRun('DELETE FROM classusers WHERE studentId=?', userId),
+                dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
+            ])
+
+            await socketUpdates.deleteCustomPolls(userId)
+            await socketUpdates.deleteClassrooms(userId)
+
+            await dbRun('COMMIT')
+            await managerUpdate()
+            socket.emit('message', 'User deleted successfully')
+        } catch (err) {
+            await dbRun('ROLLBACK')
+            throw err
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
 /**
  * Gets the classes a user owns from their email.
  * @param email
@@ -131,7 +183,6 @@ async function getUserOwnedClasses(email, socket) {
 
     const userId = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
     const classes = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
-    console.log(userId, classes)
     return classes;
 }
 
@@ -219,6 +270,7 @@ async function getEmailFromAPIKey(api) {
 
 module.exports = {
     getUser,
+    deleteUser,
     getUserOwnedClasses,
     getUserClass,
     getEmailFromAPIKey
