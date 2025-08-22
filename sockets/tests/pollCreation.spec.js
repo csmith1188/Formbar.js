@@ -2,7 +2,8 @@ const { run } = require('../pollCreation');
 const { classInformation } = require("../../modules/class/classroom");
 const { logger } = require("../../modules/logger");
 const { generateColors } = require("../../modules/util");
-const { createTestClass, testData, createSocket} = require("../../modules/tests/tests");
+const { createTestClass, testData, createSocket, createSocketUpdates} = require("../../modules/tests/tests");
+const {userSocketUpdates} = require("../init");
 
 jest.mock("../../modules/class/classroom");
 jest.mock("../../modules/logger");
@@ -16,16 +17,8 @@ describe('startPoll', () => {
 
     beforeEach(() => {
         socket = createSocket();
-
-        // Mock the socket updates
-        // This is to minimize the number of moving parts that could cause a test to fail
-        socketUpdates = {
-            clearPoll: jest.fn(),
-            pollUpdate: jest.fn(),
-            virtualBarUpdate: jest.fn(),
-            classPermissionUpdate: jest.fn(),
-            customPollUpdate: jest.fn()
-        };
+        socketUpdates = createSocketUpdates();
+        userSocketUpdates[socket.request.session.email] = socketUpdates;
 
         const classData = createTestClass(testData.code, 'Test Class');
         classData.isActive = true;

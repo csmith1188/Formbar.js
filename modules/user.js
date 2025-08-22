@@ -1,7 +1,6 @@
 const { classInformation } = require('./class/classroom')
 const { database, dbGetAll, dbGet } = require('./database')
 const { logger } = require('./logger')
-const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
