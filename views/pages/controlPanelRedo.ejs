@@ -1,0 +1,50 @@
+<%- include('../partials/sockets') %>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel</title>
+    <link rel="stylesheet" href="css/newControlPanel.css">
+</head>
+
+<body>
+    <h1>NEW FORMBAR</h1>
+    <div id="topBar">
+        Top Bar
+        <div id="timerContainer">Timer Container</div>
+        <div id="classInfo">Class Info</div>
+    </div>
+
+    <div id="mainContent">
+
+        <div id="leftSidebar" class="innerContent side">
+            Left Sidebar
+            <div id="pollStarter">Poll Starter</div>
+            <div id="previousPolls">Previous Polls</div>
+        </div>
+
+        <div id="centerContent" class="innerContent">
+            Center Content
+            <div id="pollContainer">
+                Poll Container
+                <div id="poll">
+                    Poll Wheel
+                    <%- include('../partials/virtual_bar.ejs') %>
+                </div>
+                <div id="answerOptions">Answer Options</div>
+            </div>
+            <div id="settings">Settings</div>
+        </div>
+
+        <div id="rightSidebar" class="innerContent side">
+            Right Sidebar
+            <div id="filters">Filters</div>
+            <div id="studentList">Student List</div>
+        </div>
+    </div>
+</body>
+
+</html>

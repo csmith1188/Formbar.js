@@ -1,0 +1,46 @@
+#mainContent, #topBar {
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+}
+
+#mainContent {
+    height: 2000px;
+}
+
+#mainContent *.div {
+    flex-direction: column;
+}
+
+#topBar {
+    justify-content: start;
+    position: sticky;
+    top: 0;
+}
+
+#topBar * {
+    margin: 0;
+}
+
+.innerContent, .innerContent *, #topBar * {
+    background-color: grey;
+    flex-grow: 1;
+}
+
+#centerContent {
+    display: flex;
+    flex-direction: column;
+}
+
+div {
+    border: solid 3px black;
+    background-color: lightgrey;
+    /* remove the regular margin eventually */
+    margin: 5px;
+    /* margin-top: 5px;
+    margin-bottom: 5px; */
+}
+
+#settings {
+    flex: 1;
+}
