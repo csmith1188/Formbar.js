@@ -1,4 +1,3 @@
-const { createSocketFromHttp } = require("../../../modules/webServer");
 const { logger } = require("../../../modules/logger");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
 const { isClassActive } = require("../../../modules/class/class");
