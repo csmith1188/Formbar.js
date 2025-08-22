@@ -2,7 +2,6 @@ const request = require('supertest');
 const { createExpressServer } = require("../../modules/tests/tests");
 const { database } = require('../../modules/database');
 const loginRoute = require('../login');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 // Mocks

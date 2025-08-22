@@ -1,6 +1,7 @@
 const { classInformation, Classroom} = require('../class/classroom');
 const { Student } = require('../student');
 const express = require('express');
+const { SocketUpdates } = require("../socketUpdates");
 
 // Common test data
 const testData = {
@@ -87,14 +88,19 @@ function createSocket() {
 
 // Mock the socket updates
 // This is to minimize the number of moving parts that could cause a test to fail
-function createSocketUpdates() {
-    return {
+function createSocketUpdates(isMocked = true, socket) {
+    if (!socket && isMocked) {
+        socket = createSocket(socket);
+    }
+
+    return isMocked ? {
+        endPoll: jest.fn(),
         clearPoll: jest.fn(),
         pollUpdate: jest.fn(),
         virtualBarUpdate: jest.fn(),
         classPermissionUpdate: jest.fn(),
         customPollUpdate: jest.fn()
-    }
+    } :  new SocketUpdates(socket);
 }
 
 module.exports = {

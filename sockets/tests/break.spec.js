@@ -1,5 +1,5 @@
 const { createSocket, createTestUser, testData, createTestClass } = require("../../modules/tests/tests");
-const { run } = require('../break');
+const { run: breakRun } = require('../break');
 
 describe('break', () => {
     let socket;
@@ -12,7 +12,7 @@ describe('break', () => {
         socket = createSocket();
 
         // Run the socket handler
-        run(socket, socketUpdates);
+        breakRun(socket, socketUpdates);
         requestBreakHandler = socket.on.mock.calls.find(call => call[0] === 'requestBreak')[1];
         approveBreakHandler = socket.on.mock.calls.find(call => call[0] === 'approveBreak')[1];
         endBreakHandler = socket.on.mock.calls.find(call => call[0] === 'endBreak')[1];
