@@ -1,6 +1,6 @@
 module.exports = {
     run(app) {
-        app.get('/newControlPanel', (req, res) => {
+        app.get('/test', (req, res) => {
             res.render('pages/controlPanelRedo');
         })
     }

@@ -1,46 +1,46 @@
 #mainContent, #topBar {
     display: flex;
-    justify-content: center;
-    padding: 5px;
 }
 
 #mainContent {
-    height: 2000px;
-}
-
-#mainContent *.div {
-    flex-direction: column;
+    width: 100vw - 10px;
+    margin: 5px;
+    justify-content: center;
+    gap: 5px;
+    border: 5px solid black;
+    padding: 0.25em
 }
 
 #topBar {
-    justify-content: start;
-    position: sticky;
-    top: 0;
+    width: 100vw - 10px;
+    margin: 5px;
+    border: 5px solid black;
+    padding: 0.25em
 }
 
-#topBar * {
-    margin: 0;
+#mainContent *, #topBar * {
+    /* text-align: center; */
+    margin: 5px;
+    border: 5px solid black;
+    padding: 0.25em
 }
 
-.innerContent, .innerContent *, #topBar * {
-    background-color: grey;
-    flex-grow: 1;
-}
-
-#centerContent {
+#mainContent div {
+    background-color: lightgray;
     display: flex;
     flex-direction: column;
 }
 
-div {
-    border: solid 3px black;
-    background-color: lightgrey;
-    /* remove the regular margin eventually */
-    margin: 5px;
-    /* margin-top: 5px;
-    margin-bottom: 5px; */
+#centerContent {
+    flex-grow: 3;
 }
 
-#settings {
-    flex: 1;
+#leftSidebar {
+    flex-grow: 1;
+    left: 0;
+}
+
+#rightSidebar {
+    flex-grow: 1;
+    right: 0;
 }
