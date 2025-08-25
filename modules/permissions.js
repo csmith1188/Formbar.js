@@ -16,6 +16,7 @@ const PAGE_PERMISSIONS = {
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
 	makequiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
+	test: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },

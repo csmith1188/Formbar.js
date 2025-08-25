@@ -1,4 +1,5 @@
 <%- include('../partials/sockets') %>
+<%- include('../partials/header_content') %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,24 +7,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <% if (locals.title) { %>
-            <%- title + ' - ' %>
-                <% } %>
-                    Formbar
-    </title>
-    <link rel="icon" href="/img/favicon.png">
-    <script>
-        let MANAGER_PERMISSIONS = Number('<%- MANAGER_PERMISSIONS %>')
-        let TEACHER_PERMISSIONS = Number('<%- TEACHER_PERMISSIONS %>')
-        let MOD_PERMISSIONS = Number('<%- MOD_PERMISSIONS %>')
-        let STUDENT_PERMISSIONS = Number('<%- STUDENT_PERMISSIONS %>')
-        let GUEST_PERMISSIONS = Number('<%- GUEST_PERMISSIONS %>')
-        let currentUser = null
-        if ('<%- locals.currentUser %>' != '')
-            currentUser = JSON.parse('<%- JSON.stringify(locals.currentUser) %>')
-    </script>
     <link rel="stylesheet" href="css/newControlPanel.css">
+    <link rel="stylesheet" href="css/style.css">
 
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
@@ -33,13 +18,25 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body>
-    <h1>NEW FORMBAR</h1>
-    <div id="topBar">
-        <!-- Top Bar -->
+<body onload="load('<%= pollStatus %>')" style="margin-bottom: 10cqh;">
+
+<!-- <h1>NEW FORMBAR</h1> -->
+    
+<%- include('../partials/formbar_header') %>
+<header id='quickMenu'>
+    <p id='className'>Class Name:</p>
+    <p id='classCode'>Class Code:</p>
+    <p id='totalUsers'></p>
+    <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
+    <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
+    <button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'><img src="img/cogwheel.svg" id="Settings"></button>
+</header>
+
+    <!-- <div id="topBar">
+        Top Bar
         <div id="timerContainer">Timer Container</div>
         <div id="classInfo">Class Info</div>
-    </div>
+    </div> -->
 
     <div id="mainContent">
 
@@ -54,7 +51,7 @@
                 <div id="vbContainer">
                     <canvas id='virtualbar'></canvas>
                 </div>
-                <div id="answerOptions">Answer Options</div>
+                <!-- <div id="answerOptions">Answer Options</div> -->
             </div>
             <div id="settings">Settings</div>
         </div>
