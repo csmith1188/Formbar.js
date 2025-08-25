@@ -59,3 +59,7 @@
 #previousPolls {
     flex-grow: 1;
 }
+
+#settings {
+    flex-grow: 1;
+}
