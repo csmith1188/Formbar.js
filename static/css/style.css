@@ -246,9 +246,9 @@ dialog {
 	height: 45px;
 }
 
-#lmdmBtn:hover {}
+/* #lmdmBtn:hover {} */
 
-#logoutButton:hover {}
+/* #logoutButton:hover {} */
 
 #lmdmIcon, #logoutIcon, #muteIcon, #unmuteIcon {
 	position: absolute;

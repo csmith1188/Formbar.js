@@ -6,8 +6,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Panel</title>
+    <title>
+        <% if (locals.title) { %>
+            <%- title + ' - ' %>
+                <% } %>
+                    Formbar
+    </title>
+    <link rel="icon" href="/img/favicon.png">
+    <script>
+        let MANAGER_PERMISSIONS = Number('<%- MANAGER_PERMISSIONS %>')
+        let TEACHER_PERMISSIONS = Number('<%- TEACHER_PERMISSIONS %>')
+        let MOD_PERMISSIONS = Number('<%- MOD_PERMISSIONS %>')
+        let STUDENT_PERMISSIONS = Number('<%- STUDENT_PERMISSIONS %>')
+        let GUEST_PERMISSIONS = Number('<%- GUEST_PERMISSIONS %>')
+        let currentUser = null
+        if ('<%- locals.currentUser %>' != '')
+            currentUser = JSON.parse('<%- JSON.stringify(locals.currentUser) %>')
+    </script>
     <link rel="stylesheet" href="css/newControlPanel.css">
+
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <script src='/js/iro.js'></script>
+    <script src='/js/floating-ui-core.js'></script>
+    <script src='/js/floating-ui-dom.js'></script>
+    <script src='/js/deepObjectEqual.js'></script>
 </head>
 
 <body>
@@ -27,12 +50,9 @@
         </div>
 
         <div id="centerContent" class="innerContent">
-            Center Content
             <div id="pollContainer">
-                Poll Container
-                <div id="poll">
-                    Poll Wheel
-                    <!-- <%- include('../partials/virtual_bar.ejs') %> -->
+                <div id="vbContainer">
+                    <canvas id='virtualbar'></canvas>
                 </div>
                 <div id="answerOptions">Answer Options</div>
             </div>
@@ -46,5 +66,188 @@
         </div>
     </div>
 </body>
+
+<div id="vbContainer">
+    <canvas id='virtualbar'></canvas>
+</div>
+
+<script src="js/chart.js"></script>
+<script>
+    let noPoll;
+    let virtualBar = document.getElementById("virtualbar");
+    let mychart = virtualBar.getContext("2d");
+    let pollsData = {}
+    let timeData = {}
+    let doughnutChart = new Chart(mychart, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                backgroundColor: [],
+                data: []
+            },
+            {
+                backgroundColor: ["blue", "white"],
+                data: [],
+                type: "pie",
+                options: {
+                    //disable the labels appearing on the pie chart's data
+                    plugins: {
+                        legend: {
+                            labels: {
+                                display: false,
+                            }
+                        }
+                    }
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            size: 20
+                        },
+                        color: 'grey'
+                    },
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label;
+                        }
+                    }
+                }
+            },
+            cutout: '0%',
+        }
+    })
+
+    // Calls for data
+    socket.emit('vbUpdate')
+
+    // Gets data from server
+    socket.on('vbUpdate', (newPollsData) => {
+        if (deepObjectEqual(newPollsData, pollsData)) return
+
+        if (!newPollsData.status && Object.keys(newPollsData.polls).length == 0) {
+            if (!timeData.active) {
+                if (noPoll) noPoll.style.display = ''
+
+                virtualBar.parentElement.style.display = "none";
+            }
+
+            doughnutChart.data.datasets[0].data = []
+            doughnutChart.data.labels = []
+        } else {
+            if (noPoll) noPoll.style.display = 'none'
+            virtualBar.parentElement.style.display = "block";
+
+            // Reset virtual bar
+            doughnutChart.data.datasets[0].backgroundColor = []
+            doughnutChart.data.datasets[0].data = []
+            doughnutChart.data.labels = []
+
+            let totalStudents = newPollsData.totalResponders
+            let totalResponses = newPollsData.totalResponses;
+
+            // make the polls blind unless all students answered
+            if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
+                newPollsData.blind = false
+            }
+
+            let labelsArray = []
+            let pollArray = []
+
+            let studentResponses = {}
+            // Loops through object to get each label of the possible answers
+            // Also, create a new label for each possible answer
+            if (newPollsData.blind) {
+                labelsArray.push('Responses')
+                studentResponses.responses = 0
+            } else {
+                for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
+                    labelsArray.push(pollData.answer)
+                    studentResponses[poll] = 0
+                }
+            }
+            labelsArray.push('No Response')
+            studentResponses.noResponse = 0
+
+            // Loops through all possible answers and generates a new color letiant for each answer
+            // All possible answers should have a different color
+            if (newPollsData.blind) {
+                doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
+            } else {
+                for (let poll of Object.values(newPollsData.polls)) {
+                    doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+                }
+            }
+            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
+            // Loops through all student answers and adds them to a total tally
+            // Student response corresponds with a property name in studResponses
+            studentResponses.noResponse += newPollsData.totalResponders - newPollsData.totalResponses
+            for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
+                if (newPollsData.blind)
+                    studentResponses.responses += pollData.responses
+                else studentResponses[poll] += pollData.responses
+            }
+
+            for (const responses of Object.keys(studentResponses)) {
+                pollArray.push(studentResponses[responses])
+            }
+
+            doughnutChart.data.labels = labelsArray
+            doughnutChart.data.datasets[0].data = pollArray
+        }
+
+        pollsData = newPollsData
+        doughnutChart.update()
+    })
+
+    socket.emit('vbTimer')
+    socket.on('vbTimer', (newTimeData) => {
+        if (deepObjectEqual(newTimeData, timeData)) return
+
+        let pieChart = doughnutChart.data.datasets[1]
+        let time = newTimeData.timeLeft
+        let timePassed = newTimeData.startTime - newTimeData.timeLeft
+        let sound = newTimeData.sound
+        let active = newTimeData.active
+        //turn the time into minutes and seconds
+        let minutes = Math.floor(time / 60)
+        let seconds = time % 60
+        if (seconds < 10) {
+            seconds = "0" + seconds
+        }
+        let timeString = minutes + ":" + seconds
+
+        if (active) {
+            virtualBar.parentElement.style.display = "block";
+            if (time > 0) {
+                pieChart.data = [time, timePassed]
+                doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
+                doughnutChart.data.label = `${minutes}:${seconds}`
+                pieChart.backgroundColor = ["blue", "white"]
+            } else {
+                pieChart.data = [timePassed]
+                doughnutChart.data.datasets[1].label = timeString
+                pieChart.backgroundColor = ["red"]
+            }
+        } else {
+            if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
+                virtualBar.parentElement.style.display = "none";
+            }
+            pieChart.data = []
+        }
+
+        timeData = newTimeData
+        doughnutChart.update()
+    })
+</script>
 
 </html>
