@@ -17,9 +17,10 @@ function isAuthenticated(req, res, next) {
 	try {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-		if (req.session.email) {
-			if (classInformation.users[req.session.email].activeClasses.length == 0) {
-				if (classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS || classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
+        const user = classInformation.users[req.session.email];
+		if (req.session.email && user) {
+			if (user.activeClasses.length === 0) {
+				if (user.permissions >= MANAGER_PERMISSIONS || user.permissions >= TEACHER_PERMISSIONS) {
 					res.render("pages/news");
 				} else {
 					res.redirect('/selectClass')

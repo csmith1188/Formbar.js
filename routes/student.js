@@ -12,6 +12,11 @@ module.exports = {
         */
         app.get('/student', isAuthenticated, permCheck, (req, res) => {
             try {
+                // If the student is not currently in a class, redirect them back to the home page
+                if (!classInformation.classrooms[req.session.classId].students[req.session.email]) {
+                    res.redirect('/');
+                }
+
                 // Poll Setup
                 let user = {
                     name: req.session.email,

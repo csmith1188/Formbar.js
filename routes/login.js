@@ -26,7 +26,7 @@ module.exports = {
                 }
 
                 // If the user is not logged in, render the login page
-                if (req.session.email !== undefined) {
+                if (req.session.email !== undefined && classInformation.users[req.session.email]) {
                     res.redirect('/');
                     return;
                 } else if (!token) {

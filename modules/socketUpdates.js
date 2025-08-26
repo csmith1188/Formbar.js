@@ -372,10 +372,10 @@ class SocketUpdates {
         }
     }
     
-    customPollUpdate(email) {
+    customPollUpdate(email, socket = this.socket) {
         try {
             // Ignore any requests which do not have an associated socket with the email
-            if (!email) email = this.socket.request.session.email;
+            if (!email && socket.request.session) email = socket.request.session.email;
             if (!userSockets[email]) {
                 return;
             }

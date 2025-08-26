@@ -2,8 +2,8 @@ const { classInformation } = require('./class/classroom')
 const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
 const { userSockets, managerUpdate, SocketUpdates} = require("./socketUpdates");
-const { logout } = require("passport/lib/http/request");
 const {userSocketUpdates} = require("../sockets/init");
+const {logout} = require("passport/lib/http/request");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -130,7 +130,6 @@ async function deleteUser(userId, socket, socketUpdates) {
         if (!socketUpdates) {
             socketUpdates = new SocketUpdates(socket);
         }
-        console.log('userId:', userId)
 
         const user = await new Promise((resolve, reject) => {
             database.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
@@ -144,8 +143,10 @@ async function deleteUser(userId, socket, socketUpdates) {
             return
         }
 
-        if (userSockets[user.email]) {
-            logout(userSockets[user.email])
+        const userSocket = userSockets[user.email];
+        const usersSocketUpdates = userSocketUpdates[user.email];
+        if (userSocket && usersSocketUpdates) {
+            usersSocketUpdates.logout(userSocket);
         }
 
         try {
@@ -159,6 +160,15 @@ async function deleteUser(userId, socket, socketUpdates) {
 
             await socketUpdates.deleteCustomPolls(userId)
             await socketUpdates.deleteClassrooms(userId)
+
+            const activeClass = (classInformation.users[user.email].activeClasses || [])[0];
+            const classroom = classInformation.classrooms[activeClass];
+            delete classInformation.users[user.email];
+            if (classroom) {
+                delete classroom.students[user.email];
+                socketUpdates.classPermissionUpdate(activeClass);
+            }
+
 
             await dbRun('COMMIT')
             await managerUpdate()
