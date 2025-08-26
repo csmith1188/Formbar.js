@@ -2,8 +2,7 @@ const { classInformation } = require('./class/classroom')
 const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
 const { userSockets, managerUpdate, SocketUpdates} = require("./socketUpdates");
-const {userSocketUpdates} = require("../sockets/init");
-const {logout} = require("passport/lib/http/request");
+const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -62,11 +61,11 @@ async function getUser(api) {
 
             // If the user is in a class, query the database for the user's data and class permissions
             database.get(
-                'SELECT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.id = ? AND users.email = ?',
+                'SELECT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users JOIN classroom ON classroom.id = ? LEFT JOIN classusers ON classusers.classId = classroom.id AND classusers.studentId = users.id WHERE users.email = ?;',
                 [classId, email],
                 (err, dbUser) => {
                     try {
-                        // If an error occurs, throw the error
+                        // If an error occurs,g throw the error
                         if (err) throw err
 
                         // If no user is found, resolve the promise with an error object
@@ -191,9 +190,8 @@ async function getUserOwnedClasses(email, socket) {
     logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
     logger.log('info', `[getOwnedClasses] email=(${email})`);
 
-    const userId = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
-    const classes = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
-    return classes;
+    const userId = (await dbGet('SELECT id FROM users WHERE email = ?', [email])).id;
+    return await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
 }
 
 /**

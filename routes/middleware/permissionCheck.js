@@ -5,6 +5,12 @@ const { dbGet } = require("../../modules/database");
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
 const { camelCaseToNormal } = require("../../modules/util");
 
+// For users who do not have teacher/manager permissions, then they can only access these endpoints when it's
+// only affecting themselves.
+const endpointWhitelistMap = [
+    'getOwnedClasses'
+]
+
 /**
  * Permission check for HTTP requests
  * This is used for using the same socket permissions for socket APIs for HTTP APIs.
@@ -50,6 +56,15 @@ function httpPermCheck(event){
                 logger.log('info', '[http permission check] Class socket permission settings check passed')
                 return next();
             } else if (!PASSIVE_SOCKETS.includes(event)) {
+                if (endpointWhitelistMap.includes(event)) {
+                    const id = req.params.id;
+                    const user = await dbGet('SELECT * FROM users WHERE email = ?', [email]);
+                    if (user.id == id) {
+                        logger.log('info', `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
+                        return next();
+                    }
+                }
+
                 logger.log('info', `[http permission check] User does not have permission to use ${camelCaseToNormal(event)}`)
                 return res.status(401).json({ error: `You do not have permission to use ${camelCaseToNormal(event)}.` });
             }
