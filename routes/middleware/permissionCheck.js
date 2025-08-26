@@ -8,7 +8,8 @@ const { camelCaseToNormal } = require("../../modules/util");
 // For users who do not have teacher/manager permissions, then they can only access these endpoints when it's
 // only affecting themselves.
 const endpointWhitelistMap = [
-    'getOwnedClasses'
+    'getOwnedClasses',
+    'getActiveClass'
 ]
 
 /**
@@ -68,6 +69,8 @@ function httpPermCheck(event){
                 logger.log('info', `[http permission check] User does not have permission to use ${camelCaseToNormal(event)}`)
                 return res.status(401).json({ error: `You do not have permission to use ${camelCaseToNormal(event)}.` });
             }
+
+            return next();
         } catch (err) {
             logger.log('error', err.stack);
             res.status(500).json({ error: 'There was a server error try again.' });

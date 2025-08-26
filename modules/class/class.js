@@ -166,7 +166,7 @@ async function leaveClassroom(socket) {
 
 function isClassActive(classId) {
     const classroom = classInformation.classrooms[classId];
-    return classroom && classroom.isActive;
+    return classroom.isActive;
 }
 
 module.exports = {

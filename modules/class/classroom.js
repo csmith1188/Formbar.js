@@ -13,7 +13,6 @@ class Classroom {
 		this.className = className
 		this.isActive = false
 		this.students = {}
-		this.owner = "NotImplemented";
 		this.sharedPolls = sharedPolls || []
 		this.poll = {
 			status: false,

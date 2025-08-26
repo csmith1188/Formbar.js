@@ -33,7 +33,8 @@ const PASSIVE_SOCKETS = [
 	'cpUpdate',
 	'pluginUpdate',
 	'customPollUpdate',
-	'classBannedUsersUpdate'
+	'classBannedUsersUpdate',
+    'isClassActive',
 ]
 
 /**

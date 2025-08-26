@@ -40,6 +40,7 @@ module.exports = {
 					// Set the user in the session
 					if (user) {
 						req.session.user = user
+                        req.session.email = user.email
 					}
 	
 					// Log the authenticated user
