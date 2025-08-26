@@ -1,689 +1,709 @@
 <%- include('../partials/sockets') %>
-<%- include('../partials/header_content') %>
+    <%- include('../partials/header_content') %>
 
-<!DOCTYPE html>
-<html lang="en">
+        <!DOCTYPE html>
+        <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/newControlPanel.css">
-    <link rel="stylesheet" href="css/style.css">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="css/newControlPanel.css">
+            <link rel="stylesheet" href="css/style.css">
 
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <script src='/js/iro.js'></script>
-    <script src='/js/floating-ui-core.js'></script>
-    <script src='/js/floating-ui-dom.js'></script>
-    <script src='/js/deepObjectEqual.js'></script>
-</head>
+            <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <script src='/js/iro.js'></script>
+            <script src='/js/floating-ui-core.js'></script>
+            <script src='/js/floating-ui-dom.js'></script>
+            <script src='/js/deepObjectEqual.js'></script>
+        </head>
 
-<body onload="load('<%= pollStatus %>')" style="margin-bottom: 10cqh;">
+        <body onload="load('<%= pollStatus %>')" style="margin-bottom: 10cqh;">
 
-<!-- <h1>NEW FORMBAR</h1> -->
-    
-<%- include('../partials/formbar_header') %>
-<header id='quickMenu'>
-    <p id='className'>Class Name:</p>
-    <p id='classCode'>Class Code:</p>
-    <p id='totalUsers'></p>
-    <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
-    <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
-    <button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'><img src="img/cogwheel.svg" id="Settings"></button>
-</header>
+            <!-- NEW FORMBAR -->
 
-    <!-- <div id="topBar">
+            <%- include('../partials/formbar_header') %>
+                <header id='quickMenu'>
+                    <p id='className'>Class Name:</p>
+                    <p id='classCode'>Class Code:</p>
+                    <p id='totalUsers'></p>
+                    <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
+                    <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
+                    <button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'><img
+                            src="img/cogwheel.svg" id="Settings"></button>
+                </header>
+
+                <!-- <div id="topBar">
         Top Bar
         <div id="timerContainer">Timer Container</div>
         <div id="classInfo">Class Info</div>
     </div> -->
 
-    <div id="mainContent">
+                <div id="mainContent">
 
-        <div id="leftSidebar" class="innerContent side">
-            Left Sidebar
-            <div id="pollStarter">Poll Starter</div>
-            <div id="previousPolls">Previous Polls</div>
-        </div>
+                    <div id="leftSidebar" class="innerContent side">
+                        Left Sidebar
+                        <div id="pollStarter">Poll Starter</div>
+                        <div id="previousPolls">Previous Polls</div>
+                    </div>
 
-        <div id="centerContent" class="innerContent">
-                <div id="vbContainer">
-                    <canvas id='virtualbar'></canvas>
+                    <div id="centerContent" class="innerContent">
+                        <div id="vbContainer">
+                            <canvas id='virtualbar'></canvas>
+                        </div>
+                        <!-- <div id="answerOptions">Answer Options</div> -->
+                        <div id="settings">Settings</div>
+                    </div>
+
+                    <div id="rightSidebar" class="innerContent side">
+                        Right Sidebar
+                        <div id="filters">Filters</div>
+                        <p id='responsesCounter'></p>
+                        <details id="student-fake" style="opacity: 0.65; order: 9997; display: none;" hidden>
+                            <summary>
+                                <span id="alerts"></span>
+                                <span>
+                                    <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
+                                </span>
+                                <span id="email"></span>
+                                <span id="studentTags"></span>
+                                <div id="reasons">
+                                    <div id="helpReason"></div>
+                                    <div id="breakReason"></div>
+                                    <div id="response"></div>
+                                </div>
+                            </summary>
+                            <div id="permissions"></div>
+                            <div id="roomTags"></div>
+                            <div id="extraButtons"></div>
+                        </details>
+                        <div id='users'></div>
+                    </div>
                 </div>
-                <!-- <div id="answerOptions">Answer Options</div> -->
-            <div id="settings">Settings</div>
+        </body>
+
+        <div id="vbContainer">
+            <canvas id='virtualbar'></canvas>
         </div>
 
-        <div id="rightSidebar" class="innerContent side">
-            Right Sidebar
-            <div id="filters">Filters</div>
-            <div id="studentList">Student List</div>
-        </div>
-    </div>
-</body>
-
-<div id="vbContainer">
-    <canvas id='virtualbar'></canvas>
-</div>
-
-<script src="js/chart.js"></script>
-<script>
-    let noPoll;
-    let virtualBar = document.getElementById("virtualbar");
-    let mychart = virtualBar.getContext("2d");
-    let pollsData = {}
-    let timeData = {}
-    let doughnutChart = new Chart(mychart, {
-        type: 'doughnut',
-        data: {
-            labels: [],
-            datasets: [{
-                backgroundColor: [],
-                data: []
-            },
-            {
-                backgroundColor: ["blue", "white"],
-                data: [],
-                type: "pie",
+        <script src="js/chart.js"></script>
+        <script>
+            let noPoll;
+            let virtualBar = document.getElementById("virtualbar");
+            let mychart = virtualBar.getContext("2d");
+            let pollsData = {}
+            let timeData = {}
+            let doughnutChart = new Chart(mychart, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        backgroundColor: [],
+                        data: []
+                    },
+                    {
+                        backgroundColor: ["blue", "white"],
+                        data: [],
+                        type: "doughnut",
+                        options: {
+                            //disable the labels appearing on the pie chart's data
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        display: false,
+                                    }
+                                }
+                            }
+                        }
+                    }]
+                },
                 options: {
-                    //disable the labels appearing on the pie chart's data
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             labels: {
-                                display: false,
+                                font: {
+                                    size: 20
+                                },
+                                color: 'grey'
+                            },
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label;
+                                }
                             }
                         }
-                    }
-                }
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        font: {
-                            size: 20
-                        },
-                        color: 'grey'
                     },
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return context.dataset.label;
+                    cutout: '0%',
+                }
+            })
+
+            // Calls for data
+            socket.emit('vbUpdate')
+
+            // Gets data from server
+            socket.on('vbUpdate', (newPollsData) => {
+                if (deepObjectEqual(newPollsData, pollsData)) return
+
+                if (!newPollsData.status && Object.keys(newPollsData.polls).length == 0) {
+                    if (!timeData.active) {
+                        if (noPoll) noPoll.style.display = ''
+
+                        virtualBar.parentElement.style.display = "none";
+                    }
+
+                    doughnutChart.data.datasets[0].data = []
+                    doughnutChart.data.labels = []
+                } else {
+                    if (noPoll) noPoll.style.display = 'none'
+                    virtualBar.parentElement.style.display = "block";
+
+                    // Reset virtual bar
+                    doughnutChart.data.datasets[0].backgroundColor = []
+                    doughnutChart.data.datasets[0].data = []
+                    doughnutChart.data.labels = []
+
+                    let totalStudents = newPollsData.totalResponders
+                    let totalResponses = newPollsData.totalResponses;
+
+                    // make the polls blind unless all students answered
+                    if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
+                        newPollsData.blind = false
+                    }
+
+                    let labelsArray = []
+                    let pollArray = []
+
+                    let studentResponses = {}
+                    // Loops through object to get each label of the possible answers
+                    // Also, create a new label for each possible answer
+                    if (newPollsData.blind) {
+                        labelsArray.push('Responses')
+                        studentResponses.responses = 0
+                    } else {
+                        for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
+                            labelsArray.push(pollData.answer)
+                            studentResponses[poll] = 0
                         }
                     }
-                }
-            },
-            cutout: '0%',
-        }
-    })
+                    labelsArray.push('No Response')
+                    studentResponses.noResponse = 0
 
-    // Calls for data
-    socket.emit('vbUpdate')
+                    // Loops through all possible answers and generates a new color letiant for each answer
+                    // All possible answers should have a different color
+                    if (newPollsData.blind) {
+                        doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
+                    } else {
+                        for (let poll of Object.values(newPollsData.polls)) {
+                            doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+                        }
+                    }
+                    doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
+                    // Loops through all student answers and adds them to a total tally
+                    // Student response corresponds with a property name in studResponses
+                    studentResponses.noResponse += newPollsData.totalResponders - newPollsData.totalResponses
+                    for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
+                        if (newPollsData.blind)
+                            studentResponses.responses += pollData.responses
+                        else studentResponses[poll] += pollData.responses
+                    }
 
-    // Gets data from server
-    socket.on('vbUpdate', (newPollsData) => {
-        if (deepObjectEqual(newPollsData, pollsData)) return
+                    for (const responses of Object.keys(studentResponses)) {
+                        pollArray.push(studentResponses[responses])
+                    }
 
-        if (!newPollsData.status && Object.keys(newPollsData.polls).length == 0) {
-            if (!timeData.active) {
-                if (noPoll) noPoll.style.display = ''
-
-                virtualBar.parentElement.style.display = "none";
-            }
-
-            doughnutChart.data.datasets[0].data = []
-            doughnutChart.data.labels = []
-        } else {
-            if (noPoll) noPoll.style.display = 'none'
-            virtualBar.parentElement.style.display = "block";
-
-            // Reset virtual bar
-            doughnutChart.data.datasets[0].backgroundColor = []
-            doughnutChart.data.datasets[0].data = []
-            doughnutChart.data.labels = []
-
-            let totalStudents = newPollsData.totalResponders
-            let totalResponses = newPollsData.totalResponses;
-
-            // make the polls blind unless all students answered
-            if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
-                newPollsData.blind = false
-            }
-
-            let labelsArray = []
-            let pollArray = []
-
-            let studentResponses = {}
-            // Loops through object to get each label of the possible answers
-            // Also, create a new label for each possible answer
-            if (newPollsData.blind) {
-                labelsArray.push('Responses')
-                studentResponses.responses = 0
-            } else {
-                for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
-                    labelsArray.push(pollData.answer)
-                    studentResponses[poll] = 0
-                }
-            }
-            labelsArray.push('No Response')
-            studentResponses.noResponse = 0
-
-            // Loops through all possible answers and generates a new color letiant for each answer
-            // All possible answers should have a different color
-            if (newPollsData.blind) {
-                doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
-            } else {
-                for (let poll of Object.values(newPollsData.polls)) {
-                    doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
-                }
-            }
-            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-            // Loops through all student answers and adds them to a total tally
-            // Student response corresponds with a property name in studResponses
-            studentResponses.noResponse += newPollsData.totalResponders - newPollsData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
-                if (newPollsData.blind)
-                    studentResponses.responses += pollData.responses
-                else studentResponses[poll] += pollData.responses
-            }
-
-            for (const responses of Object.keys(studentResponses)) {
-                pollArray.push(studentResponses[responses])
-            }
-
-            doughnutChart.data.labels = labelsArray
-            doughnutChart.data.datasets[0].data = pollArray
-        }
-
-        pollsData = newPollsData
-        doughnutChart.update()
-    })
-
-    socket.emit('vbTimer')
-    socket.on('vbTimer', (newTimeData) => {
-        if (deepObjectEqual(newTimeData, timeData)) return
-
-        let pieChart = doughnutChart.data.datasets[1]
-        let time = newTimeData.timeLeft
-        let timePassed = newTimeData.startTime - newTimeData.timeLeft
-        let sound = newTimeData.sound
-        let active = newTimeData.active
-        //turn the time into minutes and seconds
-        let minutes = Math.floor(time / 60)
-        let seconds = time % 60
-        if (seconds < 10) {
-            seconds = "0" + seconds
-        }
-        let timeString = minutes + ":" + seconds
-
-        if (active) {
-            virtualBar.parentElement.style.display = "block";
-            if (time > 0) {
-                pieChart.data = [time, timePassed]
-                doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
-                doughnutChart.data.label = `${minutes}:${seconds}`
-                pieChart.backgroundColor = ["blue", "white"]
-            } else {
-                pieChart.data = [timePassed]
-                doughnutChart.data.datasets[1].label = timeString
-                pieChart.backgroundColor = ["red"]
-            }
-        } else {
-            if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-                virtualBar.parentElement.style.display = "none";
-            }
-            pieChart.data = []
-        }
-
-        timeData = newTimeData
-        doughnutChart.update()
-    })
-</script>
-<script src='/js/tabs.js'></script>
-<script>
-    let userCustomPolls = []
-    let classroomCustomPolls = []
-    let publicCustomPolls = []
-    let customPolls = []
-    let editingPollId = null
-    let currentSharePollId = null
-    let currentSharePollType = null
-    let classroom = {}
-
-    const FilterState = {
-        alert: [
-            'Alert tickets',
-            'Alert ticket in',
-            'No alert ticket'
-        ],
-        polls: [
-            'Polls',
-            'Responded to poll',
-            'Did not respond to poll',
-        ]
-    }
-
-    const SortState = {
-        name: [
-            'Name',
-            'Name 🡇',
-            'Name 🡅'
-        ],
-        pollName: [
-            'Poll Name',
-            'Poll Name 🡇',
-            'Poll Name 🡅'
-        ],
-        pollTime: [
-            'Poll time',
-            'Poll time 🡇',
-            'Poll time 🡅'
-        ],
-        helpTime: [
-            'Help time',
-            'Sorting by Help time',
-        ],
-        permissions: [
-            'Permissions',
-            'Permissions 🡇',
-            'Permissions 🡅'
-        ]
-    }
-
-    // 0 = off
-    // 1 = only
-    // 2 = except
-    let filter = {
-        alert: 0,
-        break: 0,
-        polls: 0
-    }
-    // 0 = off
-    // 1 = descending
-    // 2 = ascending
-    let sort = {
-        name: 0,
-        pollName: 0,
-        pollTime: 0,
-        helpTime: 0,
-        permissions: 1
-    }
-
-    let letterString = 'abcdefghijklmnopqrstuvwxyz'
-    let generatedColors = []
-    let pollResponses = []
-    let colorPickers = []
-    let multiRes = document.getElementById('multiRes')
-    let usersDiv = document.getElementById('users')
-    let resNumber = document.getElementById('resNumber')
-    let resTextBox = document.getElementById('resTextBox')
-    let endPoll = document.getElementById('endPoll')
-    let clearPoll = document.getElementById('clearPoll')
-    let startPollForm = document.getElementById('startPollForm')
-    let pollPrompt = document.getElementById('pollBox')
-    let permSort = document.getElementById('permSort')
-    let responsesDiv = document.getElementById('responses')
-    let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
-    let resetColorsButton = document.getElementById('resetColors')
-    let toPollsButton = document.getElementById('toPolls')
-    let toPollHistoryButton = document.getElementById('toPollHistory')
-    let blindCheck = document.getElementById('blind')
-    let className = document.getElementById('className')
-    let classCode = document.getElementById('classCode')
-    let mainPolls = document.getElementById('menuPolls')
-    let savePollButton = document.getElementById('save-poll')
-    let editPollDialog = document.getElementById('editPollDialog')
-    let sharePollDialog = document.getElementById('sharePollDialog')
-    let sharePollUserInput = document.getElementById('sharePollUserInput')
-    let sharePollClassInput = document.getElementById('sharePollClassInput')
-    let permissionsDiv = document.querySelector('#permissionsList')
-    let tagsDiv = document.querySelector('#tagsList');
-    let tagOptionsDiv = document.querySelector('#tagOptions');
-    let bannedTabButton = document.querySelector('.tab#bannedMenu')
-    let pollsTabButton = document.querySelector('.tab#pollsMenu')
-    let settingsTabButton = document.querySelector('.tab#settingsMenu')
-    let permissionsTabButton = document.querySelector('.tab#permissions')
-    let generalOptionsDiv = document.getElementById('generalOptions');
-    let responsesCounter = document.getElementById('responsesCounter');
-
-    let totalUsers = document.getElementById('totalUsers')
-    let responseDivs = document.getElementsByClassName('response');
-
-    // Function runs on page load
-    // Checks if poll is active or not and displays correct output
-    let rooms;
-    socket.emit('cpUpdate')
-    socket.on('cpUpdate', (newClassroom) => {
-        rooms = newClassroom
-    })
-    let tagNames = '<%= tagNames %>';
-
-    // Alerts the user if they try to start a poll without a prompt or responses
-    function pollCheck() {
-        if (pollPrompt.value == '' && responsesDiv.children.length == 0) {
-            alert('Please enter a prompt for the poll and add responses')
-        } else if (pollPrompt.value == '') {
-            alert('Please enter a prompt for the poll')
-        } else if (responsesDiv.children.length == 0) {
-            alert('Please add responses to the poll')
-        } else {
-            startPoll()
-        }
-    }
-
-    // Check if the class is currently active and change the "Start Class" button depending on state
-    socket.emit("isClassActive")
-    socket.on("isClassActive", (isActive) => {
-        setClassActiveState(isActive);
-    });
-
-    // Changes the text for the "Start Class" button depending on the state of the class
-    function setClassActiveState(isActive) {
-        const startClassButton = document.getElementById('startClass');
-        const endClassButton = document.getElementById('endClass');
-
-        if (isActive) {
-            if (startClassButton) {
-                startClassButton.innerText = 'End Class';
-                startClassButton.onclick = endClass;
-                startClassButton.id = 'endClass';
-            }
-        } else {
-            if (endClassButton) {
-                endClassButton.innerText = 'Start Class';
-                endClassButton.onclick = startClass;
-                endClassButton.id = 'startClass';
-            }
-        }
-    }
-
-    function startClass() {
-        socket.emit('startClass')
-        setClassActiveState(true);
-    }
-
-    function endClass() {
-        if (confirm('Are you sure you want to end the class?')) {
-            socket.emit('endClass')
-            setClassActiveState(false);
-        }
-    }
-
-    function regenerateAccessCode() {
-        if (confirm("Are you sure you want to regenerate the class code?")) {
-            socket.emit('regenerateClassCode');
-        }
-    }
-
-    function changeClassName() {
-        const newClassName = document.getElementById('classNameInput').value;
-        if (!newClassName) return;
-        if (confirm(`Are you sure you want to change the class name to "${newClassName}"?`)) {
-            socket.emit('changeClassName', newClassName);
-        }
-    }
-
-    function kickAll() {
-        if (confirm('Are you sure you want to kick all students?')) {
-            socket.emit('classKickStudents');
-        }
-    }
-
-    const previousPollsDiv = document.getElementById('previousPolls');
-    const previousPollTemplate = document.getElementById('previousPoll-template');
-    const previousPollBackButton = document.getElementById('previousPollBackward');
-    const previousPollForwardButton = document.getElementById("previousPollForward");
-    const customPollPromptElement = document.getElementById('pollBox');
-    const customPollsButton = document.querySelector('.quickButton.tab[data-tab-group="mainTabs"]#pollsMenu');
-    const addResponseButton = document.getElementById('addPollRes');
-    let currentPreviousPolls = []; // Holds the current page of previous poll data
-    let currentPreviousPollIndex = 0; // Used to keep track of which page of previous polls we're on
-    let totalPreviousPolls = 0; // Used to keep track of how many previous polls there are. This is set at the getPreviousPolls socket event.
-
-    // Loads previous polls from an index
-    // This index will decide which page of previous polls to load
-    // Each page has 20 previous polls, so to go to the second page, you would do socket.emit('getPreviousPolls', 20)
-    // This might want to be simplified to handle the number previous polls on a page on the server in the future
-    function loadPreviousPolls(index) {
-        socket.emit('getPreviousPolls', index);
-    }
-
-    async function loadPoll(button) {
-        const previousPollElement = button.parentElement;
-        const pollId = previousPollElement.id;
-        const previousPoll = currentPreviousPolls.find(poll => poll.id == pollId);
-        const previousPollData = JSON.parse(previousPoll.data);
-        const responses = []; // Holds all possible responses for the poll
-        let customPollResponseChildren = responsesDiv.children;
-
-        // Check if previous poll data has responses
-        // Legacy polls do not have this data, which makes loading poll less reliable as the
-        // possible responses were never stored. Only student's responses were stored.
-        if (previousPollData.responses) {
-            for (const response in previousPollData.responses) {
-                const responseData = previousPollData.responses[response];
-                responses.push(responseData);
-            }
-        } else {
-            // Loop through student responses and add them to responses list
-            for (const letterResponse of previousPollData.letter) {
-                // Skip if the response is empty or already in the array
-                if (letterResponse == '' || responses.indexOf(letterResponse) != -1) continue;
-                responses.push(letterResponse);
-            }
-        }
-
-        // Get all responses by id removeAnswer
-        const removeAnswerButtons = document.querySelectorAll('[id=removeAnswer]');
-        for (const removeAnswerButton of removeAnswerButtons) {
-            removeAnswerButton.click();
-        }
-
-        // Open custom polls tab and input the poll data
-        customPollsButton.click();
-        customPollPromptElement.value = previousPollData.prompt;
-        for (const responseIndex in responses) {
-            // Add a new response input
-            addResponseButton.click();
-            customPollResponseChildren = responsesDiv.children;
-
-            const response = responses[responseIndex];
-            const responseInput = customPollResponseChildren[responseIndex].querySelector('.answerName');
-            const hexInput = responseInput.parentElement.querySelector('.hexInput');
-            if (Array.isArray(response)) {
-                // If it's a legacy poll, treat it like just an array of text
-                responseInput.value = response;
-            } else {
-                // If it's not a legacy poll, use the data available
-                hexInput.value = response.color;
-                responseInput.value = response.answer;
-            }
-
-            // Trigger the onchange events to update the inputs
-            responseInput.onchange?.({ target: responseInput }); // Trigger the onchange event to update the response answer
-            hexInput.onchange?.({ target: hexInput, preventDefault() { } });
-
-        }
-    }
-
-    // Scrolls previous polls page forward and backward
-    // Shows 20 previous polls at a time to prevent sending too much data over websockets
-    function scrollPreviousPolls(direction) {
-        if (direction === "forward") {
-            // Prevent currentPreviousPollIndex from going over the total number of previous polls
-            if (currentPreviousPollIndex + 20 > totalPreviousPolls) {
-                currentPreviousPollIndex = Math.max(0, totalPreviousPolls - 20);
-            } else {
-                currentPreviousPollIndex += 20;
-            }
-        } else {
-            // Check if we're at the beginning and if currentPreviousPollIndex - 20 is below 0, set it to zero
-            if (currentPreviousPollIndex - 20 < 0) {
-                currentPreviousPollIndex = 0;
-            } else {
-                currentPreviousPollIndex -= 20;
-            }
-        }
-
-        // Request the previous poll data from the server
-        loadPreviousPolls(currentPreviousPollIndex);
-    }
-
-    // Load the initial previous polls
-    // Begins at index 0
-    loadPreviousPolls(currentPreviousPollIndex);
-
-    // When new data is retrieved, display it
-    socket.on('getPreviousPolls', (previousPolls, total) => {
-        // Set the total number of previous polls
-        totalPreviousPolls = total;
-        currentPreviousPolls = previousPolls;
-
-        // Remove all the previous polls from the div
-        while (previousPollsDiv.firstChild) {
-            previousPollsDiv.removeChild(previousPollsDiv.firstChild);
-        }
-
-        // If there are no previous polls, display a message
-        if (previousPolls.length === 0) {
-            previousPollsDiv.innerHTML = "<p style='text-align: center;'>No previous polls to display</p>";
-        }
-
-        // If currentPreviousPollIndex is zero, hide the back button
-        // If currentPreviousPollIndex is greater than or equal to totalPreviousPolls - 20, hide the forward button
-        previousPollBackButton.hidden = currentPreviousPollIndex === 0;
-        previousPollForwardButton.hidden = currentPreviousPollIndex >= totalPreviousPolls - 20;
-
-        // Build each previous poll
-        for (const previousPoll of previousPolls) {
-            const previousPollData = JSON.parse(previousPoll.data);
-            const previousPollClone = previousPollTemplate.cloneNode(true);
-            const pollNameElement = previousPollClone.querySelector('#name');
-            const responseTemplate = previousPollClone.querySelector('#response-template');
-            const loadPoll = previousPollClone.querySelector('#loadPoll');
-
-            // Set the poll name
-            const fixedDate = previousPoll.date.replaceAll(' ', ''); // Remove spaces from date due to an issue with the way they were being stored
-            pollNameElement.innerText = `${fixedDate} - ${previousPollData.prompt}`;
-
-            // Create a response div for each user response
-            for (const nameIndex in previousPollData.names) {
-                const name = previousPollData.names[nameIndex];
-                const userTextResponse = previousPollData.text[nameIndex];
-                let userLetterResponse = previousPollData.letter[nameIndex];
-
-                // If the response data exists, use it to color the user's response
-                if (previousPollData.responses) {
-                    userLetterResponse = `<span style='color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : "black"}'>${userLetterResponse || "No response"}</span>`;
+                    doughnutChart.data.labels = labelsArray
+                    doughnutChart.data.datasets[0].data = pollArray
                 }
 
-                // Create a new response div
-                const responseDiv = responseTemplate.cloneNode(true);
-                responseDiv.id = `response-${name}`;
-                responseDiv.innerHTML = userLetterResponse ? `${name}: ${userLetterResponse}` : `${name}: No response`;
-                responseDiv.style.display = `block`;
+                pollsData = newPollsData
+                doughnutChart.update()
+            })
 
-                // If there is a text response, add it to the response div
-                if (userTextResponse) {
-                    const textResponseDiv = document.createElement('div');
-                    textResponseDiv.innerText = `Text response: ${userTextResponse}`;
-                    responseDiv.appendChild(textResponseDiv);
+            socket.emit('vbTimer')
+            socket.on('vbTimer', (newTimeData) => {
+                if (deepObjectEqual(newTimeData, timeData)) return
+
+                let pieChart = doughnutChart.data.datasets[1]
+                let time = newTimeData.timeLeft
+                let timePassed = newTimeData.startTime - newTimeData.timeLeft
+                let sound = newTimeData.sound
+                let active = newTimeData.active
+                //turn the time into minutes and seconds
+                let minutes = Math.floor(time / 60)
+                let seconds = time % 60
+                if (seconds < 10) {
+                    seconds = "0" + seconds
                 }
+                let timeString = minutes + ":" + seconds
 
-                // Append the response div to the previous poll clone
-                previousPollClone.id = previousPoll.id;
-                previousPollClone.insertBefore(responseDiv, loadPoll);
-            }
-
-
-            // Display the previous poll div
-            previousPollClone.style.display = "block";
-            previousPollsDiv.appendChild(previousPollClone);
-        }
-    });
-
-    // Handle settings
-    const settings = '<%- settings %>';
-
-    // Handle sorting and filtering
-    // They're stored by their name then a hyphen before the sorting value it is
-    // 0 = off, 1 = descending, 2 = ascending
-    if (settings.sort) {
-        const [sortName, sortValue] = settings.sort.split('-');
-        const allSorts = document.querySelectorAll('.sort');
-        const sortButton = document.getElementById(sortName);
-
-        // Set the correct sort to on
-        Object.keys(sort).forEach(key => sort[key] = 0);
-        sort[sortName] = parseInt(sortValue);
-
-        // Remove arrow from all sorts
-        allSorts.forEach(button => {
-            button.textContent = SortState[button.id][sort[button.id]]
-            button.classList.remove('pressed')
-        });
-
-        // Set the correct sort to pressed
-        sortButton.classList.add('pressed');
-        sortButton.textContent = `${SortState[sortName][sortValue]}`;
-    }
-
-    // If there are filters provided, parse them and set the correct filters
-    // This is to preserve filters between page loads
-    if (settings.filter) {
-        try {
-            // Get all filters from settings
-            const filters = JSON.parse(settings.filter);
-            Object.keys(filter).forEach(key => filter[key] = 0);
-
-            // Set the correct filters to on
-            for (const filterName in filters) {
-                const filterValue = filters[filterName];
-                const filterButton = document.getElementById(filterName);
-                if (filterValue === 0) {
-                    filterButton.classList.remove('pressed');
-                    filterButton.textContent = FilterState[filterName][0];
+                if (active) {
+                    virtualBar.parentElement.style.display = "block";
+                    if (time > 0) {
+                        pieChart.data = [time, timePassed]
+                        doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
+                        doughnutChart.data.label = `${minutes}:${seconds}`
+                        pieChart.backgroundColor = ["blue", "white"]
+                    } else {
+                        pieChart.data = [timePassed]
+                        doughnutChart.data.datasets[1].label = timeString
+                        pieChart.backgroundColor = ["red"]
+                    }
                 } else {
-                    filter[filterName] = parseInt(filterValue);
-                    filterButton.classList.add('pressed');
-                    filterButton.textContent = FilterState[filterName][filterValue];
+                    if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
+                        virtualBar.parentElement.style.display = "none";
+                    }
+                    pieChart.data = []
+                }
+
+                timeData = newTimeData
+                doughnutChart.update()
+            })
+        </script>
+        <script src='/js/tabs.js'></script>
+        <script>
+            let userCustomPolls = []
+            let classroomCustomPolls = []
+            let publicCustomPolls = []
+            let customPolls = []
+            let editingPollId = null
+            let currentSharePollId = null
+            let currentSharePollType = null
+            let classroom = {}
+
+            const FilterState = {
+                alert: [
+                    'Alert tickets',
+                    'Alert ticket in',
+                    'No alert ticket'
+                ],
+                polls: [
+                    'Polls',
+                    'Responded to poll',
+                    'Did not respond to poll',
+                ]
+            }
+
+            const SortState = {
+                name: [
+                    'Name',
+                    'Name 🡇',
+                    'Name 🡅'
+                ],
+                pollName: [
+                    'Poll Name',
+                    'Poll Name 🡇',
+                    'Poll Name 🡅'
+                ],
+                pollTime: [
+                    'Poll time',
+                    'Poll time 🡇',
+                    'Poll time 🡅'
+                ],
+                helpTime: [
+                    'Help time',
+                    'Sorting by Help time',
+                ],
+                permissions: [
+                    'Permissions',
+                    'Permissions 🡇',
+                    'Permissions 🡅'
+                ]
+            }
+
+            // 0 = off
+            // 1 = only
+            // 2 = except
+            let filter = {
+                alert: 0,
+                break: 0,
+                polls: 0
+            }
+            // 0 = off
+            // 1 = descending
+            // 2 = ascending
+            let sort = {
+                name: 0,
+                pollName: 0,
+                pollTime: 0,
+                helpTime: 0,
+                permissions: 1
+            }
+
+            let letterString = 'abcdefghijklmnopqrstuvwxyz'
+            let generatedColors = []
+            let pollResponses = []
+            let colorPickers = []
+            let multiRes = document.getElementById('multiRes')
+            let usersDiv = document.getElementById('users')
+            let resNumber = document.getElementById('resNumber')
+            let resTextBox = document.getElementById('resTextBox')
+            let endPoll = document.getElementById('endPoll')
+            let clearPoll = document.getElementById('clearPoll')
+            let startPollForm = document.getElementById('startPollForm')
+            let pollPrompt = document.getElementById('pollBox')
+            let permSort = document.getElementById('permSort')
+            let responsesDiv = document.getElementById('responses')
+            let resetAnswerNamesButton = document.getElementById('resetAnswerNames')
+            let resetColorsButton = document.getElementById('resetColors')
+            let toPollsButton = document.getElementById('toPolls')
+            let toPollHistoryButton = document.getElementById('toPollHistory')
+            let blindCheck = document.getElementById('blind')
+            let className = document.getElementById('className')
+            let classCode = document.getElementById('classCode')
+            let mainPolls = document.getElementById('menuPolls')
+            let savePollButton = document.getElementById('save-poll')
+            let editPollDialog = document.getElementById('editPollDialog')
+            let sharePollDialog = document.getElementById('sharePollDialog')
+            let sharePollUserInput = document.getElementById('sharePollUserInput')
+            let sharePollClassInput = document.getElementById('sharePollClassInput')
+            let permissionsDiv = document.querySelector('#permissionsList')
+            let tagsDiv = document.querySelector('#tagsList');
+            let tagOptionsDiv = document.querySelector('#tagOptions');
+            let bannedTabButton = document.querySelector('.tab#bannedMenu')
+            let pollsTabButton = document.querySelector('.tab#pollsMenu')
+            let settingsTabButton = document.querySelector('.tab#settingsMenu')
+            let permissionsTabButton = document.querySelector('.tab#permissions')
+            let generalOptionsDiv = document.getElementById('generalOptions');
+            let responsesCounter = document.getElementById('responsesCounter');
+
+            let totalUsers = document.getElementById('totalUsers')
+            let responseDivs = document.getElementsByClassName('response');
+
+            // Function runs on page load
+            // Checks if poll is active or not and displays correct output
+            let rooms;
+            socket.emit('cpUpdate')
+            socket.on('cpUpdate', (newClassroom) => {
+                rooms = newClassroom
+            })
+            let tagNames = '<%= tagNames %>';
+
+            // Alerts the user if they try to start a poll without a prompt or responses
+            function pollCheck() {
+                if (pollPrompt.value == '' && responsesDiv.children.length == 0) {
+                    alert('Please enter a prompt for the poll and add responses')
+                } else if (pollPrompt.value == '') {
+                    alert('Please enter a prompt for the poll')
+                } else if (responsesDiv.children.length == 0) {
+                    alert('Please add responses to the poll')
+                } else {
+                    startPoll()
                 }
             }
-        } catch (err) {
-            // Set the default filter settings
-            socket.emit('setClassSetting', 'filter', JSON.stringify({
-                alert: 0,
-                polls: 0
-            }));
-        }
-    }
 
-    // Handle mute button
-    let mute = settings.mute;
-    setMuteSound(mute)
+            // Check if the class is currently active and change the "Start Class" button depending on state
+            socket.emit("isClassActive")
+            socket.on("isClassActive", (isActive) => {
+                setClassActiveState(isActive);
+            });
 
-    function setMuteSound(isMuted) {
-        mute = isMuted;
-        document.getElementById('muteButton').hidden = mute;
-        document.getElementById('unmuteButton').hidden = !mute;
-    }
+            // Changes the text for the "Start Class" button depending on the state of the class
+            function setClassActiveState(isActive) {
+                const startClassButton = document.getElementById('startClass');
+                const endClassButton = document.getElementById('endClass');
 
-    function toggleMuteSound() {
-        setMuteSound(!mute);
-        socket.emit('setClassSetting', 'mute', mute);
-    }
-</script>
-<script src='/js/controlPanelStudents.js'></script>
-<script src='/js/sockets/cpUpdate.js'></script>
-<script src='/js/modules/tags.js'></script>
-<script src='/js/controlPanelSockets.js'></script>
-<script src='/js/controlPanelPolls.js'></script>
+                if (isActive) {
+                    if (startClassButton) {
+                        startClassButton.innerText = 'End Class';
+                        startClassButton.onclick = endClass;
+                        startClassButton.id = 'endClass';
+                    }
+                } else {
+                    if (endClassButton) {
+                        endClassButton.innerText = 'Start Class';
+                        endClassButton.onclick = startClass;
+                        endClassButton.id = 'startClass';
+                    }
+                }
+            }
 
-<%- include('../partials/footer_content') %>
+            function startClass() {
+                socket.emit('startClass')
+                setClassActiveState(true);
+            }
 
-</html>
+            function endClass() {
+                if (confirm('Are you sure you want to end the class?')) {
+                    socket.emit('endClass')
+                    setClassActiveState(false);
+                }
+            }
+
+            function regenerateAccessCode() {
+                if (confirm("Are you sure you want to regenerate the class code?")) {
+                    socket.emit('regenerateClassCode');
+                }
+            }
+
+            function changeClassName() {
+                const newClassName = document.getElementById('classNameInput').value;
+                if (!newClassName) return;
+                if (confirm(`Are you sure you want to change the class name to "${newClassName}"?`)) {
+                    socket.emit('changeClassName', newClassName);
+                }
+            }
+
+            function kickAll() {
+                if (confirm('Are you sure you want to kick all students?')) {
+                    socket.emit('classKickStudents');
+                }
+            }
+
+            const previousPollsDiv = document.getElementById('previousPolls');
+            const previousPollTemplate = document.getElementById('previousPoll-template');
+            const previousPollBackButton = document.getElementById('previousPollBackward');
+            const previousPollForwardButton = document.getElementById("previousPollForward");
+            const customPollPromptElement = document.getElementById('pollBox');
+            const customPollsButton = document.querySelector('.quickButton.tab[data-tab-group="mainTabs"]#pollsMenu');
+            const addResponseButton = document.getElementById('addPollRes');
+            let currentPreviousPolls = []; // Holds the current page of previous poll data
+            let currentPreviousPollIndex = 0; // Used to keep track of which page of previous polls we're on
+            let totalPreviousPolls = 0; // Used to keep track of how many previous polls there are. This is set at the getPreviousPolls socket event.
+
+            // Loads previous polls from an index
+            // This index will decide which page of previous polls to load
+            // Each page has 20 previous polls, so to go to the second page, you would do socket.emit('getPreviousPolls', 20)
+            // This might want to be simplified to handle the number previous polls on a page on the server in the future
+            function loadPreviousPolls(index) {
+                socket.emit('getPreviousPolls', index);
+            }
+
+            async function loadPoll(button) {
+                const previousPollElement = button.parentElement;
+                const pollId = previousPollElement.id;
+                const previousPoll = currentPreviousPolls.find(poll => poll.id == pollId);
+                const previousPollData = JSON.parse(previousPoll.data);
+                const responses = []; // Holds all possible responses for the poll
+                let customPollResponseChildren = responsesDiv.children;
+
+                // Check if previous poll data has responses
+                // Legacy polls do not have this data, which makes loading poll less reliable as the
+                // possible responses were never stored. Only student's responses were stored.
+                if (previousPollData.responses) {
+                    for (const response in previousPollData.responses) {
+                        const responseData = previousPollData.responses[response];
+                        responses.push(responseData);
+                    }
+                } else {
+                    // Loop through student responses and add them to responses list
+                    for (const letterResponse of previousPollData.letter) {
+                        // Skip if the response is empty or already in the array
+                        if (letterResponse == '' || responses.indexOf(letterResponse) != -1) continue;
+                        responses.push(letterResponse);
+                    }
+                }
+
+                // Get all responses by id removeAnswer
+                const removeAnswerButtons = document.querySelectorAll('[id=removeAnswer]');
+                for (const removeAnswerButton of removeAnswerButtons) {
+                    removeAnswerButton.click();
+                }
+
+                // Open custom polls tab and input the poll data
+                customPollsButton.click();
+                customPollPromptElement.value = previousPollData.prompt;
+                for (const responseIndex in responses) {
+                    // Add a new response input
+                    addResponseButton.click();
+                    customPollResponseChildren = responsesDiv.children;
+
+                    const response = responses[responseIndex];
+                    const responseInput = customPollResponseChildren[responseIndex].querySelector('.answerName');
+                    const hexInput = responseInput.parentElement.querySelector('.hexInput');
+                    if (Array.isArray(response)) {
+                        // If it's a legacy poll, treat it like just an array of text
+                        responseInput.value = response;
+                    } else {
+                        // If it's not a legacy poll, use the data available
+                        hexInput.value = response.color;
+                        responseInput.value = response.answer;
+                    }
+
+                    // Trigger the onchange events to update the inputs
+                    responseInput.onchange?.({ target: responseInput }); // Trigger the onchange event to update the response answer
+                    hexInput.onchange?.({ target: hexInput, preventDefault() { } });
+
+                }
+            }
+
+            // Scrolls previous polls page forward and backward
+            // Shows 20 previous polls at a time to prevent sending too much data over websockets
+            function scrollPreviousPolls(direction) {
+                if (direction === "forward") {
+                    // Prevent currentPreviousPollIndex from going over the total number of previous polls
+                    if (currentPreviousPollIndex + 20 > totalPreviousPolls) {
+                        currentPreviousPollIndex = Math.max(0, totalPreviousPolls - 20);
+                    } else {
+                        currentPreviousPollIndex += 20;
+                    }
+                } else {
+                    // Check if we're at the beginning and if currentPreviousPollIndex - 20 is below 0, set it to zero
+                    if (currentPreviousPollIndex - 20 < 0) {
+                        currentPreviousPollIndex = 0;
+                    } else {
+                        currentPreviousPollIndex -= 20;
+                    }
+                }
+
+                // Request the previous poll data from the server
+                loadPreviousPolls(currentPreviousPollIndex);
+            }
+
+            // Load the initial previous polls
+            // Begins at index 0
+            loadPreviousPolls(currentPreviousPollIndex);
+
+            // When new data is retrieved, display it
+            socket.on('getPreviousPolls', (previousPolls, total) => {
+                // Set the total number of previous polls
+                totalPreviousPolls = total;
+                currentPreviousPolls = previousPolls;
+
+                // Remove all the previous polls from the div
+                while (previousPollsDiv.firstChild) {
+                    previousPollsDiv.removeChild(previousPollsDiv.firstChild);
+                }
+
+                // If there are no previous polls, display a message
+                if (previousPolls.length === 0) {
+                    previousPollsDiv.innerHTML = "<p style='text-align: center;'>No previous polls to display</p>";
+                }
+
+                // If currentPreviousPollIndex is zero, hide the back button
+                // If currentPreviousPollIndex is greater than or equal to totalPreviousPolls - 20, hide the forward button
+                previousPollBackButton.hidden = currentPreviousPollIndex === 0;
+                previousPollForwardButton.hidden = currentPreviousPollIndex >= totalPreviousPolls - 20;
+
+                // Build each previous poll
+                for (const previousPoll of previousPolls) {
+                    const previousPollData = JSON.parse(previousPoll.data);
+                    const previousPollClone = previousPollTemplate.cloneNode(true);
+                    const pollNameElement = previousPollClone.querySelector('#name');
+                    const responseTemplate = previousPollClone.querySelector('#response-template');
+                    const loadPoll = previousPollClone.querySelector('#loadPoll');
+
+                    // Set the poll name
+                    const fixedDate = previousPoll.date.replaceAll(' ', ''); // Remove spaces from date due to an issue with the way they were being stored
+                    pollNameElement.innerText = `${fixedDate} - ${previousPollData.prompt}`;
+
+                    // Create a response div for each user response
+                    for (const nameIndex in previousPollData.names) {
+                        const name = previousPollData.names[nameIndex];
+                        const userTextResponse = previousPollData.text[nameIndex];
+                        let userLetterResponse = previousPollData.letter[nameIndex];
+
+                        // If the response data exists, use it to color the user's response
+                        if (previousPollData.responses) {
+                            userLetterResponse = `<span style='color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : "black"}'>${userLetterResponse || "No response"}</span>`;
+                        }
+
+                        // Create a new response div
+                        const responseDiv = responseTemplate.cloneNode(true);
+                        responseDiv.id = `response-${name}`;
+                        responseDiv.innerHTML = userLetterResponse ? `${name}: ${userLetterResponse}` : `${name}: No response`;
+                        responseDiv.style.display = `block`;
+
+                        // If there is a text response, add it to the response div
+                        if (userTextResponse) {
+                            const textResponseDiv = document.createElement('div');
+                            textResponseDiv.innerText = `Text response: ${userTextResponse}`;
+                            responseDiv.appendChild(textResponseDiv);
+                        }
+
+                        // Append the response div to the previous poll clone
+                        previousPollClone.id = previousPoll.id;
+                        previousPollClone.insertBefore(responseDiv, loadPoll);
+                    }
+
+
+                    // Display the previous poll div
+                    previousPollClone.style.display = "block";
+                    previousPollsDiv.appendChild(previousPollClone);
+                }
+            });
+
+            // Handle settings
+            const settings = '<%- settings %>';
+
+            // Handle sorting and filtering
+            // They're stored by their name then a hyphen before the sorting value it is
+            // 0 = off, 1 = descending, 2 = ascending
+            if (settings.sort) {
+                const [sortName, sortValue] = settings.sort.split('-');
+                const allSorts = document.querySelectorAll('.sort');
+                const sortButton = document.getElementById(sortName);
+
+                // Set the correct sort to on
+                Object.keys(sort).forEach(key => sort[key] = 0);
+                sort[sortName] = parseInt(sortValue);
+
+                // Remove arrow from all sorts
+                allSorts.forEach(button => {
+                    button.textContent = SortState[button.id][sort[button.id]]
+                    button.classList.remove('pressed')
+                });
+
+                // Set the correct sort to pressed
+                sortButton.classList.add('pressed');
+                sortButton.textContent = `${SortState[sortName][sortValue]}`;
+            }
+
+            // If there are filters provided, parse them and set the correct filters
+            // This is to preserve filters between page loads
+            if (settings.filter) {
+                try {
+                    // Get all filters from settings
+                    const filters = JSON.parse(settings.filter);
+                    Object.keys(filter).forEach(key => filter[key] = 0);
+
+                    // Set the correct filters to on
+                    for (const filterName in filters) {
+                        const filterValue = filters[filterName];
+                        const filterButton = document.getElementById(filterName);
+                        if (filterValue === 0) {
+                            filterButton.classList.remove('pressed');
+                            filterButton.textContent = FilterState[filterName][0];
+                        } else {
+                            filter[filterName] = parseInt(filterValue);
+                            filterButton.classList.add('pressed');
+                            filterButton.textContent = FilterState[filterName][filterValue];
+                        }
+                    }
+                } catch (err) {
+                    // Set the default filter settings
+                    socket.emit('setClassSetting', 'filter', JSON.stringify({
+                        alert: 0,
+                        polls: 0
+                    }));
+                }
+            }
+
+            // Handle mute button
+            let mute = settings.mute;
+            setMuteSound(mute)
+
+            function setMuteSound(isMuted) {
+                mute = isMuted;
+                document.getElementById('muteButton').hidden = mute;
+                document.getElementById('unmuteButton').hidden = !mute;
+            }
+
+            function toggleMuteSound() {
+                setMuteSound(!mute);
+                socket.emit('setClassSetting', 'mute', mute);
+            }
+        </script>
+        <script src='/js/controlPanelStudents.js'></script>
+        <script src='/js/sockets/cpUpdate.js'></script>
+        <script src='/js/modules/tags.js'></script>
+        <script src='/js/controlPanelSockets.js'></script>
+        <script src='/js/controlPanelPolls.js'></script>
+
+        <%- include('../partials/footer_content') %>
+
+        </html>
