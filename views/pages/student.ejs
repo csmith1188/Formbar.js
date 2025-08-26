@@ -22,18 +22,6 @@
 
 							<br>
 							<div id="helpBreak">
-								<div id="studHelp">
-									<h1>Need Help?</h1>
-									<button onclick="{document.getElementById('requestHelpDialog').showModal()}" class="quickButton helpButton">Send Ticket</button>
-									<br>
-								</div>
-								<div id="studBreak">
-									<h1>Need a Break?</h1>
-									<button class="breakButton"
-										onclick="{document.getElementById('requestBreakDialog').showModal()}">
-										Take Break
-									</button>
-								</div>
 								<div id="pollContent">
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
 									<div id="poll">
@@ -42,17 +30,28 @@
 
 											</h2>
 										</u>
-										<form id="pollForm"></form>
+										<div id="pollForm"></div>
 										<br>
 									</div>
+								</div>
+								<div id="studHelp">
+									<button onclick="{document.getElementById('requestHelpDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}" class="quickButton helpButton">Send Help Ticket</button>
+									<br>
+								</div>
+								<div id="studBreak">
+									<button class="breakButton"
+										onclick="{document.getElementById('requestBreakDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}">
+										Take a Break
+									</button>
 								</div>
 							</div>
 				</div>
 				<%- include('../partials/body_content') %>
 
-					<dialog id="requestBreakDialog" class="contentBox">
+					<dialog id="requestBreakDialog" class="contentBox" on="console.log">
+						<script>document.getElementById("requestBreakDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 						<form
-							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
+							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
 							<h3 style="margin-top: 0;">Take a break</h3>
 							<div id="breakInputs" class="centered">
 								<label class="form-control" id="pollControl" for="bathroom">
@@ -68,12 +67,13 @@
 							</div>
 							<div id="takeBreak" class="hCentered">
 								<button class="quickButton" id="cancel" type="button"
-									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
+									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
 								<button class="quickButton" type="submit">Take Break</button>
 							</div>
 						</form>
 					</dialog>
 					<dialog id="requestHelpDialog" class="contentBox">
+						<script>document.getElementById("requestHelpDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 						<form onsubmit="help()">
 							<h3 style="margin-top: 0;">Request Help</h3>
 							<div id="eventForm">
@@ -83,11 +83,12 @@
 							</div>
 							
 							<div id="takeHelp" class="hCentered">
-								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();">Cancel</button>
+								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
 								<button class="quickButton" type="submit">Request Help</button>
 							</div>
 						</form>
 					</dialog>
+					<div id="backgroundDarken"></div>
 					<% } %>
 			</body>
 
@@ -134,10 +135,16 @@
 					}
 
 					function updatePageLoop() {
+						pollForm = document.getElementById('pollForm');
+						pollPromptDisplay = document.getElementById('pollPrompt');
+
+						if(pollDiv.querySelector("#remove")) {
+							pollDiv.querySelector("#remove").remove()
+						}
 						if (poll.multiRes) {
 							multiAnswer = "checkbox"
 						} else {
-							multiAnswer = "radio"
+							multiAnswer = "button"
 						}
 						if (mode == 'poll' && votingRight) {
 							pollContent.style.display = 'block'
@@ -147,25 +154,26 @@
 								pollDiv.style.display = 'block'
 
 								pollForm.innerHTML = ''
-
 								pollPromptDisplay.innerText = poll.prompt
 								// Creates all selectable answers and displays them to the user
 								for (let response of Object.values(poll.responses)) {
-									response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-									pollForm.innerHTML += `
+									
+									if(multiAnswer !== 'button') {
+										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+
+										pollForm.innerHTML += `
 											<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
 												<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
 												${response.answer}
 											</label>
 										`;
+									} else {
+										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+										pollForm.innerHTML += `<button name="poll" id="${response.answer}" style="background: ${response.color}44; --theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+									}
 								}
 								if (!poll.multiRes) {
-									pollForm.innerHTML += `
-												<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
-													<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
-													remove
-												</label>
-											`
+									pollDiv.innerHTML += `<button name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
 								}
 
 								if (poll.textRes) {
@@ -180,10 +188,10 @@
 							const resTextBox = document.getElementById("resTextBox")
 							if (!poll.multiRes) {
 								// If the poll isn't multi-res, handle it normally
-								const oldLetterElement = document.getElementById(oldLetterRes)
-								if (oldLetterRes && oldLetterElement) {
-									oldLetterElement.checked = true
-								}
+								// const oldLetterElement = document.getElementById(oldLetterRes)
+								// if (oldLetterRes && oldLetterElement) {
+								// 	oldLetterElement.checked = true
+								// }
 							} else {
 								// If the poll is multi-res, split the response and check all of them
 								const splitLetterRes = oldLetterRes.split(',')
@@ -224,7 +232,7 @@
 
 					// Submits the users answer to the poll
 					// Takes the pollResponses value which defines the number of possible answers
-					function submitPoll() {
+					function submitPoll(button) {
 						let radios = document.getElementsByName('poll')
 						let textarea = document.getElementById("resTextBox")
 						let lettRes = []
@@ -232,13 +240,15 @@
 
 						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
 						for (let i = 0; i < radios.length; i++) {
-							if ((radios[i].type == 'radio' || radios[i].type == "checkbox") && radios[i].checked) {
+							if (radios[i].type == "checkbox" && radios[i].checked) {
 								// Defines the letter response of the user
-								if (radios[i].value == "remove") {
+								if(radios[i].value == "remove") {
 									lettRes = radios[i].value
 									break;
 								}
 								lettRes.push(radios[i].value)
+							} else if(radios[i].tagName == 'BUTTON' && radios[i] == button) {
+								lettRes.push(radios[i].id)
 							}
 						}
 

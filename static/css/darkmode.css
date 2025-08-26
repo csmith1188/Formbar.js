@@ -40,7 +40,7 @@
 }
 
 body {
-	background-color: #323232;
+	background: linear-gradient(135deg, #072438 30%, #000c15 100%);
 	color: #ffffff;
 }
 
@@ -117,4 +117,29 @@ select option {
 #tagBox {
 	border-color: #000000;
 	color: #000000;
+}
+
+#pollForm button {
+	color: white !important;
+  	border: 2px solid #fff4;
+}
+
+.breakButton,
+.helpButton,
+button#remove,
+#pollPrompt {
+	background-color: #d8e4f744;
+  	border: 2px solid #fff4;
+}
+
+canvas {
+	opacity: 50%;
+}
+
+
+button,
+#quickMenu {
+	background-color: #d8e4f744;
+  	border: 2px solid #fff4;
+	color: white;
 }

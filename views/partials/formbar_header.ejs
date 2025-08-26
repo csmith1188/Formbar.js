@@ -4,35 +4,36 @@
   }
 </style>
 <header id="formbarHeader">
-  <a href="/" id="headerLogo">Formbar</a>
+  <a href="/" id="headerLogo"><h1>Formbar</h1><p id="version">v 1.1.0</p></a>
   <% if (locals.currentUser) { %>
+    <ul>
     <% if (currentUser.classPermissions) { %>
-      <a href="/controlPanel" class="headerTab">Panel</a>
+      <li><a href="/controlPanel" class="headerTab">Panel</a></li>
       <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
-          <a href="/managerPanel" class="headerTab">Manager</a>
+          <li><a href="/managerPanel" class="headerTab">Manager</a></li>
           <% } %>
             <% if (!currentUser.classPermissions) { %>
               <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                <a href="/manageClass" class="headerTab">Manage Class</a>
+                <li><a href="/manageClass" class="headerTab">Manage Class</a></li>
                 <% } %>
-                  <a href="/selectClass" class="headerTab">Join Class</a>
+                  <li><a href="/selectClass" class="headerTab">Join Class</a></li>
                   <% } %>
                     <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                      <a href="/plugins" class="headerTab">Plugins</a>
+                      <li><a href="/plugins" class="headerTab">Plugins</a></li>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button>
-
-                            <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button>
+                          <li><button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button></li>
+                            <li>
+                            <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button></li>
                           <% } %>
-                            <button href="/" id="logoutButton" onclick="logout()">
-                              <img id="logoutIcon" src="/img/logout.svg" title="Logout">
-                            </button>
                             <% } %>
-                            <p id="version">v 1.1.0</p>
+                            </ul>
                             <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM">
                               <img id="lmdmIcon" src="/img/sun.svg">
+                            </button>
+                            <button href="/" id="logoutButton" onclick="logout()">
+                              <img id="logoutIcon" src="/img/logout.svg" title="Logout">
                             </button>
                             <button id="muteButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
                             <button id="unmuteButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>

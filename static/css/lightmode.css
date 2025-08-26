@@ -40,7 +40,7 @@
 }
 
 body {
-	background-color: white;
+	background: linear-gradient(135deg, #b8e1ff 30%, #699bbe 100%);
 	color: #000;
 }
 

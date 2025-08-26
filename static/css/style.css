@@ -1,4 +1,5 @@
 /* --- GENERAL --- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
 :root {
 	/*All pages can use this set of colors*/
@@ -45,6 +46,8 @@ body {
 	text-align: center;
 	--theme-color: var(--color-blue);
 	transition: background-color 0.5s, color 0.5s;
+	width: calc(100vw - 16px);
+	height: calc(100vh - 16px);
 }
 
 a {
@@ -83,60 +86,73 @@ input[type="checkbox"] {
 	vertical-align: middle;
 }
 
-button,
-.quickButton {
-	border-radius: 8px;
-	font-size: inherit;
-	font-family: inherit;
-	background-color: var(--bg-light-blue);
-	color: var(--theme-color);
-	border: .3vh solid var(--theme-color);
-	margin: 2px 1px;
-	cursor: pointer;
-	transition-duration: 0.2s;
-	transition-property: width, transform, box-shadow, background-color, color;
-}
 
 .breakButton,
-.helpButton {
-	border-radius: 8px;
-	font-size: 150%;
-	font-family: inherit;
-	background-color: var(--bg-light-blue);
-	color: var(--theme-color);
-	border: 2px solid var(--theme-color);
-	margin: 2px 1px;
+.helpButton,
+button#remove {
 	cursor: pointer;
-	transition-duration: 0.2s;
-	transition-property: width, transform, box-shadow, background-color, color;
-	width: 200px;
-	height: 100px;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 230px;
+	height: 100%;
+	background-color: #122f5f44;
+	border: 2px solid #0004;
+	border-radius: 10px;
+	font-size: 24px;
+	padding: 0px 20px;
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s scale ease-in-out;
 }
 
-/*Pop-out effect*/
-:is(button, .quickButton):not(.unselectable, .pressed):where(:hover, :focus-visible),
-:is(button.tab.unselectable, .quickButton.tab.unselectable):where(:hover, :focus-visible) {
-	transform: translate(3px, -3px);
-	box-shadow: -1.5px 1.5px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%), -3px 3px color-mix(in hsl, var(--theme-color) 70%, hsl(0, 0%, 0%) 30%);
+.breakButton:hover,
+.helpButton:hover,
+button#remove:hover {
+	background-color: #122f5f99;
+	scale: 1.05;
 }
 
-:is(button, .quickButton):not(.unselectable):active {
-	background: var(--theme-color);
-	color: white;
-	transform: none !important;
-	box-shadow: none !important;
+button#remove {
+	width: 100%;
+	height: 55px;
 }
 
 /*Shows that the button is currently active*/
 button.pressed,
 .quickButton.pressed {
-	background-color: var(--theme-color);
-	border: 2px solid #000000;
-	box-shadow: inset 0 0 5px rgb(0, 0, 0);
+	border: 2px solid #013fbf44;
+	background: #013fbf44;
 	color: white;
 }
 
+#backgroundDarken {
+	width: 100vw;
+	height: 100vh;
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: #0000;
+	backdrop-filter: blur(0px);
+	z-index: 5;
+
+	pointer-events: none;
+	transition: 0.2s ease-in-out background, 0.2s ease-in-out backdrop-filter;
+}
+
+#backgroundDarken.open {
+	background: #000a;
+	backdrop-filter: blur(5px);
+}
+
+#virtualbar {
+	filter: drop-shadow(2px 2px 6px #000a);
+}
+
 dialog {
+	/* background: red; */
 	box-shadow: 3px 3px 10px black;
 }
 
@@ -220,54 +236,120 @@ dialog {
 }
 
 #formbarHeader {
-	position: fixed;
-	width: 110%;
-	height: fit-content;
-	align-items: center;
-	z-index: 1;
+	position: absolute;
 	top: 0;
-	left: -5%;
+	left: 15px;
+	right: 15px;
+	background: linear-gradient(to right, #0040bf, #6f00ff);
+	height: 60px;
+	box-shadow: 0px 3px 10px black;
+	color: white;
+	padding: 0 20px;
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	font-size: 20px;
+	border-radius: 0 0 10px 10px;
+	z-index:5;
+}
+
+#formbarHeader ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	height: 100%;
+	margin-right: 30px;
+}
+
+#formbarHeader li {
+	float: left;
+	margin: 5px;
+	height: calc(100% - 10px);
+}
+
+button {
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #0004;
+	border: 2px solid #0004;
+	border-radius: 10px;
+	font-size: 24px;
+	padding: 5px 20px;
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s scale ease-in-out;
+}
+
+#formbarHeader li a,
+#formbarHeader li button {
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background-color: #0004;
+	border: 2px solid #0004;
+	border-radius: 10px;
+	font-size: 24px;
+	padding: 0px 20px;
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s scale ease-in-out;
+}
+
+#formbarHeader li a:hover,
+#formbarHeader li button:hover {
+	background-color: #0006;
+	scale: 1.05;
+}
+
+
+
+#formbarHeader > button {
+	height: 80%;
+	aspect-ratio: 1;
+	background-color: #fff8;
+	border-radius: 100%;
 	display: flex;
 	justify-content: center;
-	background: linear-gradient(to right, var(--color-blue), var(--color-purple));
-	box-shadow: 0 3px 10px black;
-	user-select: none;
-	animation: gradient 5s ease infinite;
-	background: linear-gradient(-30deg, var(--color-blue), var(--color-purple));
-	background-size: 400% 400%;
-	transition: filter 0.5s;
+	align-items: center;
+	cursor: pointer;
+	border: 2px solid #0004;
+	margin-right: 5px;
+	transition: 
+		0.2s scale ease-in-out;
 }
 
-#lmdmBtn, #logoutButton, #muteButton, #unmuteButton {
-	position: fixed;
-	right: 1%;
-	border-radius: 100%;
-	width: 45px;
-	height: 45px;
+#formbarHeader > button:last-of-type {
+	margin: 0;
 }
 
-#lmdmBtn:hover {}
-
-#logoutButton:hover {}
-
-#lmdmIcon, #logoutIcon, #muteIcon, #unmuteIcon {
-	position: absolute;
-	left: 20%;
-	top: 22%;
-	width: 25px;
-	height: 25px;
+#formbarHeader > button img {
+	height: 60%;
+	aspect-ratio: 1;
+	object-fit: cover;
 }
 
-#logoutButton {
-	left: 1%;
+#formbarHeader > button:hover {
+	background-color: #fffb;
+	scale: 1.05;
 }
 
 #muteButton {
-	display: none;
+	display: none !important;
 	margin-right: 55px;
 }
 
 #unmuteButton {
+	display: none !important;
 	margin-right: 55px;
 }
 
@@ -289,38 +371,34 @@ dialog {
 	}
 }
 
-#version {
-	color: var(--light-gray);
-	padding-left: 10px;
-}
-
-a.headerTab {
-	padding: 12px 16px;
-	font-size: 1.5vi;
-	color: white;
-	cursor: pointer;
-
-}
-
-.headerTab {
-	padding: 12px 16px;
-	font-size: 1.5vi;
-	cursor: pointer;
-}
-
-.headerTab:hover,
-.headerTab:focus {
-	background-color: #00000055;
-	color: white;
-}
-
 #headerLogo {
-	padding: 8px 16px 10px;
-	font-size: 24px;
-	font-family: 'Arial Black';
-	color: white;
-	text-decoration: underline dotted;
-	cursor: pointer;
+	flex: 1 1 auto;
+	text-align: left;
+}
+
+#headerLogo > h1,
+#headerLogo > p {
+	font-family: "Outfit", sans-serif;
+  	display: inline-block;
+}
+
+#headerLogo h1 {
+	margin: 0;
+}
+
+#headerLogo,
+#headerLogo:visited {
+	text-decoration: none;
+	color: unset;
+}
+
+#headerLogo p {
+	display: inline-block;
+	font-size: 14px;
+	font-style: italic;
+	color: #fffa;
+	margin: 0;
+	margin-left: 10px;
 }
 
 .previousPollResponse {
@@ -489,17 +567,50 @@ input[type="radio"]:focus {
 /* --- STUDENT PANEL --- */
 #pollForm {
 	display: flex;
-	flex-wrap: wrap;
+	gap: 10px;
 	margin: auto;
 	align-items: flex-start;
+	justify-content: space-between;
+	flex-direction: row;
 }
 
+#pollForm button,
 #pollForm label {
-	margin: 1em auto 0;
-	filter: brightness(75%);
 	user-select: none;
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	background-color: #122f5f44;
+	border: 2px solid #0004;
+	border-radius: 10px;
+	font-size: 24px;
+	padding: 10px 50px;
+	width: 100%;
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s scale ease-in-out;
 }
 
+#pollForm button:hover {
+	background-color: #122f5f99;
+	scale: 1.05;
+}
+
+#pollPrompt {
+	font-size: 40px;
+	position: absolute;
+	top: 0;
+	right: 25%;
+	transform: translate(50%);
+	padding: 10px 20px;
+	background: #122f5f44;
+	color: white;
+	border-radius: 10px;
+	border: 2px solid #0004;
+}
 
 /* --- CONTROL PANEL --- */
 @keyframes fadeIn {
@@ -539,22 +650,29 @@ input[type="radio"]:focus {
 	justify-content: center;
 	margin-bottom: 2vh;
 	align-items: center;
+	position: absolute;
+	width: calc(100% - 16px);
+	top: 50%;
+	transform: translate(0, -50%);
 }
 
 #studentVBar #vbContainer {
 	width: 50% !important;
-	height: 85vh !important;
+	height: 75vh !important;
 }
 
 #helpBreak {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-evenly;
+	justify-content: space-around;	
 	width: 100%;
+	max-width: 1000px;
+	padding: 0 60px;
 }
 
 #pollContent {
 	width: 100%;
+	margin-bottom: 60px;
 }
 
 details {
@@ -608,11 +726,14 @@ details[open] #reasons {
 	border: .3vh var(--theme-color) solid;
 	margin-bottom: 2vh;
 	align-items: center;
+	background-color: #0004;
+  	border: 2px solid #0004;
+	border-radius: 10px;
 }
 
 #quickMenu p {
 	margin: 0;
-	color: var(--theme-color);
+	color: white;
 	font-weight: bold;
 }
 
@@ -707,7 +828,7 @@ hr {
 	margin: 1vh;
 	font-size: 1.5cqw;
 	padding: 0.25em 1em;
-	border-radius: 5px;
+
 }
 
 .ongoingPollOptions {
