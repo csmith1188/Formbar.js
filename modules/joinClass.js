@@ -72,7 +72,7 @@ async function joinClassroomByCode(code, session) {
 
 		if (classUser) {
 			// Get the student's session data ready to transport into new class
-			let currentUser = classInformation.users[email]
+			const currentUser = classInformation.users[email]
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'
@@ -121,6 +121,7 @@ async function joinClassroomByCode(code, session) {
 			const currentUser = classInformation.users[email]
 			currentUser.classPermissions = classData.permissions.userDefaults
 			currentUser.activeClasses.push(classroom.id)
+            currentUser.tags = '';
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
