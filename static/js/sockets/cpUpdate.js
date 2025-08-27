@@ -99,7 +99,9 @@ socket.on('cpUpdate', (newClassroom) => {
 
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
-    for (const email of Object.keys(newClassroom.students)) {
+    const studentEmails = Object.keys(newClassroom.students);
+    validateStudents(studentEmails);
+    for (const email of studentEmails) {
         let studentElement = document.getElementById(`student-${email}`)
         let oldStudentData = null
         let newStudentData = newClassroom.students[email]

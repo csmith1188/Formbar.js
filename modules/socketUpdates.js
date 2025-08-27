@@ -381,14 +381,17 @@ class SocketUpdates {
                 return;
             }
 
+            const userSession = userSockets[email].request.session
+            const user = classInformation.classrooms[userSession.classId].students[userSession.email];
+            if (!user) return; // If the user is not in the class, then do not update the custom polls
+
             logger.log('info', `[customPollUpdate] email=(${email})`)
-            let userSession = userSockets[email].request.session
-            let userSharedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].sharedPolls
-            let userOwnedPolls = classInformation.classrooms[userSession.classId].students[userSession.email].ownedPolls
-            let userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-            let classroomPolls = structuredClone(classInformation.classrooms[userSession.classId].sharedPolls)
-            let publicPolls = []
-            let customPollIds = userCustomPolls.concat(classroomPolls)
+            const userSharedPolls = user.sharedPolls
+            const userOwnedPolls = user.ownedPolls
+            const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
+            const classroomPolls = structuredClone(classInformation.classrooms[userSession.classId].sharedPolls)
+            const publicPolls = []
+            const customPollIds = userCustomPolls.concat(classroomPolls)
     
             logger.log('verbose', `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`)
     

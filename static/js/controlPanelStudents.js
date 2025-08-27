@@ -6,6 +6,17 @@ const userBreak = []
 // Stores the currently opened student elements
 let opendetails = []
 
+// Checks if all the student boxes are of students currently in the classroom
+function validateStudents(students) {
+    for (const student of usersDiv.children) {
+        if (!student.id) continue;
+
+        if (!students.includes(student.id.replace('student-', '')) && student.id !== 'student-fake') {
+            student.remove()
+        }
+    }
+}
+
 // Create a student in the user list
 function buildStudent(classroom, studentData) {
     const studentTemplateDiv = document.getElementById('student-fake')

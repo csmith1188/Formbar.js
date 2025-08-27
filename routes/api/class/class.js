@@ -27,7 +27,7 @@ module.exports = {
 				// Get the user from the session, and if the user is not in the class, return an error
 				const user = req.session.user;
 				if (!classData.students[user.email]) {
-					logger.log('verbose', `[get api/class/${key}] user is not logged in`);
+					logger.log('verbose', `[get api/class/${classId}] user is not logged in`);
 					res.status(403).json({ error: 'User is not logged into the selected class' });
 					return;
 				}
@@ -47,6 +47,7 @@ module.exports = {
 					delete classData.pollHistory;
                     delete classData.key;
                     delete classData.sharedPolls;
+                    classData.poll.studentBoxes = [];
 
                     classData.students = { [req.session.email]: classUsers[req.session.email] };
 				} else {
