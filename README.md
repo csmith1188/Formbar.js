@@ -12,9 +12,8 @@ Formbar.js is a classroom polling and management system. The two key components 
 
 ## UI-Revamp
 ### Changes
-
 - CSS
-- controlPanel.ejs
+- controlPanel.ejs (Needs worked on for active classes)
 - login.ejs
 - manageClass.ejs
 - managerPanel.ejs
@@ -25,3 +24,6 @@ Formbar.js is a classroom polling and management system. The two key components 
 - student.ejs
 - /partials/formbar_header.ejs
 - /partials/virtual_bar.ejs
+
+## TODO
+- Consistency across pages with small forms.
