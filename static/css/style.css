@@ -51,22 +51,29 @@
 	--lightMode-body-bg: linear-gradient(135deg, #b8e1ff 30%, #699bbe 100%);
 	--darkMode-body-bg: linear-gradient(135deg, #072438 30%, #000c15 100%);
 
-	--lightMode-menu-bg: #fffa;
-	--darkMode-menu-bg: #0003;
+	--lightMode-menu-bg: #fff7;
+	--lightMode-menu-border: #fffa;
+	--darkMode-menu-bg: #0007;
+	--darkMode-menu-border: #fff2;
 
 	--lightMode-border: #fff5;
 	--darkMode-border: #fff2;
 
 	--lightMode-button-bg: #0008;
 	--lightMode-button-border: #0004;
+	--lightMode-button-hover-bg: #000b;
 	--lightMode-button-pressed-bg: #013fbf99;
+	--lightMode-button-pressed-hover-bg: #3269d699;
 
 	--darkMode-button-bg: #d5e5ff33;
 	--darkMode-button-border: #fff4;
+	--darkMode-button-hover-bg: #83868c33;
 	--darkMode-button-pressed-bg: #004ce394;
+	--darkMode-button-pressed-hover-bg: #286aee94;
 }
 
 body {
+	overflow: hidden;
 	font: 16px "Outfit", Arial, sans-serif;
 	padding: 8px;
 	text-align: center;
@@ -88,20 +95,6 @@ input {
 	font-size: inherit;
 }
 
-input[type="text"],
-input[type="number"],
-input[type="password"],
-input[type="url"],
-textarea,
-select {
-	background: var(--emphasis-color);
-	font-size: inherit;
-	font-family: inherit;
-	border: 1px solid;
-	margin: 2px 1px;
-	resize: none;
-}
-
 input[type="number"] {
 	width: 48px;
 }
@@ -116,22 +109,8 @@ input[type="checkbox"] {
 .breakButton,
 .helpButton,
 button#remove {
-	cursor: pointer;
-	font-family: "Outfit", sans-serif;
-	color: white !important;
-	display: flex;
-	align-items: center;
-	justify-content: center;
 	width: 230px;
 	height: 100%;
-	background-color: #122f5f44;
-	border: 2px solid #0004;
-	border-radius: 10px;
-	font-size: 24px;
-	padding: 0px 20px;
-	transition: 
-		0.2s background-color ease-in-out,
-		0.2s scale ease-in-out;
 }
 
 .breakButton:hover,
@@ -151,6 +130,10 @@ button.pressed,
 .quickButton.pressed {
 	background: var(--lightMode-button-pressed-bg);
 	color: white;
+}
+
+button.pressed:hover {
+	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
 #backgroundDarken {
@@ -237,12 +220,12 @@ dialog {
 }
 
 #content {
-	/* width: fit-content; */
-	/* max-width: 600px; */
+	height: 380px;
 	width: 600px;
 	margin: auto;
 	padding: 100px 10px 10px;
-	background: white;
+	background: var(--lightMode-menu-bg);
+	border: 2px solid var(--lightMode-menu-border);
 	overflow: auto;
 	position: relative;
 	text-align: center;
@@ -288,71 +271,12 @@ dialog {
 }
 
 #formbarHeader li {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	float: left;
 	margin: 5px;
 	height: calc(100% - 10px);
-}
-
-button,
-input {
-	cursor: pointer;
-	font-family: "Outfit", sans-serif;
-	color: white !important;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: #0004;
-	border: 2px solid #0004;
-	border-radius: 10px;
-	font-size: 24px;
-	padding: 5px 20px;
-	transition: 
-		0.2s background-color ease-in-out,
-		0.2s scale ease-in-out;
-}
-
-#formbarHeader li a,
-#formbarHeader li button {
-	cursor: pointer;
-	font-family: "Outfit", sans-serif;
-	color: white !important;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
-	background-color: #0004;
-	border: 2px solid #0004;
-	border-radius: 10px;
-	font-size: 24px;
-	padding: 0px 20px;
-	transition: 
-		0.2s background-color ease-in-out,
-		0.2s scale ease-in-out;
-}
-
-#formbarHeader li a:hover,
-#formbarHeader li button:hover {
-	background-color: #0006;
-	scale: 1.05;
-}
-
-
-
-#formbarHeader > button {
-	height: 48px;
-	width: 48px;
-	aspect-ratio: 1;
-	background-color: #fff8;
-	border-radius: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	cursor: pointer;
-	border: 2px solid #0004;
-	margin-right: 5px;
-	transition: 
-		0.2s scale ease-in-out;
 }
 
 #formbarHeader > button:last-of-type {
@@ -363,11 +287,6 @@ input {
 	height: 60%;
 	aspect-ratio: 1;
 	object-fit: cover;
-}
-
-#formbarHeader > button:hover {
-	background-color: #fffb;
-	scale: 1.05;
 }
 
 #muteButton {
@@ -515,13 +434,12 @@ input[type="radio"]:focus {
 /* --- LOGIN --- */
 
 .loginBox {
-	width: 256px;
-	height: 30px;
 	display: block;
-	margin: auto !important;
-	margin-top: 8px !important;
+	margin: auto;
+	margin-top: 8px;
 	text-align: left;
 	font-size: 16px;
+	width: 400px;
 }
 
 /* --- HOMEPAGE --- */
@@ -599,31 +517,6 @@ input[type="radio"]:focus {
 	align-items: flex-start;
 	justify-content: space-between;
 	flex-direction: row;
-}
-
-#pollForm button,
-#pollForm label {
-	user-select: none;
-	cursor: pointer;
-	font-family: "Outfit", sans-serif;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	background-color: #122f5f44;
-	border: 2px solid #0004;
-	border-radius: 10px;
-	font-size: 24px;
-	padding: 10px 50px;
-	width: 100%;
-	transition: 
-		0.2s background-color ease-in-out,
-		0.2s scale ease-in-out;
-}
-
-#pollForm button:hover {
-	background-color: #122f5f99;
-	scale: 1.05;
 }
 
 #pollPrompt {
@@ -752,18 +645,15 @@ details[open] #reasons {
 	width: 50%;
 	margin-left: 25%;
 	border: .3vh var(--theme-color) solid;
-	margin-bottom: 2vh;
+	margin-bottom: 50px;
 	align-items: center;
-	background-color: #0004;
-  	border: 2px solid #0004;
+	background: var(--lightMode-menu-bg);
+	border: 2px solid var(--lightMode-menu-border);
 	border-radius: 10px;
+	gap: 20px;
 }
 
 #formbarHeader > button {
-	padding: 0;
-}
-
-#quickMenu button.quickButton {
 	padding: 0;
 }
 
@@ -782,8 +672,8 @@ details[open] #reasons {
 	align-items: center;
 	justify-content: center;
 	border-radius: 100%;
-	width: 2.5cqw;
-	height: 2.5cqw;
+	width: 52px;
+	height: 52px;
 }
 
 #quickMenu #settingsMenu img {
@@ -818,7 +708,6 @@ details[open] #reasons {
 	justify-content: space-evenly;
 	border-radius: 10px;
 	margin: 1vh;
-	width: 100%;
 }
 
 #settingsTab {
@@ -881,6 +770,8 @@ hr {
 	align-items: center;
 	font-size: 1.5cqw;
 	border: var(--theme-color), 3px, solid;
+	justify-content: left;
+	gap: 20px;
 }
 
 .options .headBox {
@@ -891,8 +782,7 @@ hr {
 }
 
 .options h2 {
-	font-size: 2cqw;
-	width: 10cqw;
+	font-size: 2cqw
 }
 
 #save-poll {
@@ -1056,11 +946,18 @@ div .tabContent {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);
 }
+.usersMenuBox {
+	margin: auto;
+	width: 60%;
+	display: flex;
+	flex-direction: column;
+	justify-content: stretch;
+}
 
 #users {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-evenly;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20px;
 }
 
 #users details[id^="student"],
@@ -1164,14 +1061,27 @@ div.break {
 	padding: 1vh 0;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-evenly;
-	border-bottom: 3px var(--theme-color) solid;
+	border-radius: var(--borderRadius);
+	background: var(--lightMode-menu-bg);
+	border: 2px solid var(--lightMode-menu-border);
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
 }
 
-#users div:last-child:not(#reasons, #reasons *, #alerts *) {
-	border-bottom: none;
+button.deleteUser {
+	margin-top: 20px;
 }
 
+#users div:not(#reasons, #reasons *, #alerts *) p {
+	font-size: 20px;
+}
+
+#users div:not(#reasons, #reasons *, #alerts *) label {
+	font-style: italic;
+	opacity: 0.75;
+}
 
 #users span:empty, #users div:empty {
 	display: none !important;
@@ -1268,12 +1178,11 @@ div.break {
 /* news page */
 article {
 	margin: 0 auto;
-	max-width: 500px;
+	max-width: 80%;
 }
 
-#news {
-	justify-content: center;
-	font-size: 24px;
+article ul {
+	line-height: 40px;
 }
 
 /* google button DO NOT TOUCH IT THATS MEAN */
@@ -1385,15 +1294,10 @@ article {
 #loginHeader {
 	position: absolute;
 	left: 0;
-	top: -200px;
+	top: -175px;
 	font-size: 20rem;
 	color: #0002;
 	width: 100%;
-}
-
-#content {
-	background: #fffa;
-	border: 2px solid #fff5;
 }
 
 #content div.buttons {
@@ -1404,14 +1308,158 @@ article {
 	margin-bottom: 50px;
 }
 
-button {
-	transition: 0.2s ease-in-out transform;
-	transform: scale(1);
-
-	background: var(--lightMode-button-bg);
-	border: 2px solid var(--lightMode-button-border);
+::placeholder {
+	color: black;
+	opacity: 0.5;
 }
 
-button:hover {
-	transform: scale(1.1);
+.revampButton {
+	text-align: center;
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	background-color: var(--lightMode-button-bg);
+	border: 2px solid var(--lightMode-button-border);
+	border-radius: 10px;
+	font-size: 24px;
+	padding: 5px 20px;
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s scale ease-in-out;
+}
+
+.revampButton:not(.revampWithText):hover {
+	background-color: var(--lightMode-button-hover-bg);
+	scale: 1.05;
+}
+
+.revampButton.revampWithText {
+	cursor: text !important;
+}
+
+.circularButton {
+	height: 48px;
+	width: 48px;
+	aspect-ratio: 1;
+	background-color: var(--lightMode-button-bg);
+	border-radius: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	border: 2px solid var(--lightMode-button-border);
+	margin-right: 5px;
+	transition: 
+		0.2s scale ease-in-out;
+}
+
+.circularButton:hover {
+	background-color: var(--lightMode-button-hover-bg);
+	scale: 1.1;
+}
+
+.circularButton img {
+	filter: invert(1);
+}
+
+.pollButton {
+	width: 100%;
+}
+
+.revampButton#forgotPassword {
+	margin-top: 20px;
+	font-style: italic;
+	max-width: 200px;
+	font-size: 20px;
+}
+
+.revampButton#submitButton {
+	margin-top: 20px;
+}
+
+.revampButton.warningButton {
+	background-color: var(--color-red);
+	color: white !important;
+	border: 2px solid var(--light-red);
+}
+
+.revampButton.warningButton:hover {
+	background-color: var(--bg-dark-red) !important;
+}
+
+#news {
+	width: 70%;
+	margin: auto;
+	padding: 20px 10px;
+
+	overflow: scroll;
+	height: calc(100vh - 60px);
+	font-size: 24px;
+}
+
+#news section {
+	width: 100%;
+	border-radius: var(--borderRadius);
+	border: 2px solid var(--lightMode-menu-border);
+	background: var(--lightMode-menu-bg);
+
+	padding: 10px;
+}
+
+#news section:not(:last-of-type) {
+	margin-bottom: 50px;
+}
+
+#news section div.titleSection {
+	width: 100%;
+	text-align: left;
+	padding-left: 40px;
+}
+
+#news section div.titleSection h1,
+#news section div.titleSection h6 {
+	margin: 0;
+}
+
+#news section div.titleSection h1 {
+	margin-top: 20px;
+	font-size: 64px;
+}
+
+#news section div.titleSection h6 {
+	font-weight: normal;
+	font-style: italic;
+	font-size: 20px;
+	margin-left: 5px;
+	color: #0006;
+}
+
+#news section article h3 {
+	font-size: 32px;
+	margin-bottom: 0;
+}
+
+a.link,
+a.link:visited {
+	font-style: oblique;
+	color: var(--theme-color);
+	font-weight: bold;
+	text-decoration: 3px underline var(--theme-color);
+	text-underline-offset: 8px;
+}
+
+#news ul li:not(:last-of-type) {
+	margin-bottom: 20px;
+}
+
+.ipListToggle {
+	margin: 20px 0;
+}
+
+#quickMenu button.revampButton {
+	width: 100%;
+}
+
+#newIp {
+	margin-right: 20px;
 }

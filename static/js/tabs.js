@@ -17,6 +17,7 @@ let tabs = document.getElementsByClassName('tab')
 let tabContents = document.getElementsByClassName('tabContent')
 
 function changeTab(tab, tabGroup) {
+	console.log(`Changing tab to ${tab} in group ${tabGroup}`)
 	let tabs = document.querySelectorAll(`.tab[data-tab-group="${tabGroup}"]`);
 	let tabContents = document.querySelectorAll(`.tabContent[data-tab-group="${tabGroup}"]`);
 

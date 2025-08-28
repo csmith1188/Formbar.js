@@ -4,42 +4,42 @@
   }
 </style>
 <header id="formbarHeader">
-  <a href="/" id="headerLogo"><h1>Formbar</h1><p id="version">v 1.1.0</p></a>
+  <a href="/" id="headerLogo"><h1>Formbar Revamp</h1><p id="version">v 1.1.0</p></a>
   <% if (locals.currentUser) { %>
     <ul>
     <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
-      <li><a href="/controlPanel" class="headerTab">Panel</a></li>
+      <li><a href="/controlPanel" class="headerTab revampButton">Panel</a></li>
       <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
-          <li><a href="/managerPanel" class="headerTab">Manager</a></li>
+          <li><a href="/managerPanel" class="headerTab revampButton">Manager</a></li>
           <% } %>
             <% if (!currentUser.classPermissions) { %>
               <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                <li><a href="/manageClass" class="headerTab">Manage Class</a></li>
+                <li><a href="/manageClass" class="headerTab revampButton">Manage Class</a></li>
                 <% } %>
-                  <li><a href="/selectClass" class="headerTab">Join Class</a></li>
+                  <li><a href="/selectClass" class="headerTab revampButton">Join Class</a></li>
                   <% } %>
                     <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                      <li><a href="/plugins" class="headerTab">Plugins</a></li>
+                      <li><a href="/plugins" class="headerTab revampButton">Plugins</a></li>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <li><button href="/" class="headerTab" title="Classes" onclick="leaveClass()">
+                          <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
                             Classes</button></li>
                             <li>
-                            <a href="/profile" class="headerTab" title="Profile">Profile</a></li>
+                            <a href="/profile" class="headerTab revampButton" title="Profile">Profile</a></li>
                             <li>
-                            <button href="/" class="headerTab" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
+                            <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
                           <% } %>
                             <% } %>
                             </ul>
-                            <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM">
+                            <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
                               <img id="lmdmIcon" src="/img/sun.svg">
                             </button>
-                            <button href="/" id="logoutButton" onclick="logout()">
+                            <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
                               <img id="logoutIcon" src="/img/logout.svg" title="Logout">
                             </button>
-                            <button id="muteButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
-                            <button id="unmuteButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>
+                            <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
+                            <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");

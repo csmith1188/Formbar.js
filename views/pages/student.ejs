@@ -35,11 +35,11 @@
 									</div>
 								</div>
 								<div id="studHelp">
-									<button onclick="{document.getElementById('requestHelpDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}" class="quickButton helpButton">Send Help Ticket</button>
+									<button onclick="{document.getElementById('requestHelpDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}" class="quickButton helpButton revampButton">Send Help Ticket</button>
 									<br>
 								</div>
 								<div id="studBreak">
-									<button class="breakButton"
+									<button class="breakButton revampButton"
 										onclick="{document.getElementById('requestBreakDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}">
 										Take a Break
 									</button>
@@ -169,11 +169,11 @@
 										`;
 									} else {
 										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-										pollForm.innerHTML += `<button name="poll" id="${response.answer}" style="background: ${response.color}44; --theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton" id="${response.answer}" style="background: ${response.color}44; --theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
 									}
 								}
 								if (!poll.multiRes) {
-									pollDiv.innerHTML += `<button name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
+									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
 								}
 
 								if (poll.textRes) {
