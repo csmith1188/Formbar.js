@@ -92,8 +92,8 @@ button.pressed.revampButton:hover {
 }
 
 .circularButton {
-	background-color: #fff8;
-	border: 2px solid #0004;
+	background-color: var(--darkMode-button-bg);
+	border: 2px solid var(--darkMode-button-border);
 }
 
 .circularButton:hover {
