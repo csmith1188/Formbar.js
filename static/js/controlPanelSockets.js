@@ -5,14 +5,14 @@ let selectedTagNames = new Set() // Stores selected tags so they don't get reset
 function createTagSelectButtons() {
 	// Clear every tag in the select box
 	for (const tag of selectPollDiv.children) {
-		if (tag.className === 'switchAll') continue;
+		if (tag.className === 'switchAll revampButton') continue;
 		tag.remove();
 	}
 
 	// Creation of tag buttons in the select box
 	for (let i = 1; i <= currentTags.length; i++) {
 		let tagPoll = document.createElement('button');
-		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll';
+		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll revampButton';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
@@ -20,10 +20,10 @@ function createTagSelectButtons() {
 		tagPoll.onclick = () => {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
-				tagPoll.className = 'pressed';
+				tagPoll.className = 'pressed revampButton';
 				selectedTagNames.add(tagPoll.textContent);
 			} else {
-				tagPoll.className = 'tagPoll'
+				tagPoll.className = 'tagPoll revampButton'
 				selectedTagNames.delete(tagPoll.textContent);
 			}
 
@@ -122,7 +122,7 @@ socket.on('customPollUpdate', (
 	for (let i = 1; i <= 4; i++) {
 		let customPoll = customPolls[i]
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
+		startButton.className = 'start-custom-poll revampButton'
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
@@ -138,7 +138,7 @@ socket.on('customPollUpdate', (
 	
 	// Creation of switchAll button
 	const switchAll = document.createElement('button')
-	switchAll.className = 'switchAll'
+	switchAll.className = 'switchAll revampButton'
 	switchAll.textContent = 'Switch All'
 
 	function getStudentVotingEligibility() {
@@ -171,7 +171,7 @@ socket.on('customPollUpdate', (
 		selectedTagNames.clear();
 		for (const tag of selectPollDiv.children) {
 			if (tag.className === 'pressed') {
-				tag.className = "tagPoll";
+				tag.className = "tagPoll revampButton";
 			}
 		}
 

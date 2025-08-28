@@ -4,7 +4,7 @@
   }
 </style>
 <header id="formbarHeader">
-  <a href="/" id="headerLogo"><h1>Formbar Revamp</h1><p id="version">v 1.1.0</p></a>
+  <a href="/" id="headerLogo"><h1>Formbar UI Revamp</h1><p id="version">v 1.1.0-ljh</p></a>
   <% if (locals.currentUser) { %>
     <ul>
     <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
@@ -26,12 +26,13 @@
                           <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
                             Classes</button></li>
                             <li>
-                            <a href="/profile" class="headerTab revampButton" title="Profile">Profile</a></li>
-                            <li>
                             <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
                           <% } %>
                             <% } %>
                             </ul>
+                            <a href="/profile" class="circularButton" title="LM/DM">
+                              <img src="/img/person.svg">
+                            </a>
                             <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
                               <img id="lmdmIcon" src="/img/sun.svg">
                             </button>

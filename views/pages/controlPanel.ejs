@@ -21,7 +21,7 @@
     <p id='totalUsers'></p>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
     <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
-    <button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'><img src="img/cogwheel.svg"
+    <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="img/cogwheel.svg"
                                                                                      id="Settings"></button>
 </header>
 
@@ -33,18 +33,18 @@
             <div id='userFilterBoxes' class='options'>
                 <h2 class='headerText'>Filter</h2>
                 <div class='headBox'>
-                    <button type='button' id='alert' class='filter'>Alerts</button>
-                    <button type='button' id='polls' class='filter'>Polls</button>
+                    <button type='button' id='alert' class='filter revampButton'>Alerts</button>
+                    <button type='button' id='polls' class='filter revampButton'>Polls</button>
                 </div>
             </div>
             <div id='userSortBoxes' class='options'>
                 <h2 class='headerText'>Sort</h2>
                 <div class='headBox'>
-                    <button type='button' id='name' class='sort'>Name</button>
-                    <button type='button' id='pollName' class='sort'>Poll Name</button>
-                    <button type='button' id='pollTime' class='sort'>Poll Time</button>
-                    <button type='button' id='helpTime' class='sort'>Help Time</button>
-                    <button type='button' id='permissions' class='sort pressed'>Permissions ▼</button>
+                    <button type='button' id='name' class='sort revampButton'>Name</button>
+                    <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
+                    <button type='button' id='pollTime' class='sort revampButton'>Poll Time</button>
+                    <button type='button' id='helpTime' class='sort revampButton'>Help Time</button>
+                    <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button>
                 </div>
             </div>
             <div id='userSelectBoxes' class='options'>
@@ -60,6 +60,7 @@
         </div>
     </div>
 </div>
+
 <div>
     <div>
         <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
@@ -244,14 +245,14 @@
         <button type='button' id='timerStopButton' hidden>Stop Timer</button>
     </div>
     <div class="ongoingButtons">
-        <button id='previousPollsMenu' class='quickButton tab' data-tab-group='mainTabs'>Previous Polls</button>
-        <button id='pollsMenu' class='quickButton tab' data-tab-group='mainTabs'>Custom Polls</button>
-        <button id='startPoll' onclick='pollCheck()'>Start Poll</button>
-        <button id='clearPoll' onclick='clearPollFunc()'>Clear Poll</button>
-        <button id='endPoll' onclick='endPollFunc()'>End Poll</button>
+        <button id='previousPollsMenu' class='quickButton tab revampButton' data-tab-group='mainTabs'>Previous Polls</button>
+        <button id='pollsMenu' class='quickButton tab revampButton' data-tab-group='mainTabs'>Custom Polls</button>
+        <button id='startPoll' class="revampButton" onclick='pollCheck()'>Start Poll</button>
+        <button id='clearPoll' class="revampButton"  onclick='clearPollFunc()'>Clear Poll</button>
+        <button id='endPoll' class="revampButton"  onclick='endPollFunc()'>End Poll</button>
     </div>
 </div>
-<button id="startClass" onclick="startClass()">
+<button id="startClass" class="revampButton" onclick="startClass()">
     Start Class
 </button>
 <p><b id='pollCounter'></b></p>

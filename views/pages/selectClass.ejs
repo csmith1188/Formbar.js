@@ -1,13 +1,13 @@
 <%- include('../partials/header_content') %>
     <%- include('../partials/sockets') %>
 
-        <body id="colorContent">
+        <body id="colorContent" class="selectClass">
             <%- include('../partials/formbar_header') %>
-                <div id="content" class="contentBox">
+                <div id="content" class="contentBox joinClass">
                     <h2 class="headerText">Join a class</h2>
                     <% if (joinedClasses.length > 0) { %>
                         <form action="selectClass" method="post">
-                            <select id="joinedKey" name="id" required>
+                            <select id="joinedKey" name="id" required class="revampButton">
                                 <option value="" disabled selected>Joined classes</option>
                                 <% for(let joinedClass of joinedClasses) { %>
                                     <option value="<%- joinedClass.id %>">
@@ -15,14 +15,14 @@
                                     </option>
                                     <% } %>
                             </select>
-                            <input type="submit" id="submitJoinedButton" class="button unselectable quickButton"
+                            <input type="submit" id="submitJoinedButton" class="button unselectable revampButton quickButton"
                                 value="Submit" onsubmit="return false;">
                         </form>
                         <% } %>
 
                         <form action="selectClass" method="post">
-                            <input type="text" required name="key" id="joinKey" placeholder="Class code">
-                            <input type="submit" id="submitJoinButton" class="button unselectable quickButton"
+                            <input type="text" required name="key" id="joinKey" placeholder="Class code" class="revampButton revampWithText">
+                            <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
                                 value="Submit" onsubmit="return false;">
                         </form>
                 </div>

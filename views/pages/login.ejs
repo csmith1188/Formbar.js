@@ -2,7 +2,7 @@
 <%- include('../partials/sockets') %>
     <!-- ^^ This means add this file into the contents of the header page -->
     <!-- This is where the title, top buttons, and stylesheet is located -->
-    <body id="colorContent">
+    <body id="colorContent" class="loginPage">
         <%- include('../partials/formbar_header') %>
             <h1 id="loginHeader">Login</h1>
             <div id="content" class="contentBox">
@@ -30,7 +30,7 @@
                     <input type="hidden" id="loginTypeBox" name="loginType" value="login">
                     <input type="hidden" id="userTypeBox" name="userType" value="user">
                     
-                    <input type="submit" id="submitButton" class="button unselectable quickButton revampButton" value="Log in"
+                    <input type="submit" id="submitButton" style="margin-top: 20px;" class="button unselectable quickButton revampButton" value="Log in"
                         onsubmit="return false;">
                     <a href="/changepassword" id="forgotPassword" class="quickButton loginBox revampButton">Forgot password</a>
                 </form>

@@ -5,14 +5,10 @@
         #apiKey {
             white-space: pre;
         }
-        
-        p {
-            font-family: monospace;
-        }
     </style>
         <body>
-            <div id='profileInformation' style='font-family: Arial, sans-serif; margin: 20px; padding: 20px; border: 1px solid #ccc; border-radius: 10px'>
-                <h1 style='text-align: center; color: #333;'><u>Profile Information</u></h1>
+            <div id='profileInformation' class="revampDiv">
+                <h1><p>Profile Information</p></h1>
                 <p id='displayName''><strong>Display Name:</strong> <%- displayName %></p>
 
                 <% if (email !== "Hidden") { %> <!-- If the user doesn't have permissions to see the email, don't show it -->
@@ -23,12 +19,12 @@
                 <p id='userId''><strong>ID:</strong> <%- id %></p>
                 <p id='apiKey'><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>
                 <div id='apiKeyButton' style='margin: 20px 0; text-align: center;'>
-                    <button onclick="revealApiKey()" style="padding: 10px 20px"">
+                    <button onclick="revealApiKey()" class="revampButton">
                         Reveal API Key
                     </button>
                 </div>
                 <div id='apiRefreshDiv' style='text-align: center;'>
-                    <button id='apiRefresh' onclick='refreshApiKey()' style='padding: 10px 20px; background-color: #ff8484'>
+                    <button id='apiRefresh' onclick='refreshApiKey()' class="revampButton warningButton">
                         Refresh API Key
                     </button>
                 </div>

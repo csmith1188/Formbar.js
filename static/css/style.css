@@ -1,6 +1,16 @@
 /* --- GENERAL --- */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
+*::-webkit-scrollbar,
+*::-webkit-scrollbar-track {
+	background: red;
+}
+
+* {
+	scrollbar-width: thin;
+	scrollbar-color: red;
+}
+
 :root {
 	/*All pages can use this set of colors*/
 
@@ -70,6 +80,8 @@
 	--darkMode-button-hover-bg: #83868c33;
 	--darkMode-button-pressed-bg: #004ce394;
 	--darkMode-button-pressed-hover-bg: #286aee94;
+
+	--button-hover-scale: 1.05;
 }
 
 body {
@@ -89,6 +101,7 @@ a {
 
 * {
 	accent-color: var(--theme-color);
+	font-family: 'Outfit', Arial, Helvetica, sans-serif;
 }
 
 input {
@@ -117,7 +130,7 @@ button#remove {
 .helpButton:hover,
 button#remove:hover {
 	background-color: #122f5f99;
-	scale: 1.05;
+	transform: scale(var(--button-hover-scale));
 }
 
 button#remove {
@@ -211,8 +224,21 @@ dialog {
 }
 
 #colorContent {
-	background-color: var(--bg-light);
 	display: flex;
+	flex-direction: column;
+}
+
+#colorContent.loginPage #content,
+#colorContent.selectClass #content {
+	margin: auto;
+}
+
+.joinClass {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
 }
 
 .textColorContent {
@@ -222,7 +248,7 @@ dialog {
 #content {
 	height: 380px;
 	width: 600px;
-	margin: auto;
+	margin: 0 auto;
 	padding: 100px 10px 10px;
 	background: var(--lightMode-menu-bg);
 	border: 2px solid var(--lightMode-menu-border);
@@ -268,6 +294,12 @@ dialog {
 	padding: 0;
 	height: 100%;
 	margin-right: 30px;
+	overflow-x: auto;
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	white-space: nowrap;
+	margin-right: 40px;
 }
 
 #formbarHeader li {
@@ -320,6 +352,8 @@ dialog {
 #headerLogo {
 	flex: 1 1 auto;
 	text-align: left;
+	white-space: nowrap;
+	margin-right: 10px;
 }
 
 #headerLogo > h1,
@@ -526,10 +560,7 @@ input[type="radio"]:focus {
 	right: 25%;
 	transform: translate(50%);
 	padding: 10px 20px;
-	background: #122f5f44;
 	color: white;
-	border-radius: 10px;
-	border: 2px solid #0004;
 }
 
 /* --- CONTROL PANEL --- */
@@ -663,7 +694,7 @@ details[open] #reasons {
 
 #quickMenu p {
 	margin: 0;
-	color: white;
+	color: black;
 	font-weight: bold;
 }
 
@@ -939,6 +970,7 @@ div .tabContent {
 
 #startClass {
 	--theme-color: hsl(120, 100%, 12%);
+	color: black !important;
 	background-color: hsl(120, 94%, 74%);
 }
 
@@ -946,6 +978,7 @@ div .tabContent {
 	--theme-color: hsl(0, 100%, 12%);
 	background-color: hsl(0, 94%, 74%);
 }
+
 .usersMenuBox {
 	margin: auto;
 	width: 60%;
@@ -1070,7 +1103,7 @@ div.break {
 	gap: 10px;
 }
 
-button.deleteUser {
+button.banUser {
 	margin-top: 20px;
 }
 
@@ -1294,8 +1327,8 @@ article ul {
 #loginHeader {
 	position: absolute;
 	left: 0;
-	top: -175px;
-	font-size: 20rem;
+	top: 0;
+	font-size: 15vh;
 	color: #0002;
 	width: 100%;
 }
@@ -1323,14 +1356,15 @@ article ul {
 	border-radius: 10px;
 	font-size: 24px;
 	padding: 5px 20px;
+	transform-origin: center; 	
 	transition: 
 		0.2s background-color ease-in-out,
-		0.2s scale ease-in-out;
+		0.2s transform ease-in-out;
 }
 
 .revampButton:not(.revampWithText):hover {
 	background-color: var(--lightMode-button-hover-bg);
-	scale: 1.05;
+	transform: scale(var(--button-hover-scale));
 }
 
 .revampButton.revampWithText {
@@ -1349,16 +1383,19 @@ article ul {
 	cursor: pointer;
 	border: 2px solid var(--lightMode-button-border);
 	margin-right: 5px;
+	transform-origin: center;
 	transition: 
-		0.2s scale ease-in-out;
+		0.2s transform ease-in-out;
 }
 
 .circularButton:hover {
 	background-color: var(--lightMode-button-hover-bg);
-	scale: 1.1;
+	transform: scale(var(--button-hover-scale));
 }
 
 .circularButton img {
+	width: 70% !important;
+	height: 70% !important;
 	filter: invert(1);
 }
 
@@ -1373,9 +1410,6 @@ article ul {
 	font-size: 20px;
 }
 
-.revampButton#submitButton {
-	margin-top: 20px;
-}
 
 .revampButton.warningButton {
 	background-color: var(--color-red);
@@ -1463,3 +1497,115 @@ a.link:visited {
 #newIp {
 	margin-right: 20px;
 }
+
+.revampDiv {
+	padding: 10px;
+	border-radius: var(--borderRadius);
+	border: 2px solid var(--lightMode-menu-border);
+	background: var(--lightMode-menu-bg);
+}
+
+.revampDivAlt {
+	padding: 10px;
+	border-radius: var(--borderRadius);
+	border: 2px solid var(--darkMode-menu-border);
+	background: var(--darkMode-menu-bg);
+}
+
+.revampDiv.spaceBetween {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+#ipMenu.tabContent {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	gap: 20px;
+}
+
+#whitelistedMembers {
+	width: 320px;
+}
+
+#whitelistedMemberList {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	flex-direction: column;
+
+	gap: 10px;
+	padding-bottom: 10px;
+}
+
+.whitelistIp {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-direction: row;
+	gap: 20px;
+	padding: 0 10px;
+}
+
+.whitelistIp p {
+	margin: 0;
+	font-size: 20px;
+	white-space: nowrap;
+}
+
+#whitelistHeader {
+	display: flex;
+	justify-content: space-between;
+	gap: 20px;
+	align-items: center;
+	padding: 0 10px;
+}
+
+.ipMenuDiv {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+#whitelist.tabContent,
+#blacklist.tabContent {
+	padding-bottom: 0;
+}
+
+.pluginsHeader {
+	font-size: 64px;
+}
+
+#classesMenu,
+#classesMenu form,
+#createClassMenu,
+#createClassMenu form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+}
+
+#classesMenu .buttonsHolder {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	width: 60%;
+	gap: 20px;
+}
+
+#classesMenu .buttonsHolder button,
+#classesMenu .buttonsHolder input {
+	width: 100%;
+}
+
+#classesMenu form,
+#createClassMenu form {
+	gap: 30px;
+}
+
+.profileInformation h1 

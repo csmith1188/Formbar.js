@@ -111,4 +111,49 @@ button.pressed.revampButton:hover {
 #quickMenu {
 	background: var(--darkMode-menu-bg);
 	border: 2px solid var(--darkMode-menu-border);
+	color: white !important;
+}
+
+#quickMenu * {
+	color: white !important;
+}
+
+
+#users div:not(#reasons, #reasons *, #alerts *) {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+.revampDiv {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+.revampDivAlt {
+	border: 2px solid var(--lightMode-menu-border);
+	background: var(--lightMode-menu-bg);
+}
+
+
+#news section {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+#startClass {
+	color: black !important;
+	background-color: rgb(39, 164, 39);
+}
+
+#endClass {
+	--theme-color: hsl(0, 100%, 12%);
+	background-color: hsl(0, 66%, 46%);
+}
+
+.circularButton img {
+	filter: none !important;
+}
+
+#pollPrompt {
+
 }

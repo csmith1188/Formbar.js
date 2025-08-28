@@ -31,10 +31,26 @@
                 </div>
             </div>
             <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
-                <button id="whitelist" class="quickButton tab revampButton" style="margin-right: 10px;" data-tab-group="ipTabs">Whitelist</button>
-                <button id="blacklist" class="quickButton tab pressed revampButton" data-tab-group="ipTabs">Blacklist</button>
-                <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
-                <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+                <div class="revampDiv ipMenuDiv">
+                    <div class="revampDiv spaceBetween ipTabsHead">
+                        <button id="whitelist" class="quickButton tab revampButton" style="margin-right: 10px;" data-tab-group="ipTabs">Whitelist</button>
+                        <button id="blacklist" class="quickButton tab pressed revampButton" data-tab-group="ipTabs">Blacklist</button>
+                    </div>
+                    <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
+                    <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+                </div>
+                <div id="whitelistedMembers" class="revampDiv">
+                    <div id="whitelistHeader">
+                        <h1 id="whitelistedMembersHeader">Blacklist</h1>
+                        <button id="toggleIpListButton" class="quickButton ipListToggle revampButton" onclick="toggleIpList()">Toggle</button>
+                    </div>
+                    <div id="whitelistedMemberList">
+                        <div class="whitelistIp">
+                            <p>127.0.0.1</p>
+                            <button class="revampButton warningButton" onclick="alert('Not yet implemented, will need server-side work for this.')">Delete</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <br/>
             <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>
@@ -44,6 +60,33 @@
 
     </html>
     <script>
+        const whitelistHeaderH1 = document.querySelector('h1#whitelistedMembersHeader');
+        const ipListToggle = document.getElementById('toggleIpListButton')
+        const whitelistButton = document.querySelector('button#whitelist');
+        const blacklistButton = document.querySelector('button#blacklist');
+
+        function setWhitelistHeader({ target }) {
+            if(target == whitelistButton && !whitelistButton.classList.contains('pressed')) {
+                whitelistHeaderH1.innerText = 'Whitelist';
+            } else if(target == whitelistButton && whitelistButton.classList.contains('pressed') || target == blacklistButton && !blacklistButton.classList.contains('pressed')) {
+                whitelistHeaderH1.innerText = 'Blacklist';
+            }
+
+            socket.emit('ipUpdate')
+            // Sets the button
+        }
+
+        function toggleIpList() {
+            ipListToggle.onclick = (event) => {
+                socket.emit('toggleIpList', whitelistHeaderH1.innerHTML.toLowerCase())
+            }
+        }
+
+        setWhitelistHeader(whitelistButton)
+
+        whitelistButton.addEventListener('click', setWhitelistHeader);
+        blacklistButton.addEventListener('click', setWhitelistHeader);
+
         let users = {}
 
         const FilterState = {
@@ -76,6 +119,7 @@
         }
 
         let usersDiv = document.getElementById('users')
+        let ipHeaderDiv = document.getElementById('whitelistHeader');
         let whitelistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#whitelist')
         let blacklistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#blacklist')
 
@@ -181,14 +225,14 @@
                 }
                 newUser.appendChild(permissionSwitch)
                 newUser.append(" ")
-                // let banUserButton = document.createElement("button")
-                // banUserButton.className = 'banUser quickButton'
-                // banUserButton.setAttribute("data-user", userData.id)
-                // banUserButton.innerText = "Ban User"
-                // banUserButton.onclick = (event) => {
-                //  socket.emit('banUser', { id: userData.id })
-                // }
-                // newUser.appendChild(banUserButton)
+                let banUserButton = document.createElement("button")
+                banUserButton.className = 'banUser quickButton warningButton revampButton'
+                banUserButton.setAttribute("data-user", userData.id)
+                banUserButton.innerText = "Ban User"
+                banUserButton.onclick = (event) => {
+                    socket.emit('banUser', { id: userData.id })
+                }
+                newUser.appendChild(banUserButton)
                 let deleteUserButton = document.createElement("button")
                 deleteUserButton.className = 'deleteUser quickButton revampButton warningButton'
                 deleteUserButton.setAttribute("data-userid", userData.id)
@@ -303,21 +347,23 @@
         })
         socket.emit('ipUpdate')
         socket.on('ipUpdate', (type, active, ips) => {
+            if(type == 'whitelist' && whitelistHeaderH1.innerText.toLowerCase() == 'whitelist') {
+                ipListToggle.innerText = active ? 'Disable' : 'Enable'
+                if(active) ipListToggle.classList.add('pressed')
+                else ipListToggle.classList.remove('pressed')
+            } else if(type == 'blacklist' && whitelistHeaderH1.innerText.toLowerCase() == 'blacklist') {
+                ipListToggle.innerText = active ? 'Disable' : 'Enable'
+                if(active) ipListToggle.classList.add('pressed')
+                else ipListToggle.classList.remove('pressed')
+            }
+
+            // sets button to enable/disable depending on state of list
+
             let ipListDiv
             if (type == 'whitelist') ipListDiv = whitelistIpsDiv
             else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
 
             ipListDiv.innerHTML = ''
-
-            let ipListToggle = document.createElement('button')
-            ipListToggle.className = 'quickButton ipListToggle revampButton'
-            if (active)
-                ipListToggle.classList = 'quickButton ipListToggle revampButton pressed'
-            ipListToggle.innerText = `Toggle ${type}`
-            ipListToggle.onclick = (event) => {
-                socket.emit('toggleIpList', event.target.parentElement.id)
-            }
-            ipListDiv.appendChild(ipListToggle)
 
             for (let ip of Object.values(ips)) {
                 let ipDiv = document.createElement('div')
