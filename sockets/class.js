@@ -1,7 +1,7 @@
 const { classInformation } = require("../modules/class/classroom")
 const { database, dbRun, dbGet } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
+const { advancedEmitToClass, userSockets, setClassOfApiSockets, emitToUser} = require("../modules/socketUpdates")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 const { startClass, endClass, leaveClass, leaveClassroom, isClassActive, joinClassroom, joinClass} = require("../modules/class/class");
@@ -83,9 +83,7 @@ module.exports = {
                     }
 
                     // Emit the voting right to the user
-                    if (userSockets[email]) {
-                        userSockets[email].emit('getCanVote', votingRight);
-                    }
+                    emitToUser('getCanVote', email, votingRight);
                 }
                 socketUpdates.virtualBarUpdate(classId);
             } catch(err) {

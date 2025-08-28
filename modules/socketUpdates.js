@@ -35,7 +35,13 @@ const PASSIVE_SOCKETS = [
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
-]
+];
+
+async function emitToUser(event, email, ...data) {
+    for (const socket of userSockets[email]) {
+        socket.emit(event, ...data)
+    }
+}
 
 /**
  * Emits an event to sockets based on user permissions
@@ -381,19 +387,20 @@ class SocketUpdates {
         try {
             // Ignore any requests which do not have an associated socket with the email
             if (!email && socket.request.session) email = socket.request.session.email;
-            if (!userSockets[email]) {
+            if (!classInformation.users[email]) {
                 return;
             }
 
-            const userSession = userSockets[email].request.session
-            const user = classInformation.classrooms[userSession.classId].students[userSession.email];
-            if (!user) return; // If the user is not in the class, then do not update the custom polls
+            const user = classInformation.users[email];
+            const classId = user.activeClasses[0];
+            const student = classInformation.classrooms[classId].students[email];
+            if (!student) return; // If the student is not in the class, then do not update the custom polls
 
             logger.log('info', `[customPollUpdate] email=(${email})`)
-            const userSharedPolls = user.sharedPolls
-            const userOwnedPolls = user.ownedPolls
+            const userSharedPolls = student.sharedPolls
+            const userOwnedPolls = student.ownedPolls
             const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-            const classroomPolls = structuredClone(classInformation.classrooms[userSession.classId].sharedPolls)
+            const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls)
             const publicPolls = []
             const customPollIds = userCustomPolls.concat(classroomPolls)
     
@@ -403,7 +410,7 @@ class SocketUpdates {
                 `SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner=?`,
                 [
                     ...customPollIds,
-                    userSession.userId
+                    user.id
                 ],
                 (err, customPollsData) => {
                     try {
@@ -510,12 +517,12 @@ class SocketUpdates {
             this.virtualBarUpdate(classId);
 
             // If the user is logged in, then handle the user's session
-            if (userSockets[email]) {
-                userSockets[email].leave(`class-${classId}`);
-                userSockets[email].request.session.classId = null;
-                userSockets[email].request.session.save();
-                userSockets[email].emit('reload');
-            }            
+            for (const userSocket of userSockets[email]) {
+                userSocket.leave(`class-${classId}`);
+                userSocket.request.session.classId = null;
+                userSocket.request.session.save();
+                userSocket.emit('reload');
+            }
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -707,7 +714,7 @@ class SocketUpdates {
             logger.log('info', `[getOwnedClasses] email=(${email})`)
     
             database.all('SELECT name, id FROM classroom WHERE owner=?',
-                [userSockets[email].request.session.userId], (err, ownedClasses) => {
+                [classInformation.users[email].id], (err, ownedClasses) => {
                     try {
                         if (err) throw err
     
@@ -861,6 +868,7 @@ module.exports = {
     PASSIVE_SOCKETS,
 
     // Socket functions
+    emitToUser,
     advancedEmitToClass,
     setClassOfApiSockets,
     managerUpdate,
