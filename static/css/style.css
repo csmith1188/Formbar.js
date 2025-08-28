@@ -721,10 +721,21 @@ details[open] #reasons {
 	display: flex;
 	justify-content: center;
 	margin-bottom: 2vh;
+	flex-direction: column;
 }
 
 #VBDiv #vbContainer {
-	width: 25% !important;
+	max-width: 400px;
+	padding: 20px;
+	height: auto !important;
+}
+
+#VBDiv #vbContainerOuter {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	max-width: 400px;
+	padding: 20px;
 	height: auto !important;
 }
 
@@ -732,7 +743,6 @@ details[open] #reasons {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
-	border: none;
 }
 
 .options {
@@ -776,7 +786,6 @@ hr {
 	justify-content: center;
 	flex-wrap: wrap;
 	padding: 1vh;
-	max-height: 25vh;
 	overflow-y: auto;
 	gap: 1vh;
 }
@@ -809,7 +818,6 @@ hr {
 	padding: 1vh 0;
 	color: var(--theme-color);
 	font-weight: bold;
-	border-left: 3px solid var(--theme-color);
 }
 
 .options h2 {
@@ -908,16 +916,15 @@ hr {
 	transform: scale(1.25);
 }
 
-.ongoingPollOptions #timeDiv {
+#controlFooter #timeDiv {
 	padding: 1vh 0;
 	width: 30%;
 	color: var(--theme-color);
 	font-weight: bold;
-	border-right: 3px solid var(--theme-color);
 }
 
-.ongoingPollOptions #timeDiv p,
-.ongoingPollOptions #timeDiv input {
+#controlFooter #timeDiv p,
+#controlFooter #timeDiv input {
 	display: inline;
 	color: var(--theme-color);
 	font-weight: bold;
@@ -941,7 +948,7 @@ hr {
 	margin: 0;
 }
 
-.ongoingPollOptions .ongoingButtons,
+#controlFooter .ongoingButtons,
 .options .headBox {
 	width: 100%;
 	display: flex;
@@ -1608,4 +1615,113 @@ a.link:visited {
 	gap: 30px;
 }
 
-.profileInformation h1 
+#VBDiv {
+	gap: 20px;
+	height: 100%;
+}
+
+#VBDiv #vbContainer,
+#VBDiv #newMemberListControlPanel,
+#VBDiv #VBOptions {
+
+	width: 100%;
+	height: auto !important;
+}
+
+#VBDiv #VBOptions {
+	position: relative;
+	max-width: 400px;
+	padding: 90px 20px;
+	height: auto !important;
+}
+
+body.controlPanelNewBody {
+	display: flex;
+	flex-direction: column;
+}
+
+div.userMenuCp {
+	flex: 1 1 auto;
+}
+
+div#controlFooter {
+	height: 60px;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	font-size: 1.5cqw;
+	border: var(--theme-color), 3px, solid;
+	justify-content: left;
+	gap: 20px;
+}
+
+div.sideBySide {
+	display: flex;
+	justify-content: space-between;
+	align-items: stretch;
+	gap: 20px;
+	flex: 1 1 auto;
+}
+
+#VBOptions .options {
+	height: 20px;
+	overflow: hidden;
+}
+
+#vbOptionsLast,
+#vbOptionsNext {
+	padding: 0;
+	width: 30%;
+	height: 50px;
+	padding: 20px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: absolute;
+}
+
+#vbOptionsLast img,
+#vbOptionsNext img {
+	filter: invert(1);
+}
+
+#vbOptionsLast {
+	top: 20px;
+}
+
+#vbOptionsNext {
+	bottom: 20px;
+}
+
+#VBOptions .options:not(.activeControlTab) {
+	display: none;
+}
+
+#VBOptions .options.activeControlTab {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+#VBDiv #newMemberListControlPanel {
+	gap: 20px;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	position: relative;
+	padding-top: 70px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+#VBDiv #newMemberListControlPanel h1 {
+	position: absolute;
+	top: 0;
+	left: 30px;
+}
+
+.controlStudent {
+	max-height: unset;
+	height: min-content;
+}

@@ -24,7 +24,7 @@ module.exports = {
                 /* Uses EJS to render the template and display the information for the class.
                 This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
                 */
-                res.render('pages/controlPanel', {
+                res.render('pages/controlPanelNew', {
                     title: 'Control Panel',
                     pollStatus: classInformation.classrooms[req.session.classId].poll.status,
                     settingsPermissions: classInformation.classrooms[req.session.classId].permissions.manageClass,
