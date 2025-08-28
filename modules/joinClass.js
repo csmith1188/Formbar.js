@@ -5,8 +5,8 @@ const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
 async function joinClassroomByCode(code, session) {
-	const email = session.email;
 	try {
+        const email = session.email;
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
 
 		// Find the id of the class from the database
@@ -72,7 +72,7 @@ async function joinClassroomByCode(code, session) {
 
 		if (classUser) {
 			// Get the student's session data ready to transport into new class
-			const currentUser = classInformation.users[email]
+			let currentUser = classInformation.users[email]
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'
@@ -86,6 +86,11 @@ async function joinClassroomByCode(code, session) {
 				classInformation.users[email].tags = classInformation.users[email].tags.replace('Offline', '')
 			}
 
+            // Redact the API key from the classroom user to prevent it from being sent anywhere
+            const studentAPIKey = currentUser.API;
+            currentUser = structuredClone(currentUser);
+            currentUser.API = undefined;
+
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
 			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
@@ -96,7 +101,7 @@ async function joinClassroomByCode(code, session) {
 			session.classId = classroom.id;
 
 			// Set the class of the API socket
-			setClassOfApiSockets(currentUser.API, classroom.id);
+			setClassOfApiSockets(studentAPIKey, classroom.id);
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -118,10 +123,15 @@ async function joinClassroomByCode(code, session) {
 
 			// Grab the user from the users list
 			const classData = classInformation.classrooms[classroom.id];
-			const currentUser = classInformation.users[email]
+			let currentUser = classInformation.users[email]
 			currentUser.classPermissions = classData.permissions.userDefaults
 			currentUser.activeClasses.push(classroom.id)
             currentUser.tags = '';
+
+            // Redact the API key from the classroom user to prevent it from being sent anywhere
+            const studentAPIKey = currentUser.API;
+            currentUser = structuredClone(currentUser);
+            currentUser.API = undefined;
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
@@ -133,6 +143,7 @@ async function joinClassroomByCode(code, session) {
 				classData.permissions.manageClass
 			)
 
+            setClassOfApiSockets(studentAPIKey, classroom.id);
 			advancedEmitToClass('cpUpdate', classroom.id, { classPermissions: cpPermissions }, classData);
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true

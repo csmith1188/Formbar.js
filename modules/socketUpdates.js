@@ -79,6 +79,10 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
+    if (!api) {
+        console.trace("[setClassOfApiSockets]: Unexpected undefined api key")
+    }
+
 	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
 	const sockets = await io.in(`api-${api}`).fetchSockets()
@@ -127,7 +131,7 @@ class SocketUpdates {
     classPermissionUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
-            const classData = classInformation.classrooms[classId]
+            const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) return; // If the class is not loaded, then do not update the class permissions
 
             let cpPermissions = Math.min(

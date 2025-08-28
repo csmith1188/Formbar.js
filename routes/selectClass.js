@@ -1,4 +1,4 @@
-const { isLoggedIn, permCheck } = require("../modules/authentication")
+const { isLoggedIn, permCheck, isInClass } = require("../modules/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -8,7 +8,7 @@ const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socket
 
 module.exports = {
     run(app) {
-        app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
+        app.get('/selectClass', isLoggedIn, permCheck, isInClass, (req, res) => {
             try {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
@@ -102,8 +102,8 @@ module.exports = {
 				}
 
                 logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`)        
-                let classJoinStatus = await joinClassroomByCode(classCode, req.session)
 
+                const classJoinStatus = await joinClassroomByCode(classCode, req.session)
                 if (typeof classJoinStatus == 'string') {
                     res.render('pages/message', {
                         message: `Error: ${classJoinStatus}`,
@@ -138,16 +138,15 @@ module.exports = {
 					req.session.classId = classId;
 				}
 
-                let classData = classInformation.classrooms[classId]
-                let cpPermissions = Math.min(
+                const classData = classInformation.classrooms[classId]
+                const classPermissions = Math.min(
                     classData.permissions.controlPolls,
                     classData.permissions.manageStudents,
                     classData.permissions.manageClass
                 )
 
-                advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
-				req.session.classId = classId
-                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.email].API, classId)
+                advancedEmitToClass('cpUpdate', classId, { classPermissions }, classInformation.classrooms[classId])
+                setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
         
                 res.redirect('/')
             } catch (err) {

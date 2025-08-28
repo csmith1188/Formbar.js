@@ -35,6 +35,10 @@ function startClass(socket) {
 }
 
 async function joinClass(socket, classId) {
+    if (!socket) {
+        throw new Error('Socket is required');
+    }
+
     try {
         logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
         const email = socket.request.session.email;
@@ -57,11 +61,19 @@ async function joinClass(socket, classId) {
         if (classInformation.classrooms[classId]) {
             classCode = classInformation.classrooms[classId].key;
         } else {
-            classCode = (await dbGet('SELECT key FROM classroom WHERE id=?', classId)).key;
+            const classroom = await dbGet('SELECT key FROM classroom WHERE id=?', classId);
+            if (classroom && classroom.key) {
+                classCode = classroom.key;
+            }
         }
 
         // If there's a class code, then attempt to join the class and emit the response
-        const response = await joinClass(classCode, socket.request.session);
+        const response = await joinClassroomByCode(classCode, socket.request.session);
+        if (response === true) {
+            socket.request.session.classId = classId;
+            socket.request.session.save();
+        }
+
         socket.emit('joinClass', response);
     } catch (err) {
         logger.log('error', err.stack);

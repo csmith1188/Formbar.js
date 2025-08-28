@@ -83,8 +83,30 @@ function isLoggedIn(req, res, next) {
 		res.render('pages/message', {
 			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
 			title: 'Error'
-		})
+		});
 	}
+}
+
+// Check if the user is currently in a class.
+// If they are, then redirect them to the student page.
+function isInClass(req, res, next) {
+    try {
+        if (req.session.email) {
+            const user = classInformation.users[req.session.email];
+            if (user && user.activeClasses.length > 0) {
+                res.redirect('/student');
+                return;
+            }
+
+            next();
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+        res.render('pages/message', {
+            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+            title: 'Error'
+        });
+    }
 }
 
 // Check if user has the permission levels to enter that page
@@ -178,6 +200,7 @@ module.exports = {
     isAuthenticated,
 	isVerified,
     isLoggedIn,
+    isInClass,
     permCheck,
 	checkIPBanned
 }

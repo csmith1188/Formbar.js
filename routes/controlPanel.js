@@ -12,15 +12,6 @@ module.exports = {
             try {
                 logger.log('info', `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
-                let students = classInformation.classrooms[req.session.classId].students
-                let keys = Object.keys(students)
-                let allStudents = []
-
-                for (let i = 0; i < keys.length; i++) {
-                    const val = { name: keys[i], perms: students[keys[i]].permissions, pollRes: { lettRes: students[keys[i]].pollRes.buttonRes, textRes: students[keys[i]].pollRes.textRes }, help: students[keys[i]].help }
-                    allStudents.push(val)
-                }
-
                 /* Uses EJS to render the template and display the information for the class.
                 This includes the class list of students, poll responses, and the class code - Riley R., May 22, 2023
                 */
