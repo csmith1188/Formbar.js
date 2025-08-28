@@ -7,7 +7,7 @@
   <a href="/" id="headerLogo"><h1>Formbar</h1><p id="version">v 1.1.0</p></a>
   <% if (locals.currentUser) { %>
     <ul>
-    <% if (currentUser.classPermissions) { %>
+    <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
       <li><a href="/controlPanel" class="headerTab">Panel</a></li>
       <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
@@ -23,9 +23,12 @@
                       <li><a href="/plugins" class="headerTab">Plugins</a></li>
                       <% } %>
                         <% if (currentUser.classPermissions) { %>
-                          <li><button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button></li>
+                          <li><button href="/" class="headerTab" title="Classes" onclick="leaveClass()">
+                            Classes</button></li>
                             <li>
-                            <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button></li>
+                            <a href="/profile" class="headerTab" title="Profile">Profile</a></li>
+                            <li>
+                            <button href="/" class="headerTab" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
                           <% } %>
                             <% } %>
                             </ul>

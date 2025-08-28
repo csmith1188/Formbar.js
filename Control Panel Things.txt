@@ -1,0 +1,35 @@
+Filters:
+	Help Tickets - Off, Ticket In, No Ticket
+	Poll - Off, Responded, Hasn't Responded
+	
+Sort:
+	Name - Off, A-Z, Z-A
+	Poll Name (unknown) - Off, A-Z, Z-A
+	Poll Time (unknown) - Off, A-Z, Z-A
+	Help Time - Off, Newest, Oldest
+	Permissions - Off, Most, Least
+	
+Select:
+	Select All Users
+		(if all users selected show "Deselect All Users")
+	Switch Selected Users
+		(Selected -> Unselected, Unselected -> Selected)
+
+Fast Polls:
+	TUTD:
+		Up [#00ff00],
+		Wiggle [#00ffff],
+		Down [#ff0000]
+		
+	True / False:
+		True [#00ff00],
+		False [#ff0000]
+		
+	Done / Ready:
+		Yes [#00ff00]
+		
+	Multiple Choice:
+		A [#ff0000]
+		B [#0000ff]
+		C [#ffff00]
+		D [#00ff00]

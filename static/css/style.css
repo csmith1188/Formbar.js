@@ -38,10 +38,36 @@
 
 	--bg-light: #d0c8e0;
 	--bg-light-blue: #def;
+
+	--formbarAccent1: #033fc0;
+	--formbarAccent2: #6f00ff;
+
+	--borderRadius: 10px;
+
+
+
+
+
+	--lightMode-body-bg: linear-gradient(135deg, #b8e1ff 30%, #699bbe 100%);
+	--darkMode-body-bg: linear-gradient(135deg, #072438 30%, #000c15 100%);
+
+	--lightMode-menu-bg: #fffa;
+	--darkMode-menu-bg: #0003;
+
+	--lightMode-border: #fff5;
+	--darkMode-border: #fff2;
+
+	--lightMode-button-bg: #0008;
+	--lightMode-button-border: #0004;
+	--lightMode-button-pressed-bg: #013fbf99;
+
+	--darkMode-button-bg: #d5e5ff33;
+	--darkMode-button-border: #fff4;
+	--darkMode-button-pressed-bg: #004ce394;
 }
 
 body {
-	font: 16px "Segoe UI", sans-serif;
+	font: 16px "Outfit", Arial, sans-serif;
 	padding: 8px;
 	text-align: center;
 	--theme-color: var(--color-blue);
@@ -123,8 +149,7 @@ button#remove {
 /*Shows that the button is currently active*/
 button.pressed,
 .quickButton.pressed {
-	border: 2px solid #013fbf44;
-	background: #013fbf44;
+	background: var(--lightMode-button-pressed-bg);
 	color: white;
 }
 
@@ -204,6 +229,7 @@ dialog {
 
 #colorContent {
 	background-color: var(--bg-light);
+	display: flex;
 }
 
 .textColorContent {
@@ -257,7 +283,6 @@ dialog {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
-	overflow: hidden;
 	height: 100%;
 	margin-right: 30px;
 }
@@ -268,7 +293,8 @@ dialog {
 	height: calc(100% - 10px);
 }
 
-button {
+button,
+input {
 	cursor: pointer;
 	font-family: "Outfit", sans-serif;
 	color: white !important;
@@ -314,7 +340,8 @@ button {
 
 
 #formbarHeader > button {
-	height: 80%;
+	height: 48px;
+	width: 48px;
 	aspect-ratio: 1;
 	background-color: #fff8;
 	border-radius: 100%;
@@ -673,6 +700,7 @@ input[type="radio"]:focus {
 #pollContent {
 	width: 100%;
 	margin-bottom: 60px;
+
 }
 
 details {
@@ -717,7 +745,7 @@ details[open] #reasons {
 }
 
 #quickMenu {
-	padding: .1vh 1vw;
+	padding: 10px 20px;
 	font-size: 1cqw;
 	display: flex;
 	justify-content: space-between;
@@ -729,6 +757,18 @@ details[open] #reasons {
 	background-color: #0004;
   	border: 2px solid #0004;
 	border-radius: 10px;
+}
+
+#formbarHeader > button {
+	padding: 0;
+}
+
+#quickMenu button.quickButton {
+	padding: 0;
+}
+
+#quickMenu button.quickButton img {
+	filter: invert(1);
 }
 
 #quickMenu p {
@@ -890,6 +930,11 @@ hr {
 
 .customPoll button {
 	width: 5cqw;
+}
+
+#poll {
+	width: 80%;
+	margin: auto;
 }
 
 #pollResForm {
@@ -1334,4 +1379,39 @@ article {
 .gsi-material-button:not(:disabled):hover .gsi-material-button-state {
 	background-color: #303030;
 	opacity: 8%;
+}
+
+
+#loginHeader {
+	position: absolute;
+	left: 0;
+	top: -200px;
+	font-size: 20rem;
+	color: #0002;
+	width: 100%;
+}
+
+#content {
+	background: #fffa;
+	border: 2px solid #fff5;
+}
+
+#content div.buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 50px;
+}
+
+button {
+	transition: 0.2s ease-in-out transform;
+	transform: scale(1);
+
+	background: var(--lightMode-button-bg);
+	border: 2px solid var(--lightMode-button-border);
+}
+
+button:hover {
+	transform: scale(1.1);
 }

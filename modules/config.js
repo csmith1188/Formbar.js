@@ -62,7 +62,7 @@ function getConfig() {
     return {
         logNumbers: JSON.parse(fs.readFileSync('logNumbers.json', "utf8")),
         settings: {
-            'port': +process.env.PORT || 420,
+            'port': +process.env.PORT || 80,
             'whitelistActive': process.env.WHITELIST_ENABLED === 'true',
             'blacklistActive': process.env.BLACKLIST_ENABLED === 'true',
             'emailEnabled': process.env.EMAIL_ENABLED === 'true',

@@ -4,13 +4,15 @@
     <!-- This is where the title, top buttons, and stylesheet is located -->
     <body id="colorContent">
         <%- include('../partials/formbar_header') %>
+            <h1 id="loginHeader">Login</h1>
             <div id="content" class="contentBox">
-                <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log
-                    in</button>
-                <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New
-                    account</button>
-                <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
-                <br><br>
+                <div class="buttons">
+                    <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log
+                        in</button>
+                    <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New
+                        account</button>
+                    <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
+                </div>
                 <!-- The route to post to after redirecting. Only used if the redirect url is specified -->
                 <form id="login" action="login" method="post" style="margin-bottom: 16px;">
                     <input type="hidden" id="route" name="route" value="<%-route%>">
@@ -80,6 +82,7 @@
         const loginTypeBox = document.getElementById('loginTypeBox');
         const forgotPassword = document.getElementById('forgotPassword');
         const submitButton = document.getElementById('submitButton');
+        const headerText = document.getElementById('loginHeader');
 
         // If the route is not login...
         if (route.value !== 'login') {
@@ -100,6 +103,7 @@
             // Hide or show inputs based on the selected login type
             switch (el) {
                 case loginButton:
+                    headerText.innerText = "Login";
                     passwordBox.classList.remove('hidden');
                     passwordBox.required = true;
                     forgotPassword.classList.remove('hidden');
@@ -111,6 +115,7 @@
                     loginTypeBox.value = 'login';
                     break;
                 case newAccountButton:
+                    headerText.innerText = "Register";
                     passwordBox.classList.remove('hidden');
                     passwordBox.required = true;
                     forgotPassword.classList.add('hidden');
@@ -122,6 +127,7 @@
                     loginTypeBox.value = 'new';
                     break;
                 case guestButton:
+                    headerText.innerText = "Guest";
                     passwordBox.value = null;
                     passwordBox.classList.add('hidden');
                     passwordBox.required = false;

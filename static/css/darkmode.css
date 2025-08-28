@@ -136,10 +136,33 @@ canvas {
 	opacity: 50%;
 }
 
-
 button,
 #quickMenu {
 	background-color: #d8e4f744;
   	border: 2px solid #fff4;
 	color: white;
+}
+
+
+#loginHeader {
+	color: #fff2 !important;
+}
+
+#content.contentBox {
+	background-color: #0003 !important;
+	border: 2px solid #fff2;
+}
+
+#content div.buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 50px;
+}
+
+button.pressed,
+.quickButton.pressed {
+	border: 2px solid #fff3;
+  	background: #004ce394;
 }
