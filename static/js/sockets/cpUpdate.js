@@ -242,12 +242,12 @@ socket.on('cpUpdate', (newClassroom) => {
         let newTag = document.createElement('textarea')
         newTag.className = 'revampButton revampWithText'
         newTag.type = 'text'
-        newTag.placeholder = 'Add Tag (Seperate With Comma for Multiple)'
+        newTag.placeholder = 'Add Tag (tag1, tag2, ...)'
         newTag.style.height = "5.5vh"
 
         let addTagButton = document.createElement('button')
-        addTagButton.className = 'revampButton'
-        addTagButton.textContent = '✔'
+        addTagButton.className = 'circularButton'
+        addTagButton.innerHTML = '<img src="/img/checkmark-outline.svg">'
         addTagButton.onclick = () => {
             if (newTag.value.includes(',')) {
                 let tags = newTag.value.split(',')

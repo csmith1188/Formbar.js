@@ -118,11 +118,29 @@ socket.on('customPollUpdate', (
 	let userPollsDiv = document.querySelector('div#userPolls')
 	let fastPollDiv = document.querySelector('div#quickPoll')
 
+	function hoverShowPollDetails(poll) {
+		poll.answers.forEach((answer, index) => {
+			console.log(`Poll ${poll.name} | Answer: ${answer.answer}, Color: ${answer.color}, Weight: ${answer.weight}`);
+		});
+	}
+
 	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
-		let customPoll = customPolls[i]
+		let customPoll = customPolls[i];
 		let startButton = document.createElement('button')
 		startButton.className = 'start-custom-poll revampButton'
+
+		// Logic for showing poll details on hover
+		let hoverTimeout = null;
+		let hoverCount = 500;
+		startButton.addEventListener('mouseover', () => {
+			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll) }, hoverCount);
+		});
+		startButton.addEventListener('mouseout', () => {
+			clearTimeout(hoverTimeout);
+		});
+
+
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {

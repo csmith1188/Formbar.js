@@ -222,8 +222,7 @@
         </form>
     </div>
     <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-        <div id='settingsTab'>
-            <h2 class='headerText'>Settings</h2>
+        <div id='quickMenu'>
             <button id='permissions' class='quickButton tab pressed revampButton'
                     data-tab-group='settingsTabs'>Permissions
             </button>
@@ -239,15 +238,15 @@
             <div id="tagOptions"></div>
         </div>
         <div id="settingsFunc">
-            <button id="kickUsers" class="revampButton" onclick="kickAll()">
-                Kick All Students
-            </button>
-            <br>
-            <button class="revampButton" onclick="regenerateAccessCode()">
-                Regenerate Code
-            </button>
-            <br>
-            <div>
+            <div class="settingsFuncButtons">
+                <button id="kickUsers" class="revampButton warningButton" onclick="kickAll()">
+                    Kick All Students
+                </button>
+                <button class="revampButton warningButton" onclick="regenerateAccessCode()">
+                    Regenerate Code
+                </button>
+            </div>
+            <div class="settingsFuncClassName">
                 <input type="text" id="classNameInput" class="revampButton revampWithText" placeholder="New class name">
                 <button id="changeClassNameButton" class="revampButton" onclick="changeClassName()">Change Class Name</button>
             </div>

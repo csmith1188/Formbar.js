@@ -931,7 +931,6 @@ hr {
 
 #settingsMenu textarea, #settingsMenu input {
 	color: var(--theme-color);
-	height: 2cqw;
 	resize: vertical;
 	font-weight: bold;
 	white-space: normal;
@@ -1034,12 +1033,22 @@ div .tabContent {
 
 #tagOptions div {
 	display: flex;
+	align-items: center;
 	justify-content: center;
+	gap: 20px;
+}
+
+#settingsFunc {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
 }
 
 #settingsFunc div {
 	display: flex;
 	justify-content: center;
+	align-items: stretch;
+	gap: 20px;
 }
 
 #studentTags span{
