@@ -720,7 +720,6 @@ details[open] #reasons {
 #VBDiv {
 	display: flex;
 	justify-content: center;
-	margin-bottom: 2vh;
 	flex-direction: column;
 }
 
@@ -787,7 +786,6 @@ hr {
 	flex-wrap: wrap;
 	padding: 1vh;
 	overflow-y: auto;
-	gap: 1vh;
 }
 
 .headBox button {
@@ -916,15 +914,15 @@ hr {
 	transform: scale(1.25);
 }
 
-#controlFooter #timeDiv {
+#timeDiv {
 	padding: 1vh 0;
 	width: 30%;
 	color: var(--theme-color);
 	font-weight: bold;
 }
 
-#controlFooter #timeDiv p,
-#controlFooter #timeDiv input {
+#timeDiv p,
+#timeDiv input {
 	display: inline;
 	color: var(--theme-color);
 	font-weight: bold;
@@ -937,13 +935,10 @@ hr {
 	resize: vertical;
 	font-weight: bold;
 	white-space: normal;
-	text-align: justify;
-	-moz-text-align-last: center;
-	text-align-last: center;
 }
 
-.ongoingPollOptions #timeDiv input::-webkit-outer-spin-button,
-.ongoingPollOptions #timeDiv input::-webkit-inner-spin-button {
+#timeDiv input::-webkit-outer-spin-button,
+#timeDiv input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
 }
@@ -1110,10 +1105,6 @@ div.break {
 	gap: 10px;
 }
 
-button.banUser {
-	margin-top: 20px;
-}
-
 #users div:not(#reasons, #reasons *, #alerts *) p {
 	font-size: 20px;
 }
@@ -1189,12 +1180,14 @@ button.banUser {
 
 
 #permissionsList {
-	display: flex;
+	display: grid;
 	justify-content: space-evenly;
 	border-radius: 10px;
 	margin: 1vh;
 	width: 100%;
 	font-size: 1.5cqw;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 20px;			
 }
 
 #helpReason, #breakReason {
@@ -1650,7 +1643,6 @@ div#controlFooter {
 	display: flex;
 	align-items: center;
 	font-size: 1.5cqw;
-	border: var(--theme-color), 3px, solid;
 	justify-content: left;
 	gap: 20px;
 }
@@ -1724,4 +1716,100 @@ div.sideBySide {
 .controlStudent {
 	max-height: unset;
 	height: min-content;
+}
+
+#vbContainerOuter:has(#vbContainer[style="display: none;"]) {
+	display: none !important;
+}
+
+#quickMenu.dividedThree {
+	width: 100%;
+	margin-left: 0;
+	margin-bottom: 20px;
+	padding: 0;
+	background: none;
+	border: none;
+	display: flex;
+	flex-direction: row;
+	justify-content: stretch;
+	align-items: center;
+}
+
+#quickMenu.dividedThree div {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+#quickMenu.dividedThree div.classInfo {
+	justify-content: space-evenly;
+}
+
+#quickMenu.dividedThree div.timerInfo {
+	justify-content: space-evenly;
+}
+
+
+div.upDown {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+}
+
+div.leftRight {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	align-items: center;
+	gap: 5px;
+}
+
+div.revampDiv button#settingsMenu img {
+	filter: invert(1) !important;
+}
+
+details > #permissions,
+details > #extraButtons {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 5px;
+	margin-top: 10px;
+}
+
+input.inputtedTime.revampButton.revampWithText {
+	width: 100px;
+	-moz-appearance:textfield;
+}
+
+input.inputtedTime.revampButton.revampWithText + p {
+	font-size: 36px;
+	color: black !important;
+}
+
+button#timerButton[hidden], 
+button#timerStopButton[hidden] {
+	display: none !important;
+}
+
+.permissionLabel {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+	align-items: center;
+}
+
+div#settingsMenu.tabContent {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding-bottom: 0;
+}
+
+div#tags.tabContent,
+div#permissions.tabContent {
+	height: 100%;
 }

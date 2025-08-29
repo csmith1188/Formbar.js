@@ -265,7 +265,7 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 })
 
 socket.on("changeClassName", (name) => {
-	className.textContent = `Class Name: ${name}`;
+	className.innerHTML = `<b>Class Name:</b> ${name}`;
 })
 
 socket.on("classPollSave", (pollId) => {

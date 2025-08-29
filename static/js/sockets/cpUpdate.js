@@ -64,10 +64,10 @@ socket.on('cpUpdate', (newClassroom) => {
         }
     }
 
-    className.textContent = `Class Name: ${newClassroom.className}`
-    classCode.textContent = `Class Code: ${newClassroom.key}`
+    className.innerHTML = `<b>Class Name:</b> ${newClassroom.className}`
+    classCode.innerHTML = `<b>Class Code:</b> ${newClassroom.key}`
 
-    totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - studentsOffline}`
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(newClassroom.students).length - studentsOffline}`
     if (newClassroom.poll.prompt != "") {
         pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
     } else {
@@ -126,7 +126,7 @@ socket.on('cpUpdate', (newClassroom) => {
         studentElement.replaceWith(buildStudent(newClassroom, newStudentData))
     }
 
-    totalUsers.innerText = `Users: ${Object.keys(newClassroom.students).length - studentsOffline - 1}`
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(newClassroom.students).length - studentsOffline - 1}`
 
     for (let studentElement of document.getElementsByClassName('student')) {
         if (!newClassroom.students[studentElement.id.replace('student-', '')]) {
@@ -211,10 +211,11 @@ socket.on('cpUpdate', (newClassroom) => {
         permissionsDiv.innerHTML = ''
         for (let [permission, permissionLevel] of Object.entries(newClassroom.permissions)) {
             let permissionLabel = document.createElement('label')
+            permissionLabel.className = 'permissionLabel revampDiv'
             permissionLabel.textContent = camelCaseToNormal(permission)
 
             let permissionSelect = document.createElement('select')
-            permissionSelect.className = 'permissionSelect'
+            permissionSelect.className = 'permissionSelect revampButton'
             permissionSelect.id = permission
             permissionSelect.onchange = (event) => {
                 let select = event.target
@@ -239,11 +240,13 @@ socket.on('cpUpdate', (newClassroom) => {
 
         let newTagDiv = document.createElement('div')
         let newTag = document.createElement('textarea')
+        newTag.className = 'revampButton revampWithText'
         newTag.type = 'text'
         newTag.placeholder = 'Add Tag (Seperate With Comma for Multiple)'
         newTag.style.height = "5.5vh"
 
         let addTagButton = document.createElement('button')
+        addTagButton.className = 'revampButton'
         addTagButton.textContent = '✔'
         addTagButton.onclick = () => {
             if (newTag.value.includes(',')) {
