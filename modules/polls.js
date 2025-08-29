@@ -175,6 +175,11 @@ function pollResponse(res, textRes, socket) {
     const classroom = classInformation.classrooms[classId]
     const socketUpdates = userSocketUpdates[socket.request.session.email];
 
+    // Do not allow responses if the poll is not active
+    if (!classroom.poll || !classroom.poll.status) {
+        return;
+    }
+
     // Check if user is allowed to respond
     const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
     if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {

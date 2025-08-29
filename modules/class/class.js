@@ -1,7 +1,7 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
 const { plugins } = require("../plugins");
-const { advancedEmitToClass, userSockets } = require("../socketUpdates");
+const { advancedEmitToClass, emitToUser} = require("../socketUpdates");
 const { getStudentId } = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
@@ -166,7 +166,7 @@ async function leaveClassroom(socket) {
 
         // Play leave sound and reload the user's page
         advancedEmitToClass('leaveSound', socket.request.session.classId, {});
-        userSockets[email].emit('reload');
+        emitToUser('reload', email);
 
         if (socket.isEmulatedSocket) {
             socket.res.status(200).json({ message: 'Success' });

@@ -137,7 +137,7 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        for (let userSocket of Object.values(userSockets)) {
+                        for (const userSocket of Object.values(userSockets)) {
                             socketUpdates.customPollUpdate(userSocket.request.session.email)
                         }
                     } catch (err) {

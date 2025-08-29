@@ -38,7 +38,7 @@ const PASSIVE_SOCKETS = [
 ];
 
 async function emitToUser(event, email, ...data) {
-    for (const socket of userSockets[email]) {
+    for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
     }
 }
@@ -387,12 +387,12 @@ class SocketUpdates {
         try {
             // Ignore any requests which do not have an associated socket with the email
             if (!email && socket.request.session) email = socket.request.session.email;
-            if (!classInformation.users[email]) {
-                return;
-            }
+            if (!classInformation.users[email]) return;
 
             const user = classInformation.users[email];
             const classId = user.activeClasses[0];
+            if (!classInformation.classrooms[classId]) return;
+
             const student = classInformation.classrooms[classId].students[email];
             if (!student) return; // If the student is not in the class, then do not update the custom polls
 
@@ -517,7 +517,7 @@ class SocketUpdates {
             this.virtualBarUpdate(classId);
 
             // If the user is logged in, then handle the user's session
-            for (const userSocket of userSockets[email]) {
+            for (const userSocket of Object.values(userSockets[email])) {
                 userSocket.leave(`class-${classId}`);
                 userSocket.request.session.classId = null;
                 userSocket.request.session.save();
@@ -543,6 +543,7 @@ class SocketUpdates {
     }
     
     logout(socket) {
+        console.warn(socket)
         const email = socket.request.session.email
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId
@@ -558,8 +559,13 @@ class SocketUpdates {
         socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
-    
-                delete userSockets[email]
+
+                // Delete the user's socket
+                delete userSockets[email][socket.id];
+                if (Object.keys(userSockets[email]).length === 0) {
+                    delete userSockets[email];
+                }
+
                 socket.leave(`class-${classId}`)
                 socket.emit('reload')
 
