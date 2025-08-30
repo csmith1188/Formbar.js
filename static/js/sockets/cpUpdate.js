@@ -69,7 +69,7 @@ socket.on('cpUpdate', (newClassroom) => {
 
     totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(newClassroom.students).length - studentsOffline}`
     if (newClassroom.poll.prompt != "") {
-        pollCounter.innerText = `Poll Prompt:'${newClassroom.poll.prompt}'`
+        pollCounter.innerText = `Poll Prompt: '${newClassroom.poll.prompt}'`
     } else {
         pollCounter.innerText = `Poll Prompt:`
     }

@@ -16,7 +16,8 @@
 <body onload="load(<%= pollStatus %>)" class="controlPanelNewBody">
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
-    <div class="revampDiv upDown">
+    <div class="revampDiv upDown" id="pollDetails">
+        <img src="/img/cursor.webp" alt="">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
     </div>
@@ -51,17 +52,17 @@
                 <h1>Members</h1>
             </div>
             <div id='VBOptions' class="revampDiv">
-                <button id="vbOptionsLast" class="revampButton"><img src="/img/chevron-up-outline.svg" alt=""></button>
-                <button id="vbOptionsNext" class="revampButton"><img src="/img/chevron-down-outline.svg" alt=""></button>
+                <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt=""></button>
+                <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt=""></button>
                 <div id='userFilterBoxes' class='options activeControlTab'>
-                    <h2 class='headerText'>Filter</h2>
+                    <h2 class='headerText'>Filter by:</h2>
                     <div class='headBox'>
                         <button type='button' id='alert' class='filter revampButton'>Alerts</button>
                         <button type='button' id='polls' class='filter revampButton'>Polls</button>
                     </div>
                 </div>
                 <div id='userSortBoxes' class='options'>
-                    <h2 class='headerText'>Sort</h2>
+                    <h2 class='headerText'>Sort by:</h2>
                     <div class='headBox'>
                         <button type='button' id='name' class='sort revampButton'>Name</button>
                         <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
@@ -71,7 +72,7 @@
                     </div>
                 </div>
                 <div id='userSelectBoxes' class='options'>
-                    <h2 class='headerText'>Select</h2>
+                    <h2 class='headerText'>Select:</h2>
                     <div class='headBox' id="selectPoll">
                     </div>
                 </div>
@@ -103,30 +104,30 @@
         <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
             <div id='pollOptions' class='options'>
                 <h2 class='headerText'>Custom Polls</h2>
-                <button id='publicPolls' class='quickButton tab' data-tab-group='polls'>Public
+                <button id='publicPolls' class='quickButton tab revampButton' data-tab-group='polls'>Public
                     Polls
                 </button>
-                <button id='classPolls' class='quickButton tab' data-tab-group='polls'>Class
+                <button id='classPolls' class='quickButton tab revampButton' data-tab-group='polls'>Class
                     Polls
                 </button>
-                <button id='userPolls' class='quickButton tab' data-tab-group='polls'>Your
+                <button id='userPolls' class='quickButton tab revampButton' data-tab-group='polls'>Your
                     Polls
                 </button>
             </div>
             <div id='startPollForm'>
                 <div id="pollResForm">
-                    <input type='text' id='pollBox' placeholder='Prompt'>
+                    <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
                     <div>
                         <input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
                         <div id='responses'></div>
                     </div>
-                    <button id="addPollRes" class='quickButton' onclick='addAnswer()'>+</button>
+                    <button id="addPollRes" class='quickButton revampButton' onclick='addAnswer()'>+</button>
                 </div>
                 <div id='generalOptions' style="width: 50%; margin-left: 25%;">
                     <div class="options">
                         <div class="headBox" style="border: none;">
-                            <button id='resetAnswerNames' class='quickButton'>Reset Names</button>
-                            <button id='resetColors' class='quickButton'>Reset Colors</button>
+                            <button id='resetAnswerNames' class='quickButton revampButton'>Reset Names</button>
+                            <button id='resetColors' class='quickButton revampButton'>Reset Colors</button>
                         </div>
                     </div>
                     <div class="options">
@@ -192,6 +193,8 @@
         </div>
     </div>
 </div>
+
+<div id="pollPreview" class="revampDiv"></div>
 
 <div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
     <div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
@@ -357,41 +360,41 @@
 
     const FilterState = {
         alert: [
-            'Alert tickets',
-            'Alert ticket in',
-            'No alert ticket'
+            'Tickets',
+            'Ticket In',
+            'No Ticket'
         ],
         polls: [
-            'Polls',
-            'Responded to poll',
-            'Did not respond to poll',
+            'Poll Response',
+            'Has Responded',
+            'No Response',
         ]
     }
 
     const SortState = {
         name: [
             'Name',
-            'Name ▼',
-            'Name ▲'
+            'Name ▼ (Z-A)',
+            'Name ▲ (A-Z)'
         ],
         pollName: [
             'Poll Name',
-            'Poll Name ▼',
-            'Poll Name ▲'
+            'Poll Name ▼ (Z-A)',
+            'Poll Name ▲ (A-Z)'
         ],
         pollTime: [
-            'Poll time',
-            'Poll time ▼',
-            'Poll time ▲'
+            'Poll Time',
+            'Poll Time ▼',
+            'Poll Time ▲'
         ],
         helpTime: [
-            'Help time',
-            'Sorting by Help time',
+            'Help Time',
+            'Help Time',
         ],
         permissions: [
             'Permissions',
-            'Permissions ▼',
-            'Permissions ▲'
+            'Permissions ▼ (Most)',
+            'Permissions ▲ (Least)'
         ]
     }
 
@@ -458,29 +461,54 @@
     let vbOptionsNext = document.getElementById('vbOptionsNext');
 
     let sidebarOptionsIDs = [
-        'userFilterBoxes',
-        'userSortBoxes',
-        'userSelectBoxes',
-        'userFastPollBoxes'
+        {
+            elementID: 'userFilterBoxes',
+            optionName: 'Filter by:'
+        },
+        {
+            elementID: 'userSortBoxes',
+            optionName: 'Sort by:'
+        },
+        {
+            elementID: 'userSelectBoxes',
+            optionName: 'Select:'
+        },
+        {
+            elementID: 'userFastPollBoxes',
+            optionName: 'Fast Poll'
+        }
     ]
 
     function showOptions(last_or_next) {
         let activeEl = null;
 
-        sidebarOptionsIDs.forEach(id => {
-            if(document.getElementById(id).classList.contains('activeControlTab')) activeEl = id;
-            document.getElementById(id).classList.remove('activeControlTab');
+        sidebarOptionsIDs.forEach((item) => {
+            if(document.getElementById(item.elementID).classList.contains('activeControlTab')) activeEl = item;
+            document.getElementById(item.elementID).classList.remove('activeControlTab');
         });
+
+        let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
 
         if(last_or_next) {
             //Last Tab
-            let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
+            let newActive = sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let lastButton = sidebarOptionsIDs[(lastElIndex - 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let nextButton = sidebarOptionsIDs[lastElIndex];
 
-            document.getElementById(sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length]).classList.add('activeControlTab');
+            document.getElementById(newActive.elementID).classList.add('activeControlTab');
+
+            vbOptionsLast.innerHTML = `<p>${lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="">`;
+            vbOptionsNext.innerHTML = `<p>${nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="">`;
+
+
         } else {
-            let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
+            let newActive = sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let nextButton = sidebarOptionsIDs[(lastElIndex + 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let lastButton = sidebarOptionsIDs[lastElIndex];
+            document.getElementById(newActive.elementID).classList.add('activeControlTab');
 
-            document.getElementById(sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length]).classList.add('activeControlTab');
+            vbOptionsLast.innerHTML = `<p>${lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="">`;
+            vbOptionsNext.innerHTML = `<p>${nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="">`;
         }
     }
 

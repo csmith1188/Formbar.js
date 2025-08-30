@@ -254,7 +254,7 @@ function responseAmountChange() {
 
 		let answerName = document.createElement('input')
 		answerName.type = 'text'
-		answerName.className = 'answerName'
+		answerName.className = 'answerName revampButton revampWithText'
 		answerName.name = 'answerName'
 		answerName.placeholder = `Answer ${String.fromCharCode(i + 97)} `
 		answerName.value = ''
@@ -264,7 +264,7 @@ function responseAmountChange() {
 		responseDiv.appendChild(answerName)
 
 		let removeAnswerButton = document.createElement("button");
-		removeAnswerButton.className = "quickButton";
+		removeAnswerButton.className = "quickButton revampButton";
 		removeAnswerButton.textContent = "X";
 		removeAnswerButton.id = `removeAnswer`;
 		removeAnswerButton.onclick = removeAnswer;

@@ -102,6 +102,50 @@ function createTagSelectButtons() {
 	}
 }
 
+
+let pollHoverDiv = document.querySelector('div#pollPreview');
+let hoverTimeoutBig = null;
+let hoverCountBig = 500;
+let pollDetailsDiv = document.getElementById('pollDetails');
+pollDetailsDiv.addEventListener('mouseover', (e) => {
+	hoverTimeoutBig = setTimeout(() => { 
+		hoverShowPollDetails(classroom.poll, e, true);
+		pollDetailsDiv.classList.add('tutorialDone');
+		if(localStorage.getItem('controlTutorialDone') !== "true") {
+			localStorage.setItem('controlTutorialDone', true);
+		}
+
+	}, hoverCountBig);
+});
+pollDetailsDiv.addEventListener('mouseout', () => {
+	pollHoverDiv.className = 'revampDiv';
+	clearTimeout(hoverTimeoutBig);
+});
+
+if(localStorage.getItem('controlTutorialDone') == "true") {
+	pollDetailsDiv.classList.add('tutorialDone');
+}
+
+function hoverShowPollDetails(poll, event, isDetails = false) {
+	console.log(poll)
+	pollHoverDiv.innerHTML = `<h1>${poll.prompt}</h1>`;
+
+	if(!isDetails) {
+		poll.answers.forEach((answer, index) => {
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answer.color}44";>${answer.answer}</button>`
+		});
+	} else {
+		Object.keys(poll.responses).forEach((answer, index) => {
+			let answerDetails = poll.responses[answer];
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answerDetails.color}44";>${answerDetails.answer}</button>`
+		});
+	}
+
+	pollHoverDiv.style.setProperty('--mouseX', event.x - 300);
+	pollHoverDiv.style.setProperty('--mouseY', event.y);
+	pollHoverDiv.className = 'revampDiv open';
+}
+
 socket.emit('customPollUpdate')
 socket.on('customPollUpdate', (
 	newPublicCustomPolls,
@@ -118,12 +162,6 @@ socket.on('customPollUpdate', (
 	let userPollsDiv = document.querySelector('div#userPolls')
 	let fastPollDiv = document.querySelector('div#quickPoll')
 
-	function hoverShowPollDetails(poll) {
-		poll.answers.forEach((answer, index) => {
-			console.log(`Poll ${poll.name} | Answer: ${answer.answer}, Color: ${answer.color}, Weight: ${answer.weight}`);
-		});
-	}
-
 	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
 		let customPoll = customPolls[i];
@@ -133,10 +171,11 @@ socket.on('customPollUpdate', (
 		// Logic for showing poll details on hover
 		let hoverTimeout = null;
 		let hoverCount = 500;
-		startButton.addEventListener('mouseover', () => {
-			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll) }, hoverCount);
+		startButton.addEventListener('mouseover', (e) => {
+			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll, e) }, hoverCount);
 		});
 		startButton.addEventListener('mouseout', () => {
+			pollHoverDiv.className = 'revampDiv';
 			clearTimeout(hoverTimeout);
 		});
 

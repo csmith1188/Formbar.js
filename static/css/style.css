@@ -747,7 +747,6 @@ details[open] #reasons {
 .options {
 	justify-content: space-evenly;
 	border-radius: 10px;
-	margin: 1vh;
 }
 
 #settingsTab {
@@ -783,6 +782,8 @@ hr {
 .headBox {
 	display: flex;
 	justify-content: center;
+	flex-direction: column;
+	align-items: stretch;
 	flex-wrap: wrap;
 	padding: 1vh;
 	overflow-y: auto;
@@ -793,9 +794,9 @@ hr {
 	min-width: 100px;
 	height: auto;
 	margin: 1vh;
-	font-size: 1.5cqw;
+	font-size: 26px;
 	padding: 0.25em 1em;
-
+	white-space: nowrap;
 }
 
 .ongoingPollOptions {
@@ -806,10 +807,12 @@ hr {
 .options {
 	display: flex;
 	align-items: center;
+	flex-direction: column;
 	font-size: 1.5cqw;
 	border: var(--theme-color), 3px, solid;
-	justify-content: left;
+	justify-content: center;
 	gap: 20px;
+	padding: 90px 20px;
 }
 
 .options .headBox {
@@ -1665,16 +1668,21 @@ div.sideBySide {
 }
 
 #VBOptions .options {
-	height: 20px;
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
 	overflow: hidden;
 }
 
 #vbOptionsLast,
 #vbOptionsNext {
+	z-index: 5;
 	padding: 0;
-	width: 30%;
+	
+	gap: 10px;
+  	width: 200px;
 	height: 50px;
-	padding: 20px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -1683,7 +1691,14 @@ div.sideBySide {
 
 #vbOptionsLast img,
 #vbOptionsNext img {
+	height: 80%;
 	filter: invert(1);
+}
+
+#vbOptionsLast p,
+#vbOptionsNext p {
+	color: #fffa;
+	font-style: italic;
 }
 
 #vbOptionsLast {
@@ -1695,7 +1710,9 @@ div.sideBySide {
 }
 
 #VBOptions .options:not(.activeControlTab) {
-	display: none;
+	opacity: 0;
+	pointer-events: none;
+	transition: 0.1s ease-in-out opacity;
 }
 
 #VBOptions .options.activeControlTab {
@@ -1821,4 +1838,84 @@ div#settingsMenu.tabContent {
 div#tags.tabContent,
 div#permissions.tabContent {
 	height: 100%;
+}
+
+div#pollPreview {
+	position: absolute;
+	top: var(--mouseY);
+	left: var(--mouseX);
+	backdrop-filter: blur(20px);
+	box-shadow: 0px 0px 5px #0005;
+	width: 300px;
+
+	opacity: 0;
+	pointer-events: none;
+
+	transition: 0.2s ease-in-out opacity;
+
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	padding: 20px;
+}
+
+div#pollPreview.open {
+	opacity: 1;
+}
+
+#pollDetails {
+	cursor: help;
+	position: relative;
+}
+
+#pollDetails:not(.tutorialDone) img {
+	width: 28px;
+	pointer-events: none;
+	height: 28px;
+	position: absolute;
+	bottom: 20%;
+	right: 20%;
+	animation: showHoverableDetailsX 3s cubic-bezier(.77,0,.18,1) infinite, showHoverableDetailsY 3s cubic-bezier(.22,.61,.36,1) infinite;
+}
+
+#pollDetails.tutorialDone img { display: none; }
+
+@keyframes showHoverableDetailsX {
+	0% {
+		right: 0;
+		opacity: 0;
+	}
+	5% {
+		opacity: 1;
+	}
+	65% {
+		opacity: 1;
+	}
+	70% {
+		opacity: 0;
+		right: 20%;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes showHoverableDetailsY {
+	0% {
+		bottom: -20%;
+		opacity: 0;
+	}
+	5% {
+		opacity: 1;
+	}
+	65% {
+		opacity: 1;
+	}
+	70% {
+		opacity: 0;
+		bottom: 20%;
+	}
+	100% {
+		opacity: 0;
+	}
 }
