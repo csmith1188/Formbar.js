@@ -13,7 +13,7 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body onload="load(<%= pollStatus %>)" class="controlPanelNewBody">
+<body onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: auto;">
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
@@ -101,10 +101,11 @@
 
 <div>
     <div>
-        <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
-            <div id='pollOptions' class='options'>
-                <h2 class='headerText'>Custom Polls</h2>
-                <button id='publicPolls' class='quickButton tab revampButton' data-tab-group='polls'>Public
+        <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative; height: 100%;">
+            <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+            <h1 class='headerText' style="margin-bottom: 20px;">Custom Polls</h1>
+            <div id='pollOptions' class='options customOptions'>
+                <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
                     Polls
                 </button>
                 <button id='classPolls' class='quickButton tab revampButton' data-tab-group='polls'>Class
@@ -113,8 +114,16 @@
                 <button id='userPolls' class='quickButton tab revampButton' data-tab-group='polls'>Your
                     Polls
                 </button>
+                <button id='newPoll' class='quickButton tab revampButton' data-tab-group='polls'>Poll Editor
+                </button>
             </div>
-            <div id='startPollForm'>
+            <div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
+            </div>
+            <div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
+            </div>
+            <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
+            </div>
+            <div id='newPoll' class='customPolls tabContent' data-tab-group='polls'>
                 <div id="pollResForm">
                     <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
                     <div>
@@ -166,26 +175,20 @@
                     <button id="delete-poll" onclick="deletePoll()">Delete Poll</button>
                 </dialog>
             </div>
-            <div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
-            <div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
-            <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
 
         </div>
     </div>
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
         <div id='pollOptions' class='options'>
-            <h2 class='headerText'>Previous Polls</h2>
-
-            <details id="previousPoll-template" style="order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
+            <details id="previousPoll-template" style="order: 9997; margin: 20px; display: none" class="revampDiv previousPoll" hidden>
                 <summary style="height: fit-content; margin: 20px; cursor: pointer;">
                     <span id="name"></span>
+                    <span id="date"></span>
                 </summary>
-                <span class="previousPollResponse" id="response-template" style="display: none"></span>
-                <button id="loadPoll" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
+                <span class="previousPollResponse revampDiv" id="response-template" style="display: none"></span>
+                <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
             <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><--</button>
@@ -225,6 +228,7 @@
         </form>
     </div>
     <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
         <div id='quickMenu'>
             <button id='permissions' class='quickButton tab pressed revampButton'
                     data-tab-group='settingsTabs'>Permissions
@@ -283,10 +287,10 @@
 						</span>
         <span id="email"></span>
         <span id="studentTags"></span>
+        <div id="response"></div>
         <div id="reasons">
             <div id="helpReason"></div>
             <div id="breakReason"></div>
-            <div id="response"></div>
         </div>
     </summary>
     <div id="permissions"></div>
@@ -725,12 +729,14 @@
             const previousPollData = JSON.parse(previousPoll.data);
             const previousPollClone = previousPollTemplate.cloneNode(true);
             const pollNameElement = previousPollClone.querySelector('#name');
+            const pollDateElement = previousPollClone.querySelector('#date');
             const responseTemplate = previousPollClone.querySelector('#response-template');
             const loadPoll = previousPollClone.querySelector('#loadPoll');
 
             // Set the poll name
             const fixedDate = previousPoll.date.replaceAll(' ', ''); // Remove spaces from date due to an issue with the way they were being stored
-            pollNameElement.innerText = `${fixedDate} - ${previousPollData.prompt}`;
+            pollNameElement.innerText = `${previousPollData.prompt}`;
+            pollDateElement.innerText = `${fixedDate}`;
 
             // Create a response div for each user response
             for (const nameIndex in previousPollData.names) {
@@ -740,7 +746,7 @@
 
                 // If the response data exists, use it to color the user's response
                 if (previousPollData.responses) {
-                    userLetterResponse = `<span style='color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : "black"}'>${userLetterResponse || "No response"}</span>`;
+                    userLetterResponse = `<span style='font-weight:bold;color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : ""}'>${userLetterResponse || "No response"}</span>`;
                 }
 
                 // Create a new response div

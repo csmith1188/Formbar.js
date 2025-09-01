@@ -486,6 +486,7 @@ function startPoll(customPollId) {
 function editCustomPoll(customPollId) {
 	editingPollId = customPollId
 	let customPoll = customPolls[editingPollId]
+	
 
 	if (customPoll.owner == currentUser.id) {
 		editPollDialog.open = true
@@ -496,6 +497,8 @@ function editCustomPoll(customPollId) {
 	resTextBox.checked = customPoll.textRes
 
 	responseAmountChange(customPoll.answers.length)
+
+	console.log(customPoll)
 
 	let answerInputs = document.getElementsByClassName('answerName')
 	for (let pollIndex = 0; pollIndex < customPoll.answers.length; pollIndex++) {
@@ -631,7 +634,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		if (!customPoll) continue
 
 		let customPollDiv = document.createElement('div')
-		customPollDiv.className = 'customPoll'
+		customPollDiv.className = 'customPoll revampDiv'
 
 		let customPollName = document.createElement('p')
 		customPollName.className = 'custom-poll-name'
@@ -647,16 +650,17 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		customPollDiv.appendChild(customPollName)
 
 		let editButton = document.createElement('button')
-		editButton.className = 'edit-custom-poll'
+		editButton.className = 'edit-custom-poll revampButton'
 		editButton.style.gridColumn = 2
 		editButton.textContent = 'Edit'
 		editButton.onclick = () => {
+			changeTab('newPoll', 'polls')
 			editCustomPoll(customPollId)
 		}
 		customPollDiv.appendChild(editButton)
 
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
+		startButton.className = 'start-custom-poll revampButton'
 		startButton.style.gridColumn = 3
 		startButton.textContent = 'Start'
 		startButton.onclick = () => {

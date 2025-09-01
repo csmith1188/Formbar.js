@@ -321,14 +321,9 @@ dialog {
 	object-fit: cover;
 }
 
-#muteButton {
-	display: none !important;
-	margin-right: 55px;
-}
-
+#muteButton,
 #unmuteButton {
-	display: none !important;
-	margin-right: 55px;
+	margin-right: 0;
 }
 
 #logoutIcon {
@@ -388,8 +383,7 @@ dialog {
 	border: 1px solid black;
 	border-radius: 5px;
 	background-color: var(--bg-light-blue);
-	color: black;
-	font-weight: bold;
+	font-weight: normal;
 }
 
 .headerText {
@@ -664,7 +658,8 @@ details[open] #reasons {
 }
 
 #response {
-	width: 100%;
+	font-weight: bold;
+	margin-left: 20px;
 	word-break: break-all;
 }
 
@@ -853,9 +848,12 @@ hr {
 .customPoll {
 	border: 3px solid var(--theme-color);
 	width: 15cqw;
-	padding-bottom: 2vh;
 	border-radius: 10px;
 	margin-bottom: 1vh;
+}
+
+.customPoll.revampDiv {
+	padding: 20px 10px;
 }
 
 .customPoll button {
@@ -879,6 +877,7 @@ hr {
 	display: flex;
 	justify-content: center;
 	font-size: 1cqw;
+	gap: 20px;
 }
 
 #pollResForm .response button {
@@ -1030,8 +1029,6 @@ div .tabContent {
 	order: 3;
 	display: flex;
 	justify-content: space-evenly;
-	margin-left: auto;
-	width: 70%;
 }
 
 #tagOptions div {
@@ -1740,6 +1737,7 @@ div.sideBySide {
 }
 
 .controlStudent {
+	cursor: pointer;
 	max-height: unset;
 	height: min-content;
 }
@@ -1918,4 +1916,96 @@ div#pollPreview.open {
 	100% {
 		opacity: 0;
 	}
+}
+
+@media screen and (orientation: portrait) {
+	#VBDiv #newMemberListControlPanel {
+		display: flex;
+  		flex-direction: column;
+	}
+}
+
+.circularButton[hidden] {
+	display: none !important;
+}
+
+.previousPoll.revampDiv span#date {
+	font-size: 16px;
+	font-style: italic;
+	opacity: 0.5;
+	margin-left: 10px;
+}
+
+.previousPoll {
+	max-height: none;
+	height: min-content;
+}
+
+.controlStudent summary {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	flex-direction: row;
+	gap: 10px;
+}
+
+.customOptions {
+	padding: 10px 20px;
+	font-size: 1cqw;
+	display: flex;
+	justify-content: space-between;
+	width: 50%;
+	margin-left: 25%;
+	border: .3vh var(--theme-color) solid;
+	margin-bottom: 50px;
+	align-items: center;
+	background: var(--lightMode-menu-bg);
+	border: 2px solid var(--lightMode-menu-border);
+	border-radius: 10px;
+	gap: 20px;
+	flex-direction: row;
+	flex-wrap: nowrap !important;
+}
+
+.customOptions button {
+	width: 100% !important;
+	height: auto !important;
+}
+
+button.backButton {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 60px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+}
+
+button.backButton img {
+	filter: invert(1);
+	height: 80%;
+}
+
+button.backButton * {
+	pointer-events: none;
+}
+
+#settingsMenu,
+#previousPollsMenu {
+	position: relative;
+}
+.custom-poll-name {
+	font-weight: bold;
+	font-size: 32px;
+
+	/* 2000 lines!!! */
+
+	margin-top: 0;
+}
+
+.edit-custom-poll {
+	margin-right: 20px;
 }

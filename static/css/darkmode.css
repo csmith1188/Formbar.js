@@ -104,7 +104,8 @@ button.pressed.revampButton:hover {
 	background: linear-gradient(to right, #00256e, #390085);
 }
 
-#quickMenu {
+#quickMenu,
+.customOptions {
 	background: var(--darkMode-menu-bg);
 	border: 2px solid var(--darkMode-menu-border);
 	color: white !important;
