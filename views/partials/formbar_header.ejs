@@ -19,28 +19,25 @@
                 <% } %>
                   <li><a href="/selectClass" class="headerTab revampButton">Join Class</a></li>
                   <% } %>
-                    <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                      <li><a href="/plugins" class="headerTab revampButton">Plugins</a></li>
-                      <% } %>
-                        <% if (currentUser.classPermissions) { %>
-                          <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
-                            Classes</button></li>
-                            <li>
-                            <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
+                      <% if (currentUser.classPermissions) { %>
+                        <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
+                          Classes</button></li>
+                          <li>
+                          <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
+                        <% } %>
                           <% } %>
-                            <% } %>
-                            </ul>
-                            <a href="/profile" class="circularButton" title="LM/DM">
-                              <img src="/img/person.svg">
-                            </a>
-                            <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
-                              <img id="lmdmIcon" src="/img/sun.svg">
-                            </button>
-                            <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
-                              <img id="logoutIcon" src="/img/logout.svg" title="Logout">
-                            </button>
-                            <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
-                            <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>
+                          </ul>
+                          <a href="/profile" class="circularButton" title="LM/DM">
+                            <img src="/img/person.svg">
+                          </a>
+                          <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
+                            <img id="lmdmIcon" src="/img/sun.svg">
+                          </button>
+                          <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
+                            <img id="logoutIcon" src="/img/logout.svg" title="Logout">
+                          </button>
+                          <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
+                          <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");

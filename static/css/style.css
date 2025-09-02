@@ -9,6 +9,7 @@
 * {
 	scrollbar-width: thin;
 	scrollbar-color: red;
+	/* cursor: url(/img/image.png), auto !important; */
 }
 
 :root {
@@ -140,12 +141,15 @@ button#remove {
 
 /*Shows that the button is currently active*/
 button.pressed,
-.quickButton.pressed {
+.quickButton.pressed,
+.revampButton.pressed {
 	background: var(--lightMode-button-pressed-bg);
 	color: white;
 }
 
-button.pressed:hover {
+button.pressed:hover,
+.quickButton.pressed:hover,
+.revampButton.pressed:hover {
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
@@ -1997,15 +2001,22 @@ button.backButton * {
 #previousPollsMenu {
 	position: relative;
 }
+/* 2000 lines!!! */
+
 .custom-poll-name {
 	font-weight: bold;
 	font-size: 32px;
-
-	/* 2000 lines!!! */
-
 	margin-top: 0;
 }
 
 .edit-custom-poll {
 	margin-right: 20px;
+}
+
+#userSortBoxes.options {
+	display: flex;
+	flex-direction: row;
+	justify-content: left;
+	padding: 0 !important;
+	margin-bottom: 20px;
 }
