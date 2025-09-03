@@ -51,8 +51,13 @@ async function joinClass(socket, classId) {
             const studentId = await getStudentId(email);
             const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
             if (!classUsers) {
-                socket.emit('joinClass', 'You are not in that class.');
-                return;
+                // The owner of the class is not in classUsers, so we need to check if the user is the owner
+                // of the class.
+                const classroomOwner = await dbGet('SELECT owner FROM classroom WHERE id=?', classId);
+                if (classroomOwner && classroomOwner.owner !== studentId) {
+                    socket.emit('joinClass', 'You are not in that class.');
+                    return;
+                }
             }
         }
 

@@ -311,13 +311,6 @@
 						updatePage()
 					})
 
-					socket.emit('quizUpdate')
-					socket.on('quizUpdate', (newQuiz) => {
-						if (deepObjectEqual(quiz, newQuiz)) return
-
-						quiz = newQuiz
-						updatePage()
-					})
 					//help ticket/break button
 
 					socket.on("helpSuccess", () => {

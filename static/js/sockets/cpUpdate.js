@@ -1,6 +1,28 @@
 let currentTags = []
 let students = []
 let classId = null
+const permissionOptions = [
+    {
+        name: "Owner",
+        permissionLevel: 5
+    },
+    {
+        name: "Teacher",
+        permissionLevel: 4
+    },
+    {
+        name: "Mod",
+        permissionLevel: 3
+    },
+    {
+        name: "Student",
+        permissionLevel: 2
+    },
+    {
+        name: "Guest",
+        permissionLevel: 1
+    }
+]
 
 // Ask for classroom update and listen for the response
 socket.emit('cpUpdate')
@@ -185,29 +207,6 @@ socket.on('cpUpdate', (newClassroom) => {
             endPoll.style.display = 'none'
         }
     }
-
-    const permissionOptions = [
-        {
-            name: "Owner",
-            permissionLevel: 5
-        },
-        {
-            name: "Teacher",
-            permissionLevel: 4
-        },
-        {
-            name: "Mod",
-            permissionLevel: 3
-        },
-        {
-            name: "Student",
-            permissionLevel: 2
-        },
-        {
-            name: "Guest",
-            permissionLevel: 1
-        }
-    ]
 
     if (!deepObjectEqual(classroom?.permissions, newClassroom.permissions)) {
         permissionsDiv.innerHTML = ''

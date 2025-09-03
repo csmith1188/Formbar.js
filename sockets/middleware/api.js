@@ -35,6 +35,7 @@ module.exports = {
                                         userData.displayName,
                                         false
                                     )
+                                    console.log('set user')
                                 }
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id

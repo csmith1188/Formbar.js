@@ -25,8 +25,6 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 const PASSIVE_SOCKETS = [
 	'pollUpdate',
 	'modeUpdate',
-	'quizUpdate',
-	'lessonUpdate',
 	'managerUpdate',
 	'ipUpdate',
 	'vbUpdate',
@@ -322,38 +320,6 @@ class SocketUpdates {
         }
     }
     
-    quizUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[quizUpdate] classId=(${classId})`)
-            logger.log('verbose', `[quizUpdate] quiz=(${JSON.stringify(classInformation.classrooms[classId].quiz)})`)
-    
-            advancedEmitToClass(
-                'quizUpdate',
-                classId,
-                { classPermissions: CLASS_SOCKET_PERMISSIONS.quizUpdate },
-                classInformation.classrooms[classId].quiz
-            )
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    lessonUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[lessonUpdate] classId=(${classId})`)
-            logger.log('verbose', `[lessonUpdate] lesson=(${JSON.stringify(classInformation.classrooms[classId].lesson)})`)
-    
-            advancedEmitToClass(
-                'lessonUpdate',
-                classId,
-                { classPermissions: CLASS_SOCKET_PERMISSIONS.lessonUpdate },
-                classInformation.classrooms[classId].lesson
-            )
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
     pluginUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[pluginUpdate] classId=(${classId})`)
@@ -517,11 +483,13 @@ class SocketUpdates {
             this.virtualBarUpdate(classId);
 
             // If the user is logged in, then handle the user's session
-            for (const userSocket of Object.values(userSockets[email])) {
-                userSocket.leave(`class-${classId}`);
-                userSocket.request.session.classId = null;
-                userSocket.request.session.save();
-                userSocket.emit('reload');
+            if (userSockets[email]) {
+                for (const userSocket of Object.values(userSockets[email])) {
+                    userSocket.leave(`class-${classId}`);
+                    userSocket.request.session.classId = null;
+                    userSocket.request.session.save();
+                    userSocket.emit('reload');
+                }
             }
         } catch (err) {
             logger.log('error', err.stack);

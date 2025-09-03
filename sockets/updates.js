@@ -38,6 +38,7 @@ module.exports = {
         socket.on('cpUpdate', () => {
             logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
+            console.log('cpUpdate requested');
             socketUpdates.classPermissionUpdate();
         })
 

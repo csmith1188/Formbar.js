@@ -1,6 +1,6 @@
 const { logger } = require("./logger");
 const { Classroom, classInformation } = require("./class/classroom");
-const { BANNED_PERMISSIONS } = require("./permissions");
+const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
@@ -71,6 +71,7 @@ async function joinClassroomByCode(code, session) {
 		}
 
 		if (classUser) {
+            console.log('path 1', classUser)
 			// Get the student's session data ready to transport into new class
 			let currentUser = classInformation.users[email]
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
@@ -124,9 +125,11 @@ async function joinClassroomByCode(code, session) {
 			// Grab the user from the users list
 			const classData = classInformation.classrooms[classroom.id];
 			let currentUser = classInformation.users[email]
-			currentUser.classPermissions = classData.permissions.userDefaults
+			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
 			currentUser.activeClasses.push(classroom.id)
             currentUser.tags = '';
+
+            console.log(currentUser);
 
             // Redact the API key from the classroom user to prevent it from being sent anywhere
             const studentAPIKey = currentUser.API;
