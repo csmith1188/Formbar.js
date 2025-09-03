@@ -106,7 +106,7 @@ a {
 
 input {
 	font-size: inherit;
-}
+} 	
 
 input[type="number"] {
 	width: 48px;
@@ -124,6 +124,12 @@ input[type="checkbox"] {
 button#remove {
 	width: 230px;
 	height: 100%;
+}
+
+button#remove {
+    max-width: max-content;
+    margin: auto;
+    padding: 0 50px;
 }
 
 .breakButton:hover,
@@ -530,24 +536,20 @@ input[type="radio"]:focus {
 	bottom: 20px;
 }
 
-#takeBreak #cancel, #takeHelp #cancel {
-	--theme-color: hsl(0, 0%, 20%);
-	background-color: white;
-	margin-right: 10px;
-}
-
 #takeBreak #cancel:active, #takeHelp #cancel:active {
 	background-color: var(--theme-color);
 }
 
 /* --- STUDENT PANEL --- */
 #pollForm {
+	flex-wrap: wrap;
 	display: flex;
 	gap: 10px;
 	margin: auto;
 	align-items: flex-start;
-	justify-content: space-between;
+	justify-content: center;
 	flex-direction: row;
+	margin-bottom: 20px;
 }
 
 #pollPrompt {
@@ -598,10 +600,8 @@ input[type="radio"]:focus {
 	justify-content: center;
 	margin-bottom: 2vh;
 	align-items: center;
-	position: absolute;
 	width: calc(100% - 16px);
-	top: 50%;
-	transform: translate(0, -50%);
+	height: 100%;
 }
 
 #studentVBar #vbContainer {
@@ -609,19 +609,27 @@ input[type="radio"]:focus {
 	height: 75vh !important;
 }
 
-#helpBreak {
-    position: relative;
+#studHelpAandBreak {
 	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-around;	
-	width: 100%;
-	max-width: 1000px;
-	padding: 0 60px;
+	justify-content: space-evenly;
+	gap: 20px;
+}
+
+#helpBreak {
+	position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    padding: 0 60px;
+    height: 75%;
+    gap: 30px;
 }
 
 #pollContent {
 	width: 100%;
-	margin-bottom: 60px;
 
 }
 
@@ -1406,7 +1414,6 @@ article ul {
 }
 
 .pollButton {
-	width: 100%;
 }
 
 .revampButton#forgotPassword {
@@ -2043,8 +2050,6 @@ button.backButton * {
 
 #pollResForm #responses {
 	display: flex;
-	max-height: 25vh;
-	overflow: scroll;
 	flex-direction: column;
 	justify-content: start;
 	align-items: center;

@@ -52,9 +52,10 @@
                     </div>
                 </div>
             </div>
-            <br/>
-            <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>
-            <button type="button" class="revampButton" onclick="downloadDatabase()">Download Database</button>
+            <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
+                <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>
+                <button type="button" class="revampButton" onclick="downloadDatabase()">Download Database</button>
+            </div>
             <%- include('../partials/body_content') %>
     </body>
 

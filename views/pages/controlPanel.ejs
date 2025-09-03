@@ -13,7 +13,7 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody nooverflow">
+<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: scroll;">
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
@@ -196,8 +196,6 @@
             <input type="submit" class="quickButton">
         </form>
         <button type='button' id='nextStep'>Next Step</button>
-        <br>
-        <br>
         <form>
             <label class='form-control' id='pollControl' for='modeP'>
                 <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>
@@ -295,11 +293,8 @@
         <input type='submit' class='quickButton'>
     </form>
     <button type='button' id='nextStep'>Next Step</button>
-    <br>
-    <br>
     <button type='button' id='timerButton'>Start Timer</button>
     <button type='button' id='timerStopButton' hidden>Stop Timer</button>
-    <br>
     <button id='kickUsers' onclick=`((event)HH
     => {socket.emit('classKickStudents')})()`>
     Kick All Students
@@ -317,8 +312,6 @@
         <input type='submit' class='quickButton'>
     </form>
     <button type='button' id='nextStep'>Next Step</button>
-    <br>
-    <br>
     <form>
         <label class='form-control' id='pollControl' for='modeP'>
             <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>

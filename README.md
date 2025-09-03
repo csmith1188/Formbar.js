@@ -8,22 +8,3 @@ Formbar.js is a classroom polling and management system. The two key components 
 - Have permanent logins and seperate classes
 
 ## Documentation inside of wiki
-
-
-## UI-Revamp
-### Changes
-- CSS
-- controlPanel.ejs (Needs worked on for active classes)
-- login.ejs
-- manageClass.ejs
-- managerPanel.ejs
-- news.ejs
-- plugins.ejs
-- profile.ejs
-- selectClass.ejs
-- student.ejs
-- /partials/formbar_header.ejs
-- /partials/virtual_bar.ejs
-
-## TODO
-- Consistency across pages with small forms.

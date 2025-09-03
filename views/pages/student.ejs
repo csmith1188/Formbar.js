@@ -20,7 +20,6 @@
 					<%- include("../partials/virtual_bar.ejs") %>
 						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 
-							<br>
 							<div id="helpBreak">
                                 <u>
                                     <h2 id="pollPrompt" class="revampDivAlt">
@@ -31,14 +30,10 @@
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
 									<div id="poll">
 										<div id="pollForm"></div>
-										<br>
 									</div>
 								</div>
-								<div id="studHelp">
+								<div id="studHelpAandBreak">
 									<button onclick="{document.getElementById('requestHelpDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}" class="quickButton helpButton revampButton">Send Help Ticket</button>
-									<br>
-								</div>
-								<div id="studBreak">
 									<button class="breakButton revampButton"
 										onclick="{document.getElementById('requestBreakDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}">
 										Take a Break
@@ -48,7 +43,7 @@
 				</div>
 				<%- include('../partials/body_content') %>
 
-					<dialog id="requestBreakDialog" class="contentBox" on="console.log">
+					<dialog id="requestBreakDialog" class="contentBox revampDiv" on="console.log">
 						<script>document.getElementById("requestBreakDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 						<form
 							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
@@ -66,13 +61,13 @@
 									maxlength="150"></textarea>
 							</div>
 							<div id="takeBreak" class="hCentered">
-								<button class="quickButton" id="cancel" type="button"
+								<button class="quickButton revampButton" id="cancel" type="button"
 									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
-								<button class="quickButton" type="submit">Take Break</button>
+								<button class="quickButton revampButton" type="submit">Take Break</button>
 							</div>
 						</form>
 					</dialog>
-					<dialog id="requestHelpDialog" class="contentBox">
+					<dialog id="requestHelpDialog" class="contentBox revampDiv">
 						<script>document.getElementById("requestHelpDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 						<form onsubmit="help()">
 							<h3 style="margin-top: 0;">Request Help</h3>
@@ -83,8 +78,8 @@
 							</div>
 							
 							<div id="takeHelp" class="hCentered">
-								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
-								<button class="quickButton" type="submit">Request Help</button>
+								<button class="quickButton revampButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
+								<button class="quickButton revampButton" type="submit">Request Help</button>
 							</div>
 						</form>
 					</dialog>
@@ -177,7 +172,7 @@
 								}
 
 								if (poll.textRes) {
-									pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
+									pollForm.innerHTML += `<textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
 								}
 							} else {
 								noPoll.style.display = 'block'

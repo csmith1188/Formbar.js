@@ -51,8 +51,8 @@
 
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 600px;">
         <% for (let i = 0; i < logs.length; i++) { %>
-            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton"
-                    style="width: 180px; height: 75px; text-align: center;">
+            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton revampButton"
+                    style="width: 180px; height: 75px; text-align: center;font-size:14px">
                 View <%- logs[i] %>
             </button>
         <% } %>
