@@ -553,9 +553,9 @@ input[type="radio"]:focus {
 #pollPrompt {
 	font-size: 40px;
 	position: absolute;
-	top: 0;
-	right: 25%;
-	transform: translate(50%);
+    top: -50%;
+    right: 50%;
+    transform: translate(50%);
 	padding: 10px 20px;
 	color: white;
 }
@@ -610,6 +610,7 @@ input[type="radio"]:focus {
 }
 
 #helpBreak {
+    position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: space-around;	
@@ -839,6 +840,8 @@ hr {
 
 .customPoll.revampDiv {
 	padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .customPoll button {
@@ -1347,6 +1350,9 @@ article ul {
 }
 
 .revampButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 	text-align: center;
 	cursor: pointer;
 	font-family: "Outfit", sans-serif;
@@ -1649,6 +1655,10 @@ body.controlPanelNewBody {
 	flex-direction: column;
 }
 
+body.nooverflow {
+    overflow: hidden !important;
+}
+
 div.userMenuCp {
 	flex: 1 1 auto;
 }
@@ -1847,6 +1857,7 @@ div#permissions.tabContent {
 }
 
 div#pollPreview {
+    z-index: 5;
 	position: absolute;
 	top: var(--mouseY);
 	left: var(--mouseX);
@@ -2011,10 +2022,15 @@ button.backButton * {
 	font-weight: bold;
 	font-size: 32px;
 	margin-top: 0;
+    flex: 1 1 auto;
 }
 
-.edit-custom-poll {
-	margin-right: 20px;
+.customPollButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+	gap: 10px;
 }
 
 #userSortBoxes.options {
@@ -2033,7 +2049,6 @@ button.backButton * {
 	justify-content: start;
 	align-items: center;
 	gap: 10px;
-	mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
 }
 
 .colorPicker {

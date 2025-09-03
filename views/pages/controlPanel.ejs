@@ -13,7 +13,7 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: auto;">
+<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody nooverflow">
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
@@ -121,7 +121,7 @@
         </div>
         <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
         </div>
-        <div id='newPoll' class='customPolls tabContent' data-tab-group='polls'>
+        <div id='newPoll' class='customPolls tabContent' style="padding-bottom: 0;" data-tab-group='polls'>
             <div id="pollResForm">
                 <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
                 <div>
@@ -154,10 +154,6 @@
                 </div>
             </div>
             <div id='generalOptions' style="width: 50%; margin-left: 25%;">
-                <div class="options">
-                    <div class="headBox" style="border: none;">
-                    </div>
-                </div>
                 
                 <div class="options">
                     <div class="headBox" style="border: none;">

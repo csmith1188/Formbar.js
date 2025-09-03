@@ -661,6 +661,9 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		}
 		customPollDiv.appendChild(customPollName)
 
+        let buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'customPollButtons'
+
 		let deleteButton = document.createElement('button')
 		deleteButton.className = 'edit-custom-poll revampButton warningButton'
 		deleteButton.style.gridColumn = 2
@@ -668,7 +671,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		deleteButton.onclick = () => {
 			deletePoll(customPollId)
 		}
-		if(customPollsDiv.id !== "publicPolls") customPollDiv.appendChild(deleteButton)
+		if(customPollsDiv.id !== "publicPolls") buttonsDiv.appendChild(deleteButton)
 
 		let editButton = document.createElement('button')
 		editButton.className = 'edit-custom-poll revampButton'
@@ -678,7 +681,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 			changeTab('newPoll', 'polls')
 			editCustomPoll(customPollId)
 		}
-		customPollDiv.appendChild(editButton)
+		buttonsDiv.appendChild(editButton)
 
 		let startButton = document.createElement('button')
 		startButton.className = 'start-custom-poll revampButton'
@@ -687,7 +690,9 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		startButton.onclick = () => {
 			startPoll(customPollId)
 		}
-		customPollDiv.appendChild(startButton)
+		buttonsDiv.appendChild(startButton)
+
+        customPollDiv.appendChild(buttonsDiv);
 
 		if (customPoll.owner == currentUser.id) {
 			// let shareButton = document.createElement('button')
