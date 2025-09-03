@@ -7,7 +7,7 @@ module.exports = {
     run(socket, socketUpdates) {
         socket.on('endPoll', async () => {
             try {
-                await endPoll();
+                await endPoll(socket);
             } catch (err) {
                 logger.log('error', err.stack);
             }
