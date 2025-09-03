@@ -48,7 +48,7 @@ app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs
 
 // Check if an IP is banned
 app.use((req, res, next) => {
-	let ip = req.ipr
+	let ip = req.ip
 	if (!ip) return next();
 	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
 
