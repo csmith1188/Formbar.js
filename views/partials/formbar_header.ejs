@@ -28,16 +28,16 @@
                           <% } %>
                           </ul>
                           <a href="/profile" class="circularButton" title="LM/DM">
-                            <img src="/img/person.svg">
+                            <img src="/img/person.svg" title="Profile">
                           </a>
                           <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
-                            <img id="lmdmIcon" src="/img/sun.svg">
+                            <img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
                           </button>
                           <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
                             <img id="logoutIcon" src="/img/logout.svg" title="Logout">
                           </button>
-                          <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg"></button>
-                          <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg"></button>
+                          <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="img/volume.svg" title="Sound On"></button>
+                          <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="img/mute.svg" title="Sound Off"></button>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");

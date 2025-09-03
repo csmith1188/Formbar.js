@@ -115,8 +115,9 @@ function resTextChange() {
 	}
 }
 
-function responseAmountChange() {
+function responseAmountChange(responseAmount = null) {
 	responseDivs = document.getElementsByClassName('response')
+	if(responseAmount) resNumber.value = responseAmount;
 	if (resTextBox.checked) {
 		if (resNumber.value < 0) resNumber.value = 0
 	}
@@ -165,7 +166,7 @@ function responseAmountChange() {
 		responseDiv.id = `response${i}`
 
 		let colorPickerButton = document.createElement('button')
-		colorPickerButton.className = 'colorPickerButton'
+		colorPickerButton.className = 'colorPickerButton revampButton'
 		colorPickerButton.id = i
 		colorPickerButton.onclick = (event) => {
 			event.preventDefault()
@@ -189,14 +190,14 @@ function responseAmountChange() {
 		responseDiv.appendChild(colorPickerButton)
 
 		let colorPickerDiv = document.createElement('div')
-		colorPickerDiv.className = 'colorPicker'
+		colorPickerDiv.className = 'colorPicker revampDiv'
 
 		let buttonsDiv = document.createElement('div')
 		buttonsDiv.className = 'buttonsDiv'
 
 		let saveColorButton = document.createElement('button')
-		saveColorButton.className = 'quickButton'
-		saveColorButton.style.width = "100px"
+		saveColorButton.className = 'quickButton revampButton'
+		//saveColorButton.style.width = "100px"
 		saveColorButton.textContent = 'Save Color'
 		saveColorButton.onclick = () => {
 			saveColor(i)
@@ -204,8 +205,8 @@ function responseAmountChange() {
 		buttonsDiv.appendChild(saveColorButton)
 
 		let resetColor = document.createElement('button')
-		resetColor.className = 'quickButton'
-		resetColor.style.width = "100px"
+		resetColor.className = 'quickButton revampButton warningButton'
+		//resetColor.style.width = "100px"
 		resetColor.textContent = 'Reset Color'
 		resetColor.onclick = (event) => {
 			event.preventDefault()
@@ -233,13 +234,11 @@ function responseAmountChange() {
 		newColor.className = 'newColor'
 		colorsDiv.appendChild(newColor)
 
-		colorPickerDiv.appendChild(colorsDiv)
-
 		let hexLabel = document.createElement('label')
 		hexLabel.className = 'hexLabel'
 		hexLabel.textContent = 'Hex '
 		let hexInput = document.createElement('input')
-		hexInput.className = 'hexInput'
+		hexInput.className = 'hexInput revampButton revampWithText'
 		hexInput.type = 'text'
 		hexInput.pattern = '[0-9A-Fa-f]{3,6}'
 		hexInput.onchange = (event) => {
@@ -264,8 +263,8 @@ function responseAmountChange() {
 		responseDiv.appendChild(answerName)
 
 		let removeAnswerButton = document.createElement("button");
-		removeAnswerButton.className = "quickButton revampButton";
-		removeAnswerButton.textContent = "X";
+		removeAnswerButton.className = "quickButton revampButton warningButton";
+		removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
 		removeAnswerButton.id = `removeAnswer`;
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
@@ -306,10 +305,14 @@ function responseAmountChange() {
 				}
 			]
 		})
+
+		colorPickers[i].base.appendChild(colorsDiv)
+
 		colorPickers[i].on(['color:init', 'color:change'], color => {
-			let newColor = responseDiv.getElementsByClassName('newColor')[0]
+			let newColor = colorPickers[i].base.getElementsByClassName('newColor')[0]
 			let hexInput = responseDiv.getElementsByClassName('hexInput')[0]
 
+			
 			newColor.style.backgroundColor = color.hexString
 			hexInput.value = color.hexString.substring(1)
 		})
@@ -319,7 +322,7 @@ function responseAmountChange() {
 	for (let i = 0; i < responseDivs.length; i++) {
 		let responseDiv = responseDivs[i]
 		let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
-		let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+		let oldColor = colorPickers[i].base.getElementsByClassName('oldColor')[0]
 
 		pollResponses[i].defaultColor = generatedColors[i]
 		if (!pollResponses[i].color) {
@@ -602,20 +605,29 @@ function sharePoll(type) {
 
 function deletePoll(pollId) {
 	let elems = document.querySelectorAll(`.custom-poll-name`)
-	for (elem of elems) {
-		if (elem.innerHTML == customPolls[editingPollId].name) elem.parentElement.remove()
+
+	if (!customPolls[pollId]) {
+		alert('No poll found.')
+		return
 	}
 
-	if (!pollId && !editingPollId) {
+	if (!pollId) {
 		alert('No poll selected')
 		return
 	}
-	if (!pollId) {
-		pollId = editingPollId
-		unloadPoll()
-	}
+	
+	//if (!pollId) {
+	//	pollId = editingPollId
+	//	unloadPoll()
+	//}
 
-	socket.emit('deletePoll', pollId)
+	if(confirm(`Are you sure you would like to delete the poll "${customPolls[pollId].name}"?`)) 
+	{ 
+		for (elem of elems) {
+			if (elem.innerHTML == customPolls[pollId].name) elem.parentElement.remove()
+		}
+		socket.emit('deletePoll', pollId) 
+	};
 }
 
 function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
@@ -648,6 +660,15 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 			customPollName.textContent = 'Unnamed Poll'
 		}
 		customPollDiv.appendChild(customPollName)
+
+		let deleteButton = document.createElement('button')
+		deleteButton.className = 'edit-custom-poll revampButton warningButton'
+		deleteButton.style.gridColumn = 2
+		deleteButton.textContent = 'Delete'
+		deleteButton.onclick = () => {
+			deletePoll(customPollId)
+		}
+		if(customPollsDiv.id !== "publicPolls") customPollDiv.appendChild(deleteButton)
 
 		let editButton = document.createElement('button')
 		editButton.className = 'edit-custom-poll revampButton'
