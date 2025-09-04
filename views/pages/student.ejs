@@ -60,7 +60,7 @@
 								<textarea class="hidden" id="otherText" cols="25" rows="3"
 									maxlength="150"></textarea>
 							</div>
-							<div id="takeBreak" class="hCentered">
+							<div id="takeBreak" class="hCentered" style="display: flex;flex-direction: row;justify-content: center;align-items: center;gap: 20px;">
 								<button class="quickButton revampButton" id="cancel" type="button"
 									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
 								<button class="quickButton revampButton" type="submit">Take Break</button>
@@ -72,12 +72,12 @@
 						<form onsubmit="help()">
 							<h3 style="margin-top: 0;">Request Help</h3>
 							<div id="eventForm">
-								<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
+								<textarea id="ticket" class="revampButton revampWithText" cols="30" rows="5" maxlength="150" class="helpBox"
 									placeholder="Reason (optional)"></textarea>
 								<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
 							</div>
 							
-							<div id="takeHelp" class="hCentered">
+							<div id="takeHelp" class="hCentered" style="display: flex;flex-direction: row;justify-content: center;align-items: center;gap: 20px;">
 								<button class="quickButton revampButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
 								<button class="quickButton revampButton" type="submit">Request Help</button>
 							</div>

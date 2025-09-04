@@ -44,6 +44,7 @@
                           </button>
                           <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/volume.svg" title="Sound On"></button>
                           <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>
+                          <script>if(!window.location.href.includes('controlPanel')){document.getElementById('muteButton').remove();document.getElementById('unmuteButton').remove()}</script>
 </header>
 <script>
   let lmdmIcon = document.getElementById("lmdmIcon");

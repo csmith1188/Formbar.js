@@ -852,7 +852,8 @@ hr {
 }
 
 .customPoll.revampDiv {
-	padding: 20px 10px;
+	width: max-content;
+	padding: 20px;
     display: flex;
     flex-direction: column;
 }
@@ -999,7 +1000,7 @@ div .tabContent {
 
 #users {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
 }
 
@@ -1027,8 +1028,8 @@ div .tabContent {
 }
 
 #previousPolls {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
 	justify-content: space-evenly;
 }
 
@@ -1119,6 +1120,7 @@ div.break {
 	justify-content: center;
 	align-items: center;
 	gap: 10px;
+	height: min-content;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) p {
@@ -2185,4 +2187,32 @@ p#apiKey {
 
 p#apiKey {
     overflow: scroll;
+}
+
+button img {
+	pointer-events: none
+}
+
+#permissions.tabContent,
+#tags.tabContent {
+	position: relative;
+}
+
+#loadPoll {
+	margin: auto;
+}
+
+#users .user.hasInfo {
+	cursor: pointer;
+}
+
+#users .user.hiddenInfo *:not(p) {
+	display: none;
+}
+
+#addIpForm {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: row;
 }

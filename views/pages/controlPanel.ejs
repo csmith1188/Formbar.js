@@ -34,7 +34,9 @@
             <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
             <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
         </div>
-        <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" id="Settings" alt="Settings Icon"></button>
+        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
+        <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
@@ -167,7 +169,7 @@
                 <button id="delete-poll" onclick="deletePoll()">Delete Poll</button>
             </dialog>
         </div>
-
+    </div>
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
         <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
@@ -185,6 +187,18 @@
             <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'>--></button>
         </div>
     </div>
+</div>
+
+<div id='permissions' class='tabContent' data-tab-group='mainTabs'>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+    <h2>Permissions</h2>
+    <div id='permissionsList'></div>
+</div>
+<div id='tags' class='tabContent' data-tab-group='mainTabs'>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+    <h2>Tags</h2>
+    <div id='tagsList'></div>
+    <div id="tagOptions"></div>
 </div>
 
 <div id="pollPreview" class="revampDiv"></div>
@@ -217,21 +231,8 @@
     </div>
     <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
         <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
-        <div id='quickMenu'>
-            <button id='permissions' class='quickButton tab pressed revampButton'
-                    data-tab-group='settingsTabs'>Permissions
-            </button>
-            <button id="tags" class="quickButton tab revampButton" data-tab-group="settingsTabs">Tags</button>
-        </div>
-        <div id='permissions' class='tabContent default' data-tab-group='settingsTabs'>
-            <h2>Permissions</h2>
-            <div id='permissionsList'></div>
-        </div>
-        <div id='tags' class='tabContent' data-tab-group='settingsTabs'>
-            <h2>Tags</h2>
-            <div id='tagsList'></div>
-            <div id="tagOptions"></div>
-        </div>
+        <h2>Settings</h2>
+        
         <div id="settingsFunc">
             <div class="settingsFuncButtons">
                 <button id="kickUsers" class="revampButton warningButton" onclick="kickAll()">

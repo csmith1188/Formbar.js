@@ -133,13 +133,15 @@
         // makes user elements
         function buildUser(userData) {
             var newUser = document.createElement("div")
-            newUser.classList.add("user")
+            newUser.className = "user hiddenInfo";
+            newUser.setAttribute('onclick', 'this.classList.toggle("hiddenInfo")')
             newUser.setAttribute("id", userData.email);
             let userElement = document.createElement("p")
             userElement.innerText += userData.displayName
             
             newUser.appendChild(userElement)
             if (userData.permissions < currentUser.permissions) {
+                newUser.classList.add('hasInfo')
                 let permissionSwitchLabel = document.createElement("label");
                 permissionSwitchLabel.setAttribute("for", "permSwitch")
                 permissionSwitchLabel.innerText = "Users Permissions: "

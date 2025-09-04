@@ -11,6 +11,10 @@
         overflow: hidden;
     }
 
+    #content.loginContentBox div.buttons {
+        gap: 0;
+    }
+
     input#emailBox,
     input#displayNameBox,
     input#passwordBox {
@@ -51,4 +55,10 @@
         margin: 0;
         width: 100%;
     }
+
+    header#formbarHeader ul {
+        display: none;
+    }
+
+    
 }
