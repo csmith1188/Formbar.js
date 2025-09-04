@@ -55,7 +55,28 @@
         display: none;
     }
 
-    
+    #studentVBar {
+        flex-direction: column;
+        margin-top: 100px;
+        gap: 20px;
+        width: 100% !important;
+        height: calc(100% - 120px) !important;
+    }
+
+    canvas#virtualbar {
+        aspect-ratio: 1 !important;
+        height: unset !important;
+    }
+
+    #helpBreak {
+        padding: 0 !important;
+        justify-content: start !important;
+        gap: 20px !important;
+    }
+
+    div#studentVBar div#vbContainer {
+        height: min-content !important;
+    }
 }
 
 @media screen and (max-height: 600px) {

@@ -430,8 +430,27 @@ dialog {
 	gap: 0.5em;
 }
 
-.form-control+.form-control {
-	margin-top: 1em;
+#breakInfo {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	height: 100%;
+}
+
+#takeBreak {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+#breakInputs {
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
 
 .form-control:focus-within {
@@ -2013,7 +2032,7 @@ div#pollPreview.open {
 	height: auto !important;
 }
 
-button.backButton {
+.backButton {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -2024,12 +2043,12 @@ button.backButton {
 	gap: 10px;
 }
 
-button.backButton img {
+.backButton img {
 	filter: invert(1);
 	height: 80%;
 }
 
-button.backButton * {
+.backButton * {
 	pointer-events: none;
 }
 

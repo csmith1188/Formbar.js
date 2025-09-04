@@ -44,15 +44,17 @@
 						<form
 							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
 							<h3 style="margin-top: 0;">Take a break</h3>
-							<div id="breakInputs" class="centered">
-								<label class="form-control" id="pollControl" for="bathroom">
-									<input type="radio" name="option" id="bathroom" value="Bathroom" required>
-									Bathroom
-								</label>
-								<label class="form-control" id="pollControl" for="other">
-									<input type="radio" name="option" id="other" value="other">
-									Other
-								</label>
+							<div id="breakInfo">
+								<div id="breakInputs" class="">
+									<label class="form-control" id="pollControl" for="bathroom">
+										<input type="radio" name="option" id="bathroom" value="Bathroom" required>
+										Bathroom
+									</label>
+									<label class="form-control" id="pollControl" for="other">
+										<input type="radio" name="option" id="other" value="other">
+										Other
+									</label>
+								</div>
 								<textarea class="hidden revampButton revampWithText" id="otherText" cols="25" rows="3"
 									maxlength="150"></textarea>
 							</div>
