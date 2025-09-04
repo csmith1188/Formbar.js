@@ -1,0 +1,34 @@
+- Pages Complete
+    - [ ] Pages
+      - [x] ~~`apiKey.ejs` (Removed)~~
+      - [ ] `controlPanel.ejs`
+      - [x] ~~`lesson.ejs` (Removed)~~
+      - [x] `login.ejs`
+      - [x] `logs.ejs`
+      - [x] `manageClass.ejs`
+      - [x] `managerPanel.ejs`
+      - [ ] `message.ejs`
+      - [x] `news.ejs`
+      - [x] ~~`plugins.ejs` (Removed)~~
+      - [x] ~~`previousLesson.ejs` (Removed)~~
+      - [x] `profile.ejs`
+      - [x] ~~`queryquiz.ejs` (Removed)~~
+      - [x] `selectClass.ejs`
+      - [ ] `student.ejs`
+    - [ ] Partials
+      - [ ] `/partials/formbar_header.ejs`
+      - [ ] `/partials/virtual_bar.ejs`
+
+- [ ] Features Complete
+    - [ ] Mobile Layout
+    - [ ] Tablet Layout
+
+- [ ] Styling Changes
+    - [ ] Full ADA Compliance
+    - [x] Dark Mode & Light Mode
+
+- [ ] Extras
+    - [ ] CSS Cleanup
+    - [ ] Removing `style` attributes from elements
+    - [ ] Consistency
+    - [ ] 

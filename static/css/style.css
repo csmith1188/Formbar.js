@@ -1,5 +1,6 @@
 /* --- GENERAL --- */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url(./mobile.css);
 
 *::-webkit-scrollbar,
 *::-webkit-scrollbar-track {
@@ -280,6 +281,7 @@ dialog {
 }
 
 #formbarHeader {
+    overflow: hidden;
 	position: absolute;
 	top: 0;
 	left: 15px;
@@ -332,6 +334,7 @@ dialog {
 
 #muteButton,
 #unmuteButton {
+    display: none;
 	margin-right: 0;
 }
 
@@ -354,10 +357,13 @@ dialog {
 }
 
 #headerLogo {
-	flex: 1 1 auto;
 	text-align: left;
 	white-space: nowrap;
 	margin-right: 10px;
+}
+
+#headerSpacer {
+	flex: 1 1 auto;
 }
 
 #headerLogo > h1,
@@ -816,7 +822,6 @@ hr {
 	align-items: center;
 	flex-direction: column;
 	font-size: 1.5cqw;
-	border: var(--theme-color), 3px, solid;
 	justify-content: center;
 	gap: 20px;
 	padding: 90px 20px;
@@ -1350,6 +1355,7 @@ article ul {
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 50px;
+    gap: 20px;
 }
 
 ::placeholder {
@@ -1419,8 +1425,8 @@ article ul {
 .revampButton#forgotPassword {
 	margin-top: 20px;
 	font-style: italic;
-	max-width: 200px;
 	font-size: 20px;
+    width: max-content;
 }
 
 
@@ -2138,4 +2144,45 @@ button.backButton * {
 .pollOptionsEditorOption h2 {
 	text-align: left;
 	flex: 1 1 auto;
+}
+
+.mobileMenuButton {
+    display: none;
+}
+
+#profileInformation {
+    margin: auto;
+    width: max-content;
+    padding: 20px;
+}
+
+#apiKeyButton {
+    margin-top: 30px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+div#profileInformation h1 {
+    font-size: 32px;
+}
+
+p#displayName,
+p#email,
+p#digipogs,
+p#userId,
+p#apiKey {
+    margin: 20px auto;
+    font-size: 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+p#apiKey {
+    overflow: scroll;
 }

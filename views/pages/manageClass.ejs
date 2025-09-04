@@ -4,12 +4,12 @@
         <body id="colorContent">
             <%- include('../partials/formbar_header') %>
 
-                <header id="quickMenu">
+                <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
                     <button id="classesMenu" class="quickButton tab pressed revampButton" data-tab-group="classTabs">Classes</button>
                     <button id="createClassMenu" class="quickButton tab revampButton" data-tab-group="classTabs">Create a class</button>
                 </header>
 
-                <div id="content" class="contentBox">
+                <div id="content" class="contentBox" style="margin: auto;">
                     <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
                         <form action="createClass" method="post" id="selectClassForm">
                             <h2 class="headerText">Manage a class</h2>

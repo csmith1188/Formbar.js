@@ -5,6 +5,7 @@
 </style>
 <header id="formbarHeader">
   <a href="/" id="headerLogo"><h1>Formbar</h1><p id="version">v 1.1.0</p></a>
+  <div id="headerSpacer"></div>
   <% if (locals.currentUser) { %>
     <ul>
     <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
@@ -27,14 +28,19 @@
                         <% } %>
                           <% } %>
                           </ul>
+                        <% if(locals.currentUser) { %>
+                            <button class="mobileMenuButton circularButton">
+                                <img src="/img/menu.svg" alt="">
+                            </button>
                           <a href="/profile" class="circularButton" title="LM/DM">
                             <img src="/img/person.svg" title="Profile">
                           </a>
-                          <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
-                            <img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
-                          </button>
                           <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
                             <img id="logoutIcon" src="/img/logout.svg" title="Logout">
+                          </button>
+                          <% } %>
+                          <button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
+                            <img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
                           </button>
                           <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/volume.svg" title="Sound On"></button>
                           <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>

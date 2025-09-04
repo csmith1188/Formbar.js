@@ -1,0 +1,54 @@
+@media screen and (orientation: portrait) {
+    body {
+        width: 100dvw;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    #content.loginContentBox {
+        width: 100%;
+        height: max-content;
+        overflow: hidden;
+    }
+
+    input#emailBox,
+    input#displayNameBox,
+    input#passwordBox {
+        width: 100%;
+    }
+
+    h1#loginHeader {
+        top: 5vh;
+        font-size: 10vh;
+    }
+
+    a#headerLogo h1 {
+        font-size: 3vh;
+    }
+
+    a#headerLogo p#version {
+        display: none !important;
+    }
+
+    .circularButton {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .mobileMenuButton.circularButton {
+        display: flex;
+    }
+
+    .revampButton {
+        font-size: 2vh !important;
+    }
+
+    header#formbarHeader {
+        padding-right: 10px;
+    }
+
+    div#news {
+        margin: 0;
+        width: 100%;
+    }
+}
