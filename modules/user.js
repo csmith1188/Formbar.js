@@ -93,7 +93,6 @@ async function getUser(api) {
             ...dbUser,
             help: null,
             break: null,
-            quizScore: null,
             pogMeter: null,
             classId: classId
         }
@@ -106,7 +105,6 @@ async function getUser(api) {
                 userData.loggedIn = true
                 userData.help = cdUser.help
                 userData.break = cdUser.break
-                userData.quizScore = cdUser.quizScore
                 userData.pogMeter = cdUser.pogMeter
             }
         }

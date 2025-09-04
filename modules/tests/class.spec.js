@@ -39,7 +39,6 @@ it('should get class users', async () => {
             classPermissions: 1,
             help: null,
             break: null,
-            quizScore: null,
             pogMeter: null
         }
     });

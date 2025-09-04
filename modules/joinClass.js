@@ -71,7 +71,6 @@ async function joinClassroomByCode(code, session) {
 		}
 
 		if (classUser) {
-            console.log('path 1', classUser)
 			// Get the student's session data ready to transport into new class
 			let currentUser = classInformation.users[email]
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
@@ -128,8 +127,6 @@ async function joinClassroomByCode(code, session) {
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
 			currentUser.activeClasses.push(classroom.id)
             currentUser.tags = '';
-
-            console.log(currentUser);
 
             // Redact the API key from the classroom user to prevent it from being sent anywhere
             const studentAPIKey = currentUser.API;

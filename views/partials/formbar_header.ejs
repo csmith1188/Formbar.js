@@ -16,9 +16,6 @@
                 <% } %>
                   <a href="/selectClass" class="headerTab">Join Class</a>
                   <% } %>
-                    <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                      <a href="/plugins" class="headerTab">Plugins</a>
-                      <% } %>
                         <% if (currentUser.classPermissions) { %>
                           <button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button>
 

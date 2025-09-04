@@ -1,6 +1,5 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
-const { plugins } = require("../plugins");
 const { advancedEmitToClass, emitToUser} = require("../socketUpdates");
 const { getStudentId } = require("../student");
 const { database, dbGet, dbRun } = require("../database");

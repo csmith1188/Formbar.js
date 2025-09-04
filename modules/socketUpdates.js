@@ -24,12 +24,10 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 // Socket update events
 const PASSIVE_SOCKETS = [
 	'pollUpdate',
-	'modeUpdate',
 	'managerUpdate',
 	'ipUpdate',
 	'vbUpdate',
 	'cpUpdate',
-	'pluginUpdate',
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
@@ -83,11 +81,7 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
-    if (!api) {
-        console.trace("[setClassOfApiSockets]: Unexpected undefined api key")
-    }
-
-	logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
+    logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
 	const sockets = await io.in(`api-${api}`).fetchSockets()
 	for (let socket of sockets) {
@@ -304,51 +298,6 @@ class SocketUpdates {
         }
     }
     
-    modeUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[modeUpdate] classId=(${classId})`)
-            logger.log('verbose', `[modeUpdate] mode=(${classInformation.classrooms[classId].mode})`)
-    
-            advancedEmitToClass(
-                'modeUpdate',
-                classId,
-                { classPermissions: CLASS_SOCKET_PERMISSIONS.modeUpdate },
-                classInformation.classrooms[classId].mode
-            )
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    pluginUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[pluginUpdate] classId=(${classId})`)
-    
-            database.all(
-                'SELECT plugins.id, plugins.name, plugins.url FROM plugins JOIN classroom ON classroom.id=?',
-                [classId],
-                (err, plugins) => {
-                    try {
-                        if (err) throw err
-    
-                        logger.log('verbose', `[pluginUpdate] plugins=(${JSON.stringify(plugins)})`)
-    
-                        advancedEmitToClass(
-                            'pluginUpdate',
-                            classId,
-                            { classPermissions: CLASS_SOCKET_PERMISSIONS.pluginUpdate },
-                            plugins
-                        )
-                    } catch (err) {
-                        logger.log('error', err.stack);
-                    }
-                }
-            )
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
     customPollUpdate(email, socket = this.socket) {
         try {
             // Ignore any requests which do not have an associated socket with the email
@@ -511,7 +460,6 @@ class SocketUpdates {
     }
     
     logout(socket) {
-        console.warn(socket)
         const email = socket.request.session.email
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId

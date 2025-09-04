@@ -33,7 +33,6 @@ class Student {
 		};
 		this.help = false;
 		this.break = false;
-		this.quizScore = '';
 		this.API = API;
 		this.pogMeter = 0;
 		this.displayName = displayName;

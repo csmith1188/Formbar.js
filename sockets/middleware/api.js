@@ -35,7 +35,6 @@ module.exports = {
                                         userData.displayName,
                                         false
                                     )
-                                    console.log('set user')
                                 }
                                 socket.request.session.api = api
                                 socket.request.session.userId = userData.id
@@ -46,7 +45,6 @@ module.exports = {
                                 socket.join(`class-${socket.request.session.classId}`)
                                 socket.emit('setClass', socket.request.session.classId)
                                 socket.on('disconnect', () => {
-                                    console.log('SOCKET DISCONNECTED: ', socket.request.session.email, socket.id);
                                     if (!userSockets[socket.request.session.email]) {
                                         socketUpdates.classKickUser(socket.request.session.email, socket.request.session.classId, false)
                                     }
@@ -67,7 +65,6 @@ module.exports = {
                 socket.join(`class-${socket.request.session.classId}`)
                 socket.join(`user-${socket.request.session.email}`)
 
-                console.log('SOCKET CONNECTED: ', socket.request.session.email, socket.id);
                 userSockets[socket.request.session.email] = {
                     [socket.id]: socket
                 }

@@ -55,7 +55,6 @@ module.exports = {
                             classInformation.classrooms[id].sharedPolls = sharedPolls
                             classInformation.classrooms[id].pollHistory = pollHistory
                             classInformation.classrooms[id].tags = tags
-                            classInformation.classrooms[id].plugins = plugins
                             // classInformation.classrooms[id].owner =
                         }
 
@@ -167,7 +166,6 @@ module.exports = {
                             classroom.permissions = JSON.parse(classroom.permissions)
                             classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
                             classroom.pollHistory = JSON.parse(classroom.pollHistory)
-                            classroom.plugins = JSON.parse(classroom.plugins)
 
                             if (classroom.tags) {
                                 classroom.tags = classroom.tags.split(",");

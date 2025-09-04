@@ -35,15 +35,11 @@ module.exports = {
                     userData.classPermissions = await dbGet('SELECT permissions FROM classUsers WHERE studentId=? AND classId=?', [userData.id, classId]);
                 }
 
-                console.log('classPermissions:', userData.classPermissions);
-
                 if (GLOBAL_SOCKET_PERMISSIONS[event] && userData.permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Global socket permission check passed')
-                    console.log('pass 1', event)
                     next()
                 } else if (CLASS_SOCKET_PERMISSIONS[event] && userData.classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
                     logger.log('info', '[socket permission check] Class socket permission check passed')
-                    console.log('pass 2', event)
                     next()
                 } else if (
                     CLASS_SOCKET_PERMISSION_MAPPER[event] &&
@@ -51,7 +47,6 @@ module.exports = {
                     userData.classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
                 ) {
                     logger.log('info', '[socket permission check] Class socket permission settings check passed')
-                    console.log('pass 3', event)
                     next()
                 } else if (!PASSIVE_SOCKETS.includes(event)) {
                     logger.log('info', `[socket permission check] User does not have permission to use ${camelCaseToNormal(event)}`)
