@@ -20,12 +20,8 @@
 					<%- include("../partials/virtual_bar.ejs") %>
 						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 
+                            <h2 id="pollPrompt" class="revampDivAlt"></h2>
 							<div id="helpBreak">
-                                <u>
-                                    <h2 id="pollPrompt" class="revampDivAlt">
-
-                                    </h2>
-                                </u>
 								<div id="pollContent">
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
 									<div id="poll">
@@ -57,7 +53,7 @@
 									<input type="radio" name="option" id="other" value="other">
 									Other
 								</label>
-								<textarea class="hidden" id="otherText" cols="25" rows="3"
+								<textarea class="hidden revampButton revampWithText" id="otherText" cols="25" rows="3"
 									maxlength="150"></textarea>
 							</div>
 							<div id="takeBreak" class="hCentered" style="display: flex;flex-direction: row;justify-content: center;align-items: center;gap: 20px;">

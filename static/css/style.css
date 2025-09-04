@@ -522,7 +522,7 @@ input[type="radio"]:focus {
 
 #requestBreakDialog,
 #sharePollDialog {
-	width: 300px;
+	width: 350px;
 	height: 300px;
 }
 
@@ -561,7 +561,7 @@ input[type="radio"]:focus {
 #pollPrompt {
 	font-size: 40px;
 	position: absolute;
-    top: -50%;
+    top: 50px;
     right: 50%;
     transform: translate(50%);
 	padding: 10px 20px;
@@ -624,7 +624,7 @@ input[type="radio"]:focus {
 #helpBreak {
 	position: relative;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     flex-direction: column;
     justify-content: center;
     width: 100%;
@@ -1349,6 +1349,12 @@ article ul {
 	font-size: 15vh;
 	color: #0002;
 	width: 100%;
+    
+
+    
+        top: 5vh;
+        font-size: 10vh;
+
 }
 
 #content div.buttons {
@@ -2027,6 +2033,10 @@ button.backButton * {
 	pointer-events: none;
 }
 
+#pollsMenu {
+    height: calc(100% - 100px);
+}
+
 #settingsMenu,
 #previousPollsMenu {
 	position: relative;
@@ -2138,7 +2148,7 @@ button.backButton * {
 
 .pollOptionsEditorOption {
 	display: flex;
-	justify-content: baseline;
+	justify-content: space-between;
 	align-items: center;
 	gap: 10px;
 }
@@ -2215,4 +2225,22 @@ button img {
 	justify-content: center;
 	align-items: center;
 	flex-direction: row;
+}
+
+.joinClassForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+}
+
+#newPoll {
+    height: 100%;
+    overflow: scroll;
+}
+
+#save-poll {
+    width: 100%;
+    white-space: nowrap;
 }

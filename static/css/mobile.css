@@ -21,11 +21,6 @@
         width: 100%;
     }
 
-    h1#loginHeader {
-        top: 5vh;
-        font-size: 10vh;
-    }
-
     a#headerLogo h1 {
         font-size: 3vh;
     }
@@ -61,4 +56,8 @@
     }
 
     
+}
+
+@media screen and (max-height: 600px) {
+    /* Smaller screens */
 }

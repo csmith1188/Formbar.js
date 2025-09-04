@@ -13,7 +13,7 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: scroll;">
+<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: hidden;">
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
@@ -101,7 +101,7 @@
     </div>
 </div>
 
-    <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative; height: 100%;">
+    <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
         <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
         <h1 class='headerText' style="margin-bottom: 20px;">Custom Polls</h1>
         <div id='pollOptions' class='options customOptions'>
@@ -123,7 +123,7 @@
         </div>
         <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
         </div>
-        <div id='newPoll' class='customPolls tabContent' style="padding-bottom: 0;" data-tab-group='polls'>
+        <div id='newPoll' class='customPolls tabContent' style="padding-bottom:250px;" data-tab-group='polls'>
             <div id="pollResForm">
                 <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
                 <div>
@@ -150,18 +150,21 @@
                     <input type='checkbox' id='blind'>
                 </div>
 
-                <div class="pollOptionsEditorOption">
+                <div class="pollOptionsEditorOption" style="margin-bottom: 20px;">
                     <button id='resetAnswerNames' class='quickButton revampButton'>Reset Names</button>
                     <button id='resetColors' class='quickButton revampButton'>Reset Colors</button>
+                </div>
+
+                <div class="pollOptionsEditorOption">
+                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
+                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
                 </div>
             </div>
             <div id='generalOptions' style="width: 50%; margin-left: 25%;">
                 
                 <div class="options">
                     <div class="headBox" style="border: none;">
-                        <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
-                        <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
-                    </div>
+                        </div>
                 </div>
             </div>
             <dialog id="editPollDialog" class="contentBox">

@@ -6,7 +6,7 @@
                 <div id="content" class="contentBox joinClass">
                     <h2 class="headerText">Join a class</h2>
                     <% if (joinedClasses.length > 0) { %>
-                        <form action="selectClass" method="post">
+                        <form action="selectClass" method="post" class="joinClassFOrm">
                             <select id="joinedKey" name="id" required class="revampButton">
                                 <option value="" disabled selected>Joined classes</option>
                                 <% for(let joinedClass of joinedClasses) { %>
@@ -20,9 +20,9 @@
                         </form>
                         <% } %>
 
-                        <form action="selectClass" method="post">
+                        <form action="selectClass" method="post" class="joinClassForm">
                             <input type="text" required name="key" id="joinKey" placeholder="Class code" class="revampButton revampWithText">
-                            <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton" style="margin: auto;margin-top: 20px;"
+                            <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
                                 value="Submit" onsubmit="return false;">
                         </form>
                 </div>
