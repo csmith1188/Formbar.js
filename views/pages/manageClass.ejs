@@ -14,7 +14,7 @@
                     </form>
                     <form action="createClass" method="post" id="createClass">
                         <h2 class="headerText">Create a class</h2>
-                        <input type="text" id="usernameBox" name="name" placeholder="Class Name" value=""
+                        <input type="text" id="emailBox" name="name" placeholder="Class Name" value=""
                             autocomplete="off" required>
                         <input type="text" name="submittionType" value="create" hidden>
                         <input type="submit" id="submitButton" class="quickButton" value="Create"
@@ -43,7 +43,7 @@
                 socket.emit('deleteClass', classId)
             }
 
-            socket.emit('getOwnedClasses', currentUser.username)
+            socket.emit('getOwnedClasses', currentUser.email)
             socket.on('getOwnedClasses', (ownedClasses) => {
                 if (ownedClasses.length > 0) {
                     startClassForm.classList.remove("hidden");

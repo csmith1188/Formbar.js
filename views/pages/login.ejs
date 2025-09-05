@@ -1,103 +1,176 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/sockets') %>
-<!-- ^^ This means add this file into the contents of the header page -->
-<!-- This is where the title, top buttons, and stylesheet is located -->
+    <!-- ^^ This means add this file into the contents of the header page -->
+    <!-- This is where the title, top buttons, and stylesheet is located -->
+    <body id="colorContent">
+        <%- include('../partials/formbar_header') %>
+            <div id="content" class="contentBox">
+                <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log
+                    in</button>
+                <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New
+                    account</button>
+                <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
+                <br><br>
+                <!-- The route to post to after redirecting. Only used if the redirect url is specified -->
+                <form id="login" action="login" method="post" style="margin-bottom: 16px;">
+                    <input type="hidden" id="route" name="route" value="<%-route%>">
+                    <!-- Carries over and submits the redirectURL specified by the user. -->
+                    <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
+                    <!-- Login Inputs -->
+                    <input type="text" id="displayNameBox" name="displayName" class="loginBox"
+                           placeholder="Display Name" value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20"
+                           title='Display name must be 5-20 characters and contain only letters, numbers, and underscores'
+                           required>
+                    <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
+                    <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password"
+                        value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\" ~?/\|\\]+"
+                        title='Password must be 5-20 characters and contain only letters, numbers, and certain special characters'
+                        minlength="5" maxlength="20" required>
+                    <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
+                    <!-- User and Login Type -->
+                    <input type="hidden" id="loginTypeBox" name="loginType" value="login">
+                    <input type="hidden" id="userTypeBox" name="userType" value="user">
+                    <br>
+                    <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in"
+                        onsubmit="return false;">
+                    <br>
+                    <span id="orText">Or</span>
+                    <br>
+                </form>
 
-<body id="colorContent">
-  <%- include('../partials/formbar_header') %>
-  <div id="content" class="contentBox">
-    <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log in</button>
-    <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New account</button>
-    <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
-    <br><br>
-    <form action="login" method="post" style="margin-bottom: 16px;">
-      <input type="text" id="usernameBox" name="username" class="loginBox" placeholder="Name" value="" autocomplete="off" pattern="[a-zA-Z0-9_]+" required>
-      <p style="font-size:small;font-weight:bold;color: black;" id="passwordInfo">*Username may only contain:
-        a-z, A-Z, 0-9, and _,.</p>
-      <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password" value="" pattern="[a-z0-9A-Z!@#$%^&*_?]+" minlength="8" maxlength="32" required>
-      <input type="text" id="displayNameBox" name="displayName" class="loginBox" placeholder="Display Name" value="" pattern="[a-zA-Z0-9]+" required>
-      <p style="font-size:small;font-weight:bold;color: black;" id="passwordInfo">*passwords may only contain:
-        a-z, A-Z, 0-9, !, @, #, $, ^, %, &, *, _, and ?.</p>
-      <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
-      <input type="hidden" id="loginTypeBox" name="loginType" value="login">
-      <input type="hidden" id="userTypeBox" name="userType" value="user">
-      <br><br>
-      <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in" onsubmit="return false;">
-    </form>
-  </div>
-</body>
+                <button class="gsi-material-button" id="googleOAuthButton" onclick="loginWithGoogle()">
+                    <div class="gsi-material-button-state"></div>
+                    <div class="gsi-material-button-content-wrapper">
+                        <div class="gsi-material-button-icon">
+                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"
+                                xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
+                                <path fill="#EA4335"
+                                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
+                                </path>
+                                <path fill="#4285F4"
+                                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z">
+                                </path>
+                                <path fill="#FBBC05"
+                                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z">
+                                </path>
+                                <path fill="#34A853"
+                                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
+                                </path>
+                                <path fill="none" d="M0 0h48v48H0z"></path>
+                            </svg>
+                        </div>
+                        <span class="gsi-material-button-contents">Sign in with Google</span>
+                        <span style="display: none;">Sign in with Google</span>
+                    </div>
+                </button>
+            </div>
+    </body>
 
-<%- include('../partials/footer_content') %>
-<script type="text/javascript">
-  //Prevent submission if a field is blank
-  let liButton = document.getElementById("logInButton")
-  let naButton = document.getElementById("newAccountButton")
-  let gButton = document.getElementById("guestButton")
-  let ub = document.getElementById("usernameBox")
-  let pb = document.getElementById("passwordBox")
-  let pi = document.getElementById("passwordInfo");
-  let fp = document.getElementById("forgotPassword")
-  let ut = document.getElementById("loginTypeBox")
-  let sb = document.getElementById("submitButton")
-  let dn = document.getElementById("displayNameBox");
+    <%- include('../partials/footer_content') %>
+    <script type="text/javascript">
+        // Prevent submission if a field is blank
+        const form = document.getElementById('login');
+        const redirect = document.getElementById('redirect');
+        const loginButton = document.getElementById('logInButton');
+        const newAccountButton = document.getElementById('newAccountButton');
+        const guestButton = document.getElementById('guestButton');
+        const emailBox = document.getElementById('emailBox');
+        const passwordBox = document.getElementById('passwordBox');
+        const displayNameBox = document.getElementById('displayNameBox');
+        const loginTypeBox = document.getElementById('loginTypeBox');
+        const forgotPassword = document.getElementById('forgotPassword');
+        const submitButton = document.getElementById('submitButton');
 
-  function changeloginType(el) {
-    [liButton, naButton, gButton].forEach(button => (button == el) ? button.classList.add("pressed") : button.classList.remove("pressed"))
-    switch (el) {
-      case liButton:
-        pb.classList.remove("hidden")
-        pb.required = true
-        pi.classList.remove("hidden");
-        fp.classList.remove("hidden")
-        dn.classList.add("hidden");
-        ub.classList.remove("hidden");
-        dn.required = false;
-        sb.value = "Log in"
-        ut.value = "login"
-        break
-      case naButton:
-        pb.classList.remove("hidden")
-        pb.required = true
-        pi.classList.remove("hidden");
-        fp.classList.add("hidden")
-        dn.classList.remove("hidden");
-        ub.classList.remove("hidden");
-        dn.required = true;
-        sb.value = "Create account"
-        ut.value = "new"
-        break
-      case gButton:
-        ub.value = null;
-        ub.classList.add("hidden");
-        pb.value = null
-        pb.classList.add("hidden")
-        pb.required = false
-        pi.classList.add("hidden");
-        fp.classList.add("hidden")
-        dn.classList.remove("hidden");
-        dn.required = true;
-        sb.value = "Go"
-        ut.value = "guest"
-    }
+        // If the route is not login...
+        if (route.value !== 'login') {
+            // Hide the buttons to change the login type
+            loginButton.style.display = 'none';
+            newAccountButton.style.display = 'none';
+            guestButton.style.display = 'none';
+        }
+        // If the route is oauth, change the form action to oauth
+        if (route.value === 'oauth') form.action = 'oauth';
+        
 
-    checkIfBlank()
+        function changeloginType(el) {
+            [loginButton, newAccountButton, guestButton].forEach(button =>
+                (button === el) ? button.classList.add('pressed') : button.classList.remove('pressed')
+            );
 
-    document.getElementById("usernameBox").focus()
-  }
+            // Hide or show inputs based on the selected login type
+            switch (el) {
+                case loginButton:
+                    passwordBox.classList.remove('hidden');
+                    passwordBox.required = true;
+                    forgotPassword.classList.remove('hidden');
+                    displayNameBox.classList.add('hidden');
+                    emailBox.classList.remove('hidden');
+                    emailBox.required = true;
+                    displayNameBox.required = false;
+                    submitButton.value = 'Log in';
+                    loginTypeBox.value = 'login';
+                    break;
+                case newAccountButton:
+                    passwordBox.classList.remove('hidden');
+                    passwordBox.required = true;
+                    forgotPassword.classList.add('hidden');
+                    displayNameBox.classList.remove('hidden');
+                    emailBox.classList.remove('hidden');
+                    emailBox.required = true;
+                    displayNameBox.required = true;
+                    submitButton.value = 'Create account';
+                    loginTypeBox.value = 'new';
+                    break;
+                case guestButton:
+                    passwordBox.value = null;
+                    passwordBox.classList.add('hidden');
+                    passwordBox.required = false;
+                    forgotPassword.classList.add('hidden');
+                    displayNameBox.classList.remove('hidden');
+                    emailBox.classList.add('hidden');
+                    emailBox.required = false;
+                    displayNameBox.required = true;
+                    submitButton.value = 'Go';
+                    loginTypeBox.value = 'guest';
+                    break;
+            }
+            // Set if the inputs are required based on if they are visible
+            emailBox.required = !emailBox.classList.contains('hidden');
+            displayNameBox.required = !displayNameBox.classList.contains('hidden');
+            passwordBox.required = !passwordBox.classList.contains('hidden');
 
-  function checkIfBlank() {
-    if ((ub.value || ut.value == "guest") && (pb.value || ut.value == "guest") && (dn.value || ut.value == "login")) {
-      sb.classList.remove("unselectable")
-      sb.onsubmit = () => true
-    } else {
-      sb.classList.add("unselectable")
-      sb.onsubmit = () => false
-    }
-  }
+            // Focus on the first visible input
+            if (!displayNameBox.classList.contains('hidden')) {
+                displayNameBox.focus();
+            }
 
-  ub.oninput = checkIfBlank
-  pb.oninput = checkIfBlank
-  dn.oninput = checkIfBlank
+            checkIfBlank();
+        }
 
-  changeloginType(liButton);
-</script>
+        function checkIfBlank() {
+            if ((emailBox.value || loginTypeBox.value === 'guest') && (passwordBox.value || loginTypeBox.value === 'guest') && (displayNameBox.value.trim() !== '' || loginTypeBox.value === 'login')) {
+                submitButton.classList.remove('unselectable');
+                submitButton.onsubmit = () => true;
+            } else {
+                submitButton.classList.add('unselectable');
+                submitButton.onsubmit = () => false;
+            }
+        }
+
+        function loginWithGoogle() {
+            redirect.value ? window.location.href = `/auth/google?redirect=${redirect.value}` : window.location.href = '/auth/google';
+        }
+
+        passwordBox.oninput = checkIfBlank;
+        displayNameBox.oninput = checkIfBlank;
+
+        changeloginType(loginButton);
+
+        <% if (!googleOauthEnabled) { %>
+            const googleOAuthButton = document.getElementById('googleOAuthButton');
+            const orText = document.getElementById('orText')
+            googleOAuthButton.style.display = 'none';
+            orText.style.display = 'none';
+        <% } %>
+    </script>
+</html>

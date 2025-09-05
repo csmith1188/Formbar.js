@@ -45,23 +45,32 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-	color: var(--color-white);
+	color: var(--bg-light-blue) !important;
 }
 
 h1.headertext, h2.headertext {
-	color: var(--light-cyan);
+	color: white !important;
 }
 
-h1#noPoll.textColorContent {
-	color: var(--light-cyan);
+h1#noPoll.textColorContent, h1#headerText.textColorContent {
+	color: var(--light-cyan) !important;
 }
 
 p {
-	color: var(--color-white);
+	color: var(--bg-light-blue) !important;
 }
 
 input {
 	background-color: #323232;
+	color: #ffffff;
+}
+
+.headBox {
+	color: #ffffff !important;
+}
+
+.contentBox {
+	background-color: #484848 !important;
 	color: #ffffff;
 }
 
@@ -80,7 +89,7 @@ input {
 	color: #000000;
 }
 
-#usernameBox, #passwordBox, #displayNameBox, #joinKey {
+#passwordBox, #displayNameBox, #joinKey, #emailBox {
 	background-color: #ffffff;
 	color: #000000;
 }
@@ -91,5 +100,21 @@ input {
 }
 
 select {
-	color: #ffffff;
+	background-color: #ffffff;
+	color: #000000;
+}
+
+select option {
+	color: #000000;
+}
+
+#users details{
+	color: #000000;
+}
+
+#newPasswordBox.loginBox,
+#confirmPasswordBox.loginBox,
+#tagBox {
+	border-color: #000000;
+	color: #000000;
 }

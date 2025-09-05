@@ -5,12 +5,12 @@
             <%- include('../partials/formbar_header') %>
                 <div id="content" class="contentBox">
                     <h2 class="headerText">Join a class</h2>
-                    <% if(joinedClasses.length> 0) { %>
+                    <% if (joinedClasses.length > 0) { %>
                         <form action="selectClass" method="post">
-                            <select id="joinedKey" name="key" required>
+                            <select id="joinedKey" name="id" required>
                                 <option value="" disabled selected>Joined classes</option>
                                 <% for(let joinedClass of joinedClasses) { %>
-                                    <option value="<%- joinedClass.key %>">
+                                    <option value="<%- joinedClass.id %>">
                                         <%- joinedClass.name %>
                                     </option>
                                     <% } %>
@@ -19,23 +19,31 @@
                                 value="Submit" onsubmit="return false;">
                         </form>
                         <% } %>
-                            <form action="selectClass" method="post">
-                                <input type="text" required name="key" id="joinKey" placeholder="Class code">
-                                <input type="submit" id="submitJoinButton" class="button unselectable quickButton"
-                                    value="Submit" onsubmit="return false;">
-                            </form>
+
+                        <form action="selectClass" method="post">
+                            <input type="text" required name="key" id="joinKey" placeholder="Class code">
+                            <input type="submit" id="submitJoinButton" class="button unselectable quickButton"
+                                value="Submit" onsubmit="return false;">
+                        </form>
                 </div>
         </body>
 
         <script>
             if (document.getElementById("joinedKey")) {
                 document.getElementById("joinedKey").addEventListener('input', () => {
-                    if (event.target.value) document.getElementById("submitJoinedButton").classList.remove("unselectable")
-                    else document.getElementById("submitJoinedButton").classList.add("unselectable")
+                    if (event.target.value) {
+                        document.getElementById("submitJoinedButton").classList.remove("unselectable")
+                    } else {
+                        document.getElementById("submitJoinedButton").classList.add("unselectable")
+                    }
                 })
             }
+
             document.getElementById("joinKey").addEventListener('input', (event) => {
-                if (event.target.value) document.getElementById("submitJoinButton").classList.remove("unselectable")
-                else document.getElementById("submitJoinButton").classList.add("unselectable")
+                if (event.target.value) {
+                    document.getElementById("submitJoinButton").classList.remove("unselectable")
+                } else {
+                    document.getElementById("submitJoinButton").classList.add("unselectable")
+                }
             })
         </script>

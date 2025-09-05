@@ -1,0 +1,92 @@
+<%- include('../partials/header_content') %>
+    <%- include('../partials/sockets') %>
+    <%- include('../partials/formbar_header') %>
+    <style>
+        #apiKey {
+            white-space: pre;
+        }
+        
+        p {
+            font-family: monospace;
+        }
+    </style>
+        <body>
+            <div id='profileInformation' style='font-family: Arial, sans-serif; margin: 20px; padding: 20px; border: 1px solid #ccc; border-radius: 10px'>
+                <h1 style='text-align: center; color: #333;'><u>Profile Information</u></h1>
+                <p id='displayName''><strong>Display Name:</strong> <%- displayName %></p>
+
+                <% if (email !== "Hidden") { %> <!-- If the user doesn't have permissions to see the email, don't show it -->
+                    <p id="email"><strong>Email:</strong> <%- email %></p>
+                <% } %>
+
+                <p id='digipogs''><strong>Digipogs:</strong> <%- digipogs %></p>
+                <p id='userId''><strong>ID:</strong> <%- id %></p>
+                <p id='apiKey'><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>
+                <div id='apiKeyButton' style='margin: 20px 0; text-align: center;'>
+                    <button onclick="revealApiKey()" style="padding: 10px 20px"">
+                        Reveal API Key
+                    </button>
+                </div>
+                <div id='apiRefreshDiv' style='text-align: center;'>
+                    <button id='apiRefresh' onclick='refreshApiKey()' style='padding: 10px 20px; background-color: #ff8484'>
+                        Refresh API Key
+                    </button>
+                </div>
+            </div>
+        </body>
+        <script>
+            let apiKeyValue = '<%- API %>';
+            if (apiKeyValue == '') {
+                document.querySelectorAll('[id*="api"]').forEach(element => {
+                    element.remove();
+                });
+            }
+
+            let apiKey = document.getElementById('apiKey');
+                
+
+            function revealApiKey() {
+                let apiKeyButton = document.getElementById('apiKeyButton');
+                apiKey.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '<p>';
+                apiKeyButton.innerHTML = '<button onclick="hideApiKey()" style="padding: 10px 20px">Hide API Key</button>';
+            }
+
+            function hideApiKey() {
+                let apiKeyButton = document.getElementById('apiKeyButton');
+                apiKey.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
+                apiKeyButton.innerHTML = '<button onclick="revealApiKey()" style="padding: 10px 20px">Reveal API Key</button>';
+            }
+
+            function refreshApiKey() {
+                const confirmButton = document.createElement('button');
+                confirmButton.innerText = 'Confirm Refresh';
+                confirmButton.style.padding = '10px 20px';
+                confirmButton.style.backgroundColor = '#ff8484';
+                confirmButton.addEventListener('click', () => {
+                    socket.emit('refreshApiKey');
+                });
+                const denyButton = document.createElement('button');
+                denyButton.innerText = 'Cancel Refresh';
+                denyButton.style.padding = '10px 20px';
+                denyButton.addEventListener('click', () => {
+                    apiRefreshDiv.innerHTML = '<button id="apiRefresh" onclick="refreshApiKey()" style="padding: 10px 20px; background-color: #ff8484">Refresh API Key</button>';
+                });
+                const apiRefreshDiv = document.getElementById('apiRefreshDiv');
+                apiRefreshDiv.innerHTML = ''; // Clear previous content
+                apiRefreshDiv.appendChild(denyButton);
+                apiRefreshDiv.appendChild(confirmButton);
+            }
+            
+            socket.on('apiKeyUpdated', (data) => {
+                apiKeyValue = data;
+                const apiKey = document.getElementById('apiKey');
+                const apiRefreshDiv = document.getElementById('apiRefreshDiv');
+                apiRefreshDiv.innerHTML = '<button id="apiRefresh" onclick="refreshApiKey()" style="padding: 10px 20px; background-color: #ff8484">Refresh API Key</button>';
+                const apiKeyButton = document.getElementById('apiKeyButton');
+                if (apiKeyButton.innerHTML.includes('Hide API Key')) {
+                    apiKey.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '</p>';
+                } else {
+                    apiKey.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
+                }
+            });
+        </script>

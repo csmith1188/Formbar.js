@@ -1,10 +1,15 @@
 node_modules/
 database/database.db
+database/*.bak
 .vscode/
+.idea/
 uploads/
+.env
 
 logNumbers.json
 settings.json
 
 logs/
 logNumbers.json
+
+*.pem
