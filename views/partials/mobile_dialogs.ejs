@@ -46,7 +46,7 @@
 
     let orientation = 'landscape';
 
-    document.body.addEventListener('resize', () => {
+    window.addEventListener('resize', () => {
         if(window.innerHeight > window.innerWidth) orientation = 'portrait';
         else orientation = 'landscape';
     });

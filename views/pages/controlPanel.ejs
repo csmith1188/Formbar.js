@@ -36,11 +36,12 @@
             <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
             <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
         </div>
-        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
-        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
         <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
+        <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
+        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
         <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
@@ -50,37 +51,7 @@
 
 <div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
-    <div id='VBOptions' class="revampDiv">
-        <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
-        <button id="vbOptionsNext" class="revampButton"><p>Sort members by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
-        <div id='userFilterBoxes' class='options activeControlTab'>
-            <h2 class='headerText'>Filter members by:</h2>
-            <div class='headBox'>
-                <button type='button' id='alert' class='filter revampButton'>Alerts</button>
-                <button type='button' id='polls' class='filter revampButton'>Polls</button>
-            </div>
-        </div>
-        <div id='userSortBoxes' class='options'>
-            <h2 class='headerText'>Sort members by:</h2>
-            <div class='headBox'>
-                <button type='button' id='name' class='sort revampButton'>Name</button>
-                <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
-                <button type='button' id='pollTime' class='sort revampButton'>Poll Time</button>
-                <button type='button' id='helpTime' class='sort revampButton'>Help Time</button>
-                <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button>
-            </div>
-        </div>
-        <div id='userSelectBoxes' class='options'>
-            <h2 class='headerText'>Select Members:</h2>
-            <div class='headBox' id="selectPoll">
-            </div>
-        </div>
-        <div id='userFastPollBoxes' class='options'>
-            <h2 class='headerText'>Fast Poll</h2>
-            <div class='headBox' id='quickPoll'>
-            </div>
-        </div>
-    </div>
+    
 </div>
 
 <div id='usersMenu' class='tabContent controlPanel default userMenuCp' data-tab-group='mainTabs'>
@@ -93,7 +64,7 @@
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
             </div>
-            <div id='VBOptions' class="revampDiv hideMobile">
+            <div id='VBOptions' class="revampDiv">
                 <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
                 <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
                 <div id='userFilterBoxes' class='options activeControlTab'>
@@ -153,6 +124,7 @@
                     <p>End Class</p>
                     <img src="/img/stop.svg" alt="End Class">
                 </button>
+                <button id='iconHelp' class="revampButton mobileHasIcon mobileCircular showMobile"><img src="/img/help-circle-outline.svg" alt="End Class"></button>
             </div>
         </div>
     </div>
@@ -416,20 +388,27 @@
 
     let vbContainerOuter = document.getElementById('vbContainerOuter');
     let vbContainer = document.getElementById('vbContainer');
+    let vbOptions = document.getElementById('VBOptions');
     let pollDetails = document.getElementById('pollDetails');
+    let sortingFilterMenu = document.querySelector('div#sortingFilterMenu.tabContent');
+    let sideBySide = document.querySelector('.sideBySide');
 
-    document.body.addEventListener('resize', () => {
+    window.addEventListener('resize', () => {
         if(orientation == 'portrait') {
             pollDetails.appendChild(vbContainer);
+            sortingFilterMenu.appendChild(vbOptions);
         } else {
             vbContainerOuter.appendChild(vbContainer);
+            sideBySide.appendChild(vbOptions);
         }
-    })
+    });
 
     if(orientation == 'portrait') {
         pollDetails.appendChild(vbContainer);
+        sortingFilterMenu.appendChild(vbOptions);
     } else {
         vbContainerOuter.appendChild(vbContainer);
+        sideBySide.appendChild(vbOptions);
     }
 
     let letterString = 'abcdefghijklmnopqrstuvwxyz'

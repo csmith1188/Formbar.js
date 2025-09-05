@@ -416,6 +416,7 @@ dialog {
 
 /* Custom radio button code */
 
+
 *,
 *:before,
 *:after {
@@ -1996,13 +1997,6 @@ div#pollPreview.open {
 	}
 	100% {
 		opacity: 0;
-	}
-}
-
-@media screen and (orientation: portrait) {
-	#VBDiv #newMemberListControlPanel {
-		display: flex;
-  		flex-direction: column;
 	}
 }
 

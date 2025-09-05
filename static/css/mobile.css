@@ -43,12 +43,20 @@
     }
 
     header#formbarHeader {
-        padding-right: 10px;
+        width: 100%;
+        margin: 0;
+        left: 0;
+        right: 0;
+        border-radius: 0 !important;
     }
 
     div#news {
         margin: 0;
         width: 100%;
+    }
+
+    .headBox button {
+        padding: 1em !important;
     }
 
     header#formbarHeader ul {
@@ -249,6 +257,11 @@
         width: 100% !important;
     }
 
+	#VBDiv #newMemberListControlPanel {
+		display: flex;
+  		flex-direction: column;
+	}
+
     div.sideBySide {
         height: calc(100% - 100px) !important;
     }
@@ -290,6 +303,10 @@
 
     div#timeDiv {
         display: none !important;
+    }
+
+    div.timeInfo button {
+        margin: 0 !important;
     }
 
     #VBOptions .options:not(.activeControlTab) {
@@ -488,6 +505,36 @@
     }
 }
 
-@media screen and (max-height: 600px) {
-    /* Smaller screens */
+@media screen and (max-width: 1280px) and (orientation: landscape) {
+    body {
+        
+    }
+
+    .revampButton {
+        font-size: 1.5cqw !important;
+    }
+
+    #formbarHeader {
+        height: 50px !important;
+    }
+
+    h1 {
+        font-size: 4vh !important;
+    }
+
+    .circularButton {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    div.sideBySide {
+        height: calc(100% - 100px) !important;
+    }
+
+	#VBDiv #newMemberListControlPanel {
+		display: flex !important;
+  		flex-direction: column !important;
+        overflow: scroll !important;
+	}
+    
 }
