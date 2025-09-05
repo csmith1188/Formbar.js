@@ -111,7 +111,7 @@ a {
 
 * {
 	accent-color: var(--theme-color);
-	font-family: 'Outfit', Arial, Helvetica, sans-serif;
+	font-family: 'Outfit', Arial, Helvetica, sans-serif !important;
 }
 
 input {
@@ -1821,6 +1821,10 @@ div.sideBySide {
 	cursor: pointer;
 	max-height: unset;
 	height: min-content;
+}
+
+body:not(:has(header#formbarHeader[style="display: none;"])) {
+	padding-top: 72px;
 }
 
 #vbContainerOuter:has(#vbContainer[style="display: none;"]) {

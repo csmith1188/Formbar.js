@@ -25,6 +25,12 @@
         font-size: 3vh;
     }
 
+    body > #studentVBar #vbContainer {
+        width: 50% !important;
+        height: unset !important;
+        aspect-ratio: 1 !important;
+    }
+
     a#headerLogo p#version {
         display: none !important;
     }
