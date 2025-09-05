@@ -6,11 +6,6 @@ const { classInformation } = require("../../modules/class/classroom");
 
 // Mock the authentication module to simulate a user being logged in
 jest.mock('../../modules/authentication', () => ({
-    isLoggedIn: (req, res, next) => {
-        req.session = req.session || {};
-        req.session.email = 'testuser';
-        next();
-    },
     permCheck: (req, res, next) => {
         next();
     }

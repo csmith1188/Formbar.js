@@ -2,7 +2,6 @@ const { logger } = require("./logger")
 const { classInformation } = require("./class/classroom")
 const { logNumbers, settings } = require("./config")
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions")
-const fs = require('fs');
 
 const whitelistedIps = {}
 const blacklistedIps = {}
@@ -21,7 +20,7 @@ function isAuthenticated(req, res, next) {
 		if (req.session.email && user) {
 			if (user.activeClasses.length === 0) {
 				if (user.permissions >= MANAGER_PERMISSIONS || user.permissions >= TEACHER_PERMISSIONS) {
-					res.render("pages/news");
+					next()
 				} else {
 					res.redirect('/selectClass')
 				}
@@ -56,27 +55,6 @@ function isVerified(req, res, next) {
 		} else {
 			// If there is no session, redirect to the login page
 			res.redirect('/login');
-		}
-	} catch (err) {
-		logger.log('error', err.stack);
-		res.render('pages/message', {
-			message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-			title: 'Error'
-		});
-	};
-};
-
-// Check if user is logged in. Only used for create and select class pages
-// Use isAuthenticated function for any other pages
-// Created for the first page since there is no check before this
-// This allows for a first check in where the user gets checked by the webpage
-function isLoggedIn(req, res, next) {
-	try {
-		logger.log('info', `[isLoggedIn] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-		if (req.session.email) {
-			next()
-		} else {
-			res.redirect('/login')
 		}
 	} catch (err) {
 		logger.log('error', err.stack);
@@ -199,7 +177,6 @@ module.exports = {
 	// Authentication functions
     isAuthenticated,
 	isVerified,
-    isLoggedIn,
     isInClass,
     permCheck,
 	checkIPBanned

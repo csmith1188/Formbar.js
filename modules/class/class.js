@@ -34,10 +34,6 @@ function startClass(socket) {
 }
 
 async function joinClass(socket, classId) {
-    if (!socket) {
-        throw new Error('Socket is required');
-    }
-
     try {
         logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
         const email = socket.request.session.email;

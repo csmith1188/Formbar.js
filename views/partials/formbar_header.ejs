@@ -6,7 +6,9 @@
 <header id="formbarHeader">
   <a href="/" id="headerLogo">Formbar</a>
   <% if (locals.currentUser) { %>
-      <a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab">Panel</a>
+    <% if (currentUser.classPermissions) {%>
+            <a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab">Panel</a>
+    <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
           <a href="/managerPanel" class="headerTab">Manager</a>
           <% } %>

@@ -13,7 +13,8 @@ module.exports = {
         app.get('/', isAuthenticated, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                if (classInformation.users[req.session.email].classPermissions >= TEACHER_PERMISSIONS) {
+                if (classInformation.users[req.session.email].classPermissions >= TEACHER_PERMISSIONS ||
+                    classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
                     res.render('pages/news');
                 } else {
                     res.redirect('/student')

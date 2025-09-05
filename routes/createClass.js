@@ -1,4 +1,4 @@
-const { isLoggedIn, permCheck } = require("../modules/authentication")
+const { permCheck, isAuthenticated} = require("../modules/authentication")
 const { classInformation, Classroom } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -14,7 +14,7 @@ module.exports = {
         // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
         // This will allow the teacher to give students student perms, and guests student perms as well
         // Plus they can ban and kick as long as they can create classes
-        app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
+        app.post('/createClass', isAuthenticated, permCheck, (req, res) => {
             try {
                 let submittionType = req.body.submittionType
                 let className = req.body.name

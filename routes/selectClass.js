@@ -1,4 +1,4 @@
-const { isLoggedIn, permCheck, isInClass } = require("../modules/authentication")
+const { isAuthenticated, permCheck, isInClass } = require("../modules/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
@@ -8,7 +8,7 @@ const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socket
 
 module.exports = {
     run(app) {
-        app.get('/selectClass', isLoggedIn, permCheck, isInClass, (req, res) => {
+        app.get('/selectClass', isAuthenticated, permCheck, isInClass, (req, res) => {
             try {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
@@ -43,7 +43,7 @@ module.exports = {
         })
         
         // Adds user to a selected class, typically from the select class page
-        app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
+        app.post('/selectClass', isAuthenticated, permCheck, async (req, res) => {
             try {
                 let classId = req.body.id;
 				let classCode = req.body.key;
