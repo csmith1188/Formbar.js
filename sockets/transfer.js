@@ -1,44 +1,47 @@
-const { database } = require('../modules/database');
+const { privateKey } = require("../modules/config");
+const { database } = require("../modules/database");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv").config({ silent: true });
 
 module.exports = {
     run(socket) {
-        socket.on('transfer', (data) => {
+        socket.on("transfer", (data) => {
             const { from, to, amount, pin, reason } = data;
             // Validate input
             if (!from || !to || !amount || !pin || !reason) {
-                return socket.emit('transferResponse', { success: false, message: 'Missing required fields.' });
+                return socket.emit("transferResponse", jwt.sign({ success: false, message: "Missing required fields." }, privateKey, { expiresIn: "1h"}));
             }
             if (amount <= 0) {
-                return socket.emit('transferResponse', { success: false, message: 'Amount must be greater than zero.' });
+                return socket.emit("transferResponse", jwt.sign({ success: false, message: "Amount must be greater than zero." }, privateKey, { expiresIn: "1h"}));
             }
             if (from === to) {
-                return socket.emit('transferResponse', { success: false, message: 'Cannot transfer to the same account.' });
+                return socket.emit("transferResponse", jwt.sign({ success: false, message: "Cannot transfer to the same account." }, privateKey, { expiresIn: "1h"}));
             }
             
             // Begin transaction
             database.serialize(() => {
-                database.get('SELECT balance, pin FROM users WHERE id = ?', [from], (err, fromUser) => {
+                database.get("SELECT balance, pin FROM users WHERE id = ?", [from], (err, fromUser) => {
                     // Check for errors and validate sender
                     if (err) {
-                        return socket.emit('transferResponse', { success: false, message: 'Database error.' });
+                        return socket.emit("transferResponse", jwt.sign({ success: false, message: "Database error." }, privateKey, { expiresIn: "1h"}));
                     }
                     if (!fromUser) {
-                        return socket.emit('transferResponse', { success: false, message: 'Sender account not found.' });
+                        return socket.emit("transferResponse", jwt.sign({ success: false, message: "Sender account not found." }, privateKey, { expiresIn: "1h"}));
                     }
                     if (fromUser.pin !== pin) {
-                        return socket.emit('transferResponse', { success: false, message: 'Invalid PIN.' });
+                        return socket.emit("transferResponse", jwt.sign({ success: false, message: "Invalid PIN." }, privateKey, { expiresIn: "1h"}));
                     }
                     if (fromUser.balance < amount) {
-                        return socket.emit('transferResponse', { success: false, message: 'Insufficient funds.' });
+                        return socket.emit("transferResponse", jwt.sign({ success: false, message: "Insufficient funds." }, privateKey, { expiresIn: "1h"}));
                     }
 
-                    database.get('SELECT balance FROM users WHERE id = ?', [to], (err, toUser) => {
+                    database.get("SELECT balance FROM users WHERE id = ?", [to], (err, toUser) => {
                         // Check for errors and validate recipient
                         if (err) {
-                            return socket.emit('transferResponse', { success: false, message: 'Database error.' });
+                            return socket.emit("transferResponse", jwt.sign({ success: false, message: "Database error." }, privateKey, { expiresIn: "1h"}));
                         }
                         if (!toUser) {
-                            return socket.emit('transferResponse', { success: false, message: 'Recipient account not found.' });
+                            return socket.emit("transferResponse", jwt.sign({ success: false, message: "Recipient account not found." }, privateKey, { expiresIn: "1h"}));
                         }
 
                         // Perform the transfer
@@ -47,14 +50,14 @@ module.exports = {
 
                         // Set up respective update promises
                         const updateFrom = new Promise((resolve, reject) => {
-                            database.run('UPDATE users SET balance = ? WHERE id = ?', [newFromBalance, from], function(err) {
+                            database.run("UPDATE users SET balance = ? WHERE id = ?", [newFromBalance, from], function(err) {
                                 if (err) return reject(err);
                                 resolve();
                             });
                         });
 
                         const updateTo = new Promise((resolve, reject) => {
-                            database.run('UPDATE users SET balance = ? WHERE id = ?', [newToBalance, to], function(err) {
+                            database.run("UPDATE users SET balance = ? WHERE id = ?", [newToBalance, to], function(err) {
                                 if (err) return reject(err);
                                 resolve();
                             });
@@ -64,10 +67,10 @@ module.exports = {
                         Promise.all([updateFrom, updateTo])
                             .then(() => {
                                 d
-                                socket.emit('transferResponse', { success: true, message: 'Transfer successful.' });
+                                socket.emit("transferResponse", jwt.sign({ success: true, message: "Transfer successful." }, privateKey, { expiresIn: "1h"}));
                             })
                             .catch(() => {
-                                socket.emit('transferResponse', { success: false, message: 'Transfer failed due to database error.' });
+                                socket.emit("transferResponse", jwt.sign({ success: false, message: "Transfer failed due to database error." }, privateKey, { expiresIn: "1h"}));
                             });
                     });
                 });
