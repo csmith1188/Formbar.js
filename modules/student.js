@@ -20,7 +20,7 @@ class Student {
 	) {
 		this.email = email;
 		this.id = id;
-		this.activeClasses = [];
+		this.activeClass = null;
 		this.permissions = permissions;
 		this.classPermissions = null;
 		this.tags = tags;

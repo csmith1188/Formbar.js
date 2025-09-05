@@ -150,7 +150,7 @@ async function leaveClassroom(socket) {
 
         // Remove the user from the class
         delete classInformation.classrooms[classId].students[email];
-        classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((classroomId) => classroomId != classId);
+        classInformation.users[email].activeClass = null;
         classInformation.users[email].classPermissions = null;
         database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
 

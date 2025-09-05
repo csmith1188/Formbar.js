@@ -99,7 +99,7 @@ module.exports = {
                 for (const email in classInformation.users) {
                     const user = classInformation.users[email];
                     if (user.API == api) {
-                        setClassOfApiSockets(api, user.activeClasses[0]);
+                        setClassOfApiSockets(api, user.activeClass);
                         return;
                     }
                 }

@@ -86,7 +86,7 @@
     }
   }
 
-  if (currentUser && currentUser.activeClasses.length > 0 && currentUser.permissions >= MOD_PERMISSIONS) {
+  if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
       const muteButton = document.getElementById("muteButton");
       muteButton.style.display = "block";
   }

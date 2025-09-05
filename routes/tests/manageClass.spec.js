@@ -24,7 +24,7 @@ describe('Manage Class Route', () => {
             [mockemail]: {
                 email: mockemail,
                 permissions: TEACHER_PERMISSIONS,
-                activeClasses: []
+                activeClass: null
             }
         };
 

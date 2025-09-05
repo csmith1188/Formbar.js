@@ -43,7 +43,7 @@ describe("help", () => {
         classData.isActive = true;
         classData.students[userData.email].help = {
             reason: "reason",
-            time: new Date()
+            time: Date.now()
         }
         await deleteHelpTicketHandler(userData.email);
 

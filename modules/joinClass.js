@@ -80,7 +80,7 @@ async function joinClassroomByCode(code, session) {
 
 			// Set class permissions and remove the user's Offline tag if their tags aren't null
 			currentUser.classPermissions = classUser.permissions
-			currentUser.activeClasses.push(classroom.id);
+			currentUser.activeClass = classroom.id;
 			if (currentUser.tags) {
 				currentUser.tags = currentUser.tags.replace('Offline', '');	
 				classInformation.users[email].tags = classInformation.users[email].tags.replace('Offline', '')
@@ -94,7 +94,7 @@ async function joinClassroomByCode(code, session) {
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
 			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
-			classInformation.users[email].activeClasses.push(classroom.id)
+			classInformation.users[email].activeClass = classroom.id
 			advancedEmitToClass('joinSound', classroom.id, {})
 
 			// Set session class and classId
@@ -125,7 +125,7 @@ async function joinClassroomByCode(code, session) {
 			const classData = classInformation.classrooms[classroom.id];
 			let currentUser = classInformation.users[email]
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
-			currentUser.activeClasses.push(classroom.id)
+			currentUser.activeClass = classroom.id
             currentUser.tags = '';
 
             // Redact the API key from the classroom user to prevent it from being sent anywhere
@@ -136,7 +136,7 @@ async function joinClassroomByCode(code, session) {
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
 			classData.poll.studentBoxes.push(email)
-			classInformation.users[email].activeClasses.push(classroom.id)
+			classInformation.users[email].activeClass = classroom.id
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,

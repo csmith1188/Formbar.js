@@ -18,7 +18,13 @@ function isAuthenticated(req, res, next) {
 
         const user = classInformation.users[req.session.email];
 		if (req.session.email && user) {
-			if (user.activeClasses.length === 0) {
+            // If the user is already logged in and tries to access the login page, redirect them to the home page
+            if (req.url === '/login') {
+                res.redirect('/');
+                return;
+            }
+
+			if (user.activeClass == null) {
 				if (user.permissions >= MANAGER_PERMISSIONS || user.permissions >= TEACHER_PERMISSIONS) {
 					next()
 				} else {
@@ -71,7 +77,7 @@ function isInClass(req, res, next) {
     try {
         if (req.session.email) {
             const user = classInformation.users[req.session.email];
-            if (user && user.activeClasses.length > 0) {
+            if (user && user.activeClass != null) {
                 res.redirect('/student');
                 return;
             }
@@ -136,10 +142,12 @@ function permCheck(req, res, next) {
 				next()
 			} else {
 				logger.log('info', '[permCheck] Not enough permissions')
-				res.render('pages/message', {
-					message: `Error: You don't have high enough permissions to access ${urlPath}`,
-					title: 'Error'
-				})
+                res.redirect('/');
+                // @TODO: Decide if we should show an error message or just redirect to home
+				// res.render('pages/message', {
+				// 	message: `Error: You don't have high enough permissions to access ${urlPath}`,
+				// 	title: 'Error'
+				// })
 			}
 		}
 	} catch (err) {

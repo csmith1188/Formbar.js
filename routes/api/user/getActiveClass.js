@@ -22,8 +22,8 @@ module.exports = {
                 }
 
                 const userInformation = classInformation.users[user.email]
-                if (userInformation && userInformation.activeClasses[0]) {
-                    const classId = userInformation.activeClasses[0];
+                if (userInformation && userInformation.activeClass) {
+                    const classId = userInformation.activeClass;
                     const classInfo = await dbGet('SELECT * FROM classroom WHERE id = ?', [classId]);
                     if (classInfo) {
                         res.status(200).json({

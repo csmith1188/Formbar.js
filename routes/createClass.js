@@ -61,7 +61,7 @@ module.exports = {
                         // Add the teacher to the newly created class
                         classInformation.classrooms[id].students[req.session.email] = user
                         classInformation.classrooms[id].students[req.session.email].classPermissions = MANAGER_PERMISSIONS
-                        classInformation.users[req.session.email].activeClasses.push(id)
+                        classInformation.users[req.session.email].activeClass = id
                         classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS
 
                         const classStudents = await getStudentsInClass(id);

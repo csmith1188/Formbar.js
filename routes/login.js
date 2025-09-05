@@ -453,7 +453,7 @@ module.exports = {
                     const email = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student =  new Student(
                         email, // email
-                        9999, // Id
+                        -1, // Id
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls

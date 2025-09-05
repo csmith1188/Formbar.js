@@ -158,7 +158,7 @@ async function deleteUser(userId, socket, socketUpdates) {
             await socketUpdates.deleteCustomPolls(userId)
             await socketUpdates.deleteClassrooms(userId)
 
-            const activeClass = (classInformation.users[user.email].activeClasses || [])[0];
+            const activeClass = classInformation.users[user.email].activeClass;
             const classroom = classInformation.classrooms[activeClass];
             delete classInformation.users[user.email];
             if (classroom) {

@@ -305,7 +305,7 @@ class SocketUpdates {
             if (!classInformation.users[email]) return;
 
             const user = classInformation.users[email];
-            const classId = user.activeClasses[0];
+            const classId = user.activeClass;
             if (!classInformation.classrooms[classId]) return;
 
             const student = classInformation.classrooms[classId].students[email];
@@ -405,7 +405,7 @@ class SocketUpdates {
 
             // Remove user from class session
             classInformation.users[email].classPermissions = null;
-            classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((activeClass) => activeClass != classId);
+            classInformation.users[email].activeClass = null;
             setClassOfApiSockets(classInformation.users[email].API, null);
             
             // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
@@ -415,7 +415,7 @@ class SocketUpdates {
                 if (student.isGuest) {
                     delete classInformation.classrooms[classId].students[email];
                 } else {
-                    student.activeClasses = classInformation.classrooms[classId].students[email].activeClasses.filter((activeClass) => activeClass != classId);
+                    student.activeClass = null;
                     student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
                 }
             }
@@ -468,7 +468,7 @@ class SocketUpdates {
         let className = null
         if (classId) {
             className = classInformation.classrooms[classId].className
-            classInformation.users[email].activeClasses = classInformation.users[email].activeClasses.filter((activeClass) => activeClass != classId);
+            classInformation.users[email].activeClass = null;
             classInformation.users[email].classPermissions = null;
         }
 
@@ -494,7 +494,7 @@ class SocketUpdates {
                         delete classInformation.classrooms[classId].students[email];
                     } else {
                         // Mark the student as offline
-                        student.activeClasses = classInformation.classrooms[classId].students[email].activeClasses.filter((activeClass) => activeClass != classId);
+                        student.activeClass = null;
                         student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
                     }
                     
@@ -529,7 +529,7 @@ class SocketUpdates {
             let data = { prompt: '', names: [], letter: [], text: [] }
             currentPoll += 1
     
-            let dateConfig = new Date()
+            let dateConfig = Date.now()
             let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     
             data.prompt = classInformation.classrooms[classId].poll.prompt
