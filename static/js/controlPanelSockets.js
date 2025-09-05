@@ -108,6 +108,7 @@ let hoverTimeoutBig = null;
 let hoverCountBig = 500;
 let pollDetailsDiv = document.getElementById('pollDetails');
 pollDetailsDiv.addEventListener('mouseover', (e) => {
+	if(screen.orientation.type.startsWith('portrait')) return; // Don't show on landscape mode
 	hoverTimeoutBig = setTimeout(() => { 
 		hoverShowPollDetails(classroom.poll, e, true);
 		pollDetailsDiv.classList.add('tutorialDone');
@@ -172,6 +173,7 @@ socket.on('customPollUpdate', (
 		let hoverTimeout = null;
 		let hoverCount = 500;
 		startButton.addEventListener('mouseover', (e) => {
+			if(screen.orientation.type.startsWith('portrait')) return; // Don't show on landscape mode
 			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll, e) }, hoverCount);
 		});
 		startButton.addEventListener('mouseout', () => {

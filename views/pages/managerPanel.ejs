@@ -12,7 +12,7 @@
 
     <body>
         <%- include('../partials/formbar_header') %>
-            <header id="quickMenu">
+            <header id="quickMenu" class="fullWidth">
                 <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
                 <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
                 <!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
@@ -77,6 +77,25 @@
             // Sets the button
         }
 
+        let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
+        let backgroundDarken = document.getElementById("backgroundDarken");
+
+        function showUserInfo(userDiv) {
+            if(screen.orientation.type.startsWith('landscape')) {
+                // Desktop
+                userDiv.classList.toggle('hiddenInfo');
+                return;
+            } else {
+                // Mobile
+                backgroundDarken.className = 'open';
+
+                managerPaneluserDialog.innerHTML = mobileDialogBackButton + userDiv.innerHTML;
+
+                managerPaneluserDialog.showModal();
+                return;
+            }
+        }
+
         function toggleIpList() {
             ipListToggle.onclick = (event) => {
                 socket.emit('toggleIpList', whitelistHeaderH1.innerHTML.toLowerCase())
@@ -134,7 +153,7 @@
         function buildUser(userData) {
             var newUser = document.createElement("div")
             newUser.className = "user hiddenInfo";
-            newUser.setAttribute('onclick', 'this.classList.toggle("hiddenInfo")')
+            newUser.setAttribute('onclick', 'showUserInfo(this)')
             newUser.setAttribute("id", userData.email);
             let userElement = document.createElement("p")
             userElement.innerText += userData.displayName

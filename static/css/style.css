@@ -92,8 +92,17 @@ body {
 	text-align: center;
 	--theme-color: var(--color-blue);
 	transition: background-color 0.5s, color 0.5s;
-	width: calc(100vw - 16px);
-	height: calc(100vh - 16px);
+	width: calc(100dvw - 16px);
+	height: calc(100dvh - 16px);
+}
+
+.messageBody {
+	font-size: 18px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	gap: 20px;
 }
 
 a {
@@ -998,14 +1007,14 @@ div .tabContent {
 }
 
 #startClass {
-	--theme-color: hsl(120, 100%, 12%);
+	--theme-color: hsl(120, 100%, 12%) !important;
 	color: black !important;
-	background-color: hsl(120, 94%, 74%);
+	background-color: hsl(120, 94%, 74%) !important;
 }
 
 #endClass {
-	--theme-color: hsl(0, 100%, 12%);
-	background-color: hsl(0, 94%, 74%);
+	--theme-color: hsl(0, 100%, 12%) !important;
+	background-color: hsl(0, 94%, 74%) !important;
 	color: black !important;
 }
 
@@ -1129,7 +1138,7 @@ div.break {
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) {
-	padding: 1vh 0;
+	padding: 1vh;
 	display: flex;
 	flex-wrap: wrap;
 	border-radius: var(--borderRadius);
@@ -1390,6 +1399,15 @@ article ul {
 	opacity: 0.5;
 }
 
+button:disabled {
+	opacity: 0.5 !important;
+	cursor: not-allowed !important;
+}
+
+button:disabled:hover {
+	transform: none !important;
+}
+
 .revampButton {
     display: flex;
     justify-content: center;
@@ -1407,6 +1425,10 @@ article ul {
 	transition: 
 		0.2s background-color ease-in-out,
 		0.2s transform ease-in-out;
+}
+
+.revampButton img {
+	filter: invert(1);
 }
 
 .revampButton:not(.revampWithText):hover {
@@ -2192,7 +2214,7 @@ div#pollPreview.open {
     text-align: center;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: stretch;
     gap: 20px;
 }
 
@@ -2262,4 +2284,49 @@ button img {
 #save-poll {
     width: 100%;
     white-space: nowrap;
+}
+
+#mobileNavigation {
+	display: none;
+}
+
+.logButton {
+	font-size: 2cqmin !important;
+	overflow: hidden;
+	width: 180px;
+	height: 75px;
+	text-align: center;
+}
+
+.revampButton p {
+	margin: 0;
+}
+
+.revampButton * {
+	pointer-events: none;
+}
+
+.revampButton.mobileHasIcon img {
+	display: none;
+}
+
+.pollDetailsText {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+div.mobileSpacer {
+	display: none;
+}
+
+*.showMobile {
+	display: none;
+}
+
+
+
+*:not(details)[hidden] {
+	display: none !important;
 }

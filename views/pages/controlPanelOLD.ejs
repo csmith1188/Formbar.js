@@ -18,10 +18,8 @@
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
         <img src="/img/cursor.webp" alt="">
-        <div class="pollDetailsText">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
-    </div>
     </div>
     <div class="revampDiv leftRight">
         <p id='className'>Class Name:</p>
@@ -38,15 +36,6 @@
         </div>
         <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
         <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
-        <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'>
-            <p>Previous Polls</p>
-            <img src="/img/time-outline.svg" alt="">
-        </button>
-
-        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs' disabled>
-            <p>Custom Polls</p>
-            <img src="/img/add-circle-outline.svg" alt="">
-        </button>
         <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
@@ -99,16 +88,19 @@
         
         <div id="controlFooter" class="revampDiv">
             <div class="ongoingButtons">
-                <button id='previousPollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
+                <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular' data-tab-group='mainTabs'>
                     <p>Previous Polls</p>
+                    <img src="/img/time-outline.svg" alt="">
                 </button>
 
-                <button id='pollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
+                <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular' data-tab-group='mainTabs'>
                     <p>Custom Polls</p>
+                    <img src="/img/add-circle-outline.svg" alt="">
                 </button>
                 <button id='startPoll' class="revampButton mobileHasIcon mobileCircular" onclick='pollCheck()'>
                     <p>Start Poll</p>
                     <img src="/img/play-circle-outline.svg" alt="">
+
                 </button>
                 <button id='clearPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='clearPollFunc()'>
                     <p>Clear Poll</p>
@@ -119,10 +111,9 @@
                     <p>End Poll</p>
                     <img src="/img/stop-circle-outline.svg" alt="">
                 </button>
-                <div class="mobileSpacer"></div>
                 <button id='endClass' onclick='endClass()' class="revampButton mobileHasIcon mobileCircular">
                     <p>End Class</p>
-                    <img src="/img/stop.svg" alt="">
+                    <img src="/img/" alt="">
                 </button>
             </div>
         </div>
@@ -214,8 +205,8 @@
                 <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
-            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/arrow-back.svg" alt="Newer Polls"></button>
-            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'><img src="/img/arrow-forward.svg" alt="Older Polls"></button>
+            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><--</button>
+            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'>--></button>
         </div>
     </div>
 </div>
@@ -234,45 +225,71 @@
 
 <div id="pollPreview" class="revampDiv"></div>
 
-<div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
-    <h2>Settings</h2>
-    
-    <div id="settingsFunc">
-        <div class="settingsFuncClassName">
-            <input type="text" id="classNameInput" class="revampButton revampWithText" placeholder="New class name">
-            <button id="changeClassNameButton" class="revampButton" onclick="changeClassName()">Change Class Name</button>
-        </div>
-        <div class="settingsFuncButtons">
-            <button id="kickUsers" class="revampButton warningButton" onclick="kickAll()">
-                Kick All Students
-            </button>
-            <button class="revampButton warningButton" onclick="regenerateAccessCode()">
-                Regenerate Code
-            </button>
+<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
+    <div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
+        <form method="post" enctype="multipart/form-data">
+            <input name="spreadsheet" type="file">
+            <input type="submit" class="quickButton">
+        </form>
+        <button type='button' id='nextStep'>Next Step</button>
+        <form>
+            <label class='form-control' id='pollControl' for='modeP'>
+                <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>
+                Poll Mode
+            </label>
+            <label class='form-control' id='pollControl' for='modeL'>
+                <input type='radio' name='mode' id='modeL' onchange='modeChange()' value='lesson'>
+                Lesson Mode
+            </label>
+            <label class='form-control' id='pollControl' for='modeQ'>
+                <input type='radio' name='mode' id='modeQ' onchange='modeChange()' value='quiz'>
+                Quiz Mode
+            </label>
+            <label class='form-control' id='pollControl' for='modePT'>
+                <input type='radio' name='mode' id='modePT' onchange='modeChange()' value='playtime'>
+                Playtime Mode
+            </label>
+        </form>
+    </div>
+    <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+        <h2>Settings</h2>
+        
+        <div id="settingsFunc">
+            <div class="settingsFuncButtons">
+                <button id="kickUsers" class="revampButton warningButton" onclick="kickAll()">
+                    Kick All Students
+                </button>
+                <button class="revampButton warningButton" onclick="regenerateAccessCode()">
+                    Regenerate Code
+                </button>
+            </div>
+            <div class="settingsFuncClassName">
+                <input type="text" id="classNameInput" class="revampButton revampWithText" placeholder="New class name">
+                <button id="changeClassNameButton" class="revampButton" onclick="changeClassName()">Change Class Name</button>
+            </div>
         </div>
     </div>
+    <dialog id='sharePollDialog'>
+        <button
+                onclick=`(()=>{currentSharePollId = null;
+            document.getElementById('sharePollDialog').close()})()`>Close
+        </button>
+        <p>
+            <label for='share'>Share to User</label>
+            <input type='text' name='share' id='sharePollUserInput' pattern='[a-z0-9]+'
+                   placeholder='Email' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
+        </p>
+        <div id='userPollShares'></div>
+        <p>
+            <label for='share'>Share to Class</label>
+            <input type='text' name='share' id='sharePollClassInput' pattern='[a-z0-9]+'
+                   placeholder='Class Code' onkeypress=`if(event.key == 'Enter') sharePoll('class')'`>
+        </p>
+        <div id='classPollShares'></div>
+    </dialog>
+    <%- include('../partials/body_content') %>
 </div>
-<dialog id='sharePollDialog'>
-    <button
-            onclick=`(()=>{currentSharePollId = null;
-        document.getElementById('sharePollDialog').close()})()`>Close
-    </button>
-    <p>
-        <label for='share'>Share to User</label>
-        <input type='text' name='share' id='sharePollUserInput' pattern='[a-z0-9]+'
-                placeholder='Email' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
-    </p>
-    <div id='userPollShares'></div>
-    <p>
-        <label for='share'>Share to Class</label>
-        <input type='text' name='share' id='sharePollClassInput' pattern='[a-z0-9]+'
-                placeholder='Class Code' onkeypress=`if(event.key == 'Enter') sharePoll('class')'`>
-    </p>
-    <div id='classPollShares'></div>
-</dialog>
-<%- include('../partials/body_content') %>
-
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
         <span id="alerts"></span>
@@ -312,6 +329,31 @@
     </div>
 </div>
 <div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
+<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
+    <form method='post' enctype='multipart/form-data'>
+        <input name='spreadsheet' type='file'>
+        <input type='submit' class='quickButton'>
+    </form>
+    <button type='button' id='nextStep'>Next Step</button>
+    <form>
+        <label class='form-control' id='pollControl' for='modeP'>
+            <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>
+            Poll Mode
+        </label>
+        <label class='form-control' id='pollControl' for='modeL'>
+            <input type='radio' name='mode' id='modeL' onchange='modeChange()' value='lesson'>
+            Lesson Mode
+        </label>
+        <label class='form-control' id='pollControl' for='modeQ'>
+            <input type='radio' name='mode' id='modeQ' onchange='modeChange()' value='quiz'>
+            Quiz Mode
+        </label>
+        <label class='form-control' id='pollControl' for='modePT'>
+            <input type='radio' name='mode' id='modePT' onchange='modeChange()' value='playtime'>
+            Playtime Mode
+        </label>
+    </form>
+</div>
 </body>
 
 </html>
@@ -383,24 +425,6 @@
         pollTime: 0,
         helpTime: 0,
         permissions: 1
-    }
-
-    let vbContainerOuter = document.getElementById('vbContainerOuter');
-    let vbContainer = document.getElementById('vbContainer');
-    let pollDetails = document.getElementById('pollDetails');
-
-    document.body.addEventListener('resize', () => {
-        if(screen.orientation.type.startsWith('portrait')) {
-            pollDetails.appendChild(vbContainer);
-        } else {
-            vbContainerOuter.appendChild(vbContainer);
-        }
-    })
-
-    if(screen.orientation.type.startsWith('portrait')) {
-        pollDetails.appendChild(vbContainer);
-    } else {
-        vbContainerOuter.appendChild(vbContainer);
     }
 
     let letterString = 'abcdefghijklmnopqrstuvwxyz'
@@ -536,13 +560,13 @@
 
         if (isActive) {
             if (startClassButton) {
-                startClassButton.innerHTML = '<p>End Class</p><img src="/img/stop.svg" alt="End Class">';
+                startClassButton.innerText = 'End Class';
                 startClassButton.onclick = endClass;
                 startClassButton.id = 'endClass';
             }
         } else {
             if (endClassButton) {
-                endClassButton.innerHTML = '<p>Start Class</p><img src="/img/play.svg" alt="Start Class">';
+                endClassButton.innerText = 'Start Class';
                 endClassButton.onclick = startClass;
                 endClassButton.id = 'startClass';
             }

@@ -21,14 +21,46 @@
 
 - [ ] Features Complete
     - [ ] Mobile Layout
+      - [x] `changepassword.ejs` 
+      - [ ] ~~`consent.ejs`~~
+      - [ ] `controlPanel.ejs` 
+        - [ ] Needs Done
+          - [ ] Filters
+          - [ ] Sort
+          - [ ] Select
+          - [ ] Fast Poll
+          - [ ] Timer
+      - [x] `login.ejs` 
+      - [x] `logs.ejs` 
+      - [x] `manageClass.ejs` 
+      - [x] `managerPanel.ejs` 
+      - [x] `message.ejs` 
+      - [x] `news.ejs` 
+      - [x] `profile.ejs` 
+      - [ ] ~~`results.ejs`~~
+      - [x] `selectClass.ejs` 
+      - [x] `student.ejs` 
     - [ ] Tablet Layout
+      - [ ] `changepassword.ejs` 
+      - [ ] `consent.ejs` 
+      - [ ] `controlPanel.ejs` 
+      - [ ] `login.ejs` 
+      - [ ] `logs.ejs` 
+      - [ ] `manageClass.ejs` 
+      - [ ] `managerPanel.ejs` 
+      - [ ] `message.ejs` 
+      - [ ] `news.ejs` 
+      - [ ] `profile.ejs` 
+      - [ ] `results.ejs` 
+      - [ ] `selectClass.ejs` 
+      - [ ] `student.ejs` 
 
 - [ ] Styling Changes
     - [ ] Full ADA Compliance
     - [x] Dark Mode & Light Mode
 
 - [ ] Extras
+    - [ ] Mobile navigation
     - [ ] CSS Cleanup
     - [ ] Removing `style` attributes from elements
     - [ ] Consistency
-    - [ ] 

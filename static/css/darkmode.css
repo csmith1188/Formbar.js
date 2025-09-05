@@ -91,13 +91,15 @@ button.pressed.revampButton:hover {
 	background-color: var(--darkMode-button-hover-bg);
 }
 
-.circularButton {
-	background-color: var(--darkMode-button-bg);
-	border: 2px solid var(--darkMode-button-border);
+.circularButton,
+.mobileCircular {
+	background-color: var(--darkMode-button-bg) !important;
+	border: 2px solid var(--darkMode-button-border) !important;
 }
 
-.circularButton:hover {
-	background-color: var(--darkMode-button-hover-bg);
+.circularButton:hover,
+.mobileCircular:hover {
+	background-color: var(--darkMode-button-hover-bg) !important;
 }
 
 #formbarHeader {

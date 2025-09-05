@@ -70,12 +70,319 @@
 
     #helpBreak {
         padding: 0 !important;
-        justify-content: start !important;
+        justify-content: end !important;
         gap: 20px !important;
     }
 
-    div#studentVBar div#vbContainer {
-        height: min-content !important;
+    #quickMenu div div#vbContainer {
+        pointer-events: none;
+        min-height: 48px;
+        min-width: 48px;
+        max-width: 48px;
+        max-height: 48px;
+        position: absolute;
+        right: 5px;
+    }
+
+    #quickMenu.dividedThree {
+        width: 100% !important;
+    }
+
+
+    #pollDetails {
+        cursor: auto !important;
+        flex-direction: row !important;
+    }
+
+    #VBDiv #vbContainerOuter {
+        display: none !important;
+    }
+
+    #content.joinClass {
+        width: 100%;
+    }
+
+    #content .joinClassForm {
+        width: 100%;
+    }
+
+    #joinKey {
+        width: 100%;
+    }
+
+    #profileInformation {
+        width: 100% !important;
+    }
+
+    #news section {
+        padding: 20px !important;
+    }
+
+    #news section div.titleSection {
+        padding-left: 0 !important;
+    }
+
+    #news section div.titleSection h1 {
+        margin-top: 0 !important;
+        font-size: 9cqw !important;
+    }
+    
+    #news section div.titleSection h6 {
+        font-size: 4cqw !important;
+    }
+    
+    #news section article ul {
+        line-height: 6cqw !important;
+        font-size: 4cqw !important;
+    }
+
+    #content {
+        width: 100% !important;
+    }
+
+    #quickMenu {
+        width: calc(100% - 16px) !important;
+        margin-left: 0 !important;
+    }
+
+    #quickMenu.fullWidth {
+        width: 100% !important;
+    }
+
+    .usersMenuBox {
+        width: 100% !important;
+    }
+
+    .headerText {
+        font-size: 5cqw !important
+    }
+
+    .backButton.dialogBack {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+    }
+
+    #ipMenu.tabContent {
+        flex-direction: column;
+    }
+
+    #whitelistedMembers {
+        width: 100% !important;
+    }
+
+    #whitelist,
+    #blacklist {
+        margin-top: 10px !important;
+    }
+
+    #whitelist *,
+    #blacklist * {
+        width: 100%;
+    }
+
+    #ticket,
+    #otherText {
+        width: 100% !important;
+    }
+
+    #managerPanel-userDialog[open] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 10px;
+        padding: 20px 50px !important;
+    }
+    #managerPanel-userDialog[open] > p {
+        margin-top: 0 !important;
+        font-weight: bold;
+        font-size: 2vh !important;
+    }
+
+    .revampButton.mobileHasIcon img {
+        display: block !important;
+        filter: invert(1);
+    }
+
+    .revampButton.mobileHasIcon#endClass img, 
+    .revampButton.mobileHasIcon#startClass img {
+        filter: none !important;
+    }
+
+    .revampButton.mobileHasIcon p {
+        display: none !important;
+    }
+
+    div#controlFooter {
+        min-height: 80px !important;
+    }
+
+    #usersMenu {
+        height: 0px !important;
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+    }
+
+    details.controlStudent {
+        overflow: unset;
+    }
+
+    #VBDiv {
+        width: 100% !important;
+    }
+
+    div.sideBySide {
+        height: calc(100% - 100px) !important;
+    }
+
+    #newMemberListControlPanel {
+        overflow: scroll !important;
+    }
+
+    .mobileCircular {
+        padding: 5px !important;
+        height: 40px !important;
+        width: 40px !important;
+        aspect-ratio: 1 !important;
+        background-color: var(--lightMode-button-bg) !important;
+        border-radius: 100% !important;
+        justify-content: center !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        border: 2px solid var(--lightMode-button-border) !important;
+        transform-origin: center !important;
+        transition: 
+            0.2s transform ease-in-out !important;
+    }
+
+    header#quickMenu.dividedThree {
+        flex-direction: column;
+        gap: 5px !important;
+    }
+
+    header#quickMenu.dividedThree div {
+        height: 100%;
+        width: 100%;
+        font-size: 3cqw;
+    }
+
+    div#pollDetails img {
+        display: none !important; 
+    }
+
+    div#timeDiv {
+        display: none !important;
+    }
+
+
+
+    div#mobileNavigation {
+        display: flex;
+        position: absolute;
+        background: #000a;
+        backdrop-filter: blur(10px);
+        height: 100dvh;
+        width: 100dvw;
+        left: -100%;
+        top: 0;
+        transition: left 0.3s ease;
+    }
+
+    div#mobileNavigation.open {
+        left: 0;
+    }
+
+
+    div#VBOptions {
+        display: none !important;
+    }
+
+    #permissionsList {
+        display: flex !important;
+        width: unset !important;
+        flex-direction: column;
+        width: auto;
+        align-items: center;
+    }
+
+    #permissions.tabContent,
+    #tags.tabContent,
+    #settingsMenu.tabContent,
+    #previousPollsMenu.tabContent,
+    #pollsMenu.tabContent {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        padding: 20px !important;
+        width: 100dvw;
+        height: 100dvh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        background: #000a;
+        backdrop-filter: blur(10px);
+        z-index: 20;
+        overflow: scroll;
+    }
+    
+    #previousPollsMenu.tabContent {
+        justify-content: start;
+        padding-top: 80px !important;
+    }
+
+    #pollOptions {
+        font-size: 3.5cqw;
+    }
+
+    #permissions.tabContent > button.backButton,
+    #tags.tabContent > button.backButton,
+    #settingsMenu.tabContent > button.backButton,
+    #previousPollsMenu.tabContent > button.backButton,
+    #pollsMenu.tabContent > button.backButton {
+        top: 10px;
+        left: 10px;
+    }
+
+    #settingsFunc {
+        width: 100%;
+    }
+
+    div.settingsFuncClassName * {
+        width: 100%;
+    }
+
+    #previousPolls {
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    label.permissionLabel {
+        font-size: 5cqw;
+        justify-content: space-between;
+        text-align: left;
+        width: 100%;
+        gap: 20px;
+    }
+
+    div.mobileSpacer {
+        display: block !important;
+        flex: 1 1 auto;
+    }
+
+    *.hideMobile {
+        display: none !important;
+    }
+
+    *.showMobile {
+        display: flex !important;
+    }
+
+    .ongoingButtons {
+        gap: 20px !important;
     }
 }
 

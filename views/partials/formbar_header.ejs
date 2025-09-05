@@ -29,7 +29,7 @@
                           <% } %>
                           </ul>
                         <% if(locals.currentUser) { %>
-                            <button class="mobileMenuButton circularButton">
+                            <button class="mobileMenuButton circularButton" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
                                 <img src="/img/menu.svg" alt="">
                             </button>
                           <a href="/profile" class="circularButton" title="LM/DM">
@@ -103,3 +103,5 @@
       muteButton.style.display = "block";
   }
 </script>
+
+<%- include('./mobile_dialogs.ejs') %>

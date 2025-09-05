@@ -1,0 +1,20 @@
+<div id="backgroundDarken"></div>
+
+<dialog id="managerPanel-userDialog" class="contentBox revampDiv">
+    
+</dialog>
+
+<div id="mobileNavigation">
+    
+</div>
+
+<script>
+
+    function closeModal(e) {
+        e.parentElement.close();
+        document.getElementById("backgroundDarken").className = ""
+    }
+
+    const mobileDialogBackButton = `<button class='backButton quickButton revampButton dialogBack' onclick="closeModal(this)"><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>`;
+
+</script>
