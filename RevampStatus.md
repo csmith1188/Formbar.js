@@ -25,6 +25,7 @@
       - [ ] ~~`consent.ejs`~~
       - [ ] `controlPanel.ejs` 
         - [ ] Needs Done
+          - [ ] Poll Editor
           - [ ] Filters
           - [ ] Sort
           - [ ] Select
@@ -60,7 +61,7 @@
     - [x] Dark Mode & Light Mode
 
 - [ ] Extras
-    - [ ] Mobile navigation
+    - [x] Mobile navigation
     - [ ] CSS Cleanup
     - [ ] Removing `style` attributes from elements
     - [ ] Consistency

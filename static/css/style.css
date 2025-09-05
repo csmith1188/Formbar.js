@@ -2006,6 +2006,11 @@ div#pollPreview.open {
 	}
 }
 
+button.edit-custom-poll,
+button.start-custom-poll {
+	width: auto;
+}
+
 .circularButton[hidden] {
 	display: none !important;
 }

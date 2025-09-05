@@ -81,7 +81,7 @@
         let backgroundDarken = document.getElementById("backgroundDarken");
 
         function showUserInfo(userDiv) {
-            if(screen.orientation.type.startsWith('landscape')) {
+            if(orientation == 'landscape') {
                 // Desktop
                 userDiv.classList.toggle('hiddenInfo');
                 return;

@@ -5,7 +5,33 @@
 </dialog>
 
 <div id="mobileNavigation">
-    
+  <% if (locals.currentUser) { %>
+    <ul>
+    <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
+      <li><a href="/controlPanel" class="headerTab revampButton">Panel</a></li>
+      <% } %>
+        <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
+          <li><a href="/managerPanel" class="headerTab revampButton">Manager</a></li>
+          <% } %>
+            <% if (!currentUser.classPermissions) { %>
+              <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                <li><a href="/manageClass" class="headerTab revampButton">Manage Class</a></li>
+                <% } %>
+                  <li><a href="/selectClass" class="headerTab revampButton">Join Class</a></li>
+                  <% } %>
+                      <% if (currentUser.classPermissions) { %>
+                        <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
+                          Classes</button></li>
+                          <li>
+                          <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button></li>
+                        <% } %></ul>
+                          <a href="/profile" class="headerTab revampButton" title="LM/DM">
+                            Profile
+                          </a>
+                          <button href="/" id="logoutButton" class="revampButton" onclick="logout()">
+                            Logout
+                          </button>
+                          <% } %>
 </div>
 
 <script>
@@ -16,5 +42,15 @@
     }
 
     const mobileDialogBackButton = `<button class='backButton quickButton revampButton dialogBack' onclick="closeModal(this)"><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>`;
+
+
+    let orientation = 'landscape';
+
+    document.body.addEventListener('resize', () => {
+        if(window.innerHeight > window.innerWidth) orientation = 'portrait';
+        else orientation = 'landscape';
+    });
+    if(window.innerHeight > window.innerWidth) orientation = 'portrait';
+    else orientation = 'landscape';
 
 </script>

@@ -390,14 +390,14 @@
     let pollDetails = document.getElementById('pollDetails');
 
     document.body.addEventListener('resize', () => {
-        if(screen.orientation.type.startsWith('portrait')) {
+        if(orientation == 'portrait') {
             pollDetails.appendChild(vbContainer);
         } else {
             vbContainerOuter.appendChild(vbContainer);
         }
     })
 
-    if(screen.orientation.type.startsWith('portrait')) {
+    if(orientation == 'portrait') {
         pollDetails.appendChild(vbContainer);
     } else {
         vbContainerOuter.appendChild(vbContainer);
@@ -818,8 +818,8 @@
 
     function setMuteSound(isMuted) {
         mute = isMuted;
-        document.getElementById('muteButton').hidden = mute;
-        document.getElementById('unmuteButton').hidden = !mute;
+        document.getElementById('muteButton').style.display = mute ? "none" : "block";
+        document.getElementById('unmuteButton').style.display = !mute ? "none" : "block";
     }
 
     function toggleMuteSound() {

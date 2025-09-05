@@ -32,10 +32,10 @@
                             <button class="mobileMenuButton circularButton" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
                                 <img src="/img/menu.svg" alt="">
                             </button>
-                          <a href="/profile" class="circularButton" title="LM/DM">
+                          <a href="/profile" class="circularButton hideMobile" title="LM/DM">
                             <img src="/img/person.svg" title="Profile">
                           </a>
-                          <button href="/" id="logoutButton" class="circularButton" onclick="logout()">
+                          <button href="/" id="logoutButton" class="circularButton hideMobile" onclick="logout()">
                             <img id="logoutIcon" src="/img/logout.svg" title="Logout">
                           </button>
                           <% } %>
@@ -43,7 +43,7 @@
                             <img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
                           </button>
                           <button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/volume.svg" title="Sound On"></button>
-                          <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>
+                          <button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()"><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>
                           <script>if(!window.location.href.includes('controlPanel')){document.getElementById('muteButton').remove();document.getElementById('unmuteButton').remove()}</script>
 </header>
 <script>

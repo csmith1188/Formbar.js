@@ -149,6 +149,17 @@
         width: 100% !important;
     }
 
+    #usersMenu.tabContent #users {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    #usersMenu.tabContent #users div.user {
+        width: 100% !important;
+    }
+
     .usersMenuBox {
         width: 100% !important;
     }
@@ -218,7 +229,7 @@
         min-height: 80px !important;
     }
 
-    #usersMenu {
+    #usersMenu.tabContent.controlPanel.default.userMenuCp {
         height: 0px !important;
         display: flex !important;
         justify-content: center;
@@ -280,6 +291,7 @@
 
     div#mobileNavigation {
         display: flex;
+        z-index: 3;
         position: absolute;
         background: #000a;
         backdrop-filter: blur(10px);
@@ -287,13 +299,32 @@
         width: 100dvw;
         left: -100%;
         top: 0;
+        padding: 80px 10% 20px 10%;
         transition: left 0.3s ease;
+        display: flex;
+        justify-content: start;
+        flex-direction: column;
+        gap: 20px;
     }
 
     div#mobileNavigation.open {
         left: 0;
     }
 
+    div#mobileNavigation ul {
+        flex: 1 1 auto;
+        margin: 0 auto;
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+    }
+
+    div#mobileNavigation ul li * {
+        width: 100%;
+    }
 
     div#VBOptions {
         display: none !important;
@@ -337,6 +368,36 @@
         font-size: 3.5cqw;
     }
 
+    #pollOptions.customOptions {
+        align-items: stretch;
+        margin: 0 !important;
+    }
+
+    #pollOptions.customOptions button {
+        font-size: 3cqw !important;
+        padding: 5px;
+    }
+
+    #publicPolls:not(button),
+    #userPolls:not(button) {
+        width: 100% !important;
+        display: flex;
+        flex-wrap: nowrap !important;
+        justify-content: start !important;
+        flex-direction: column;
+        align-items: stretch;
+        overflow: scroll;
+        height: 50vh;
+        margin-top: 10px;
+        mask-image: linear-gradient(to bottom, #0000 0%, black 10%, black 70%, #0000 100%);
+        padding: 20px 15px !important;
+    }
+
+    #publicPolls:not(button) div.customPoll, 
+    #userPolls:not(button) div.customPoll {
+        width: 100% !important;
+    }
+
     #permissions.tabContent > button.backButton,
     #tags.tabContent > button.backButton,
     #settingsMenu.tabContent > button.backButton,
@@ -344,6 +405,23 @@
     #pollsMenu.tabContent > button.backButton {
         top: 10px;
         left: 10px;
+    }
+
+    #pollResForm,
+    .pollOptionsEditor,
+    #generalOptions {
+        display: none !important;
+    }
+
+    #newPoll {
+        padding-bottom: 0 !important;
+        height: unset !important;
+    }
+
+    #newPoll.tabContent::after {
+        content: 'Coming Soon to Mobile!';
+        line-height: 45px;
+        font-style: italic;
     }
 
     #settingsFunc {
@@ -383,6 +461,11 @@
 
     .ongoingButtons {
         gap: 20px !important;
+    }
+
+    .customOptions {
+        margin: 0;
+        width: 100% !important;
     }
 }
 

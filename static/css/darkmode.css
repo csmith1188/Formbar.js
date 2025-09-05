@@ -152,3 +152,7 @@ button.pressed.revampButton:hover {
 #pollPrompt {
 
 }
+
+dialog {
+	color: white !important;
+}
