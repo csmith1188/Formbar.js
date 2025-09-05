@@ -63,6 +63,11 @@
         height: calc(100% - 120px) !important;
     }
 
+    #VBOptions {
+        background: none !important;
+        border: none !important;
+    }
+
     canvas#virtualbar {
         aspect-ratio: 1 !important;
         height: unset !important;
@@ -287,6 +292,9 @@
         display: none !important;
     }
 
+    #VBOptions .options:not(.activeControlTab) {
+        transition: none !important;
+    }
 
 
     div#mobileNavigation {
@@ -326,10 +334,6 @@
         width: 100%;
     }
 
-    div#VBOptions {
-        display: none !important;
-    }
-
     #permissionsList {
         display: flex !important;
         width: unset !important;
@@ -342,7 +346,8 @@
     #tags.tabContent,
     #settingsMenu.tabContent,
     #previousPollsMenu.tabContent,
-    #pollsMenu.tabContent {
+    #pollsMenu.tabContent,
+    #sortingFilterMenu.tabContent {
         position: absolute !important;
         top: 0;
         left: 0;
@@ -402,10 +407,24 @@
     #tags.tabContent > button.backButton,
     #settingsMenu.tabContent > button.backButton,
     #previousPollsMenu.tabContent > button.backButton,
-    #pollsMenu.tabContent > button.backButton {
+    #pollsMenu.tabContent > button.backButton,
+    #sortingFilterMenu.tabContent > button.backButton {
         top: 10px;
         left: 10px;
+        z-index: 3;
     }
+
+    #sortingFilterMenu.tabContent > button.backButton {
+        padding: 5px;
+        width: 60px;
+    }
+
+    #vbOptionsNext,
+    #vbOptionsLast {
+        width: auto !important;
+        padding: 10px !important;
+    }
+    
 
     #pollResForm,
     .pollOptionsEditor,

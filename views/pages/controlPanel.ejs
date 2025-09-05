@@ -17,7 +17,7 @@
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
-        <img src="/img/cursor.webp" alt="">
+        <img src="/img/cursor.webp" alt="Hover for poll info.">
         <div class="pollDetailsText">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
@@ -38,21 +38,50 @@
         </div>
         <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
         <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
-        <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'>
-            <p>Previous Polls</p>
-            <img src="/img/time-outline.svg" alt="">
-        </button>
-
-        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'>
-            <p>Custom Polls</p>
-            <img src="/img/add-circle-outline.svg" alt="">
-        </button>
+        <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
+        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
+        <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
         <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
     <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
 </header>
+
+<div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <div id='VBOptions' class="revampDiv">
+        <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
+        <button id="vbOptionsNext" class="revampButton"><p>Sort members by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
+        <div id='userFilterBoxes' class='options activeControlTab'>
+            <h2 class='headerText'>Filter members by:</h2>
+            <div class='headBox'>
+                <button type='button' id='alert' class='filter revampButton'>Alerts</button>
+                <button type='button' id='polls' class='filter revampButton'>Polls</button>
+            </div>
+        </div>
+        <div id='userSortBoxes' class='options'>
+            <h2 class='headerText'>Sort members by:</h2>
+            <div class='headBox'>
+                <button type='button' id='name' class='sort revampButton'>Name</button>
+                <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
+                <button type='button' id='pollTime' class='sort revampButton'>Poll Time</button>
+                <button type='button' id='helpTime' class='sort revampButton'>Help Time</button>
+                <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button>
+            </div>
+        </div>
+        <div id='userSelectBoxes' class='options'>
+            <h2 class='headerText'>Select Members:</h2>
+            <div class='headBox' id="selectPoll">
+            </div>
+        </div>
+        <div id='userFastPollBoxes' class='options'>
+            <h2 class='headerText'>Fast Poll</h2>
+            <div class='headBox' id='quickPoll'>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id='usersMenu' class='tabContent controlPanel default userMenuCp' data-tab-group='mainTabs'>
     <!-- This canvas should be the student panel pie-graph thingy -->
@@ -64,9 +93,9 @@
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
             </div>
-            <div id='VBOptions' class="revampDiv">
-                <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt=""></button>
-                <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt=""></button>
+            <div id='VBOptions' class="revampDiv hideMobile">
+                <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
+                <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
                 <div id='userFilterBoxes' class='options activeControlTab'>
                     <h2 class='headerText'>Filter by:</h2>
                     <div class='headBox'>
@@ -108,21 +137,21 @@
                 </button>
                 <button id='startPoll' class="revampButton mobileHasIcon mobileCircular" onclick='pollCheck()'>
                     <p>Start Poll</p>
-                    <img src="/img/play-circle-outline.svg" alt="">
+                    <img src="/img/play-circle-outline.svg" alt="Start Poll Icon">
                 </button>
                 <button id='clearPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='clearPollFunc()'>
                     <p>Clear Poll</p>
-                    <img src="/img/refresh-circle-outline.svg" alt="">
+                    <img src="/img/refresh-circle-outline.svg" alt="Clear Poll Icon">
 
                 </button>
                 <button id='endPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='endPollFunc()'>
                     <p>End Poll</p>
-                    <img src="/img/stop-circle-outline.svg" alt="">
+                    <img src="/img/stop-circle-outline.svg" alt="End Poll Icon">
                 </button>
                 <div class="mobileSpacer"></div>
                 <button id='endClass' onclick='endClass()' class="revampButton mobileHasIcon mobileCircular">
                     <p>End Class</p>
-                    <img src="/img/stop.svg" alt="">
+                    <img src="/img/stop.svg" alt="End Class">
                 </button>
             </div>
         </div>
@@ -130,7 +159,7 @@
 </div>
 
     <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
         <h1 class='headerText' style="margin-bottom: 20px;">Custom Polls</h1>
         <div id='pollOptions' class='options customOptions'>
             <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
@@ -203,7 +232,7 @@
     </div>
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
         <div id='pollOptions' class='options'>
             <details id="previousPoll-template" style="order: 9997; margin: 20px; display: none" class="revampDiv previousPoll" hidden>
                 <summary style="height: fit-content; margin: 20px; cursor: pointer;">
@@ -221,12 +250,12 @@
 </div>
 
 <div id='permissions' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
     <h2>Permissions</h2>
     <div id='permissionsList'></div>
 </div>
 <div id='tags' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
     <h2>Tags</h2>
     <div id='tagsList'></div>
     <div id="tagOptions"></div>
@@ -235,7 +264,7 @@
 <div id="pollPreview" class="revampDiv"></div>
 
 <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt=""><p>Back</p></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
     <h2>Settings</h2>
     
     <div id="settingsFunc">
@@ -449,19 +478,23 @@
     let sidebarOptionsIDs = [
         {
             elementID: 'userFilterBoxes',
-            optionName: 'Filter by:'
+            optionName: 'Filter by:',
+            mobileOptionName: "Filter members by:"
         },
         {
             elementID: 'userSortBoxes',
-            optionName: 'Sort by:'
+            optionName: 'Sort by:',
+            mobileOptionName: "Sort members by:"
         },
         {
             elementID: 'userSelectBoxes',
-            optionName: 'Select:'
+            optionName: 'Select:',
+            mobileOptionName: "Select members:"
         },
         {
             elementID: 'userFastPollBoxes',
-            optionName: 'Fast Poll'
+            optionName: 'Fast Poll',
+            mobileOptionName: "Fast Poll"
         }
     ]
 
@@ -483,8 +516,8 @@
 
             document.getElementById(newActive.elementID).classList.add('activeControlTab');
 
-            vbOptionsLast.innerHTML = `<p>${lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="">`;
-            vbOptionsNext.innerHTML = `<p>${nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="">`;
+            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
 
 
         } else {
@@ -493,8 +526,8 @@
             let lastButton = sidebarOptionsIDs[lastElIndex];
             document.getElementById(newActive.elementID).classList.add('activeControlTab');
 
-            vbOptionsLast.innerHTML = `<p>${lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="">`;
-            vbOptionsNext.innerHTML = `<p>${nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="">`;
+            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
         }
     }
 
