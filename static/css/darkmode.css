@@ -12,7 +12,7 @@ a.link {
 	text-decoration-color: var(--light-blue) !important;
 }
 
-h1.headertext, h2.headertext {
+.headerText {
 	color: white !important;
 }
 
@@ -70,7 +70,7 @@ canvas {
 
 
 #loginHeader {
-	color: #fff2 !important;
+	color: #fff9 !important;
 }
 
 #content {

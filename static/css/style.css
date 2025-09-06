@@ -412,6 +412,8 @@ dialog {
 
 .headerText {
 	color: var(--theme-color);
+	font-size: 30px;
+	font-weight: 700;
 }
 
 /* Custom radio button code */
@@ -587,6 +589,13 @@ input[type="radio"]:focus {
 	margin-bottom: 20px;
 }
 
+
+body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
+	top: 20px;
+	margin: 0;
+}
+
+
 #pollPrompt {
 	font-size: 40px;
 	position: absolute;
@@ -595,6 +604,10 @@ input[type="radio"]:focus {
     transform: translate(50%);
 	padding: 10px 20px;
 	color: white;
+}
+
+#pollPrompt:empty {
+	display: none;
 }
 
 /* --- CONTROL PANEL --- */
@@ -1376,7 +1389,7 @@ article ul {
 	left: 0;
 	top: 0;
 	font-size: 15vh;
-	color: #0002;
+	color: #0009;
 	width: 100%;
     
 
@@ -1550,7 +1563,7 @@ button:disabled:hover {
 	font-style: italic;
 	font-size: 20px;
 	margin-left: 5px;
-	color: #0006;
+	color: #000d;
 }
 
 #news section article h3 {
@@ -1826,6 +1839,8 @@ div.sideBySide {
 body:not(:has(header#formbarHeader[style="display: none;"])) {
 	padding-top: 72px;
 }
+
+
 
 #vbContainerOuter:has(#vbContainer[style="display: none;"]) {
 	display: none !important;

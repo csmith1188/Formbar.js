@@ -1,7 +1,7 @@
 <%- include('../partials/header_content') %>
     <%- include('../partials/sockets') %>
 
-        <body id="colorContent">
+        <body id="colorContent" role="document" tabindex="0">
             <%- include('../partials/formbar_header') %>
 
                 <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
@@ -12,7 +12,7 @@
                 <div id="content" class="contentBox" style="margin: auto;">
                     <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
                         <form action="createClass" method="post" id="selectClassForm">
-                            <h2 class="headerText">Manage a class</h2>
+                            <label for="manageClassSelect" class="headerText">Manage a class</label>
                             <select id="manageClassSelect" name="id" class="revampButton">
     
                             </select>
@@ -28,7 +28,7 @@
 
                     <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'>
                         <form action="createClass" method="post" id="createClass">
-                            <h2 class="headerText">Create a class</h2>
+                            <label for="emailBox" class="headerText h2">Create a class</label>
                             
                             <div class="buttonsHolder">
                                 <input type="text" id="emailBox" name="name" placeholder="Class Name" value=""

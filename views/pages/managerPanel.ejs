@@ -10,7 +10,7 @@
         <script src="/js/tabs.js" defer></script>
     </head>
 
-    <body>
+    <body role="document" tabindex="0">
         <%- include('../partials/formbar_header') %>
             <header id="quickMenu" class="fullWidth">
                 <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
@@ -152,8 +152,10 @@
         // makes user elements
         function buildUser(userData) {
             var newUser = document.createElement("div")
+            newUser.tabIndex = 0;
             newUser.className = "user hiddenInfo";
             newUser.setAttribute('onclick', 'showUserInfo(this)')
+            newUser.setAttribute('onkeydown', 'if(event.key == " " || event.key == "Enter") showUserInfo(this)')
             newUser.setAttribute("id", userData.email);
             let userElement = document.createElement("p")
             userElement.innerText += userData.displayName

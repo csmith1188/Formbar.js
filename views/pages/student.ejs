@@ -15,12 +15,12 @@
 				<script src="/js/deepObjectEqual.js"></script>
 			</head>
 
-			<body>
+			<body role="document" tabindex="0">
 				<div id="studentVBar">
 					<%- include("../partials/virtual_bar.ejs") %>
+						<h2 id="pollPrompt" class="revampDivAlt"></h2>
 						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 
-                            <h2 id="pollPrompt" class="revampDivAlt"></h2>
 							<div id="helpBreak">
 								<div id="pollContent">
 									<h1 id="noPoll" class="textColorContent">No active poll</h1>
@@ -84,6 +84,20 @@
 					<div id="backgroundDarken"></div>
 					<% } %>
 			</body>
+
+			<% if(currentUser.classPermissions <= GUEST_PERMISSIONS) { %>
+				<script>
+					let pollPromptDisplayGuest = document.getElementById('pollPrompt');
+
+					function updatePage(newPoll) {
+						pollPromptDisplayGuest.innerText = newPoll.prompt;
+					}
+
+					socket.on('vbUpdate', (newPoll) => {
+						updatePage(newPoll)
+					})
+				</script>
+			<% } %>
 
 			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 				<script type="text/javascript">

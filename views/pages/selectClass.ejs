@@ -1,10 +1,10 @@
 <%- include('../partials/header_content') %>
     <%- include('../partials/sockets') %>
 
-        <body id="colorContent" class="selectClass">
+        <body id="colorContent" class="selectClass" role="document" tabindex="0">
             <%- include('../partials/formbar_header') %>
                 <div id="content" class="contentBox joinClass">
-                    <h2 class="headerText">Join a class</h2>
+                    <label for="joinedKey" class="headerText">Join a class</label>
                     <% if (joinedClasses.length > 0) { %>
                         <form action="selectClass" method="post" class="joinClassFOrm">
                             <select id="joinedKey" name="id" required class="revampButton">

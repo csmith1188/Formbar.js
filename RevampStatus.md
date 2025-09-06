@@ -1,13 +1,14 @@
 - Pages Complete
     - [ ] Pages
       - [x] ~~`apiKey.ejs` (Removed)~~
+      - [x] `changepassword.ejs` 
       - [ ] `controlPanel.ejs`
       - [x] ~~`lesson.ejs` (Removed)~~
       - [x] `login.ejs`
       - [x] `logs.ejs`
       - [x] `manageClass.ejs`
       - [x] `managerPanel.ejs`
-      - [ ] `message.ejs`
+      - [x] `message.ejs`
       - [x] `news.ejs`
       - [x] ~~`plugins.ejs` (Removed)~~
       - [x] ~~`previousLesson.ejs` (Removed)~~
@@ -15,9 +16,9 @@
       - [x] ~~`queryquiz.ejs` (Removed)~~
       - [x] `selectClass.ejs`
       - [ ] `student.ejs`
-    - [ ] Partials
-      - [ ] `/partials/formbar_header.ejs`
-      - [ ] `/partials/virtual_bar.ejs`
+    - [x] Partials
+      - [x] `/partials/formbar_header.ejs`
+      - [x] `/partials/virtual_bar.ejs`
 
 - [ ] Features Complete
     - [ ] Mobile Layout
@@ -26,10 +27,10 @@
       - [ ] `controlPanel.ejs` 
         - [ ] Needs Done
           - [ ] Poll Editor
-          - [ ] Filters
-          - [ ] Sort
-          - [ ] Select
-          - [ ] Fast Poll
+          - [x] Filters
+          - [x] Sort
+          - [x] Select
+          - [x] Fast Poll
           - [ ] Timer
       - [x] `login.ejs` 
       - [x] `logs.ejs` 
@@ -43,7 +44,7 @@
       - [x] `student.ejs` 
     - [ ] Tablet Layout
       - [ ] `changepassword.ejs` 
-      - [ ] `consent.ejs` 
+      - [ ] ~~`consent.ejs`~~
       - [ ] `controlPanel.ejs` 
       - [ ] `login.ejs` 
       - [ ] `logs.ejs` 
@@ -52,12 +53,24 @@
       - [ ] `message.ejs` 
       - [ ] `news.ejs` 
       - [ ] `profile.ejs` 
-      - [ ] `results.ejs` 
+      - [ ] ~~`results.ejs`~~
       - [ ] `selectClass.ejs` 
       - [ ] `student.ejs` 
 
 - [ ] Styling Changes
     - [ ] Full ADA Compliance
+      - [x] Pages
+        - [x] `changepassword.ejs` 
+        - [x] `controlPanel.ejs`
+        - [x] `login.ejs`
+        - [ ] `logs.ejs`
+        - [x] `manageClass.ejs`
+        - [x] `managerPanel.ejs`
+        - [a] `message.ejs`
+        - [x] `news.ejs`
+        - [x] `profile.ejs`
+        - [x] `selectClass.ejs`
+        - [x] `student.ejs`
     - [x] Dark Mode & Light Mode
 
 - [ ] Extras

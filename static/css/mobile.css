@@ -264,8 +264,8 @@
     }
 
 	#VBDiv #newMemberListControlPanel {
-		display: flex;
-  		flex-direction: column;
+		display: flex !important;
+  		flex-direction: column !important;
 	}
 
     div.sideBySide {
@@ -363,6 +363,11 @@
         flex-direction: column;
         width: auto;
         align-items: center;
+    }
+
+    #pollPrompt {
+        font-size: 6cqw !important;
+        white-space: nowrap;
     }
 
     #permissions.tabContent,
