@@ -6,7 +6,7 @@
                 <div id="content" class="contentBox joinClass">
                     <label for="joinedKey" class="headerText">Join a class</label>
                     <% if (joinedClasses.length > 0) { %>
-                        <form action="selectClass" method="post" class="joinClassFOrm">
+                        <form action="selectClass" method="post" class="joinClassForm">
                             <select id="joinedKey" name="id" required class="revampButton">
                                 <option value="" disabled selected>Joined classes</option>
                                 <% for(let joinedClass of joinedClasses) { %>

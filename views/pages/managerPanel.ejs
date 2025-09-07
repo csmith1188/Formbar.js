@@ -89,7 +89,12 @@
                 // Mobile
                 backgroundDarken.className = 'open';
 
-                managerPaneluserDialog.innerHTML = mobileDialogBackButton + userDiv.innerHTML;
+                managerPaneluserDialog.innerHTML = mobileDialogBackButton;
+                Array.from(userDiv.children).forEach(child => {
+                    let newChild = child.cloneNode(true);
+                    newChild.onclick = child.onclick;
+                    managerPaneluserDialog.appendChild(newChild);
+                });
 
                 managerPaneluserDialog.showModal();
                 return;
