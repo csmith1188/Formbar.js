@@ -1,10 +1,10 @@
-const { isLoggedIn, permCheck } = require("../modules/authentication")
+const { permCheck, isAuthenticated} = require("./middleware/authentication")
 const { classInformation, Classroom } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS} = require("../modules/permissions")
-const { setClassOfApiSockets } = require("../modules/socketUpdates")
+const { setClassOfApiSockets, userSockets, emitToUser} = require("../modules/socketUpdates")
 const { getStudentsInClass } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 
@@ -14,7 +14,7 @@ module.exports = {
         // Allowing the teacher to create classes is vital to whether the lesson actually works or not, because they have to be allowed to create a teacher class
         // This will allow the teacher to give students student perms, and guests student perms as well
         // Plus they can ban and kick as long as they can create classes
-        app.post('/createClass', isLoggedIn, permCheck, (req, res) => {
+        app.post('/createClass', isAuthenticated, permCheck, (req, res) => {
             try {
                 let submittionType = req.body.submittionType
                 let className = req.body.name
@@ -55,14 +55,13 @@ module.exports = {
                             classInformation.classrooms[id].sharedPolls = sharedPolls
                             classInformation.classrooms[id].pollHistory = pollHistory
                             classInformation.classrooms[id].tags = tags
-                            classInformation.classrooms[id].plugins = plugins
                             // classInformation.classrooms[id].owner =
                         }
 
                         // Add the teacher to the newly created class
                         classInformation.classrooms[id].students[req.session.email] = user
                         classInformation.classrooms[id].students[req.session.email].classPermissions = MANAGER_PERMISSIONS
-                        classInformation.users[req.session.email].activeClasses.push(id)
+                        classInformation.users[req.session.email].activeClass = id
                         classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS
 
                         const classStudents = await getStudentsInClass(id);
@@ -132,6 +131,10 @@ module.exports = {
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
                                     if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
+                                        if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+                                            emitToUser('reload', req.session.email, '/controlPanel');
+                                            return;
+                                        }
                                         res.redirect('/controlPanel')
                                     }
                                 } catch (err) {
@@ -167,7 +170,6 @@ module.exports = {
                             classroom.permissions = JSON.parse(classroom.permissions)
                             classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
                             classroom.pollHistory = JSON.parse(classroom.pollHistory)
-                            classroom.plugins = JSON.parse(classroom.plugins)
 
                             if (classroom.tags) {
                                 classroom.tags = classroom.tags.split(",");
@@ -199,6 +201,10 @@ module.exports = {
                             }
 
                             if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
+                                if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+                                    emitToUser('reload', req.session.email, '/controlPanel');
+                                    return;
+                                }
                                 res.redirect('/controlPanel')
                             }
                         } catch (err) {

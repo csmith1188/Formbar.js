@@ -12,8 +12,7 @@ const { classInformation } = require('./modules/class/classroom.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { settings } = require('./modules/config.js');
-const { configurePlugins } = require('./modules/plugins.js')
-const authentication = require('./modules/authentication.js')
+const authentication = require('./routes/middleware/authentication.js')
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -94,9 +93,6 @@ for (const routeFile of routeFiles) {
 	const route = require(`./routes/${routeFile}`);
 	route.run(app);
 }
-
-// Initialize plugin routes
-configurePlugins(app);
 
 // Initialize websocket routes
 initSocketRoutes();

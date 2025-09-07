@@ -14,7 +14,7 @@ function generateAccessToken(userData, classId, refreshToken) {
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
-        activeClasses: userData.activeClasses,
+        activeClass: userData.activeClass,
         class: classId,
         refreshToken
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
@@ -66,7 +66,7 @@ async function createUserData(userData) {
     
     userData.classPermissions = null;
     userData.classrooms = classroomData;
-    userData.activeClasses = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClasses : [];
+    userData.activeClass = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClass : null;
     if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.email]) {
         userData.classPermissions = classInformation.classrooms[classId].students[userData.email].classPermissions;
     }

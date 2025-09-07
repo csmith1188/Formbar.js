@@ -1,12 +1,10 @@
 const { classInformation } = require("../modules/class/classroom")
 const { database, dbRun, dbGet } = require("../modules/database")
-const { joinClass } = require("../modules/joinClass")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass, userSockets, setClassOfApiSockets } = require("../modules/socketUpdates")
-const { getStudentId } = require("../modules/student")
+const { advancedEmitToClass, userSockets, setClassOfApiSockets, emitToUser} = require("../modules/socketUpdates")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
-const { startClass, endClass, leaveClass, leaveClassroom, isClassActive} = require("../modules/class/class");
+const { startClass, endClass, leaveClass, leaveClassroom, isClassActive, joinClassroom, joinClass} = require("../modules/class/class");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -22,50 +20,11 @@ module.exports = {
 
         // Join a classroom session
         socket.on('joinClass', async (classId) => {
-            try {
-                logger.log('info', `[joinClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classId=${classId}`);
-                const email = socket.request.session.email;
-
-                // Check if the user is in the class to prevent people from joining classes just from the class ID
-                if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
-                    socket.emit('joinClass', 'You are not in that class.');
-                    return;
-                } else if (!classInformation.classrooms[classId]) {
-                    const studentId = await getStudentId(email);
-                    const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
-                    if (!classUsers) {
-                        socket.emit('joinClass', 'You are not in that class.');
-                        return;
-                    }
-                }
-
-                // Retrieve the class code either from memory or the database
-                let classCode;
-                if (classInformation.classrooms[classId]) {
-                    classCode = classInformation.classrooms[classId].key;
-                } else {
-                    classCode = (await dbGet('SELECT key FROM classroom WHERE id=?', classId)).key;
-                }
-
-                // If there's a class code, then attempt to join the class and emit the response
-                const response = await joinClass(classCode, socket.request.session);
-                socket.emit('joinClass', response);
-            } catch (err) {
-                logger.log('error', err.stack);
-                socket.emit('joinClass', 'There was a server error. Please try again');
-            }
+            await joinClass(socket, classId);
         });
 
         socket.on("joinClassroom", async (classCode) => {
-            try {
-                logger.log('info', `[joinClassroom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classCode=${classCode}`);
-                
-                const response = joinClass(classCode, socket.request.session);
-                socket.emit("joinClass", response);
-            } catch (err) {
-                logger.log('error', err.stack);
-                socket.emit('joinClass', 'There was a server error. Please try again');
-            }
+            joinClassroom(socket, classCode);
         });
 
         /**
@@ -81,7 +40,7 @@ module.exports = {
          * The user is no longer associated with the class
          */
         socket.on('leaveClassroom', async () => {
-            leaveClassroom(socket);
+            await leaveClassroom(socket);
         });
 
         /**
@@ -124,9 +83,7 @@ module.exports = {
                     }
 
                     // Emit the voting right to the user
-                    if (userSockets[email]) {
-                        userSockets[email].emit('getCanVote', votingRight);
-                    }
+                    emitToUser('getCanVote', email, votingRight);
                 }
                 socketUpdates.virtualBarUpdate(classId);
             } catch(err) {
@@ -142,7 +99,7 @@ module.exports = {
                 for (const email in classInformation.users) {
                     const user = classInformation.users[email];
                     if (user.API == api) {
-                        setClassOfApiSockets(api, user.activeClasses[0]);
+                        setClassOfApiSockets(api, user.activeClass);
                         return;
                     }
                 }

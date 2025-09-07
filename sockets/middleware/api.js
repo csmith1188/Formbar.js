@@ -62,10 +62,30 @@ module.exports = {
                     }
                 })
             } else if (socket.request.session.email) {
-                socket.join(`class-${socket.request.session.classId}`)
-                socket.join(`user-${socket.request.session.email}`)
+                // Retrieve class id from the user's activeClass if session.classId is not set
+                const email = socket.request.session.email
+                const user = classInformation.users[email]
+                const classId = user && user.activeClass != null ? user.activeClass : socket.request.session.classId
+                if (classId) {
+                    socket.request.session.classId = classId
+                    socket.request.session.save()
+                    socket.join(`class-${classId}`)
+                }
 
-                userSockets[socket.request.session.email] = socket
+                // Track all sockets for the user
+                socket.join(`user-${email}`)
+                if (!userSockets[email]) userSockets[email] = {}
+                userSockets[email][socket.id] = socket
+
+                // Cleanup on disconnect
+                socket.on('disconnect', () => {
+                    if (userSockets[email]) {
+                        delete userSockets[email][socket.id]
+                        if (Object.keys(userSockets[email]).length === 0) {
+                            delete userSockets[email]
+                        }
+                    }
+                })
             }
         } catch (err) {
             logger.log('error', err.stack);

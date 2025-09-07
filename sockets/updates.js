@@ -9,12 +9,6 @@ module.exports = {
             socketUpdates.pollUpdate()
         })
 
-        socket.on('modeUpdate', () => {
-            logger.log('info', `[modeUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-            socketUpdates.modeUpdate()
-        })
-
         // Sends poll and student response data to client side virtual bar
         socket.on('vbUpdate', () => {
             logger.log('info', `[virtualBarUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
@@ -28,17 +22,25 @@ module.exports = {
             socketUpdates.customPollUpdate(socket.request.session.email)
         })
 
-        socket.on('pluginUpdate', () => {
-            logger.log('info', `[pluginUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-            socketUpdates.pluginUpdate()
-        })
-
         // Updates and stores poll history
         socket.on('cpUpdate', () => {
             logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
-            socketUpdates.classPermissionUpdate();
+            // Get class id from the user's activeClass if session.classId is not set
+            const email = socket.request.session.email;
+            const user = email ? classInformation.users[email] : null;
+            const classId = user && user.activeClass != null ? user.activeClass : socket.request.session.classId;
+            const classroom = classId ? classInformation.classrooms[classId] : null;
+
+            // Respond with the full classroom data so the page can populate
+            if (classroom) {
+                socket.emit('cpUpdate', structuredClone(classroom));
+            }
+
+            // Send update to the rest of the class
+            if (classId) {
+                socketUpdates.classPermissionUpdate(classId);
+            }
         })
 
         socket.on('classBannedUsersUpdate', () => {
@@ -47,22 +49,6 @@ module.exports = {
 
         socket.on('managerUpdate', () => {
             managerUpdate()
-        })
-
-        // Changes the class mode
-        socket.on('modeChange', (mode) => {
-            try {
-                logger.log('info', `[modeChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[modeChange] mode=(${mode})`)
-
-                classInformation.classrooms[socket.request.session.classId].mode = mode
-
-                logger.log('verbose', `[modeChange] classData=(${classInformation.classrooms[socket.request.session.classId]})`)
-
-                socketUpdates.modeUpdate()
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
         })
     }
 }

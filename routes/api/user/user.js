@@ -1,7 +1,7 @@
 const { classInformation } = require("../../../modules/class/classroom")
 const { logger } = require("../../../modules/logger")
 const { dbGet } = require("../../../modules/database");
-const { getUser } = require("../../../modules/user");
+const {MANAGER_PERMISSIONS} = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
@@ -17,10 +17,17 @@ module.exports = {
                     user = await dbGet('SELECT * FROM users WHERE id=?', userId);
                 }
 
+                // Only include the email if the requester is the user themselves or a manager
+                const requesterEmail = req.session.email;
+                let userEmail = undefined;
+                if (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS) {
+                    userEmail = user.email
+                }
+
                 if (user) {
                     res.status(200).json({
                         id: user.id,
-                        email: user.email,
+                        email: userEmail,
                         permissions: user.permissions,
                         digipogs: user.digipogs,
                         displayName: user.displayName,

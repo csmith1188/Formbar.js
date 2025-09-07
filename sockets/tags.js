@@ -74,7 +74,7 @@ module.exports = {
 
                 // If the student has the offline tag while they are active in the class, remove it
                 // If the student is not active in the class, add the offline tag
-                if (classInformation.users[email].activeClasses.includes(socket.request.session.classId)) {
+                if (classInformation.users[email].activeClass === socket.request.session.classId) {
                     for (tag of tags) {
                         if (tag == 'Offline' || tag == '') {
                             tags.splice(tags.indexOf(tag), 1);

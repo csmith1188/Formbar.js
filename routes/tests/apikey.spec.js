@@ -5,19 +5,11 @@ const { createExpressServer } = require("../../modules/tests/tests");
 const { classInformation } = require("../../modules/class/classroom");
 
 // Mock the authentication module to simulate a user being logged in
-jest.mock('../../modules/authentication', () => ({
-    isLoggedIn: (req, res, next) => {
-        req.session = req.session || {};
-        req.session.email = 'testuser';
-        next();
-    },
-    permCheck: (req, res, next) => {
-        next();
-    }
+jest.mock('../middleware/authentication', () => ({
+    isAuthenticated: (req, res, next) => next(),
 }));
 
-classInformation.users['testuser'] = {}
-classInformation.users['testuser'].API = 'testapikey';
+classInformation.users['testuser'] = { email: 'testuser', API: 'testapikey' };
 
 describe('APIKey Route', () => {
     let app;
@@ -25,6 +17,10 @@ describe('APIKey Route', () => {
     beforeEach(() => {
         // Create a new Express app instance
         app = createExpressServer();
+        app.use((req, res, next) => {
+            req.session = { email: 'testuser' };
+            next();
+        });
 
         // Apply the route
         apiKeyRoute.run(app);

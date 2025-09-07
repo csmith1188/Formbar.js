@@ -15,10 +15,9 @@ module.exports = {
                     return res.json({ error: "User not found" })
                 }
 
-                // TODO: Something is broken here
                 const socket = createSocketFromHttp(req, res);
                 const ownedClasses = await getUserOwnedClasses(user.email, socket);
-                console.log(ownedClasses);
+                res.status(200).json(ownedClasses);
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).send(`Error: ${err.message}`);

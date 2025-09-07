@@ -139,7 +139,7 @@
 						} else {
 							multiAnswer = "radio"
 						}
-						if (mode == 'poll' && votingRight) {
+						if (votingRight) {
 							pollContent.style.display = 'block'
 
 							if (poll.status) {
@@ -303,21 +303,6 @@
 						}
 					})
 
-					socket.emit('modeUpdate')
-					socket.on('modeUpdate', (newMode) => {
-						if (mode == newMode) return
-
-						mode = newMode
-						updatePage()
-					})
-
-					socket.emit('quizUpdate')
-					socket.on('quizUpdate', (newQuiz) => {
-						if (deepObjectEqual(quiz, newQuiz)) return
-
-						quiz = newQuiz
-						updatePage()
-					})
 					//help ticket/break button
 
 					socket.on("helpSuccess", () => {

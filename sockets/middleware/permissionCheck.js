@@ -12,7 +12,14 @@ module.exports = {
         socket.use(async ([event, ...args], next) => {
             try {
                 const email = socket.request.session.email;
-                const classId = socket.request.session.classId;
+                const userData = classInformation.users[email];
+                const classId = userData && userData.activeClass != null ? userData.activeClass : socket.request.session.classId;
+
+                // If the classId in the session is different from the user's active class, update it
+                if (!socket.request.session.classId || socket.request.session.classid !== classId) {
+                    socket.request.session.classId = classId;
+                    socket.request.session.save();
+                }
 
                 logger.log('info', `[socket permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`)
                 if (!classInformation.classrooms[classId] && classId != null) {
@@ -28,7 +35,6 @@ module.exports = {
                     return;
                 }
 
-                let userData = classInformation.users[email];
                 if (!classInformation.users[email]) {
                     // Get the user data from the database
                     userData = await dbGet('SELECT * FROM users WHERE email=?', [email]);
