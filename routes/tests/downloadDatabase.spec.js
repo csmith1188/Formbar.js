@@ -3,10 +3,9 @@ const downloadDatabaseRoute = require('../downloadDatabase');
 const { createExpressServer } = require('../../modules/tests/tests');
 
 // Mock the authentication module to simulate a user being logged in
-jest.mock('../../modules/authentication', () => ({
-    permCheck: (req, res, next) => {
-        next();
-    }
+jest.mock('../middleware/authentication', () => ({
+    isAuthenticated: (req, res, next) => next(),
+    permCheck: (req, res, next) => next()
 }));
 
 describe('Download Database Route', () => {

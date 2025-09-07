@@ -1,10 +1,19 @@
-const { logger } = require("./logger")
-const { classInformation } = require("./class/classroom")
-const { logNumbers, settings } = require("./config")
-const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions")
+const { logger } = require("../../modules/logger")
+const { classInformation } = require("../../modules/class/classroom")
+const { logNumbers, settings } = require("../../modules/config")
+const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions")
 
 const whitelistedIps = {}
 const blacklistedIps = {}
+const loginOnlyRoutes = [
+	'/createClass',
+	'/selectClass',
+	'/manageClass',
+	'/managerPanel',
+	'/downloadDatabase',
+	'/logs',
+	'/apikey',
+] // Routes that can be accessed without being in a class
 
 /*
 Check if user has logged in
@@ -16,26 +25,48 @@ function isAuthenticated(req, res, next) {
 	try {
 		logger.log('info', `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
+		// Check if the user is logged in, if not redirect to login page
         const user = classInformation.users[req.session.email];
-		if (req.session.email && user) {
-            // If the user is already logged in and tries to access the login page, redirect them to the home page
-            if (req.url === '/login') {
-                res.redirect('/');
-                return;
-            }
-
-			if (user.activeClass == null) {
-				if (user.permissions >= MANAGER_PERMISSIONS || user.permissions >= TEACHER_PERMISSIONS) {
-					next()
-				} else {
-					res.redirect('/selectClass')
-				}
-			} else {
-				next()
-			}
-		} else {
-			res.redirect('/login')
+		if (!req.session.email || !user) {
+			return res.redirect('/login');
 		}
+
+		// If the user is already logged in and tries to access the login page, redirect them to the home page
+		if (req.url === '/login') {
+			res.redirect('/');
+			return;
+		}
+
+		// If the user is already in a class and tries to access the select class page, redirect them to the appropriate page
+		const isTeacher = user.permissions >= TEACHER_PERMISSIONS
+		const isInClass = user.activeClass != null;
+		if (req.url === '/selectClass' && isInClass) {
+			isTeacher ? res.redirect('/controlPanel') : res.redirect('/student');
+			return;
+		}
+
+		// Allow access to certain routes without being in a class
+		if (loginOnlyRoutes.includes(req.url)) {
+			next();
+			return;
+		}
+
+		// If the user is not in a class, then continue
+		if (isInClass) {
+			next()
+			return;
+		}
+
+		// If the user is not in a class, redirect them to the select class page
+		if (isTeacher) {
+			next();
+			return;
+		} else if (req.url !== '/selectClass') {
+			res.redirect('/selectClass');
+			return;
+		}
+
+		next();
 	} catch (err) {
 		logger.log('error', err.stack);
 		res.render('pages/message', {
@@ -71,27 +102,7 @@ function isVerified(req, res, next) {
 	}
 }
 
-// Check if the user is currently in a class.
-// If they are, then redirect them to the student page.
-function isInClass(req, res, next) {
-    try {
-        if (req.session.email) {
-            const user = classInformation.users[req.session.email];
-            if (user && user.activeClass != null) {
-                res.redirect('/student');
-                return;
-            }
 
-            next();
-        }
-    } catch (err) {
-        logger.log('error', err.stack);
-        res.render('pages/message', {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: 'Error'
-        });
-    }
-}
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
@@ -142,12 +153,7 @@ function permCheck(req, res, next) {
 				next()
 			} else {
 				logger.log('info', '[permCheck] Not enough permissions')
-                res.redirect('/');
-                // @TODO: Decide if we should show an error message or just redirect to home
-				// res.render('pages/message', {
-				// 	message: `Error: You don't have high enough permissions to access ${urlPath}`,
-				// 	title: 'Error'
-				// })
+				res.redirect('/')
 			}
 		}
 	} catch (err) {
@@ -185,7 +191,6 @@ module.exports = {
 	// Authentication functions
     isAuthenticated,
 	isVerified,
-    isInClass,
     permCheck,
 	checkIPBanned
 }

@@ -1,10 +1,10 @@
-const { permCheck, isAuthenticated} = require("../modules/authentication")
+const { permCheck, isAuthenticated} = require("./middleware/authentication")
 const { classInformation, Classroom } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS} = require("../modules/permissions")
-const { setClassOfApiSockets } = require("../modules/socketUpdates")
+const { setClassOfApiSockets, userSockets, emitToUser} = require("../modules/socketUpdates")
 const { getStudentsInClass } = require("../modules/student")
 const { generateKey } = require("../modules/util")
 
@@ -131,6 +131,10 @@ module.exports = {
 
                                     if (makeClassStatus instanceof Error) throw makeClassStatus
                                     if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
+                                        if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+                                            emitToUser('reload', req.session.email, '/controlPanel');
+                                            return;
+                                        }
                                         res.redirect('/controlPanel')
                                     }
                                 } catch (err) {
@@ -197,6 +201,10 @@ module.exports = {
                             }
 
                             if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
+                                if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+                                    emitToUser('reload', req.session.email, '/controlPanel');
+                                    return;
+                                }
                                 res.redirect('/controlPanel')
                             }
                         } catch (err) {

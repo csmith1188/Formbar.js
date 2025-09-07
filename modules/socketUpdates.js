@@ -1,4 +1,4 @@
-const { whitelistedIps, blacklistedIps } = require("./authentication");
+const { whitelistedIps, blacklistedIps } = require("../routes/middleware/authentication");
 const { classInformation } = require("./class/classroom");
 const { settings } = require("./config");
 const { database, dbGetAll, dbRun } = require("./database");
@@ -529,7 +529,7 @@ class SocketUpdates {
             let data = { prompt: '', names: [], letter: [], text: [] }
             currentPoll += 1
     
-            let dateConfig = Date.now()
+            let dateConfig = new Date()
             let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
     
             data.prompt = classInformation.classrooms[classId].poll.prompt

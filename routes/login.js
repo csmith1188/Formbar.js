@@ -9,6 +9,7 @@ const { managerUpdate } = require("../modules/socketUpdates");
 const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const {isAuthenticated} = require("passport/lib/http/request");
 
 // Regex to test if the password and display name are valid
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]{5,20}$/;

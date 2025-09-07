@@ -140,10 +140,13 @@ async function deleteUser(userId, socket, socketUpdates) {
             return
         }
 
-        const userSocket = userSockets[user.email];
+        const userSocketsMap = userSockets[user.email];
         const usersSocketUpdates = userSocketUpdates[user.email];
-        if (userSocket && usersSocketUpdates) {
-            usersSocketUpdates.logout(userSocket);
+        if (userSocketsMap && usersSocketUpdates) {
+            const anySocket = Object.values(userSocketsMap)[0];
+            if (anySocket) {
+                usersSocketUpdates.logout(anySocket);
+            }
         }
 
         try {

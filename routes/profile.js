@@ -1,4 +1,4 @@
-const { isVerified } = require('../modules/authentication');
+const { isVerified } = require('./middleware/authentication');
 const { dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger')
 const { logNumbers } = require('../modules/config');

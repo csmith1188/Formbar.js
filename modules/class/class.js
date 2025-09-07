@@ -1,6 +1,6 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
-const { advancedEmitToClass, emitToUser} = require("../socketUpdates");
+const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
 const { getStudentId } = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
@@ -10,16 +10,6 @@ function startClass(socket) {
     try {
         logger.log('info', `[startClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
         const socketUpdates = userSocketUpdates[socket.request.session.email];
-
-        // Enable all plugins
-        for (const pluginName of Object.keys(plugins)) {
-            const plugin = plugins[pluginName]
-            if (typeof plugin.onEnable == 'function') {
-                plugin.onEnable()
-            } else {
-                logger.log('warning', `[startClass] Plugin ${plugin.name} does not have an onEnable function.`)
-            }
-        }
 
         // Start the class
         const classId = socket.request.session.classId
@@ -70,11 +60,14 @@ async function joinClass(socket, classId) {
         // If there's a class code, then attempt to join the class and emit the response
         const response = await joinClassroomByCode(classCode, socket.request.session);
         if (response === true) {
-            socket.request.session.classId = classId;
-            socket.request.session.save();
+            for (const userSocket of Object.values(userSockets[email])) {
+                userSocket.request.session.classId = classId;
+                userSocket.request.session.save();
+                userSocket.emit('joinClass', response);
+            }
         }
 
-        socket.emit('joinClass', response);
+        emitToUser('joinClass', email, response);
     } catch (err) {
         logger.log('error', err.stack);
         socket.emit('joinClass', 'There was a server error. Please try again');

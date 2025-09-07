@@ -1,14 +1,14 @@
-const { isAuthenticated, permCheck, isInClass } = require("../modules/authentication")
+const { isAuthenticated, permCheck  } = require("./middleware/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
 const { joinClassroomByCode } = require("../modules/joinClass")
 const { logger } = require("../modules/logger")
-const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socketUpdates")
+const { setClassOfApiSockets, advancedEmitToClass, userSockets, emitToUser} = require("../modules/socketUpdates")
 
 module.exports = {
     run(app) {
-        app.get('/selectClass', isAuthenticated, permCheck, isInClass, (req, res) => {
+        app.get('/selectClass', isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
@@ -147,7 +147,10 @@ module.exports = {
 
                 advancedEmitToClass('cpUpdate', classId, { classPermissions }, classInformation.classrooms[classId])
                 setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
-        
+
+				if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+					emitToUser('reload', req.session.email);
+				}
                 res.redirect('/')
             } catch (err) {
                 logger.log('error', err.stack);
