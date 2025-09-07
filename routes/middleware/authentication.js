@@ -1,7 +1,7 @@
 const { logger } = require("../../modules/logger")
 const { classInformation } = require("../../modules/class/classroom")
 const { logNumbers, settings } = require("../../modules/config")
-const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions")
+const { TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions")
 
 const whitelistedIps = {}
 const blacklistedIps = {}
