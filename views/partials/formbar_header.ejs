@@ -6,19 +6,19 @@
 <header id="formbarHeader">
   <a href="/" id="headerLogo">Formbar</a>
   <% if (locals.currentUser) { %>
-    <% if (currentUser.classPermissions) {%>
+    <% if (currentUser && currentUser.activeClass != null) { %>
             <a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab">Panel</a>
     <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
           <a href="/managerPanel" class="headerTab">Manager</a>
           <% } %>
-            <% if (!currentUser.classPermissions) { %>
+            <% if (!(currentUser && currentUser.activeClass != null)) { %>
               <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
                 <a href="/manageClass" class="headerTab">Manage Class</a>
                 <% } %>
                   <a href="/selectClass" class="headerTab">Join Class</a>
                   <% } %>
-                        <% if (currentUser.classPermissions) { %>
+                        <% if (currentUser && currentUser.activeClass != null) { %>
                           <button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button>
 
                             <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button>

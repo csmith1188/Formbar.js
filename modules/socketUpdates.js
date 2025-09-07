@@ -464,58 +464,68 @@ class SocketUpdates {
         const userId = socket.request.session.userId
         const classId = socket.request.session.classId
 
-        // If the user is in a class, then get the class name and mark the user as inactive
-        let className = null
-        if (classId) {
-            className = classInformation.classrooms[classId].className
-            classInformation.users[email].activeClass = null;
-            classInformation.users[email].classPermissions = null;
+        // Remove this socket from the user's active sockets first and determine if this was the last one
+        let isLastSession = false;
+        if (userSockets[email]) {
+            delete userSockets[email][socket.id];
+            if (Object.keys(userSockets[email]).length === 0) {
+                delete userSockets[email];
+                isLastSession = true;
+            }
+        } else {
+            isLastSession = true;
         }
+
+        // Leave the room only on this socket
+        if (classId) socket.leave(`class-${classId}`)
 
         socket.request.session.destroy((err) => {
             try {
                 if (err) throw err
 
-                // Delete the user's socket
-                delete userSockets[email][socket.id];
-                if (Object.keys(userSockets[email]).length === 0) {
-                    delete userSockets[email];
-                }
-
-                socket.leave(`class-${classId}`)
+                // Reload just this client
                 socket.emit('reload')
 
-                // If the user is in a class, then remove the user from the class, update the class permissions, and virtual bar
-                if (className) {
-                    const student = classInformation.classrooms[classId].students[email];
-                    if (!student) return;
-                    if (student.isGuest) {
-                        // Remove the guest from the class
-                        delete classInformation.classrooms[classId].students[email];
-                    } else {
-                        // Mark the student as offline
-                        student.activeClass = null;
-                        student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                // Only clear global user/class state if this was the last active session
+                if (isLastSession && classId) {
+                    const user = classInformation.users[email];
+                    if (user) {
+                        user.activeClass = null;
+                        user.classPermissions = null;
                     }
-                    
-                    // Update class permissions and virtual bar
-                    this.classPermissionUpdate(classId)
-                    this.virtualBarUpdate(classId)
-                }
-    
-                database.get(
-                    'SELECT * FROM classroom WHERE owner=? AND id=?',
-                    [userId, classId],
-                    (err, classroom) => {
-                        if (err) {
-                            logger.log('error', err.stack)
+
+                    const classroom = classInformation.classrooms[classId];
+                    if (classroom) {
+                        const student = classroom.students[email];
+                        if (student) {
+                            if (student.isGuest) {
+                                delete classroom.students[email];
+                            } else {
+                                student.activeClass = null;
+                                student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                            }
                         }
 
-                        if (classroom) {
-                            this.endClass(classroom.id);
-                        }
+                        // Update class permissions and virtual bar
+                        this.classPermissionUpdate(classId)
+                        this.virtualBarUpdate(classId)
                     }
-                )
+
+                    // If this user owns the classroom, end it
+                    database.get(
+                        'SELECT * FROM classroom WHERE owner=? AND id=?',
+                        [userId, classId],
+                        (err, classroom) => {
+                            if (err) {
+                                logger.log('error', err.stack)
+                            }
+
+                            if (classroom) {
+                                this.endClass(classroom.id);
+                            }
+                        }
+                    )
+                }
             } catch (err) {
                 logger.log('error', err.stack)
             }
