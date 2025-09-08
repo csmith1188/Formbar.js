@@ -549,6 +549,14 @@
         margin: 0;
         width: 100% !important;
     }
+
+    div#content {
+        z-index: 0;
+    }
+
+    button#loadPoll {
+        margin: auto !important;
+    }
 }
 
 @media screen and (max-width: 1280px) and (orientation: landscape) {
