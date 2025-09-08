@@ -1,5 +1,5 @@
-const { createTestClass, testData, createTestUser, createSocket} = require("../../modules/tests/tests")
-const { run } = require("../help");
+const { createTestClass, testData, createTestUser, createSocket } = require("../../modules/tests/tests")
+const { run: helpRun } = require("../help");
 
 describe("help", () => {
     let socket;
@@ -11,7 +11,7 @@ describe("help", () => {
         socket = createSocket();
 
         // Run the socket handler
-        run(socket, socketUpdates);
+        helpRun(socket, socketUpdates);
         helpHandler = socket.on.mock.calls.find(call => call[0] === 'help')[1];
         deleteHelpTicketHandler = socket.on.mock.calls.find(call => call[0] === 'deleteTicket')[1];
     });
@@ -43,7 +43,7 @@ describe("help", () => {
         classData.isActive = true;
         classData.students[userData.email].help = {
             reason: "reason",
-            time: new Date()
+            time: Date.now()
         }
         await deleteHelpTicketHandler(userData.email);
 

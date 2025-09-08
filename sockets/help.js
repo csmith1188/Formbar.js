@@ -19,7 +19,7 @@ module.exports = {
                 logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
                 // Set the student's help ticket to an object with the reason and time of the request
-                const time = new Date();
+                const time = Date.now();
                 const student = classInformation.classrooms[classId].students[email];
                 student.help = { reason: reason, time: time };
 

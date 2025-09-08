@@ -9,6 +9,7 @@ const { managerUpdate } = require("../modules/socketUpdates");
 const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const {isAuthenticated} = require("passport/lib/http/request");
 
 // Regex to test if the password and display name are valid
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]{5,20}$/;
@@ -26,7 +27,7 @@ module.exports = {
                 }
 
                 // If the user is not logged in, render the login page
-                if (req.session.email !== undefined) {
+                if (req.session.email !== undefined && classInformation.users[req.session.email]) {
                     res.redirect('/');
                     return;
                 } else if (!token) {
@@ -453,7 +454,7 @@ module.exports = {
                     const email = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student =  new Student(
                         email, // email
-                        9999, // Id
+                        -1, // Id
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls

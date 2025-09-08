@@ -1,5 +1,5 @@
 const { createSocket, createTestUser, testData, createTestClass } = require("../../modules/tests/tests");
-const { run } = require('../apikey');
+const { run: apiKeyRun } = require('../apikey');
 const { dbRun } = require("../../modules/database");
 
 describe('apikey', () => {
@@ -11,7 +11,7 @@ describe('apikey', () => {
         socket = createSocket();
 
         // Run the socket handler
-        run(socket, socketUpdates);
+        apiKeyRun(socket, socketUpdates);
         refreshApiKeyHandler = socket.on.mock.calls.find(call => call[0] === 'refreshApiKey')[1];
     });
 

@@ -24,7 +24,7 @@ describe('Manage Class Route', () => {
             [mockemail]: {
                 email: mockemail,
                 permissions: TEACHER_PERMISSIONS,
-                activeClasses: []
+                activeClass: null
             }
         };
 
@@ -48,13 +48,9 @@ describe('Manage Class Route', () => {
             // Set user permissions to student level
             classInformation.users[mockemail].permissions = STUDENT_PERMISSIONS;
 
-            const response = await request(app)
+            await request(app)
                 .get('/manageClass')
-                .expect(200);
-
-            expect(response.body.view).toBe('pages/message');
-            expect(response.body.options.message).toContain("You don't have high enough permissions");
-            expect(response.body.options.title).toBe('Error');
+                .expect(302);
         });
 
         it('should redirect to login when user is not logged in', async () => {

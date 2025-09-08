@@ -11,11 +11,8 @@ const BANNED_PERMISSIONS = 0
 // Permission level needed to access each page along with if it's a class-related page or not
 const PAGE_PERMISSIONS = {
 	controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
-	previouslessons: { permissions: TEACHER_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
-	makequiz: { permissions: TEACHER_PERMISSIONS, classPage: true },
-	plugins: { permissions: STUDENT_PERMISSIONS, classPage: true },
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
@@ -65,14 +62,12 @@ const CLASS_SOCKET_PERMISSIONS = {
 	requestBreak: STUDENT_PERMISSIONS,
 	endBreak: STUDENT_PERMISSIONS,
 	pollUpdate: STUDENT_PERMISSIONS,
-	modeUpdate: STUDENT_PERMISSIONS,
 	vbUpdate: GUEST_PERMISSIONS,
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	leaveClassroom: GUEST_PERMISSIONS,
 	setClassSetting: TEACHER_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
-	pluginUpdate: STUDENT_PERMISSIONS,
 	setClassPermissionSetting: MANAGER_PERMISSIONS,
 	classPoll: MOD_PERMISSIONS,
 	timer: TEACHER_PERMISSIONS,
@@ -112,7 +107,6 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	removePlugin: 'manageClass',
 	startClass: 'manageClass',
 	endClass: 'manageClass',
-	modeChange: 'manageClass',
 	isClassActive: 'manageClass',
 	regenerateClassCode: 'manageClass',
 	changeClassName: 'manageClass',
@@ -121,9 +115,6 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classUnbanUser: 'manageStudents',
 	awardDigipogs: 'userDefaults',
 	requestConversion: 'userDefaults',
-	installPlugin: 'manageClass',
-	uninstallPlugin: 'manageClass',
-	swapPlugin: 'manageClass',
 }
 
 module.exports = {

@@ -1,12 +1,12 @@
-const { run } = require('../pollCreation');
+const { run: pollCreationRun } = require('../pollCreation');
 const { classInformation } = require("../../modules/class/classroom");
 const { logger } = require("../../modules/logger");
 const { generateColors } = require("../../modules/util");
-const { createTestClass, testData, createSocket} = require("../../modules/tests/tests");
+const { createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
+const { userSocketUpdates } = require("../init");
 
 jest.mock("../../modules/class/classroom");
-jest.mock("../../modules/logger");
-jest.mock("../../modules/socketUpdates");
+// jest.mock("../../modules/logger");
 jest.mock("../../modules/util");
 
 describe('startPoll', () => {
@@ -15,17 +15,10 @@ describe('startPoll', () => {
     let startPollHandler;
 
     beforeEach(() => {
+        jest.mock("../../modules/socketUpdates");
         socket = createSocket();
-
-        // Mock the socket updates
-        // This is to minimize the number of moving parts that could cause a test to fail
-        socketUpdates = {
-            clearPoll: jest.fn(),
-            pollUpdate: jest.fn(),
-            virtualBarUpdate: jest.fn(),
-            classPermissionUpdate: jest.fn(),
-            customPollUpdate: jest.fn()
-        };
+        socketUpdates = createSocketUpdates();
+        userSocketUpdates[socket.request.session.email] = socketUpdates;
 
         const classData = createTestClass(testData.code, 'Test Class');
         classData.isActive = true;
@@ -35,7 +28,7 @@ describe('startPoll', () => {
         }
 
         // Run the socket handler
-        run(socket, socketUpdates);
+        pollCreationRun(socket, socketUpdates);
         generateColors.mockReturnValue(['#ff0000', '#00ff00', '#0000ff']);
         startPollHandler = socket.on.mock.calls.find(call => call[0] === 'startPoll')[1];
     });
@@ -69,4 +62,8 @@ describe('startPoll', () => {
         await startPollHandler(3, true, 'Test Poll', [{}, {}, {}], false, 1, ['tag1'], ['box1'], ['indeterminate1'], true);
         expect(logger.log).toHaveBeenCalledWith('error', expect.stringContaining('Test Error'));
     });
+
+    afterAll(() => {
+        jest.unmock('../../modules/socketUpdates');
+    })
 });

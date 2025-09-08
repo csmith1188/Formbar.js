@@ -116,11 +116,17 @@ function logout() {
 	}
 }
 
-function leaveClass() {
-	if (confirm('Are you sure you want to change classes? This will remove you from the current class session.')) {
-	socket.emit('leaveClass')
-	}
-}
+  function leaveClass() {
+    if (confirm('Are you sure you want to change classes? This will remove you from the current class session.')) {
+      // Redirect teachers to manageClass, others to selectClass after the server triggers a reload
+      if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
+        window.reloadRedirect = '/manageClass';
+      } else {
+        window.reloadRedirect = '/selectClass';
+      }
+      socket.emit('leaveClass')
+    }
+  }
 
 function leaveClassroom() {
 	if (confirm('Are you sure you want to leave the classroom?')) { 
@@ -128,10 +134,10 @@ function leaveClassroom() {
 	}
 }
 
-if (currentUser && currentUser.activeClasses.length > 0 && currentUser.permissions >= MOD_PERMISSIONS) {
-	const muteButton = document.getElementById("muteButton");
-	muteButton.style.display = "block";
-}
+  if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
+      const muteButton = document.getElementById("muteButton");
+      muteButton.style.display = "block";
+  }
 </script>
 
 <%- include('./mobile_dialogs.ejs') %>

@@ -1,5 +1,5 @@
 <%- include('../partials/header_content') %>
-    <%- include('../partials/sockets') %>
+<%- include('../partials/sockets') %>
 
         <body id="colorContent" class="selectClass" role="document" tabindex="0">
             <%- include('../partials/formbar_header') %>
@@ -28,22 +28,28 @@
                 </div>
         </body>
 
-        <script>
-            if (document.getElementById("joinedKey")) {
-                document.getElementById("joinedKey").addEventListener('input', () => {
-                    if (event.target.value) {
-                        document.getElementById("submitJoinedButton").classList.remove("unselectable")
-                    } else {
-                        document.getElementById("submitJoinedButton").classList.add("unselectable")
-                    }
-                })
+<script>
+    if (document.getElementById("joinedKey")) {
+        document.getElementById("joinedKey").addEventListener('input', () => {
+            if (event.target.value) {
+                document.getElementById("submitJoinedButton").classList.remove("unselectable")
+            } else {
+                document.getElementById("submitJoinedButton").classList.add("unselectable")
             }
+        })
+    }
 
-            document.getElementById("joinKey").addEventListener('input', (event) => {
-                if (event.target.value) {
-                    document.getElementById("submitJoinButton").classList.remove("unselectable")
-                } else {
-                    document.getElementById("submitJoinButton").classList.add("unselectable")
-                }
-            })
-        </script>
+    document.getElementById("joinKey").addEventListener('input', (event) => {
+        if (event.target.value) {
+            document.getElementById("submitJoinButton").classList.remove("unselectable")
+        } else {
+            document.getElementById("submitJoinButton").classList.add("unselectable")
+        }
+    })
+
+    socket.on('joinClass', (success) => {
+        if (success === true) {
+            window.location.href = '/student';
+        }
+    });
+</script>

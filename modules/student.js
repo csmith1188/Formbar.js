@@ -20,7 +20,7 @@ class Student {
 	) {
 		this.email = email;
 		this.id = id;
-		this.activeClasses = [];
+		this.activeClass = null;
 		this.permissions = permissions;
 		this.classPermissions = null;
 		this.tags = tags;
@@ -33,7 +33,6 @@ class Student {
 		};
 		this.help = false;
 		this.break = false;
-		this.quizScore = '';
 		this.API = API;
 		this.pogMeter = 0;
 		this.displayName = displayName;
