@@ -5,14 +5,14 @@ let selectedTagNames = new Set() // Stores selected tags so they don't get reset
 function createTagSelectButtons() {
 	// Clear every tag in the select box
 	for (const tag of selectPollDiv.children) {
-		if (tag.className === 'switchAll') continue;
+		if (tag.className === 'switchAll revampButton') continue;
 		tag.remove();
 	}
 
 	// Creation of tag buttons in the select box
 	for (let i = 1; i <= currentTags.length; i++) {
 		let tagPoll = document.createElement('button');
-		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll';
+		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll revampButton';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
@@ -20,10 +20,10 @@ function createTagSelectButtons() {
 		tagPoll.onclick = () => {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
-				tagPoll.className = 'pressed';
+				tagPoll.className = 'pressed revampButton';
 				selectedTagNames.add(tagPoll.textContent);
 			} else {
-				tagPoll.className = 'tagPoll'
+				tagPoll.className = 'tagPoll revampButton'
 				selectedTagNames.delete(tagPoll.textContent);
 			}
 
@@ -102,6 +102,51 @@ function createTagSelectButtons() {
 	}
 }
 
+
+let pollHoverDiv = document.querySelector('div#pollPreview');
+let hoverTimeoutBig = null;
+let hoverCountBig = 500;
+let pollDetailsDiv = document.getElementById('pollDetails');
+pollDetailsDiv.addEventListener('mouseover', (e) => {
+	if(orientation == 'portrait') return; // Don't show on landscape mode
+	hoverTimeoutBig = setTimeout(() => { 
+		hoverShowPollDetails(classroom.poll, e, true);
+		pollDetailsDiv.classList.add('tutorialDone');
+		if(localStorage.getItem('controlTutorialDone') !== "true") {
+			localStorage.setItem('controlTutorialDone', true);
+		}
+
+	}, hoverCountBig);
+});
+pollDetailsDiv.addEventListener('mouseout', () => {
+	pollHoverDiv.className = 'revampDiv';
+	clearTimeout(hoverTimeoutBig);
+});
+
+if(localStorage.getItem('controlTutorialDone') == "true") {
+	pollDetailsDiv.classList.add('tutorialDone');
+}
+
+function hoverShowPollDetails(poll, event, isDetails = false) {
+	console.log(poll)
+	pollHoverDiv.innerHTML = `<h1>${poll.prompt}</h1>`;
+
+	if(!isDetails) {
+		poll.answers.forEach((answer, index) => {
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answer.color}44";>${answer.answer}</button>`
+		});
+	} else {
+		Object.keys(poll.responses).forEach((answer, index) => {
+			let answerDetails = poll.responses[answer];
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answerDetails.color}44";>${answerDetails.answer}</button>`
+		});
+	}
+
+	pollHoverDiv.style.setProperty('--mouseX', event.x - 300 + 'px');
+	pollHoverDiv.style.setProperty('--mouseY', event.y + 'px');
+	pollHoverDiv.className = 'revampDiv open';
+}
+
 socket.emit('customPollUpdate')
 socket.on('customPollUpdate', (
 	newPublicCustomPolls,
@@ -120,9 +165,23 @@ socket.on('customPollUpdate', (
 
 	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
-		let customPoll = customPolls[i]
+		let customPoll = customPolls[i];
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
+		startButton.className = 'start-custom-poll revampButton'
+
+		// Logic for showing poll details on hover
+		let hoverTimeout = null;
+		let hoverCount = 500;
+		startButton.addEventListener('mouseover', (e) => {
+			if(orientation == 'portrait') return; // Don't show on landscape mode
+			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll, e) }, hoverCount);
+		});
+		startButton.addEventListener('mouseout', () => {
+			pollHoverDiv.className = 'revampDiv';
+			clearTimeout(hoverTimeout);
+		});
+
+
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
@@ -138,7 +197,7 @@ socket.on('customPollUpdate', (
 	
 	// Creation of switchAll button
 	const switchAll = document.createElement('button')
-	switchAll.className = 'switchAll'
+	switchAll.className = 'switchAll revampButton'
 	switchAll.textContent = 'Switch All'
 
 	function getStudentVotingEligibility() {
@@ -171,7 +230,7 @@ socket.on('customPollUpdate', (
 		selectedTagNames.clear();
 		for (const tag of selectPollDiv.children) {
 			if (tag.className === 'pressed') {
-				tag.className = "tagPoll";
+				tag.className = "tagPoll revampButton";
 			}
 		}
 
@@ -265,7 +324,7 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 })
 
 socket.on("changeClassName", (name) => {
-	className.textContent = `Class Name: ${name}`;
+	className.innerHTML = `<b>Class Name:</b> ${name}`;
 })
 
 socket.on("classPollSave", (pollId) => {
