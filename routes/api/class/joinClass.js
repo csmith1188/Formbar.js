@@ -1,7 +1,7 @@
 const { createSocketFromHttp } = require("../../../modules/webServer");
 const { logger } = require("../../../modules/logger");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
-const { joinClass, joinClassroom } = require("../../../modules/class/class");
+const { joinClass, joinRoom } = require("../../../modules/class/class");
 
 module.exports = {
     run(router) {
@@ -17,10 +17,10 @@ module.exports = {
         });
 
         // Joins a classroom
-        router.post('/class/:id/join', httpPermCheck("joinClassroom"), async (req, res) => {
+        router.post('/class/:id/join', httpPermCheck("joinRoom"), async (req, res) => {
             try {
                 const socket = createSocketFromHttp(req, res);
-                await joinClassroom(socket)
+                await joinRoom(socket)
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

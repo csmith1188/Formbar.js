@@ -50,16 +50,16 @@ function buildStudent(classroom, studentData) {
 
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.email
-        studentBox.checked = classroom.poll.studentBoxes.indexOf(studentData.email) != -1
+        studentBox.checked = classroom.poll.studentsAllowedToVote.indexOf(studentData.email) != -1
 
         for (let eachResponse in classroom.poll.responses) {
-            if (studentData.pollRes.textRes) {
+            if (studentData.pollRes.allowTextResponses) {
                 pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = studentData.pollRes.textRes
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.multiRes) {
+            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.allowMultipleResponses) {
                 pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
-            } else if (classroom.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (classroom.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement('span')
                 tempElem.textContent = eachResponse + ' '
                 tempElem.style.color = classroom.poll.responses[eachResponse].color

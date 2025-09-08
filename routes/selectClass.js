@@ -2,7 +2,7 @@ const { isAuthenticated, permCheck  } = require("./middleware/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
-const { joinClassroomByCode } = require("../modules/joinClass")
+const { joinRoomByCode } = require("../modules/joinClass")
 const { logger } = require("../modules/logger")
 const { setClassOfApiSockets, advancedEmitToClass, userSockets, emitToUser} = require("../modules/socketUpdates")
 
@@ -103,7 +103,7 @@ module.exports = {
 
                 logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`)        
 
-                const classJoinStatus = await joinClassroomByCode(classCode, req.session)
+                const classJoinStatus = await joinRoomByCode(classCode, req.session)
                 if (typeof classJoinStatus == 'string') {
                     res.render('pages/message', {
                         message: `Error: ${classJoinStatus}`,

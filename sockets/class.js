@@ -1,10 +1,10 @@
 const { classInformation } = require("../modules/class/classroom")
-const { database, dbRun, dbGet } = require("../modules/database")
+const { database, dbRun } = require("../modules/database")
 const { logger } = require("../modules/logger")
-const { advancedEmitToClass, userSockets, setClassOfApiSockets, emitToUser} = require("../modules/socketUpdates")
+const { advancedEmitToClass, setClassOfApiSockets, emitToUser} = require("../modules/socketUpdates")
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
-const { startClass, endClass, leaveClass, leaveClassroom, isClassActive, joinClassroom, joinClass} = require("../modules/class/class");
+const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -23,8 +23,8 @@ module.exports = {
             await joinClass(socket, classId);
         });
 
-        socket.on("joinClassroom", async (classCode) => {
-            joinClassroom(socket, classCode);
+        socket.on("joinRoom", async (classCode) => {
+            joinRoom(socket, classCode);
         });
 
         /**
@@ -39,8 +39,8 @@ module.exports = {
          * Leaves the classroom entirely
          * The user is no longer associated with the class
          */
-        socket.on('leaveClassroom', async () => {
-            await leaveClassroom(socket);
+        socket.on('leaveRoom', async () => {
+            await leaveRoom(socket);
         });
 
         /**
@@ -52,7 +52,7 @@ module.exports = {
                 logger.log('info', `[getCanVote] email=(${email}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
-                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 const canVote = studentBoxes.indexOf(email) > -1;
                 socket.emit('getCanVote', canVote);
             } catch (err) {
@@ -70,7 +70,7 @@ module.exports = {
                 logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
-                const studentBoxes = classInformation.classrooms[classId].poll.studentBoxes;
+                const studentBoxes = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 for (const email in votingData) {
                     const votingRight = votingData[email];
                     if (votingRight) {

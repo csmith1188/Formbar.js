@@ -18,7 +18,9 @@ const earnedObject = {
  */
 async function createPoll(pollData, socket) {
     try {
-        const { resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
+        const { pollPrompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const numberOfResponses = Object.keys(pollOptions).length;
+
         const socketUpdates = userSocketUpdates[socket.request.session.email];
         earnedObject.earnedDigipogs = [];
 
@@ -31,15 +33,14 @@ async function createPoll(pollData, socket) {
 
         // Log poll information
         logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-        logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
+        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) pollPrompt=(${pollPrompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
 
         await socketUpdates.clearPoll()
-        let generatedColors = generateColors(resNumber)
+        let generatedColors = generateColors(Object.keys(pollOptions).length)
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
 
-        classInformation.classrooms[classId].mode = 'poll'
-        classInformation.classrooms[classId].poll.blind = blind
+        classInformation.classrooms[classId].poll.isBlind = isBlind
         classInformation.classrooms[classId].poll.status = true
 
         if (tags) {
@@ -48,10 +49,10 @@ async function createPoll(pollData, socket) {
             classInformation.classrooms[classId].poll.requiredTags = []
         }
 
-        if (boxes) {
-            classInformation.classrooms[classId].poll.studentBoxes = boxes
+        if (studentsAllowedToVote) {
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
-            classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = Object.keys(classInformation.classrooms[classId].students)
         }
 
         if (indeterminate) {
@@ -62,17 +63,22 @@ async function createPoll(pollData, socket) {
 
         // Creates an object for every answer possible the teacher is allowing
         const letterString = 'abcdefghijklmnopqrstuvwxyz'
-        for (let i = 0; i < resNumber; i++) {
+        for (let i = 0; i < numberOfResponses; i++) {
             let answer = letterString[i]
             let weight = 1
             let color = generatedColors[i]
 
-            if (polls[i].answer)
-                answer = polls[i].answer
-            if (polls[i].weight)
-                weight = polls[i].weight
-            if (polls[i].color)
-                color = polls[i].color
+            if (pollOptions[i].answer) {
+                answer = pollOptions[i].answer
+            }
+
+            if (pollOptions[i].weight) {
+                weight = pollOptions[i].weight
+            }
+
+            if (pollOptions[i].color) {
+                color = pollOptions[i].color
+            }
 
             classInformation.classrooms[classId].poll.responses[answer] = {
                 answer: answer,
@@ -83,9 +89,9 @@ async function createPoll(pollData, socket) {
 
         // Set the poll's data in the classroom
         classInformation.classrooms[classId].poll.weight = weight
-        classInformation.classrooms[classId].poll.textRes = resTextBox
+        classInformation.classrooms[classId].poll.allowTextResponses = allowTextResponses
         classInformation.classrooms[classId].poll.prompt = pollPrompt
-        classInformation.classrooms[classId].poll.multiRes = multiRes
+        classInformation.classrooms[classId].poll.allowMultipleResponses = allowMultipleResponses
         for (const key in classInformation.classrooms[socket.request.session.classId].students) {
             classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
             classInformation.classrooms[classId].students[key].pollRes.textRes = ''
@@ -181,13 +187,13 @@ function pollResponse(res, textRes, socket) {
     }
 
     // Check if user is allowed to respond
-    const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {
+    const isRemoving = res === 'remove' || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
+    if (!classroom.poll.studentsAllowedToVote.includes(email) && !isRemoving) {
         return; // If the user is not included in the poll, do not allow them to respond
     }
 
     // Check if the response provided is a valid response
-    if (!classroom.poll.multiRes) {
+    if (!classroom.poll.allowMultipleResponses) {
         // For normal polls, response must be either 'remove' or a valid response key
         if (res !== 'remove' && !Object.keys(classroom.poll.responses).includes(res)) {
             return;
@@ -210,7 +216,7 @@ function pollResponse(res, textRes, socket) {
 
     // If the users response is different from the previous response, play a sound
     const prevRes = classroom.students[email].pollRes.buttonRes;
-    const hasChanged = classroom.poll.multiRes ?
+    const hasChanged = classroom.poll.allowMultipleResponses ?
         JSON.stringify(prevRes) !== JSON.stringify(res) :
         prevRes !== res;
 
@@ -224,7 +230,7 @@ function pollResponse(res, textRes, socket) {
 
     // Handle response storage
     if (isRemoving) {
-        classroom.students[email].pollRes.buttonRes = classroom.poll.multiRes ? [] : "";
+        classroom.students[email].pollRes.buttonRes = classroom.poll.allowMultipleResponses ? [] : "";
         classroom.students[email].pollRes.textRes = "";
     } else {
         classroom.students[email].pollRes.buttonRes = res;
@@ -235,7 +241,7 @@ function pollResponse(res, textRes, socket) {
     // Digipog calculations
     if (!isRemoving && earnedObject.earnedDigipogs[email] === undefined) {
         let amount = 0;
-        if (classroom.poll.multiRes) {
+        if (classroom.poll.allowMultipleResponses) {
             amount = res.length;
         } else {
             // For normal polls, count based on text response length

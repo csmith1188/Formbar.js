@@ -19,9 +19,9 @@
                   <a href="/selectClass" class="headerTab">Join Class</a>
                   <% } %>
                         <% if (currentUser && currentUser.activeClass != null) { %>
-                          <button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change Class</button>
+                          <button href="/" class="headerTab" title="Change Class" onclick="leaveClass()">Change Class</button>
 
-                            <button href="/" class="headerTab" title="Leave classroom" onclick="leaveClassroom()">Leave Classroom</button>
+                            <button href="/" class="headerTab" title="Leave Room" onclick="leaveRoom()">Leave Room</button>
                           <% } %>
                             <button href="/" id="logoutButton" onclick="logout()">
                               <img id="logoutIcon" src="/img/logout.svg" title="Logout">
@@ -86,9 +86,9 @@
     }
   }
 
-  function leaveClassroom() {
+  function leaveRoom() {
     if (confirm('Are you sure you want to leave the classroom?')) { 
-      socket.emit('leaveClassroom') 
+      socket.emit('leaveRoom')
     }
   }
 

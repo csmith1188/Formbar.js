@@ -291,12 +291,24 @@
             }
         }
 
-        socket.emit('managerUpdate')
-        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
-            users = tempUsers
+        const managerData = fetch('/api/manager', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            }
+        }).then(async rawData => {
+            const managerData = await rawData.json();
+            users = managerData.users;
 
             filterSortChange()
         })
+
+        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
+            users = tempUsers
+            filterSortChange()
+        })
+
         socket.emit('ipUpdate')
         socket.on('ipUpdate', (type, active, ips) => {
             let ipListDiv
@@ -360,7 +372,6 @@
             newIp.onchange = (event) => {
                 if (!event.target.checkValidity()) {
                     event.target.reportValidity()
-                    return
                 }
             }
             addIpForm.append(newIp)

@@ -9,7 +9,6 @@ const { managerUpdate } = require("../modules/socketUpdates");
 const { sendMail, limitStore, RATE_LIMIT } = require('../modules/mail.js');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const {isAuthenticated} = require("passport/lib/http/request");
 
 // Regex to test if the password and display name are valid
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\"~?/\|\\]{5,20}$/;
@@ -106,7 +105,7 @@ module.exports = {
                                             title: 'Error'
                                         });
                                         return;
-                                    };
+                                    }
                                 });
                             } catch (err) {
                                 // Handle the same email being used for multiple accounts
@@ -151,10 +150,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 };
-
-                // Set email to email to avoid breaking things
-                // email should no longer be used, but it's safe to assume it'll be the same as the email
-                user.email = user.email;
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -371,7 +366,7 @@ module.exports = {
                                                         title: 'Error'
                                                     });
                                                     return;
-                                                };
+                                                }
                                             });
                                         } catch (err) {
                                             // Handle the same email being used for multiple accounts
@@ -463,7 +458,6 @@ module.exports = {
                         user.displayName,
                         true
                     );
-                    student.email = student.email; // Set email to email for guest users
                     classInformation.users[student.email] = student;
 
                     // Set their current class to no class

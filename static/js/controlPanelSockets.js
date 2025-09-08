@@ -211,7 +211,7 @@ socket.on('customPollUpdate', (
 		studentCheckbox.onclick = () => {
 			const canStudentVote = studentCheckbox.checked;
 
-			let studentCheckboxes = classroom.poll.studentBoxes;
+			let studentCheckboxes = classroom.studentsAllowedToVote.studentBoxes;
 			if (studentCheckbox.checked && !studentCheckboxes.includes(student.email)) {
 				studentCheckboxes.push(student.email);
 			}

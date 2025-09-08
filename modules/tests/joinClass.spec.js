@@ -1,4 +1,4 @@
-const { joinClassroomByCode } = require('../joinClass');
+const { joinRoomByCode } = require('../joinClass');
 const { database } = require('../database');
 const { testData, createTestUser } = require("./tests");
 
@@ -30,12 +30,12 @@ describe('joinClass', () => {
     });
 
     it('should join the class successfully', async () => {
-        const result = await joinClassroomByCode(testData.code, session);
+        const result = await joinRoomByCode(testData.code, session);
         expect(result).toBe(true);
     });
 
     it('should return an error for an invalid code', async () => {
-        const result = await joinClassroomByCode('wrongCode', session);
+        const result = await joinRoomByCode('wrongCode', session);
         expect(result).toBe('No class with that code');
     });
 })

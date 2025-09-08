@@ -59,12 +59,12 @@ describe("Socket Updates", () => {
             // Set up the class and user data
             classData.poll.status = true;
             classData.poll.responses = { "option1": { responses: 1 } };
-            classData.poll.textRes = true;
+            classData.poll.allowTextResponses = true;
             classData.poll.prompt = "Test Prompt";
             classData.poll.weight = 2;
-            classData.poll.blind = true;
+            classData.poll.isBlind = true;
             classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.email];
+            classData.poll.studentsAllowedToVote = [userData.email];
             userData.pollRes = { buttonRes: "option1" };
             await socketUpdates.virtualBarUpdate(testData.code);
 
@@ -92,12 +92,12 @@ describe("Socket Updates", () => {
             // Set up the class and user data
             classData.poll.status = true;
             classData.poll.responses = { "option1": { responses: 1 } };
-            classData.poll.textRes = true;
+            classData.poll.allowTextResponses = true;
             classData.poll.prompt = "Test Prompt";
             classData.poll.weight = 2;
-            classData.poll.blind = true;
+            classData.poll.isBlind = true;
             classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.email];
+            classData.poll.studentsAllowedToVote = [userData.email];
             userData.pollRes = { buttonRes: "option1" };
             userData.break = true;
 

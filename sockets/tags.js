@@ -97,7 +97,6 @@ module.exports = {
                             if (err) {
                                 logger.log('error', err)
                                 socket.emit('message', 'There was a server error try again.')
-                                return
                             }
                         });
                     } else {

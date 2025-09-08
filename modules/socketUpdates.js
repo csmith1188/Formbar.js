@@ -5,6 +5,7 @@ const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
 const { io } = require("./webServer");
+const { getManagerData } = require("./manager");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -97,28 +98,12 @@ async function setClassOfApiSockets(api, classId) {
 }
 
 async function managerUpdate() {
-    let [users, classrooms] = await Promise.all([
-        new Promise((resolve, reject) => {
-            database.all('SELECT id, email, permissions, displayName FROM users', (err, users) => {
-                if (err) reject(new Error(err))
-                else {
-                    users = users.reduce((tempUsers, tempUser) => {
-                        tempUsers[tempUser.email] = tempUser
-                        return tempUsers
-                    }, {})
-                    resolve(users)
-                }
-            })
-        }),
-        new Promise((resolve, reject) => {
-            database.get('SELECT * FROM classroom', (err, classrooms) => {
-                if (err) reject(new Error(err))
-                else resolve(classrooms)
-            })
-        })
-    ])
-
-    io.emit('managerUpdate', users, classrooms)
+    try {
+        const { users, classrooms } = getManagerData()
+        io.emit('managerUpdate', users, classrooms)
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
 }
 
 class SocketUpdates {
@@ -126,19 +111,22 @@ class SocketUpdates {
         this.socket = socket;
     }
 
+    classUpdate(classId = this.socket.request.session.classId) {
+        // @TODO implement
+    }
+
     classPermissionUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
             const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) return; // If the class is not loaded, then do not update the class permissions
-
-            let cpPermissions = Math.min(
+            const classPermissions = Math.min(
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
-            )
+            );
 
-            advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
+            advancedEmitToClass('cpUpdate', classId, { classPermissions }, classData)
             this.customPollUpdate();
         } catch (err) {
             logger.log('error', err.stack);
@@ -148,10 +136,10 @@ class SocketUpdates {
     virtualBarUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
-            if (!classId) return; // If a class id is not provided then deny the
+            if (!classId) return; // If a class id is not provided then deny the request
 
             const classData = structuredClone(classInformation.classrooms[classId])
-            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
+            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.allowTextResponses}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.isBlind})`)
 
             let totalResponses = 0;
             let totalStudentsIncluded = [];
@@ -183,7 +171,7 @@ class SocketUpdates {
                 }
 
                 // Check if the student's checkbox was checked
-                if (classData.poll.studentBoxes.includes(student.email)) {
+                if (classData.poll.studentsAllowedToVote.includes(student.email)) {
                     included = true;
                 } else {
                     excluded = true;
@@ -265,12 +253,12 @@ class SocketUpdates {
                 status: classData.poll.status,
                 totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,
                 totalResponses: totalResponses,
-                polls: responses,
-                textRes: classData.poll.textRes,
-                multiRes: classData.poll.multiRes,
+                pollOptions: responses,
+                allowTextResponses: classData.poll.allowTextResponses,
+                allowMultipleResponses: classData.poll.allowMultipleResponses,
                 prompt: classData.poll.prompt,
                 weight: classData.poll.weight,
-                blind: classData.poll.blind,
+                isBlind: classData.poll.isBlind,
                 time: classData.timer.time,
                 sound: classData.timer.sound,
                 active: classData.timer.active,
@@ -423,7 +411,7 @@ class SocketUpdates {
 
             // If exitClass is true, then remove the user from the classroom entirely
             if (exitClass) {
-                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], (err) => {});
+                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], () => {});
                 delete classInformation.classrooms[classId].students[email];
             }
 
@@ -544,9 +532,9 @@ class SocketUpdates {
     
             data.prompt = classInformation.classrooms[classId].poll.prompt
             data.responses = classInformation.classrooms[classId].poll.responses
-            data.multiRes = classInformation.classrooms[classId].poll.multiRes
-            data.blind = classInformation.classrooms[classId].poll.blind
-            data.isTextResponse = classInformation.classrooms[classId].poll.text
+            data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
+            data.isBlind = classInformation.classrooms[classId].poll.isBlind
+            data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
 
             for (const key in classInformation.classrooms[classId].students) {
                 data.names.push(classInformation.classrooms[classId].students[key].email)
@@ -601,12 +589,12 @@ class SocketUpdates {
         classInformation.classrooms[classId].poll = {
             status: false,
             responses: {},
-            textRes: false,
+            allowTextResponses: false,
             prompt: "",
             weight: 1,
-            blind: false,
+            isBlind: false,
             requiredTags: [],
-            studentBoxes: [],
+            studentsAllowedToVote: [],
             allowedResponses: [],
         };
     }

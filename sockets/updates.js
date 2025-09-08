@@ -1,6 +1,5 @@
 const { classInformation } = require("../modules/class/classroom")
 const { logger } = require("../modules/logger")
-const { managerUpdate } = require("../modules/socketUpdates")
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -45,10 +44,6 @@ module.exports = {
 
         socket.on('classBannedUsersUpdate', () => {
             socketUpdates.classBannedUsersUpdate()
-        })
-
-        socket.on('managerUpdate', () => {
-            managerUpdate()
         })
     }
 }

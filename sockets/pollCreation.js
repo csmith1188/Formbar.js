@@ -6,9 +6,9 @@ const { createPoll } = require("../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Starts a new poll. Takes the number of responses and whether or not their are text responses
-        socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes) => {
-            await createPoll({ resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes }, socket)
+        // Starts a poll with the data provided
+        socket.on('startPoll', async (pollData) => {
+            await createPoll(pollData, socket)
         })
 
         socket.on("classPoll", (poll) => {

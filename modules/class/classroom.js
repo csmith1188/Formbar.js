@@ -16,13 +16,14 @@ class Classroom {
 		this.sharedPolls = sharedPolls || []
 		this.poll = {
 			status: false,
+            prompt: '',
 			responses: {},
-			textRes: false,
-			prompt: '',
+			allowTextResponses: false,
+            allowMultipleResponses: false,
+            isBlind: false,
 			weight: 1,
-			blind: false,
 			requiredTags: [],
-			studentBoxes: [],
+			studentsAllowedToVote: [],
 			allowedResponses: []
 		}
 		this.key = key

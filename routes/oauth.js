@@ -25,7 +25,6 @@ function generateAccessToken(userData, classId, refreshToken) {
 function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
-        email: userData.email,
         email: userData.email
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 

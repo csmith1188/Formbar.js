@@ -9,10 +9,8 @@ module.exports = {
         // Creates a poll from the data provided
         router.post('/class/:id/polls/create', httpPermCheck("startPoll"), parseJson, async (req, res) => {
             try {
-                let { resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = req.body;
                 const socket = createSocketFromHttp(req, res);
-
-                await createPoll({ resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes }, socket);
+                await createPoll(req.body, socket);
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

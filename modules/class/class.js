@@ -4,7 +4,7 @@ const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
 const { getStudentId } = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
-const { joinClassroomByCode } = require("../joinClass");
+const { joinRoomByCode } = require("../joinClass");
 
 function startClass(socket) {
     try {
@@ -58,7 +58,7 @@ async function joinClass(socket, classId) {
         }
 
         // If there's a class code, then attempt to join the class and emit the response
-        const response = await joinClassroomByCode(classCode, socket.request.session);
+        const response = await joinRoomByCode(classCode, socket.request.session);
         if (response === true) {
             for (const userSocket of Object.values(userSockets[email])) {
                 userSocket.request.session.classId = classId;
@@ -74,11 +74,11 @@ async function joinClass(socket, classId) {
     }
 }
 
-function joinClassroom(socket, classCode) {
+function joinRoom(socket, classCode) {
     try {
-        logger.log('info', `[joinClassroom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classCode=${classCode}`);
+        logger.log('info', `[joinRoom] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) classCode=${classCode}`);
 
-        const response = joinClassroomByCode(classCode, socket.request.session);
+        const response = joinRoomByCode(classCode, socket.request.session);
         socket.emit("joinClass", response);
     } catch (err) {
         logger.log('error', err.stack);
@@ -134,7 +134,7 @@ function leaveClass(socket) {
     }
 }
 
-async function leaveClassroom(socket) {
+async function leaveRoom(socket) {
     try {
         const classId = socket.request.session.classId;
         const email = socket.request.session.email;
@@ -178,8 +178,8 @@ module.exports = {
     startClass,
     endClass,
     joinClass,
-    joinClassroom,
+    joinRoom,
     leaveClass,
-    leaveClassroom,
+    leaveRoom,
     isClassActive
 }

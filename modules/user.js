@@ -6,7 +6,7 @@ const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
- * @param {Object} req - The request object.
+ * @param {Object} api - The API key for the user.
  * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
  */
 async function getUser(api) {

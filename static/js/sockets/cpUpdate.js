@@ -108,7 +108,7 @@ socket.on('cpUpdate', (newClassroom) => {
         if (!student.break
             && student.permissions > GUEST_PERMISSIONS
             && student.permissions < TEACHER_PERMISSIONS
-            && newClassroom.poll.studentBoxes.includes(student.email)
+            && newClassroom.poll.studentsAllowedToVote.includes(student.email)
         ) {
             totalResponders++;
         }

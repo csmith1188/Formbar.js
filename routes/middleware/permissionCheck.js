@@ -16,8 +16,6 @@ const endpointWhitelistMap = [
  * Permission check for HTTP requests
  * This is used for using the same socket permissions for socket APIs for HTTP APIs.
  * @param {string} event
- * @param {Request} req
- * @param {Response} res
  * @returns {Promise<boolean>}
  */
 function httpPermCheck(event){

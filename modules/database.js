@@ -1,5 +1,4 @@
 const sqlite3 = require('sqlite3');
-const fs = require('fs');
 const database = getDatabase();
 
 function getDatabase() {

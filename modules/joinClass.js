@@ -4,7 +4,7 @@ const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 
-async function joinClassroomByCode(code, session) {
+async function joinRoomByCode(code, session) {
 	try {
         const email = session.email;
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
@@ -93,7 +93,7 @@ async function joinClassroomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
-			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
+			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(email)
 			classInformation.users[email].activeClass = classroom.id
 			advancedEmitToClass('joinSound', classroom.id, {})
 
@@ -135,7 +135,7 @@ async function joinClassroomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
-			classData.poll.studentBoxes.push(email)
+			classData.poll.studentsAllowedToVote.push(email)
 			classInformation.users[email].activeClass = classroom.id
 			let cpPermissions = Math.min(
 				classData.permissions.controlPolls,
@@ -154,5 +154,5 @@ async function joinClassroomByCode(code, session) {
 }
 
 module.exports = {
-    joinClassroomByCode
+    joinRoomByCode
 }
