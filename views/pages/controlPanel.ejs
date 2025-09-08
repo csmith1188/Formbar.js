@@ -38,7 +38,7 @@
         </div>
         <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
-        <button id='timerMenu' class='warningButton quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs' disabled><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
+        <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
         <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
         <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
@@ -51,6 +51,16 @@
 
 <div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    
+</div>
+
+<div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon">Back</button>
+    
+</div>
+
+<div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon">Back</button>
     
 </div>
 
@@ -124,7 +134,7 @@
                     <p>End Class</p>
                     <img src="/img/stop.svg" alt="End Class">
                 </button>
-                <button id='iconHelp' class="revampButton mobileHasIcon mobileCircular showMobile warningButton" disabled><img src="/img/help-circle-outline.svg" alt="End Class"></button>
+                <button id='helpMenu' class="revampButton mobileHasIcon mobileCircular showMobile tab" data-tab-group='mainTabs'><img src="/img/help-circle-outline.svg" alt="End Class"></button>
             </div>
         </div>
     </div>

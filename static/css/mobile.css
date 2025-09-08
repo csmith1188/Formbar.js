@@ -410,7 +410,9 @@
     #settingsMenu.tabContent,
     #previousPollsMenu.tabContent,
     #pollsMenu.tabContent,
-    #sortingFilterMenu.tabContent {
+    #sortingFilterMenu.tabContent,
+    #timerMenu.tabContent,
+    #helpMenu.tabContent {
         position: absolute !important;
         top: 0;
         left: 0;
@@ -471,7 +473,9 @@
     #settingsMenu.tabContent > button.backButton,
     #previousPollsMenu.tabContent > button.backButton,
     #pollsMenu.tabContent > button.backButton,
-    #sortingFilterMenu.tabContent > button.backButton {
+    #sortingFilterMenu.tabContent > button.backButton,
+    #timerMenu.tabContent > button.backButton,
+    #helpMenu.tabContent > button.backButton {
         top: 10px;
         left: 10px;
         z-index: 3;
