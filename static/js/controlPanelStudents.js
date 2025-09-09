@@ -140,7 +140,7 @@ function buildStudent(classroom, studentData) {
             strPerms = strPerms[permission - 1]
             let permSwitch = document.createElement('button')
             permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch");
+            permSwitch.setAttribute("class", "permSwitch revampButton");
             permSwitch.setAttribute("data-email", studentData.email);
             permSwitch.onclick = (event) => {
                 socket.emit('classPermChange', studentData.email, Number(permission))
@@ -233,7 +233,7 @@ function buildStudent(classroom, studentData) {
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
-        banStudentButton.className = 'banUser quickButton'
+        banStudentButton.className = 'banUser quickButton revampButton warningButton'
         banStudentButton.setAttribute('data-user', studentData.email)
         banStudentButton.textContent = 'Ban User'
         banStudentButton.onclick = (event) => {
@@ -243,7 +243,7 @@ function buildStudent(classroom, studentData) {
         }
         extraButtons.appendChild(banStudentButton)
         let kickUserButton = document.createElement('button')
-        kickUserButton.className = 'kickUser quickButton'
+        kickUserButton.className = 'kickUser quickButton revampButton warningButton'
         kickUserButton.setAttribute('data-userid', studentData.email)
         kickUserButton.onclick = (event) => {
             if (confirm(`Are you sure you want to kick ${studentData.email}?`)) {
@@ -253,7 +253,7 @@ function buildStudent(classroom, studentData) {
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
 
-        if (pollBox.textContent == '' && helpReason.textContent == '' && breakReason.textContent == '') {
+        if (helpReason.textContent == '' && breakReason.textContent == '') {
             reasonsDiv.style.display = 'none'
         }
         return newStudent

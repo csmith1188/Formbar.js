@@ -35,7 +35,7 @@
     </style>
 </head>
 
-<body id="colorContent" style="padding: 0;">
+<body id="colorContent" style="padding: 0;" role="document" tabindex="0">
 <%- include('../partials/formbar_header') %>
 
 <div class="content-container">
@@ -51,8 +51,7 @@
 
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 600px;">
         <% for (let i = 0; i < logs.length; i++) { %>
-            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton"
-                    style="width: 180px; height: 75px; text-align: center;">
+            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton revampButton logButton">
                 View <%- logs[i] %>
             </button>
         <% } %>

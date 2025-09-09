@@ -38,11 +38,12 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    display: false,
                     labels: {
                         font: {
                             size: (document.documentElement.clientWidth + document.documentElement.clientHeight) / 100
                         },
-                        color: 'grey'
+                        color: 'black'
                     }
                 },
                 tooltip: {
@@ -51,6 +52,11 @@
                             return context.dataset.label;
                         }
                     }
+                }
+            },
+            elements: {
+                arc: {
+                    borderColor: "black"
                 }
             },
             cutout: '0%',

@@ -1,63 +1,23 @@
-/* --- GENERAL --- */
-
-:root {
-	/*All pages can use this set of colors*/
-
-	--color-red: #bf0000;
-	--color-brown: #802000;
-	--color-orange: #ff4000;
-	--color-gold: #fa0;
-	--color-yellow: #ffbf00;
-	--color-green: #00bf00;
-	--color-cyan: #009fbf;
-	--color-blue: #0040bf;
-	--color-purple: #bf00ff;
-	--color-pink: #ff4080;
-	--dark-gray: #555;
-
-	--light-red: #ff6860;
-	--light-brown: #bf6040;
-	--light-orange: #ff8f40;
-	--light-yellow: #ffdf40;
-	--light-green: #80ff80;
-	--light-cyan: #80ffff;
-	--light-blue: #bfcfff;
-	--light-purple: #df80ff;
-	--light-pink: #ff80bfff;
-	--light-gray: #ccc;
-
-	--bg-dark: #333;
-	--bg-darker: #222;
-	--bg-dark-highlight: #444;
-	--bg-dark-red: #400;
-	--bg-dark-yellow: #430;
-	--bg-dark-green: #243;
-	--bg-dark-blue: #000922;
-	--bg-dark-purple: #423;
-
-	--bg-light: #d0c8e0;
-	--bg-light-blue: #def;
-}
-
 body {
-	background-color: #323232;
+	background: linear-gradient(135deg, #072438 30%, #000c15 100%);
 	color: #ffffff;
 }
 
 h1, h2, h3, h4, h5, h6 {
-	color: var(--bg-light-blue) !important;
+	color: white !important;
 }
 
-h1.headertext, h2.headertext {
+a.link {
+	color: var(--light-blue) !important;
+	text-decoration-color: var(--light-blue) !important;
+}
+
+.headerText {
 	color: white !important;
 }
 
 h1#noPoll.textColorContent, h1#headerText.textColorContent {
 	color: var(--light-cyan) !important;
-}
-
-p {
-	color: var(--bg-light-blue) !important;
 }
 
 input {
@@ -67,11 +27,6 @@ input {
 
 .headBox {
 	color: #ffffff !important;
-}
-
-.contentBox {
-	background-color: #484848 !important;
-	color: #ffffff;
 }
 
 #select {
@@ -84,22 +39,7 @@ input {
 	color: #ffffff;
 }
 
-#content {
-	background-color: var(#ffffff);
-	color: #000000;
-}
-
-#passwordBox, #displayNameBox, #joinKey, #emailBox {
-	background-color: #ffffff;
-	color: #000000;
-}
-
 #resTextBox {
-	background-color: #ffffff;
-	color: #000000;
-}
-
-select {
 	background-color: #ffffff;
 	color: #000000;
 }
@@ -117,4 +57,102 @@ select option {
 #tagBox {
 	border-color: #000000;
 	color: #000000;
+}
+
+#pollForm button {
+	color: white !important;
+  	border: 2px solid #fff4;
+}
+
+canvas {
+	opacity: 50%;
+}
+
+
+#loginHeader {
+	color: #fff9 !important;
+}
+
+#content {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+button.pressed.revampButton:hover {
+	background: var(--darkMode-button-pressed-hover-bg) !important;
+}
+
+.revampButton {
+	background-color: var(--darkMode-button-bg);
+	border: 2px solid var(--darkMode-button-border);
+}
+
+.revampButton:not(.revampWithText):hover {
+	background-color: var(--darkMode-button-hover-bg);
+}
+
+.circularButton,
+.mobileCircular {
+	background-color: var(--darkMode-button-bg) !important;
+	border: 2px solid var(--darkMode-button-border) !important;
+}
+
+.circularButton:hover,
+.mobileCircular:hover {
+	background-color: var(--darkMode-button-hover-bg) !important;
+}
+
+#formbarHeader {
+	background: linear-gradient(to right, #00256e, #390085);
+}
+
+#quickMenu,
+.customOptions {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+	color: white !important;
+}
+
+#quickMenu * {
+	color: white !important;
+}
+
+
+#users div:not(#reasons, #reasons *, #alerts *) {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+.revampDiv {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+.revampDivAlt {
+	border: 2px solid var(--lightMode-menu-border);
+	background: var(--lightMode-menu-bg);
+}
+
+
+#news section {
+	background: var(--darkMode-menu-bg);
+	border: 2px solid var(--darkMode-menu-border);
+}
+
+#startClass {
+	color: black !important;
+	background-color: rgb(39, 164, 39);
+}
+
+#endClass {
+	--theme-color: hsl(0, 100%, 12%);
+	background-color: hsl(0, 66%, 46%);
+}
+
+#pollPrompt {
+
+}
+
+dialog {
+	color: white !important;
 }
