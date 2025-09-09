@@ -411,7 +411,7 @@ dialog {
 }
 
 .headerText {
-	color: var(--theme-color);
+	color: black;
 	font-size: 30px;
 	font-weight: 700;
 }
@@ -1020,16 +1020,23 @@ div .tabContent {
 	padding-bottom: 5vh;
 }
 
-#startClass {
+#startClass,
+.startClass {
 	--theme-color: hsl(120, 100%, 12%) !important;
 	color: black !important;
 	background-color: hsl(120, 94%, 74%) !important;
 }
 
-#endClass {
+#endClass,
+.endClass {
 	--theme-color: hsl(0, 100%, 12%) !important;
 	background-color: hsl(0, 94%, 74%) !important;
 	color: black !important;
+}
+
+.endClass img,
+.startClass img {
+	filter: invert(0) !important;
 }
 
 .usersMenuBox {
@@ -1769,7 +1776,7 @@ div.sideBySide {
 #vbOptionsNext {
 	z-index: 5;
 	padding: 0;
-	
+	white-space: nowrap;
 	gap: 10px;
   	width: 200px;
 	height: 50px;
@@ -2019,6 +2026,62 @@ div#pollPreview.open {
 	}
 }
 
+div#errorDialog {
+	width: auto;
+	height: 50px;
+	background-color: var(--color-red);
+	color: white !important;
+	border: 2px solid var(--light-red);
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	right: 15px;
+	bottom: 15px;
+	padding: 10px;
+	max-width: 35vw;
+	gap: 10px;
+	border-radius: 10px;
+	transform: translateY(100%);
+	opacity: 0;
+	pointer-events: none;
+}
+
+div#errorDialog img {
+	filter: invert(1);
+	height: 100%;
+	aspect-ratio: 1;
+}
+
+div#errorDialog div.errorDetails {
+	text-align: left;
+}
+
+div#errorDialog div.errorDetails p {
+	margin: 0;
+}
+
+div#errorDialog div.errorDetails p#errorCode {
+	font-size: 0.75rem;
+	opacity: 0.75;
+}
+
+div#errorDialog.shown {
+	animation: showError 0.5s ease-in-out forwards;
+}
+
+@keyframes showError {
+	0% {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	100% {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
 button.edit-custom-poll,
 button.start-custom-poll {
 	width: auto;
@@ -2081,6 +2144,8 @@ button.start-custom-poll {
 	justify-content: center;
 	align-items: center;
 	gap: 10px;
+	padding: 5px;
+	width: 60px;
 }
 
 .backButton img {
@@ -2121,7 +2186,6 @@ button.start-custom-poll {
 	display: flex;
 	flex-direction: row;
 	justify-content: left;
-	padding: 0 !important;
 	margin-bottom: 20px;
 }
 

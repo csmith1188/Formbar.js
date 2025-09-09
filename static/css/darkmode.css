@@ -91,6 +91,14 @@ button.pressed.revampButton:hover {
 	background-color: var(--darkMode-button-hover-bg);
 }
 
+div.helpIconInformation.revampDivAlt img {
+	filter: invert(0) !important;
+}
+
+div.helpIconInformation.revampDivAlt {
+	color: black !important;
+}
+
 .circularButton,
 .mobileCircular {
 	background-color: var(--darkMode-button-bg) !important;

@@ -134,4 +134,25 @@ function leaveClassroom() {
   }
 </script>
 
+<div id="errorDialog">
+	<img src="/img/close-circle.svg" alt="Error Icon">
+	<div class="errorDetails">
+		<p id="errorMessage"></p>
+		<!-- <p id="errorCode">0x23</p> An idea, may not be needed but might help in future. --> 
+	</div>
+</div>
+
+<% if(locals.errorMessage) { %>
+	<script>
+		const errorDialog = document.getElementById('errorDialog');
+		const errorMessage = document.getElementById('errorMessage');
+
+		errorMessage.innerText = "<%- errorMessage %>";
+		errorDialog.classList.add('shown');
+		setTimeout(() => {
+			errorDialog.classList.remove('shown');
+		}, 2000);
+	</script>
+<% } %>
+
 <%- include('./mobile_dialogs.ejs') %>

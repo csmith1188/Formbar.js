@@ -429,6 +429,24 @@
         overflow: scroll;
     }
     
+    .mobileMenuHeader {
+        position: absolute;
+        margin: 0;
+        top: 40px;
+        font-size: 2em;
+        color: white;
+    }
+
+    .extrasHeader {
+        top: 20px !important;
+        right: 20px;
+    }
+    
+
+    #helpMenu.tabContent {
+        padding-top: 7em !important;
+    }
+
     #previousPollsMenu.tabContent {
         justify-content: start;
         padding-top: 80px !important;
@@ -481,9 +499,8 @@
         z-index: 3;
     }
 
-    #sortingFilterMenu.tabContent > button.backButton {
-        padding: 5px;
-        width: 60px;
+    #tagOptions {
+        width: 100%;
     }
 
     #vbOptionsNext,
@@ -568,8 +585,69 @@
         justify-content: center;
         gap: 5px;
     }
+    div#timerMenu.tabContent div#timeDiv p {
+        display: none;
+    }
     div#timerMenu.tabContent div#timeDiv input {
         padding: 1em !important;
+    }
+
+    div.helpInfo {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        justify-content: start;
+        align-items: center;
+        height: 100%;
+        overflow: scroll;
+    }
+
+    div.helpInfo div.spacer {
+        min-height: 30px;
+    }
+
+    div.tabContent .headerText {
+        color: white;
+    }
+
+    div.helpInfo > p {
+        color: white;
+        text-align: left;
+        width: 100%;
+        margin: 0;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    div.helpIconInformation.revampDivAlt {
+        width: 100%;
+        height: 60px;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        flex-direction: row;
+        gap: 10px;
+        color: white;
+    }
+
+    div.helpIconInformation.revampDivAlt img {
+        height: 100%;
+        filter: invert(1);
+    }
+
+    div.helpInformation {
+        flex: 1 1 auto;
+        text-align: left;
+    }
+
+    div.helpInformation p {
+        margin: 0;
+    }
+
+    div.helpInformation p.helpDesc {
+        font-size: 0.75rem;
+        opacity: 0.75;
     }
 }
 
