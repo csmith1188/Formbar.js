@@ -57,6 +57,12 @@
 <div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon">Back</button>
     
+    <div id="timeDiv">
+        <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min">
+        <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" placeholder="Sec">
+        <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
+        <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
+    </div>
 </div>
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">

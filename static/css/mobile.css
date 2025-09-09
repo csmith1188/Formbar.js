@@ -561,6 +561,16 @@
     button#loadPoll {
         margin: auto !important;
     }
+
+    div#timerMenu.tabContent div#timeDiv {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    div#timerMenu.tabContent div#timeDiv input {
+        padding: 1em !important;
+    }
 }
 
 @media screen and (max-width: 1280px) and (orientation: landscape) {
