@@ -154,7 +154,7 @@ async function leaveRoom(socket) {
         }
 
         // Update the class and play leave sound
-        socketUpdates.classPermissionUpdate();
+        socketUpdates.controlPanelUpdate();
         socketUpdates.virtualBarUpdate();
 
         // Play leave sound and reload the user's page

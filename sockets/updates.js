@@ -38,7 +38,7 @@ module.exports = {
 
             // Send update to the rest of the class
             if (classId) {
-                socketUpdates.classPermissionUpdate(classId);
+                socketUpdates.controlPanelUpdate(classId);
             }
         })
 

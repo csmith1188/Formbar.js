@@ -241,7 +241,7 @@ module.exports = {
 
                 const classId = socket.request.session.classId
                 socketUpdates.classKickUser(email, classId)
-                socketUpdates.classPermissionUpdate(classId)
+                socketUpdates.controlPanelUpdate(classId)
                 socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('leaveSound', classId, {})
             } catch (err) {
@@ -256,7 +256,7 @@ module.exports = {
 
                 const classId = socket.request.session.classId
                 socketUpdates.classKickStudents(classId)
-                socketUpdates.classPermissionUpdate(classId)
+                socketUpdates.controlPanelUpdate(classId)
                 socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('kickStudentsSound', classId, { api: true })
             } catch (err) {
@@ -301,7 +301,7 @@ module.exports = {
 
                         socketUpdates.classKickUser(email)
                         socketUpdates.classBannedUsersUpdate()
-                        socketUpdates.classPermissionUpdate()
+                        socketUpdates.controlPanelUpdate()
                         advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${email}`)
                     } catch (err) {
@@ -405,7 +405,7 @@ module.exports = {
                         if (err) throw err
 
                         logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
-                        socketUpdates.classPermissionUpdate()
+                        socketUpdates.controlPanelUpdate()
                     } catch (err) {
                         logger.log('error', err.stack)
                     }

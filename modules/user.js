@@ -166,7 +166,7 @@ async function deleteUser(userId, socket, socketUpdates) {
             delete classInformation.users[user.email];
             if (classroom) {
                 delete classroom.students[user.email];
-                socketUpdates.classPermissionUpdate(activeClass);
+                socketUpdates.controlPanelUpdate(activeClass);
             }
 
 

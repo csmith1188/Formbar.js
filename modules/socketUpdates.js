@@ -115,7 +115,7 @@ class SocketUpdates {
         // @TODO implement
     }
 
-    classPermissionUpdate(classId = this.socket.request.session.classId) {
+    controlPanelUpdate(classId = this.socket.request.session.classId) {
         try {
             logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
             const classData = structuredClone(classInformation.classrooms[classId]);
@@ -416,7 +416,7 @@ class SocketUpdates {
             }
 
             // Update the control panel
-            this.classPermissionUpdate(classId);
+            this.controlPanelUpdate(classId);
             this.virtualBarUpdate(classId);
 
             // If the user is logged in, then handle the user's session
@@ -495,7 +495,7 @@ class SocketUpdates {
                         }
 
                         // Update class permissions and virtual bar
-                        this.classPermissionUpdate(classId)
+                        this.controlPanelUpdate(classId)
                         this.virtualBarUpdate(classId)
                     }
 

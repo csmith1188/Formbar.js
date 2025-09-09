@@ -40,6 +40,6 @@ describe('endPoll', () => {
 
         // Check if the poll was ended successfully
         expect(socketUpdates.pollUpdate).toBeCalled();
-        expect(socketUpdates.classPermissionUpdate).toBeCalled();
+        expect(socketUpdates.controlPanelUpdate).toBeCalled();
     });
 });

@@ -101,7 +101,7 @@ async function createPoll(pollData, socket) {
         logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
         socketUpdates.pollUpdate()
         socketUpdates.virtualBarUpdate()
-        socketUpdates.classPermissionUpdate()
+        socketUpdates.controlPanelUpdate()
 
         // If the request is originating from the http API, then send a response specifically for it
         // Otherwise, simply emit the startPoll event
@@ -124,7 +124,7 @@ async function endPoll(socket) {
 
     await socketUpdates.endPoll();
     socketUpdates.pollUpdate();
-    socketUpdates.classPermissionUpdate();
+    socketUpdates.controlPanelUpdate();
 
     if (socket.isEmulatedSocket) {
         socket.res.status(200).json({ message: 'Success' });
@@ -165,7 +165,7 @@ async function clearPoll(socket) {
 
     socketUpdates.pollUpdate();
     socketUpdates.virtualBarUpdate();
-    socketUpdates.classPermissionUpdate();
+    socketUpdates.controlPanelUpdate();
     if (socket.isEmulatedSocket) {
         socket.res.status(200).json({ message: 'Success' });
     }
@@ -264,7 +264,7 @@ function pollResponse(res, textRes, socket) {
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
 
-    socketUpdates.classPermissionUpdate()
+    socketUpdates.controlPanelUpdate()
     socketUpdates.virtualBarUpdate()
 }
 

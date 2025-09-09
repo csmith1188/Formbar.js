@@ -25,7 +25,7 @@ module.exports = {
                 classData.timer.timeLeft = startTime
                 classData.timer.active = active
                 classData.timer.sound = sound
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.controlPanelUpdate()
 
                 if (active) {
                     // Run the function once instantly
