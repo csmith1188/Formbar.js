@@ -98,7 +98,7 @@ function createSocketUpdates(isMocked = true, socket) {
         clearPoll: jest.fn(),
         pollUpdate: jest.fn(),
         virtualBarUpdate: jest.fn(),
-        classPermissionUpdate: jest.fn(),
+        controlPanelUpdate: jest.fn(),
         customPollUpdate: jest.fn()
     } :  new SocketUpdates(socket);
 }

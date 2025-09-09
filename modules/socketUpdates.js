@@ -112,12 +112,55 @@ class SocketUpdates {
     }
 
     classUpdate(classId = this.socket.request.session.classId) {
-        // @TODO implement
+        const email = this.socket.request.session.email;
+        const classData = structuredClone(classInformation.classrooms[classId]);
+        const userData = classData.students[email];
+        if (!classData || !userData) {
+            return; // If the class or user is not loaded, then we cannot send a class update
+        }
+
+        const classPermissions = Math.min(
+            classData.permissions.controlPolls,
+            classData.permissions.manageStudents,
+            classData.permissions.manageClass
+        );
+
+        const classReturnData = {
+            id: classData.id,
+            key: classData.key,
+            tags: classData.tags,
+            className: classData.className,
+            isActive: classData.isActive,
+            settings: classData.settings,
+            timer: classData.timer,
+            permissions: classData.permissions,
+            poll: classData.poll,
+            students: Object.fromEntries(
+                Object.entries(classData.students).map(([email, student]) => [
+                    student.id,
+                    {
+                        id: student.id,
+                        displayName: student.displayName,
+                        activeClass: student.activeClass,
+                        permissions: student.permissions,
+                        classPermissions: student.classPermissions,
+                        tags: student.tags,
+                        pollRes: student.pollRes,
+                        help: student.help,
+                        break: student.break,
+                        pogMeter: student.pogMeter,
+                        isGuest: student.isGuest,
+                    }
+                ])
+            )
+        }
+
+        advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
     }
 
     controlPanelUpdate(classId = this.socket.request.session.classId) {
         try {
-            logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
+            logger.log('info', `[controlPanelUpdate] classId=(${classId})`)
             const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) return; // If the class is not loaded, then do not update the class permissions
             const classPermissions = Math.min(

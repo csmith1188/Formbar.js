@@ -1,5 +1,5 @@
 const selectPollDiv = document.querySelector('div#selectPoll')
-let selectedTagNames = new Set() // Stores selected tags so they don't get reset when select buttons are recreated
+let selectedClassTags = new Set() // Stores selected tags so they don't get reset when select buttons are recreated
 
 // Creates the tag buttons in the select box
 function createTagSelectButtons() {
@@ -12,7 +12,7 @@ function createTagSelectButtons() {
 	// Creation of tag buttons in the select box
 	for (let i = 1; i <= currentTags.length; i++) {
 		let tagPoll = document.createElement('button');
-		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll revampButton';
+		tagPoll.className = selectedClassTags.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll revampButton';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
@@ -21,10 +21,10 @@ function createTagSelectButtons() {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
 				tagPoll.className = 'pressed revampButton';
-				selectedTagNames.add(tagPoll.textContent);
+				selectedClassTags.add(tagPoll.textContent);
 			} else {
 				tagPoll.className = 'tagPoll revampButton'
-				selectedTagNames.delete(tagPoll.textContent);
+				selectedClassTags.delete(tagPoll.textContent);
 			}
 
 			for (let tag of document.querySelectorAll('#selectPoll button.pressed')) {
@@ -128,7 +128,6 @@ if(localStorage.getItem('controlTutorialDone') == "true") {
 }
 
 function hoverShowPollDetails(poll, event, isDetails = false) {
-	console.log(poll)
 	pollHoverDiv.innerHTML = `<h1>${poll.prompt}</h1>`;
 
 	if(!isDetails) {
@@ -227,7 +226,7 @@ socket.on('customPollUpdate', (
 		switchState = !switchState;
 
 		// Unselect all select tags
-		selectedTagNames.clear();
+		selectedClassTags.clear();
 		for (const tag of selectPollDiv.children) {
 			if (tag.className === 'pressed') {
 				tag.className = "tagPoll revampButton";
@@ -335,16 +334,16 @@ let selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-tagNames = tagNames.split(",");
+classTags = classTags.split(",");
 //create the form on the poll's settings page to select tags as requirements
-for (let i = 0; i < tagNames.length; i++) {
+for (let i = 0; i < classTags.length; i++) {
 	let checkbox = document.createElement('input');
 	checkbox.type = 'checkbox';
 	checkbox.name = `tagSelector`;
-	checkbox.id = `tagSelector${tagNames[i]}`
-	checkbox.value = tagNames[i];
+	checkbox.id = `tagSelector${classTags[i]}`
+	checkbox.value = classTags[i];
 	let label = document.createElement('label');
-	label.textContent = tagNames[i];
+	label.textContent = classTags[i];
 	label.setAttribute('for', `checkbox${i}`);
 
 	selectTagForm.appendChild(checkbox);

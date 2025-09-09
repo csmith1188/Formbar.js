@@ -371,6 +371,7 @@ module.exports = {
             try {
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
+                console.log(email, classInformation.classrooms[socket.request.session.classId].students)
                 classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
                 classInformation.users[email].classPermissions = newPerm
 

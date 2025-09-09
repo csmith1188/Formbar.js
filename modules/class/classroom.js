@@ -29,7 +29,7 @@ class Classroom {
 		this.key = key
 		this.permissions = permissions
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || ['Offline'];
+		this.tags = tags || ['Offline'];
 		this.settings = settings || {
 			mute: false,
 			filter: '',
@@ -42,8 +42,8 @@ class Classroom {
 			sound: false
 		}
 
-		if (!this.tagNames.includes('Offline') && Array.isArray(this.tagNames)) {
-			this.tagNames.push('Offline');
+		if (!this.tags.includes('Offline') && Array.isArray(this.tags)) {
+			this.tags.push('Offline');
 		}
 	}
 }

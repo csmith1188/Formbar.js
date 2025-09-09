@@ -25,7 +25,7 @@ function buildStudent(classroom, studentData) {
         const newStudent = studentTemplateDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        newStudent.id = `student-${studentData.email}`
+        newStudent.id = `student-${studentData.id}`
         newStudent.open = opendetails.indexOf(studentData.email) != -1
 
         newStudent.addEventListener('click', () => {
@@ -143,7 +143,7 @@ function buildStudent(classroom, studentData) {
             permSwitch.setAttribute("class", "permSwitch revampButton");
             permSwitch.setAttribute("data-email", studentData.email);
             permSwitch.onclick = (event) => {
-                socket.emit('classPermChange', studentData.email, Number(permission))
+                socket.emit('classPermChange', studentData.id, Number(permission))
                 permSwitch.classList.add('pressed')
                 permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
                     if (perm != permSwitch) {
@@ -159,14 +159,14 @@ function buildStudent(classroom, studentData) {
         }
 
         // Add each tag as a button to the tag form
-        for (let i = 0; i < classroom.tagNames.length; i++) {
-            let tag = classroom.tagNames[i]
+        for (let i = 0; i < classroom.tags.length; i++) {
+            let tag = classroom.tags[i]
             if (tag == 'Offline') continue
 
             let button = document.createElement('button');
             button.innerHTML = tag
-            button.name = `button${classroom.tagNames[i]}`;
-            button.value = classroom.tagNames[i];
+            button.name = `button${classroom.tags[i]}`;
+            button.value = classroom.tags[i];
             if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
             button.onclick = function () {
                 if (!button.classList.contains('pressed')) {
@@ -263,13 +263,11 @@ function buildStudent(classroom, studentData) {
 // filters and sorts students
 function filterSortChange(classroom) {
     if (!classroom.students) return
-
     let userOrder = Object.keys(classroom.students)
 
-    userOrder = userOrder.filter(email => email != currentUser.email)
-
-    for (let email of userOrder) {
-        document.getElementById(`student-${email}`).style.display = ''
+    userOrder = userOrder.filter(userId => userId != currentUser.id)
+    for (const userId of userOrder) {
+        document.getElementById(`student-${userId}`).style.display = ''
     }
 
     // filter by help

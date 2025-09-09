@@ -403,9 +403,9 @@ function endPollFunc() {
 // Starts a new poll that allows students to submit answers
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
-	socket.emit('cpUpdate')
-	socket.on('cpUpdate', (newClassroom) => {
-		rooms = newClassroom
+	socket.emit('classUpdate')
+	socket.on('classUpdate', (classroomData) => {
+		rooms = classroomData
 	})
 	let userTags = []
 	let userBoxesChecked = []
@@ -498,8 +498,6 @@ function editCustomPoll(customPollId) {
 	resTextBox.checked = customPoll.textRes
 
 	responseAmountChange(customPoll.answers.length)
-
-	console.log(customPoll)
 
 	let answerInputs = document.getElementsByClassName('answerName')
 	for (let pollIndex = 0; pollIndex < customPoll.answers.length; pollIndex++) {

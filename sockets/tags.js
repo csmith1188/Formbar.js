@@ -14,7 +14,7 @@ module.exports = {
 
                 // Save the tags to the class object
                 tags = tags.sort();
-                classInformation.classrooms[socket.request.session.classId].tagNames = tags;
+                classInformation.classrooms[socket.request.session.classId].tags = tags;
 
                 // Now remove all instances of the tag from the students' tags
                 for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {

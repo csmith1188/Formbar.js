@@ -62,6 +62,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	leaveRoom: GUEST_PERMISSIONS,
+    classUpdate: GUEST_PERMISSIONS,
 	setClassSetting: TEACHER_PERMISSIONS,
 	cpUpdate: MOD_PERMISSIONS,
 	setClassPermissionSetting: MANAGER_PERMISSIONS,

@@ -21,7 +21,7 @@ module.exports = {
             socketUpdates.customPollUpdate(socket.request.session.email)
         })
 
-        // Updates and stores poll history
+        // Updates the control panel for the user and the rest of the class
         socket.on('cpUpdate', () => {
             logger.log('info', `[cpUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
@@ -33,13 +33,18 @@ module.exports = {
 
             // Respond with the full classroom data so the page can populate
             if (classroom) {
-                socket.emit('cpUpdate', structuredClone(classroom));
+                // socket.emit('cpUpdate', structuredClone(classroom));
             }
 
             // Send update to the rest of the class
             if (classId) {
                 socketUpdates.controlPanelUpdate(classId);
             }
+        })
+
+        socket.on('classUpdate', () => {
+            logger.log('info', `[classUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+            socketUpdates.classUpdate()
         })
 
         socket.on('classBannedUsersUpdate', () => {
