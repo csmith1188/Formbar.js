@@ -11,46 +11,56 @@ let reqOptions = {
 
 function get(command, callback) {
     let validCommand = '';
-    let specialReturn = null
     switch (command) {
         case 'me':
-            validCommand = command;
+            sendCommand(command, callback)
             break;
-            
-        case 'myClass':
-            let classid 
-            get('me', (data) => { classid = data.classId})
 
-            specialReturn = fetch(`${FBJS_URL}/class/${classId}`, reqOptions)  // return the promise
-                .then((response) => response.json())
-                .then((data) => {
-                    callback(data);
-                    return data;
-                })
-                .catch((err) => {
-                    console.log('connection closed due to errors', err);
-                    throw err;
-                });
+        case 'myClass':
+            sendCommand('me', (data) => {
+                sendCommand(`class/${data.classId}`, callback)
+            })
+
+            break
 
         default:
             break;
     }
-    if (validCommand) {
-        return fetch(`${FBJS_URL}/${validCommand}`, reqOptions)  // return the promise
-            .then((response) => response.json())
-            .then((data) => {
-                callback(data);
-                return data;
-            })
-            .catch((err) => {
-                console.log('connection closed due to errors', err);
-                throw err;
-            });
-    } else if (specialReturn) {
-        return specialReturn 
+}
+
+function sendCommand(validCommand, callback) {
+    return fetch(`${FBJS_URL}/${validCommand}`, reqOptions)  // return the promise
+        .then((response) => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('HTTP error! status:', response.status);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then((data) => {
+            callback(data);
+            return data;
+        })
+        .catch((err) => {
+            console.log('connection closed due to errors', err);
+            throw err;
+        });
+}
+
+function getClass(classid, extraOptions, callback) {
+    if (extraOptions) {
+        sendCommand(`class/${classid}/${extraOptions}`, (data2) => {
+            callback(data2)
+            return data2
+        })
     } else {
-        throw new Error('Invalid option for fbapp.get().')
+        sendCommand(`class/${classid}`, (data2) => {
+            callback(data2)
+            return data2
+        })
     }
 }
 
-module.exports = { get }; // exports an object with key "me"
+module.exports = { get, getClass };
