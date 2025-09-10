@@ -3,7 +3,7 @@ const { Classroom, classInformation } = require("./class/classroom");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
-const {userSocketUpdates} = require("../sockets/init");
+const { userSocketUpdates } = require("../sockets/init");
 
 async function joinRoomByCode(code, session) {
 	try {
@@ -138,9 +138,16 @@ async function joinRoomByCode(code, session) {
 			classData.students[email] = currentUser
 			classData.poll.studentsAllowedToVote.push(email)
 			classInformation.users[email].activeClass = classroom.id
+			const controlPanelPermissions = Math.min(
+				classData.permissions.controlPolls,
+				classData.permissions.manageStudents,
+				classData.permissions.manageClass
+			)
 
             setClassOfApiSockets(studentAPIKey, classroom.id);
-            userSocketUpdates[email].classUpdate(classroom.id, true);
+			advancedEmitToClass('cpUpdate', classroom.id, { classPermissions: controlPanelPermissions }, classData);
+            console.log(userSocketUpdates)
+            userSocketUpdates[email].classUpdate(classroom.id, true)
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		}

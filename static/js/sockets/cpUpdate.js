@@ -27,11 +27,14 @@ const permissionOptions = [
 // Ask for classroom update and listen for the response
 socket.emit('classUpdate')
 socket.on('classUpdate', (classroomData) => {
-    console.log('UPDATE CLASSROOM')
+    if (!classroomData.students) {
+        console.log('No students provided', classroomData)
+        return;
+    }
+
     classId = classroomData.id
     currentTags = []
     let studentsOffline = 0
-    console.log(classroomData)
     for (const studentId of Object.keys(classroomData.students)) {
         let student = classroomData.students[studentId]
 

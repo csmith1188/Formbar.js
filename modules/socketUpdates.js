@@ -184,15 +184,31 @@ class SocketUpdates {
 
     classUpdate(classId = this.socket.request.session.classId, restrictToControlPanel = false) {
         try {
-            const email = this.socket.request.session.email;
             const classData = structuredClone(classInformation.classrooms[classId]);
-            const userData = classData.students[email];
-            if (!classData || !userData) {
-                return; // If the class or user is not loaded, then we cannot send a class update
+            if (!classData) {
+                return; // If the class is not loaded, then we cannot send a class update
             }
 
-            // console.log('POLL INFO:', classData.poll)
-            const hasTeacherPermissions = userData.classPermissions >= TEACHER_PERMISSIONS || restrictToControlPanel;
+            let userData;
+            let hasTeacherPermissions = false;
+            if (this.socket.request.session) {
+                const email = this.socket.request.session.email;
+                userData = classData.students[email];
+                if (!userData) {
+                    return; // If the user is not loaded, then we cannot check if they're a teacher
+                }
+
+                if (userData.classPermissions >= TEACHER_PERMISSIONS) {
+                    hasTeacherPermissions = true;
+                }
+            }
+
+            // If we're only sending this update to people with access to the control panel, then
+            // we do not need to restrict their data access.
+            if (restrictToControlPanel) {
+                hasTeacherPermissions = true;
+            }
+
             const classReturnData = {
                 id: classData.id,
                 className: classData.className,
@@ -231,8 +247,8 @@ class SocketUpdates {
             )
 
             // If the user requesting class information is a student, then only send them the information
-            if (userData.classPermissions < TEACHER_PERMISSIONS && !restrictToControlPanel) {
-                io.to(`user-${email}`).emit('classUpdate', classReturnData);
+            if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !restrictToControlPanel) {
+                io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
             } else if (restrictToControlPanel) {
                 console.log("RESTRICTED TO CONTROL PANEL")
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
@@ -487,7 +503,7 @@ class SocketUpdates {
             }
 
             // Update the control panel
-            this.classUpdate(classId);
+            this.classUpdate(classId, true);
             this.controlPanelUpdate(classId);
             this.virtualBarUpdate(classId);
 
