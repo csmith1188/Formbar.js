@@ -239,6 +239,11 @@
         filter: invert(1);
     }
 
+    .mobileCircular.mobileHasIcon img {
+        width: 100%;
+        height: 100%;
+    }
+
     .revampButton.mobileHasIcon#endClass img, 
     .revampButton.mobileHasIcon#startClass img {
         filter: none !important;
