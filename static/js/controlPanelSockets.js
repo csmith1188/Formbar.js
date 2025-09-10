@@ -109,7 +109,7 @@ let hoverCountBig = 500;
 let pollDetailsDiv = document.getElementById('pollDetails');
 pollDetailsDiv.addEventListener('mouseover', (e) => {
 	if(orientation == 'portrait') return; // Don't show on landscape mode
-	hoverTimeoutBig = setTimeout(() => { 
+	hoverTimeoutBig = setTimeout(() => {
 		hoverShowPollDetails(classroom.poll, e, true);
 		pollDetailsDiv.classList.add('tutorialDone');
 		if(localStorage.getItem('controlTutorialDone') !== "true") {

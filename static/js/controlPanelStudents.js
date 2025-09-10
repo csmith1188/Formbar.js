@@ -141,7 +141,7 @@ function buildStudent(classroom, studentData) {
             let permSwitch = document.createElement('button')
             permSwitch.setAttribute("name", "permSwitch");
             permSwitch.setAttribute("class", "permSwitch revampButton");
-            permSwitch.setAttribute("data-email", studentData.email);
+            permSwitch.setAttribute("data-id", studentData.id);
             permSwitch.onclick = (event) => {
                 socket.emit('classPermChange', studentData.id, Number(permission))
                 permSwitch.classList.add('pressed')
@@ -234,20 +234,20 @@ function buildStudent(classroom, studentData) {
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
         banStudentButton.className = 'banUser quickButton revampButton warningButton'
-        banStudentButton.setAttribute('data-user', studentData.email)
+        banStudentButton.setAttribute('data-user', studentData.id)
         banStudentButton.textContent = 'Ban User'
         banStudentButton.onclick = (event) => {
-            if (confirm(`Are you sure you want to ban ${studentData.email}?`)) {
-                socket.emit('classBanUser', studentData.email)
+            if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
+                socket.emit('classBanUser', studentData.id)
             }
         }
         extraButtons.appendChild(banStudentButton)
         let kickUserButton = document.createElement('button')
         kickUserButton.className = 'kickUser quickButton revampButton warningButton'
-        kickUserButton.setAttribute('data-userid', studentData.email)
+        kickUserButton.setAttribute('data-userid', studentData.id)
         kickUserButton.onclick = (event) => {
-            if (confirm(`Are you sure you want to kick ${studentData.email}?`)) {
-                socket.emit('classKickUser', studentData.email)
+            if (confirm(`Are you sure you want to kick ${studentData.displayName}?`)) {
+                socket.emit('classKickUser', studentData.id)
             }
         }
         kickUserButton.textContent = 'Kick User'

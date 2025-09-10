@@ -270,17 +270,18 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
+					socket.emit('classUpdate')
+					socket.on('classUpdate', (classroomData) => {
+                        console.log(classroomData)
+                        const newPoll = classroomData.poll;
+                        if (deepObjectEqual(poll, newPoll)) return;
 
-					socket.emit('pollUpdate')
-					socket.on('pollUpdate', (newPoll) => {
-						if (deepObjectEqual(poll, newPoll)) return
-
-						poll = newPoll
-						if (poll.status) {
-							socket.emit('getCanVote', currentUser.email)
-						}
-						updatePage()
-					})
+                        poll = newPoll;
+                        if (poll.status) {
+                            socket.emit('getCanVote', currentUser.email);
+                        }
+                        updatePage();
+					});
 
 					socket.on('pollResp', (voteData) => {
 						const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')

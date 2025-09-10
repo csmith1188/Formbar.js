@@ -5,6 +5,7 @@ const { advancedEmitToClass, setClassOfApiSockets, emitToUser} = require("../mod
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
+const { getEmailFromId } = require("../modules/student");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -256,6 +257,7 @@ module.exports = {
 
                 const classId = socket.request.session.classId
                 socketUpdates.classKickStudents(classId)
+                socketUpdates.classUpdate(classId)
                 socketUpdates.controlPanelUpdate(classId)
                 socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('kickStudentsSound', classId, { api: true })
@@ -301,6 +303,7 @@ module.exports = {
 
                         socketUpdates.classKickUser(email)
                         socketUpdates.classBannedUsersUpdate()
+                        socketUpdates.classUpdate();
                         socketUpdates.controlPanelUpdate()
                         advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${email}`)
@@ -367,11 +370,11 @@ module.exports = {
          * @param {string} email - The email of the user to change permissions for.
          * @param {number} newPerm - The new permission level to set.
          */
-        socket.on('classPermChange', (email, newPerm) => {
+        socket.on('classPermChange', async (userId, newPerm) => {
             try {
+                const email = await getEmailFromId(userId);
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
-                console.log(email, classInformation.classrooms[socket.request.session.classId].students)
                 classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
                 classInformation.users[email].classPermissions = newPerm
 
@@ -406,6 +409,7 @@ module.exports = {
                         if (err) throw err
 
                         logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
+                        socketUpdates.classUpdate()
                         socketUpdates.controlPanelUpdate()
                     } catch (err) {
                         logger.log('error', err.stack)

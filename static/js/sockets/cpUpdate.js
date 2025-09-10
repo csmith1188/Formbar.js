@@ -27,10 +27,14 @@ const permissionOptions = [
 // Ask for classroom update and listen for the response
 socket.emit('classUpdate')
 socket.on('classUpdate', (classroomData) => {
+    console.log('UPDATE CLASSROOM')
     classId = classroomData.id
     currentTags = []
     let studentsOffline = 0
-    for (let student of Object.values(classroomData.students)) {
+    console.log(classroomData)
+    for (const studentId of Object.keys(classroomData.students)) {
+        let student = classroomData.students[studentId]
+
         if (student.permissions >= 4) continue;
         student.help.time = new Date(student.help.time)
         student.pollRes.time = new Date(student.pollRestime)

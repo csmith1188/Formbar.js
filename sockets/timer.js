@@ -25,6 +25,7 @@ module.exports = {
                 classData.timer.timeLeft = startTime
                 classData.timer.active = active
                 classData.timer.sound = sound
+                socketUpdates.classUpdate();
                 socketUpdates.controlPanelUpdate()
 
                 if (active) {

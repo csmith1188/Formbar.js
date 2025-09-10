@@ -99,6 +99,7 @@ async function createPoll(pollData, socket) {
 
         // Log data about the class then call the appropriate update functions
         logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
+        socketUpdates.classUpdate()
         socketUpdates.pollUpdate()
         socketUpdates.virtualBarUpdate()
         socketUpdates.controlPanelUpdate()
@@ -123,6 +124,7 @@ async function endPoll(socket) {
     const socketUpdates = userSocketUpdates[socket.request.session.email];
 
     await socketUpdates.endPoll();
+    socketUpdates.classUpdate();
     socketUpdates.pollUpdate();
     socketUpdates.controlPanelUpdate();
 
@@ -264,6 +266,7 @@ function pollResponse(res, textRes, socket) {
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
 
+    socketUpdates.classUpdate()
     socketUpdates.controlPanelUpdate()
     socketUpdates.virtualBarUpdate()
 }

@@ -37,6 +37,7 @@ module.exports = {
                     return;
                 };
                 student.requestConversion = data;
+                socketUpdates.classUpdate();
                 socketUpdates.controlPanelUpdate();
             });
         } catch (err) {

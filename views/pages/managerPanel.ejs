@@ -382,6 +382,7 @@
         })
 
         socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
+            console.log("MANAGER UPDATE TRIGGERED")
             users = tempUsers
             filterSortChange()
         })

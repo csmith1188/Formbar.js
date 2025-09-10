@@ -161,14 +161,18 @@ async function deleteUser(userId, socket, socketUpdates) {
             await socketUpdates.deleteCustomPolls(userId)
             await socketUpdates.deleteClassrooms(userId)
 
-            const activeClass = classInformation.users[user.email].activeClass;
-            const classroom = classInformation.classrooms[activeClass];
-            delete classInformation.users[user.email];
-            if (classroom) {
-                delete classroom.students[user.email];
-                socketUpdates.controlPanelUpdate(activeClass);
+            // If the student is online, remove them from any class they're in and update the control panel
+            const student = classInformation.users[user.email];
+            if (student) {
+                const activeClass = classInformation.users[user.email].activeClass;
+                const classroom = classInformation.classrooms[activeClass];
+                delete classInformation.users[user.email];
+                if (classroom) {
+                    delete classroom.students[user.email];
+                    socketUpdates.classUpdate();
+                    socketUpdates.controlPanelUpdate(activeClass);
+                }
             }
-
 
             await dbRun('COMMIT')
             await managerUpdate()
@@ -276,11 +280,9 @@ async function getEmailFromAPIKey(api) {
     }
 }
 
-
 module.exports = {
     getUser,
     deleteUser,
     getUserOwnedClasses,
-    getUserClass,
-    getEmailFromAPIKey
+    getUserClass
 }

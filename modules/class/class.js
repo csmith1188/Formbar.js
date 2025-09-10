@@ -1,7 +1,7 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
 const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
-const { getStudentId } = require("../student");
+const { getIdFromEmail} = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinClass");
@@ -33,7 +33,7 @@ async function joinClass(socket, classId) {
             socket.emit('joinClass', 'You are not in that class.');
             return;
         } else if (!classInformation.classrooms[classId]) {
-            const studentId = await getStudentId(email);
+            const studentId = await getIdFromEmail(email);
             const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
             if (!classUsers) {
                 // The owner of the class is not in classUsers, so we need to check if the user is the owner
@@ -138,7 +138,7 @@ async function leaveRoom(socket) {
     try {
         const classId = socket.request.session.classId;
         const email = socket.request.session.email;
-        const studentId = await getStudentId(email);
+        const studentId = await getIdFromEmail(email);
         const socketUpdates = userSocketUpdates[email];
 
         // Remove the user from the class
@@ -154,6 +154,7 @@ async function leaveRoom(socket) {
         }
 
         // Update the class and play leave sound
+        socketUpdates.classUpdate();
         socketUpdates.controlPanelUpdate();
         socketUpdates.virtualBarUpdate();
 

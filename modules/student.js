@@ -111,16 +111,16 @@ async function getStudentsInClass(classId) {
  * @param email
  * @returns {Promise|Number}
  */
-function getStudentId(email) {
+function getIdFromEmail(email) {
 	try {
-		// If the user is already loded, return the id
+		// If the user is already loaded, return the id
 		if (classInformation.users[email]) {
 			return classInformation.users[email].id
 		}
-	
+
 		// If the user isn't loaded, get the id from the database
 		return new Promise((resolve, reject) => {
-			database.get('SELECT id FROM users WHERE email=?', email, (err, row) => {
+			database.get('SELECT id FROM users WHERE email=?', [email], (err, row) => {
 				if (err) return reject(err)
 				resolve(row.id)
 			})
@@ -130,8 +130,26 @@ function getStudentId(email) {
 	}
 }
 
+async function getEmailFromId(userId) {
+    let email = null;
+    for (const user of Object.values(classInformation.users)) {
+        if (user.id === userId) {
+            email = user.email;
+            break;
+        }
+    }
+
+    // If the user is not logged in, then get their email from the database
+    if (!email) {
+        email = (await dbGet('SELECT email FROM users WHERE id = ?', [userId]));
+    }
+
+    return email;
+}
+
 module.exports = {
 	Student,
 	getStudentsInClass,
-	getStudentId
+	getIdFromEmail,
+    getEmailFromId
 }

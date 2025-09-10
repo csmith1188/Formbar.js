@@ -26,6 +26,7 @@ module.exports = {
                 student.break = reason;
 
                 logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
+                socketUpdates.classUpdate();
                 socketUpdates.controlPanelUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
@@ -44,6 +45,7 @@ module.exports = {
                 logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
 
                 if (breakApproval) io.to(`user-${email}`).emit('break')
+                socketUpdates.classUpdate()
                 socketUpdates.controlPanelUpdate()
                 socketUpdates.virtualBarUpdate()
             } catch (err) {
@@ -61,6 +63,7 @@ module.exports = {
 
                 logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email])})`)
 
+                socketUpdates.classUpdate()
                 socketUpdates.controlPanelUpdate()
                 socketUpdates.virtualBarUpdate()
             } catch (err) {
