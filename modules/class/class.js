@@ -1,7 +1,7 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
 const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
-const { getIdFromEmail} = require("../student");
+const { getIdFromEmail } = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinClass");
@@ -91,16 +91,6 @@ function endClass(socket) {
         logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
         const socketUpdates = userSocketUpdates[socket.request.session.email];
 
-        // Disable all plugins
-        for (const pluginName of Object.keys(plugins)) {
-            const plugin = plugins[pluginName]
-            if (typeof plugin.onDisable == 'function') {
-                plugin.onDisable()
-            } else {
-                logger.log('warning', `[endClass] Plugin ${plugin.name} does not have an onDisable function.`)
-            }
-        }
-
         // End the class
         const classId = socket.request.session.classId
         socketUpdates.endClass(classId)
@@ -155,8 +145,6 @@ async function leaveRoom(socket) {
 
         // Update the class and play leave sound
         socketUpdates.classUpdate();
-        socketUpdates.controlPanelUpdate();
-        socketUpdates.virtualBarUpdate();
 
         // Play leave sound and reload the user's page
         advancedEmitToClass('leaveSound', socket.request.session.classId, {});

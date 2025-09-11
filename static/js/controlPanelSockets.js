@@ -42,7 +42,7 @@ function createTagSelectButtons() {
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			const selectedStudents = []; // Stores the selected students
 			for (const student of students) {
-				const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
+				const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
 				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
 				if (selectedTags.length === 0) continue;
 				if (student.permissions >= TEACHER_PERMISSIONS) continue;
@@ -50,10 +50,10 @@ function createTagSelectButtons() {
 				// Handle tag selections
 				for (const studentTag of studentTags) {
 					if (selectedTagTexts.has(studentTag.textContent)) {
-						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentElement.open = true;
 						studentCheckbox.checked = true;
-						selectedStudents.push(student.email);
+						selectedStudents.push(student.id);
 						break;
 					}
 				}
@@ -63,7 +63,7 @@ function createTagSelectButtons() {
 					// Handle multi-res polls
 					for (const response of student.pollRes.buttonRes) {
 						if (selectedTagTexts.has(response)) {
-							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 							studentElement.open = true;
 							studentCheckbox.checked = true;
 							selectedStudents.push(student.email);
@@ -73,19 +73,19 @@ function createTagSelectButtons() {
 				} else if (typeof student.pollRes.buttonRes === 'string') {
 					// Handle regular polls
 					if (selectedTagTexts.has(student.pollRes.buttonRes)) {
-						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentElement.open = true;
 						studentCheckbox.checked = true;
-						selectedStudents.push(student.email);
+						selectedStudents.push(student.id);
 					}
 				}
 			}
 
 			// If the student is not selected, then unselect them
 			for (const student of students) {
-				if (selectedStudents.indexOf(student.email) === -1) {
-					const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
-					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+				if (selectedStudents.indexOf(student.id) === -1) {
+					const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 					if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
 
 					studentElement.open = false;
@@ -237,15 +237,17 @@ socket.on('customPollUpdate', (
 		for (const student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
-			const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
-			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+			const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 
 			if (studentCheckbox) {
 				studentCheckbox.checked = switchState;
-				votingData[student.email] = switchState;
+				votingData[student.id] = switchState;
 				studentElement.open = studentCheckbox.checked;
 			}
 		}
+
+        // Send the voting data to the server to update the students' voting rights
 		socket.emit('changeCanVote', votingData)
 	}
 
@@ -261,21 +263,22 @@ socket.on('customPollUpdate', (
 
 		// Get the student's checkbox
 		// If they do not have one, skip them
-		const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`)
+		const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`)
 		if (!studentCheckbox) continue;
 
 		// When a student's checkbox is clicked, add all students who have their checkboxes checked to a list
 		// Send this to the server to update student's voting rights
 		studentCheckbox.onclick = () => {
+            console.log('im clicked lol')
 			const canStudentVote = studentCheckbox.checked;
 
-			let studentCheckboxes = classroom.studentsAllowedToVote.studentBoxes;
-			if (studentCheckbox.checked && !studentCheckboxes.includes(student.email)) {
-				studentCheckboxes.push(student.email);
+			let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
+			if (studentCheckbox.checked && !studentsAllowedToVote.includes(student.id)) {
+				studentsAllowedToVote.push(student.id);
 			}
 
 			socket.emit('changeCanVote', {
-				[student.email]: canStudentVote
+				[student.id]: canStudentVote
 			});
 		}
 	}

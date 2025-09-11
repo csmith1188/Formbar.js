@@ -26,13 +26,13 @@ function buildStudent(classroom, studentData) {
         newStudent.hidden = false
         newStudent.style.display = 'flex'
         newStudent.id = `student-${studentData.id}`
-        newStudent.open = opendetails.indexOf(studentData.email) != -1
+        newStudent.open = opendetails.indexOf(studentData.id) != -1
 
         newStudent.addEventListener('click', () => {
             if (newStudent.open) {
-                opendetails.splice(opendetails.indexOf(studentData.email), 1)
+                opendetails.splice(opendetails.indexOf(studentData.id), 1)
             } else {
-                opendetails.push(studentData.email)
+                opendetails.push(studentData.id)
             }
         })
 
@@ -49,8 +49,8 @@ function buildStudent(classroom, studentData) {
         let extraButtons = newStudent.querySelector('#extraButtons')
 
         newStudent.querySelector('#email').textContent = studentData.displayName
-        studentBox.id = 'checkbox_' + studentData.email
-        studentBox.checked = classroom.poll.studentsAllowedToVote.indexOf(studentData.email) != -1
+        studentBox.id = 'checkbox_' + studentData.id
+        studentBox.checked = classroom.poll.studentsAllowedToVote.indexOf(studentData.id) != -1
 
         for (let eachResponse in classroom.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
@@ -89,7 +89,7 @@ function buildStudent(classroom, studentData) {
 
             let deleteTicketButton = document.createElement('button')
             deleteTicketButton.classList.add('quickButton')
-            deleteTicketButton.dataset.studentName = studentData.email
+            deleteTicketButton.dataset.studentName = studentData.id
             deleteTicketButton.onclick = (event) => {
                 deleteTicket(event.target)
             }
@@ -99,7 +99,7 @@ function buildStudent(classroom, studentData) {
         }
 
         if (studentData.break == true) {
-            userBreak.push(studentData.email)
+            userBreak.push(studentData.id)
         } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
@@ -109,17 +109,17 @@ function buildStudent(classroom, studentData) {
 
             let approveBreakButton = document.createElement('button')
             approveBreakButton.classList.add('quickButton')
-            approveBreakButton.dataset.studentName = studentData.email
+            approveBreakButton.dataset.studentName = studentData.id
             approveBreakButton.onclick = (event) => {
-                approveBreak(true, studentData.email)
+                approveBreak(true, studentData.id)
             }
             approveBreakButton.textContent = 'Approve Break'
 
             let denyBreakButton = document.createElement('button')
             denyBreakButton.classList.add('quickButton')
-            denyBreakButton.dataset.studentName = studentData.email
+            denyBreakButton.dataset.studentName = studentData.id
             denyBreakButton.onclick = (event) => {
-                approveBreak(false, studentData.email)
+                approveBreak(false, studentData.id)
             }
             denyBreakButton.textContent = 'Deny Break'
 
@@ -212,7 +212,7 @@ function buildStudent(classroom, studentData) {
                     for (let tagButton of roomTagDiv.querySelectorAll('button.pressed')) {
                         tags.push(tagButton.textContent);
                     }
-                    socket.emit('saveTags', studentData.id, tags, studentData.email);
+                    socket.emit('saveTags', studentData.id, tags);
                 }
 
                 createTagSelectButtons();
@@ -272,34 +272,34 @@ function filterSortChange(classroom) {
 
     // filter by help
     if (filter.alert) {
-        for (let email of userOrder.slice()) {
-            let studentElement = document.getElementById(`student-${email}`);
+        for (const userId of userOrder.slice()) {
+            let studentElement = document.getElementById(`student-${userId}`);
             if (
                 (
-                    (filter.alert == 1 && !classroom.students[email].help && !classroom.students[email].break) ||
-                    (filter.alert == 2 && (classroom.students[email].help || classroom.students[email].break))
+                    (filter.alert == 1 && !classroom.students[userId].help && !classroom.students[userId].break) ||
+                    (filter.alert == 2 && (classroom.students[userId].help || classroom.students[userId].break))
                 )
             ) {
                 studentElement.style.display = 'none'
-                userOrder.pop(email)
+                userOrder.pop(userId)
             }
         }
     }
 
     // filter by poll
     if (filter.polls) {
-        for (let email of userOrder) {
-            let studentElement = document.getElementById(`student-${email}`);
+        for (const userId of userOrder) {
+            let studentElement = document.getElementById(`student-${userId}`);
             if (
                 (filter.polls == 1 && (
-                        !classroom.students[email].pollRes.buttonRes && !classroom.students[email].pollRes.textRes)
+                        !classroom.students[userId].pollRes.buttonRes && !classroom.students[userId].pollRes.textRes)
                 ) ||
                 (filter.polls == 2 &&
-                    (classroom.students[email].pollRes.buttonRes || classroom.students[email].pollRes.textRes)
+                    (classroom.students[userId].pollRes.buttonRes || classroom.students[userId].pollRes.textRes)
                 )
             ) {
                 studentElement.style.display = 'none'
-                userOrder.pop(email)
+                userOrder.pop(userId)
             }
         }
     }
@@ -458,6 +458,6 @@ function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
 }
 
-function approveBreak(breakApproval, email) {
-    socket.emit('approveBreak', breakApproval, email)
+function approveBreak(breakApproval, userId) {
+    socket.emit('approveBreak', breakApproval, userId)
 }

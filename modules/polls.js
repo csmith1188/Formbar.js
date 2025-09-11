@@ -18,7 +18,8 @@ const earnedObject = {
  */
 async function createPoll(pollData, socket) {
     try {
-        const { pollPrompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        console.log(studentsAllowedToVote);
         const numberOfResponses = Object.keys(pollOptions).length;
 
         const socketUpdates = userSocketUpdates[socket.request.session.email];
@@ -33,7 +34,7 @@ async function createPoll(pollData, socket) {
 
         // Log poll information
         logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) pollPrompt=(${pollPrompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
+        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
 
         await socketUpdates.clearPoll()
         let generatedColors = generateColors(Object.keys(pollOptions).length)
@@ -90,7 +91,7 @@ async function createPoll(pollData, socket) {
         // Set the poll's data in the classroom
         classInformation.classrooms[classId].poll.weight = weight
         classInformation.classrooms[classId].poll.allowTextResponses = allowTextResponses
-        classInformation.classrooms[classId].poll.prompt = pollPrompt
+        classInformation.classrooms[classId].poll.prompt = prompt
         classInformation.classrooms[classId].poll.allowMultipleResponses = allowMultipleResponses
         for (const key in classInformation.classrooms[socket.request.session.classId].students) {
             classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
@@ -100,9 +101,6 @@ async function createPoll(pollData, socket) {
         // Log data about the class then call the appropriate update functions
         logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
         socketUpdates.classUpdate()
-        socketUpdates.pollUpdate()
-        socketUpdates.virtualBarUpdate()
-        socketUpdates.controlPanelUpdate()
 
         // If the request is originating from the http API, then send a response specifically for it
         // Otherwise, simply emit the startPoll event
@@ -125,8 +123,6 @@ async function endPoll(socket) {
 
     await socketUpdates.endPoll();
     socketUpdates.classUpdate();
-    socketUpdates.pollUpdate();
-    socketUpdates.controlPanelUpdate();
 
     if (socket.isEmulatedSocket) {
         socket.res.status(200).json({ message: 'Success' });
@@ -165,15 +161,14 @@ async function clearPoll(socket) {
         }
     }
 
-    socketUpdates.pollUpdate();
-    socketUpdates.virtualBarUpdate();
-    socketUpdates.controlPanelUpdate();
+    socketUpdates.classUpdate();
     if (socket.isEmulatedSocket) {
         socket.res.status(200).json({ message: 'Success' });
     }
 }
 
 function pollResponse(res, textRes, socket) {
+    console.log('recieveed', res, textRes)
     const resLength = textRes != null ? textRes.length : 0;
     logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
     logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`)
@@ -266,9 +261,8 @@ function pollResponse(res, textRes, socket) {
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
 
+    console.log('class update')
     socketUpdates.classUpdate()
-    socketUpdates.controlPanelUpdate()
-    socketUpdates.virtualBarUpdate()
 }
 
 /**

@@ -38,7 +38,6 @@ module.exports = {
                 };
                 student.requestConversion = data;
                 socketUpdates.classUpdate();
-                socketUpdates.controlPanelUpdate();
             });
         } catch (err) {
             logger.log('error', err.stack)
@@ -60,7 +59,7 @@ module.exports = {
                     if (err) throw err;
                 });
                 student.requestConversion = null;
-                socketUpdates.controlPanelUpdate();
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack)
             }

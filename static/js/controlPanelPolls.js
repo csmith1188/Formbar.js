@@ -453,6 +453,7 @@ function startPoll(customPollId) {
 		let customPoll = customPolls[customPollId]
 		changeTab('mainPolls', 'polls')
 
+        console.log(customPoll.prompt)
         socket.emit('startPoll', {
             prompt: customPoll.prompt,
             pollOptions: customPoll.answers,
@@ -531,7 +532,7 @@ function savePoll() {
 	let customPoll = customPolls[editingPollId]
 
 	customPoll.blind = blindCheck.checked
-	customPoll.prompt = pollPrompt.value
+	customPoll.prompt = prompt.value
 	customPoll.textRes = resTextBox.checked
 
 	let pollAnswers = []

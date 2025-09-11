@@ -46,15 +46,16 @@ module.exports = {
 
         /**
          * Retrieves the voting rights of a user
-         * @param {String} email - email of the user to check.
+         * @param {number} id - The id of the user to check.
          */
-        socket.on('getCanVote', (email) => {
+        socket.on('getCanVote', async (userId) => {
             try {
-                logger.log('info', `[getCanVote] email=(${email}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+                logger.log('info', `[getCanVote] userId=(${userId}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
-                const studentBoxes = classInformation.classrooms[classId].poll.studentsAllowedToVote;
-                const canVote = studentBoxes.indexOf(email) > -1;
+                const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
+                const canVote = studentsAllowedToVote.includes(userId.toString());
+                console.log(userId, studentsAllowedToVote, canVote);
                 socket.emit('getCanVote', canVote);
             } catch (err) {
                 logger.log('error', err.stack)
@@ -66,13 +67,14 @@ module.exports = {
          * @param {Object} votingData - An object containing the emails and their voting rights.
          * This should only include emails which should be changed.
          */
-        socket.on('changeCanVote', (votingData) => {
+        socket.on('changeCanVote', async (votingData) => {
             try {
                 logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
                 const studentBoxes = classInformation.classrooms[classId].poll.studentsAllowedToVote;
-                for (const email in votingData) {
+                for (const userId in votingData) {
+                    const email = await getEmailFromId(userId);
                     const votingRight = votingData[email];
                     if (votingRight) {
                         if (!studentBoxes[email]) {
@@ -86,7 +88,7 @@ module.exports = {
                     // Emit the voting right to the user
                     emitToUser('getCanVote', email, votingRight);
                 }
-                socketUpdates.virtualBarUpdate(classId);
+                socketUpdates.classUpdate(classId);
             } catch(err) {
                 logger.log('error', err.stack)
             }
@@ -242,8 +244,6 @@ module.exports = {
 
                 const classId = socket.request.session.classId
                 socketUpdates.classKickUser(email, classId)
-                socketUpdates.controlPanelUpdate(classId)
-                socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('leaveSound', classId, {})
             } catch (err) {
                 logger.log('error', err.stack)
@@ -258,8 +258,6 @@ module.exports = {
                 const classId = socket.request.session.classId
                 socketUpdates.classKickStudents(classId)
                 socketUpdates.classUpdate(classId)
-                socketUpdates.controlPanelUpdate(classId)
-                socketUpdates.virtualBarUpdate(classId)
                 advancedEmitToClass('kickStudentsSound', classId, { api: true })
             } catch (err) {
                 logger.log('error', err.stack)
@@ -304,7 +302,6 @@ module.exports = {
                         socketUpdates.classKickUser(email)
                         socketUpdates.classBannedUsersUpdate()
                         socketUpdates.classUpdate();
-                        socketUpdates.controlPanelUpdate()
                         advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${email}`)
                     } catch (err) {
@@ -410,7 +407,6 @@ module.exports = {
 
                         logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
                         socketUpdates.classUpdate()
-                        socketUpdates.controlPanelUpdate()
                     } catch (err) {
                         logger.log('error', err.stack)
                     }

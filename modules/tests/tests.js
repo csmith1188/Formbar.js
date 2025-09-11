@@ -96,9 +96,7 @@ function createSocketUpdates(isMocked = true, socket) {
     return isMocked ? {
         endPoll: jest.fn(),
         clearPoll: jest.fn(),
-        pollUpdate: jest.fn(),
-        virtualBarUpdate: jest.fn(),
-        controlPanelUpdate: jest.fn(),
+        classUpdate: jest.fn(),
         customPollUpdate: jest.fn()
     } :  new SocketUpdates(socket);
 }

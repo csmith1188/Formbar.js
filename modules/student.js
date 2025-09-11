@@ -1,5 +1,5 @@
 const { classInformation } = require("./class/classroom");
-const { database } = require("./database")
+const { database, dbGet } = require("./database")
 const { STUDENT_PERMISSIONS } = require("./permissions")
 const { logger } = require("./logger");
 
@@ -131,6 +131,7 @@ function getIdFromEmail(email) {
 }
 
 async function getEmailFromId(userId) {
+    //console.trace("USER ID: ", userId);
     let email = null;
     for (const user of Object.values(classInformation.users)) {
         if (user.id === userId) {
@@ -141,7 +142,10 @@ async function getEmailFromId(userId) {
 
     // If the user is not logged in, then get their email from the database
     if (!email) {
-        email = (await dbGet('SELECT email FROM users WHERE id = ?', [userId]));
+        const emailData = (await dbGet('SELECT email FROM users WHERE id = ?', [userId]));
+        if (emailData && emailData.email) {
+            email = emailData.email;
+        }
     }
 
     return email;

@@ -33,7 +33,6 @@ module.exports = {
 
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
                 socketUpdates.classUpdate();
-                socketUpdates.controlPanelUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -51,7 +50,6 @@ module.exports = {
 
                 // Call the classPermissionUpdate function to update the class information with this new data
                 socketUpdates.classUpdate()
-                socketUpdates.controlPanelUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }

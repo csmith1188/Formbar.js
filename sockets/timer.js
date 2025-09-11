@@ -26,7 +26,6 @@ module.exports = {
                 classData.timer.active = active
                 classData.timer.sound = sound
                 socketUpdates.classUpdate();
-                socketUpdates.controlPanelUpdate()
 
                 if (active) {
                     // Run the function once instantly

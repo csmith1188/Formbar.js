@@ -170,7 +170,6 @@ async function deleteUser(userId, socket, socketUpdates) {
                 if (classroom) {
                     delete classroom.students[user.email];
                     socketUpdates.classUpdate();
-                    socketUpdates.controlPanelUpdate(activeClass);
                 }
             }
 

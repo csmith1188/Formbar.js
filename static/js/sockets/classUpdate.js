@@ -79,7 +79,7 @@ socket.on('classUpdate', (classroomData) => {
 
         if (students.length > 0) {
             for (let i = 0; i < students.length; i++) {
-                if (students[i].email == student.email) {
+                if (students[i].id == student.id) {
                     students[i] = student
                     break
                 }
@@ -115,7 +115,7 @@ socket.on('classUpdate', (classroomData) => {
         if (!student.break
             && student.permissions > GUEST_PERMISSIONS
             && student.permissions < TEACHER_PERMISSIONS
-            && classroomData.poll.studentsAllowedToVote.includes(student.email)
+            && classroomData.poll.studentsAllowedToVote.includes(student.id)
         ) {
             totalResponders++;
         }
@@ -128,12 +128,12 @@ socket.on('classUpdate', (classroomData) => {
 
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
-    const studentEmails = Object.keys(classroomData.students);
-    validateStudents(studentEmails);
-    for (const email of studentEmails) {
-        let studentElement = document.getElementById(`student-${email}`)
+    const studentIds = Object.keys(classroomData.students);
+    validateStudents(studentIds);
+    for (const userId of studentIds) {
+        let studentElement = document.getElementById(`student-${userId}`)
         let oldStudentData = null
-        let newStudentData = classroomData.students[email]
+        let newStudentData = classroomData.students[userId]
 
         // Add any selected tags to the current tags list
         // This will allow the teacher to filter students by tags
@@ -145,7 +145,7 @@ socket.on('classUpdate', (classroomData) => {
             }
         }
 
-        if (classroom.students && classroom.students[email]) oldStudentData = classroom.students[email]
+        if (classroom.students && classroom.students[userId]) oldStudentData = classroom.students[userId]
         if (!studentElement) {
             let builtStudent = buildStudent(classroomData, newStudentData)
             if (builtStudent) usersDiv.appendChild(builtStudent)

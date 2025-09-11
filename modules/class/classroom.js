@@ -14,6 +14,7 @@ class Classroom {
 		this.isActive = false
 		this.students = {}
 		this.sharedPolls = sharedPolls || []
+        this.studentsAllowedToVote = []
 		this.poll = {
 			status: false,
             prompt: '',

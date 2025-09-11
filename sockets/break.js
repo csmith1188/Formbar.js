@@ -2,6 +2,7 @@ const { classInformation } = require("../modules/class/classroom")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 const { io } = require("../modules/webServer")
+const {getEmailFromId} = require("../modules/student");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -27,15 +28,15 @@ module.exports = {
 
                 logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
                 socketUpdates.classUpdate();
-                socketUpdates.controlPanelUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
             }
         });
 
         // Approves the break ticket request
-        socket.on('approveBreak', (breakApproval, email) => {
+        socket.on('approveBreak', async (breakApproval, userId) => {
             try {
+                const email = await getEmailFromId(userId);
                 logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`)
 
@@ -46,8 +47,6 @@ module.exports = {
 
                 if (breakApproval) io.to(`user-${email}`).emit('break')
                 socketUpdates.classUpdate()
-                socketUpdates.controlPanelUpdate()
-                socketUpdates.virtualBarUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -64,8 +63,6 @@ module.exports = {
                 logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email])})`)
 
                 socketUpdates.classUpdate()
-                socketUpdates.controlPanelUpdate()
-                socketUpdates.virtualBarUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
