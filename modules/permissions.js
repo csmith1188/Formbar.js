@@ -19,6 +19,16 @@ const PAGE_PERMISSIONS = {
 	logs: { permissions: MANAGER_PERMISSIONS, classPage: false }
 }
 
+const CLASS_PERMISSIONS = {
+    GAMES: 'games',
+    CONTROL_POLLS: 'controlPolls',
+    MANAGE_STUDENTS: 'manageStudents',
+    MANAGE_CLASS: 'manageClass',
+    BREAK_AND_HELP: 'breakAndHelp',
+    AUXILIARY: 'auxiliary',
+    USER_DEFAULTS: 'userDefaults',
+}
+
 // Defines the default permissions for people in a class
 const DEFAULT_CLASS_PERMISSIONS = {
 	games: MOD_PERMISSIONS, // Control the games	
@@ -122,6 +132,7 @@ module.exports = {
 
 	// Page permissions
     PAGE_PERMISSIONS,
+    CLASS_PERMISSIONS,
     DEFAULT_CLASS_PERMISSIONS,
 
 	// Socket permissions

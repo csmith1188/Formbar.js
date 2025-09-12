@@ -1,9 +1,10 @@
 const { logger } = require("../../modules/logger");
-const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS} = require("../../modules/permissions");
+const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_PERMISSIONS} = require("../../modules/permissions");
 const { classInformation } = require("../../modules/class/classroom");
 const { dbGet } = require("../../modules/database");
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
 const { camelCaseToNormal } = require("../../modules/util");
+const {checkUserClassPermission, startClass} = require("../../modules/class/class");
 
 // For users who do not have teacher/manager permissions, then they can only access these endpoints when it's
 // only affecting themselves.
@@ -11,6 +12,23 @@ const endpointWhitelistMap = [
     'getOwnedClasses',
     'getActiveClass'
 ]
+
+function classPermCheck(classPermission) {
+    return async function(req, res, next) {
+        try {
+            const classId = req.params.id;
+            const hasPermissions = await checkUserClassPermission(req.session.user.id, classId, classPermission);
+            if (hasPermissions) {
+                next()
+            } else {
+                res.status(403).json({ message: 'Unauthorized' });
+            }
+        } catch (err) {
+            logger.log('error', err.stack);
+            res.status(500).json({ error: 'There was a server error try again.' });
+        }
+    }
+}
 
 /**
  * Permission check for HTTP requests
@@ -76,23 +94,7 @@ function httpPermCheck(event){
     }
 }
 
-function checkUserPermission(allowedPermission) {
-    return function (req, res, next) {
-        const email = req.session.user.email;
-        const user = classInformation.users[email];
-        if (!user) {
-            return res.status(401).json({ error: 'Not logged in' });
-        }
-
-        if (user.permissions >= allowedPermission) {
-            next()
-        } else {
-            return res.status(401).json({ error: "You don't have high enough permissions to access this endpoint." });
-        }
-    }
-}
-
 module.exports = {
-    httpPermCheck,
-    checkUserPermission
+    classPermCheck,
+    httpPermCheck
 };

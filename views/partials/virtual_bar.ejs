@@ -69,10 +69,9 @@
     // Gets data from server
     socket.on('classUpdate', (classroomData) => {
         const newPollData = classroomData.poll
-        console.log(newPollData)
         if (deepObjectEqual(newPollData, pollsData)) return
 
-        if (!newPollData.status && Object.keys(newPollData.pollOptions).length == 0) {
+        if (!newPollData.status && Object.keys(newPollData.pollResponses).length == 0) {
             if (!timeData.active) {
                 if (noPoll) noPoll.style.display = ''
 
@@ -108,7 +107,7 @@
                 labelsArray.push('Responses')
                 studentResponses.responses = 0
             } else {
-                for (const [poll, pollData] of Object.entries(newPollData.pollOptions)) {
+                for (const [poll, pollData] of Object.entries(newPollData.pollResponses)) {
                     labelsArray.push(pollData.answer)
                     studentResponses[poll] = 0
                 }
@@ -121,7 +120,7 @@
             if (newPollData.blind) {
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (let poll of Object.values(newPollData.pollOptions)) {
+                for (let poll of Object.values(newPollData.pollResponses)) {
                     doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
                 }
             }
@@ -129,7 +128,7 @@
             // Loops through all student answers and adds them to a total tally
             // Student response corresponds with a property name in studResponses
             studentResponses.noResponse += newPollData.totalResponders - newPollData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollData.pollOptions)) {
+            for (const [poll, pollData] of Object.entries(newPollData.pollResponses)) {
                 if (newPollData.blind)
                     studentResponses.responses += pollData.responses
                 else studentResponses[poll] += pollData.responses
@@ -177,7 +176,7 @@
                 pieChart.backgroundColor = ["red"]
             }
         } else {
-            if (!pollsData.status && Object.keys(pollsData.pollOptions).length == 0) {
+            if (!pollsData.status && Object.keys(pollsData.pollResponses).length == 0) {
                 virtualBar.parentElement.style.display = "none";
             }
             pieChart.data = []

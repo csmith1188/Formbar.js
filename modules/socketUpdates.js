@@ -25,17 +25,15 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 
 // Socket update events
 const PASSIVE_SOCKETS = [
-	'pollUpdate',
+    'classUpdate',
 	'managerUpdate',
 	'ipUpdate',
-	'vbUpdate',
-	'cpUpdate',
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
 ];
 
-async function emitToUser(event, email, ...data) {
+async function emitToUser(email, event, ...data) {
     console.warn("EMIT TO USER", event, email)
     for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
@@ -139,8 +137,8 @@ function sortStudentsInPoll(classData) {
             }
         }
 
-        // Check if the student's checkbox was checked
-        if (classData.poll.studentsAllowedToVote.includes(student.email)) {
+        // Check if the student's checkbox was checked (studentsAllowedToVote stores student ids)
+        if (classData.poll.studentsAllowedToVote.includes(student.id.toString())) {
             included = true;
         } else {
             excluded = true;
@@ -231,8 +229,8 @@ function getPollResponseInformation(classData) {
 
     return {
         totalResponses,
-        totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,
-        pollOptions: responses,
+        totalResponders: totalStudentsIncluded.length,
+        pollResponses: responses,
     }
 }
 
@@ -268,11 +266,10 @@ class SocketUpdates {
                 hasTeacherPermissions = true;
             }
 
-            const { totalResponses, totalResponders, pollOptions } = getPollResponseInformation(classData);
+            const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
             classData.poll.totalResponses = totalResponses;
             classData.poll.totalResponders = totalResponders;
-            classData.poll.pollOptions = pollOptions;
-            console.log("TEST", classData.poll.prompt)
+            classData.poll.pollResponses = pollResponses;
 
             // Redact sensitive information if the user does not have teacher permissions
             if (!hasTeacherPermissions && !restrictToControlPanel) {
@@ -320,7 +317,6 @@ class SocketUpdates {
             if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !restrictToControlPanel) {
                 io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
             } else if (restrictToControlPanel) {
-                console.log("RESTRICTED TO CONTROL PANEL")
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
             } else {
                 advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
@@ -341,9 +337,9 @@ class SocketUpdates {
 
             advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
                 status: classData.poll.status,
-                totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,
+                totalResponders: totalStudentsIncluded.length,
                 totalResponses: totalResponses,
-                pollOptions: responses,
+                pollResponses: responses,
                 allowTextResponses: classData.poll.allowTextResponses,
                 allowMultipleResponses: classData.poll.allowMultipleResponses,
                 prompt: classData.poll.prompt,

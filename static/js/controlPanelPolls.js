@@ -453,7 +453,6 @@ function startPoll(customPollId) {
 		let customPoll = customPolls[customPollId]
 		changeTab('mainPolls', 'polls')
 
-        console.log(customPoll.prompt)
         socket.emit('startPoll', {
             prompt: customPoll.prompt,
             pollOptions: customPoll.answers,

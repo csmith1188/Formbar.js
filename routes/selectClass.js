@@ -149,7 +149,7 @@ module.exports = {
                 setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
 
 				if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
-					emitToUser('reload', req.session.email);
+					emitToUser(req.session.email, 'reload');
 				}
                 res.redirect('/')
             } catch (err) {

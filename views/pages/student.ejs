@@ -160,7 +160,6 @@
 								pollDiv.style.display = 'block'
 
 								pollForm.innerHTML = ''
-                                console.log('test', poll)
 								pollPromptDisplay.innerText = poll.prompt
 								// Creates all selectable answers and displays them to the user
 								for (let response of Object.values(poll.responses)) {
@@ -273,7 +272,6 @@
 
 					socket.emit('classUpdate')
 					socket.on('classUpdate', (classroomData) => {
-                        console.log(classroomData)
                         const newPoll = classroomData.poll;
                         if (deepObjectEqual(poll, newPoll)) return;
 
@@ -312,7 +310,6 @@
 						socket.emit('getCanVote', currentUser.id)
 					}
 					socket.on('getCanVote', (newVotingRight) => {
-                        console.log("NEW VOTING RIGHT", newVotingRight)
 						votingRight = newVotingRight
 						if (newVotingRight) {
 							updatePage()

@@ -269,7 +269,6 @@ socket.on('customPollUpdate', (
 		// When a student's checkbox is clicked, add all students who have their checkboxes checked to a list
 		// Send this to the server to update student's voting rights
 		studentCheckbox.onclick = () => {
-            console.log('im clicked lol')
 			const canStudentVote = studentCheckbox.checked;
 
 			let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;

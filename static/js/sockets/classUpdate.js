@@ -28,7 +28,6 @@ const permissionOptions = [
 socket.emit('classUpdate')
 socket.on('classUpdate', (classroomData) => {
     if (!classroomData.students) {
-        console.log('No students provided', classroomData)
         return;
     }
 

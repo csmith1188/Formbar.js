@@ -19,7 +19,6 @@ const earnedObject = {
 async function createPoll(pollData, socket) {
     try {
         const { prompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
-        console.log(studentsAllowedToVote);
         const numberOfResponses = Object.keys(pollOptions).length;
 
         const socketUpdates = userSocketUpdates[socket.request.session.email];
@@ -168,15 +167,15 @@ async function clearPoll(socket) {
 }
 
 function pollResponse(res, textRes, socket) {
-    console.log('recieveed', res, textRes)
     const resLength = textRes != null ? textRes.length : 0;
     logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
     logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`)
 
-    const classId = socket.request.session.classId
-    const email = socket.request.session.email
-    const classroom = classInformation.classrooms[classId]
-    const socketUpdates = userSocketUpdates[socket.request.session.email];
+    const classId = socket.request.session.classId;
+    const email = socket.request.session.email;
+    const user = classInformation.users[email];
+    const classroom = classInformation.classrooms[classId];
+    const socketUpdates = userSocketUpdates[email];
 
     // Do not allow responses if the poll is not active
     if (!classroom.poll || !classroom.poll.status) {
@@ -185,7 +184,7 @@ function pollResponse(res, textRes, socket) {
 
     // Check if user is allowed to respond
     const isRemoving = res === 'remove' || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentsAllowedToVote.includes(email) && !isRemoving) {
+    if (!classroom.poll.studentsAllowedToVote.includes(user.id.toString()) && !isRemoving) {
         return; // If the user is not included in the poll, do not allow them to respond
     }
 
@@ -261,7 +260,6 @@ function pollResponse(res, textRes, socket) {
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
 
-    console.log('class update')
     socketUpdates.classUpdate()
 }
 

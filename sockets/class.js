@@ -11,21 +11,36 @@ module.exports = {
     run(socket, socketUpdates) {
         // Starts a classroom session
         socket.on('startClass', () => {
-            startClass(socket);
+            try {
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
+                startClass(classId);
+            } catch (err) {
+                logger.log('error', err.stack);
+                socket.emit('startClass', 'There was a server error. Please try again');
+            }
         });
 
         // Ends a classroom session
         socket.on('endClass', () => {
-            endClass(socket);
+            try {
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
+                endClass(classId);
+            } catch (err) {
+                logger.log('error', err.stack);
+                socket.emit('startClass', 'There was a server error. Please try again');
+            }
         });
 
         // Join a classroom session
         socket.on('joinClass', async (classId) => {
-            await joinClass(socket, classId);
+            await joinClass(socket.request.session, classId);
         });
 
+        // Joins a classroom
         socket.on("joinRoom", async (classCode) => {
-            joinRoom(socket, classCode);
+            joinRoom(socket.request.session, classCode);
         });
 
         /**
@@ -33,7 +48,7 @@ module.exports = {
          * The user is still associated with the class, but they're not active in it
          */
         socket.on('leaveClass', () => {
-            leaveClass(socket);
+            leaveClass(socket.request.session);
         });
 
         /**
@@ -41,7 +56,7 @@ module.exports = {
          * The user is no longer associated with the class
          */
         socket.on('leaveRoom', async () => {
-            await leaveRoom(socket);
+            await leaveRoom(socket.request.session);
         });
 
         /**
@@ -55,7 +70,6 @@ module.exports = {
                 const classId = socket.request.session.classId;
                 const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 const canVote = studentsAllowedToVote.includes(userId.toString());
-                console.log(userId, studentsAllowedToVote, canVote);
                 socket.emit('getCanVote', canVote);
             } catch (err) {
                 logger.log('error', err.stack)
@@ -86,7 +100,7 @@ module.exports = {
                     }
 
                     // Emit the voting right to the user
-                    emitToUser('getCanVote', email, votingRight);
+                    emitToUser(email, 'getCanVote', votingRight);
                 }
                 socketUpdates.classUpdate(classId);
             } catch(err) {

@@ -4,6 +4,7 @@ const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
+const {io} = require("./webServer");
 
 async function joinRoomByCode(code, session) {
 	try {
@@ -35,7 +36,7 @@ async function joinRoomByCode(code, session) {
 
 		// Load the classroom into the classInformation object if it's not already loaded
 		if (!classInformation.classrooms[classroom.id]) {
-			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags, classroom.plugins)
+			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.owner, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
 		}
 
 		// Find the id of the user who is trying to join the class
@@ -94,7 +95,7 @@ async function joinRoomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
-			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(email)
+			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(currentUser.id)
 			classInformation.users[email].activeClass = classroom.id
 			advancedEmitToClass('joinSound', classroom.id, {})
 
@@ -103,7 +104,7 @@ async function joinRoomByCode(code, session) {
 
 			// Set the class of the API socket
 			setClassOfApiSockets(studentAPIKey, classroom.id);
-
+            userSocketUpdates[email].classUpdate(classroom.id, true)
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
@@ -136,7 +137,7 @@ async function joinRoomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
-			classData.poll.studentsAllowedToVote.push(email)
+			classData.poll.studentsAllowedToVote.push(currentUser.id)
 			classInformation.users[email].activeClass = classroom.id
 			const controlPanelPermissions = Math.min(
 				classData.permissions.controlPolls,
@@ -145,8 +146,6 @@ async function joinRoomByCode(code, session) {
 			)
 
             setClassOfApiSockets(studentAPIKey, classroom.id);
-			advancedEmitToClass('cpUpdate', classroom.id, { classPermissions: controlPanelPermissions }, classData);
-            console.log(userSocketUpdates)
             userSocketUpdates[email].classUpdate(classroom.id, true)
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -157,5 +156,5 @@ async function joinRoomByCode(code, session) {
 }
 
 module.exports = {
-    joinRoomByCode
+    joinRoomByCode,
 }
