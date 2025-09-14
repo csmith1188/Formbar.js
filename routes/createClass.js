@@ -105,7 +105,7 @@ module.exports = {
 
                             logger.log('verbose', '[post /createClass] Added classroom to database')
 
-                            database.get('SELECT id, name, key, permissions, tags, plugins FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
+                            database.get('SELECT id, name, key, permissions, tags FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
                                 try {
                                     if (err) throw err
 
@@ -122,7 +122,7 @@ module.exports = {
                                         classroom.id,
                                         classroom.name,
                                         classroom.key,
-                                        classroom.owner,
+                                        req.session.userId,
                                         JSON.parse(classroom.permissions),
                                         [],
                                         [],
