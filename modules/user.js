@@ -6,7 +6,7 @@ const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
- * @param {Object} req - The request object.
+ * @param {Object} api - The API key for the user.
  * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
  */
 async function getUser(api) {
@@ -125,7 +125,7 @@ async function deleteUser(userId, socket, socketUpdates) {
         logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
         logger.log('info', `[deleteUser] userId=(${userId})`)
         if (!socketUpdates) {
-            socketUpdates = new SocketUpdates(socket);
+            socketUpdates = socket ? new SocketUpdates(socket) : new SocketUpdates({ request: { session: {} }, emit: () => {} });
         }
 
         const user = await new Promise((resolve, reject) => {
@@ -136,7 +136,7 @@ async function deleteUser(userId, socket, socketUpdates) {
         })
 
         if (!user) {
-            socket.emit('message', 'User not found')
+            if (socket && socket.emit) socket.emit('message', 'User not found')
             return
         }
 
@@ -161,18 +161,21 @@ async function deleteUser(userId, socket, socketUpdates) {
             await socketUpdates.deleteCustomPolls(userId)
             await socketUpdates.deleteClassrooms(userId)
 
-            const activeClass = classInformation.users[user.email].activeClass;
-            const classroom = classInformation.classrooms[activeClass];
-            delete classInformation.users[user.email];
-            if (classroom) {
-                delete classroom.students[user.email];
-                socketUpdates.classPermissionUpdate(activeClass);
+            // If the student is online, remove them from any class they're in and update the control panel
+            const student = classInformation.users[user.email];
+            if (student) {
+                const activeClass = classInformation.users[user.email].activeClass;
+                const classroom = classInformation.classrooms[activeClass];
+                delete classInformation.users[user.email];
+                if (classroom) {
+                    delete classroom.students[user.email];
+                    socketUpdates.classUpdate();
+                }
             }
-
 
             await dbRun('COMMIT')
             await managerUpdate()
-            socket.emit('message', 'User deleted successfully')
+            if (socket && socket.emit) socket.emit('message', 'User deleted successfully')
         } catch (err) {
             await dbRun('ROLLBACK')
             throw err
@@ -185,10 +188,10 @@ async function deleteUser(userId, socket, socketUpdates) {
 /**
  * Gets the classes a user owns from their email.
  * @param email
- * @param socket
+ * @param userSession
  */
-async function getUserOwnedClasses(email, socket) {
-    logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+async function getUserOwnedClasses(email, userSession) {
+    logger.log('info', `[getOwnedClasses] session=(${JSON.stringify(userSession)})`);
     logger.log('info', `[getOwnedClasses] email=(${email})`);
 
     const userId = (await dbGet('SELECT id FROM users WHERE email = ?', [email])).id;
@@ -276,11 +279,9 @@ async function getEmailFromAPIKey(api) {
     }
 }
 
-
 module.exports = {
     getUser,
     deleteUser,
     getUserOwnedClasses,
-    getUserClass,
-    getEmailFromAPIKey
+    getUserClass
 }

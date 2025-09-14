@@ -1,6 +1,5 @@
 const { logger } = require("../../../modules/logger");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
-const { createSocketFromHttp } = require("../../../modules/webServer");
 const { deleteUser } = require("../../../modules/user");
 
 module.exports = {
@@ -9,9 +8,8 @@ module.exports = {
         router.get('/user/:id/delete', httpPermCheck("deleteUser"), async (req, res) => {
             try {
                 const userId = req.params.id;
-                const socket = createSocketFromHttp(req, res);
-
-                await deleteUser(userId, socket)
+                await deleteUser(userId)
+                res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

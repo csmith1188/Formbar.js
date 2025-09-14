@@ -4,7 +4,7 @@ const { logger } = require("../modules/logger")
 // This is the page shown when a user tries to access a page that does not exist
 module.exports = {
 	run(app) {
-		app.use((req, res, next) => {
+		app.use((req, res) => {
 			try {
 				let urlPath = req.url // Defines users desired endpoint
 				

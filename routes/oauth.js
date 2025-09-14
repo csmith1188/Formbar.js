@@ -4,6 +4,7 @@ const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
+const getConfig = require('../modules/config');
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(userData, classId, refreshToken) {
@@ -25,7 +26,6 @@ function generateAccessToken(userData, classId, refreshToken) {
 function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
-        email: userData.email,
         email: userData.email
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 
@@ -164,7 +164,8 @@ module.exports = {
                     res.render('pages/login', {
                         title: 'Oauth',
                         redirectURL: redirectURL,
-                        route: 'oauth'
+                        route: 'oauth',
+                        googleOauthEnabled: getConfig().googleOauth.enabled
                     });
                 }
             } catch (err) {

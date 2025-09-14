@@ -1,7 +1,6 @@
-const { createSocketFromHttp } = require("../../../modules/webServer");
 const { logger } = require("../../../modules/logger");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
-const { leaveClass, leaveClassroom } = require("../../../modules/class/class");
+const { leaveClass, leaveRoom } = require("../../../modules/class/class");
 
 module.exports = {
     run(router) {
@@ -9,8 +8,12 @@ module.exports = {
         // The user is still attached to the classroom
         router.post('/class/:id/leaveSession', httpPermCheck("leaveClass"), async (req, res) => {
             try {
-                const socket = createSocketFromHttp(req, res);
-                leaveClass(socket);
+                const result = leaveClass(socket);
+                if (!result) {
+                    return res.status(403).json({ message: 'Unauthorized' });
+                }
+
+                res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });
@@ -19,10 +22,10 @@ module.exports = {
 
         // Leaves the classroom entirely
         // The user is no longer attached to the classroom
-        router.post('/class/:id/leave', httpPermCheck("leaveClassroom"), async (req, res) => {
+        router.post('/class/:id/leave', httpPermCheck("leaveRoom"), async (req, res) => {
             try {
-                const socket = createSocketFromHttp(req, res);
-                await leaveClassroom(socket)
+                await leaveRoom(socket.request.session)
+                socket.res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

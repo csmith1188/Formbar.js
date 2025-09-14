@@ -1,4 +1,4 @@
-const { createSocket, createTestUser, testData, createTestClass } = require("../../modules/tests/tests");
+const { createSocket, createTestUser, testData, createTestClass, createSocketUpdates } = require("../../modules/tests/tests");
 const { run: breakRun } = require('../break');
 
 describe('break', () => {
@@ -10,6 +10,7 @@ describe('break', () => {
 
     beforeEach(() => {
         socket = createSocket();
+        socketUpdates = createSocketUpdates();
 
         // Run the socket handler
         breakRun(socket, socketUpdates);
@@ -44,7 +45,7 @@ describe('break', () => {
 
         classData.isActive = true;
         classData.students[userData.email].break = "reason";
-        await approveBreakHandler(true, userData.email);
+        await approveBreakHandler(true, userData.id);
 
         expect(classData.students[testData.email].break).toBe(true);
     });
@@ -55,7 +56,7 @@ describe('break', () => {
 
         classData.isActive = true;
         classData.students[userData.email].break = "reason";
-        await approveBreakHandler(false, userData.email);
+        await approveBreakHandler(false, userData.id);
 
         expect(classData.students[testData.email].break).toBe(false);
     })
@@ -66,7 +67,7 @@ describe('break', () => {
 
         classData.isActive = true;
         classData.students[userData.email].break = "reason";
-        await endBreakHandler(userData.email);
+        await endBreakHandler();
 
         expect(classData.students[testData.email].break).toBe(false);
     })

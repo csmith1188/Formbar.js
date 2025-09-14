@@ -1,5 +1,5 @@
 const { classInformation } = require("./class/classroom");
-const { database } = require("./database")
+const { database, dbGet } = require("./database")
 const { STUDENT_PERMISSIONS } = require("./permissions")
 const { logger } = require("./logger");
 
@@ -43,7 +43,7 @@ class Student {
 /**
  * Retrieves the students in a class from the database.
  * Creates an actual student class for each student rather than just returning their data.
- * @param {integer} id - The class id.
+ * @param {integer} classId - The class id.
  * @returns {Promise|Object} A promise that resolves to the class users or an error object.
  */
 async function getStudentsInClass(classId) {
@@ -111,16 +111,16 @@ async function getStudentsInClass(classId) {
  * @param email
  * @returns {Promise|Number}
  */
-function getStudentId(email) {
+function getIdFromEmail(email) {
 	try {
-		// If the user is already loded, return the id
+		// If the user is already loaded, return the id
 		if (classInformation.users[email]) {
 			return classInformation.users[email].id
 		}
-	
+
 		// If the user isn't loaded, get the id from the database
 		return new Promise((resolve, reject) => {
-			database.get('SELECT id FROM users WHERE email=?', email, (err, row) => {
+			database.get('SELECT id FROM users WHERE email=?', [email], (err, row) => {
 				if (err) return reject(err)
 				resolve(row.id)
 			})
@@ -130,8 +130,30 @@ function getStudentId(email) {
 	}
 }
 
+async function getEmailFromId(userId) {
+    //console.trace("USER ID: ", userId);
+    let email = null;
+    for (const user of Object.values(classInformation.users)) {
+        if (user.id === userId) {
+            email = user.email;
+            break;
+        }
+    }
+
+    // If the user is not logged in, then get their email from the database
+    if (!email) {
+        const emailData = (await dbGet('SELECT email FROM users WHERE id = ?', [userId]));
+        if (emailData && emailData.email) {
+            email = emailData.email;
+        }
+    }
+
+    return email;
+}
+
 module.exports = {
 	Student,
 	getStudentsInClass,
-	getStudentId
+	getIdFromEmail,
+    getEmailFromId
 }

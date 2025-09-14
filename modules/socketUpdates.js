@@ -3,8 +3,10 @@ const { classInformation } = require("./class/classroom");
 const { settings } = require("./config");
 const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
+const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS} = require("./permissions");
 const { io } = require("./webServer");
+const { getManagerData } = require("./manager");
+const { getEmailFromId } = require("./student");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -23,17 +25,15 @@ database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
 
 // Socket update events
 const PASSIVE_SOCKETS = [
-	'pollUpdate',
+    'classUpdate',
 	'managerUpdate',
 	'ipUpdate',
-	'vbUpdate',
-	'cpUpdate',
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
 ];
 
-async function emitToUser(event, email, ...data) {
+async function emitToUser(email, event, ...data) {
     for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
     }
@@ -43,7 +43,7 @@ async function emitToUser(event, email, ...data) {
  * Emits an event to sockets based on user permissions
  * @param {string} event - The event to emit
  * @param {string} classId - The id of the class
- * @param {{permissions?: number, classPermissions?: number, api?: boolean, email?: string}} options - The options object
+ * @param {{permissions?: number, classPermissions?: number, maxClassPermissions?: number, api?: boolean, email?: string}} options - The options object
  * @param  {...any} data - Additional data to emit with the event
  */
 async function advancedEmitToClass(event, classId, options, ...data) {
@@ -57,6 +57,7 @@ async function advancedEmitToClass(event, classId, options, ...data) {
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
+        if (options.maxClassPermissions && user.classPermissions > options.maxClassPermissions) continue
 		if (options.email && user.email != options.email) continue
 
 		for (let room of socket.rooms) {
@@ -97,28 +98,185 @@ async function setClassOfApiSockets(api, classId) {
 }
 
 async function managerUpdate() {
-    let [users, classrooms] = await Promise.all([
-        new Promise((resolve, reject) => {
-            database.all('SELECT id, email, permissions, displayName FROM users', (err, users) => {
-                if (err) reject(new Error(err))
-                else {
-                    users = users.reduce((tempUsers, tempUser) => {
-                        tempUsers[tempUser.email] = tempUser
-                        return tempUsers
-                    }, {})
-                    resolve(users)
-                }
-            })
-        }),
-        new Promise((resolve, reject) => {
-            database.get('SELECT * FROM classroom', (err, classrooms) => {
-                if (err) reject(new Error(err))
-                else resolve(classrooms)
-            })
-        })
-    ])
+    try {
+        const { users, classrooms } = await getManagerData()
 
-    io.emit('managerUpdate', users, classrooms)
+        // Emit only to connected manager sockets
+        for (const [email, sockets] of Object.entries(userSockets)) {
+            if (classInformation.users[email].permissions >= MANAGER_PERMISSIONS) {
+                for (const socket of Object.values(sockets)) {
+                    socket.emit('managerUpdate', users, classrooms)
+                }
+            }
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
+/**
+ * Sorts students into either included or excluded from the poll.
+ * @returns {Object} An object containing two arrays: included and excluded students.
+ */
+function sortStudentsInPoll(classData) {
+    const totalStudentsIncluded = [];
+    const totalStudentsExcluded = [];
+    for (const student of Object.values(classData.students)) {
+        // Store whether the student is included or excluded
+        let included = false;
+        let excluded = false;
+
+        // Check if the student passes the tags test
+        if (classData.poll.requiredTags.length > 0) {
+            let studentTags = student.tags.split(",");
+            if (classData.poll.requiredTags[0][0] == "0") {
+                if (classData.poll.requiredTags.slice(1).join() == student.tags) {
+                    included = true;
+                } else {
+                    excluded = true;
+                }
+            } else if (classData.poll.requiredTags[0][0] == "1") {
+                let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
+                if (correctTags == classData.poll.requiredTags.length - 1) {
+                    included = true;
+                } else {
+                    excluded = true;
+                }
+            }
+        }
+
+        // Check if the student's checkbox was checked (studentsAllowedToVote stores student ids)
+        if (classData.poll.studentsAllowedToVote.includes(student.id.toString())) {
+            included = true;
+        } else {
+            excluded = true;
+        }
+
+        // Check if they are a guest
+        if (student.classPermissions == GUEST_PERMISSIONS) {
+            excluded = true;
+        }
+
+        // Check if they should be in the excluded array
+        if (student.break == true) {
+            excluded = true;
+        }
+
+        // Prevent students from being included if they are offline
+        if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
+            excluded = true;
+            included = false;
+        }
+
+        // Update the included and excluded lists
+        if (excluded) {
+            totalStudentsExcluded.push(student.email);
+        }
+
+        if (included) {
+            totalStudentsIncluded.push(student.email);
+        }
+    }
+
+    return {
+        totalStudentsIncluded,
+        totalStudentsExcluded,
+    }
+}
+
+function getPollResponseInformation(classData) {
+    let totalResponses = 0;
+    let responses = {};
+    let { totalStudentsIncluded, totalStudentsExcluded } = sortStudentsInPoll(classData);
+
+    // Count the number of responses for each poll option
+    if (Object.keys(classData.poll.responses).length > 0) {
+        for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
+            responses[resKey] = {
+                ...resValue,
+                responses: 0
+            }
+        }
+
+        for (const studentData of Object.values(classData.students)) {
+            if (studentData.break == true || totalStudentsExcluded.includes(studentData.email)) {
+                continue;
+            }
+
+            // Count student as responded if they have any valid response and aren't excluded
+            if (Array.isArray(studentData.pollRes.buttonRes)) {
+                if (studentData.pollRes.buttonRes.length > 0) {
+                    totalResponses++;
+                }
+            } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
+                totalResponses++;
+            }
+
+            if (Array.isArray(studentData.pollRes.buttonRes)) {
+                for (let response of studentData.pollRes.buttonRes) {
+                    if (studentData && Object.keys(responses).includes(response)) {
+                        responses[response].responses++;
+                    }
+                }
+            } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.email)) {
+                responses[studentData.pollRes.buttonRes].responses++;
+            }
+        }
+    }
+
+    if (totalResponses == 0) {
+        totalStudentsIncluded = Object.keys(classData.students)
+        for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
+            const studentName = totalStudentsIncluded[i];
+            const student = classData.students[studentName];
+            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
+                totalStudentsIncluded.splice(i, 1);
+            }
+        }
+    }
+
+    return {
+        totalResponses,
+        totalResponders: totalStudentsIncluded.length,
+        pollResponses: responses,
+    }
+}
+
+function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
+    // Redact sensitive information if the user does not have teacher permissions
+    if (!hasTeacherPermissions && !options.restrictToControlPanel) {
+        classData.poll.studentsAllowedToVote = undefined;
+    }
+
+    return {
+        id: classData.id,
+        className: classData.className,
+        isActive: classData.isActive,
+        timer: classData.timer,
+        poll: classData.poll,
+        permissions: hasTeacherPermissions ? classData.permissions : undefined,
+        key: hasTeacherPermissions ? classData.key : undefined,
+        tags: hasTeacherPermissions ? classData.tags : undefined,
+        settings: hasTeacherPermissions ? classData.settings : undefined,
+        students: hasTeacherPermissions ? Object.fromEntries(
+            Object.entries(classData.students).map(([email, student]) => [
+                student.id,
+                {
+                    id: student.id,
+                    displayName: student.displayName,
+                    activeClass: student.activeClass,
+                    permissions: student.permissions,
+                    classPermissions: student.classPermissions,
+                    tags: student.tags,
+                    pollRes: student.pollRes,
+                    help: student.help,
+                    break: student.break,
+                    pogMeter: student.pogMeter,
+                    isGuest: student.isGuest,
+                }
+            ])
+        ) : undefined
+    }
 }
 
 class SocketUpdates {
@@ -126,173 +284,68 @@ class SocketUpdates {
         this.socket = socket;
     }
 
-    classPermissionUpdate(classId = this.socket.request.session.classId) {
+    classUpdate(
+        classId = this.socket.request.session.classId,
+        options = { global: false, restrictToControlPanel: false }) {
         try {
-            logger.log('info', `[classPermissionUpdate] classId=(${classId})`)
             const classData = structuredClone(classInformation.classrooms[classId]);
-            if (!classData) return; // If the class is not loaded, then do not update the class permissions
+            if (!classData) {
+                return; // If the class is not loaded, then we cannot send a class update
+            }
 
-            let cpPermissions = Math.min(
+            // Retrieve the permissions that allows a user to access the control panel
+            const controlPanelPermissions = Math.min(
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             )
 
-            advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classData)
-            this.customPollUpdate();
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    virtualBarUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
-            if (!classId) return; // If a class id is not provided then deny the
-
-            const classData = structuredClone(classInformation.classrooms[classId])
-            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.textRes}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.blind})`)
-
-            let totalResponses = 0;
-            let totalStudentsIncluded = [];
-            let totalStudentsExcluded = [];
-            let responses = {};
-
-            for (let student of Object.values(classData.students)) {
-                // Store whether the student is included or excluded
-                let included = false;
-                let excluded = false;
-
-                // Check if the student passes the tags test
-                if (classData.poll.requiredTags.length > 0) {
-                    let studentTags = student.tags.split(",");
-                    if (classData.poll.requiredTags[0][0] == "0") {
-                        if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-                            included = true;
-                        } else {
-                            excluded = true;
-                        }
-                    } else if (classData.poll.requiredTags[0][0] == "1") {
-                        let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
-                        if (correctTags == classData.poll.requiredTags.length - 1) {
-                            included = true;
-                        } else {
-                            excluded = true;
-                        }
-                    }
+            let userData;
+            let hasTeacherPermissions = false;
+            if (this.socket.request.session) {
+                const email = this.socket.request.session.email;
+                userData = classData.students[email];
+                if (!userData) {
+                    return; // If the user is not loaded, then we cannot check if they're a teacher
                 }
 
-                // Check if the student's checkbox was checked
-                if (classData.poll.studentBoxes.includes(student.email)) {
-                    included = true;
+                if (userData.classPermissions >= controlPanelPermissions) {
+                    hasTeacherPermissions = true;
+                }
+            }
+
+            // If we're only sending this update to people with access to the control panel, then
+            // we do not need to restrict their data access.
+            if (options.restrictToControlPanel) {
+                hasTeacherPermissions = true;
+            } else if (options.global) {
+                hasTeacherPermissions = false;
+            }
+
+            const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
+            classData.poll.totalResponses = totalResponses;
+            classData.poll.totalResponders = totalResponders;
+            classData.poll.pollResponses = pollResponses;
+
+            if (options.global) {
+                const controlPanelData = getClassUpdateData(classData, true);
+                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
+                advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
+                advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
+                this.customPollUpdate();
+            } else {
+                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
+                if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
+                    // If the user requesting class information is a student, then only send them the information
+                    io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
+                } else if (options.restrictToControlPanel) {
+                    // If it's restricted to the control panel, then only send it to people with control panel access
+                    advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
                 } else {
-                    excluded = true;
+                    advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
                 }
-
-                // Check if they are a guest
-                if (student.classPermissions == GUEST_PERMISSIONS) {
-                    excluded = true;
-                }
-
-                // Check if they should be in the excluded array
-                if (student.break == true) {
-                    excluded = true;
-                }
-
-                // Prevent students from being included if they are offline
-                if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
-                    excluded = true;
-                    included = false;
-                }
-
-                // Update the included and excluded lists
-                if (excluded) {
-                    totalStudentsExcluded.push(student.email);
-                }
-
-                if (included) {
-                    totalStudentsIncluded.push(student.email);
-                }
+                this.customPollUpdate();
             }
-
-            // Count the number of responses for each poll option
-            if (Object.keys(classData.poll.responses).length > 0) {
-                for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
-                    responses[resKey] = {
-                        ...resValue,
-                        responses: 0
-                    }
-                }
-
-                for (const studentData of Object.values(classData.students)) {
-                    if (studentData.break == true || totalStudentsExcluded.includes(studentData.email)) {
-                        continue;
-                    }
-
-                    // Count student as responded if they have any valid response and aren't excluded
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        if (studentData.pollRes.buttonRes.length > 0) {
-                            totalResponses++;
-                        }
-                    } else if (studentData.pollRes.buttonRes && studentData.pollRes.buttonRes !== "") {
-                        totalResponses++;
-                    }
-
-                    if (Array.isArray(studentData.pollRes.buttonRes)) {
-                        for (let response of studentData.pollRes.buttonRes) {
-                            if (studentData && Object.keys(responses).includes(response)) {
-                                responses[response].responses++;
-                            }
-                        }
-                    } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.email)) {
-                        responses[studentData.pollRes.buttonRes].responses++;
-                    }
-                }
-            }
-
-            if (totalResponses == 0) {
-                totalStudentsIncluded = Object.keys(classData.students)
-                for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
-                    const studentName = totalStudentsIncluded[i];
-                    const student = classData.students[studentName];
-                    if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
-                        totalStudentsIncluded.splice(i, 1);
-                    }
-                }
-            }
-
-            advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
-                status: classData.poll.status,
-                totalResponders: Object.keys(classData.students).length - totalStudentsExcluded.length,
-                totalResponses: totalResponses,
-                polls: responses,
-                textRes: classData.poll.textRes,
-                multiRes: classData.poll.multiRes,
-                prompt: classData.poll.prompt,
-                weight: classData.poll.weight,
-                blind: classData.poll.blind,
-                time: classData.timer.time,
-                sound: classData.timer.sound,
-                active: classData.timer.active,
-                timePassed: classData.timer.timePassed,
-            })
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
-    pollUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[pollUpdate] classId=(${classId})`)
-            logger.log('verbose', `[pollUpdate] poll=(${JSON.stringify(classInformation.classrooms[classId].poll)})`)
-    
-            advancedEmitToClass(
-                'pollUpdate',
-                classId,
-                { classPermissions: CLASS_SOCKET_PERMISSIONS.pollUpdate },
-                classInformation.classrooms[classId].poll
-            )
-
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -375,11 +428,10 @@ class SocketUpdates {
             logger.log('info', `[classBannedUsersUpdate] classId=(${classId})`);
             if (!classId) return;
     
-            database.all('SELECT users.email FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
+            database.all('SELECT users.id FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
                 try {
                     if (err) throw err
-    
-                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.email)
+                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.id)
     
                     advancedEmitToClass(
                         'classBannedUsersUpdate',
@@ -399,8 +451,9 @@ class SocketUpdates {
     // Kicks a user from a class
     // If exitClass is set to true, then it will fully remove the user from the class;
     // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
-    classKickUser(email, classId = this.socket.request.session.classId, exitClass = true) {
+    async classKickUser(userId, classId = this.socket.request.session.classId, exitClass = true) {
         try {
+            const email = await getEmailFromId(userId);
             logger.log('info', `[classKickUser] email=(${email}) classId=(${classId}) exitClass=${exitClass}`);
 
             // Remove user from class session
@@ -423,13 +476,12 @@ class SocketUpdates {
 
             // If exitClass is true, then remove the user from the classroom entirely
             if (exitClass) {
-                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], (err) => {});
+                database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], () => {});
                 delete classInformation.classrooms[classId].students[email];
             }
 
             // Update the control panel
-            this.classPermissionUpdate(classId);
-            this.virtualBarUpdate(classId);
+            this.classUpdate(classId, true);
 
             // If the user is logged in, then handle the user's session
             if (userSockets[email]) {
@@ -507,8 +559,7 @@ class SocketUpdates {
                         }
 
                         // Update class permissions and virtual bar
-                        this.classPermissionUpdate(classId)
-                        this.virtualBarUpdate(classId)
+                        this.classUpdate(classId);
                     }
 
                     // If this user owns the classroom, end it
@@ -530,85 +581,6 @@ class SocketUpdates {
                 logger.log('error', err.stack)
             }
         })
-    }
-    
-    async endPoll(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[endPoll] ip=(${this.socket.handshake.address}) session=(${JSON.stringify(this.socket.request.session)})`)
-    
-            let data = { prompt: '', names: [], letter: [], text: [] }
-            currentPoll += 1
-    
-            let dateConfig = new Date()
-            let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-    
-            data.prompt = classInformation.classrooms[classId].poll.prompt
-            data.responses = classInformation.classrooms[classId].poll.responses
-            data.multiRes = classInformation.classrooms[classId].poll.multiRes
-            data.blind = classInformation.classrooms[classId].poll.blind
-            data.isTextResponse = classInformation.classrooms[classId].poll.text
-
-            for (const key in classInformation.classrooms[classId].students) {
-                data.names.push(classInformation.classrooms[classId].students[key].email)
-                data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
-                data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
-            }
-    
-            await new Promise((resolve, reject) => {
-                database.run(
-                    'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-                    [classId, JSON.stringify(data), date], (err) => {
-                        if (err) {
-                            logger.log('error', err.stack);
-                            reject(new Error(err));
-                        } else {
-                            logger.log('verbose', '[endPoll] saved poll to history');
-                            resolve();
-                        }
-                    }
-                );
-            });
-    
-            let latestPoll = await new Promise((resolve, reject) => {
-                database.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
-                    classId
-                ], (err, poll) => {
-                    if (err) {
-                        logger.log("error", err.stack);
-                        reject(new Error(err));
-                    } else resolve(poll);
-                });
-            });
-    
-            latestPoll.data = JSON.parse(latestPoll.data);
-            classInformation.classrooms[classId].pollHistory.push(latestPoll);
-    
-            classInformation.classrooms[classId].poll.status = false
-    
-            logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    async clearPoll(classId = this.socket.request.session.classId) {
-        if (classInformation.classrooms[classId].poll.status) {
-            await this.endPoll()
-        }
-    
-        classInformation.classrooms[classId].poll.responses = {};
-        classInformation.classrooms[classId].poll.prompt = "";
-        classInformation.classrooms[classId].poll = {
-            status: false,
-            responses: {},
-            textRes: false,
-            prompt: "",
-            weight: 1,
-            blind: false,
-            requiredTags: [],
-            studentBoxes: [],
-            allowedResponses: [],
-        };
     }
 
     async startClass(classId) {
@@ -668,7 +640,7 @@ class SocketUpdates {
             logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
     
             database.all(
-                'SELECT pollId, userId, email FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
+                'SELECT pollId, userId FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
                 pollId,
                 (err, userPollShares) => {
                     try {

@@ -526,11 +526,11 @@
     // Function runs on page load
     // Checks if poll is active or not and displays correct output
     let rooms;
-    socket.emit('cpUpdate')
-    socket.on('cpUpdate', (newClassroom) => {
-        rooms = newClassroom
+    socket.emit('classUpdate')
+    socket.on('classUpdate', (classroomData) => {
+        rooms = classroomData
     })
-    let tagNames = '<%= tagNames %>';
+    let classTags = '<%= tags %>';
 
     // Alerts the user if they try to start a poll without a prompt or responses
     function pollCheck() {
@@ -850,10 +850,10 @@
     }
 </script>
 <script src='/js/controlPanelStudents.js'></script>
-<script src='/js/sockets/cpUpdate.js'></script>
+<script src='/js/controlPanelPolls.js'></script>
+<script src='/js/sockets/classUpdate.js'></script>
 <script src='/js/modules/tags.js'></script>
 <script src='/js/controlPanelSockets.js'></script>
-<script src='/js/controlPanelPolls.js'></script>
 
 <%- include('../partials/footer_content') %>
 

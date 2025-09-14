@@ -2,7 +2,6 @@ const { logger } = require("../../../modules/logger")
 const { dbGet } = require("../../../modules/database");
 const { getUserOwnedClasses} = require("../../../modules/user");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
-const { createSocketFromHttp } = require("../../../modules/webServer");
 
 module.exports = {
     run(router) {
@@ -15,8 +14,7 @@ module.exports = {
                     return res.json({ error: "User not found" })
                 }
 
-                const socket = createSocketFromHttp(req, res);
-                const ownedClasses = await getUserOwnedClasses(user.email, socket);
+                const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);
                 res.status(200).json(ownedClasses);
             } catch (err) {
                 logger.log('error', err.stack);

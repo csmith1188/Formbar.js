@@ -27,7 +27,7 @@
 				<button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">Classes</button>
 			</li>
 			<li>
-				<button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveClassroom()">Leave Class</button>
+				<button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()">Leave Room</button>
 			</li>
 		<% } %>
 	<% } %>
@@ -54,7 +54,6 @@
 			<img id="logoutIcon" src="/img/logout.svg" title="Logout">
 		</button>
 	<% } %>
-
 </header>
 <script>
 function doFullscreen() {
@@ -122,11 +121,12 @@ function logout() {
     }
   }
 
-function leaveClassroom() {
-	if (confirm('Are you sure you want to leave the classroom?')) { 
-	socket.emit('leaveClassroom') 
-	}
-}
+
+  function leaveRoom() {
+    if (confirm('Are you sure you want to leave the classroom?')) { 
+      socket.emit('leaveRoom')
+    }
+  }
 
   if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
       const muteButton = document.getElementById("muteButton");

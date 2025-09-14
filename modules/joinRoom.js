@@ -3,8 +3,10 @@ const { Classroom, classInformation } = require("./class/classroom");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
+const { userSocketUpdates } = require("../sockets/init");
+const {io} = require("./webServer");
 
-async function joinClassroomByCode(code, session) {
+async function joinRoomByCode(code, session) {
 	try {
         const email = session.email;
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
@@ -34,7 +36,7 @@ async function joinClassroomByCode(code, session) {
 
 		// Load the classroom into the classInformation object if it's not already loaded
 		if (!classInformation.classrooms[classroom.id]) {
-			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags, classroom.plugins)
+			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.owner, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
 		}
 
 		// Find the id of the user who is trying to join the class
@@ -93,7 +95,7 @@ async function joinClassroomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
-			classInformation.classrooms[classroom.id].poll.studentBoxes.push(email)
+			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(currentUser.id)
 			classInformation.users[email].activeClass = classroom.id
 			advancedEmitToClass('joinSound', classroom.id, {})
 
@@ -102,7 +104,7 @@ async function joinClassroomByCode(code, session) {
 
 			// Set the class of the API socket
 			setClassOfApiSockets(studentAPIKey, classroom.id);
-
+            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true });
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
@@ -135,16 +137,16 @@ async function joinClassroomByCode(code, session) {
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
-			classData.poll.studentBoxes.push(email)
+			classData.poll.studentsAllowedToVote.push(currentUser.id)
 			classInformation.users[email].activeClass = classroom.id
-			let cpPermissions = Math.min(
+			const controlPanelPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,
 				classData.permissions.manageClass
 			)
 
             setClassOfApiSockets(studentAPIKey, classroom.id);
-			advancedEmitToClass('cpUpdate', classroom.id, { classPermissions: cpPermissions }, classData);
+            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true })
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		}
@@ -154,5 +156,5 @@ async function joinClassroomByCode(code, session) {
 }
 
 module.exports = {
-    joinClassroomByCode
+    joinRoomByCode,
 }
