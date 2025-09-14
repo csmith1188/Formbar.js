@@ -4,8 +4,8 @@ const { advancedEmitToClass, emitToUser, userSockets} = require("../socketUpdate
 const { getIdFromEmail, getEmailFromId} = require("../student");
 const { database, dbGet, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
-const { joinRoomByCode } = require("../joinClass");
-const { CLASS_SOCKET_PERMISSIONS, CLASS_PERMISSIONS} = require("../permissions");
+const { joinRoomByCode } = require("../joinRoom");
+const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
 
 async function startClass(classId) {
     try {
@@ -101,8 +101,8 @@ async function joinClass(userSession, classId) {
         }
 
         // If there's a class code, then attempt to join the class and emit the response
-        const response = await joinRoomByCode(classCode, socket.request.session);
-        if (response === true) {
+        const response = await joinRoomByCode(classCode, userSession);
+        if (response === true && userSockets[email]) {
             for (const userSocket of Object.values(userSockets[email])) {
                 userSocket.request.session.classId = classId;
                 userSocket.request.session.save();
@@ -116,34 +116,19 @@ async function joinClass(userSession, classId) {
     }
 }
 
-function joinRoom(userSession, classCode) {
-    try {
-        logger.log('info', `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
+async function joinRoom(userSession, classCode) {
+	try {
+		logger.log('info', `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
 
-        const response = joinRoomByCode(classCode, userSession);
-        socket.emit("joinClass", response);
-    } catch (err) {
-        logger.log('error', err.stack);
-        socket.emit('joinClass', 'There was a server error. Please try again');
-    }
+		const response = await joinRoomByCode(classCode, userSession);
+		const email = userSession.email;
+        emitToUser(email, 'joinClass', response);
+	} catch (err) {
+		const email = userSession.email;
+		emitToUser(email, 'joinClass', 'There was a server error. Please try again');
+		logger.log('error', err.stack);
+	}
 }
-//
-// function endClass(socket) {
-//     try {
-//         logger.log('info', `[endClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-//         const socketUpdates = userSocketUpdates[socket.request.session.email];
-//
-//         // End the class
-//         const classId = socket.request.session.classId
-//         socketUpdates.endClass(classId)
-//
-//         if (socket.isEmulatedSocket) {
-//             socket.res.status(200).json({ message: 'Success' });
-//         }
-//     } catch (err) {
-//         logger.log('error', err.stack)
-//     }
-// }
 
 function leaveClass(userSession, classId) {
     try {

@@ -39,7 +39,7 @@ module.exports = {
         });
 
         // Joins a classroom
-        socket.on("joinRoom", async (classCode) => {
+        socket.on('joinRoom', async (classCode) => {
             joinRoom(socket.request.session, classCode);
         });
 
@@ -86,20 +86,20 @@ module.exports = {
                 logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId;
-                const studentBoxes = classInformation.classrooms[classId].poll.studentsAllowedToVote;
+                const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 for (const userId in votingData) {
-                    const email = await getEmailFromId(userId);
-                    const votingRight = votingData[email];
+                    const votingRight = votingData[userId];
                     if (votingRight) {
-                        if (!studentBoxes[email]) {
-                            studentBoxes.push(email);
+                        if (!studentsAllowedToVote[userId]) {
+                            studentsAllowedToVote.push(userId);
                         }
                     } else {
                         // Remove all instances of the email from the studentBoxes array
-                        studentBoxes.splice(0, studentBoxes.length, ...studentBoxes.filter(student => student !== email));
+                        studentsAllowedToVote.splice(0, studentsAllowedToVote.length, ...studentsAllowedToVote.filter(student => student !== userId));
                     }
 
                     // Emit the voting right to the user
+                    const email = await getEmailFromId(userId);
                     emitToUser(email, 'getCanVote', votingRight);
                 }
                 socketUpdates.classUpdate(classId);

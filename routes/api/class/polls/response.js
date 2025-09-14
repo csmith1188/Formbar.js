@@ -1,4 +1,3 @@
-const { createSocketFromHttp } = require("../../../../modules/webServer");
 const { pollResponse } = require("../../../../modules/polls");
 const { logger } = require("../../../../modules/logger");
 const { httpPermCheck } = require("../../../middleware/permissionCheck");
@@ -10,9 +9,8 @@ module.exports = {
         router.post('/class/:id/polls/response', httpPermCheck("pollResp"), parseJson, async (req, res) => {
             try {
                 const { response, textRes } = req.body;
-                const socket = createSocketFromHttp(req, res);
-
-                await pollResponse(response, textRes, socket);
+                const classId = req.params.id;
+                await pollResponse(classId, response, textRes, req.session.user);
                 res.status(200).json( { message: "Success" });
             } catch (err) {
                 logger.log('error', err.stack);

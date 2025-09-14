@@ -2,9 +2,10 @@ const { isAuthenticated, permCheck  } = require("./middleware/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
-const { joinRoomByCode } = require("../modules/joinClass")
+const { joinRoomByCode } = require("../modules/joinRoom")
 const { logger } = require("../modules/logger")
 const { setClassOfApiSockets, advancedEmitToClass, userSockets, emitToUser} = require("../modules/socketUpdates")
+const {userSocketUpdates} = require("../sockets/init");
 
 module.exports = {
     run(app) {
@@ -138,14 +139,7 @@ module.exports = {
 					req.session.classId = classId;
 				}
 
-                const classData = classInformation.classrooms[classId]
-                const classPermissions = Math.min(
-                    classData.permissions.controlPolls,
-                    classData.permissions.manageStudents,
-                    classData.permissions.manageClass
-                )
-
-                advancedEmitToClass('cpUpdate', classId, { classPermissions }, classInformation.classrooms[classId])
+				userSocketUpdates[req.session.email].classUpdate();
                 setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
 
 				if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {

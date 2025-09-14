@@ -50,7 +50,7 @@ function buildStudent(classroom, studentData) {
 
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
-        studentBox.checked = classroom.poll.studentsAllowedToVote.indexOf(studentData.id) != -1
+        studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
 
         for (let eachResponse in classroom.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {

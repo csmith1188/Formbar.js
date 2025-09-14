@@ -104,7 +104,7 @@ async function joinRoomByCode(code, session) {
 
 			// Set the class of the API socket
 			setClassOfApiSockets(studentAPIKey, classroom.id);
-            userSocketUpdates[email].classUpdate(classroom.id, true)
+            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true });
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
@@ -146,7 +146,7 @@ async function joinRoomByCode(code, session) {
 			)
 
             setClassOfApiSockets(studentAPIKey, classroom.id);
-            userSocketUpdates[email].classUpdate(classroom.id, true)
+            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true })
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		}

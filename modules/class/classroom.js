@@ -1,6 +1,6 @@
-const { database, dbGet, dbRun} = require("../database")
+const { database } = require("../database")
 const { logger } = require("../logger")
-const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("../permissions");
+const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();
 
@@ -29,7 +29,13 @@ class Classroom {
 			allowedResponses: []
 		}
 		this.key = key
-		this.permissions = permissions
+		// Ensure permissions is an object, not a JSON string
+		try {
+			this.permissions = typeof permissions === 'string' ? JSON.parse(permissions) : (permissions || DEFAULT_CLASS_PERMISSIONS)
+		} catch (err) {
+			// Fallback to defaults if parsing fails
+			this.permissions = DEFAULT_CLASS_PERMISSIONS
+		}
 		this.pollHistory = pollHistory || []
 		this.tags = tags || ['Offline'];
 		this.settings = settings || {

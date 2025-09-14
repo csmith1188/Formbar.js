@@ -1,13 +1,15 @@
-const { joinRoomByCode } = require('../joinClass');
+const { joinRoomByCode } = require('../joinRoom');
 const { database } = require('../database');
-const { testData, createTestUser } = require("./tests");
+const { testData, createTestUser, createSocketUpdates } = require("./tests");
+const { userSocketUpdates } = require('../../sockets/init');
 
 describe('joinClass', () => {
     const session = { email: testData.email };
 
     beforeEach(() => {
-        createTestUser(testData.email);
         jest.resetAllMocks();
+        createTestUser(testData.email);
+        userSocketUpdates[testData.email] = createSocketUpdates();
 
         database.get.mockImplementation((query, params, callback) => {
             if (query.includes('SELECT * FROM classroom WHERE key=?')) {

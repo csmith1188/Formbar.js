@@ -6,9 +6,35 @@ const { createPoll } = require("../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Starts a poll with the data provided
-        socket.on('startPoll', async (pollData) => {
-            await createPoll(pollData, socket)
+        // Starts a poll with the data provided (supports legacy positional args)
+        socket.on('startPoll', async (...args) => {
+            try {
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
+            
+                let pollData;
+                if (args.length === 1 && args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
+                    pollData = args[0];
+                } else {
+                    const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = args;
+                    pollData = {
+                        prompt: pollPrompt,
+                        pollOptions: Array.isArray(polls) ? polls : [],
+                        isBlind: !!blind,
+                        weight: Number(weight ?? 1),
+                        tags: Array.isArray(tags) ? tags : [],
+                        studentsAllowedToVote: Array.isArray(boxes) ? boxes : undefined,
+                        indeterminate: Array.isArray(indeterminate) ? indeterminate : [],
+                        allowTextResponses: !!responseTextBox,
+                        allowMultipleResponses: !!multiRes,
+                    }
+                }
+
+                await createPoll(classId, pollData, socket.request.session)
+                socket.emit('startPoll')
+            } catch (err) {
+                logger.log("error", err.stack);
+            }
         })
 
         socket.on("classPoll", (poll) => {

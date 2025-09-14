@@ -3,7 +3,7 @@ const { classInformation } = require("./class/classroom");
 const { settings } = require("./config");
 const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS } = require("./permissions");
+const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS} = require("./permissions");
 const { io } = require("./webServer");
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
@@ -34,7 +34,6 @@ const PASSIVE_SOCKETS = [
 ];
 
 async function emitToUser(email, event, ...data) {
-    console.warn("EMIT TO USER", event, email)
     for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
     }
@@ -44,7 +43,7 @@ async function emitToUser(email, event, ...data) {
  * Emits an event to sockets based on user permissions
  * @param {string} event - The event to emit
  * @param {string} classId - The id of the class
- * @param {{permissions?: number, classPermissions?: number, api?: boolean, email?: string}} options - The options object
+ * @param {{permissions?: number, classPermissions?: number, maxClassPermissions?: number, api?: boolean, email?: string}} options - The options object
  * @param  {...any} data - Additional data to emit with the event
  */
 async function advancedEmitToClass(event, classId, options, ...data) {
@@ -58,6 +57,7 @@ async function advancedEmitToClass(event, classId, options, ...data) {
 
 		if (options.permissions && user.permissions < options.permissions) continue
 		if (options.classPermissions && user.classPermissions < options.classPermissions) continue
+        if (options.maxClassPermissions && user.classPermissions > options.maxClassPermissions) continue
 		if (options.email && user.email != options.email) continue
 
 		for (let room of socket.rooms) {
@@ -100,7 +100,15 @@ async function setClassOfApiSockets(api, classId) {
 async function managerUpdate() {
     try {
         const { users, classrooms } = await getManagerData()
-        io.emit('managerUpdate', users, classrooms)
+
+        // Emit only to connected manager sockets
+        for (const [email, sockets] of Object.entries(userSockets)) {
+            if (classInformation.users[email].permissions >= MANAGER_PERMISSIONS) {
+                for (const socket of Object.values(sockets)) {
+                    socket.emit('managerUpdate', users, classrooms)
+                }
+            }
+        }
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -234,17 +242,63 @@ function getPollResponseInformation(classData) {
     }
 }
 
+function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
+    // Redact sensitive information if the user does not have teacher permissions
+    if (!hasTeacherPermissions && !options.restrictToControlPanel) {
+        classData.poll.studentsAllowedToVote = undefined;
+    }
+
+    return {
+        id: classData.id,
+        className: classData.className,
+        isActive: classData.isActive,
+        timer: classData.timer,
+        poll: classData.poll,
+        permissions: hasTeacherPermissions ? classData.permissions : undefined,
+        key: hasTeacherPermissions ? classData.key : undefined,
+        tags: hasTeacherPermissions ? classData.tags : undefined,
+        settings: hasTeacherPermissions ? classData.settings : undefined,
+        students: hasTeacherPermissions ? Object.fromEntries(
+            Object.entries(classData.students).map(([email, student]) => [
+                student.id,
+                {
+                    id: student.id,
+                    displayName: student.displayName,
+                    activeClass: student.activeClass,
+                    permissions: student.permissions,
+                    classPermissions: student.classPermissions,
+                    tags: student.tags,
+                    pollRes: student.pollRes,
+                    help: student.help,
+                    break: student.break,
+                    pogMeter: student.pogMeter,
+                    isGuest: student.isGuest,
+                }
+            ])
+        ) : undefined
+    }
+}
+
 class SocketUpdates {
     constructor(socket) {
         this.socket = socket;
     }
 
-    classUpdate(classId = this.socket.request.session.classId, restrictToControlPanel = false) {
+    classUpdate(
+        classId = this.socket.request.session.classId,
+        options = { global: false, restrictToControlPanel: false }) {
         try {
             const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) {
                 return; // If the class is not loaded, then we cannot send a class update
             }
+
+            // Retrieve the permissions that allows a user to access the control panel
+            const controlPanelPermissions = Math.min(
+                classData.permissions.controlPolls,
+                classData.permissions.manageStudents,
+                classData.permissions.manageClass
+            )
 
             let userData;
             let hasTeacherPermissions = false;
@@ -255,15 +309,17 @@ class SocketUpdates {
                     return; // If the user is not loaded, then we cannot check if they're a teacher
                 }
 
-                if (userData.classPermissions >= TEACHER_PERMISSIONS) {
+                if (userData.classPermissions >= controlPanelPermissions) {
                     hasTeacherPermissions = true;
                 }
             }
 
             // If we're only sending this update to people with access to the control panel, then
             // we do not need to restrict their data access.
-            if (restrictToControlPanel) {
+            if (options.restrictToControlPanel) {
                 hasTeacherPermissions = true;
+            } else if (options.global) {
+                hasTeacherPermissions = false;
             }
 
             const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
@@ -271,85 +327,25 @@ class SocketUpdates {
             classData.poll.totalResponders = totalResponders;
             classData.poll.pollResponses = pollResponses;
 
-            // Redact sensitive information if the user does not have teacher permissions
-            if (!hasTeacherPermissions && !restrictToControlPanel) {
-                classData.poll.studentsAllowedToVote = undefined;
-            }
-
-            const classReturnData = {
-                id: classData.id,
-                className: classData.className,
-                isActive: classData.isActive,
-                timer: classData.timer,
-                poll: classData.poll,
-                permissions: hasTeacherPermissions ? classData.permissions : undefined,
-                key: hasTeacherPermissions ? classData.key : undefined,
-                tags: hasTeacherPermissions ? classData.tags : undefined,
-                settings: hasTeacherPermissions ? classData.settings : undefined,
-                students: hasTeacherPermissions ? Object.fromEntries(
-                    Object.entries(classData.students).map(([email, student]) => [
-                        student.id,
-                        {
-                            id: student.id,
-                            displayName: student.displayName,
-                            activeClass: student.activeClass,
-                            permissions: student.permissions,
-                            classPermissions: student.classPermissions,
-                            tags: student.tags,
-                            pollRes: student.pollRes,
-                            help: student.help,
-                            break: student.break,
-                            pogMeter: student.pogMeter,
-                            isGuest: student.isGuest,
-                        }
-                    ])
-                ) : undefined
-            }
-
-            // Retrieve the permissions that allows a user to access the control panel
-            const controlPanelPermissions = Math.min(
-                classData.permissions.controlPolls,
-                classData.permissions.manageStudents,
-                classData.permissions.manageClass
-            )
-
-            // If the user requesting class information is a student, then only send them the information
-            if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !restrictToControlPanel) {
-                io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
-            } else if (restrictToControlPanel) {
-                advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
+            if (options.global) {
+                const controlPanelData = getClassUpdateData(classData, true);
+                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
+                advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
+                advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
+                this.customPollUpdate();
             } else {
-                advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
+                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
+                if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
+                    // If the user requesting class information is a student, then only send them the information
+                    io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
+                } else if (options.restrictToControlPanel) {
+                    // If it's restricted to the control panel, then only send it to people with control panel access
+                    advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
+                } else {
+                    advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
+                }
+                this.customPollUpdate();
             }
-            this.customPollUpdate();
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    virtualBarUpdate(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[virtualBarUpdate] classId=(${classId})`)
-            if (!classId) return; // If a class id is not provided then deny the request
-
-            const classData = structuredClone(classInformation.classrooms[classId])
-            logger.log('verbose', `[virtualBarUpdate] status=(${classData.poll.status}) totalResponses=(${Object.keys(classData.students).length}) textRes=(${classData.poll.allowTextResponses}) prompt=(${classData.poll.prompt}) weight=(${classData.poll.weight}) blind=(${classData.poll.isBlind})`)
-
-            advancedEmitToClass('vbUpdate', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.vbUpdate }, {
-                status: classData.poll.status,
-                totalResponders: totalStudentsIncluded.length,
-                totalResponses: totalResponses,
-                pollResponses: responses,
-                allowTextResponses: classData.poll.allowTextResponses,
-                allowMultipleResponses: classData.poll.allowMultipleResponses,
-                prompt: classData.poll.prompt,
-                weight: classData.poll.weight,
-                isBlind: classData.poll.isBlind,
-                time: classData.timer.time,
-                sound: classData.timer.sound,
-                active: classData.timer.active,
-                timePassed: classData.timer.timePassed,
-            })
         } catch (err) {
             logger.log('error', err.stack);
         }
@@ -432,11 +428,10 @@ class SocketUpdates {
             logger.log('info', `[classBannedUsersUpdate] classId=(${classId})`);
             if (!classId) return;
     
-            database.all('SELECT users.email FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
+            database.all('SELECT users.id FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
                 try {
                     if (err) throw err
-    
-                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.email)
+                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.id)
     
                     advancedEmitToClass(
                         'classBannedUsersUpdate',
@@ -587,84 +582,6 @@ class SocketUpdates {
             }
         })
     }
-    
-    async endPoll(classId = this.socket.request.session.classId) {
-        try {
-            logger.log('info', `[endPoll] ip=(${this.socket.handshake.address}) session=(${JSON.stringify(this.socket.request.session)})`)
-    
-            let data = { prompt: '', names: [], letter: [], text: [] }
-            currentPoll += 1
-    
-            let dateConfig = new Date()
-            let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
-    
-            data.prompt = classInformation.classrooms[classId].poll.prompt
-            data.responses = classInformation.classrooms[classId].poll.responses
-            data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
-            data.isBlind = classInformation.classrooms[classId].poll.isBlind
-            data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
-
-            for (const key in classInformation.classrooms[classId].students) {
-                data.names.push(classInformation.classrooms[classId].students[key].email)
-                data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
-                data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
-            }
-    
-            await new Promise((resolve, reject) => {
-                database.run(
-                    'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-                    [classId, JSON.stringify(data), date], (err) => {
-                        if (err) {
-                            logger.log('error', err.stack);
-                            reject(new Error(err));
-                        } else {
-                            logger.log('verbose', '[endPoll] saved poll to history');
-                            resolve();
-                        }
-                    }
-                );
-            });
-    
-            let latestPoll = await new Promise((resolve, reject) => {
-                database.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
-                    classId
-                ], (err, poll) => {
-                    if (err) {
-                        logger.log("error", err.stack);
-                        reject(new Error(err));
-                    } else resolve(poll);
-                });
-            });
-    
-            latestPoll.data = JSON.parse(latestPoll.data);
-            classInformation.classrooms[classId].pollHistory.push(latestPoll);
-            classInformation.classrooms[classId].poll.status = false
-    
-            logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-    
-    async clearPoll(classId = this.socket.request.session.classId) {
-        if (classInformation.classrooms[classId].poll.status) {
-            await this.endPoll()
-        }
-    
-        classInformation.classrooms[classId].poll.responses = {};
-        classInformation.classrooms[classId].poll.prompt = "";
-        classInformation.classrooms[classId].poll = {
-            status: false,
-            responses: {},
-            allowTextResponses: false,
-            prompt: "",
-            weight: 1,
-            isBlind: false,
-            requiredTags: [],
-            studentsAllowedToVote: [],
-            allowedResponses: [],
-        };
-    }
 
     async startClass(classId) {
         try {
@@ -723,7 +640,7 @@ class SocketUpdates {
             logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
     
             database.all(
-                'SELECT pollId, userId, email FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
+                'SELECT pollId, userId FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
                 pollId,
                 (err, userPollShares) => {
                     try {

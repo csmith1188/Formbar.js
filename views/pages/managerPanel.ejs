@@ -176,6 +176,7 @@
                 permissionSwitch.setAttribute("name", "permSwitch")
                 permissionSwitch.setAttribute("class", "permSwitch revampButton")
                 permissionSwitch.setAttribute("data-userid", userData.email)
+                permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
                 permissionSwitch.onchange = (event) => {
                     socket.emit('permChange', event.target.dataset.userid, event.target.value)
                 }

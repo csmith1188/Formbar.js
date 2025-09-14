@@ -27,6 +27,7 @@ const permissionOptions = [
 // Ask for classroom update and listen for the response
 socket.emit('classUpdate')
 socket.on('classUpdate', (classroomData) => {
+    console.log('Received classUpdate', classroomData)
     if (!classroomData.students) {
         return;
     }
@@ -102,29 +103,8 @@ socket.on('classUpdate', (classroomData) => {
         pollCounter.innerText = `Poll Prompt:`
     }
 
-    let responseCount = 0;
-    let totalResponders = 0;
-    for (let [studentName, student] of Object.entries(classroomData.students)) {
-        // If the student is on break, skip them
-        if (student.tags && student.tags.includes("Offline")) {
-            continue;
-        }
-
-        // If the student is on break, a guest, or a teacher, do not include them as a potential responder
-        if (!student.break
-            && student.permissions > GUEST_PERMISSIONS
-            && student.permissions < TEACHER_PERMISSIONS
-            && classroomData.poll.studentsAllowedToVote.includes(student.id)
-        ) {
-            totalResponders++;
-        }
-
-        // If the student has responded to the poll, increment the response count
-        if (student.pollRes.buttonRes != "" || student.pollRes.textRes != "") {
-            responseCount++;
-        }
-    }
-
+    const responseCount = classroomData.poll?.totalResponses ?? 0;
+    const totalResponders = classroomData.poll?.totalResponders ?? 0;
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
     const studentIds = Object.keys(classroomData.students);

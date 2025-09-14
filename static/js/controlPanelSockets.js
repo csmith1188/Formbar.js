@@ -272,7 +272,7 @@ socket.on('customPollUpdate', (
 			const canStudentVote = studentCheckbox.checked;
 
 			let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
-			if (studentCheckbox.checked && !studentsAllowedToVote.includes(student.id)) {
+			if (studentCheckbox.checked && !studentsAllowedToVote.includes(student.id.toString())) {
 				studentsAllowedToVote.push(student.id);
 			}
 

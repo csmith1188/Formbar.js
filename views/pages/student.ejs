@@ -93,7 +93,8 @@
 						pollPromptDisplayGuest.innerText = newPoll.prompt;
 					}
 
-					socket.on('vbUpdate', (newPoll) => {
+					socket.on('classUpdate', (classroomData) => {
+						const newPoll = classroomData.poll;
 						updatePage(newPoll)
 					})
 				</script>

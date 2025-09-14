@@ -125,7 +125,7 @@ async function deleteUser(userId, socket, socketUpdates) {
         logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
         logger.log('info', `[deleteUser] userId=(${userId})`)
         if (!socketUpdates) {
-            socketUpdates = new SocketUpdates(socket);
+            socketUpdates = socket ? new SocketUpdates(socket) : new SocketUpdates({ request: { session: {} }, emit: () => {} });
         }
 
         const user = await new Promise((resolve, reject) => {
@@ -136,7 +136,7 @@ async function deleteUser(userId, socket, socketUpdates) {
         })
 
         if (!user) {
-            socket.emit('message', 'User not found')
+            if (socket && socket.emit) socket.emit('message', 'User not found')
             return
         }
 
@@ -175,7 +175,7 @@ async function deleteUser(userId, socket, socketUpdates) {
 
             await dbRun('COMMIT')
             await managerUpdate()
-            socket.emit('message', 'User deleted successfully')
+            if (socket && socket.emit) socket.emit('message', 'User deleted successfully')
         } catch (err) {
             await dbRun('ROLLBACK')
             throw err
@@ -188,10 +188,10 @@ async function deleteUser(userId, socket, socketUpdates) {
 /**
  * Gets the classes a user owns from their email.
  * @param email
- * @param socket
+ * @param userSession
  */
-async function getUserOwnedClasses(email, socket) {
-    logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+async function getUserOwnedClasses(email, userSession) {
+    logger.log('info', `[getOwnedClasses] session=(${JSON.stringify(userSession)})`);
     logger.log('info', `[getOwnedClasses] email=(${email})`);
 
     const userId = (await dbGet('SELECT id FROM users WHERE email = ?', [email])).id;
