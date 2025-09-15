@@ -4,6 +4,7 @@ const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
+const getConfig = require('../modules/config');
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(userData, classId, refreshToken) {
@@ -14,7 +15,7 @@ function generateAccessToken(userData, classId, refreshToken) {
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
-        activeClasses: userData.activeClasses,
+        activeClass: userData.activeClass,
         class: classId,
         refreshToken
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
@@ -25,7 +26,6 @@ function generateAccessToken(userData, classId, refreshToken) {
 function generateRefreshToken(userData) {
     const token = jwt.sign({
         id: userData.id,
-        email: userData.email,
         email: userData.email
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '14d' });
 
@@ -66,7 +66,7 @@ async function createUserData(userData) {
     
     userData.classPermissions = null;
     userData.classrooms = classroomData;
-    userData.activeClasses = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClasses : [];
+    userData.activeClass = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClass : null;
     if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.email]) {
         userData.classPermissions = classInformation.classrooms[classId].students[userData.email].classPermissions;
     }
@@ -164,7 +164,8 @@ module.exports = {
                     res.render('pages/login', {
                         title: 'Oauth',
                         redirectURL: redirectURL,
-                        route: 'oauth'
+                        route: 'oauth',
+                        googleOauthEnabled: getConfig().googleOauth.enabled
                     });
                 }
             } catch (err) {

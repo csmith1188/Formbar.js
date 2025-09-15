@@ -7,7 +7,9 @@ module.exports = {
     run(socket, socketUpdates) {
         socket.on('endPoll', async () => {
             try {
-                await endPoll();
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
+                await endPoll(classId, socket.request.session.user);
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -90,7 +92,9 @@ module.exports = {
         // End the current poll. Does not take any arguments
         socket.on('clearPoll', async () => {
             try {
-                await clearPoll(socket);
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
+                await clearPoll(classId, socket.request.session.user);
             } catch (err) {
                 logger.log('error', err.stack);
             }

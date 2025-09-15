@@ -13,250 +13,376 @@
     <script src='/js/deepObjectEqual.js'></script>
 </head>
 
-<body onload="load(<%= pollStatus %>)" style="margin-bottom: 10cqh;">
+<body role="document" tabindex="0" onload="load(<%= pollStatus %>)" class="controlPanelNewBody" style="overflow: hidden;">
 <%- include('../partials/formbar_header') %>
-<header id='quickMenu'>
-    <p id='className'>Class Name:</p>
-    <p id='classCode'>Class Code:</p>
-    <p id='totalUsers'></p>
+<header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
+    <div class="revampDiv upDown" id="pollDetails">
+        <img src="/img/cursor.webp" alt="Hover for poll info.">
+        <div class="pollDetailsText">
+        <p><b id='pollCounter'></b></p>
+        <p id='responsesCounter'></p>
+    </div>
+    </div>
+    <div class="revampDiv leftRight">
+        <p id='className'>Class Name:</p>
+        <p id='classCode'>Class Code:</p>
+        <p id='totalUsers'></p>
+    </div>
+    <div class="revampDiv leftRight timeInfo">
+        <div id="timeDiv">
+            <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min">
+            <p>:</p>
+            <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" placeholder="Sec">
+            <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
+            <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
+        </div>
+        <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
+        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
+        <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
+        <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
+        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
+        <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
+
+    </div>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
     <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
-    <button id='settingsMenu' class='quickButton tab' data-tab-group='mainTabs'><img src="img/cogwheel.svg"
-                                                                                     id="Settings"></button>
 </header>
 
-<div id='usersMenu' class='tabContent controlPanel default' data-tab-group='mainTabs'>
-    <!-- This canvas should be the student panel pie-graph thingy -->
-    <div id='VBDiv'>
-        <%- include('../partials/virtual_bar.ejs') %>
-        <div id='VBOptions'>
-            <div id='userFilterBoxes' class='options'>
-                <h2 class='headerText'>Filter</h2>
-                <div class='headBox'>
-                    <button type='button' id='alert' class='filter'>Alerts</button>
-                    <button type='button' id='polls' class='filter'>Polls</button>
-                </div>
+<div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    
+</div>
+
+<div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <h1 class="mobileMenuHeader">Poll Timer</h1>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+</div>
+
+<div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <h1 class="mobileMenuHeader">Help</h1>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    
+    <div class="helpInfo">
+        <p>Navigation</p>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/time-outline.svg" alt="Previous Polls">
+            <div class="helpInformation">
+                <p class="helpTitle">Previous Polls</p>
+                <p class="helpDesc">Load and check answers from previous polls.</p>
             </div>
-            <div id='userSortBoxes' class='options'>
-                <h2 class='headerText'>Sort</h2>
-                <div class='headBox'>
-                    <button type='button' id='name' class='sort'>Name</button>
-                    <button type='button' id='pollName' class='sort'>Poll Name</button>
-                    <button type='button' id='pollTime' class='sort'>Poll Time</button>
-                    <button type='button' id='helpTime' class='sort'>Help Time</button>
-                    <button type='button' id='permissions' class='sort pressed'>Permissions 🡇</button>
-                </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/add-circle-outline.svg" alt="Custom Polls">
+            <div class="helpInformation">
+                <p class="helpTitle">Custom Polls</p>
+                <p class="helpDesc">Create and edit your own custom polls.</p>
             </div>
-            <div id='userSelectBoxes' class='options'>
-                <h2 class='headerText'>Select</h2>
-                <div class='headBox' id="selectPoll">
-                </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/timer-outline.svg" alt="Poll Timer">
+            <div class="helpInformation">
+                <p class="helpTitle">Poll Timer</p>
+                <p class="helpDesc">Set a fixed time for the current poll.</p>
             </div>
-            <div id='userFastPollBoxes' class='options'>
-                <h2 class='headerText'>Fast Poll</h2>
-                <div class='headBox' id='quickPoll'>
-                </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/grid-outline.svg" alt="Extras">
+            <div class="helpInformation">
+                <p class="helpTitle">Extras</p>
+                <p class="helpDesc">Sort / Filter members, Poll Presets, and member selection.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/lock-closed-outline.svg" alt="Permissions">
+            <div class="helpInformation">
+                <p class="helpTitle">Permissions</p>
+                <p class="helpDesc">Change who can do what in your classes premissions.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/pricetags-outline.svg" alt="Tags">
+            <div class="helpInformation">
+                <p class="helpTitle">Tags</p>
+                <p class="helpDesc">Set custom tags to create groups of members.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/cogwheel.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Settings</p>
+                <p class="helpDesc">Edit preferences about this class.</p>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+        <p>Poll Buttons</p>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/play-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Start Poll</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/refresh-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Clear Poll</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/stop-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">End Poll</p>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+        <p>Starting & Ending</p>
+
+        <div class="helpIconInformation revampDivAlt startClass">
+            <img src="/img/play.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Start Class</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt endClass">
+            <img src="/img/stop.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">End Class</p>
             </div>
         </div>
     </div>
 </div>
-<div>
-    <div>
-        <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs'>
-            <div id='pollOptions' class='options'>
-                <h2 class='headerText'>Custom Polls</h2>
-                <button id='publicPolls' class='quickButton tab' data-tab-group='polls'>Public
-                    Polls
-                </button>
-                <button id='classPolls' class='quickButton tab' data-tab-group='polls'>Class
-                    Polls
-                </button>
-                <button id='userPolls' class='quickButton tab' data-tab-group='polls'>Your
-                    Polls
-                </button>
-            </div>
-            <div id='startPollForm'>
-                <div id="pollResForm">
-                    <input type='text' id='pollBox' placeholder='Prompt'>
-                    <div>
-                        <input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
-                        <div id='responses'></div>
-                    </div>
-                    <button id="addPollRes" class='quickButton' onclick='addAnswer()'>+</button>
-                </div>
-                <div id='generalOptions' style="width: 50%; margin-left: 25%;">
-                    <div class="options">
-                        <div class="headBox" style="border: none;">
-                            <button id='resetAnswerNames' class='quickButton'>Reset Names</button>
-                            <button id='resetColors' class='quickButton'>Reset Colors</button>
-                        </div>
-                    </div>
-                    <div class="options">
-                        <h2 class="headerText">
-                            <input type='checkbox' id='multiRes'>
-                        </h2>
-                        <div class="headBox">
-                            Multiple Answer Poll
-                        </div>
-                    </div>
-                    <div class="options">
-                        <h2 class="headerText">
-                            <input type='checkbox' id='resTextBox' onclick='resTextChange()'>
-                        </h2>
-                        <div class="headBox">
-                            Text Responses
-                        </div>
-                    </div>
-                    <div class="options">
-                        <h2 class="headerText">
-                            <input type='checkbox' id='blind'>
-                        </h2>
-                        <div class="headBox">
-                            Blind Poll until everyone has answered
-                        </div>
-                    </div>
-                    <div class="options">
-                        <div class="headBox" style="border: none;">
-                            <button id="save-poll" onclick="savePollAs('user')">Save</button>
-                            <button id="save-poll" onclick="savePollAs('class')">Save as Class Poll</button>
-                        </div>
-                    </div>
-                </div>
-                <dialog id="editPollDialog" class="contentBox">
-                    <button id="unload-poll" onclick="unloadPoll()">Close</button>
-                    <button id="delete-poll" onclick="deletePoll()">Delete Poll</button>
-                </dialog>
-            </div>
-            <div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
-            <div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
-            <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
-            </div>
 
+<div id='usersMenu' class='tabContent controlPanel default userMenuCp' data-tab-group='mainTabs'>
+    <!-- This canvas should be the student panel pie-graph thingy -->
+    <div id='VBDiv'>
+        <div class="sideBySide">
+            <div id="vbContainerOuter" class="revampDiv">
+                <%- include('../partials/virtual_bar.ejs') %>
+            </div>
+            <div id="newMemberListControlPanel" class="revampDiv">
+                <h1>Members</h1>
+            </div>
+            <div id='VBOptions' class="revampDiv">
+                <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
+                <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
+                <div id='userFilterBoxes' class='options activeControlTab'>
+                    <h2 class='headerText'>Filter by:</h2>
+                    <div class='headBox'>
+                        <button type='button' id='alert' class='filter revampButton'>Alerts</button>
+                        <button type='button' id='polls' class='filter revampButton'>Polls</button>
+                    </div>
+                </div>
+                <div id='userSortBoxes' class='options'>
+                    <h2 class='headerText'>Sort by:</h2>
+                    <div class='headBox'>
+                        <button type='button' id='name' class='sort revampButton'>Name</button>
+                        <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
+                        <button type='button' id='pollTime' class='sort revampButton'>Poll Time</button>
+                        <button type='button' id='helpTime' class='sort revampButton'>Help Time</button>
+                        <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button>
+                    </div>
+                </div>
+                <div id='userSelectBoxes' class='options'>
+                    <h2 class='headerText'>Select:</h2>
+                    <div class='headBox' id="selectPoll">
+                    </div>
+                </div>
+                <div id='userFastPollBoxes' class='options'>
+                    <h2 class='headerText'>Fast Poll</h2>
+                    <div class='headBox' id='quickPoll'>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="controlFooter" class="revampDiv">
+            <div class="ongoingButtons">
+                <button id='previousPollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
+                    <p>Previous Polls</p>
+                </button>
+
+                <button id='pollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
+                    <p>Custom Polls</p>
+                </button>
+                <button id='startPoll' class="revampButton mobileHasIcon mobileCircular" onclick='pollCheck()'>
+                    <p>Start Poll</p>
+                    <img src="/img/play-circle-outline.svg" alt="Start Poll Icon">
+                </button>
+                <button id='clearPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='clearPollFunc()'>
+                    <p>Clear Poll</p>
+                    <img src="/img/refresh-circle-outline.svg" alt="Clear Poll Icon">
+
+                </button>
+                <button id='endPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='endPollFunc()'>
+                    <p>End Poll</p>
+                    <img src="/img/stop-circle-outline.svg" alt="End Poll Icon">
+                </button>
+                <div class="mobileSpacer"></div>
+                <button id='endClass' onclick='endClass()' class="revampButton mobileHasIcon mobileCircular">
+                    <p>End Class</p>
+                    <img src="/img/stop.svg" alt="End Class">
+                </button>
+                <button id='helpMenu' class="revampButton mobileHasIcon mobileCircular showMobile tab" data-tab-group='mainTabs'><img src="/img/help-circle-outline.svg" alt="End Class"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
+        <h1 class="mobileMenuHeader">Custom Polls</h1>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+        <div id='pollOptions' class='options customOptions'>
+            <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
+                Polls
+            </button>
+            <button id='classPolls' class='quickButton tab revampButton' data-tab-group='polls'>Class
+                Polls
+            </button>
+            <button id='userPolls' class='quickButton tab revampButton' data-tab-group='polls'>Your
+                Polls
+            </button>
+            <button id='newPoll' class='quickButton tab revampButton' data-tab-group='polls'>Poll Editor
+            </button>
+        </div>
+        <div id='publicPolls' class='customPolls tabContent' data-tab-group='polls'>
+        </div>
+        <div id='classPolls' class='customPolls tabContent' data-tab-group='polls'>
+        </div>
+        <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
+        </div>
+        <div id='newPoll' class='customPolls tabContent' style="padding-bottom:250px;" data-tab-group='polls'>
+            <div id="pollResForm">
+                <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
+                <div>
+                    <input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
+                    <div id='responses'></div>
+                </div>
+                <button id="addPollRes" class='quickButton revampButton acceptButton' onclick='addAnswer()'>+</button>
+            </div>
+            <div class="pollOptionsEditor revampDiv">
+                <h2 class="pollOptionsEditorHeader">More Options</h2> 
+
+                <div class="pollOptionsEditorOption">
+                    <h2>Multiple Answer Poll</h2>
+                    <input type='checkbox' id='multiRes'>
+                </div>
+                
+                <div class="pollOptionsEditorOption">
+                    <h2>Text Responses</h2>
+                    <input type='checkbox' id='resTextBox' onclick='resTextChange()'>
+                </div>
+                
+                <div class="pollOptionsEditorOption">
+                    <h2>Blind Poll</h2>
+                    <input type='checkbox' id='blind'>
+                </div>
+
+                <div class="pollOptionsEditorOption" style="margin-bottom: 20px;">
+                    <button id='resetAnswerNames' class='quickButton revampButton'>Reset Names</button>
+                    <button id='resetColors' class='quickButton revampButton'>Reset Colors</button>
+                </div>
+
+                <div class="pollOptionsEditorOption">
+                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
+                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
+                </div>
+            </div>
+            <div id='generalOptions' style="width: 50%; margin-left: 25%;">
+                
+                <div class="options">
+                    <div class="headBox" style="border: none;">
+                        </div>
+                </div>
+            </div>
+            <dialog id="editPollDialog" class="contentBox">
+                <button id="unload-poll" onclick="unloadPoll()">Close</button>
+                <button id="delete-poll" onclick="deletePoll()">Delete Poll</button>
+            </dialog>
         </div>
     </div>
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
+        <h1 class="mobileMenuHeader">Previous Polls</h1>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
         <div id='pollOptions' class='options'>
-            <h2 class='headerText'>Previous Polls</h2>
-
-            <details id="previousPoll-template" style="order: 9997; margin: 20px; color: black; background-color: var(--bg-light-blue); display: none" hidden>
+            <details id="previousPoll-template" style="order: 9997; margin: 20px; display: none" class="revampDiv previousPoll" hidden>
                 <summary style="height: fit-content; margin: 20px; cursor: pointer;">
                     <span id="name"></span>
+                    <span id="date"></span>
                 </summary>
-                <span class="previousPollResponse" id="response-template" style="display: none"></span>
-                <button id="loadPoll" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
+                <span class="previousPollResponse revampDiv" id="response-template" style="display: none"></span>
+                <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
-            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><--</button>
-            <button style='width: 60px' class="quickButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'>--></button>
+            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/arrow-back.svg" alt="Newer Polls"></button>
+            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'><img src="/img/arrow-forward.svg" alt="Older Polls"></button>
         </div>
     </div>
 </div>
 
-<div id="settingsMenu" class="tabContent" data-tab-group="mainTabs">
-    <div id="lessonMenu" class="tabContent" data-tab-group="mainTabs">
-        <form method="post" enctype="multipart/form-data">
-            <input name="spreadsheet" type="file">
-            <input type="submit" class="quickButton">
-        </form>
-        <button type='button' id='nextStep'>Next Step</button>
-        <br>
-        <br>
-        <form>
-            <label class='form-control' id='pollControl' for='modeP'>
-                <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>
-                Poll Mode
-            </label>
-            <label class='form-control' id='pollControl' for='modeL'>
-                <input type='radio' name='mode' id='modeL' onchange='modeChange()' value='lesson'>
-                Lesson Mode
-            </label>
-            <label class='form-control' id='pollControl' for='modeQ'>
-                <input type='radio' name='mode' id='modeQ' onchange='modeChange()' value='quiz'>
-                Quiz Mode
-            </label>
-            <label class='form-control' id='pollControl' for='modePT'>
-                <input type='radio' name='mode' id='modePT' onchange='modeChange()' value='playtime'>
-                Playtime Mode
-            </label>
-        </form>
-    </div>
-    <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-        <div id='settingsTab'>
-            <h2 class='headerText'>Settings</h2>
-            <button id='permissions' class='quickButton tab pressed'
-                    data-tab-group='settingsTabs'>Permissions
-            </button>
-            <button id="tags" class="quickButton tab" data-tab-group="settingsTabs">Tags</button>
+<div id='permissions' class='tabContent' data-tab-group='mainTabs'>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Permissions</h2>
+    <h1 class="showMobile mobileMenuHeader">Permissions</h1>
+    <div id='permissionsList'></div>
+</div>
+<div id='tags' class='tabContent' data-tab-group='mainTabs'>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Tags</h2>
+    <h1 class="showMobile mobileMenuHeader">Tags</h1>
+    <div id='tagsList'></div>
+    <div id="tagOptions"></div>
+</div>
+
+<div id="pollPreview" class="revampDiv"></div>
+
+<div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Settings</h2>
+    <h1 class="showMobile mobileMenuHeader">Settings</h1>
+    
+    <div id="settingsFunc">
+        <div class="settingsFuncClassName">
+            <input type="text" id="classNameInput" class="revampButton revampWithText" placeholder="New class name">
+            <button id="changeClassNameButton" class="revampButton" onclick="changeClassName()">Change Class Name</button>
         </div>
-        <div id='permissions' class='tabContent default' data-tab-group='settingsTabs'>
-            <h2>Permissions</h2>
-            <div id='permissionsList'></div>
-        </div>
-        <div id='tags' class='tabContent' data-tab-group='settingsTabs'>
-            <h2>Tags</h2>
-            <div id='tagsList'></div>
-            <div id="tagOptions"></div>
-        </div>
-        <div id="settingsFunc">
-            <button id="kickUsers" onclick="kickAll()">
+        <div class="settingsFuncButtons">
+            <button id="kickUsers" class="revampButton warningButton" onclick="kickAll()">
                 Kick All Students
             </button>
-            <br>
-            <button onclick="regenerateAccessCode()">
+            <button class="revampButton warningButton" onclick="regenerateAccessCode()">
                 Regenerate Code
             </button>
-            <br>
-            <div>
-                <input type="text" id="classNameInput" placeholder="New class name">
-                <button id="changeClassNameButton" onclick="changeClassName()">Change Class Name</button>
-            </div>
         </div>
     </div>
-    <dialog id='sharePollDialog'>
-        <button
-                onclick=`(()=>{currentSharePollId = null;
-            document.getElementById('sharePollDialog').close()})()`>Close
-        </button>
-        <p>
-            <label for='share'>Share to User</label>
-            <input type='text' name='share' id='sharePollUserInput' pattern='[a-z0-9]+'
-                   placeholder='Email' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
-        </p>
-        <div id='userPollShares'></div>
-        <p>
-            <label for='share'>Share to Class</label>
-            <input type='text' name='share' id='sharePollClassInput' pattern='[a-z0-9]+'
-                   placeholder='Class Code' onkeypress=`if(event.key == 'Enter') sharePoll('class')'`>
-        </p>
-        <div id='classPollShares'></div>
-    </dialog>
-    <%- include('../partials/body_content') %>
 </div>
-<div class="ongoingPollOptions">
-    <div id="timeDiv">
-        <p>Timer</p>
-        <input type="number" class="inputtedTime" min="0.1" placeholder="00"> :
-        <input type="number" class="inputtedTime" min="1" placeholder="00">
-        <button type='button' id='timerButton'>Start Timer</button>
-        <button type='button' id='timerStopButton' hidden>Stop Timer</button>
-    </div>
-    <div class="ongoingButtons">
-        <button id='previousPollsMenu' class='quickButton tab' data-tab-group='mainTabs'>Previous Polls</button>
-        <button id='pollsMenu' class='quickButton tab' data-tab-group='mainTabs'>Custom Polls</button>
-        <button id='startPoll' onclick='pollCheck()'>Start Poll</button>
-        <button id='clearPoll' onclick='clearPollFunc()'>Clear Poll</button>
-        <button id='endPoll' onclick='endPollFunc()'>End Poll</button>
-    </div>
-</div>
-<button id="startClass" onclick="startClass()">
-    Start Class
-</button>
-<p><b id='pollCounter'></b></p>
-<p id='responsesCounter'></p>
-<details id="student-fake" style="opacity: 0.65; order: 9997; display: none;" hidden>
+<dialog id='sharePollDialog'>
+    <button
+            onclick=`(()=>{currentSharePollId = null;
+        document.getElementById('sharePollDialog').close()})()`>Close
+    </button>
+    <p>
+        <label for='share'>Share to User</label>
+        <input type='text' name='share' id='sharePollUserInput' pattern='[a-z0-9]+'
+                placeholder='Email' onkeypress=`if(event.key == 'Enter') sharePoll('user')`>
+    </p>
+    <div id='userPollShares'></div>
+    <p>
+        <label for='share'>Share to Class</label>
+        <input type='text' name='share' id='sharePollClassInput' pattern='[a-z0-9]+'
+                placeholder='Class Code' onkeypress=`if(event.key == 'Enter') sharePoll('class')'`>
+    </p>
+    <div id='classPollShares'></div>
+</dialog>
+<%- include('../partials/body_content') %>
+
+<details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
         <span id="alerts"></span>
         <span>
@@ -264,18 +390,16 @@
 						</span>
         <span id="email"></span>
         <span id="studentTags"></span>
+        <div id="response"></div>
         <div id="reasons">
             <div id="helpReason"></div>
             <div id="breakReason"></div>
-            <div id="response"></div>
         </div>
     </summary>
     <div id="permissions"></div>
     <div id="roomTags"></div>
     <div id="extraButtons"></div>
 </details>
-<div id='users'>
-</div>
 </div>
 <div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 <div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
@@ -284,17 +408,11 @@
         <input type='submit' class='quickButton'>
     </form>
     <button type='button' id='nextStep'>Next Step</button>
-    <br>
-    <br>
     <button type='button' id='timerButton'>Start Timer</button>
     <button type='button' id='timerStopButton' hidden>Stop Timer</button>
-    <br>
     <button id='kickUsers' onclick=`((event)HH
     => {socket.emit('classKickStudents')})()`>
     Kick All Students
-    </button>
-    <button id='endClass' onclick='endClass()'>
-        End ClassH
     </button>
     <!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
     <p><b id='pollCounter'></b></p>
@@ -303,33 +421,6 @@
     </div>
 </div>
 <div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
-<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
-    <form method='post' enctype='multipart/form-data'>
-        <input name='spreadsheet' type='file'>
-        <input type='submit' class='quickButton'>
-    </form>
-    <button type='button' id='nextStep'>Next Step</button>
-    <br>
-    <br>
-    <form>
-        <label class='form-control' id='pollControl' for='modeP'>
-            <input type='radio' name='mode' id='modeP' onchange='modeChange()' value='poll'>
-            Poll Mode
-        </label>
-        <label class='form-control' id='pollControl' for='modeL'>
-            <input type='radio' name='mode' id='modeL' onchange='modeChange()' value='lesson'>
-            Lesson Mode
-        </label>
-        <label class='form-control' id='pollControl' for='modeQ'>
-            <input type='radio' name='mode' id='modeQ' onchange='modeChange()' value='quiz'>
-            Quiz Mode
-        </label>
-        <label class='form-control' id='pollControl' for='modePT'>
-            <input type='radio' name='mode' id='modePT' onchange='modeChange()' value='playtime'>
-            Playtime Mode
-        </label>
-    </form>
-</div>
 </body>
 
 </html>
@@ -346,41 +437,41 @@
 
     const FilterState = {
         alert: [
-            'Alert tickets',
-            'Alert ticket in',
-            'No alert ticket'
+            'Tickets',
+            'Ticket In',
+            'No Ticket'
         ],
         polls: [
-            'Polls',
-            'Responded to poll',
-            'Did not respond to poll',
+            'Poll Response',
+            'Has Responded',
+            'No Response',
         ]
     }
 
     const SortState = {
         name: [
             'Name',
-            'Name 🡇',
-            'Name 🡅'
+            'Name ▼ (Z-A)',
+            'Name ▲ (A-Z)'
         ],
         pollName: [
             'Poll Name',
-            'Poll Name 🡇',
-            'Poll Name 🡅'
+            'Poll Name ▼ (Z-A)',
+            'Poll Name ▲ (A-Z)'
         ],
         pollTime: [
-            'Poll time',
-            'Poll time 🡇',
-            'Poll time 🡅'
+            'Poll Time',
+            'Poll Time ▼',
+            'Poll Time ▲'
         ],
         helpTime: [
-            'Help time',
-            'Sorting by Help time',
+            'Help Time',
+            'Help Time',
         ],
         permissions: [
             'Permissions',
-            'Permissions 🡇',
-            'Permissions 🡅'
+            'Permissions ▼ (Most)',
+            'Permissions ▲ (Least)'
         ]
     }
 
@@ -403,12 +494,38 @@
         permissions: 1
     }
 
+    let vbContainerOuter = document.getElementById('vbContainerOuter');
+    let vbContainer = document.getElementById('vbContainer');
+    let vbOptions = document.getElementById('VBOptions');
+    let pollDetails = document.getElementById('pollDetails');
+    let timeDiv = document.getElementById('timeDiv');
+    let sortingFilterMenu = document.querySelector('div#sortingFilterMenu.tabContent');
+    let timerMenu = document.querySelector('div#timerMenu.tabContent');
+    let nonMobileTimerMenu = document.querySelector('div.revampDiv.leftRight.timeInfo');
+    let sideBySide = document.querySelector('.sideBySide');
+
+    function mobileMove() {
+        if(orientation == 'portrait') {
+            timerMenu.appendChild(timeDiv);
+            pollDetails.appendChild(vbContainer);
+            sortingFilterMenu.appendChild(vbOptions);
+        } else {
+            nonMobileTimerMenu.insertBefore(timeDiv, nonMobileTimerMenu.firstChild);
+            vbContainerOuter.appendChild(vbContainer);
+            sideBySide.appendChild(vbOptions);
+        }
+    }
+
+    window.addEventListener('resize', () => {mobileMove()});
+
+    mobileMove()
+
     let letterString = 'abcdefghijklmnopqrstuvwxyz'
     let generatedColors = []
     let pollResponses = []
     let colorPickers = []
     let multiRes = document.getElementById('multiRes')
-    let usersDiv = document.getElementById('users')
+    let usersDiv = document.getElementById('newMemberListControlPanel')
     let resNumber = document.getElementById('resNumber')
     let resTextBox = document.getElementById('resTextBox')
     let endPoll = document.getElementById('endPoll')
@@ -443,14 +560,76 @@
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
 
+    let vbOptionsLast = document.getElementById('vbOptionsLast');
+    let vbOptionsNext = document.getElementById('vbOptionsNext');
+
+    let sidebarOptionsIDs = [
+        {
+            elementID: 'userFilterBoxes',
+            optionName: 'Filter by:',
+            mobileOptionName: "Filter members by:"
+        },
+        {
+            elementID: 'userSortBoxes',
+            optionName: 'Sort by:',
+            mobileOptionName: "Sort members by:"
+        },
+        {
+            elementID: 'userSelectBoxes',
+            optionName: 'Select:',
+            mobileOptionName: "Select members:"
+        },
+        {
+            elementID: 'userFastPollBoxes',
+            optionName: 'Fast Poll',
+            mobileOptionName: "Fast Poll"
+        }
+    ]
+
+    function showOptions(last_or_next) {
+        let activeEl = null;
+
+        sidebarOptionsIDs.forEach((item) => {
+            if(document.getElementById(item.elementID).classList.contains('activeControlTab')) activeEl = item;
+            document.getElementById(item.elementID).classList.remove('activeControlTab');
+        });
+
+        let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
+
+        if(last_or_next) {
+            //Last Tab
+            let newActive = sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let lastButton = sidebarOptionsIDs[(lastElIndex - 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let nextButton = sidebarOptionsIDs[lastElIndex];
+
+            document.getElementById(newActive.elementID).classList.add('activeControlTab');
+
+            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
+
+
+        } else {
+            let newActive = sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let nextButton = sidebarOptionsIDs[(lastElIndex + 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+            let lastButton = sidebarOptionsIDs[lastElIndex];
+            document.getElementById(newActive.elementID).classList.add('activeControlTab');
+
+            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
+        }
+    }
+
+    vbOptionsLast.onclick = () => showOptions(true);
+    vbOptionsNext.onclick = () => showOptions(false);
+
     // Function runs on page load
     // Checks if poll is active or not and displays correct output
     let rooms;
-    socket.emit('cpUpdate')
-    socket.on('cpUpdate', (newClassroom) => {
-        rooms = newClassroom
+    socket.emit('classUpdate')
+    socket.on('classUpdate', (classroomData) => {
+        rooms = classroomData
     })
-    let tagNames = '<%= tagNames %>';
+    let classTags = '<%= tags %>';
 
     // Alerts the user if they try to start a poll without a prompt or responses
     function pollCheck() {
@@ -478,13 +657,13 @@
 
         if (isActive) {
             if (startClassButton) {
-                startClassButton.innerText = 'End Class';
+                startClassButton.innerHTML = '<p>End Class</p><img src="/img/stop.svg" alt="End Class">';
                 startClassButton.onclick = endClass;
                 startClassButton.id = 'endClass';
             }
         } else {
             if (endClassButton) {
-                endClassButton.innerText = 'Start Class';
+                endClassButton.innerHTML = '<p>Start Class</p><img src="/img/play.svg" alt="Start Class">';
                 endClassButton.onclick = startClass;
                 endClassButton.id = 'startClass';
             }
@@ -653,12 +832,14 @@
             const previousPollData = JSON.parse(previousPoll.data);
             const previousPollClone = previousPollTemplate.cloneNode(true);
             const pollNameElement = previousPollClone.querySelector('#name');
+            const pollDateElement = previousPollClone.querySelector('#date');
             const responseTemplate = previousPollClone.querySelector('#response-template');
             const loadPoll = previousPollClone.querySelector('#loadPoll');
 
             // Set the poll name
             const fixedDate = previousPoll.date.replaceAll(' ', ''); // Remove spaces from date due to an issue with the way they were being stored
-            pollNameElement.innerText = `${fixedDate} - ${previousPollData.prompt}`;
+            pollNameElement.innerText = `${previousPollData.prompt}`;
+            pollDateElement.innerText = `${fixedDate}`;
 
             // Create a response div for each user response
             for (const nameIndex in previousPollData.names) {
@@ -668,7 +849,7 @@
 
                 // If the response data exists, use it to color the user's response
                 if (previousPollData.responses) {
-                    userLetterResponse = `<span style='color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : "black"}'>${userLetterResponse || "No response"}</span>`;
+                    userLetterResponse = `<span style='font-weight:bold;color: ${userLetterResponse !== "" ? previousPollData.responses[userLetterResponse]?.color : ""}'>${userLetterResponse || "No response"}</span>`;
                 }
 
                 // Create a new response div
@@ -758,8 +939,8 @@
 
     function setMuteSound(isMuted) {
         mute = isMuted;
-        document.getElementById('muteButton').hidden = mute;
-        document.getElementById('unmuteButton').hidden = !mute;
+        document.getElementById('muteButton').style.display = mute ? "none" : "flex";
+        document.getElementById('unmuteButton').style.display = !mute ? "none" : "flex";
     }
 
     function toggleMuteSound() {
@@ -768,10 +949,10 @@
     }
 </script>
 <script src='/js/controlPanelStudents.js'></script>
-<script src='/js/sockets/cpUpdate.js'></script>
+<script src='/js/controlPanelPolls.js'></script>
+<script src='/js/sockets/classUpdate.js'></script>
 <script src='/js/modules/tags.js'></script>
 <script src='/js/controlPanelSockets.js'></script>
-<script src='/js/controlPanelPolls.js'></script>
 
 <%- include('../partials/footer_content') %>
 

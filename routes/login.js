@@ -26,7 +26,7 @@ module.exports = {
                 }
 
                 // If the user is not logged in, render the login page
-                if (req.session.email !== undefined) {
+                if (req.session.email !== undefined && classInformation.users[req.session.email]) {
                     res.redirect('/');
                     return;
                 } else if (!token) {
@@ -105,7 +105,7 @@ module.exports = {
                                             title: 'Error'
                                         });
                                         return;
-                                    };
+                                    }
                                 });
                             } catch (err) {
                                 // Handle the same email being used for multiple accounts
@@ -150,10 +150,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 };
-
-                // Set email to email to avoid breaking things
-                // email should no longer be used, but it's safe to assume it'll be the same as the email
-                user.email = user.email;
 
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
@@ -370,7 +366,7 @@ module.exports = {
                                                         title: 'Error'
                                                     });
                                                     return;
-                                                };
+                                                }
                                             });
                                         } catch (err) {
                                             // Handle the same email being used for multiple accounts
@@ -453,7 +449,7 @@ module.exports = {
                     const email = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student =  new Student(
                         email, // email
-                        9999, // Id
+                        -1, // Id
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls
@@ -462,7 +458,6 @@ module.exports = {
                         user.displayName,
                         true
                     );
-                    student.email = student.email; // Set email to email for guest users
                     classInformation.users[student.email] = student;
 
                     // Set their current class to no class

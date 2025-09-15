@@ -25,7 +25,7 @@ const allMigrations = [...sqlMigrations, ...jsMigrations].sort((a, b) => a.filen
 
 // Backup the database if there's already a database
 // If there's already a backup, denote it with a number
-if (!fs.existsSync('database/database.db')) {
+if (fs.existsSync('database/database.db')) {
     let backupNumber = fs.existsSync("database/database.bak") ? 1 : 0;
     while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
         backupNumber++;

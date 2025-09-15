@@ -1,4 +1,4 @@
-const { isLoggedIn, permCheck } = require("../modules/authentication");
+const { permCheck, isAuthenticated} = require("./middleware/authentication");
 const { logger } = require("../modules/logger");
 const fs = require('fs');
 const {logNumbers} = require("../modules/config");
@@ -6,7 +6,7 @@ const {logNumbers} = require("../modules/config");
 module.exports = {
     run(app) {
         // Handle displaying all logs to the manager
-        app.get('/logs', isLoggedIn, permCheck, (req, res) => {
+        app.get('/logs', isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /logs] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
@@ -22,7 +22,7 @@ module.exports = {
         });
 
         // Handle displaying a specific log to the manager
-        app.get('/logs/:log', isLoggedIn, permCheck, (req, res) => {
+        app.get('/logs/:log', isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /logs/:log] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 

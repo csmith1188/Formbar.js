@@ -4,6 +4,7 @@ const { generateColors } = require("./util");
 const { currentPoll, advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
+const { MANAGER_PERMISSIONS } = require("./permissions");
 
 // Stores an object containing the earned Digipogs
 // This is only stored in an object because Javascript passes objects as references
@@ -11,35 +12,35 @@ const earnedObject = {
     earnedDigipogs: []
 };
 
-/**
- * Creates a new poll in the class.
- * @param pollData
- * @param socket
- */
-async function createPoll(pollData, socket) {
+// /**
+//  * Creates a new poll in the class.
+//  * @param pollData
+//  * @param socket
+//  */
+async function createPoll(classId, pollData, userSession) {
     try {
-        const { resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes } = pollData;
-        const socketUpdates = userSocketUpdates[socket.request.session.email];
+        const { prompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const numberOfResponses = Object.keys(pollOptions).length;
+        const socketUpdates = userSocketUpdates[userSession.email];
         earnedObject.earnedDigipogs = [];
 
         // Get class id and check if the class is active before continuing
-        const classId = socket.request.session.classId;
+        const classId = userSession.classId;
         if (!classInformation.classrooms[classId] || !classInformation.classrooms[classId].isActive) {
-            socket.emit('message', 'This class is not currently active.');
-            return;
+            // socket.emit('message', 'This class is not currently active.');
+            return 'This class is not currently active.';
         }
 
         // Log poll information
-        logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-        logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
+        logger.log('info', `[startPoll] session=(${JSON.stringify(userSession)})`)
+        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
 
-        await socketUpdates.clearPoll()
-        let generatedColors = generateColors(resNumber)
-        logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]})`)
+        await clearPoll(classId, userSession)
+        let generatedColors = generateColors(Object.keys(pollOptions).length)
+        logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
 
-        classInformation.classrooms[classId].mode = 'poll'
-        classInformation.classrooms[classId].poll.blind = blind
+        classInformation.classrooms[classId].poll.isBlind = isBlind
         classInformation.classrooms[classId].poll.status = true
 
         if (tags) {
@@ -48,10 +49,10 @@ async function createPoll(pollData, socket) {
             classInformation.classrooms[classId].poll.requiredTags = []
         }
 
-        if (boxes) {
-            classInformation.classrooms[classId].poll.studentBoxes = boxes
+        if (studentsAllowedToVote) {
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
-            classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = Object.keys(classInformation.classrooms[classId].students)
         }
 
         if (indeterminate) {
@@ -62,17 +63,22 @@ async function createPoll(pollData, socket) {
 
         // Creates an object for every answer possible the teacher is allowing
         const letterString = 'abcdefghijklmnopqrstuvwxyz'
-        for (let i = 0; i < resNumber; i++) {
+        for (let i = 0; i < numberOfResponses; i++) {
             let answer = letterString[i]
             let weight = 1
             let color = generatedColors[i]
 
-            if (polls[i].answer)
-                answer = polls[i].answer
-            if (polls[i].weight)
-                weight = polls[i].weight
-            if (polls[i].color)
-                color = polls[i].color
+            if (pollOptions[i].answer) {
+                answer = pollOptions[i].answer
+            }
+
+            if (pollOptions[i].weight) {
+                weight = pollOptions[i].weight
+            }
+
+            if (pollOptions[i].color) {
+                color = pollOptions[i].color
+            }
 
             classInformation.classrooms[classId].poll.responses[answer] = {
                 answer: answer,
@@ -83,118 +89,166 @@ async function createPoll(pollData, socket) {
 
         // Set the poll's data in the classroom
         classInformation.classrooms[classId].poll.weight = weight
-        classInformation.classrooms[classId].poll.textRes = resTextBox
-        classInformation.classrooms[classId].poll.prompt = pollPrompt
-        classInformation.classrooms[classId].poll.multiRes = multiRes
-        for (const key in classInformation.classrooms[socket.request.session.classId].students) {
+        classInformation.classrooms[classId].poll.allowTextResponses = allowTextResponses
+        classInformation.classrooms[classId].poll.prompt = prompt
+        classInformation.classrooms[classId].poll.allowMultipleResponses = allowMultipleResponses
+        for (const key in classInformation.classrooms[classId].students) {
             classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
             classInformation.classrooms[classId].students[key].pollRes.textRes = ''
         }
 
         // Log data about the class then call the appropriate update functions
         logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-        socketUpdates.pollUpdate()
-        socketUpdates.virtualBarUpdate()
-        socketUpdates.classPermissionUpdate()
+        socketUpdates.classUpdate()
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
 
-        // If the request is originating from the http API, then send a response specifically for it
-        // Otherwise, simply emit the startPoll event
-        if (socket.isEmulatedSocket) {
-            socket.res.status(200).json({ message: 'Success' });
-        } else {
-            socket.emit('startPoll')
+async function endPoll(classId, userSession) {
+    try {
+        logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
+
+        let data = { prompt: '', names: [], letter: [], text: [] }
+        currentPoll += 1
+
+        let dateConfig = new Date()
+        let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+
+        data.prompt = classInformation.classrooms[classId].poll.prompt
+        data.responses = classInformation.classrooms[classId].poll.responses
+        data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
+        data.isBlind = classInformation.classrooms[classId].poll.isBlind
+        data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
+
+        for (const key in classInformation.classrooms[classId].students) {
+            data.names.push(classInformation.classrooms[classId].students[key].email)
+            data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
+            data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
         }
+
+        await new Promise((resolve, reject) => {
+            database.run(
+                'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
+                [classId, JSON.stringify(data), date], (err) => {
+                    if (err) {
+                        logger.log('error', err.stack);
+                        reject(new Error(err));
+                    } else {
+                        logger.log('verbose', '[endPoll] saved poll to history');
+                        resolve();
+                    }
+                }
+            );
+        });
+
+        let latestPoll = await new Promise((resolve, reject) => {
+            database.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
+                classId
+            ], (err, poll) => {
+                if (err) {
+                    logger.log("error", err.stack);
+                    reject(new Error(err));
+                } else resolve(poll);
+            });
+        });
+
+        latestPoll.data = JSON.parse(latestPoll.data);
+        classInformation.classrooms[classId].pollHistory.push(latestPoll);
+        classInformation.classrooms[classId].poll.status = false
+
+        const socketUpdates = userSocketUpdates[userSession.email];
+        socketUpdates.classUpdate();
+
+        logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
     } catch (err) {
         logger.log('error', err.stack);
     }
 }
 
 /**
- * Ends the current poll in the class.
- * @param socket
- */
-async function endPoll(socket) {
-    const socketUpdates = userSocketUpdates[socket.request.session.email];
-
-    await socketUpdates.endPoll();
-    socketUpdates.pollUpdate();
-    socketUpdates.classPermissionUpdate();
-
-    if (socket.isEmulatedSocket) {
-        socket.res.status(200).json({ message: 'Success' });
-    }
-}
-
-/**
  * Clears the current poll from the class
- * @param socket
+ * @param TODO
  */
-async function clearPoll(socket) {
-    const socketUpdates = userSocketUpdates[socket.request.session.email];
-    await socketUpdates.clearPoll();
+async function clearPoll(classId, userSession) {
+    try {
+        const socketUpdates = userSocketUpdates[userSession.email];
+        if (classInformation.classrooms[classId].poll.status) {
+            await endPoll()
+        }
 
-    // Adds data to the previous poll answers table upon clearing the poll
-    for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
-        if (student.classPermissions != 5) {
-            const currentPollId = classInformation.classrooms[socket.request.session.classId].pollHistory[currentPoll].id
-            for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
-                const studentRes = student.pollRes.buttonRes[i]
+        classInformation.classrooms[classId].poll.responses = {};
+        classInformation.classrooms[classId].poll.prompt = "";
+        classInformation.classrooms[classId].poll = {
+            status: false,
+            responses: {},
+            allowTextResponses: false,
+            prompt: "",
+            weight: 1,
+            isBlind: false,
+            requiredTags: [],
+            studentsAllowedToVote: [],
+            allowedResponses: [],
+        };
+
+        // Adds data to the previous poll answers table upon clearing the poll
+        for (const student of Object.values(classInformation.classrooms[classId].students)) {
+            if (student.classPermissions < MANAGER_PERMISSIONS) {
+                const currentPollId = classInformation.classrooms[classId].pollHistory[currentPoll].id
+                for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
+                    const studentRes = student.pollRes.buttonRes[i]
+                    const studentId = student.id
+                    database.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
+                        if (err) {
+                            logger.log('error', err.stack)
+                        }
+                    })
+                }
+
+                const studentTextRes = student.pollRes.textRes
                 const studentId = student.id
-                database.run('INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentRes], (err) => {
+                database.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
                     if (err) {
                         logger.log('error', err.stack)
                     }
                 })
             }
-
-            const studentTextRes = student.pollRes.textRes
-            const studentId = student.id
-            database.run('INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)', [currentPollId, studentId, studentTextRes], (err) => {
-                if (err) {
-                    logger.log('error', err.stack)
-                }
-            })
         }
-    }
 
-    socketUpdates.pollUpdate();
-    socketUpdates.virtualBarUpdate();
-    socketUpdates.classPermissionUpdate();
-    if (socket.isEmulatedSocket) {
-        socket.res.status(200).json({ message: 'Success' });
+        socketUpdates.classUpdate(classId);
+    } catch (err) {
+        logger.log('error', err.stack);
     }
 }
 
-function pollResponse(res, textRes, socket) {
+function pollResponse(classId, res, textRes, userSession) {
     const resLength = textRes != null ? textRes.length : 0;
-    logger.log('info', `[pollResp] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+    logger.log('info', `[pollResp] session=(${JSON.stringify(userSession)})`)
     logger.log('info', `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`)
 
-    const classId = socket.request.session.classId
-    const email = socket.request.session.email
-    const classroom = classInformation.classrooms[classId]
-    const socketUpdates = userSocketUpdates[socket.request.session.email];
+    const email = userSession.email;
+    const user = classInformation.users[email];
+    const classroom = classInformation.classrooms[classId];
+    const socketUpdates = userSocketUpdates[email];
 
-    // Check if user is allowed to respond
-    const isRemoving = res === 'remove' || (classroom.poll.multiRes && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentBoxes.includes(email) && !isRemoving) {
-        return; // If the user is not included in the poll, do not allow them to respond
+    if (!classroom.poll || !classroom.poll.status) {
+        return;
     }
 
-    // Check if the response provided is a valid response
-    if (!classroom.poll.multiRes) {
-        // For normal polls, response must be either 'remove' or a valid response key
+    const isRemoving = res === 'remove' || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
+    if (!classroom.poll.studentsAllowedToVote.includes(user.id.toString()) && !isRemoving) {
+        return;
+    }
+
+    if (!classroom.poll.allowMultipleResponses) {
         if (res !== 'remove' && !Object.keys(classroom.poll.responses).includes(res)) {
             return;
         }
     } else {
-        // For multi-res polls, validate that all responses are valid
         if (isRemoving) {
-            // Allow removal
         } else if (!Array.isArray(res)) {
-            return; // Must be an array for multires polls
+            return;
         } else {
-            // Check that all responses in the array are valid
             const validResponses = Object.keys(classroom.poll.responses);
             const allValid = res.every(response => validResponses.includes(response));
             if (!allValid) {
@@ -203,9 +257,8 @@ function pollResponse(res, textRes, socket) {
         }
     }
 
-    // If the users response is different from the previous response, play a sound
     const prevRes = classroom.students[email].pollRes.buttonRes;
-    const hasChanged = classroom.poll.multiRes ?
+    const hasChanged = classroom.poll.allowMultipleResponses ?
         JSON.stringify(prevRes) !== JSON.stringify(res) :
         prevRes !== res;
 
@@ -217,9 +270,8 @@ function pollResponse(res, textRes, socket) {
         }
     }
 
-    // Handle response storage
     if (isRemoving) {
-        classroom.students[email].pollRes.buttonRes = classroom.poll.multiRes ? [] : "";
+        classroom.students[email].pollRes.buttonRes = classroom.poll.allowMultipleResponses ? [] : "";
         classroom.students[email].pollRes.textRes = "";
     } else {
         classroom.students[email].pollRes.buttonRes = res;
@@ -227,13 +279,11 @@ function pollResponse(res, textRes, socket) {
     }
     classroom.students[email].pollRes.time = new Date()
 
-    // Digipog calculations
     if (!isRemoving && earnedObject.earnedDigipogs[email] === undefined) {
         let amount = 0;
-        if (classroom.poll.multiRes) {
+        if (classroom.poll.allowMultipleResponses) {
             amount = res.length;
         } else {
-            // For normal polls, count based on text response length
             for (let i = 0; i <= resLength; i++) {
                 amount++;
             }
@@ -251,10 +301,9 @@ function pollResponse(res, textRes, socket) {
             earnedObject.earnedDigipogs[email] = email;
         }
     }
-    logger.log('verbose', `[pollResp] user=(${classroom.students[socket.request.session.email]})`)
+    logger.log('verbose', `[pollResp] user=(${classroom.students[userSession.email]})`)
 
-    socketUpdates.classPermissionUpdate()
-    socketUpdates.virtualBarUpdate()
+    socketUpdates.classUpdate(classId, { global: true });
 }
 
 /**

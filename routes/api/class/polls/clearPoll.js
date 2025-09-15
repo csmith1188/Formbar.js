@@ -1,16 +1,16 @@
-const { createSocketFromHttp } = require("../../../../modules/webServer");
 const { clearPoll } = require("../../../../modules/polls");
 const { logger } = require("../../../../modules/logger");
-const { httpPermCheck } = require("../../../middleware/permissionCheck");
-const { parseJson } = require("../../../middleware/parseJson");
+const { httpPermCheck, classPermCheck} = require("../../../middleware/permissionCheck");
+const { CLASS_PERMISSIONS } = require("../../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Clears the current poll for the class
-        router.post('/class/:id/polls/clear', httpPermCheck('clearPoll'), parseJson, async (req, res) => {
+        router.post('/class/:id/polls/clear', httpPermCheck('clearPoll'), classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
             try {
-                const socket = createSocketFromHttp(req, res);
-                await clearPoll(socket);
+                const classId = req.params.id;
+                await clearPoll(classId, req.session.user);
+                res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

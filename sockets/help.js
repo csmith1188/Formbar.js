@@ -19,7 +19,7 @@ module.exports = {
                 logger.log('info', `[help] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
                 // Set the student's help ticket to an object with the reason and time of the request
-                const time = new Date();
+                const time = Date.now();
                 const student = classInformation.classrooms[classId].students[email];
                 student.help = { reason: reason, time: time };
 
@@ -32,7 +32,7 @@ module.exports = {
                 }
 
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -49,7 +49,7 @@ module.exports = {
                 logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[student])})`)
 
                 // Call the classPermissionUpdate function to update the class information with this new data
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }

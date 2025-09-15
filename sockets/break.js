@@ -2,6 +2,7 @@ const { classInformation } = require("../modules/class/classroom")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 const { io } = require("../modules/webServer")
+const {getEmailFromId} = require("../modules/student");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -26,15 +27,16 @@ module.exports = {
                 student.break = reason;
 
                 logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
-                socketUpdates.classPermissionUpdate();
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
             }
         });
 
         // Approves the break ticket request
-        socket.on('approveBreak', (breakApproval, email) => {
+        socket.on('approveBreak', async (breakApproval, userId) => {
             try {
+                const email = await getEmailFromId(userId);
                 logger.log('info', `[approveBreak] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`)
 
@@ -44,8 +46,7 @@ module.exports = {
                 logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
 
                 if (breakApproval) io.to(`user-${email}`).emit('break')
-                socketUpdates.classPermissionUpdate()
-                socketUpdates.virtualBarUpdate()
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -61,8 +62,7 @@ module.exports = {
 
                 logger.log('verbose', `[endBreak] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email])})`)
 
-                socketUpdates.classPermissionUpdate()
-                socketUpdates.virtualBarUpdate()
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }

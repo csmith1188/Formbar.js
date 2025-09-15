@@ -1,11 +1,12 @@
 const { classInformation } = require('./class/classroom')
-const { database, dbGetAll, dbGet } = require('./database')
+const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
+const { userSockets, managerUpdate, SocketUpdates} = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
 
 /**
  * Asynchronous function to get the current user's data.
- * @param {Object} req - The request object.
+ * @param {Object} api - The API key for the user.
  * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
  */
 async function getUser(api) {
@@ -60,11 +61,11 @@ async function getUser(api) {
 
             // If the user is in a class, query the database for the user's data and class permissions
             database.get(
-                'SELECT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.id = ? AND users.email = ?',
+                'SELECT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users JOIN classroom ON classroom.id = ? LEFT JOIN classusers ON classusers.classId = classroom.id AND classusers.studentId = users.id WHERE users.email = ?;',
                 [classId, email],
                 (err, dbUser) => {
                     try {
-                        // If an error occurs, throw the error
+                        // If an error occurs,g throw the error
                         if (err) throw err
 
                         // If no user is found, resolve the promise with an error object
@@ -92,7 +93,6 @@ async function getUser(api) {
             ...dbUser,
             help: null,
             break: null,
-            quizScore: null,
             pogMeter: null,
             classId: classId
         }
@@ -105,7 +105,6 @@ async function getUser(api) {
                 userData.loggedIn = true
                 userData.help = cdUser.help
                 userData.break = cdUser.break
-                userData.quizScore = cdUser.quizScore
                 userData.pogMeter = cdUser.pogMeter
             }
         }
@@ -121,19 +120,82 @@ async function getUser(api) {
     }
 }
 
+async function deleteUser(userId, socket, socketUpdates) {
+    try {
+        logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+        logger.log('info', `[deleteUser] userId=(${userId})`)
+        if (!socketUpdates) {
+            socketUpdates = socket ? new SocketUpdates(socket) : new SocketUpdates({ request: { session: {} }, emit: () => {} });
+        }
+
+        const user = await new Promise((resolve, reject) => {
+            database.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
+                if (err) reject(err)
+                resolve(user)
+            })
+        })
+
+        if (!user) {
+            if (socket && socket.emit) socket.emit('message', 'User not found')
+            return
+        }
+
+        const userSocketsMap = userSockets[user.email];
+        const usersSocketUpdates = userSocketUpdates[user.email];
+        if (userSocketsMap && usersSocketUpdates) {
+            const anySocket = Object.values(userSocketsMap)[0];
+            if (anySocket) {
+                usersSocketUpdates.logout(anySocket);
+            }
+        }
+
+        try {
+            await dbRun('BEGIN TRANSACTION')
+
+            await Promise.all([
+                dbRun('DELETE FROM users WHERE id=?', userId),
+                dbRun('DELETE FROM classusers WHERE studentId=?', userId),
+                dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
+            ])
+
+            await socketUpdates.deleteCustomPolls(userId)
+            await socketUpdates.deleteClassrooms(userId)
+
+            // If the student is online, remove them from any class they're in and update the control panel
+            const student = classInformation.users[user.email];
+            if (student) {
+                const activeClass = classInformation.users[user.email].activeClass;
+                const classroom = classInformation.classrooms[activeClass];
+                delete classInformation.users[user.email];
+                if (classroom) {
+                    delete classroom.students[user.email];
+                    socketUpdates.classUpdate();
+                }
+            }
+
+            await dbRun('COMMIT')
+            await managerUpdate()
+            if (socket && socket.emit) socket.emit('message', 'User deleted successfully')
+        } catch (err) {
+            await dbRun('ROLLBACK')
+            throw err
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
+
 /**
  * Gets the classes a user owns from their email.
  * @param email
- * @param socket
+ * @param userSession
  */
-async function getUserOwnedClasses(email, socket) {
-    logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+async function getUserOwnedClasses(email, userSession) {
+    logger.log('info', `[getOwnedClasses] session=(${JSON.stringify(userSession)})`);
     logger.log('info', `[getOwnedClasses] email=(${email})`);
 
-    const userId = await dbGet('SELECT id FROM users WHERE email = ?', [email]);
-    const classes = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
-    console.log(userId, classes)
-    return classes;
+    const userId = (await dbGet('SELECT id FROM users WHERE email = ?', [email])).id;
+    return await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userId]);
 }
 
 /**
@@ -217,10 +279,9 @@ async function getEmailFromAPIKey(api) {
     }
 }
 
-
 module.exports = {
     getUser,
+    deleteUser,
     getUserOwnedClasses,
-    getUserClass,
-    getEmailFromAPIKey
+    getUserClass
 }

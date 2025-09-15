@@ -1,8 +1,7 @@
-const { logger } = require("../../modules/logger")
-const { dbGet } = require("../../modules/database");
-const { getUserOwnedClasses} = require("../../modules/user");
-const { httpPermCheck } = require("../middleware/permissionCheck");
-const { createSocketFromHttp } = require("../../modules/webServer");
+const { logger } = require("../../../modules/logger")
+const { dbGet } = require("../../../modules/database");
+const { getUserOwnedClasses} = require("../../../modules/user");
+const { httpPermCheck } = require("../../middleware/permissionCheck");
 
 module.exports = {
     run(router) {
@@ -15,10 +14,8 @@ module.exports = {
                     return res.json({ error: "User not found" })
                 }
 
-                // TODO: Something is broken here
-                const socket = createSocketFromHttp(req, res);
-                const ownedClasses = await getUserOwnedClasses(user.email, socket);
-                console.log(ownedClasses);
+                const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);
+                res.status(200).json(ownedClasses);
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).send(`Error: ${err.message}`);

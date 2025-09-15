@@ -26,99 +26,49 @@ describe("Socket Updates", () => {
         });
 
         socketUpdates = new SocketUpdates();
-        socketUpdates.socket = { request: { session: { classId: testData.code } } };
+        socketUpdates.socket = { request: { session: { classId: testData.code, email: testData.email } } };
+        socketUpdates.customPollUpdate = jest.fn();
     });
 
-    describe("virtualBarUpdate", () => {
-        it("should handle no active poll", async () => {
-            createTestClass(testData.code, 'Test Class');
-            createTestUser(testData.email, testData.code, 3);
-            await socketUpdates.virtualBarUpdate(testData.code);
+    describe("classUpdate", () => {
+        it("emits classUpdate with server-computed poll totals", async () => {
+            const { createTestClass, createTestUser } = require('./tests');
+            const { DEFAULT_CLASS_PERMISSIONS, TEACHER_PERMISSIONS, STUDENT_PERMISSIONS } = require('../permissions');
+            const { classInformation } = require('../class/classroom');
 
-            // Check if emit was called with the expected event and data
-            expect(mockEmit).toHaveBeenCalledWith("vbUpdate", {
-                "status": false,
-                "totalResponders": 0,
-                "totalResponses": 0,
-                "polls": {},
-                "textRes": false,
-                "prompt": "",
-                "weight": 1,
-                "blind": false,
-                "time": undefined,
-                "sound": false,
-                "active": false,
-                "timePassed": undefined,
-            });
-        });
-
-        it("should handle active poll with responses", async () => {
+            // Setup classroom and permissions
             const classData = createTestClass(testData.code, 'Test Class');
-            const userData = createTestUser(testData.email, testData.code, 3);
+            classData.permissions = DEFAULT_CLASS_PERMISSIONS;
 
-            // Set up the class and user data
+            // Teacher (will receive the emit)
+            const teacher = createTestUser(testData.email, testData.code, TEACHER_PERMISSIONS);
+            teacher.classPermissions = TEACHER_PERMISSIONS;
+
+            // Student who is allowed to vote and has responded
+            const studentEmail = 'student@example.com';
+            const student = createTestUser(studentEmail, testData.code, STUDENT_PERMISSIONS);
+            student.classPermissions = STUDENT_PERMISSIONS;
+            student.pollRes.buttonRes = 'A';
+
+            // Active poll with one valid response
             classData.poll.status = true;
-            classData.poll.responses = { "option1": { responses: 1 } };
-            classData.poll.textRes = true;
-            classData.poll.prompt = "Test Prompt";
-            classData.poll.weight = 2;
-            classData.poll.blind = true;
+            classData.poll.responses = { A: { answer: 'A', weight: 1, color: '#000' } };
             classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.email];
-            userData.pollRes = { buttonRes: "option1" };
-            await socketUpdates.virtualBarUpdate(testData.code);
+            classData.poll.studentsAllowedToVote = [student.id.toString()];
 
-            // Check if emit was called with the expected event and data
-            expect(mockEmit).toHaveBeenCalledWith( "vbUpdate", {
-                "status": true,
-                "totalResponders": 1,
-                "totalResponses": 1,
-                "polls": { "option1": { responses: 1 } },
-                "textRes": true,
-                "prompt": "Test Prompt",
-                "weight": 2,
-                "blind": true,
-                "time": undefined,
-                "sound": false,
-                "active": false,
-                "timePassed": undefined,
-            });
-        });
+            // Execute
+            await socketUpdates.classUpdate(testData.code);
 
-        it("should handle students on break", async () => {
-            const classData = createTestClass(testData.code, 'Test Class');
-            const userData = createTestUser(testData.email, testData.code, 3);
+            // Assert emit with computed totals
+            expect(mockEmit).toHaveBeenCalled();
+            const calls = mockEmit.mock.calls.filter(call => call[0] === 'classUpdate');
+            expect(calls.length).toBeGreaterThan(0);
 
-            // Set up the class and user data
-            classData.poll.status = true;
-            classData.poll.responses = { "option1": { responses: 1 } };
-            classData.poll.textRes = true;
-            classData.poll.prompt = "Test Prompt";
-            classData.poll.weight = 2;
-            classData.poll.blind = true;
-            classData.poll.requiredTags = [];
-            classData.poll.studentBoxes = [userData.email];
-            userData.pollRes = { buttonRes: "option1" };
-            userData.break = true;
-
-            classInformation.classrooms[testData.code] = classData;
-            await socketUpdates.virtualBarUpdate(testData.code);
-
-            // Check if emit was called with the expected event and data
-            expect(mockEmit).toHaveBeenCalledWith("vbUpdate", {
-                "status": true,
-                "totalResponders": 0,
-                "totalResponses": 0,
-                "polls": { "option1": { responses: 0 } },
-                "textRes": true,
-                "prompt": "Test Prompt",
-                "weight": 2,
-                "blind": true,
-                "time": undefined,
-                "sound": false,
-                "active": false,
-                "timePassed": undefined,
-            });
+            const payload = calls[calls.length - 1][1];
+            expect(payload.poll.totalResponses).toBe(1);
+            expect(payload.poll.totalResponders).toBe(1);
+            // Teachers should receive full poll data
+            expect(Array.isArray(payload.poll.studentsAllowedToVote)).toBe(true);
         });
     });
 });
