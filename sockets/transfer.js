@@ -31,7 +31,7 @@ module.exports = {
                     if (fromUser.pin !== pin) {
                         return socket.emit("transferResponse", jwt.sign({ success: false, message: "Invalid PIN." }, privateKey, { expiresIn: "1h"}));
                     }
-                    if (fromUser.balance < amount) {
+                    if (fromUser.digipogs < amount) {
                         return socket.emit("transferResponse", jwt.sign({ success: false, message: "Insufficient funds." }, privateKey, { expiresIn: "1h"}));
                     }
 
@@ -45,8 +45,8 @@ module.exports = {
                         }
 
                         // Perform the transfer
-                        const newFromBalance = fromUser.balance - amount;
-                        const newToBalance = toUser.balance + amount * .95; // Deduct 5% fee
+                        const newFromBalance = fromUser.digipogs - amount;
+                        const newToBalance = toUser.digipogs + amount * .95; // Deduct 5% fee
 
                         // Set up respective update promises
                         const updateFrom = new Promise((resolve, reject) => {
