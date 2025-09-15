@@ -1,7 +1,6 @@
 const { privateKey } = require("../modules/config");
 const { database } = require("../modules/database");
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv").config({ silent: true });
 
 module.exports = {
     run(socket) {
@@ -66,7 +65,6 @@ module.exports = {
                         // Execute both updates and respond accordingly and emit response
                         Promise.all([updateFrom, updateTo])
                             .then(() => {
-                                d
                                 socket.emit("transferResponse", jwt.sign({ success: true, message: "Transfer successful." }, privateKey, { expiresIn: "1h"}));
                             })
                             .catch(() => {
