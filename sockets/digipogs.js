@@ -1,7 +1,7 @@
 const { transferDigipogs } = require('../modules/digipogs');
 const { classInformation } = require('../modules/class/classroom');
 const { database } = require('../modules/database');
-const {logger} = require("../modules/logger");
+const { logger } = require("../modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -37,7 +37,7 @@ module.exports = {
                     return;
                 };
                 student.requestConversion = data;
-                socketUpdates.classPermissionUpdate();
+                socketUpdates.classUpdate();
             });
         } catch (err) {
             logger.log('error', err.stack)
@@ -59,7 +59,7 @@ module.exports = {
                     if (err) throw err;
                 });
                 student.requestConversion = null;
-                socketUpdates.classPermissionUpdate();
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack)
             }

@@ -1,6 +1,7 @@
 const { classInformation } = require("../modules/class/classroom")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
+const { getEmailFromId } = require("../modules/student");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -14,7 +15,7 @@ module.exports = {
 
                 // Save the tags to the class object
                 tags = tags.sort();
-                classInformation.classrooms[socket.request.session.classId].tagNames = tags;
+                classInformation.classrooms[socket.request.session.classId].tags = tags;
 
                 // Now remove all instances of the tag from the students' tags
                 for (const student of Object.values(classInformation.classrooms[socket.request.session.classId].students)) {
@@ -65,10 +66,11 @@ module.exports = {
             }
         });
 
-        socket.on('saveTags', (studentId, tags, email) => {
+        socket.on('saveTags', async (studentId, tags) => {
             // Save the tags to the students tag element in their object
             // Then save their tags to the database
             try {
+                const email = await getEmailFromId(studentId);
                 logger.log('info', `[saveTags] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`)
 
@@ -97,7 +99,6 @@ module.exports = {
                             if (err) {
                                 logger.log('error', err)
                                 socket.emit('message', 'There was a server error try again.')
-                                return
                             }
                         });
                     } else {

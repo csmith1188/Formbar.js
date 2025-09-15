@@ -93,7 +93,8 @@
 						pollPromptDisplayGuest.innerText = newPoll.prompt;
 					}
 
-					socket.on('vbUpdate', (newPoll) => {
+					socket.on('classUpdate', (classroomData) => {
+						const newPoll = classroomData.poll;
 						updatePage(newPoll)
 					})
 				</script>
@@ -132,7 +133,6 @@
 					let oldTextRes = '<%- myTextRes %>'
 
 					let poll = {}
-					let mode = ''
 					let quiz = {}
 					let votingRight = false
 
@@ -220,20 +220,19 @@
 					function updatePage() {
 						if (poll.allowedResponses.length > 0) {
 							for (let eachAllowedResponse of poll.allowedResponses) {
-								if (eachAllowedResponse == currentUser.email) {
+								if (eachAllowedResponse == currentUser.id) {
 									updatePageLoop()
 									return
 								}
 							}
 							for (let eachUnallowedResponse of poll.unallowedResponses) {
-								if (eachUnallowedResponse == currentUser.email) {
+								if (eachUnallowedResponse == currentUser.id) {
 									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 								}
 							}
 						}
 						else if (poll.allowedResponses.length == 0) {
 							updatePageLoop()
-							return
 						}
 					}
 
@@ -272,17 +271,17 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
+					socket.emit('classUpdate')
+					socket.on('classUpdate', (classroomData) => {
+                        const newPoll = classroomData.poll;
+                        if (deepObjectEqual(poll, newPoll)) return;
 
-					socket.emit('pollUpdate')
-					socket.on('pollUpdate', (newPoll) => {
-						if (deepObjectEqual(poll, newPoll)) return
-
-						poll = newPoll
-						if (poll.status) {
-							socket.emit('getCanVote', currentUser.email)
-						}
-						updatePage()
-					})
+                        poll = newPoll;
+                        if (poll.status) {
+                            socket.emit('getCanVote', currentUser.id);
+                        }
+                        updatePage();
+					});
 
 					socket.on('pollResp', (voteData) => {
 						const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')
@@ -309,7 +308,7 @@
 					});
 
 					if (poll.status) {
-						socket.emit('getCanVote', currentUser.email)
+						socket.emit('getCanVote', currentUser.id)
 					}
 					socket.on('getCanVote', (newVotingRight) => {
 						votingRight = newVotingRight

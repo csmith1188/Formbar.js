@@ -32,7 +32,7 @@ module.exports = {
                 }
 
                 logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack)
             }
@@ -49,7 +49,7 @@ module.exports = {
                 logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[student])})`)
 
                 // Call the classPermissionUpdate function to update the class information with this new data
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack)
             }

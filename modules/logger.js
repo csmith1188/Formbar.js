@@ -24,7 +24,7 @@ function createLoggerTransport(level) {
 	});
 
 	// When the log file is rotated, it resets the error count, saves it to a file, and deletes the old log file.
-	transport.on("rotate", function (oldFilename, newFilename) {
+	transport.on("rotate", function (oldFilename) {
 		// Reset the error log count
 		logNumbers.error = 0;
 

@@ -12,10 +12,10 @@ module.exports = {
         socket.use(async ([event, ...args], next) => {
             try {
                 const email = socket.request.session.email;
-                const userData = classInformation.users[email];
-                const classId = userData && userData.activeClass != null ? userData.activeClass : socket.request.session.classId;
+                let userData = classInformation.users[email];
 
                 // If the classId in the session is different from the user's active class, update it
+                const classId = userData && userData.activeClass != null ? userData.activeClass : socket.request.session.classId;
                 if (!socket.request.session.classId || socket.request.session.classid !== classId) {
                     socket.request.session.classId = classId;
                     socket.request.session.save();

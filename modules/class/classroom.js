@@ -1,6 +1,6 @@
-const { database, dbGet, dbRun} = require("../database")
+const { database } = require("../database")
 const { logger } = require("../logger")
-const { MOD_PERMISSIONS, STUDENT_PERMISSIONS } = require("../permissions");
+const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();
 
@@ -8,27 +8,36 @@ const classInformation = createClassInformation();
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
 	// Needs the name of the class you want to create
-	constructor(id, className, key, permissions, sharedPolls, pollHistory, tags, plugins, settings) {
+	constructor(id, className, key, owner, permissions, sharedPolls, pollHistory, tags, settings) {
 		this.id = id
 		this.className = className
 		this.isActive = false
+        this.owner = owner
 		this.students = {}
 		this.sharedPolls = sharedPolls || []
+        this.studentsAllowedToVote = []
 		this.poll = {
 			status: false,
+            prompt: '',
 			responses: {},
-			textRes: false,
-			prompt: '',
+			allowTextResponses: false,
+            allowMultipleResponses: false,
+            isBlind: false,
 			weight: 1,
-			blind: false,
 			requiredTags: [],
-			studentBoxes: [],
+			studentsAllowedToVote: [],
 			allowedResponses: []
 		}
 		this.key = key
-		this.permissions = permissions
+		// Ensure permissions is an object, not a JSON string
+		try {
+			this.permissions = typeof permissions === 'string' ? JSON.parse(permissions) : (permissions || DEFAULT_CLASS_PERMISSIONS)
+		} catch (err) {
+			// Fallback to defaults if parsing fails
+			this.permissions = DEFAULT_CLASS_PERMISSIONS
+		}
 		this.pollHistory = pollHistory || []
-		this.tagNames = tags || ['Offline'];
+		this.tags = tags || ['Offline'];
 		this.settings = settings || {
 			mute: false,
 			filter: '',
@@ -41,8 +50,8 @@ class Classroom {
 			sound: false
 		}
 
-		if (!this.tagNames.includes('Offline') && Array.isArray(this.tagNames)) {
-			this.tagNames.push('Offline');
+		if (!this.tags.includes('Offline') && Array.isArray(this.tags)) {
+			this.tags.push('Offline');
 		}
 	}
 }

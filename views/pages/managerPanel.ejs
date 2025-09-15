@@ -176,6 +176,7 @@
                 permissionSwitch.setAttribute("name", "permSwitch")
                 permissionSwitch.setAttribute("class", "permSwitch revampButton")
                 permissionSwitch.setAttribute("data-userid", userData.email)
+                permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
                 permissionSwitch.onchange = (event) => {
                     socket.emit('permChange', event.target.dataset.userid, event.target.value)
                 }
@@ -368,12 +369,24 @@
             }
         }
 
-        socket.emit('managerUpdate')
-        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
-            users = tempUsers
+        const managerData = fetch('/api/manager', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            }
+        }).then(async rawData => {
+            const managerData = await rawData.json();
+            users = managerData.users;
 
             filterSortChange()
         })
+
+        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
+            users = tempUsers
+            filterSortChange()
+        })
+
         socket.emit('ipUpdate')
         socket.on('ipUpdate', (type, active, ips) => {
             if(type == 'whitelist' && whitelistHeaderH1.innerText.toLowerCase() == 'whitelist') {
@@ -440,7 +453,6 @@
             newIp.onchange = (event) => {
                 if (!event.target.checkValidity()) {
                     event.target.reportValidity()
-                    return
                 }
             }
             addIpForm.append(newIp)

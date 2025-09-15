@@ -25,12 +25,18 @@ const permissionOptions = [
 ]
 
 // Ask for classroom update and listen for the response
-socket.emit('cpUpdate')
-socket.on('cpUpdate', (newClassroom) => {
-    classId = newClassroom.id
+socket.emit('classUpdate')
+socket.on('classUpdate', (classroomData) => {
+    if (!classroomData.students) {
+        return;
+    }
+
+    classId = classroomData.id
     currentTags = []
     let studentsOffline = 0
-    for (let student of Object.values(newClassroom.students)) {
+    for (const studentId of Object.keys(classroomData.students)) {
+        let student = classroomData.students[studentId]
+
         if (student.permissions >= 4) continue;
         student.help.time = new Date(student.help.time)
         student.pollRes.time = new Date(student.pollRestime)
@@ -72,7 +78,7 @@ socket.on('cpUpdate', (newClassroom) => {
 
         if (students.length > 0) {
             for (let i = 0; i < students.length; i++) {
-                if (students[i].email == student.email) {
+                if (students[i].id == student.id) {
                     students[i] = student
                     break
                 }
@@ -86,47 +92,26 @@ socket.on('cpUpdate', (newClassroom) => {
         }
     }
 
-    className.innerHTML = `<b>Class Name:</b> ${newClassroom.className}`
-    classCode.innerHTML = `<b>Class Code:</b> ${newClassroom.key}`
+    className.innerHTML = `<b>Class Name:</b> ${classroomData.className}`
+    classCode.innerHTML = `<b>Class Code:</b> ${classroomData.key}`
 
-    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(newClassroom.students).length - studentsOffline}`
-    if (newClassroom.poll.prompt != "") {
-        pollCounter.innerText = `Poll Prompt: '${newClassroom.poll.prompt}'`
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline}`
+    if (classroomData.poll.prompt != "") {
+        pollCounter.innerText = `Poll Prompt: '${classroomData.poll.prompt}'`
     } else {
         pollCounter.innerText = `Poll Prompt:`
     }
 
-    let responseCount = 0;
-    let totalResponders = 0;
-    for (let [studentName, student] of Object.entries(newClassroom.students)) {
-        // If the student is on break, skip them
-        if (student.tags && student.tags.includes("Offline")) {
-            continue;
-        }
-
-        // If the student is on break, a guest, or a teacher, do not include them as a potential responder
-        if (!student.break
-            && student.permissions > GUEST_PERMISSIONS
-            && student.permissions < TEACHER_PERMISSIONS
-            && newClassroom.poll.studentBoxes.includes(student.email)
-        ) {
-            totalResponders++;
-        }
-
-        // If the student has responded to the poll, increment the response count
-        if (student.pollRes.buttonRes != "" || student.pollRes.textRes != "") {
-            responseCount++;
-        }
-    }
-
+    const responseCount = classroomData.poll?.totalResponses ?? 0;
+    const totalResponders = classroomData.poll?.totalResponders ?? 0;
     responsesCounter.innerText = `Total Responses: ${responseCount} out of ${totalResponders}`;
 
-    const studentEmails = Object.keys(newClassroom.students);
-    validateStudents(studentEmails);
-    for (const email of studentEmails) {
-        let studentElement = document.getElementById(`student-${email}`)
+    const studentIds = Object.keys(classroomData.students);
+    validateStudents(studentIds);
+    for (const userId of studentIds) {
+        let studentElement = document.getElementById(`student-${userId}`)
         let oldStudentData = null
-        let newStudentData = newClassroom.students[email]
+        let newStudentData = classroomData.students[userId]
 
         // Add any selected tags to the current tags list
         // This will allow the teacher to filter students by tags
@@ -138,22 +123,22 @@ socket.on('cpUpdate', (newClassroom) => {
             }
         }
 
-        if (classroom.students && classroom.students[email]) oldStudentData = classroom.students[email]
+        if (classroom.students && classroom.students[userId]) oldStudentData = classroom.students[userId]
         if (!studentElement) {
-            let builtStudent = buildStudent(newClassroom, newStudentData)
+            let builtStudent = buildStudent(classroomData, newStudentData)
             if (builtStudent) usersDiv.appendChild(builtStudent)
             continue
         }
 
         if (deepObjectEqual(oldStudentData, newStudentData)) continue
 
-        studentElement.replaceWith(buildStudent(newClassroom, newStudentData))
+        studentElement.replaceWith(buildStudent(classroomData, newStudentData))
     }
 
-    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(newClassroom.students).length - studentsOffline - 1}`
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - 1}`
 
     for (let studentElement of document.getElementsByClassName('student')) {
-        if (!newClassroom.students[studentElement.id.replace('student-', '')]) {
+        if (!classroomData.students[studentElement.id.replace('student-', '')]) {
             studentElement.remove()
         }
     }
@@ -170,7 +155,7 @@ socket.on('cpUpdate', (newClassroom) => {
     // 	}
     // }
 
-    if (currentUser.classPermissions >= newClassroom.permissions.controlPolls) {
+    if (currentUser.classPermissions >= classroomData.permissions.controlPolls) {
         pollsTabButton.style.display = ''
     } else {
         pollsTabButton.style.display = 'none'
@@ -180,7 +165,7 @@ socket.on('cpUpdate', (newClassroom) => {
         }
     }
 
-    if (currentUser.classPermissions >= newClassroom.permissions.manageClass) {
+    if (currentUser.classPermissions >= classroomData.permissions.manageClass) {
         settingsTabButton.style.display = ''
     } else {
         settingsTabButton.style.display = 'none'
@@ -200,17 +185,17 @@ socket.on('cpUpdate', (newClassroom) => {
         }
     }
 
-    if (classroom?.poll?.status != newClassroom.poll.status) {
-        if (newClassroom.poll.status) {
+    if (classroom?.poll?.status != classroomData.poll.status) {
+        if (classroomData.poll.status) {
             endPoll.style.display = 'block'
         } else {
             endPoll.style.display = 'none'
         }
     }
 
-    if (!deepObjectEqual(classroom?.permissions, newClassroom.permissions)) {
+    if (!deepObjectEqual(classroom?.permissions, classroomData.permissions)) {
         permissionsDiv.innerHTML = ''
-        for (let [permission, permissionLevel] of Object.entries(newClassroom.permissions)) {
+        for (let [permission, permissionLevel] of Object.entries(classroomData.permissions)) {
             let permissionLabel = document.createElement('label')
             permissionLabel.className = 'permissionLabel revampDiv'
             permissionLabel.textContent = camelCaseToNormal(permission)
@@ -236,8 +221,10 @@ socket.on('cpUpdate', (newClassroom) => {
         }
     }
 
-    if (!deepObjectEqual(classroom?.tagNames, newClassroom.tagNames)) {
-        for (let tag of newClassroom.tagNames) addTagElement(tag)
+    if (!deepObjectEqual(classroom?.tags, classroomData.tags)) {
+        for (let tag of classroomData.tags) {
+            addTagElement(tag)
+        }
 
         let newTagDiv = document.createElement('div')
         let newTag = document.createElement('textarea')
@@ -272,7 +259,7 @@ socket.on('cpUpdate', (newClassroom) => {
         tagOptionsDiv.appendChild(newTagDiv)
     }
 
-    filterSortChange(newClassroom)
+    filterSortChange(classroomData)
 
-    classroom = newClassroom
+    classroom = classroomData
 })
