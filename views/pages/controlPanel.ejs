@@ -55,13 +55,107 @@
 </div>
 
 <div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon">Back</button>
-    
+    <h1 class="mobileMenuHeader">Poll Timer</h1>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
 </div>
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon">Back</button>
+    <h1 class="mobileMenuHeader">Help</h1>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
     
+    <div class="helpInfo">
+        <p>Navigation</p>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/time-outline.svg" alt="Previous Polls">
+            <div class="helpInformation">
+                <p class="helpTitle">Previous Polls</p>
+                <p class="helpDesc">Load and check answers from previous polls.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/add-circle-outline.svg" alt="Custom Polls">
+            <div class="helpInformation">
+                <p class="helpTitle">Custom Polls</p>
+                <p class="helpDesc">Create and edit your own custom polls.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/timer-outline.svg" alt="Poll Timer">
+            <div class="helpInformation">
+                <p class="helpTitle">Poll Timer</p>
+                <p class="helpDesc">Set a fixed time for the current poll.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/grid-outline.svg" alt="Extras">
+            <div class="helpInformation">
+                <p class="helpTitle">Extras</p>
+                <p class="helpDesc">Sort / Filter members, Poll Presets, and member selection.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/lock-closed-outline.svg" alt="Permissions">
+            <div class="helpInformation">
+                <p class="helpTitle">Permissions</p>
+                <p class="helpDesc">Change who can do what in your classes premissions.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/pricetags-outline.svg" alt="Tags">
+            <div class="helpInformation">
+                <p class="helpTitle">Tags</p>
+                <p class="helpDesc">Set custom tags to create groups of members.</p>
+            </div>
+        </div>
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/cogwheel.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Settings</p>
+                <p class="helpDesc">Edit preferences about this class.</p>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+        <p>Poll Buttons</p>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/play-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Start Poll</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/refresh-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Clear Poll</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt">
+            <img src="/img/stop-circle-outline.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">End Poll</p>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+        <p>Starting & Ending</p>
+
+        <div class="helpIconInformation revampDivAlt startClass">
+            <img src="/img/play.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">Start Class</p>
+            </div>
+        </div>
+        
+        <div class="helpIconInformation revampDivAlt endClass">
+            <img src="/img/stop.svg" alt="Settings">
+            <div class="helpInformation">
+                <p class="helpTitle">End Class</p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id='usersMenu' class='tabContent controlPanel default userMenuCp' data-tab-group='mainTabs'>
@@ -141,8 +235,8 @@
 </div>
 
     <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
-        <h1 class='headerText' style="margin-bottom: 20px;">Custom Polls</h1>
+        <h1 class="mobileMenuHeader">Custom Polls</h1>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
         <div id='pollOptions' class='options customOptions'>
             <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
                 Polls
@@ -214,7 +308,8 @@
     </div>
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
+        <h1 class="mobileMenuHeader">Previous Polls</h1>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
         <div id='pollOptions' class='options'>
             <details id="previousPoll-template" style="order: 9997; margin: 20px; display: none" class="revampDiv previousPoll" hidden>
                 <summary style="height: fit-content; margin: 20px; cursor: pointer;">
@@ -232,13 +327,15 @@
 </div>
 
 <div id='permissions' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
-    <h2>Permissions</h2>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Permissions</h2>
+    <h1 class="showMobile mobileMenuHeader">Permissions</h1>
     <div id='permissionsList'></div>
 </div>
 <div id='tags' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
-    <h2>Tags</h2>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Tags</h2>
+    <h1 class="showMobile mobileMenuHeader">Tags</h1>
     <div id='tagsList'></div>
     <div id="tagOptions"></div>
 </div>
@@ -246,8 +343,9 @@
 <div id="pollPreview" class="revampDiv"></div>
 
 <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>
-    <h2>Settings</h2>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <h2 class="hideMobile">Settings</h2>
+    <h1 class="showMobile mobileMenuHeader">Settings</h1>
     
     <div id="settingsFunc">
         <div class="settingsFuncClassName">
@@ -400,26 +498,27 @@
     let vbContainer = document.getElementById('vbContainer');
     let vbOptions = document.getElementById('VBOptions');
     let pollDetails = document.getElementById('pollDetails');
+    let timeDiv = document.getElementById('timeDiv');
     let sortingFilterMenu = document.querySelector('div#sortingFilterMenu.tabContent');
+    let timerMenu = document.querySelector('div#timerMenu.tabContent');
+    let nonMobileTimerMenu = document.querySelector('div.revampDiv.leftRight.timeInfo');
     let sideBySide = document.querySelector('.sideBySide');
 
-    window.addEventListener('resize', () => {
+    function mobileMove() {
         if(orientation == 'portrait') {
+            timerMenu.appendChild(timeDiv);
             pollDetails.appendChild(vbContainer);
             sortingFilterMenu.appendChild(vbOptions);
         } else {
+            nonMobileTimerMenu.insertBefore(timeDiv, nonMobileTimerMenu.firstChild);
             vbContainerOuter.appendChild(vbContainer);
             sideBySide.appendChild(vbOptions);
         }
-    });
-
-    if(orientation == 'portrait') {
-        pollDetails.appendChild(vbContainer);
-        sortingFilterMenu.appendChild(vbOptions);
-    } else {
-        vbContainerOuter.appendChild(vbContainer);
-        sideBySide.appendChild(vbOptions);
     }
+
+    window.addEventListener('resize', () => {mobileMove()});
+
+    mobileMove()
 
     let letterString = 'abcdefghijklmnopqrstuvwxyz'
     let generatedColors = []
