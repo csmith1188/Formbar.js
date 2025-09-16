@@ -4,26 +4,15 @@ const { settings } = require("./config");
 const { database, dbGetAll, dbRun } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS} = require("./permissions");
-const { io } = require("./webServer");
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
+const { io } = require("./webServer");
 
 const runningTimers = {}
 const rateLimits = {}
 const userSockets = {}
-let currentPoll = 0
 
-// Get the current poll id
-database.get('SELECT MAX(id) FROM poll_history', (err, pollHistory) => {
-    if (err) {
-        logger.log('error', err.stack)
-    } else {
-        // Set the current poll id to the maximum id minus one since the database starts poll ids at 1
-        currentPoll = pollHistory['MAX(id)'] - 1
-    }
-})
-
-// Socket update events
+// These events will not display a permission error if the user does not have permission to use them
 const PASSIVE_SOCKETS = [
     'classUpdate',
 	'managerUpdate',
@@ -31,6 +20,7 @@ const PASSIVE_SOCKETS = [
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
+    'getCanVote'
 ];
 
 async function emitToUser(email, event, ...data) {
@@ -284,9 +274,7 @@ class SocketUpdates {
         this.socket = socket;
     }
 
-    classUpdate(
-        classId = this.socket.request.session.classId,
-        options = { global: false, restrictToControlPanel: false }) {
+    classUpdate(classId = this.socket.request.session.classId, options = { global: true, restrictToControlPanel: false }) {
         try {
             const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) {
@@ -328,8 +316,8 @@ class SocketUpdates {
             classData.poll.pollResponses = pollResponses;
 
             if (options.global) {
-                const controlPanelData = getClassUpdateData(classData, true);
-                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
+                const controlPanelData = structuredClone(getClassUpdateData(classData, true));
+                const classReturnData = structuredClone(getClassUpdateData(classData, hasTeacherPermissions));
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
                 advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
                 this.customPollUpdate();
@@ -481,7 +469,7 @@ class SocketUpdates {
             }
 
             // Update the control panel
-            this.classUpdate(classId, true);
+            this.classUpdate(classId);
 
             // If the user is logged in, then handle the user's session
             if (userSockets[email]) {
@@ -768,7 +756,6 @@ module.exports = {
     runningTimers,
     rateLimits,
     userSockets,
-    currentPoll,
     PASSIVE_SOCKETS,
 
     // Socket functions

@@ -9,7 +9,7 @@ module.exports = {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-                await endPoll(classId, socket.request.session.user);
+                await endPoll(classId, socket.request.session);
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -94,7 +94,7 @@ module.exports = {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-                await clearPoll(classId, socket.request.session.user);
+                await clearPoll(classId, socket.request.session);
             } catch (err) {
                 logger.log('error', err.stack);
             }
