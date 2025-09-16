@@ -1,3 +1,8 @@
+* {
+	scrollbar-width: thin;
+	scrollbar-color: white transparent;
+}
+
 body {
 	background: linear-gradient(135deg, #072438 30%, #000c15 100%);
 	color: #ffffff;
