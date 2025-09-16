@@ -31,6 +31,7 @@ module.exports = {
                     digipogs: digipogs,
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
+                    pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0
                 });
             } catch (err) {
                 logger.log('error', err.stack);
