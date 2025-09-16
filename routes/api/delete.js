@@ -1,6 +1,6 @@
-const { logger } = require("../../../modules/logger");
-const { httpPermCheck } = require("../../middleware/permissionCheck");
-const { deleteUser } = require("../../../modules/user");
+const { logger } = require("../../modules/logger");
+const { httpPermCheck } = require("../middleware/permissionCheck");
+const { deleteUser } = require("../../modules/user");
 
 module.exports = {
     run(router) {

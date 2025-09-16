@@ -39,7 +39,7 @@ it('should get class users', async () => {
             classPermissions: 1,
             help: null,
             break: null,
-            pogMeter: null
+            pogMeter: 0
         }
     });
 });
