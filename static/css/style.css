@@ -389,7 +389,6 @@ dialog {
 #headerLogo p {
 	display: inline-block;
 	font-size: 14px;
-	font-style: italic;
 	color: #fffa;
 	margin: 0;
 	margin-left: 10px;
@@ -2326,6 +2325,7 @@ button.start-custom-poll {
     margin: auto;
     width: max-content;
     padding: 20px;
+	position: relative;
 }
 
 #apiKeyButton {
@@ -2478,4 +2478,42 @@ div.mobileSpacer {
 	align-items: center;
 	flex-direction: row;
 	gap: 20px;
+}
+
+.pogMeter {
+    position: absolute;
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.pogMeter p {
+	margin: 0;
+    margin-bottom: 15px;
+}
+
+#pogMeter {
+	height: 430px;
+    width: 80px;
+	padding: -0;
+    overflow: hidden;
+}
+
+#pogMeterFill {
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(to top, #3f69bb, #a763ff);
+	mask-image: linear-gradient(to top, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
+}
+
+#pogMeterFill::before {
+	width: 100%;
+	height: 100%;
+	content: '';
+	position: absolute;
+	z-index: -1;
+	background: linear-gradient(to top, #3f69bb, #a763ff);
+	mask-image: linear-gradient(to top, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
+	top: 0;
+	left: 0;
 }

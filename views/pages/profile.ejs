@@ -8,7 +8,7 @@
     </style>
         <body style="display: flex;" role="document" tabindex="0">
             <div id="editPin" style="display: none;">
-                <div class="revampDivAlt">
+                <div class="revampDiv">
                     <h1>Edit PIN</h1>
                     <div id="editPinForm">
                         <div class="editPinInputs">
@@ -68,11 +68,23 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="pogMeter">
+                    <p>Pog Meter</p>
+                    <div id="pogMeter" class="revampDivAlt">
+                        <div id="pogMeterFill">
+    
+                        </div>
+                    </div>
+                </div>
             </div>
         </body>
         <script>
             let apiKeyValue = '<%- API %>';
-            let pinValue = '<%- pin %>';
+            let pinValue = '<%- pin || "None" %>';
+            let pogMeterValue = <%- pogMeter / 5 %>;
+
+            document.getElementById('pogMeterFill').style.setProperty('--pogPercent', pogMeterValue + '%');
 
             if (apiKeyValue == '') {
                 document.querySelectorAll('[id*="api"]').forEach(element => {
@@ -135,7 +147,7 @@
                     return;
                 }
 
-                if (currentPin !== pinValue) {
+                if (currentPin !== pinValue && pinValue !== 'None') {
                     alert("Current PIN is incorrect.");
                     return;
                 }
@@ -150,7 +162,7 @@
                 document.getElementById('confirmNewPin').value = '';
 
                 pinValue = newPin;
-                
+
                 hidePin(); // Hide the PIN after updating
 
                 // Close the edit PIN modal
