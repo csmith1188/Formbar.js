@@ -105,12 +105,14 @@ div.helpIconInformation.revampDivAlt {
 }
 
 .circularButton,
+.squareButton,
 .mobileCircular {
 	background-color: var(--darkMode-button-bg) !important;
 	border: 2px solid var(--darkMode-button-border) !important;
 }
 
 .circularButton:hover,
+.squareButton:hover,
 .mobileCircular:hover {
 	background-color: var(--darkMode-button-hover-bg) !important;
 }
