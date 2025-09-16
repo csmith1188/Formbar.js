@@ -5,11 +5,12 @@ const { advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
+const { log } = require('winston');
 
-// Stores an object containing the earned Digipogs
+// Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
-const earnedObject = {
-    earnedDigipogs: []
+const pogMeterTracker = {
+    pogMeterIncreased: []
 };
 
 // /**
@@ -19,10 +20,14 @@ const earnedObject = {
 //  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, pollOptions, isBlind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
         const numberOfResponses = Object.keys(pollOptions).length;
         const socketUpdates = userSocketUpdates[userSession.email];
-        earnedObject.earnedDigipogs = [];
+        pogMeterTracker.pogMeterIncreased = [];
+        // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
+        pollData.weight = Math.floor((pollData.weight || 1) * 100) / 100; // Round to 2 decimal places
+        if (!pollData.weight || isNaN(pollData.weight) || pollData.weight <= 0) weight = 1;
+        let weight = pollData.weight > 5 ? 5 : pollData.weight;
 
         // Get class id and check if the class is active before continuing
         const classId = userSession.classId;
@@ -282,27 +287,23 @@ function pollResponse(classId, res, textRes, userSession) {
     }
     classroom.students[email].pollRes.time = new Date()
 
-    if (!isRemoving && earnedObject.earnedDigipogs[email] === undefined) {
-        let amount = 0;
-        if (classroom.poll.allowMultipleResponses) {
-            amount = res.length;
-        } else {
-            for (let i = 0; i <= resLength; i++) {
-                amount++;
-            }
-        }
-
-        amount = Math.ceil(amount/4);
-        amount = amount > 5 ? 5 : amount;
-        if (Number.isInteger(amount)) {
-            database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE email = '${email}'`, (err) => {
+    if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
+        const resWeight = classroom.poll.responses[res] ? classroom.poll.responses[res].weight : 1;
+        // Increase pog meter by 100 times the weight of the response
+        // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
+        const pogMeterIncrease = Math.floor(100 * resWeight);
+        classroom.students[email].pogMeter += pogMeterIncrease;
+        if (classroom.students[email].pogMeter >= 500) {
+            classroom.students[email].pogMeter -= 500;
+            database.run('UPDATE users SET digipogs = digipogs + 1 WHERE id = ?', [user.id], (err) => {
                 if (err) {
-                    console.log(`Error adding ${amount} digipogs to ${email}`);
-                    console.error(err);
+                    logger.log('error', err.stack);
+                } else {
+                    logger.log('info', `[pollResp] User ${user.email} earned a Digipog`);
                 }
             });
-            earnedObject.earnedDigipogs[email] = email;
         }
+        pogMeterTracker.pogMeterIncreased[email] = true;
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[userSession.email]})`)
 
@@ -352,5 +353,5 @@ module.exports = {
     clearPoll,
     pollResponse,
     getPollResponses,
-    earnedObject
+    pogMeterTracker
 }
