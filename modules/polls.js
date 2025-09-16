@@ -1,7 +1,7 @@
 const { classInformation } = require("./class/classroom");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
-const { currentPoll, advancedEmitToClass } = require("./socketUpdates");
+const { advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
@@ -115,8 +115,6 @@ async function endPoll(classId, userSession) {
         logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
 
         let data = { prompt: '', names: [], letter: [], text: [] }
-        currentPoll += 1
-
         let dateConfig = new Date()
         let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
@@ -179,7 +177,7 @@ async function clearPoll(classId, userSession) {
     try {
         const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
-            await endPoll()
+            await endPoll(classId, userSession)
         }
 
         classInformation.classrooms[classId].poll.responses = {};
@@ -199,7 +197,12 @@ async function clearPoll(classId, userSession) {
         // Adds data to the previous poll answers table upon clearing the poll
         for (const student of Object.values(classInformation.classrooms[classId].students)) {
             if (student.classPermissions < MANAGER_PERMISSIONS) {
-                const currentPollId = classInformation.classrooms[classId].pollHistory[currentPoll].id
+                const pollHistory = classInformation.classrooms[classId].pollHistory || []
+                const currentPollId = pollHistory.length > 0 ? pollHistory[pollHistory.length - 1].id : undefined
+                if (!currentPollId) {
+                    continue
+                }
+
                 for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
                     const studentRes = student.pollRes.buttonRes[i]
                     const studentId = student.id

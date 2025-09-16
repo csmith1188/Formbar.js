@@ -95,7 +95,8 @@ socket.on('classUpdate', (classroomData) => {
     className.innerHTML = `<b>Class Name:</b> ${classroomData.className}`
     classCode.innerHTML = `<b>Class Code:</b> ${classroomData.key}`
 
-    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline}`
+    // Set the users to the number of students minus the number of offline students and minus one for the teacher
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - 1}`
     if (classroomData.poll.prompt != "") {
         pollCounter.innerText = `Poll Prompt: '${classroomData.poll.prompt}'`
     } else {
