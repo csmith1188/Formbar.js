@@ -122,7 +122,7 @@ async function getClassUsers(user, key) {
 				...user,
 				help: null,
 				break: null,
-				pogMeter: null
+				pogMeter: 0
 			}
 
 			// If the user is logged in

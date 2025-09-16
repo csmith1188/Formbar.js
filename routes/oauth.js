@@ -4,7 +4,7 @@ const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
-const getConfig = require('../modules/config');
+const settings = require('../modules/config');
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(userData, classId, refreshToken) {
@@ -165,7 +165,7 @@ module.exports = {
                         title: 'Oauth',
                         redirectURL: redirectURL,
                         route: 'oauth',
-                        googleOauthEnabled: getConfig().googleOauth.enabled
+                        googleOauthEnabled: settings.googleOauthEnabled
                     });
                 }
             } catch (err) {
