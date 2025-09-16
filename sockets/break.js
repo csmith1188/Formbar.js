@@ -2,7 +2,7 @@ const { classInformation } = require("../modules/class/classroom")
 const { logger } = require("../modules/logger")
 const { advancedEmitToClass } = require("../modules/socketUpdates")
 const { io } = require("../modules/webServer")
-const {getEmailFromId} = require("../modules/student");
+const { getEmailFromId } = require("../modules/student");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -27,7 +27,7 @@ module.exports = {
                 student.break = reason;
 
                 logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
-                socketUpdates.classUpdate();
+                socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log('error', err.stack);
             }
