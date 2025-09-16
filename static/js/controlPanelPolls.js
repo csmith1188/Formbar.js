@@ -276,7 +276,7 @@ function responseAmountChange(responseAmount = null) {
 			colorPickerDiv,
 			() => {
 				FloatingUIDOM.computePosition(colorPickerButton, colorPickerDiv, {
-					placement: 'bottom',
+					placement: 'right-end',
 					middleware: [FloatingUIDOM.offset(10), FloatingUIDOM.flip()]
 				})
 					.then(({ x, y }) => {
@@ -739,6 +739,15 @@ document.addEventListener('click', (event) => {
 			colorPickersDiv[i].style.display = 'none'
 		}
 	}
+	if(
+		!event.target.closest('details.controlStudent') &&
+		!event.target.classList.contains('controlStudent')
+	) {
+		let controlStudents = document.getElementsByClassName('controlStudent')
+		for(let controlStudent of controlStudents) {
+			controlStudent.open = false
+		}
+	}
 })
 
 //Make the code above work
@@ -754,8 +763,6 @@ timerButton.addEventListener('click', function () {
 	}
 	socket.emit("timer", time.value * 60 + Number(timeS.value), true)
 	timerButton.hidden = true
-	time.hidden = true
-	timeS.hidden = true
 	timerStopButton.hidden = false
 })
 
@@ -764,8 +771,6 @@ timerStopButton.addEventListener('click', function () {
 	timerButton.hidden = false
 	time.value = ''
 	timeS.value = ''
-	time.hidden = false
-	timeS.hidden = false
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
