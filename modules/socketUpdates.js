@@ -313,7 +313,7 @@ class SocketUpdates {
             const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
             classData.poll.totalResponses = totalResponses;
             classData.poll.totalResponders = totalResponders;
-            classData.poll.pollResponses = pollResponses;
+            classData.poll.responses = pollResponses;
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
