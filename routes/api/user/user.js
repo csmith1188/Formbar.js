@@ -20,7 +20,7 @@ module.exports = {
                 // Only include the email if the requester is the user themselves or a manager
                 const requesterEmail = req.session.email;
                 let userEmail = undefined;
-                if (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS) {
+                if (user && (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS)) {
                     userEmail = user.email
                 }
 
@@ -34,7 +34,7 @@ module.exports = {
                         verified: user.verified
                     });
                 } else {
-                    return res.status(404).json({ error: "User not found" });
+                    return res.status(404).json({ error: "User not found." });
                 }
             } catch (err) {
                 logger.log('error', err.stack);
