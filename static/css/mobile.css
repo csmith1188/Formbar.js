@@ -101,6 +101,7 @@
         max-height: 48px;
         position: absolute;
         right: 5px;
+        padding: 5px;
     }
 
     #quickMenu.dividedThree {
@@ -685,7 +686,7 @@
 	#VBDiv #newMemberListControlPanel {
 		display: flex !important;
   		flex-direction: column !important;
-        overflow: scroll !important;
+        overflow: auto !important;
 	}
     
 }

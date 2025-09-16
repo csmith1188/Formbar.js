@@ -2,14 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 @import url(./mobile.css);
 
-*::-webkit-scrollbar,
-*::-webkit-scrollbar-track {
-	background: red;
-}
-
 * {
 	scrollbar-width: thin;
-	scrollbar-color: red;
+	scrollbar-color: black transparent;
 }
 
 :root {
@@ -695,7 +690,18 @@ details[open] #reasons {
 	transform: translateY(-80%);
 }
 
+#helpReason button, #breakReason button {
+	width: 100%;
+	margin-top: 10px;
+	font-size: 14px;
+}
+
+#helpReason button.noReason, #breakReason button.noReason {
+	margin-top: 0;
+}
+
 #reasons {
+	backdrop-filter: blur(10px);
 	transform: translateY(80%);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
 	text-align: center;
@@ -707,7 +713,6 @@ details[open] #reasons {
 	padding: 5px;
 	transition: transform 250ms ease-in-out;
 	display: flex;
-	background-color: #f0f0f0;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
@@ -938,6 +943,7 @@ input[type='checkbox'] {
 #pollResForm button#removeAnswer {
 	aspect-ratio: 1;
 	padding: 0;
+	height: 44px;
 }
 
 #pollResForm button#removeAnswer img {
@@ -1841,6 +1847,11 @@ div.sideBySide {
 	cursor: pointer;
 	max-height: unset;
 	height: min-content;
+	padding: 0 !important;
+}
+
+.controlStudent summary {
+	padding: 10px;
 }
 
 body:not(:has(header#formbarHeader[style="display: none;"])) {
@@ -1909,6 +1920,8 @@ details > #extraButtons {
 	grid-template-columns: repeat(2, 1fr);
 	gap: 5px;
 	margin-top: 10px;
+	padding: 10px;
+  	padding-top: 0;
 }
 
 input.inputtedTime.revampButton.revampWithText {
@@ -2187,6 +2200,7 @@ button.start-custom-poll {
 	flex-direction: row;
 	justify-content: left;
 	margin-bottom: 20px;
+	padding: 0 !important;
 }
 
 #pollResForm #responses {
@@ -2318,10 +2332,6 @@ p#apiKey {
     gap: 20px;
 }
 
-p#apiKey {
-    overflow: scroll;
-}
-
 button img {
 	pointer-events: none
 }
@@ -2358,7 +2368,7 @@ button img {
     gap: 10px;
 }
 
-#newPoll {
+#newPoll.tabContent {
     height: 100%;
     overflow: scroll;
 }
@@ -2411,4 +2421,9 @@ div.mobileSpacer {
 
 *:not(details)[hidden] {
 	display: none !important;
+}
+
+#ticket,
+#otherText {
+	resize: none;
 }

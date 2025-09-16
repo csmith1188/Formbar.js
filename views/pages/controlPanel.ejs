@@ -17,7 +17,7 @@
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
-        <img src="/img/cursor.webp" alt="Hover for poll info.">
+        <!-- <img src="/img/cursor.webp" alt="Hover for poll info."> -->
         <div class="pollDetailsText">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
@@ -40,9 +40,9 @@
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
         <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
-        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
-        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
-        <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
+        <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
+        <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
@@ -391,7 +391,7 @@
         <span id="email"></span>
         <span id="studentTags"></span>
         <div id="response"></div>
-        <div id="reasons">
+        <div id="reasons" class="revampDiv">
             <div id="helpReason"></div>
             <div id="breakReason"></div>
         </div>

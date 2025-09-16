@@ -77,23 +77,26 @@ function buildStudent(classroom, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
+        console.log(studentData)
         if (studentData.help) {
             let div = document.createElement('div')
-            div.textContent = '❗'
+            //summary.innerHTML += '❗'
             alertSpan.appendChild(div)
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
-            if (studentData.help.reason) {
-                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()} `
-            }
 
             let deleteTicketButton = document.createElement('button')
-            deleteTicketButton.classList.add('quickButton')
+            deleteTicketButton.classList.add('quickButton', 'revampButton', 'noReason')
             deleteTicketButton.dataset.studentName = studentData.id
             deleteTicketButton.onclick = (event) => {
-                deleteTicket(event.target)
+               deleteTicket(event.target)
             }
             deleteTicketButton.textContent = 'Delete Ticket'
+
+            if (studentData.help.reason) {
+                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()}`;
+                deleteTicketButton.classList.remove('noReason')
+            }
 
             helpReason.appendChild(deleteTicketButton)
         }
@@ -108,7 +111,7 @@ function buildStudent(classroom, studentData) {
             }
 
             let approveBreakButton = document.createElement('button')
-            approveBreakButton.classList.add('quickButton')
+            approveBreakButton.classList.add('quickButton', 'revampButton')
             approveBreakButton.dataset.studentName = studentData.id
             approveBreakButton.onclick = (event) => {
                 approveBreak(true, studentData.id)
@@ -116,7 +119,7 @@ function buildStudent(classroom, studentData) {
             approveBreakButton.textContent = 'Approve Break'
 
             let denyBreakButton = document.createElement('button')
-            denyBreakButton.classList.add('quickButton')
+            denyBreakButton.classList.add('quickButton', 'revampButton')
             denyBreakButton.dataset.studentName = studentData.id
             denyBreakButton.onclick = (event) => {
                 approveBreak(false, studentData.id)
