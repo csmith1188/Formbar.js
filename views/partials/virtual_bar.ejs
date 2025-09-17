@@ -64,6 +64,7 @@
     })
 
     // Calls for data
+    console.log('called vb')
     socket.emit('classUpdate')
 
     // Gets data from server
@@ -142,11 +143,12 @@
             doughnutChart.data.datasets[0].data = pollArray
         }
 
+        console.log('set')
         pollsData = newPollData
         doughnutChart.update()
     })
 
-    socket.emit('vbTimer')
+    // socket.emit('vbTimer')
     socket.on('vbTimer', (newTimeData) => {
         if (deepObjectEqual(newTimeData, timeData)) return
 

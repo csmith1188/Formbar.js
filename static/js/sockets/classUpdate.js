@@ -25,7 +25,7 @@ const permissionOptions = [
 ]
 
 // Ask for classroom update and listen for the response
-socket.emit('classUpdate')
+// socket.emit('classUpdate')
 socket.on('classUpdate', (classroomData) => {
     if (!classroomData.students) {
         return;
