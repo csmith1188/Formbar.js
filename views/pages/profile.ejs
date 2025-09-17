@@ -142,6 +142,11 @@
                     return;
                 }
 
+                if(!isFinite(newPin)) {
+                    alert("PIN must only contain numbers.");
+                    return;
+                }
+
                 if(newPin.length < 4 || newPin.length > 6) {
                     alert("PIN must be between 4 and 6 digits.");
                     return;
