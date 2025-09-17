@@ -150,7 +150,6 @@ module.exports = {
                     userType: req.body.userType,
                     displayName: req.body.displayName
                 };
-
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
@@ -435,6 +434,8 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'guest') {
+                console.log("hi")
+
                     if (user.displayName.trim() == '') {
                         logger.log('verbose', '[post /login] Invalid display name provided to create guest user');
                         res.render('pages/message', {
