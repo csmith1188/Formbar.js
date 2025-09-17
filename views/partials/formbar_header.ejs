@@ -9,7 +9,7 @@
 	<% if (locals.currentUser) { %>
 		<ul>
 		<% if (currentUser && currentUser.activeClass != null) { %>
-           <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton">Control Panel</a></li>
+           <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton">Panel</a></li>
     	<% } %>
 		<% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
 			<li>
