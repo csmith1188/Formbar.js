@@ -46,6 +46,7 @@ function buildStudent(classroom, studentData) {
         let roomTagDiv = newStudent.querySelector('#roomTags')
         let permDiv = newStudent.querySelector('#permissions')
         let reasonsDiv = newStudent.querySelector('#reasons')
+        let digipogButtons = newStudent.querySelector('#digipogButtons')
         let extraButtons = newStudent.querySelector('#extraButtons')
 
         newStudent.querySelector('#email').textContent = studentData.displayName
@@ -101,7 +102,21 @@ function buildStudent(classroom, studentData) {
         }
 
         if (studentData.break == true) {
-            userBreak.push(studentData.id)
+            userBreak.push(studentData.id);
+            let div = document.createElement('div')
+            div.textContent = '⏱'
+            alertSpan.appendChild(div)
+            newStudent.classList.add('break')
+
+            let endUsersBreak = document.createElement('button')
+            endUsersBreak.classList.add('quickButton', 'revampButton', 'endBreakButton')
+            endUsersBreak.dataset.studentName = studentData.id
+            endUsersBreak.onclick = (event) => {
+                approveBreak(false, studentData.id)
+            }
+            endUsersBreak.textContent = 'End Break'
+
+            breakReason.appendChild(endUsersBreak);
         } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
@@ -129,44 +144,46 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(denyBreakButton)
         }
 
-        if (studentData.break) {
-            let div = document.createElement('div')
-            div.textContent = '⏱'
-            alertSpan.appendChild(div)
-            newStudent.classList.add('break')
-
-            let denyBreakButton = document.createElement('button')
-            denyBreakButton.classList.add('quickButton', 'revampButton')
-            denyBreakButton.dataset.studentName = studentData.id
-            denyBreakButton.onclick = (event) => {
-                approveBreak(false, studentData.id)
-            }
-            denyBreakButton.textContent = 'End Break'
-
-            breakReason.appendChild(denyBreakButton)
-        }
-
+        let permSwitch = document.createElement('select');
+        permSwitch.setAttribute("name", "permSwitch");
+        permSwitch.setAttribute("class", "permSwitch revampButton");
+        permSwitch.setAttribute("data-id", studentData.id);
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
-            let permSwitch = document.createElement('button')
-            permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch revampButton");
-            permSwitch.setAttribute("data-id", studentData.id);
-            permSwitch.onclick = (event) => {
-                socket.emit('classPermChange', studentData.id, Number(permission))
-                permSwitch.classList.add('pressed')
-                permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
-                    if (perm != permSwitch) {
-                        perm.classList.remove('pressed')
-                    }
-                })
+            // let permSwitch = document.createElement('button')
+            // permSwitch.setAttribute("name", "permSwitch");
+            // permSwitch.setAttribute("class", "permSwitch revampButton");
+            // permSwitch.setAttribute("data-id", studentData.id);
+            // permSwitch.onclick = (event) => {
+            //     socket.emit('classPermChange', studentData.id, Number(permission))
+            //     permSwitch.classList.add('pressed')
+            //     permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
+            //         if (perm != permSwitch) {
+            //             perm.classList.remove('pressed')
+            //         }
+            //     })
+            // }
+            // permSwitch.innerHTML = strPerms
+            // if (studentData.classPermissions == permission) {
+            //     permSwitch.classList.add('pressed')
+            // }
+
+            permSwitch.onchange = (event) => {
+                const newPerm = Number(event.target.value);
+                socket.emit('classPermChange', studentData.id, newPerm)
             }
-            permSwitch.innerHTML = strPerms
+            
+            const option = document.createElement('option');
+            option.value = permission;
+            option.innerText = strPerms;
+            permSwitch.appendChild(option)
+
             if (studentData.classPermissions == permission) {
-                permSwitch.classList.add('pressed')
+                permSwitch.value = permission;
             }
+
             permDiv.appendChild(permSwitch)
         }
 
@@ -242,6 +259,27 @@ function buildStudent(classroom, studentData) {
 
             roomTagDiv.appendChild(button);
         }
+
+        // Digipog awarding
+        let digipogAwardInput = document.createElement('input');
+        digipogAwardInput.className = 'quickButton revampButton revampWithText digipogAward'
+        digipogAwardInput.placeholder = '0'
+        digipogAwardInput.type = 'number'
+        digipogAwardInput.min = 0
+        digipogAwardInput.value = ''
+        digipogAwardInput.max = 999;
+        digipogButtons.appendChild(digipogAwardInput)
+
+        let sendDigipogs = document.createElement('button')
+        sendDigipogs.className = 'quickButton revampButton acceptButton digipogSend'
+        sendDigipogs.setAttribute('data-user', studentData.id)
+        sendDigipogs.textContent = 'Award Digipogs'
+        sendDigipogs.onclick = (event) => {
+            // if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
+            //     socket.emit('classBanUser', studentData.id)
+            // }
+        }
+        digipogButtons.appendChild(sendDigipogs)
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')

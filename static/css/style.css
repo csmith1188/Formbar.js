@@ -873,6 +873,12 @@ hr {
 	padding: 90px 20px;
 }
 
+#userSortBoxes.options {
+	flex-direction: row;
+	padding: 15px;
+	justify-content: start;
+}
+
 .options .headBox {
 	padding: 1vh 0;
 	color: var(--theme-color);
@@ -1556,9 +1562,9 @@ button:disabled:hover {
 }
 
 #news {
-	width: 70%;
+	width: 100%;
 	margin: auto;
-	padding: 20px 10px;
+	padding: 40px 15%;
 
 	overflow: scroll;
 	height: calc(100vh - 60px);
@@ -2518,4 +2524,12 @@ div.mobileSpacer {
 	height: 100%;
 	background: linear-gradient(to top, #3f69bb, #a763ff);
 	mask-image: linear-gradient(to top, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
+}
+
+.endBreakButton {
+	margin-top: 0 !important;
+}
+
+.permSwitch {
+  	grid-column: span 2;
 }
