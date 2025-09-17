@@ -4,7 +4,7 @@ const { TEACHER_PERMISSIONS } = require("../modules/permissions");
 const jwt = require("jsonwebtoken");
 
 function jwtSign(payload) {
-    return jwt.sign(payload, privateKey, { expiresIn: "1h" });
+    return jwt.sign(payload, privateKey, { algorithm: "RS256", expiresIn: "1h" });
 }
 
 module.exports = {
@@ -59,15 +59,15 @@ module.exports = {
         });
 
         // For transferring digipogs between users for third party services
-        socket.on("transfer", (data) => {
+        socket.on("transferDigipogs", (data) => {
             const { from, to, amount, pin, reason = "" } = data;
             // Validate input
             if (!from || !to || !amount || !pin || !reason) {
-                return socket.emit("transferResponse", jwtSign({ success: false, message: "Missing required fields." }));
+                return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Missing required fields." }));
             } else if (amount <= 0) {
-                return socket.emit("transferResponse", jwtSign({ success: false, message: "Amount must be greater than zero." }));
+                return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Amount must be greater than zero." }));
             } else if (from === to) {
-                return socket.emit("transferResponse", jwtSign({ success: false, message: "Cannot transfer to the same account." }));
+                return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Cannot transfer to the same account." }));
             }
             
             // Begin transaction
@@ -75,21 +75,21 @@ module.exports = {
                 database.get("SELECT * FROM users WHERE id = ?", [from], (err, fromUser) => {
                     // Check for errors and validate sender
                     if (err) {
-                        return socket.emit("transferResponse", jwtSign({ success: false, message: "Database error." }));
+                        return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Database error." }));
                     } else if (!fromUser) {
-                        return socket.emit("transferResponse", jwtSign({ success: false, message: "Sender account not found." }));
+                        return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Sender account not found." }));
                     } else if (fromUser.pin !== pin) {
-                        return socket.emit("transferResponse", jwtSign({ success: false, message: "Invalid PIN." }));
+                        return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Invalid PIN." }));
                     } else if (fromUser.digipogs < amount) {
-                        return socket.emit("transferResponse", jwtSign({ success: false, message: "Insufficient funds." }));
+                        return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Insufficient funds." }));
                     }
 
                     database.get("SELECT * FROM users WHERE id = ?", [to], (err, toUser) => {
                         // Check for errors and validate recipient
                         if (err) {
-                            return socket.emit("transferResponse", jwtSign({ success: false, message: "Database error." }));
+                            return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Database error." }));
                         } else if (!toUser) {
-                            return socket.emit("transferResponse", jwtSign({ success: false, message: "Recipient account not found." }));
+                            return socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Recipient account not found." }));
                         }
 
                         // Perform the transfer
@@ -119,14 +119,14 @@ module.exports = {
                                     if (err) {
                                         console.error("Failed to log transaction:", err);
                                         // If logging fails, still consider the award successful but notify of logging failure
-                                        socket.emit("transferResponse", jwtSign({ success: true, message: "Transfer successful, but failed to log transaction." }));
+                                        socket.emit("transferDigipogsResult", jwtSign({ success: true, message: "Transfer successful, but failed to log transaction." }));
                                     } else {
-                                        socket.emit("transferResponse", jwtSign({ success: true, message: "Transfer successful." }));
+                                        socket.emit("transferDigipogsResult", jwtSign({ success: true, message: "Transfer successful." }));
                                     }
                                 });
                             })
                             .catch(() => {
-                                socket.emit("transferResponse", jwtSign({ success: false, message: "Transfer failed due to database error." }));
+                                socket.emit("transferDigipogsResult", jwtSign({ success: false, message: "Transfer failed due to database error." }));
                             });
                     });
                 });

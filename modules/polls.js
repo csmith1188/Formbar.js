@@ -5,7 +5,6 @@ const { currentPoll, advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
-const { log } = require('winston');
 
 // Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
@@ -285,7 +284,7 @@ function pollResponse(classId, res, textRes, userSession) {
     classroom.students[email].pollRes.time = new Date()
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
-        const resWeight = classroom.poll.responses[res] ? classroom.poll.responses[res].weight : 1;
+        const resWeight = classroom.poll.responses[res].weight || 1;
         // Increase pog meter by 100 times the weight of the response
         // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
         const pogMeterIncrease = Math.floor(100 * resWeight);

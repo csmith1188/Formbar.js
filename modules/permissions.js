@@ -60,6 +60,10 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
+	transferDigipogs: STUDENT_PERMISSIONS,
+	transferDigipogsResult: STUDENT_PERMISSIONS,
+	awardDigipogs: TEACHER_PERMISSIONS,
+	awardDigipogsResponse: TEACHER_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
