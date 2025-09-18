@@ -9,7 +9,7 @@
 	<% if (locals.currentUser) { %>
 		<ul>
 		<% if (currentUser && currentUser.activeClass != null) { %>
-           <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton">Control Panel</a></li>
+           <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton">Panel</a></li>
     	<% } %>
 		<% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
 			<li>
@@ -66,8 +66,8 @@ function doFullscreen() {
 	}
 }		
 document.addEventListener('fullscreenchange', (event) => {
-	if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
-	else document.getElementById('formbarHeader').style.display = 'flex';
+	// if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
+	// else document.getElementById('formbarHeader').style.display = 'flex';
 });
 
 let lmdmIcon = document.getElementById("lmdmIcon");

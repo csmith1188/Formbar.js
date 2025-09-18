@@ -1,5 +1,5 @@
 const { isVerified } = require('./middleware/authentication');
-const { dbGet } = require('../modules/database');
+const { dbGet, dbGetAll } = require('../modules/database');
 const { logger } = require('../modules/logger')
 const { logNumbers } = require('../modules/config');
 const { classInformation } = require("../modules/class/classroom");
@@ -7,6 +7,34 @@ const { MANAGER_PERMISSIONS } = require("../modules/permissions");
 
 module.exports = {
     run(app) {
+        // Define the /profile/transactions/:userId route first
+        app.get("/profile/transactions/:userId?", isVerified, async (req, res) => {
+            // Log the request information
+            logger.log('info', `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+            const userId = req.params.userId || req.session.userId;
+            const transactions = await dbGetAll('SELECT * FROM transactions WHERE from_user = ? OR to_user = ? ORDER BY date DESC', [userId, userId]);
+            if (!transactions) {
+                logger.log('error', 'No transactions found for user');
+                return res.render('pages/message', {
+                    message: 'No transactions found for this user.',
+                    title: 'Transactions'
+                });
+            }
+            // Check if the user has permission to view these transactions (either their own or they are a manager)
+            if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
+                res.render('pages/message', {
+                    message: 'You do not have permission to view these transactions.',
+                    title: 'Error'
+                });
+            }
+            // Render the transactions page with the retrieved transactions
+            res.render('pages/transactions', {
+                title: 'Transactions',
+                transactions: transactions,
+                userId: userId
+            });
+        });
+
         app.get('/profile/:userId?', isVerified, async (req, res) => {
             try {
                 // Log the request information
@@ -41,7 +69,7 @@ module.exports = {
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
                     pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-                    pin: pin || null
+                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : null
                 });
             } catch (err) {
                 logger.log('error', err.stack);
@@ -50,33 +78,6 @@ module.exports = {
                     title: 'Error'
                 });
             }
-        });
-
-        app.get("profile/transactions/:userId", isVerified, async (req, res) => {
-            // Log the request information
-            logger.log('info', `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-            const userId = req.params.userId || req.session.userId;
-            const transactions = await dbAll('SELECT * FROM transactions WHERE from_user = ? OR to_user = ? ORDER BY date DESC', [userId, userId]);
-            if (!transactions) {
-                logger.log('error', 'No transactions found for user');
-                return res.render('pages/message', {
-                    message: 'No transactions found for this user.',
-                    title: 'Transactions'
-                });
-            }
-            // Check if the user has permission to view these transactions (either their own or they are a manager)
-            if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-                res.render('pages/message', {
-                    message: 'You do not have permission to view these transactions.',
-                    title: 'Error'
-                });
-            }
-            // Render the transactions page with the retrieved transactions
-            res.render('pages/transactions', {
-                title: 'Transactions',
-                transactions: transactions,
-                userId: userId
-            });
         });
     }
 }

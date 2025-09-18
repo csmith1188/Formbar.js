@@ -655,6 +655,29 @@
         font-size: 0.75rem;
         opacity: 0.75;
     }
+
+    p#apiKey {
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    div.pogMeter {
+        right: 0 !important;
+        bottom: -90px !important;
+        width: 100% !important;
+        height: 80px !important;
+        top: unset !important;
+        transform: unset !important;
+    }
+
+    #pogMeter {
+        width: 100% !important;
+        height: 80px !important;
+    }
+
+    #pogMeterFill {
+        background: linear-gradient(to right, #3f69bb, #a763ff) !important;
+    }
 }
 
 @media screen and (max-width: 1280px) and (orientation: landscape) {
