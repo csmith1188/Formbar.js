@@ -260,7 +260,7 @@ dialog {
 }
 
 #content {
-	height: auto;
+	height: 380px;
 	width: 600px;
 	margin: 0 auto;
 	padding: 100px 10px 10px;
@@ -873,12 +873,6 @@ hr {
 	padding: 90px 20px;
 }
 
-#userSortBoxes.options {
-	flex-direction: row;
-	padding: 15px;
-	justify-content: start;
-}
-
 .options .headBox {
 	padding: 1vh 0;
 	color: var(--theme-color);
@@ -963,9 +957,8 @@ input[type='checkbox'] {
 	font-size: 3rem;
 }
 
-#pollResForm .response > input {
+#pollResForm input {
 	text-align: center;
-	width: 10%;
 }
 
 #pollResForm div, #pollResForm h1 {
@@ -998,8 +991,8 @@ input[type='checkbox'] {
 	white-space: normal;
 }
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
+#timeDiv input::-webkit-outer-spin-button,
+#timeDiv input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
 }
@@ -1562,9 +1555,9 @@ button:disabled:hover {
 }
 
 #news {
-	width: 100%;
+	width: 70%;
 	margin: auto;
-	padding: 40px 15%;
+	padding: 20px 10px;
 
 	overflow: scroll;
 	height: calc(100vh - 60px);
@@ -1821,20 +1814,6 @@ div.sideBySide {
 	position: absolute;
 }
 
-#toolbarOptions {
-	z-index: 5;
-	padding: 0;
-	white-space: nowrap;
-	gap: 10px;
-  	width: 200px;
-	height: 50px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	position: absolute;
-	top: 20px;
-}
-
 #vbOptionsLast img,
 #vbOptionsNext img {
 	height: 80%;
@@ -1858,17 +1837,15 @@ div.sideBySide {
 #VBOptions .options:not(.activeControlTab) {
 	opacity: 0;
 	pointer-events: none;
-	transition: 0.1s ease-in-out opacity, 0.1s ease-in-out transform;
-	transform: scale(0.95);
+	transition: 0.1s ease-in-out opacity;
 }
 
-#VBOptions .options {
+#VBOptions .options.activeControlTab {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 	height: 100%;
-	transform: scale(1);
 }
 
 #VBDiv #newMemberListControlPanel {
@@ -1971,10 +1948,6 @@ details > #extraButtons {
 
 input.inputtedTime.revampButton.revampWithText {
 	width: 100px;
-	-moz-appearance:textfield;
-}
-
-input.revampButton.revampWithText {
 	-moz-appearance:textfield;
 }
 
@@ -2244,6 +2217,13 @@ button.start-custom-poll {
 	gap: 10px;
 }
 
+#userSortBoxes.options {
+	display: flex;
+	flex-direction: row;
+	justify-content: left;
+	margin-bottom: 20px;
+	padding: 0 !important;
+}
 
 #pollResForm #responses {
 	display: flex;
@@ -2532,4 +2512,21 @@ div.mobileSpacer {
 
 .permSwitch {
   	grid-column: span 2;
+}
+
+#digipogButtons {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	gap: 5px;
+	padding: 10px;
+}
+
+.digipogAward {
+	width: 50% !important;
+	padding: 0 !important;
+}
+
+.digipogSend {
+	flex-grow: 1;
 }

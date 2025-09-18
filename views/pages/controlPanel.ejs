@@ -964,6 +964,12 @@
         setMuteSound(!mute);
         socket.emit('setClassSetting', 'mute', mute);
     }
+
+    socket.on('awardDigipogsResponse', ({ success, message }) => {
+        if(!success) console.log(message);
+        alert(message);
+    })
+
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>
