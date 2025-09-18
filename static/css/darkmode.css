@@ -171,3 +171,7 @@ div.helpIconInformation.revampDivAlt {
 dialog {
 	color: white !important;
 }
+
+td, th {
+	border-bottom: 3px solid var(--darkMode-menu-border);
+}

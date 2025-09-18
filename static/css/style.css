@@ -2505,3 +2505,28 @@ div.mobileSpacer {
 	background: linear-gradient(to top, #3f69bb, #a763ff);
 	mask-image: linear-gradient(to top, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
 }
+
+.endBreakButton {
+	margin-top: 0 !important;
+}
+
+.permSwitch {
+  	grid-column: span 2;
+}
+
+#digipogButtons {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	gap: 5px;
+	padding: 10px;
+}
+
+.digipogAward {
+	width: 50% !important;
+	padding: 0 !important;
+}
+
+.digipogSend {
+	flex-grow: 1;
+}
