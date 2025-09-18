@@ -40,7 +40,7 @@ async function createPoll(classId, pollData, userSession) {
         logger.log('info', `[startPoll] session=(${JSON.stringify(userSession)})`)
         logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
 
-        await clearPoll(classId, userSession)
+        await clearPoll(classId, userSession, false)
         let generatedColors = generateColors(Object.keys(pollOptions).length)
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
@@ -173,7 +173,7 @@ async function endPoll(classId, userSession) {
  * Clears the current poll from the class
  * @param TODO
  */
-async function clearPoll(classId, userSession) {
+async function clearPoll(classId, userSession, updateClass = true) {
     try {
         const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
@@ -223,7 +223,9 @@ async function clearPoll(classId, userSession) {
             }
         }
 
-        socketUpdates.classUpdate(classId);
+        if (updateClass) {
+            socketUpdates.classUpdate(classId);
+        }
     } catch (err) {
         logger.log('error', err.stack);
     }

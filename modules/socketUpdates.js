@@ -20,7 +20,8 @@ const PASSIVE_SOCKETS = [
 	'customPollUpdate',
 	'classBannedUsersUpdate',
     'isClassActive',
-    'getCanVote'
+    'getCanVote',
+    'setClassSetting'
 ];
 
 async function emitToUser(email, event, ...data) {

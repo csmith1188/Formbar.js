@@ -4,7 +4,6 @@ const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
-const {io} = require("./webServer");
 
 async function joinRoomByCode(code, session) {
 	try {

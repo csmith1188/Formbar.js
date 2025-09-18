@@ -271,7 +271,6 @@
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
-					// socket.emit('classUpdate')
 					socket.on('classUpdate', (classroomData) => {
                         const newPoll = classroomData.poll;
                         if (deepObjectEqual(poll, newPoll)) return;
