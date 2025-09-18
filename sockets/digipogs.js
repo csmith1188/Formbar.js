@@ -15,32 +15,32 @@ module.exports = {
             const reason = "Awarded";
             // Validate input
             if (!from || !to || !amount) {
-                return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Missing required fields." }));
+                return socket.emit("awardDigipogsResponse", { success: false, message: "Missing required fields." });
             } else if (amount <= 0) {
-                return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Amount must be greater than zero." }));
+                return socket.emit("awardDigipogsResponse", { success: false, message: "Amount must be greater than zero." });
             }
             database.serialize(() => {
                 database.get("SELECT * FROM users WHERE id = ?", [from], (err, fromUser) => {
                     // Check for errors and validate sender
                     if (err) {
-                        return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Database error." }));
+                        return socket.emit("awardDigipogsResponse", { success: false, message: "Database error." });
                     } else if (!fromUser) {
-                        return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Sender account not found." }));
+                        return socket.emit("awardDigipogsResponse", { success: false, message: "Sender account not found." });
                     } else if (fromUser.permissions < TEACHER_PERMISSIONS) {
-                        return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Insufficient permissions." }));
+                        return socket.emit("awardDigipogsResponse", { success: false, message: "Insufficient permissions." });
                     }
                     database.get("SELECT * FROM users WHERE id = ?", [to], (err, toUser) => {
                         // Check for errors and validate recipient
                         if (err) {
-                            return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Database error." }));
+                            return socket.emit("awardDigipogsResponse", { success: false, message: "Database error." });
                         } else if (!toUser) {
-                            return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Recipient account not found." }));
+                            return socket.emit("awardDigipogsResponse", { success: false, message: "Recipient account not found." });
                         }
                         // Update recipient's digipogs
                         const newBalance = toUser.digipogs + amount;
                         database.run("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to], function(err) {
                             if (err) {
-                                return socket.emit("awardDigipogsResponse", jwtSign({ success: false, message: "Failed to update balance." }));
+                                return socket.emit("awardDigipogsResponse", { success: false, message: "Failed to update balance." });
                             }
                         });
                     });
@@ -48,10 +48,10 @@ module.exports = {
                     database.run("INSERT INTO transactions (from_user, to_user, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [from, to, amount, reason, Date.now()], (err) => {
                         if (err) {
                             // If logging fails, still consider the award successful but notify of logging failure
-                            return socket.emit("awardDigipogsResponse", jwtSign({ success: true, message: "Award succeeded, but failed to log transaction." }));
+                            return socket.emit("awardDigipogsResponse", { success: true, message: "Award succeeded, but failed to log transaction." });
                         }
                         // Emit success response
-                        socket.emit("awardDigipogsResponse", jwtSign({ success: true, message: "Digipogs awarded successfully." }));
+                        socket.emit("awardDigipogsResponse", { success: true, message: "Digipogs awarded successfully." });
                     });
                 });
 

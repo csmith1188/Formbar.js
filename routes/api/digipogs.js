@@ -1,35 +1,39 @@
+function jwtSign(payload) {
+    return jwt.sign(payload, privateKey, { algorithm: "RS256", expiresIn: "1h" });
+}
+
 module.exports = {
     run(app) {
         app.post("/api/transferDigipogs", (req, res) => {
             const { from, to, amount, pin, reason = "" } = req.body;
             // Validate input
             if (!from || !to || !amount || !pin || !reason) {
-                return res.status(400).json({ success: false, message: "Missing required fields." });
+                return res.status(400).json(jwtSign({ success: false, message: "Missing required fields." }));
             } else if (amount <= 0) {
-                return res.status(400).json({ success: false, message: "Amount must be greater than zero." });
+                return res.status(400).json(jwtSign({ success: false, message: "Amount must be greater than zero." }));
             } else if (from === to) {
-                return res.status(400).json({ success: false, message: "Cannot transfer to the same account." });
+                return res.status(400).json(jwtSign({ success: false, message: "Cannot transfer to the same account." }));
             }
             // Begin transaction
             database.serialize(() => {
                 database.get("SELECT * FROM users WHERE id = ?", [from], (err, fromUser) => {
                     // Check for errors and validate sender
                     if (err) {
-                        return res.status(400).json({ success: false, message: "Database error." });
+                        return res.status(400).json(jwtSign({ success: false, message: "Database error." }));
                     } else if (!fromUser) {
-                        return res.status(400).json({ success: false, message: "Sender account not found." });
+                        return res.status(400).json(jwtSign({ success: false, message: "Sender account not found." }));
                     } else if (fromUser.pin !== pin) {
-                        return res.status(400).json({ success: false, message: "Invalid PIN." });
+                        return res.status(400).json(jwtSign({ success: false, message: "Invalid PIN." }));
                     } else if (fromUser.digipogs < amount) {
-                        return res.status(400).json({ success: false, message: "Insufficient funds." });
+                        return res.status(400).json(jwtSign({ success: false, message: "Insufficient funds." }));
                     }
 
                     database.get("SELECT * FROM users WHERE id = ?", [to], (err, toUser) => {
                         // Check for errors and validate recipient
                         if (err) {
-                            return res.status(400).json({ success: false, message: "Database error." });
+                            return res.status(400).json(jwtSign({ success: false, message: "Database error." }));
                         } else if (!toUser) {
-                            return res.status(400).json({ success: false, message: "Recipient account not found." });
+                            return res.status(400).json(jwtSign({ success: false, message: "Recipient account not found." }));
                         }
 
                         // Perform the transfer
@@ -59,14 +63,14 @@ module.exports = {
                                     if (err) {
                                         console.error("Failed to log transaction:", err);
                                         // If logging fails, still consider the award successful but notify of logging failure
-                                        res.status(200).json({ success: true, message: "Transfer successful, but failed to log transaction." });
+                                        res.status(200).json(jwtSign({ success: true, message: "Transfer successful, but failed to log transaction." }));
                                     } else {
-                                        res.status(200).json({ success: true, message: "Transfer successful." });
+                                        res.status(200).json(jwtSign({ success: true, message: "Transfer successful." }));
                                     }
                                 });
                             })
                             .catch(() => {
-                                res.status(400).json({ success: false, message: "Transfer failed due to database error." });
+                                res.status(400).json(jwtSign({ success: false, message: "Transfer failed due to database error." }));
                             });
                     });
                 });
