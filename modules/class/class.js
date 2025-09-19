@@ -172,7 +172,7 @@ async function leaveRoom(userSession) {
         }
 
         // Update the class and play leave sound
-        socketUpdates.classUpdate();
+        socketUpdates.classUpdate(classId);
 
         // Play leave sound and reload the user's page
         advancedEmitToClass('leaveSound', userSession.classId, {});

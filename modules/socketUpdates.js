@@ -277,7 +277,6 @@ class SocketUpdates {
 
     classUpdate(classId = this.socket.request.session.classId, options = { global: true, restrictToControlPanel: false }) {
         try {
-            console.log('classUpdate called')
             const classData = structuredClone(classInformation.classrooms[classId]);
             if (!classData) {
                 return; // If the class is not loaded, then we cannot send a class update
@@ -292,7 +291,7 @@ class SocketUpdates {
 
             let userData;
             let hasTeacherPermissions = false;
-            if (this.socket.request.session) {
+            if (this.socket.request.session && !options.global) {
                 const email = this.socket.request.session.email;
                 userData = classData.students[email];
                 if (!userData) {
