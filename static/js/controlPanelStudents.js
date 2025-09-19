@@ -47,6 +47,7 @@ function buildStudent(classroom, studentData) {
         let permDiv = newStudent.querySelector('#permissions')
         let reasonsDiv = newStudent.querySelector('#reasons')
         let extraButtons = newStudent.querySelector('#extraButtons')
+        let digipogButtons = newStudent.querySelector('#digipogButtons')
 
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
@@ -138,27 +139,31 @@ function buildStudent(classroom, studentData) {
             newStudent.classList.add('break')
         }
 
+        let permSwitch = document.createElement('select');
+        permSwitch.setAttribute("name", "permSwitch");
+        permSwitch.setAttribute("class", "permSwitch revampButton");
+        permSwitch.setAttribute("data-id", studentData.id);
+
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
-            let permSwitch = document.createElement('button')
-            permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch revampButton");
-            permSwitch.setAttribute("data-id", studentData.id);
-            permSwitch.onclick = (event) => {
-                socket.emit('classPermChange', studentData.id, Number(permission))
-                permSwitch.classList.add('pressed')
-                permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
-                    if (perm != permSwitch) {
-                        perm.classList.remove('pressed')
-                    }
-                })
+            // }
+
+            permSwitch.onchange = (event) => {
+                const newPerm = Number(event.target.value);
+                socket.emit('classPermChange', studentData.id, newPerm)
             }
-            permSwitch.innerHTML = strPerms
+            
+            const option = document.createElement('option');
+            option.value = permission;
+            option.innerText = strPerms;
+            permSwitch.appendChild(option)
+
             if (studentData.classPermissions == permission) {
-                permSwitch.classList.add('pressed')
+                permSwitch.value = permission;
             }
+
             permDiv.appendChild(permSwitch)
         }
 
