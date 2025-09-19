@@ -8,7 +8,7 @@
   <% if (locals.currentUser) { %>
     <ul>
     <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
-      <li><a href="/controlPanel" class="headerTab revampButton"><img src="/img/pie-chart-outline.svg" alt="Panel Icon">Panel</a></li>
+      <li><a href="/controlPanel" class="headerTab revampButton"><img src="/img/pie-chart-outline.svg" alt="Panel Icon">Control Panel</a></li>
       <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
           <li><a href="/managerPanel" class="headerTab revampButton"><img src="/img/briefcase-outline.svg" alt="Manager Icon">Manager</a></li>

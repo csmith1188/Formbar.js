@@ -93,7 +93,7 @@ async function getUser(api) {
             ...dbUser,
             help: null,
             break: null,
-            pogMeter: null,
+            pogMeter: 0,
             classId: classId
         }
 

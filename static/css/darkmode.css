@@ -1,3 +1,8 @@
+* {
+	scrollbar-width: thin;
+	scrollbar-color: white transparent;
+}
+
 body {
 	background: linear-gradient(135deg, #072438 30%, #000c15 100%);
 	color: #ffffff;
@@ -100,12 +105,14 @@ div.helpIconInformation.revampDivAlt {
 }
 
 .circularButton,
+.squareButton,
 .mobileCircular {
 	background-color: var(--darkMode-button-bg) !important;
 	border: 2px solid var(--darkMode-button-border) !important;
 }
 
 .circularButton:hover,
+.squareButton:hover,
 .mobileCircular:hover {
 	background-color: var(--darkMode-button-hover-bg) !important;
 }
@@ -163,4 +170,8 @@ div.helpIconInformation.revampDivAlt {
 
 dialog {
 	color: white !important;
+}
+
+td, th {
+	border-bottom: 3px solid var(--darkMode-menu-border);
 }

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<%- include('../partials/header_content') %>
+
+        <html lang="en">
+
+        <head>
+            <style>
+                body {
+                    padding-top: 52px !important;
+                }
+
+                td, th {
+                    padding: 20px 35px;
+                    border-bottom: 2px solid var(--lightMode-menu-border);
+                }
+
+                table {
+                    border-spacing: 0;
+                }
+
+                div.transactionHistory {
+                    width: 100%;
+                    height: 100vh;
+                    display: flex;
+                    justify-content: start;
+                    align-items: center;
+                    overflow: scroll;
+                    flex-direction: column;
+                    padding: 5px 0 60px 0;
+                }
+                
+                .buttons {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+
+            </style>
+        </head>
+
+        <body role="document" tabindex="0">
+            <%- include('../partials/formbar_header') %>
+
+            
+            <div class="transactionHistory">
+                <h1>Showing transactions for user with ID <%- userId %>.</h1>
+
+                <table class="revampDiv">
+                    <tr>
+                        <th>From:</th>
+                        <th>To:</th>
+                        <th>Amount</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                    </tr>
+
+                    <% for(let i=0;i<Math.floor(transactions.length / 10);i++) { %>
+                        <% let transactionRange = transactions.slice(i*10, i*10+10); %>
+                        <% transactionRange.forEach(function(transaction) { %>
+                            <tr data-page="<%- i %>" style="display: none;">
+                                <td><%= transaction.from_user %></td>
+                                <td><%= transaction.to_user %></td>
+                                <td><%= transaction.amount %></td>
+                                <td><%= transaction.reason %></td>
+                                <td><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
+                            </tr>
+                        <% }); %>
+                    <% } %>
+
+                    <% for(let i=0;i<transactions.length % 10;i++) { %>
+                        <% let transaction = transactions[Math.floor(transactions.length / 10) * 10 + i]; %>
+                        <tr data-page="<%- Math.floor(transactions.length / 10) %>" style="display: none;">
+                            <td><%= transaction.from_user %></td>
+                            <td><%= transaction.to_user %></td>
+                            <td><%= transaction.amount %></td>
+                            <td><%= transaction.reason %></td>
+                            <td><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
+                        </tr>
+                    <% } %>
+                </table>
+
+                <div class="buttons">
+                    <button onclick="lastPage()" id="backButton" class="revampButton">&lt;&lt;</button>
+                    <button onclick="nextPage()" id="forwardButton" class="revampButton">&gt;&gt;</button>
+                </div>
+            </div>
+        </body>
+        
+                    
+        <script>
+            let backButton = document.getElementById('backButton');
+            let forwardButton = document.getElementById('forwardButton');
+
+            let currentPage = 0;
+            const totalPages = Math.floor(<%- transactions.length %> / 10) + (<%- transactions.length % 10 === 0 ? 0 : 1 %>);
+            
+            function showPage(page) {
+                document.querySelectorAll('tr[data-page]').forEach(row => {
+                    row.style.display = 'none';
+                });
+                
+                document.querySelectorAll(`tr[data-page="${page}"]`).forEach(row => {
+                    row.style.display = '';
+                });
+                
+                document.querySelector('p').innerText = `Page: ${page + 1} / ${totalPages}`;
+
+                currentPage == 0 ? backButton.style.display = 'none' : backButton.style.display = 'block';
+                currentPage == totalPages - 1 ? forwardButton.style.display = 'none' : forwardButton.style.display = 'block';
+            }
+            
+            function nextPage() {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    showPage(currentPage);
+                }
+            }
+            
+            function lastPage() {
+                if (currentPage > 0) {
+                    currentPage--;
+                    showPage(currentPage);
+                }
+            }
+            
+            showPage(0);
+        </script>
+</html>

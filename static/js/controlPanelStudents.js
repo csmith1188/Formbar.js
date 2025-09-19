@@ -47,9 +47,11 @@ function buildStudent(classroom, studentData) {
         let permDiv = newStudent.querySelector('#permissions')
         let reasonsDiv = newStudent.querySelector('#reasons')
         let extraButtons = newStudent.querySelector('#extraButtons')
+        let digipogButtons = newStudent.querySelector('#digipogButtons')
 
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
+        console.log(classroom.poll, studentData)
         studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
 
         for (let eachResponse in classroom.poll.responses) {
@@ -77,23 +79,26 @@ function buildStudent(classroom, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
+        console.log(studentData)
         if (studentData.help) {
             let div = document.createElement('div')
-            div.textContent = '❗'
+            //summary.innerHTML += '❗'
             alertSpan.appendChild(div)
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
-            if (studentData.help.reason) {
-                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()} `
-            }
 
             let deleteTicketButton = document.createElement('button')
-            deleteTicketButton.classList.add('quickButton')
+            deleteTicketButton.classList.add('quickButton', 'revampButton', 'noReason')
             deleteTicketButton.dataset.studentName = studentData.id
             deleteTicketButton.onclick = (event) => {
-                deleteTicket(event.target)
+               deleteTicket(event.target)
             }
             deleteTicketButton.textContent = 'Delete Ticket'
+
+            if (studentData.help.reason) {
+                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()}`;
+                deleteTicketButton.classList.remove('noReason')
+            }
 
             helpReason.appendChild(deleteTicketButton)
         }
@@ -108,7 +113,7 @@ function buildStudent(classroom, studentData) {
             }
 
             let approveBreakButton = document.createElement('button')
-            approveBreakButton.classList.add('quickButton')
+            approveBreakButton.classList.add('quickButton', 'revampButton')
             approveBreakButton.dataset.studentName = studentData.id
             approveBreakButton.onclick = (event) => {
                 approveBreak(true, studentData.id)
@@ -116,7 +121,7 @@ function buildStudent(classroom, studentData) {
             approveBreakButton.textContent = 'Approve Break'
 
             let denyBreakButton = document.createElement('button')
-            denyBreakButton.classList.add('quickButton')
+            denyBreakButton.classList.add('quickButton', 'revampButton')
             denyBreakButton.dataset.studentName = studentData.id
             denyBreakButton.onclick = (event) => {
                 approveBreak(false, studentData.id)
@@ -134,27 +139,31 @@ function buildStudent(classroom, studentData) {
             newStudent.classList.add('break')
         }
 
+        let permSwitch = document.createElement('select');
+        permSwitch.setAttribute("name", "permSwitch");
+        permSwitch.setAttribute("class", "permSwitch revampButton");
+        permSwitch.setAttribute("data-id", studentData.id);
+
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
-            let permSwitch = document.createElement('button')
-            permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch revampButton");
-            permSwitch.setAttribute("data-id", studentData.id);
-            permSwitch.onclick = (event) => {
-                socket.emit('classPermChange', studentData.id, Number(permission))
-                permSwitch.classList.add('pressed')
-                permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
-                    if (perm != permSwitch) {
-                        perm.classList.remove('pressed')
-                    }
-                })
+            // }
+
+            permSwitch.onchange = (event) => {
+                const newPerm = Number(event.target.value);
+                socket.emit('classPermChange', studentData.id, newPerm)
             }
-            permSwitch.innerHTML = strPerms
+            
+            const option = document.createElement('option');
+            option.value = permission;
+            option.innerText = strPerms;
+            permSwitch.appendChild(option)
+
             if (studentData.classPermissions == permission) {
-                permSwitch.classList.add('pressed')
+                permSwitch.value = permission;
             }
+
             permDiv.appendChild(permSwitch)
         }
 
@@ -230,6 +239,31 @@ function buildStudent(classroom, studentData) {
 
             roomTagDiv.appendChild(button);
         }
+
+        // Digipog awarding
+        let digipogAwardInput = document.createElement('input');
+        digipogAwardInput.className = 'quickButton revampButton revampWithText digipogAward'
+        digipogAwardInput.placeholder = '0'
+        digipogAwardInput.type = 'number'
+        digipogAwardInput.min = 0
+        digipogAwardInput.value = ''
+        digipogAwardInput.max = 999;
+        digipogAwardInput.oninput = (event) => {
+            if (digipogAwardInput.value > 999) digipogAwardInput.value = 999
+            if (digipogAwardInput.value < 0) digipogAwardInput.value = 0
+            if (digipogAwardInput.value == '') digipogAwardInput.value = 0
+            digipogAwardInput.value = parseInt(digipogAwardInput.value)
+        }
+        digipogButtons.appendChild(digipogAwardInput)
+
+        let sendDigipogs = document.createElement('button')
+        sendDigipogs.className = 'quickButton revampButton acceptButton digipogSend'
+        sendDigipogs.setAttribute('data-user', studentData.id)
+        sendDigipogs.textContent = 'Award Digipogs'
+        sendDigipogs.onclick = (event) => {
+            awardDigipogs(studentData.id, digipogAwardInput.value)
+        }
+        digipogButtons.appendChild(sendDigipogs)
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
@@ -460,4 +494,15 @@ function deleteTicket(e) {
 
 function approveBreak(breakApproval, userId) {
     socket.emit('approveBreak', breakApproval, userId)
+}
+
+function awardDigipogs(userId, amount) {
+    if (amount <= 0 || isNaN(amount)) return
+
+    socket.emit('awardDigipogs', 
+        { from: currentUser.id, to: userId, amount: Number(amount) }
+    )
+    const awardButton = document.querySelector(`button.digipogSend[data-user="${userId}"]`)
+    const awardInput = awardButton.parentElement.querySelector('input.digipogAward');
+    awardInput.value = 0;
 }

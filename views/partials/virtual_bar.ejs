@@ -71,7 +71,7 @@
         const newPollData = classroomData.poll
         if (deepObjectEqual(newPollData, pollsData)) return
 
-        if (!newPollData.status && Object.keys(newPollData.pollResponses).length == 0) {
+        if (!newPollData.status && Object.keys(newPollData.responses).length == 0) {
             if (!timeData.active) {
                 if (noPoll) noPoll.style.display = ''
 
@@ -107,7 +107,7 @@
                 labelsArray.push('Responses')
                 studentResponses.responses = 0
             } else {
-                for (const [poll, pollData] of Object.entries(newPollData.pollResponses)) {
+                for (const [poll, pollData] of Object.entries(newPollData.responses)) {
                     labelsArray.push(pollData.answer)
                     studentResponses[poll] = 0
                 }
@@ -120,7 +120,7 @@
             if (newPollData.blind) {
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (let poll of Object.values(newPollData.pollResponses)) {
+                for (let poll of Object.values(newPollData.responses)) {
                     doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
                 }
             }
@@ -128,7 +128,7 @@
             // Loops through all student answers and adds them to a total tally
             // Student response corresponds with a property name in studResponses
             studentResponses.noResponse += newPollData.totalResponders - newPollData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollData.pollResponses)) {
+            for (const [poll, pollData] of Object.entries(newPollData.responses)) {
                 if (newPollData.blind)
                     studentResponses.responses += pollData.responses
                 else studentResponses[poll] += pollData.responses
@@ -176,7 +176,7 @@
                 pieChart.backgroundColor = ["red"]
             }
         } else {
-            if (!pollsData.status && Object.keys(pollsData.pollResponses).length == 0) {
+            if (!pollsData.status && Object.keys(pollsData.responses).length == 0) {
                 virtualBar.parentElement.style.display = "none";
             }
             pieChart.data = []

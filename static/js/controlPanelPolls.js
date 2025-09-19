@@ -262,6 +262,33 @@ function responseAmountChange(responseAmount = null) {
 		}
 		responseDiv.appendChild(answerName)
 
+		let answerWeight = document.createElement('input')
+		answerWeight.type = 'number'
+		answerWeight.className = 'answerWeight revampButton revampWithText'
+		answerWeight.name = 'answerWeight'
+		answerWeight.step = '0.1';
+		answerWeight.placeholder = `Weight`
+		answerWeight.value = 1
+		answerWeight.onkeydown = (event) => {
+			if(isFinite(event.key)) return;
+			if(
+				event.key === '.' ||
+				event.key === 'Backspace' ||
+				event.key === 'Delete' ||
+				event.key === 'Tab' ||
+				event.key === 'ArrowLeft' ||
+				event.key === 'ArrowRight') return;
+			else event.preventDefault();
+		}
+		answerWeight.onchange = (event) => {
+			if(/^\d*\.?\d*$/.test(event.target.value)) {
+				pollResponses[i].weight = parseFloat(event.target.value);
+			} else {
+				answerWeight.value = pollResponses[i].weight;
+			}
+		}
+		responseDiv.appendChild(answerWeight)
+
 		let removeAnswerButton = document.createElement("button");
 		removeAnswerButton.className = "quickButton revampButton warningButton";
 		removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
@@ -276,7 +303,7 @@ function responseAmountChange(responseAmount = null) {
 			colorPickerDiv,
 			() => {
 				FloatingUIDOM.computePosition(colorPickerButton, colorPickerDiv, {
-					placement: 'bottom',
+					placement: 'right-end',
 					middleware: [FloatingUIDOM.offset(10), FloatingUIDOM.flip()]
 				})
 					.then(({ x, y }) => {
@@ -450,7 +477,18 @@ function startPoll(customPollId) {
 	userBreak.sort()
 
 	if (customPollId) {
-		let customPoll = customPolls[customPollId]
+		let customPoll
+		if(customPollId == "current") {
+			customPoll = {
+				prompt: pollPrompt.value,
+				isBlind: blindCheck.checked,
+				textRes: resTextBox.checked,
+				answers: pollAnswers,
+				weight: 1,
+				indeterminate: userIndeterminate
+			}
+		}
+		else customPoll = customPolls[customPollId]
 		changeTab('mainPolls', 'polls')
 
         socket.emit('startPoll', {
@@ -513,6 +551,81 @@ function editCustomPoll(customPollId) {
 		pollResponses[pollIndex].weight = answer.weight
 	}
 }
+
+function startPollWithoutSaving() {
+	socket.emit('classUpdate')
+	socket.on('classUpdate', (classroomData) => {
+		rooms = classroomData
+	})
+	let userTags = []
+	let userBoxesChecked = []
+	let userIndeterminate = []
+	let pollAnswers = []
+	for (let i = 0; i < resNumber.value; i++) {
+		let pollResponse = pollResponses[i]
+		let pollAnswer = {
+			answer: (pollResponse.answer) ? pollResponse.answer : pollResponse.defaultAnswer,
+			weight: pollResponse.weight,
+			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
+		}
+		pollAnswer.answer = pollAnswer.answer.replaceAll('"', '“')
+		pollAnswer.answer = pollAnswer.answer.replaceAll(',', '‚')
+		pollAnswers.push(pollAnswer)
+	}
+	let multiRes = document.getElementById("multiRes")
+	let selectTagForm = document.getElementsByName('selectTagForm')
+	let allCheckboxes = document.getElementsByName('studentCheckbox')
+	for (let eachTagForm of selectTagForm[0]) {
+		if (eachTagForm.checked) {
+			//for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
+			userTags.push(eachTagForm.value)
+		}
+	}
+
+	for (let eachBox of allCheckboxes) {
+		if (eachBox.checked && !eachBox.indeterminate) {
+			let boxId = eachBox.id.split('_')[1]
+			userBoxesChecked.push(boxId)
+		}
+		if (eachBox.indeterminate) {
+			let boxId = eachBox.id.split('_')[1]
+			userIndeterminate.push(boxId)
+		}
+	}
+
+
+	userTags.sort()
+	userBoxesChecked.sort()
+	userIndeterminate.sort()
+	userBreak.sort()
+
+	let customPoll = {
+		prompt: pollPrompt.value,
+		isBlind: blindCheck.checked,
+		textRes: resTextBox.checked,
+		answers: pollAnswers,
+		weight: 1,
+		indeterminate: userIndeterminate
+	}
+
+	changeTab('mainPolls', 'polls')
+
+	socket.emit('startPoll', {
+		prompt: customPoll.prompt,
+		pollOptions: customPoll.answers,
+		allowTextResponses: customPoll.textRes,
+		allowMultipleResponses: false,
+		isBlind: customPoll.blind,
+		weight: customPoll.weight,
+		tags: userTags,
+		indeterminate: customPoll.indeterminate,
+		studentsAllowedToVote: userBoxesChecked,
+	});
+	
+	clearPoll.style.display = 'block'
+	endPoll.style.display = 'block'
+	changeTab('usersMenu', 'mainTabs')
+};
 
 function unloadPoll() {
 	editPollDialog.open = false
@@ -680,7 +793,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		buttonsDiv.appendChild(editButton)
 
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll revampButton'
+		startButton.className = 'start-custom-poll revampButton acceptButton'
 		startButton.style.gridColumn = 3
 		startButton.textContent = 'Start'
 		startButton.onclick = () => {
@@ -739,6 +852,15 @@ document.addEventListener('click', (event) => {
 			colorPickersDiv[i].style.display = 'none'
 		}
 	}
+	if(
+		!event.target.closest('details.controlStudent') &&
+		!event.target.classList.contains('controlStudent')
+	) {
+		let controlStudents = document.getElementsByClassName('controlStudent')
+		for(let controlStudent of controlStudents) {
+			controlStudent.open = false
+		}
+	}
 })
 
 //Make the code above work
@@ -754,8 +876,6 @@ timerButton.addEventListener('click', function () {
 	}
 	socket.emit("timer", time.value * 60 + Number(timeS.value), true)
 	timerButton.hidden = true
-	time.hidden = true
-	timeS.hidden = true
 	timerStopButton.hidden = false
 })
 
@@ -764,8 +884,6 @@ timerStopButton.addEventListener('click', function () {
 	timerButton.hidden = false
 	time.value = ''
 	timeS.value = ''
-	time.hidden = false
-	timeS.hidden = false
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
