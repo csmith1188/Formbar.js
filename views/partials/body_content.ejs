@@ -6,5 +6,5 @@
 </dialog>
 
 <% if(currentUser.break) { %>
-	<script>document.getElementById('breakDialog').showModal()</script>
+	<script>document.getElementById('breakDialog').showModal();document.getElementById("backgroundDarken").classList.add('open')</script>
 <% } %>

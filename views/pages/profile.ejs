@@ -7,6 +7,32 @@
         }
     </style>
         <body style="display: flex;" role="document" tabindex="0">
+            <div id="editPin" style="display: none;">
+                <div class="revampDiv">
+                    <h1>Edit PIN</h1>
+                    <div id="editPinForm">
+                        <div class="editPinInputs">
+                            <label for="currentPin">Current PIN:</label>
+                            <input type="password" id="currentPin" name="currentPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                        </div>
+                        <div class="editPinInputs">
+                            <label for="newPin">New PIN:</label>
+                            <input type="password" id="newPin" name="newPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                        </div>
+                        
+                        <div class="editPinInputs">
+                            <label for="confirmNewPin">Confirm New PIN:</label>
+                            <input type="password" id="confirmNewPin" name="confirmNewPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                        </div>
+
+                        <div class="editPinInputs" style="margin-top: 20px;">
+                            <button type="submit" class="revampButton warningButton" onclick="updatePin()">Update PIN</button>
+                            <button type="button" class="revampButton" onclick="editPin()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id='profileInformation' class="revampDiv">
                 <h1>Profile Information</h1>
                 <p id='displayName''><strong>Display Name:</strong> <%- displayName %></p>
@@ -15,24 +41,51 @@
                     <p id="email"><strong>Email:</strong> <%- email %></p>
                 <% } %>
 
-                <p id='digipogs''><strong>Digipogs:</strong> <%- digipogs %></p>
-                <p id='userId''><strong>ID:</strong> <%- id %></p>
-                <p id='apiKey'><strong>API Key:</strong> █</p>
-                <div id='apiKeyButton'>
-                    <button onclick="copyApiKey()" class="revampButton">
-                        Copy API Key
-                    </button>
-                    <button id="showHideApi" onclick="revealApiKey()" class="revampButton">
-                        Reveal API Key
-                    </button>
-                    <button id='apiRefresh' onclick='refreshApiKey()' class="revampButton warningButton">
-                        Refresh API Key
-                    </button>
+                <p id='digipogs'><strong>Digipogs:</strong> <%- digipogs %></p>
+                <p id='userId'><strong>ID:</strong> <%- id %></p>
+                <div class="sensitiveInfo">
+                    <p id='apiKey'><strong>API Key:</strong> █</p>
+                    <div id='apiKeyButton'>
+                        <button onclick="copyApiKey()" class="squareButton">
+                            <img src="/img/clipboard-outline.svg" alt="Refresh API Key">
+                        </button>
+                        <button id="showHideApi" onclick="revealApiKey()" class="squareButton" title="Reveal API Key">
+                            <img src="/img/eye-outline.svg" alt="Reveal API Key">
+                        </button>
+                        <button id='apiRefresh' onclick='refreshApiKey()' class="squareButton warningButton" title="Refresh API Key">
+                            <img src="/img/refresh-outline.svg" alt="Refresh API Key">
+                        </button>
+                    </div>
+                </div>
+                <div class="sensitiveInfo">
+                    <p id='pin'><strong>PIN:</strong> █</p>
+                    <div id='apiKeyButton'>
+                        <button id="showHidePin" onclick="revealPin()" class="squareButton" title="Reveal PIN">
+                            <img src="/img/eye-outline.svg" alt="Reveal PIN">
+                        </button>
+                        <button id='pinEdit' onclick='editPin()' class="squareButton warningButton" title="Edit PIN">
+                            <img src="/img/pencil-outline.svg" alt="Edit PIN">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pogMeter">
+                    <p>Pog Meter</p>
+                    <div id="pogMeter" class="revampDivAlt">
+                        <div id="pogMeterFill">
+    
+                        </div>
+                    </div>
                 </div>
             </div>
         </body>
         <script>
             let apiKeyValue = '<%- API %>';
+            let pinValue = '<%- pin || "None" %>';
+            let pogMeterValue = <%- pogMeter / 5 %>;
+
+            document.getElementById('pogMeterFill').style.setProperty('--pogPercent', pogMeterValue + '%');
+
             if (apiKeyValue == '') {
                 document.querySelectorAll('[id*="api"]').forEach(element => {
                     element.remove();
@@ -40,6 +93,7 @@
             }
 
             let apiKey = document.getElementById('apiKey');
+            let pin = document.getElementById('pin');
                 
             function copyApiKey() {
                 navigator.clipboard.writeText(apiKeyValue);
@@ -49,21 +103,85 @@
                 let showHideApi = document.getElementById('showHideApi');
                 apiKey.innerHTML = '<strong>API Key:</strong> ' + apiKeyValue;
                 showHideApi.setAttribute("onclick", "hideApiKey()");
-                showHideApi.innerText = 'Hide API Key';
+                showHideApi.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide API Key">';
             }
 
             function hideApiKey() {
                 let showHideApi = document.getElementById('showHideApi');
 
-                apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 2)}`;
+                apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 3)}`;
                 showHideApi.setAttribute("onclick", "revealApiKey()");
-                showHideApi.innerText = 'Reveal API Key';
+                showHideApi.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal API Key">';
+            }
+
+            function revealPin() {
+                let showHidePin = document.getElementById('showHidePin');
+                pin.innerHTML = '<strong>PIN:</strong> ' + pinValue;
+                showHidePin.setAttribute("onclick", "hidePin()");
+                showHidePin.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide Pin">';
+            }
+
+            function hidePin() {
+                let showHidePin = document.getElementById('showHidePin');
+
+                pin.innerHTML = `<strong>PIN:</strong> ${'█'.repeat(pinValue.length)}`;
+                showHidePin.setAttribute("onclick", "revealPin()");
+                showHidePin.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal Pin">';
             }
 
             hideApiKey();
+            hidePin();
+
+            function updatePin() {
+                const currentPin = document.getElementById('currentPin').value;
+                const newPin = document.getElementById('newPin').value;
+                const confirmNewPin = document.getElementById('confirmNewPin').value;
+
+                if (newPin !== confirmNewPin) {
+                    alert("New PIN and Confirm New PIN do not match.");
+                    return;
+                }
+
+                if(!isFinite(newPin)) {
+                    alert("PIN must only contain numbers.");
+                    return;
+                }
+
+                if(newPin.length < 4 || newPin.length > 6) {
+                    alert("PIN must be between 4 and 6 digits.");
+                    return;
+                }
+
+                if (currentPin !== pinValue && pinValue !== 'None') {
+                    alert("Current PIN is incorrect.");
+                    return;
+                }
+
+                socket.emit('refreshPin', newPin);
+
+                alert(pinValue ? "PIN updated successfully." : "PIN set successfully.");
+
+                // Clear input fields
+                document.getElementById('currentPin').value = '';
+                document.getElementById('newPin').value = '';
+                document.getElementById('confirmNewPin').value = '';
+
+                pinValue = newPin;
+
+                hidePin(); // Hide the PIN after updating
+
+                // Close the edit PIN modal
+                editPin();
+            }
 
             function refreshApiKey() {
                 if(confirm("Are you sure you want to refresh your API key? This action cannot be undone.")) socket.emit('refreshApiKey');
+            }
+
+            function editPin() {
+                document.getElementById('backgroundDarken').classList.toggle('open');
+                document.getElementById('editPin').style.display = 
+                (document.getElementById('editPin').style.display === 'flex') ? 'none' : 'flex';
             }
             
             socket.on('apiKeyUpdated', (data) => {
