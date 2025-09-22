@@ -6,7 +6,7 @@ module.exports = {
     run(router) {
         // Leaves the current class session
         // The user is still attached to the classroom
-        router.post('/class/:id/leaveSession', httpPermCheck("leaveClass"), async (req, res) => {
+        router.post('/class/:id/leave', httpPermCheck("leaveClass"), async (req, res) => {
             try {
                 const result = leaveClass(socket);
                 if (!result) {
@@ -14,18 +14,6 @@ module.exports = {
                 }
 
                 res.status(200).json({ message: 'Success' });
-            } catch (err) {
-                logger.log('error', err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-
-        // Leaves the classroom entirely
-        // The user is no longer attached to the classroom
-        router.post('/class/:id/leave', httpPermCheck("leaveRoom"), async (req, res) => {
-            try {
-                await leaveRoom(socket.request.session)
-                socket.res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

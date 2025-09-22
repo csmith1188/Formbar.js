@@ -1,13 +1,13 @@
 const { createPoll } = require("../../../../modules/polls");
 const { logger } = require("../../../../modules/logger");
-const { httpPermCheck, classPermCheck} = require("../../../middleware/permissionCheck");
+const { classPermCheck} = require("../../../middleware/permissionCheck");
 const { parseJson } = require("../../../middleware/parseJson");
 const { CLASS_PERMISSIONS } = require("../../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Creates a poll from the data provided
-        router.post('/class/:id/polls/create', httpPermCheck("startPoll"), classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
+        router.post('/class/:id/polls/create', classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
             try {
                 const classId = req.params.id;
                 

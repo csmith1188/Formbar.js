@@ -1,46 +1,26 @@
 const { logger } = require("../../../modules/logger")
 const { classInformation, getClassUsers } = require("../../../modules/class/classroom")
+const { classPermCheck } = require("../../middleware/permissionCheck");
+const { CLASS_PERMISSIONS } = require("../../../modules/permissions");
+const { dbGetAll } = require("../../../modules/database");
 
 module.exports = {
     run(router) {
         // Gets the students of a class
-		router.get('/class/:id/students', async (req, res) => {
+		router.get('/class/:id/students', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
 			try {
-				// Get the class key from the request parameters
-				let classId = req.params.id;
-
-				// Log the request details
+				// Get the class key from the request parameters and log the request details
+				const classId = req.params.id;
 				logger.log('info', `get api/class/${classId}/students ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
-				// If the class does not exist, return an error
-				if (!classInformation.classrooms[classId]) {
-					logger.log('verbose', `[get api/class/${classId}/students] class not started`);
-					res.status(404).json({ error: 'Class not started' });
-					return;
-				}
-
-				// Get the user from the session
-				let user = req.session.user;
-
-				// If the user is not in the class, return an error
-				if (!classInformation.classrooms[classId].students[user.email]) {
-					logger.log('verbose', `[get api/class/${classId}/students] user is not logged in`);
-					res.status(403).json({ error: 'User is not logged into the selected class' });
-					return;
-				}
-
 				// Get the students of the class
-				let classUsers = await getClassUsers(user, classId);
-
-				// If an error occurs, log the error and return the error
+                // If an error occurs, log the error and return the error
+				const classUsers = await dbGetAll('SELECT users.id, users.displayName, users.digipogs, classUsers.permissions AS classPermissions FROM users INNER JOIN classUsers ON users.id = classUsers.studentId WHERE classUsers.classId = ?', [classId]);
 				if (classUsers.error) {
 					logger.log('info', `[get api/class/${classId}] ${classUsers}`);
 					res.status(404).json(classUsers);
 				}
 
-				// Log the students of the class
-				logger.log('verbose', `[get api/class/${classId}/students] response=(${JSON.stringify(classUsers)})`);
-				
 				// Send the students of the class as a JSON response
 				res.status(200).json(classUsers);
 			} catch (err) {

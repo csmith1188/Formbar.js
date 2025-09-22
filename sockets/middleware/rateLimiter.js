@@ -1,5 +1,5 @@
 const { logger } = require("../../modules/logger")
-const { rateLimits } = require("../../modules/socketUpdates")
+const { rateLimits, PASSIVE_SOCKETS} = require("../../modules/socketUpdates")
 const {TEACHER_PERMISSIONS} = require("../../modules/permissions");
 
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
                 }
 
                 if (userRequests[event].length >= limit) {
-                    if (!userRequests['hasBeenMessaged']) {
+                    if (!userRequests['hasBeenMessaged'] && !PASSIVE_SOCKETS.includes(event)) {
                         socket.emit('message', `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.`)
                     }
                     userRequests['hasBeenMessaged'] = true;

@@ -139,9 +139,8 @@ module.exports = {
 					req.session.classId = classId;
 				}
 
-				userSocketUpdates[req.session.email].classUpdate();
+				// userSocketUpdates[req.session.email].classUpdate();
                 setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
-
 				if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
 					emitToUser(req.session.email, 'reload');
 				}

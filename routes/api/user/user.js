@@ -1,11 +1,11 @@
 const { classInformation } = require("../../../modules/class/classroom")
 const { logger } = require("../../../modules/logger")
 const { dbGet } = require("../../../modules/database");
-const {MANAGER_PERMISSIONS} = require("../../../modules/permissions");
+const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
-        // Gets a class by id
+        // Gets a user by id
         router.get('/user/:id', async (req, res) => {
             try {
                 const userId = req.params.id;
@@ -20,7 +20,7 @@ module.exports = {
                 // Only include the email if the requester is the user themselves or a manager
                 const requesterEmail = req.session.email;
                 let userEmail = undefined;
-                if (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS) {
+                if (user && (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS)) {
                     userEmail = user.email
                 }
 
@@ -34,7 +34,7 @@ module.exports = {
                         verified: user.verified
                     });
                 } else {
-                    return res.status(404).json({ error: "User not found" });
+                    return res.status(404).json({ error: "User not found." });
                 }
             } catch (err) {
                 logger.log('error', err.stack);
