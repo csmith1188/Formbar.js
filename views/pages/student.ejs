@@ -176,7 +176,7 @@
 										`;
 									} else {
 										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color}44;--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
 									}
 								}
 								if (!poll.multiRes) {
@@ -266,12 +266,6 @@
 						if (textarea) {
 							textRes = textarea.value
 						}
-
-						document.querySelectorAll('.pollButton').forEach((btn) => {
-							btn.classList.remove('activePollButton');
-						});
-
-						button.classList.add('activePollButton');
 
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)

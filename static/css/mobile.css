@@ -675,8 +675,9 @@
         height: 80px !important;
     }
 
-    #pogMeterFill {
+    #pogMeter > #pogMeterFill {
         background: linear-gradient(to right, #3f69bb, #a763ff) !important;
+        mask-image: linear-gradient(to right, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
     }
 }
 
