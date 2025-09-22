@@ -56,7 +56,7 @@ async function checkUserClassPermission(userId, classId, permission) {
     } else {
         // If the user or classroom isn't loaded, then check it from the database
         const classData = await dbGet('SELECT * FROM classroom WHERE id = ?', [classId]);
-        const userData = (await dbGet('SELECT permissions FROM classusers WHERE id = ? AND studentId = ?', [classId, userId]));
+        const userData = (await dbGet('SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?', [classId, userId]));
         if (!userData) {
             return classData.owner == userId;
         }
@@ -109,6 +109,8 @@ async function joinClass(userSession, classId) {
                 userSocket.emit('joinClass', response);
             }
         }
+
+        return true;
     } catch (err) {
         logger.log('error', err.stack);
         // socket.emit('joinClass', );
@@ -123,6 +125,7 @@ async function joinRoom(userSession, classCode) {
 		const response = await joinRoomByCode(classCode, userSession);
 		const email = userSession.email;
         emitToUser(email, 'joinClass', response);
+        return true;
 	} catch (err) {
 		const email = userSession.email;
 		emitToUser(email, 'joinClass', 'There was a server error. Please try again');
@@ -172,11 +175,12 @@ async function leaveRoom(userSession) {
         }
 
         // Update the class and play leave sound
-        socketUpdates.classUpdate();
+        socketUpdates.classUpdate(classId);
 
         // Play leave sound and reload the user's page
         advancedEmitToClass('leaveSound', userSession.classId, {});
         emitToUser(email, 'reload');
+        return true;
     } catch (err) {
         logger.log('error', err.stack)
     }

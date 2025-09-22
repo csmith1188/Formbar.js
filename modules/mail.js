@@ -1,23 +1,34 @@
 const nodemailer = require('nodemailer');
 const { settings } = require('./config');
+const { logger } = require("./logger");
 
 // Create a map to store the email rate limits
 const limitStore = new Map();
-const RATE_LIMIT = 60 * 1000; // 1 minute
+const RATE_LIMIT = 60000; // 1 minute in milliseconds
 
-// Create a function for sending mail, passing the recipient, subject, and HTML content as arguments
-const sendMail = (recipient, subject, html) => {
+/**
+ * Send an email via SMTP.
+ * Applies per-recipient rate limiting.
+ * @param {string} recipient - Recipient email address.
+ * @param {string} subject - Email subject.
+ * @param {string} html - HTML content of the message.
+ * @returns {void}
+ */
+function sendMail(recipient, subject, html){
+    // If email is not enabled in the settings, return
     if (!settings.emailEnabled) return;
-    // Access the email user and password from the environmental variable
+
+    // Get the email user and password from the environment variable
+    // If the email user or password is not set, return
     const emailPassword = process.env.EMAIL_PASSWORD;
     const emailUser = process.env.EMAIL_USER;
-    // If the email user or password is not set, return
     if (!emailPassword || !emailUser) return;
+
     // Get the current time
-    const currentTime = Date.now();
     // Check if the user has sent an email within the specified time period
+    const currentTime = Date.now();
     if (limitStore.has(recipient) && (currentTime - limitStore.get(recipient) < RATE_LIMIT)) {
-        console.log(`Email rejected: ${recipient} exceeded rate limit`);
+        logger.log('info', `Email rejected: ${recipient} exceeded rate limit`);
         return;
     }
 
@@ -34,11 +45,8 @@ const sendMail = (recipient, subject, html) => {
         }
     };
 
-    // Create the transporter using the smtpConfig
+    // Create the transporter using the smtpConfig and store the information for the email
     const transporter = nodemailer.createTransport(smtpConfig);
-
-    // Create a mailOptions object
-    // This object will contain the information for the email
     const mailOptions = {
         from: emailUser,
         to: recipient,
@@ -51,13 +59,12 @@ const sendMail = (recipient, subject, html) => {
         if (error) {
             console.error('Error sending email:', error);
         } else {
-            console.log('Email sent:', info.response);
-            // Store the current time for the recipient
+            // Log email and store the current time for the recipient
+            logger.log('info', `[mail] Email sent to ${recipient}`);
             limitStore.set(recipient, currentTime);
-            return;
-        };
+        }
     });
-};
+}
 
 // Export the sendMail function
 module.exports = {

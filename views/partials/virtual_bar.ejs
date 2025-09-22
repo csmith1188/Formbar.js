@@ -146,7 +146,7 @@
         doughnutChart.update()
     })
 
-    socket.emit('vbTimer')
+    // socket.emit('vbTimer')
     socket.on('vbTimer', (newTimeData) => {
         if (deepObjectEqual(newTimeData, timeData)) return
 

@@ -51,7 +51,6 @@ function buildStudent(classroom, studentData) {
 
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
-        console.log(classroom.poll, studentData)
         studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
 
         for (let eachResponse in classroom.poll.responses) {
@@ -79,7 +78,7 @@ function buildStudent(classroom, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
-        console.log(studentData)
+
         if (studentData.help) {
             let div = document.createElement('div')
             //summary.innerHTML += '❗'

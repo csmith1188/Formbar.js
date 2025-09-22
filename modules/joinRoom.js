@@ -4,7 +4,6 @@ const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
-const {io} = require("./webServer");
 
 async function joinRoomByCode(code, session) {
 	try {
@@ -80,13 +79,12 @@ async function joinRoomByCode(code, session) {
 				return 'You are banned from that class.'
 			}
 
-			// Set class permissions and remove the user's Offline tag if their tags aren't null
+			// Set class permissions and clear any previous tags so they don't persist across classes
 			currentUser.classPermissions = classUser.permissions
 			currentUser.activeClass = classroom.id;
-			if (currentUser.tags) {
-				currentUser.tags = currentUser.tags.replace('Offline', '');	
-				classInformation.users[email].tags = classInformation.users[email].tags.replace('Offline', '')
-			}
+			currentUser.tags = '';
+			classInformation.users[email].tags = '';
+			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => {});
 
             // Redact the API key from the classroom user to prevent it from being sent anywhere
             const studentAPIKey = currentUser.API;

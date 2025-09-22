@@ -267,8 +267,33 @@
                 deleteUserButton.className = 'deleteUser quickButton revampButton warningButton'
                 deleteUserButton.setAttribute("data-userid", userData.id)
                 deleteUserButton.onclick = (event) => {
+                    event.stopPropagation()
                     if (confirm('Are you sure you want to delete this user?')) {
-                        socket.emit('deleteUser', userData.id)
+                        fetch(`/api/user/${encodeURIComponent(userData.id)}/delete`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'API': currentUser.API
+                            }
+                        })
+                        .then(async (res) => {
+                            if (!res.ok) {
+                                let data
+                                try { data = await res.json() } catch (e) { /* noop */ }
+                                const message = (data && (data.error || data.message)) || 'Failed to delete user.'
+                                throw new Error(message)
+                            }
+                            return res.json()
+                        })
+                        .then(() => {
+                            const key = Object.keys(users).find(k => users[k] && users[k].id === userData.id)
+                            if (key) delete users[key]
+                            const el = document.getElementById(userData.email)
+                            if (el && el.parentElement) el.parentElement.removeChild(el)
+                        })
+                        .catch((err) => {
+                            alert(err.message || 'There was an error deleting the user.')
+                        })
                     }
                 }
                 deleteUserButton.innerText = "Delete User"

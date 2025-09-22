@@ -430,10 +430,6 @@ function endPollFunc() {
 // Starts a new poll that allows students to submit answers
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
-	socket.emit('classUpdate')
-	socket.on('classUpdate', (classroomData) => {
-		rooms = classroomData
-	})
 	let userTags = []
 	let userBoxesChecked = []
 	let userIndeterminate = []

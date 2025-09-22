@@ -642,7 +642,6 @@
     // Function runs on page load
     // Checks if poll is active or not and displays correct output
     let rooms;
-    socket.emit('classUpdate')
     socket.on('classUpdate', (classroomData) => {
         rooms = classroomData
     })

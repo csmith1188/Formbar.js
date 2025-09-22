@@ -41,7 +41,7 @@
                     <p id="email"><strong>Email:</strong> <%- email %></p>
                 <% } %>
 
-                <p id='digipogs'><strong>Digipogs:</strong> <%- digipogs %></p>
+                <p id='digipogs'><strong>Digipogs:</strong> <%- digipogs.toFixed(2) %></p>
                 <p id='userId'><strong>ID:</strong> <%- id %></p>
                 <div class="sensitiveInfo">
                     <p id='apiKey'><strong>API Key:</strong> █</p>
@@ -81,13 +81,20 @@
         </body>
         <script>
             let apiKeyValue = '<%- API %>';
-            let pinValue = '<%- pin || "None" %>';
+            let rawPinValue = '<%- pin %>';
+            let pinValue = rawPinValue || "None";
             let pogMeterValue = <%- pogMeter / 5 %>;
 
             document.getElementById('pogMeterFill').style.setProperty('--pogPercent', pogMeterValue + '%');
 
             if (apiKeyValue == '') {
                 document.querySelectorAll('[id*="api"]').forEach(element => {
+                    element.remove();
+                });
+            }
+
+            if (rawPinValue == '') {
+                document.querySelectorAll('[id*="pin"]').forEach(element => {
                     element.remove();
                 });
             }

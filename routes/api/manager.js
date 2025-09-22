@@ -16,9 +16,9 @@ module.exports = {
                 if (user.permissions < MANAGER_PERMISSIONS) {
                     return res.status(403).json({ error: 'You do not have permission to access this resource.' });
                 }
-                const { users, classrooms } = await getManagerData();
 
-                // Send the manager data as a JSON response
+                // Grab manager data and send it back as a JSON responses
+                const { users, classrooms } = await getManagerData();
                 res.status(200).json({
                     users,
                     classrooms
