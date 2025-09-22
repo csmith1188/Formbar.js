@@ -90,7 +90,6 @@ button.pressed.revampButton:hover {
 .revampButton {
 	background-color: var(--darkMode-button-bg);
 	border: 2px solid var(--darkMode-button-border);
-	outline: 2px solid #0004;
 }
 
 .revampButton:not(.revampWithText):hover {
@@ -110,8 +109,6 @@ div.helpIconInformation.revampDivAlt {
 .mobileCircular {
 	background-color: var(--darkMode-button-bg) !important;
 	border: 2px solid var(--darkMode-button-border) !important;
-	outline: 2px solid #0004;
-
 }
 
 .circularButton:hover,
@@ -144,14 +141,11 @@ div.helpIconInformation.revampDivAlt {
 .revampDiv {
 	background: var(--darkMode-menu-bg);
 	border: 2px solid var(--darkMode-menu-border);
-	outline: 2px solid #fff4;
-
 }
 
 .revampDivAlt {
 	border: 2px solid var(--lightMode-menu-border);
 	background: var(--lightMode-menu-bg);
-	outline: 2px solid #0004;
 }
 
 

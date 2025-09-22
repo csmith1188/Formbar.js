@@ -7,49 +7,35 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/js/monaco-loader.js"></script>
-    <title>
-        <% if (locals.title) { %>
-          <%- title + ' - ' %>
-            <% } %>
-              Formbar
-      </title>
+    <title>Logs</title>
     <style>
-        .logGrid {
-            display: grid;
+        #formbarHeader {
+        <% if (locals.content !== undefined) { %>
+            position: relative;
+        <% } %>
+        }
+
+        body {
+        <% if (locals.content !== undefined) { %>
+            text-align: left;
+            overflow: hidden;
+        <% } %>
+            margin: 0;
+            padding: 0;
+        }
+
+        <% if (locals.content === undefined) {%>
+        .content-container {
+            margin-top: 80px;
+            display: flex;
             justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 0 20px;
-            grid-template-columns: repeat( auto-fit, minmax(250px, 300px) );
-            height: calc(100vh - 160px);
-            overflow: scroll;
+            align-items: flex-start;
         }
-
-        .infoLog {
-            border: 5px solid #e6e35d !important;
-        }
-
-        .verboseLog {
-            border: 5px solid #05b705 !important;
-        }
-
-        .errorLog {
-            border: 5px solid #e65d5d !important;
-        }
-
-        .criticalLog {
-            border: 5px solid #ff0000 !important;
-            box-shadow: 0px 0px 15px 5px #ff0000;
-        }
-
-        #sorter {
-            margin: auto;
-            margin-bottom: 20px;
-        }
+        <% } %>
     </style>
 </head>
 
-<body id="colorContent" role="document" tabindex="0">
+<body id="colorContent" style="padding: 0;" role="document" tabindex="0">
 <%- include('../partials/formbar_header') %>
 
 <div class="content-container">
@@ -63,26 +49,10 @@
         });
     %>
 
-    <select name="sorter" id="sorter" class="revampButton">
-        <option value="all">Show All</option>
-        <option value="info">Info</option>
-        <option value="verb">Verbose</option>
-        <option value="err">Error</option>
-        <option value="crit">Critical</option>
-    </select>
-
-    <div class="logGrid">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 600px;">
         <% for (let i = 0; i < logs.length; i++) { %>
-            <% let logClass = '' %>
-            <% let logDetails = logs[i].split('.log')[0].split('-'); %>
-            <% let currentLogName = `${logDetails[1].charAt(0).toUpperCase() + logDetails[1].slice(1)} - ${logDetails[3]}/${logDetails[4]}/${logDetails[2]} at ${logDetails[5] % 12} ${logDetails[5] < 12 ? 'AM' : 'PM'}` %>
-            <% if(logDetails[1] == 'info') { logClass = 'infoLog'; } %>
-            <% if(logDetails[1] == 'verbose') { logClass = 'verboseLog' } %>
-            <% if(logDetails[1] == 'error') { logClass = 'errorLog' } %>
-            <% if(logDetails[1] == 'critical') { logClass = 'criticalLog' } %>
-
-            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton revampButton logButton <%- logClass %>">
-                <%- currentLogName %>
+            <button onclick="location.href = '/logs/<%- logs[i] %>'" class="quickButton revampButton logButton">
+                View <%- logs[i] %>
             </button>
         <% } %>
     </div>
@@ -93,33 +63,6 @@
 
 </body>
 <script>
-    
-
-    let sorter = document.getElementById('sorter');
-
-    sorter.onchange = function() {
-        let selectedValue = this.value;
-        let buttons = document.querySelectorAll('.logButton');
-
-        buttons.forEach(button => {
-            if (selectedValue === 'all') {
-                button.style.display = 'block';
-            } else if (selectedValue === 'info' && button.classList.contains('infoLog')) {
-                button.style.display = 'block';
-            } else if (selectedValue === 'verb' && button.classList.contains('verboseLog')) {
-                button.style.display = 'block';
-            } else if (selectedValue === 'err' && button.classList.contains('errorLog')) {
-                button.style.display = 'block';
-            } else if (selectedValue === 'crit' && button.classList.contains('criticalLog')) {
-                button.style.display = 'block';
-            } else {
-                button.style.display = 'none';
-            }
-        });
-    };
-
-    sorter.onchange();
-
     <% if (locals.content !== undefined) {%>
     require.config({ paths: { vs: "/js/vs" } });
     require(["vs/editor/editor.main"], function () {
@@ -180,7 +123,6 @@
             }
         }, 250);
     });
-
     <% } %>
 </script>
 </html>

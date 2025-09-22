@@ -7,9 +7,9 @@
 <div id="mobileNavigation">
   <% if (locals.currentUser) { %>
     <ul>
-		<% if (currentUser && currentUser.activeClass != null) { %>
-        <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton"><img src="/img/pie-chart-outline.svg" alt="Manager Icon">Panel</a></li>
-    	<% } %>
+    <% if (currentUser.permissions >= MOD_PERMISSIONS) { %>
+      <li><a href="/controlPanel" class="headerTab revampButton"><img src="/img/pie-chart-outline.svg" alt="Panel Icon">Control Panel</a></li>
+      <% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
           <li><a href="/managerPanel" class="headerTab revampButton"><img src="/img/briefcase-outline.svg" alt="Manager Icon">Manager</a></li>
           <% } %>

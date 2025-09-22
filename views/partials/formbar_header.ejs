@@ -130,7 +130,7 @@ function logout() {
 
   if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
       const muteButton = document.getElementById("muteButton");
-      if(muteButton) muteButton.style.display = "block";
+      muteButton.style.display = "block";
   }
 </script>
 
