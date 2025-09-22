@@ -24,15 +24,20 @@ FROM users;
 DROP TABLE users;
 ALTER TABLE users_temp RENAME TO users;
 
-CREATE TABLE IF NOT EXISTS "transactions_temp"
-{
+CREATE TABLE IF NOT EXISTS "transactions_temp" (
     "from_user" INTEGER NOT NULL,
     "to_user"   INTEGER NOT NULL,
     "amount"    INTEGER NOT NULL,
-    "reason"    TEXT DEFAULT "None", 
+    "reason"    TEXT DEFAULT "None",
     "date"      TEXT NOT NULL
-}
+);
 
-INSERT INTO transactions_temp (from_user, to_user, amount, reason, date)
+INSERT INTO transactions_temp (
+    from_user, to_user, amount, reason, date
+)
+SELECT
+    "from", "to", digipogs, reason, date
+FROM transactions;
+
 DROP TABLE transactions;
 ALTER TABLE transactions_temp RENAME TO transactions;

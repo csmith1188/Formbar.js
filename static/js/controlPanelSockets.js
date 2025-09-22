@@ -110,6 +110,7 @@ let pollDetailsDiv = document.getElementById('pollDetails');
 pollDetailsDiv.addEventListener('mouseover', (e) => {
 	if(orientation == 'portrait') return; // Don't show on landscape mode
 	hoverTimeoutBig = setTimeout(() => {
+		if(!classroom.poll.status) return; // Don't show if there is no active poll
 		hoverShowPollDetails(classroom.poll, e, true);
 		pollDetailsDiv.classList.add('tutorialDone');
 		if(localStorage.getItem('controlTutorialDone') !== "true") {

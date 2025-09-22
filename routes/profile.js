@@ -8,7 +8,7 @@ const { MANAGER_PERMISSIONS } = require("../modules/permissions");
 module.exports = {
     run(app) {
         // Define the /profile/transactions/:userId route first
-        app.get('/profile/transactions/:userId?', isVerified, async (req, res) => {
+        app.get("/profile/transactions/:userId?", isVerified, async (req, res) => {
             // Log the request information
             logger.log('info', `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
             const userId = req.params.userId || req.session.userId;
@@ -22,7 +22,7 @@ module.exports = {
             }
             // Check if the user has permission to view these transactions (either their own or they are a manager)
             if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-                return res.render('pages/message', {
+                res.render('pages/message', {
                     message: 'You do not have permission to view these transactions.',
                     title: 'Error'
                 });

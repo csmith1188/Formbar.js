@@ -2,14 +2,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 @import url(./mobile.css);
 
-*::-webkit-scrollbar,
-*::-webkit-scrollbar-track {
-	background: red;
-}
-
 * {
 	scrollbar-width: thin;
-	scrollbar-color: red;
+	scrollbar-color: black transparent;
 }
 
 :root {
@@ -265,7 +260,7 @@ dialog {
 }
 
 #content {
-	height: 380px;
+	height: auto;
 	width: 600px;
 	margin: 0 auto;
 	padding: 100px 10px 10px;
@@ -394,7 +389,6 @@ dialog {
 #headerLogo p {
 	display: inline-block;
 	font-size: 14px;
-	font-style: italic;
 	color: #fffa;
 	margin: 0;
 	margin-left: 10px;
@@ -695,7 +689,18 @@ details[open] #reasons {
 	transform: translateY(-80%);
 }
 
+#helpReason button, #breakReason button {
+	width: 100%;
+	margin-top: 10px;
+	font-size: 14px;
+}
+
+#helpReason button.noReason, #breakReason button.noReason {
+	margin-top: 0;
+}
+
 #reasons {
+	backdrop-filter: blur(10px);
 	transform: translateY(80%);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
 	text-align: center;
@@ -707,7 +712,6 @@ details[open] #reasons {
 	padding: 5px;
 	transition: transform 250ms ease-in-out;
 	display: flex;
-	background-color: #f0f0f0;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
@@ -938,6 +942,7 @@ input[type='checkbox'] {
 #pollResForm button#removeAnswer {
 	aspect-ratio: 1;
 	padding: 0;
+	height: 44px;
 }
 
 #pollResForm button#removeAnswer img {
@@ -952,8 +957,9 @@ input[type='checkbox'] {
 	font-size: 3rem;
 }
 
-#pollResForm input {
+#pollResForm .response > input {
 	text-align: center;
+	width: 10%;
 }
 
 #pollResForm div, #pollResForm h1 {
@@ -986,8 +992,8 @@ input[type='checkbox'] {
 	white-space: normal;
 }
 
-#timeDiv input::-webkit-outer-spin-button,
-#timeDiv input::-webkit-inner-spin-button {
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
 }
@@ -1448,6 +1454,8 @@ button:disabled:hover {
 		0.2s transform ease-in-out;
 }
 
+
+
 .revampButton img {
 	filter: invert(1);
 }
@@ -1461,7 +1469,8 @@ button:disabled:hover {
 	cursor: text !important;
 }
 
-.circularButton {
+.circularButton,
+.squareButton {
 	height: 48px;
 	width: 48px;
 	aspect-ratio: 1;
@@ -1478,6 +1487,10 @@ button:disabled:hover {
 		0.2s transform ease-in-out;
 }
 
+.squareButton {
+	border-radius: var(--borderRadius);
+}
+
 .circularButton:hover {
 	background-color: var(--lightMode-button-hover-bg);
 	transform: scale(var(--button-hover-scale));
@@ -1489,7 +1502,21 @@ button:disabled:hover {
 	filter: invert(1);
 }
 
-.pollButton {
+.squareButton img {
+	width: 95% !important;
+	height: 95% !important;
+	filter: invert(1);
+}
+
+.sensitiveInfo:first-of-type {
+	margin-top: 50px;
+}
+
+.sensitiveInfo {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 15px;
 }
 
 .revampButton#forgotPassword {
@@ -1501,13 +1528,15 @@ button:disabled:hover {
 
 
 .revampButton.warningButton,
+.squareButton.warningButton,
 .circularButton.warningButton {
-	background-color: var(--color-red);
+	background-color: var(--color-red) !important;
 	color: white !important;
-	border: 2px solid var(--light-red);
+	border: 2px solid var(--light-red) !important;
 }
 
 .revampButton.warningButton:hover,
+.squareButton.warningButton:hover,
 .circularButton.warningButton:hover {
 	background-color: var(--bg-dark-red) !important;
 }
@@ -1527,9 +1556,9 @@ button:disabled:hover {
 }
 
 #news {
-	width: 70%;
+	width: 100%;
 	margin: auto;
-	padding: 20px 10px;
+	padding: 40px 15%;
 
 	overflow: scroll;
 	height: calc(100vh - 60px);
@@ -1786,6 +1815,20 @@ div.sideBySide {
 	position: absolute;
 }
 
+#toolbarOptions {
+	z-index: 5;
+	padding: 0;
+	white-space: nowrap;
+	gap: 10px;
+  	width: 200px;
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: absolute;
+	top: 20px;
+}
+
 #vbOptionsLast img,
 #vbOptionsNext img {
 	height: 80%;
@@ -1809,15 +1852,17 @@ div.sideBySide {
 #VBOptions .options:not(.activeControlTab) {
 	opacity: 0;
 	pointer-events: none;
-	transition: 0.1s ease-in-out opacity;
+	transition: 0.1s ease-in-out opacity, 0.1s ease-in-out transform;
+	transform: scale(0.95);
 }
 
-#VBOptions .options.activeControlTab {
+#VBOptions .options {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 	height: 100%;
+	transform: scale(1);
 }
 
 #VBDiv #newMemberListControlPanel {
@@ -1841,6 +1886,11 @@ div.sideBySide {
 	cursor: pointer;
 	max-height: unset;
 	height: min-content;
+	padding: 0 !important;
+}
+
+.controlStudent summary {
+	padding: 10px;
 }
 
 body:not(:has(header#formbarHeader[style="display: none;"])) {
@@ -1909,10 +1959,16 @@ details > #extraButtons {
 	grid-template-columns: repeat(2, 1fr);
 	gap: 5px;
 	margin-top: 10px;
+	padding: 10px;
+  	padding-top: 0;
 }
 
 input.inputtedTime.revampButton.revampWithText {
 	width: 100px;
+	-moz-appearance:textfield;
+}
+
+input.revampButton.revampWithText {
 	-moz-appearance:textfield;
 }
 
@@ -2182,12 +2238,6 @@ button.start-custom-poll {
 	gap: 10px;
 }
 
-#userSortBoxes.options {
-	display: flex;
-	flex-direction: row;
-	justify-content: left;
-	margin-bottom: 20px;
-}
 
 #pollResForm #responses {
 	display: flex;
@@ -2289,15 +2339,15 @@ button.start-custom-poll {
     margin: auto;
     width: max-content;
     padding: 20px;
+	position: relative;
 }
 
 #apiKeyButton {
-    margin-top: 30px;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: stretch;
-    gap: 20px;
+    gap: 10px;
 }
 
 div#profileInformation h1 {
@@ -2308,7 +2358,8 @@ p#displayName,
 p#email,
 p#digipogs,
 p#userId,
-p#apiKey {
+p#apiKey,
+p#pin {
     margin: 20px auto;
     font-size: 20px;
     width: 100%;
@@ -2318,8 +2369,8 @@ p#apiKey {
     gap: 20px;
 }
 
-p#apiKey {
-    overflow: scroll;
+p#pin {
+	justify-content: start !important;
 }
 
 button img {
@@ -2358,7 +2409,7 @@ button img {
     gap: 10px;
 }
 
-#newPoll {
+#newPoll.tabContent {
     height: 100%;
     overflow: scroll;
 }
@@ -2411,4 +2462,94 @@ div.mobileSpacer {
 
 *:not(details)[hidden] {
 	display: none !important;
+}
+
+#ticket,
+#otherText {
+	resize: none;
+}
+
+#editPin {
+	z-index: 15;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+#editPinForm {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.editPinInputs {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-direction: row;
+	gap: 20px;
+}
+
+.pogMeter {
+    position: absolute;
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.pogMeter p {
+	margin: 0;
+    margin-bottom: 15px;
+}
+
+
+#userSortBoxes.options {
+	display: flex;
+	flex-direction: row;
+	justify-content: left;
+	margin-bottom: 20px;
+	padding: 0 !important;
+}
+
+#pogMeter {
+	height: 430px;
+    width: 80px;
+	padding: -0;
+    overflow: hidden;
+}
+
+#pogMeterFill {
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(to top, #3f69bb, #a763ff);
+	mask-image: linear-gradient(to top, black 0%, black var(--pogPercent), transparent var(--pogPercent), transparent 100%);
+}
+
+.endBreakButton {
+	margin-top: 0 !important;
+}
+
+.permSwitch {
+  	grid-column: span 2;
+}
+
+#digipogButtons {
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	gap: 5px;
+	padding: 10px;
+}
+
+.digipogAward {
+	width: 50% !important;
+	padding: 0 !important;
+}
+
+.digipogSend {
+	flex-grow: 1;
 }

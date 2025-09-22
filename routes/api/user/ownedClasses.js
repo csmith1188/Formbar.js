@@ -1,12 +1,12 @@
-const { logger } = require("../../modules/logger")
-const { dbGet } = require("../../modules/database");
-const { getUserOwnedClasses} = require("../../modules/user");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { logger } = require("../../../modules/logger")
+const { dbGet } = require("../../../modules/database");
+const { getUserOwnedClasses} = require("../../../modules/user");
+const { httpPermCheck } = require("../../middleware/permissionCheck");
 
 module.exports = {
     run(router) {
-        // Gets a class by id
-        router.get('/profile/:id/ownedClasses', httpPermCheck('getOwnedClasses'), async (req, res) => {
+        // Gets a user's owned classes
+        router.get('/user/:id/ownedClasses', httpPermCheck('getOwnedClasses'), async (req, res) => {
             try {
                 const userId = req.params.id;
                 const user = await dbGet('SELECT * FROM users WHERE id = ?', [userId]);

@@ -1,10 +1,10 @@
-const { logger } = require("../../modules/logger");
-const { httpPermCheck } = require("../middleware/permissionCheck");
-const { deleteUser } = require("../../modules/user");
+const { logger } = require("../../../modules/logger");
+const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { deleteUser } = require("../../../modules/user");
 
 module.exports = {
     run(router) {
-        // Retrieves the current class the user is in
+        // Deletes a user from Formbar
         router.get('/user/:id/delete', httpPermCheck("deleteUser"), async (req, res) => {
             try {
                 const userId = req.params.id;

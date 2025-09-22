@@ -85,9 +85,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	requestConversion: STUDENT_PERMISSIONS,
-	installPlugin: TEACHER_PERMISSIONS,
-	uninstallPlugin: TEACHER_PERMISSIONS,
-	swapPlugin: TEACHER_PERMISSIONS,
 	getPreviousPolls: TEACHER_PERMISSIONS,
 }
 

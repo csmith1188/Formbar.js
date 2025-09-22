@@ -2,17 +2,12 @@ const { logger } = require("../../modules/logger")
 
 module.exports = {
     run(router) {
-        // Gets the current user
+        // Gets the current user's information
         router.get('/me', async (req, res) => {
 			try {
-				// Log the request details
+				// Log the request details and get the user's session information
 				logger.log('info', `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
-				// Get the user from the session
 				const user = req.session.user;
-
-				// Log the user's data
-				logger.log('verbose', `[get api/me] response=(${JSON.stringify(user)})`);
 
 				// Send the user's data as a JSON response
 				res.status(200).json(user);

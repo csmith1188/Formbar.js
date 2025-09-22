@@ -4,7 +4,7 @@ module.exports = {
     run(socket, socketUpdates) {
         socket.on('classUpdate', () => {
             logger.log('info', `[classUpdate] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-            socketUpdates.classUpdate()
+            socketUpdates.classUpdate(socket.request.session.classId, { global: false } )
         });
 
         socket.on('customPollUpdate', () => {
