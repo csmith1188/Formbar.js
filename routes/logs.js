@@ -11,7 +11,7 @@ module.exports = {
                 logger.log('info', `[get /logs] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
 
                 const logs = fs.readdirSync('./logs').filter((fileName) => fileName.endsWith('.log'));
-                res.render('pages/logs', { logs, title: 'Logs', });
+                res.render('pages/logs', { logs });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
