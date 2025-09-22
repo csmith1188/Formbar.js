@@ -71,7 +71,7 @@ async function transferDigipogs(transferData) {
         }
 
         const newFromBalance = fromUser.digipogs - amount;
-        const newToBalance = toUser.digipogs + amount * .95;
+        const newToBalance = Math.floor(toUser.digipogs + amount * .95); // 5% fee. Math.floor to avoid fractional digipogs
 
         try {
             await Promise.all([

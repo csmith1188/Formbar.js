@@ -38,7 +38,7 @@ module.exports = {
 
                         // Perform the transfer
                         const newFromBalance = fromUser.digipogs - amount;
-                        const newToBalance = toUser.digipogs + amount * 0.95; // Deduct 5% fee
+                        const newToBalance = Math.floor(toUser.digipogs + amount * 0.95); // 5% fee. Math.floor to avoid fractional digipogs
 
                         // Set up respective update promises
                         const updateFrom = new Promise((resolve, reject) => {
