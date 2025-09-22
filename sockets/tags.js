@@ -8,7 +8,7 @@ module.exports = {
             try {
                 await setTags(tags, socket.request.session);
                 socketUpdates.classUpdate();
-                socket.emit('setTags', 'success');
+                socket.emit('message', 'Successfully set tags.');
             } catch (err) {
                 logger.log('error', err.stack);
                 socket.emit('message', 'There was a server error try again.');
@@ -20,7 +20,7 @@ module.exports = {
             try {
                 await saveTags(studentId, tags, socket.request.session);
                 socketUpdates.classUpdate();
-                socket.emit('saveTags', 'success');
+                socket.emit('message', 'Successfully saved tags.');
             } catch (err) {
                 logger.log('error', err.stack);
                 socket.emit('message', 'There was a server error try again.');

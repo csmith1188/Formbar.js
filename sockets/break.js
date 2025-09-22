@@ -3,12 +3,15 @@ const { requestBreak, approveBreak, endBreak } = require("../modules/class/break
 module.exports = {
     run(socket, socketUpdates) {
         // Sends a break ticket
-        socket.on('requestBreak', (reason) => {
-            requestBreak(reason, socket.request.session);
+        socket.on('requestBreak', async (reason) => {
+            const result = await requestBreak(reason, socket.request.session);
+            if (result !== true) {
+                socket.emit('message', result);
+            }
         });
 
         // Approves the break ticket request
-        socket.on('approveBreak', async (breakApproval, userId) => {
+        socket.on('approveBreak', (breakApproval, userId) => {
             approveBreak(breakApproval, userId, socket.request.session);
         })
 

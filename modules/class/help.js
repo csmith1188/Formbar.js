@@ -39,11 +39,11 @@ function sendHelpTicket(reason, userSession) {
     }
 }
 
-function deleteHelpTicket(studentId, userSession) {
+async function deleteHelpTicket(studentId, userSession) {
     try {
         const classId = userSession.classId;
         const email = userSession.email;
-        const studentEmail = getEmailFromId(studentId);
+        const studentEmail = await getEmailFromId(studentId);
         logger.log('info', `[deleteTicket] session=(${JSON.stringify(userSession)})`);
         logger.log('info', `[deleteTicket] student=(${studentEmail})`);
 

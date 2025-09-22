@@ -3,13 +3,16 @@ const { sendHelpTicket, deleteHelpTicket } = require("../modules/class/help");
 module.exports = {
     run(socket, socketUpdates) {
         // Sends a help ticket
-        socket.on('help', (reason) => {
-            sendHelpTicket(reason, socket.request.session);
+        socket.on('help', async (reason) => {
+            const result = await sendHelpTicket(reason, socket.request.session);
+            if (result !== true) {
+                socket.emit('message', result);
+            }
         })
 
         // Deletes help ticket
         socket.on('deleteTicket', async (studentId) => {
-            deleteHelpTicket(studentId, socket.request.session);
+            await deleteHelpTicket(studentId, socket.request.session);
         })
     }
 }
