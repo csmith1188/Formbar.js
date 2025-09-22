@@ -5,7 +5,7 @@ const { httpPermCheck } = require("../../middleware/permissionCheck");
 
 module.exports = {
     run(router) {
-        // Gets a class by id
+        // Gets a user's owned classes
         router.get('/user/:id/ownedClasses', httpPermCheck('getOwnedClasses'), async (req, res) => {
             try {
                 const userId = req.params.id;

@@ -458,7 +458,8 @@ class SocketUpdates {
                     delete classInformation.classrooms[classId].students[email];
                 } else {
                     student.activeClass = null;
-                    student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+                    student.tags = 'Offline';
+                    classInformation.users[email] = student;
                 }
             }
             logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);

@@ -41,6 +41,7 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))

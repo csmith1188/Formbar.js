@@ -27,6 +27,7 @@ function requestBreak(reason, userSession) {
 
         logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classroom.students[email])})`);
         socketUpdates.classUpdate(classId);
+        return true;
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -49,6 +50,7 @@ async function approveBreak(breakApproval, userId, userSession) {
             io.to(`user-${email}`).emit('break');
         }
         socketUpdates.classUpdate();
+        return true;
     } catch (err) {
         logger.log('error', err.stack)
     }
@@ -65,6 +67,7 @@ function endBreak(userSession) {
 
         logger.log('verbose', `[endBreak] user=(${JSON.stringify(classroom.students[userSession.email])})`);
         socketUpdates.classUpdate();
+        return true;
     } catch (err) {
         logger.log('error', err.stack)
     }

@@ -60,12 +60,6 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = Object.keys(classInformation.classrooms[classId].students)
         }
 
-        if (indeterminate) {
-            classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
-        } else {
-            classInformation.classrooms[classId].poll.studentIndeterminate = []
-        }
-
         // Creates an object for every answer possible the teacher is allowing
         const letterString = 'abcdefghijklmnopqrstuvwxyz'
         for (let i = 0; i < numberOfResponses; i++) {

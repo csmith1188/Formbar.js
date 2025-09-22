@@ -6,7 +6,7 @@ const { CLASS_PERMISSIONS } = require("../../../modules/permissions");
 module.exports = {
     run(router) {
         // Starts a class session
-        router.post('/class/:id/start', httpPermCheck("startClass"), classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+        router.post('/class/:id/start', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
                 const classId = req.params.id
                 startClass(classId);

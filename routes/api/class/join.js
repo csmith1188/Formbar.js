@@ -8,6 +8,7 @@ module.exports = {
         router.post('/class/:id/join', httpPermCheck("joinClass"), async (req, res) => {
             try {
                 joinClass(req.session)
+                res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

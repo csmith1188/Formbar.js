@@ -1,11 +1,11 @@
 const { classInformation } = require("../../../modules/class/classroom")
 const { logger } = require("../../../modules/logger")
 const { dbGet } = require("../../../modules/database");
-const {MANAGER_PERMISSIONS} = require("../../../modules/permissions");
+const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
-        // Gets a class by id
+        // Gets a user by id
         router.get('/user/:id', async (req, res) => {
             try {
                 const userId = req.params.id;
