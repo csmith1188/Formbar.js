@@ -1,6 +1,5 @@
 const { dbGetAll } = require("../../../modules/database");
 module.exports = {
-    noTransaction: true,
     async run(database) {
         const columns = await dbGetAll('PRAGMA table_info(transactions)', [], database);
         const digipogsColumn = columns.find(column => column.name === 'digipogs');
