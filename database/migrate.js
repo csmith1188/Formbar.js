@@ -118,10 +118,7 @@ async function executeSQLMigration(migration) {
 async function executeJSMigration(migration) {
     try {
         const migrationModule = require(migration.path);
-
-        database.run('BEGIN TRANSACTION');
         await migrationModule.run(database);
-        database.run('COMMIT');
     } catch (err) {
         if (err.message === "ALREADY_DONE") {
             console.log("Unable to complete migration as this migration has already been run. Continuing to next migration.");

@@ -69,7 +69,7 @@ module.exports = {
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
                     pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : null
+                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : "Hidden"
                 });
             } catch (err) {
                 logger.log('error', err.stack);
