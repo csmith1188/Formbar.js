@@ -257,6 +257,11 @@ socket.on('classUpdate', (classroomData) => {
         newTagDiv.appendChild(addTagButton)
 
         tagOptionsDiv.appendChild(newTagDiv)
+
+        // After rebuilding tag options, refresh student tag buttons
+        if (typeof updateStudentTags === 'function') {
+            updateStudentTags();
+        }
     }
 
     filterSortChange(classroomData)
