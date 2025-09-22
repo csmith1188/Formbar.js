@@ -1,13 +1,19 @@
 
-const URL = 'http://localhost:420';
+const URL = 'http://172.16.3.164:420';
 const classID = 's1gx';
 
 // Helper to parse Set-Cookie header
 function getCookie(res) {
+    console.log(res.headers);
+    
     const raw = res.headers.get('set-cookie');
+    console.log(raw);
+    
     if (!raw) return '';
     // Only grab the session cookie
     const match = raw.match(/connect\.sid=[^;]+/);
+    console.log(match);
+    
     return match ? match[0] : '';
 }
 
@@ -18,11 +24,20 @@ async function loginAndJoinClass() {
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: `displayName=BobGuest&loginType=guest`
+        body: `displayName=${encodeURIComponent('BobGuest2')}&loginType=${encodeURIComponent('guest')}`,
+        credentials: 'include',
+        
     });
+        // Debug: print status and headers
+        console.log('Login response status:', loginRes.status);
+        console.log('Login response headers:', loginRes.headers);
+        // Print all headers for inspection
+        for (const [key, value] of loginRes.headers.entries()) {
+            console.log(`${key}: ${value}`);
+        }
     const cookie = getCookie(loginRes);
     const loginText = await loginRes.text();
-    console.log('Login response:', loginText);
+        // console.log('Login response body:', loginText);
 
     if (!cookie) {
         console.log('No session cookie received. Cannot join class.');
