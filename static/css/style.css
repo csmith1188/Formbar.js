@@ -2432,7 +2432,8 @@ button img {
 .logButton {
 	font-size: 2cqmin !important;
 	overflow: hidden;
-	width: 180px;
+	width: 100%;
+	max-width: 290px;
 	height: 75px;
 	text-align: center;
 }
