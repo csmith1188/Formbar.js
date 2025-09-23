@@ -37,6 +37,7 @@ function updateStudentTags() {
     const tags = getTags();
     for (const student of usersDiv.children) {
         // Get student tag elements
+        if(student.nodeName.toLowerCase() == 'h1') continue;
         const roomTags = student.querySelector('#roomTags');
         const studTagsSpan = student.querySelector('#studentTags');
         const email = student.id.split('-')[1];

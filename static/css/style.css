@@ -1778,6 +1778,7 @@ body.nooverflow {
 
 div.userMenuCp {
 	flex: 1 1 auto;
+	height: calc(100% - 100px);
 }
 
 div#controlFooter {
@@ -1893,6 +1894,7 @@ div.sideBySide {
 	max-height: unset;
 	height: min-content;
 	padding: 0 !important;
+	flex-shrink: 0 !important;
 }
 
 .controlStudent summary {
@@ -2563,4 +2565,12 @@ div.mobileSpacer {
 
 .activePollButton {
 	box-shadow: 0px 0px 15px 5px var(--color);
+}
+
+#openCloseMoreOptions {
+	position: absolute;
+	height: 60px;
+	width: 60px;
+	padding: 5px;
+	top: -80px;
 }
