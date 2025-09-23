@@ -1,7 +1,7 @@
 const { classInformation } = require('./class/classroom')
 const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
-const { userSockets, managerUpdate, SocketUpdates} = require("./socketUpdates");
+const { userSockets, managerUpdate } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
 
 /**
@@ -120,28 +120,25 @@ async function getUser(api) {
     }
 }
 
-async function deleteUser(userId, socket, socketUpdates) {
+async function deleteUser(userId, userSession) {
     try {
-        logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
+        logger.log('info', `[deleteUser] session=(${JSON.stringify(userSession)})`)
         logger.log('info', `[deleteUser] userId=(${userId})`)
-        if (!socketUpdates) {
-            socketUpdates = socket ? new SocketUpdates(socket) : new SocketUpdates({ request: { session: {} }, emit: () => {} });
-        }
 
-        const user = await new Promise((resolve, reject) => {
-            database.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
-                if (err) reject(err)
-                resolve(user)
-            })
-        })
-
+        const user = await dbGet('SELECT * FROM users WHERE id=?', [userId]);
         if (!user) {
-            if (socket && socket.emit) socket.emit('message', 'User not found')
+            if (socket && socket.emit) {
+                socket.emit('message', 'User not found')
+            }
             return
         }
 
         const userSocketsMap = userSockets[user.email];
         const usersSocketUpdates = userSocketUpdates[user.email];
+        if (!usersSocketUpdates) {
+            return;
+        }
+
         if (userSocketsMap && usersSocketUpdates) {
             const anySocket = Object.values(userSocketsMap)[0];
             if (anySocket) {
@@ -151,15 +148,15 @@ async function deleteUser(userId, socket, socketUpdates) {
 
         try {
             await dbRun('BEGIN TRANSACTION')
-
             await Promise.all([
                 dbRun('DELETE FROM users WHERE id=?', userId),
                 dbRun('DELETE FROM classusers WHERE studentId=?', userId),
                 dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
             ])
 
-            await socketUpdates.deleteCustomPolls(userId)
-            await socketUpdates.deleteClassrooms(userId)
+            // await userSocketUpdates.deleteCustomPolls(userId)
+            console.log(userSocketUpdates)
+            await userSocketUpdates.deleteClassrooms(userId)
 
             // If the student is online, remove them from any class they're in and update the control panel
             const student = classInformation.users[user.email];
@@ -169,7 +166,7 @@ async function deleteUser(userId, socket, socketUpdates) {
                 delete classInformation.users[user.email];
                 if (classroom) {
                     delete classroom.students[user.email];
-                    socketUpdates.classUpdate();
+                    userSocketUpdates.classUpdate();
                 }
             }
 

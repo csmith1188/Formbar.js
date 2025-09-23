@@ -71,25 +71,32 @@ app.use((req, res, next) => {
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
+    res.locals = {
+        ...res.locals,
+        MANAGER_PERMISSIONS,
+        TEACHER_PERMISSIONS,
+        MOD_PERMISSIONS,
+        STUDENT_PERMISSIONS,
+        GUEST_PERMISSIONS,
+        BANNED_PERMISSIONS
+    }
+
     // If the user is in a class, then get the user from the class students list
     // This ensures that the user data is always up to date
 	if (req.session.classId) {
         const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-		classInformation.users[req.session.email] = user;
+		if (!user) {
+            res.locals.currentUser = classInformation.users[req.session.email];
+            next();
+            return;
+        }
+
+        classInformation.users[req.session.email] = user;
         res.locals.currentUser = user;
 	} else {
         res.locals.currentUser = classInformation.users[req.session.email];
     }
 
-	res.locals = {
-		...res.locals,
-		MANAGER_PERMISSIONS,
-		TEACHER_PERMISSIONS,
-		MOD_PERMISSIONS,
-		STUDENT_PERMISSIONS,
-		GUEST_PERMISSIONS,
-		BANNED_PERMISSIONS
-	}
 	next()
 })
 

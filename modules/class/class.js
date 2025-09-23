@@ -178,8 +178,8 @@ async function leaveRoom(userSession) {
         socketUpdates.classUpdate(classId);
 
         // Play leave sound and reload the user's page
-        advancedEmitToClass('leaveSound', userSession.classId, {});
-        emitToUser(email, 'reload');
+        await advancedEmitToClass('leaveSound', classId, {});
+        await emitToUser(email, 'reload');
         return true;
     } catch (err) {
         logger.log('error', err.stack)
