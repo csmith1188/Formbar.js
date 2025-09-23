@@ -6,7 +6,8 @@ const { logger } = require("./logger");
 // transferResponse
 async function awardDigipogs(awardData) {
     try {
-        const { from, to, amount } = awardData;
+        const { from, to } = awardData;
+        const amount = Math.ciel(awardData.amount); // Ensure amount is an integer
         const reason = "Awarded";
 
         if (!from || !to || !amount) {
@@ -46,7 +47,8 @@ async function awardDigipogs(awardData) {
 
 async function transferDigipogs(transferData) {
     try {
-        const { from, to, amount, pin, reason = "" } = transferData;
+        const { from, to, pin, reason = "" } = transferData;
+        const amount = Math.ciel(awardData.amount); // Ensure amount is an integer
 
         if (!from || !to || !amount || !pin || !reason) {
             return { success: false, message: "Missing required fields." };
