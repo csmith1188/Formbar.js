@@ -4,7 +4,7 @@
 const bcrypt = require('bcrypt');
 
 // Increases time to log in/verify
-const saltRounds = 1;
+const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
 
 /**
  * Generates a hash for the given text using bcrypt with a specified number of salt rounds.

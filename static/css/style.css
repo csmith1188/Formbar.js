@@ -77,7 +77,7 @@
 	--darkMode-button-pressed-bg: #004ce394;
 	--darkMode-button-pressed-hover-bg: #286aee94;
 
-	--button-hover-scale: 1.05;
+	--button-hover-scale: 1.025;
 }
 
 body {
@@ -1445,6 +1445,7 @@ button:disabled:hover {
 	color: white !important;
 	background-color: var(--lightMode-button-bg);
 	border: 2px solid var(--lightMode-button-border);
+	outline: 2px solid #fff4;
 	border-radius: 10px;
 	font-size: 24px;
 	padding: 5px 20px;
@@ -1481,10 +1482,12 @@ button:disabled:hover {
 	align-items: center;
 	cursor: pointer;
 	border: 2px solid var(--lightMode-button-border);
-	margin-right: 5px;
+	margin-right: 10px;
 	transform-origin: center;
 	transition: 
 		0.2s transform ease-in-out;
+	outline: 2px solid #fff4;
+	
 }
 
 .squareButton {
@@ -1637,6 +1640,7 @@ a.link:visited {
 	border-radius: var(--borderRadius);
 	border: 2px solid var(--lightMode-menu-border);
 	background: var(--lightMode-menu-bg);
+	outline: 2px solid #0004;
 }
 
 .revampDivAlt {
@@ -1644,6 +1648,7 @@ a.link:visited {
 	border-radius: var(--borderRadius);
 	border: 2px solid var(--darkMode-menu-border);
 	background: var(--darkMode-menu-bg);
+	outline: 2px solid #fff4;
 }
 
 .revampDiv.spaceBetween {
@@ -1883,6 +1888,7 @@ div.sideBySide {
 }
 
 .controlStudent {
+	flex-direction: column;
 	cursor: pointer;
 	max-height: unset;
 	height: min-content;
@@ -2426,7 +2432,8 @@ button img {
 .logButton {
 	font-size: 2cqmin !important;
 	overflow: hidden;
-	width: 180px;
+	width: 100%;
+	max-width: 290px;
 	height: 75px;
 	text-align: center;
 }
@@ -2552,4 +2559,8 @@ div.mobileSpacer {
 
 .digipogSend {
 	flex-grow: 1;
+}
+
+.activePollButton {
+	box-shadow: 0px 0px 15px 5px var(--color);
 }
