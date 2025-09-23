@@ -43,6 +43,7 @@ const DEFAULT_CLASS_PERMISSIONS = {
 // This defines global socket permissions that define who can use each socket event
 const GLOBAL_SOCKET_PERMISSIONS = {
 	permChange: MANAGER_PERMISSIONS,
+	verifyChange: MANAGER_PERMISSIONS,
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
