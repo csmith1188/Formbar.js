@@ -135,6 +135,17 @@ function buildStudent(classroom, studentData) {
             let div = document.createElement('div')
             div.textContent = '⏱'
             alertSpan.appendChild(div)
+
+            let endBreakButton = document.createElement('button')
+            endBreakButton.classList.add('quickButton', 'revampButton')
+            endBreakButton.dataset.studentName = studentData.id
+            endBreakButton.onclick = (event) => {
+                approveBreak(false, studentData.id)
+            }
+            endBreakButton.textContent = 'End Break'
+
+            breakReason.appendChild(endBreakButton)
+
             newStudent.classList.add('break')
         }
 
