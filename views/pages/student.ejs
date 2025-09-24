@@ -163,26 +163,25 @@
 								pollForm.innerHTML = ''
 								pollPromptDisplay.innerText = poll.prompt
 								// Creates all selectable answers and displays them to the user
-								for (let response of Object.values(poll.responses)) {
-									console.log(multiAnswer)
-									if(multiAnswer !== 'button') {
-										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+								if (!poll.allowTextResponses) {
+									for (let response of Object.values(poll.responses)) {
+										console.log(multiAnswer)
+										if(multiAnswer !== 'button') {
+											response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
 
-										pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
-									} else {
-										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+											pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
+										} else {
+											response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+											pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+										}
 									}
+								} else {
+									pollForm.innerHTML += `<textarea name="resText" cols="50" rows="15" id="resTextBox" class='revampButton revampWithText' value="${oldTextRes}"></textarea>`
 								}
-								if (!poll.allowMultipleResponses) {
+								if (!poll.allowMultipleResponses && !poll.allowTextResponses) {
 									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
 								} else {
 									pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
-								}
-								console.log(poll)
-								if (poll.allowTextResponses) {
-									pollForm.innerHTML += `<textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
-									console.log(pollForm.innerHTML)
 								}
 							} else {
 								noPoll.style.display = 'block'
@@ -259,8 +258,6 @@
 						if (textarea) {
 							textRes = textarea.value
 						}
-						
-						console.log(lettRes)
 
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
