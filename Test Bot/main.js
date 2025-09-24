@@ -1,61 +1,67 @@
+const axios = require('axios').default;
+const tough = require('tough-cookie');
 
-const URL = 'http://172.16.3.164:420';
+const URL = 'http://localhost:420';
 const classID = 's1gx';
 
-// Helper to parse Set-Cookie header
-function getCookie(res) {
-    console.log(res.headers);
-    
-    const raw = res.headers.get('set-cookie');
-    console.log(raw);
-    
-    if (!raw) return '';
-    // Only grab the session cookie
-    const match = raw.match(/connect\.sid=[^;]+/);
-    console.log(match);
-    
-    return match ? match[0] : '';
+// Store all user sessions
+const userSessions = [];
+
+async function createFakeGuest(displayName) {
+    const { wrapper } = await import('axios-cookiejar-support'); // dynamic import
+    const jar = new tough.CookieJar();
+    const client = wrapper(axios.create({ jar, withCredentials: true }));
+
+    try {
+        // Login as guest
+        const loginResponse = await client.post(
+            `${URL}/login`,
+            new URLSearchParams({ displayName, loginType: 'guest' }),
+            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        );
+        console.log(`✓ ${displayName} logged in (status ${loginResponse.status})`);
+
+        // Join the class
+        const classResponse = await client.post(
+            `${URL}/selectClass`,
+            new URLSearchParams({ key: classID }),
+            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        );
+        console.log(`  → ${displayName} joined class (status ${classResponse.status})`);
+
+        // Keep track of this user’s session
+        userSessions.push({ name: displayName, client, jar });
+        return { name: displayName, client, jar };
+
+    } catch (error) {
+        console.log(`✗ Error for ${displayName}:`, error.response?.status, error.response?.data);
+        return null;
+    }
 }
 
-async function loginAndJoinClass() {
-    // Step 1: Login as guest
-    const loginRes = await fetch(`${URL}/login`, {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `displayName=${encodeURIComponent('BobGuest2')}&loginType=${encodeURIComponent('guest')}`,
-        credentials: 'include',
-        
-    });
-        // Debug: print status and headers
-        console.log('Login response status:', loginRes.status);
-        console.log('Login response headers:', loginRes.headers);
-        // Print all headers for inspection
-        for (const [key, value] of loginRes.headers.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-    const cookie = getCookie(loginRes);
-    const loginText = await loginRes.text();
-        // console.log('Login response body:', loginText);
+async function createThirtyGuests() {
+    console.log('Creating 30 fake guest users...');
 
-    if (!cookie) {
-        console.log('No session cookie received. Cannot join class.');
-        return;
+    // Fire off all 30 at once
+    const promises = [];
+    for (let i = 1; i <= 30; i++) {
+        const name = `guest${i}`;
+        promises.push(createFakeGuest(name));
     }
 
-    // Step 2: Join the class (assuming /joinClass endpoint exists)
-    // If you have a specific endpoint for joining, use it. Otherwise, this is a placeholder.
-    const joinRes = await fetch(`${URL}/joinClass`, {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Cookie": cookie
-        },
-        body: `classID=${classID}`
+    await Promise.all(promises);
+
+    console.log(`\nFinished creating users. Total active sessions: ${userSessions.length}`);
+
+    // Verify sessions are unique
+    console.log('\nTesting sessions are unique:');
+    userSessions.forEach((session, index) => {
+        const cookies = session.jar.getCookiesSync(URL);
+        console.log(`Session ${index + 1}: ${session.name}, Cookie count: ${cookies.length}`);
     });
-    const joinText = await joinRes.text();
-    console.log('Join class response:', joinText);
+
+    console.log('\nSessions are active. Press Ctrl+C to exit.');
+    process.stdin.resume();
 }
 
-loginAndJoinClass().catch(err => console.log('Error:', err));
+createThirtyGuests().catch(err => console.error('Fatal error:', err));

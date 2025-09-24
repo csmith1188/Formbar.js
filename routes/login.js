@@ -450,7 +450,7 @@ module.exports = {
                     const email = 'guest' + crypto.randomBytes(4).toString('hex');
                     const student = new Student(
                         email, // email
-                        -1, // Id
+                        `guest_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`, // Unique ID for guest
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls
@@ -467,54 +467,10 @@ module.exports = {
                     // Add a cookie to transfer user credentials across site
                     req.session.userId = student.id;
                     req.session.email = student.email;
-                    req.session.email = student.email;
                     req.session.tags = student.tags;
                     req.session.displayName = student.displayName;
                     req.session.verified = student.verified;
                     res.redirect('/');
-                } else if (user.loginType == 'pseudoUser') { //<><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<><><><><><><><><><<>
-                    if (user.displayName.trim() == '') {
-                        logger.log('verbose', '[post /login] Invalid display name provided to create pseudoUser user');
-                        console.log("BAd!")
-                        res.render('pages/message', {
-                            message: 'Invalid display name. Please try again.',
-                            title: 'Login'
-                        });
-                        return;
-                    }
-                    logger.log('verbose', '[post /login] Logging in as guest');
-                    console.log('yay')
-
-                    // Create a temporary guest user
-                    const email = 'guest' + crypto.randomBytes(4).toString('hex');
-                    const student = new Student(
-                        email, // email
-                        -1, // Id
-                        STUDENT_PERMISSIONS,
-                        null, // API key
-                        [], // Owned polls
-                        [], // Shared polls
-                        "", // Tags
-                        user.displayName,
-                        true
-                    );
-                    console.log(student)
-                    classInformation.users[student.email] = student;
-
-                    // Set their current class to the specified class
-                    req.session.classId = user.classID;
-                    console.log(user.classID)
-
-                    // Add a cookie to transfer user credentials across site
-                    req.session.userId = student.id;
-                    req.session.email = student.email;
-                    req.session.email = student.email;
-                    req.session.tags = student.tags;
-                    req.session.displayName = student.displayName;
-                    req.session.verified = student.verified;
-                    req.session.save(() => {
-                        res.redirect('/');
-                    });
                 }
             } catch (err) {
                 logger.log('error', err.stack);

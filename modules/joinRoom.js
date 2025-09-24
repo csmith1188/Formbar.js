@@ -7,7 +7,6 @@ const { userSocketUpdates } = require("../sockets/init");
 const {io} = require("./webServer");
 
 async function joinRoomByCode(code, session) {
-	console.log('Yippie Kiyae', session)
 	try {
         const email = session.email;
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
