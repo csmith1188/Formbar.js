@@ -1,13 +1,13 @@
 const { logger } = require("./logger");
 const { Classroom, classInformation } = require("./class/classroom");
-const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS} = require("./permissions");
+const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
 
 async function joinRoomByCode(code, session) {
 	try {
-        const email = session.email;
+		const email = session.email;
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
 
 		// Find the id of the class from the database
@@ -84,12 +84,12 @@ async function joinRoomByCode(code, session) {
 			currentUser.activeClass = classroom.id;
 			currentUser.tags = '';
 			classInformation.users[email].tags = '';
-			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => {});
+			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => { });
 
-            // Redact the API key from the classroom user to prevent it from being sent anywhere
-            const studentAPIKey = currentUser.API;
-            currentUser = structuredClone(currentUser);
-            currentUser.API = undefined;
+			// Redact the API key from the classroom user to prevent it from being sent anywhere
+			const studentAPIKey = currentUser.API;
+			currentUser = structuredClone(currentUser);
+			currentUser.API = undefined;
 
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
@@ -102,7 +102,12 @@ async function joinRoomByCode(code, session) {
 
 			// Set the class of the API socket
 			setClassOfApiSockets(studentAPIKey, classroom.id);
-            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true });
+
+			// Only call classUpdate if userSocketUpdates exists for this email (guests don't have this)
+			if (userSocketUpdates[email]) {
+				userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true });
+			}
+
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		} else {
@@ -126,12 +131,12 @@ async function joinRoomByCode(code, session) {
 			let currentUser = classInformation.users[email]
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
 			currentUser.activeClass = classroom.id
-            currentUser.tags = '';
+			currentUser.tags = '';
 
-            // Redact the API key from the classroom user to prevent it from being sent anywhere
-            const studentAPIKey = currentUser.API;
-            currentUser = structuredClone(currentUser);
-            currentUser.API = undefined;
+			// Redact the API key from the classroom user to prevent it from being sent anywhere
+			const studentAPIKey = currentUser.API;
+			currentUser = structuredClone(currentUser);
+			currentUser.API = undefined;
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
@@ -143,8 +148,13 @@ async function joinRoomByCode(code, session) {
 				classData.permissions.manageClass
 			)
 
-            setClassOfApiSockets(studentAPIKey, classroom.id);
-            userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true })
+			setClassOfApiSockets(studentAPIKey, classroom.id);
+
+			// Only call classUpdate if userSocketUpdates exists for this email (guests don't have this)
+			if (userSocketUpdates[email]) {
+				userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true })
+			}
+
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
 		}
@@ -154,5 +164,5 @@ async function joinRoomByCode(code, session) {
 }
 
 module.exports = {
-    joinRoomByCode,
+	joinRoomByCode,
 }
