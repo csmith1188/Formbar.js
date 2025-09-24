@@ -71,7 +71,7 @@
 
     #studentVBar {
         flex-direction: column;
-        margin-top: 100px;
+        margin-top: 10vh;
         gap: 20px;
         width: 100% !important;
         height: calc(100% - 120px) !important;
@@ -80,6 +80,7 @@
     #VBOptions {
         background: none !important;
         border: none !important;
+        outline: none !important;
     }
 
     canvas#virtualbar {
@@ -104,10 +105,37 @@
         padding: 5px;
     }
 
+    #pollResForm {
+        margin-top: 10px;
+    }
+
+    #pollResForm > .responses {
+        max-height: 7.5rem !important;
+    }
+
+    #pollResForm .response {
+        gap: 5px !important;
+        width: 100%;
+    }
+
+    #pollResForm .response > input.answerName {
+        width: 100% !important;
+    }
+
     #quickMenu.dividedThree {
         width: 100% !important;
     }
 
+    #pollResForm .pollInfo {
+        width: 100%;
+        justify-content: start !important;
+        gap: 5px !important;
+        height: min-content !important;
+    }
+
+    #newPoll {
+        width: 100%;
+    }
 
     #pollDetails {
         cursor: auto !important;
@@ -407,7 +435,7 @@
     }
 
     #pollPrompt {
-        font-size: 6cqw !important;
+        font-size: 4vh !important;
         white-space: nowrap;
     }
 
@@ -505,8 +533,9 @@
         z-index: 3;
     }
 
-    #tagOptions {
-        width: 100%;
+    #tagOptions,
+    #tagsList {
+        width: 80vw !important;
     }
 
     #vbOptionsNext,
@@ -515,26 +544,34 @@
         padding: 10px !important;
     }
     
-
-    #pollResForm,
-    .pollOptionsEditor,
-    #generalOptions {
-        display: none !important;
+    
+    #pollResForm input[type="checkbox"] {
+        width: 3em !important;
+        height: 3em !important;
+        vertical-align: middle;
     }
+
 
     #newPoll {
         padding-bottom: 0 !important;
         height: unset !important;
     }
 
-    #newPoll.tabContent::after {
-        content: 'Coming Soon to Mobile!';
-        line-height: 45px;
-        font-style: italic;
-    }
-
     #settingsFunc {
         width: 100%;
+    }
+
+    .pollChangers {
+        display: flex;
+        justify-content: space-between;
+        margin: 5px 0;
+        flex-direction: row;
+    }
+
+    .pollOptionsEditorOption,
+    #save-poll {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
     }
 
     div.settingsFuncClassName * {
