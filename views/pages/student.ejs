@@ -165,7 +165,6 @@
 								// Creates all selectable answers and displays them to the user
 								if (!poll.allowTextResponses) {
 									for (let response of Object.values(poll.responses)) {
-										console.log(multiAnswer)
 										if(multiAnswer !== 'button') {
 											response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
 
