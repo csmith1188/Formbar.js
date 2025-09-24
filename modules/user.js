@@ -3,6 +3,7 @@ const { database, dbGetAll, dbGet, dbRun} = require('./database')
 const { logger } = require('./logger')
 const { userSockets, managerUpdate } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
+const { deleteRooms } = require("./class/class");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -135,10 +136,6 @@ async function deleteUser(userId, userSession) {
 
         const userSocketsMap = userSockets[user.email];
         const usersSocketUpdates = userSocketUpdates[user.email];
-        if (!usersSocketUpdates) {
-            return;
-        }
-
         if (userSocketsMap && usersSocketUpdates) {
             const anySocket = Object.values(userSocketsMap)[0];
             if (anySocket) {
@@ -155,8 +152,9 @@ async function deleteUser(userId, userSession) {
             ])
 
             // await userSocketUpdates.deleteCustomPolls(userId)
-            console.log(userSocketUpdates)
-            await userSocketUpdates.deleteClassrooms(userId)
+            // await userSocketUpdates.deleteClassrooms(userId)
+            deleteRooms(userId)
+
 
             // If the student is online, remove them from any class they're in and update the control panel
             const student = classInformation.users[user.email];

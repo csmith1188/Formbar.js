@@ -10,7 +10,6 @@ module.exports = {
         router.post('/class/:id/polls/create', classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
             try {
                 const classId = req.params.id;
-                
                 const body = req.body || {};
                 const isLegacy = (
                     body.pollPrompt != null ||

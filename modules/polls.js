@@ -5,7 +5,6 @@ const { advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
-const { log } = require('winston');
 
 // Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
@@ -13,11 +12,12 @@ const pogMeterTracker = {
     pogMeterIncreased: []
 };
 
-// /**
-//  * Creates a new poll in the class.
-//  * @param pollData
-//  * @param socket
-//  */
+/**
+ * Creates a new poll in the class.
+ * @param {number} classId - The ID of the class.
+ * @param {Object} pollData - The data for the poll.
+ * @param {Object} userSession - The user session object.
+ */
 async function createPoll(classId, pollData, userSession) {
     try {
         const { prompt, pollOptions, isBlind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
@@ -104,6 +104,11 @@ async function createPoll(classId, pollData, userSession) {
     }
 }
 
+/**
+ * Ends the current poll in the specified class, saves poll data to history, and updates the class state.
+ * @param {number} classId - The ID of the class.
+ * @param {Object} userSession - The user session object.
+ */
 async function endPoll(classId, userSession) {
     try {
         logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
@@ -164,10 +169,14 @@ async function endPoll(classId, userSession) {
 }
 
 /**
- * Clears the current poll from the class
- * @param TODO
+ * Clears the current poll in the specified class, optionally updates the class state,
+ * and saves poll answers to the database.
+ *
+ * @param {number} classId - The ID of the class.
+ * @param {Object} userSession - The user session object.
+ * @param {boolean} [updateClass=true] - Whether to update the class state after clearing the poll.
  */
-async function clearPoll(classId, userSession, updateClass = true) {
+async function clearPoll(classId, userSession, updateClass = true){
     try {
         const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
@@ -225,6 +234,13 @@ async function clearPoll(classId, userSession, updateClass = true) {
     }
 }
 
+/**
+ * Handles a student's poll response, updates their answer, manages pog meter, and triggers class updates.
+ * @param {number} classId - The ID of the class.
+ * @param {(string|string[])} res - The button response(s) from the student, or 'remove' to clear.
+ * @param {string} textRes - The text response from the student.
+ * @param {Object} userSession - The user session object.
+ */
 function pollResponse(classId, res, textRes, userSession) {
     const resLength = textRes != null ? textRes.length : 0;
     logger.log('info', `[pollResp] session=(${JSON.stringify(userSession)})`)
@@ -341,6 +357,21 @@ function getPollResponses(classData) {
 
     // Return the tempPolls object
     return tempPolls
+}
+
+async function deleteCustomPolls(userId) {
+    try {
+        const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
+        if (customPolls.length == 0) return
+
+        await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
+
+        for (let customPoll of customPolls) {
+            await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
+        }
+    } catch (err) {
+        throw err
+    }
 }
 
 module.exports = {

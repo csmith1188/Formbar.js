@@ -20,11 +20,15 @@ module.exports = {
         // Inactivity timeout middleware
         socket.use(([event, ...args], next) => {
             try {
-                resetTimer()
+                resetTimer();
                 next();
             } catch (err) {
                 logger.log('error', err.stack)
             }
-        })
+        });
+
+        socket.on('disconnect', () => {
+            clearTimeout(inactivityTimer);
+        });
     }
 }
