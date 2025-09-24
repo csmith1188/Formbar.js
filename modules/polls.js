@@ -1,15 +1,16 @@
 const { classInformation } = require("./class/classroom");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
-const { currentPoll, advancedEmitToClass } = require("./socketUpdates");
+const { advancedEmitToClass } = require("./socketUpdates");
 const { database } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
+const { log } = require('winston');
 
-// Stores an object containing the earned Digipogs
+// Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
-const earnedObject = {
-    earnedDigipogs: []
+const pogMeterTracker = {
+    pogMeterIncreased: []
 };
 
 // /**
@@ -19,10 +20,14 @@ const earnedObject = {
 //  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, pollOptions, isBlind, weight, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, pollOptions, isBlind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
         const numberOfResponses = Object.keys(pollOptions).length;
         const socketUpdates = userSocketUpdates[userSession.email];
-        earnedObject.earnedDigipogs = [];
+        pogMeterTracker.pogMeterIncreased = [];
+        // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
+        pollData.weight = Math.floor((pollData.weight || 1) * 100) / 100; // Round to 2 decimal places
+        if (!pollData.weight || isNaN(pollData.weight) || pollData.weight <= 0) weight = 1;
+        let weight = pollData.weight > 5 ? 5 : pollData.weight;
 
         // Get class id and check if the class is active before continuing
         const classId = userSession.classId;
@@ -35,7 +40,7 @@ async function createPoll(classId, pollData, userSession) {
         logger.log('info', `[startPoll] session=(${JSON.stringify(userSession)})`)
         logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
 
-        await clearPoll(classId, userSession)
+        await clearPoll(classId, userSession, false)
         let generatedColors = generateColors(Object.keys(pollOptions).length)
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
@@ -53,12 +58,6 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = Object.keys(classInformation.classrooms[classId].students)
-        }
-
-        if (indeterminate) {
-            classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
-        } else {
-            classInformation.classrooms[classId].poll.studentIndeterminate = []
         }
 
         // Creates an object for every answer possible the teacher is allowing
@@ -110,8 +109,6 @@ async function endPoll(classId, userSession) {
         logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
 
         let data = { prompt: '', names: [], letter: [], text: [] }
-        currentPoll += 1
-
         let dateConfig = new Date()
         let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
 
@@ -170,11 +167,11 @@ async function endPoll(classId, userSession) {
  * Clears the current poll from the class
  * @param TODO
  */
-async function clearPoll(classId, userSession) {
+async function clearPoll(classId, userSession, updateClass = true) {
     try {
         const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
-            await endPoll()
+            await endPoll(classId, userSession)
         }
 
         classInformation.classrooms[classId].poll.responses = {};
@@ -194,7 +191,12 @@ async function clearPoll(classId, userSession) {
         // Adds data to the previous poll answers table upon clearing the poll
         for (const student of Object.values(classInformation.classrooms[classId].students)) {
             if (student.classPermissions < MANAGER_PERMISSIONS) {
-                const currentPollId = classInformation.classrooms[classId].pollHistory[currentPoll].id
+                const pollHistory = classInformation.classrooms[classId].pollHistory || []
+                const currentPollId = pollHistory.length > 0 ? pollHistory[pollHistory.length - 1].id : undefined
+                if (!currentPollId) {
+                    continue
+                }
+
                 for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
                     const studentRes = student.pollRes.buttonRes[i]
                     const studentId = student.id
@@ -215,7 +217,9 @@ async function clearPoll(classId, userSession) {
             }
         }
 
-        socketUpdates.classUpdate(classId);
+        if (updateClass) {
+            socketUpdates.classUpdate(classId);
+        }
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -279,27 +283,23 @@ function pollResponse(classId, res, textRes, userSession) {
     }
     classroom.students[email].pollRes.time = new Date()
 
-    if (!isRemoving && earnedObject.earnedDigipogs[email] === undefined) {
-        let amount = 0;
-        if (classroom.poll.allowMultipleResponses) {
-            amount = res.length;
-        } else {
-            for (let i = 0; i <= resLength; i++) {
-                amount++;
-            }
-        }
-
-        amount = Math.ceil(amount/4);
-        amount = amount > 5 ? 5 : amount;
-        if (Number.isInteger(amount)) {
-            database.run(`UPDATE users SET digipogs = digipogs + ${amount} WHERE email = '${email}'`, (err) => {
+    if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
+        const resWeight = classroom.poll.responses[res] ? classroom.poll.responses[res].weight : 1;
+        // Increase pog meter by 100 times the weight of the response
+        // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
+        const pogMeterIncrease = Math.floor(100 * resWeight);
+        classroom.students[email].pogMeter += pogMeterIncrease;
+        if (classroom.students[email].pogMeter >= 500) {
+            classroom.students[email].pogMeter -= 500;
+            database.run('UPDATE users SET digipogs = digipogs + 1 WHERE id = ?', [user.id], (err) => {
                 if (err) {
-                    console.log(`Error adding ${amount} digipogs to ${email}`);
-                    console.error(err);
+                    logger.log('error', err.stack);
+                } else {
+                    logger.log('info', `[pollResp] User ${user.email} earned a Digipog`);
                 }
             });
-            earnedObject.earnedDigipogs[email] = email;
         }
+        pogMeterTracker.pogMeterIncreased[email] = true;
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[userSession.email]})`)
 
@@ -349,5 +349,5 @@ module.exports = {
     clearPoll,
     pollResponse,
     getPollResponses,
-    earnedObject
+    pogMeterTracker
 }

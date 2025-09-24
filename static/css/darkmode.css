@@ -1,3 +1,8 @@
+* {
+	scrollbar-width: thin;
+	scrollbar-color: white transparent;
+}
+
 body {
 	background: linear-gradient(135deg, #072438 30%, #000c15 100%);
 	color: #ffffff;
@@ -85,6 +90,7 @@ button.pressed.revampButton:hover {
 .revampButton {
 	background-color: var(--darkMode-button-bg);
 	border: 2px solid var(--darkMode-button-border);
+	outline: 2px solid #0004;
 }
 
 .revampButton:not(.revampWithText):hover {
@@ -100,12 +106,15 @@ div.helpIconInformation.revampDivAlt {
 }
 
 .circularButton,
+.squareButton,
 .mobileCircular {
 	background-color: var(--darkMode-button-bg) !important;
 	border: 2px solid var(--darkMode-button-border) !important;
+	outline: 2px solid #0004;
 }
 
 .circularButton:hover,
+.squareButton:hover,
 .mobileCircular:hover {
 	background-color: var(--darkMode-button-hover-bg) !important;
 }
@@ -134,11 +143,13 @@ div.helpIconInformation.revampDivAlt {
 .revampDiv {
 	background: var(--darkMode-menu-bg);
 	border: 2px solid var(--darkMode-menu-border);
+	outline: 2px solid #fff4;
 }
 
 .revampDivAlt {
 	border: 2px solid var(--lightMode-menu-border);
 	background: var(--lightMode-menu-bg);
+	outline: 2px solid #0004;
 }
 
 
@@ -163,4 +174,8 @@ div.helpIconInformation.revampDivAlt {
 
 dialog {
 	color: white !important;
+}
+
+td, th {
+	border-bottom: 3px solid var(--darkMode-menu-border);
 }

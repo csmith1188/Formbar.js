@@ -4,7 +4,7 @@ const { classInformation } = require("../../modules/class/classroom");
 const { dbGet } = require("../../modules/database");
 const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
 const { camelCaseToNormal } = require("../../modules/util");
-const {checkUserClassPermission, startClass} = require("../../modules/class/class");
+const { checkUserClassPermission } = require("../../modules/class/class");
 
 // For users who do not have teacher/manager permissions, then they can only access these endpoints when it's
 // only affecting themselves.
@@ -39,6 +39,12 @@ function classPermCheck(classPermission) {
 function httpPermCheck(event){
     return async function (req, res, next) {
         try {
+            // Allow digipogs endpoints without permission checks (public API)
+            if (req.path && req.path.startsWith('/digipogs/')) {
+                logger.log('info', `[http permission check] Skipping for public digipogs endpoint ${event}`)
+                return next();
+            }
+
             const email = req.session.user.email;
             const classId = req.session.user.classId;
 

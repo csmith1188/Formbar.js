@@ -4,14 +4,14 @@ const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
 const { getUserClass } = require('../modules/user');
-const settings = require('../modules/config');
+const config = require('../modules/config');
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(userData, classId, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
         email: userData.email,
-        username: userData.email,
+        displayName: userData.displayName,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
@@ -165,7 +165,7 @@ module.exports = {
                         title: 'Oauth',
                         redirectURL: redirectURL,
                         route: 'oauth',
-                        googleOauthEnabled: settings.googleOauthEnabled
+                        googleOauthEnabled: config.settings.googleOauthEnabled
                     });
                 }
             } catch (err) {

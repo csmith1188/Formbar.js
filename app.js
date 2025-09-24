@@ -5,6 +5,11 @@ const crypto = require('crypto')
 const fs = require('fs')
 require('dotenv').config(); // For environment variables
 
+if (!fs.existsSync('database/database.db')) {
+    console.log('The database file does not exist. Please run "npm run init-db" to initialize the database.');
+    return;
+}
+
 // Custom modules
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
@@ -36,6 +41,7 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
@@ -64,11 +70,16 @@ app.use((req, res, next) => {
 })
 
 // Add currentUser and permission constants to all pages
-// Additionally, handle session expiration
 app.use((req, res, next) => {
-	if (req.session.classId || req.session.classId === null) {
-		res.locals.currentUser = classInformation.users[req.session.email];
-	}
+    // If the user is in a class, then get the user from the class students list
+    // This ensures that the user data is always up to date
+	if (req.session.classId) {
+        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
+		classInformation.users[req.session.email] = user;
+        res.locals.currentUser = user;
+	} else {
+        res.locals.currentUser = classInformation.users[req.session.email];
+    }
 
 	res.locals = {
 		...res.locals,

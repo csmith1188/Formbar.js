@@ -10,15 +10,6 @@ module.exports = {
             socketUpdates.getOwnedClasses(email)
         })
 
-        socket.on('deleteUser', async (userId) => {
-            try {
-                await deleteUser(userId, socket, socketUpdates);
-            } catch (err) {
-                logger.log('error', err.stack)
-                socket.emit('message', 'There was a server error try again.')
-            }
-        })
-
         socket.on('logout', () => {
             try {
                 logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)

@@ -168,15 +168,10 @@
 									if(multiAnswer !== 'button') {
 										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
 
-										pollForm.innerHTML += `
-											<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
-												<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
-												${response.answer}
-											</label>
-										`;
+										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color}44;--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
 									} else {
 										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton" id="${response.answer}" style="background: ${response.color}44; --theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
 									}
 								}
 								if (!poll.multiRes) {
@@ -266,12 +261,11 @@
 						if (textarea) {
 							textRes = textarea.value
 						}
-
+						
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
 					}
 
-					socket.emit('classUpdate')
 					socket.on('classUpdate', (classroomData) => {
                         const newPoll = classroomData.poll;
                         if (deepObjectEqual(poll, newPoll)) return;

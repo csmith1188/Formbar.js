@@ -17,7 +17,7 @@
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
-        <img src="/img/cursor.webp" alt="Hover for poll info.">
+        <!-- <img src="/img/cursor.webp" alt="Hover for poll info."> -->
         <div class="pollDetailsText">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
@@ -40,9 +40,9 @@
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
         <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
-        <button id='permissions' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
-        <button id='tags' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
-        <button id='settingsMenu' class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
+        <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
+        <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
 
     </div>
     <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
@@ -169,8 +169,10 @@
                 <h1>Members</h1>
             </div>
             <div id='VBOptions' class="revampDiv">
-                <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button>
-                <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button>
+                <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button> -->
+                <!-- <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button> -->
+                <select name="toolbarOptions" id="toolbarOptions" class="revampButton">
+                </select>
                 <div id='userFilterBoxes' class='options activeControlTab'>
                     <h2 class='headerText'>Filter by:</h2>
                     <div class='headBox'>
@@ -292,6 +294,8 @@
                     <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
                     <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
                 </div>
+                
+                <button id="save-poll" class="revampButton acceptButton" style="margin-top: 20px;" onclick="startPoll('current')">Start Without Saving</button>
             </div>
             <div id='generalOptions' style="width: 50%; margin-left: 25%;">
                 
@@ -391,13 +395,14 @@
         <span id="email"></span>
         <span id="studentTags"></span>
         <div id="response"></div>
-        <div id="reasons">
+        <div id="reasons" class="revampDiv">
             <div id="helpReason"></div>
             <div id="breakReason"></div>
         </div>
     </summary>
     <div id="permissions"></div>
     <div id="roomTags"></div>
+    <div id="digipogButtons"></div>
     <div id="extraButtons"></div>
 </details>
 </div>
@@ -560,72 +565,83 @@
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
 
-    let vbOptionsLast = document.getElementById('vbOptionsLast');
-    let vbOptionsNext = document.getElementById('vbOptionsNext');
+    // let vbOptionsLast = document.getElementById('vbOptionsLast');
+    // let vbOptionsNext = document.getElementById('vbOptionsNext');
+    
+    let toolbarOptions = document.getElementById('toolbarOptions');
 
     let sidebarOptionsIDs = [
         {
             elementID: 'userFilterBoxes',
-            optionName: 'Filter by:',
-            mobileOptionName: "Filter members by:"
+            optionName: 'Filters',
         },
         {
             elementID: 'userSortBoxes',
-            optionName: 'Sort by:',
-            mobileOptionName: "Sort members by:"
+            optionName: 'Sort',
         },
         {
             elementID: 'userSelectBoxes',
-            optionName: 'Select:',
-            mobileOptionName: "Select members:"
+            optionName: 'Select',
         },
         {
             elementID: 'userFastPollBoxes',
             optionName: 'Fast Poll',
-            mobileOptionName: "Fast Poll"
         }
     ]
 
-    function showOptions(last_or_next) {
+    sidebarOptionsIDs.forEach((item) => {
+        let option = document.createElement('option');
+        option.value = item.elementID;
+        option.text = item.optionName;
+        toolbarOptions.add(option);
+    });
+    
+    toolbarOptions.onchange = (e) => {
+        showOption(e.target.value);
+    }
+
+    function showOption(optionID) {
         let activeEl = null;
 
         sidebarOptionsIDs.forEach((item) => {
-            if(document.getElementById(item.elementID).classList.contains('activeControlTab')) activeEl = item;
             document.getElementById(item.elementID).classList.remove('activeControlTab');
+            if(item.elementID == optionID) document.getElementById(item.elementID).classList.add('activeControlTab')
         });
 
-        let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
 
-        if(last_or_next) {
-            //Last Tab
-            let newActive = sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-            let lastButton = sidebarOptionsIDs[(lastElIndex - 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-            let nextButton = sidebarOptionsIDs[lastElIndex];
+        // let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
 
-            document.getElementById(newActive.elementID).classList.add('activeControlTab');
+        // if(last_or_next) {
+        //     //Last Tab
+        //     let newActive = sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+        //     let lastButton = sidebarOptionsIDs[(lastElIndex - 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+        //     let nextButton = sidebarOptionsIDs[lastElIndex];
 
-            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
-            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
+        //     document.getElementById(newActive.elementID).classList.add('activeControlTab');
+
+        //     // vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+        //     // vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
 
 
-        } else {
-            let newActive = sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-            let nextButton = sidebarOptionsIDs[(lastElIndex + 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-            let lastButton = sidebarOptionsIDs[lastElIndex];
-            document.getElementById(newActive.elementID).classList.add('activeControlTab');
+        // } else {
+        //     let newActive = sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+        //     let nextButton = sidebarOptionsIDs[(lastElIndex + 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
+        //     let lastButton = sidebarOptionsIDs[lastElIndex];
+        //     document.getElementById(newActive.elementID).classList.add('activeControlTab');
 
-            vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
-            vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
-        }
+        //     // vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
+        //     // vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
+        // }
     }
 
-    vbOptionsLast.onclick = () => showOptions(true);
-    vbOptionsNext.onclick = () => showOptions(false);
+    // vbOptionsLast.onclick = () => showOptions(true);
+    // vbOptionsNext.onclick = () => showOptions(false);
+
+    
 
     // Function runs on page load
     // Checks if poll is active or not and displays correct output
     let rooms;
-    socket.emit('classUpdate')
     socket.on('classUpdate', (classroomData) => {
         rooms = classroomData
     })
@@ -947,6 +963,12 @@
         setMuteSound(!mute);
         socket.emit('setClassSetting', 'mute', mute);
     }
+
+    socket.on('awardDigipogsResponse', ({ success, message }) => {
+        if(!success) console.log(message);
+        alert(message);
+    })
+
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>

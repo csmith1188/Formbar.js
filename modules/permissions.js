@@ -60,6 +60,8 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
+	refreshPin: STUDENT_PERMISSIONS,
+	transfer: STUDENT_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
@@ -81,9 +83,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	requestConversion: STUDENT_PERMISSIONS,
-	installPlugin: TEACHER_PERMISSIONS,
-	uninstallPlugin: TEACHER_PERMISSIONS,
-	swapPlugin: TEACHER_PERMISSIONS,
 	getPreviousPolls: TEACHER_PERMISSIONS,
 }
 

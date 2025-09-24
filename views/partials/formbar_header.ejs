@@ -66,8 +66,8 @@ function doFullscreen() {
 	}
 }		
 document.addEventListener('fullscreenchange', (event) => {
-	if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
-	else document.getElementById('formbarHeader').style.display = 'flex';
+	// if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
+	// else document.getElementById('formbarHeader').style.display = 'flex';
 });
 
 let lmdmIcon = document.getElementById("lmdmIcon");
@@ -130,7 +130,7 @@ function logout() {
 
   if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
       const muteButton = document.getElementById("muteButton");
-      muteButton.style.display = "block";
+      if(muteButton) muteButton.style.display = "block";
   }
 </script>
 
