@@ -50,7 +50,7 @@ async function transferDigipogs(transferData) {
         const { from, to, pin, reason = "" } = transferData;
         const amount = Math.ceil(transferData.amount); // Ensure amount is an integer
 
-        if (!from || !to || !amount || !pin || !reason) {
+        if (!from || !to || !amount || !pin || reason === undefined) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
