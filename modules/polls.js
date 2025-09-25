@@ -20,10 +20,11 @@ const pogMeterTracker = {
  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, pollOptions, isBlind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, pollOptions, blind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
         const numberOfResponses = Object.keys(pollOptions).length;
         const socketUpdates = userSocketUpdates[userSession.email];
         pogMeterTracker.pogMeterIncreased = [];
+
         // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
         pollData.weight = Math.floor((pollData.weight || 1) * 100) / 100; // Round to 2 decimal places
         if (!pollData.weight || isNaN(pollData.weight) || pollData.weight <= 0) weight = 1;
@@ -38,14 +39,14 @@ async function createPoll(classId, pollData, userSession) {
 
         // Log poll information
         logger.log('info', `[startPoll] session=(${JSON.stringify(userSession)})`)
-        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) isBlind=(${isBlind}) weight=(${weight}) tags=(${tags})`)
+        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
         await clearPoll(classId, userSession, false)
         let generatedColors = generateColors(Object.keys(pollOptions).length)
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
 
-        classInformation.classrooms[classId].poll.isBlind = isBlind
+        classInformation.classrooms[classId].poll.blind = blind
         classInformation.classrooms[classId].poll.status = true
 
         if (tags) {
@@ -120,7 +121,7 @@ async function endPoll(classId, userSession) {
         data.prompt = classInformation.classrooms[classId].poll.prompt
         data.responses = classInformation.classrooms[classId].poll.responses
         data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
-        data.isBlind = classInformation.classrooms[classId].poll.isBlind
+        data.blind = classInformation.classrooms[classId].poll.blind
         data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
 
         for (const key in classInformation.classrooms[classId].students) {
@@ -191,7 +192,7 @@ async function clearPoll(classId, userSession, updateClass = true){
             allowTextResponses: false,
             prompt: "",
             weight: 1,
-            isBlind: false,
+            blind: false,
             requiredTags: [],
             studentsAllowedToVote: [],
             allowedResponses: [],

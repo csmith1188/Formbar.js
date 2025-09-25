@@ -22,7 +22,7 @@ class Classroom {
 			responses: {},
 			allowTextResponses: false,
             allowMultipleResponses: false,
-            isBlind: false,
+            blind: false,
 			weight: 1,
 			requiredTags: [],
 			studentsAllowedToVote: [],

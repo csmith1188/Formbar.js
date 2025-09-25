@@ -36,7 +36,7 @@ describe('startPoll', () => {
         await startPollHandler({
             prompt: 'Test Poll',
             pollOptions: [{}, {}, {}],
-            isBlind: false,
+            blind: false,
             weight: 1,
             tags: ['tag1'],
             studentsAllowedToVote: ['box1'],
@@ -56,7 +56,7 @@ describe('startPoll', () => {
         await startPollHandler({
             prompt: 'Test Poll',
             pollOptions: [{}, {}, {}],
-            isBlind: false,
+            blind: false,
             weight: 1,
             tags: ['tag1'],
             studentsAllowedToVote: ['box1'],
@@ -77,7 +77,7 @@ describe('startPoll', () => {
         await startPollHandler({
             prompt: 'Test Poll',
             pollOptions: [{}, {}, {}],
-            isBlind: false,
+            blind: false,
             weight: 1,
             tags: ['tag1'],
             studentsAllowedToVote: ['box1'],

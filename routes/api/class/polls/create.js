@@ -24,7 +24,7 @@ module.exports = {
                 const pollData = isLegacy ? {
                     prompt: body.pollPrompt,
                     pollOptions: Array.isArray(body.polls) ? body.polls : [],
-                    isBlind: body.blind,
+                    blind: body.blind,
                     weight: body.weight,
                     tags: Array.isArray(body.tags) ? body.tags : (body.tags ?? []),
                     studentsAllowedToVote: Array.isArray(body.boxes) ? body.boxes : undefined,
