@@ -404,7 +404,13 @@ function addAnswer() {
 
 function removeAnswer(event) {
 	let element = event.target.parentElement;
-	// if(responsesDiv.childElementCount == 1) return alert("You can't remove the last answer.");
+
+	if(responsesDiv.childElementCount == 1) { 
+        let removeOnly = confirm("Are you sure you want to remove the only response?");
+
+        if(!removeOnly) return;
+    }
+
 	let elementId = element.id.split('response')[1];
 	element.remove();
 	pollResponses.splice(elementId, 1);
