@@ -148,7 +148,7 @@
 						if(pollDiv.querySelector("#remove")) {
 							pollDiv.querySelector("#remove").remove()
 						}
-						if (poll.multiRes) {
+						if (poll.allowMultipleResponses) {
 							multiAnswer = "checkbox"
 						} else {
 							multiAnswer = "button"
@@ -163,23 +163,23 @@
 								pollForm.innerHTML = ''
 								pollPromptDisplay.innerText = poll.prompt
 								// Creates all selectable answers and displays them to the user
-								for (let response of Object.values(poll.responses)) {
-									
-									if(multiAnswer !== 'button') {
-										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-
-										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color}44;--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
-									} else {
-										response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-										pollForm.innerHTML += `<button name="poll" class="revampButton pollButton" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
-									}
+								if (poll.allowTextResponses) {
+									pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText' value="${oldTextRes}"></textarea>`
 								}
-								if (!poll.multiRes) {
+                                for (let response of Object.values(poll.responses)) {
+                                    if(multiAnswer !== 'button') {
+                                        response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+
+                                        pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
+                                    } else {
+                                        response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+                                        pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
+                                    }
+                                }
+								if (!poll.allowMultipleResponses) {
 									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
-								}
-
-								if (poll.textRes) {
-									pollForm.innerHTML += `<textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
+								} else {
+									pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
 								}
 							} else {
 								noPoll.style.display = 'block'
@@ -188,7 +188,7 @@
 
 							// If the user has responded before on this poll, put their previous responses in the form
 							const resTextBox = document.getElementById("resTextBox")
-							if (!poll.multiRes) {
+							if (!poll.allowMultipleResponses) {
 								// If the poll isn't multi-res, handle it normally
 								// const oldLetterElement = document.getElementById(oldLetterRes)
 								// if (oldLetterRes && oldLetterElement) {
@@ -196,7 +196,7 @@
 								// }
 							} else {
 								// If the poll is multi-res, split the response and check all of them
-								const splitLetterRes = oldLetterRes.split(',')
+								const splitLetterRes = currentUser.pollRes.buttonRes;
 								for (const splitLetter of splitLetterRes) {
 									const oldLetterElement = document.getElementById(splitLetter)
 									if (oldLetterElement) {
@@ -242,26 +242,21 @@
 						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
 						for (let i = 0; i < radios.length; i++) {
 							if (radios[i].type == "checkbox" && radios[i].checked) {
-								// Defines the letter response of the user
-								if(radios[i].value == "remove") {
-									lettRes = radios[i].value
-									break;
-								}
-								lettRes.push(radios[i].value)
+								lettRes.push(radios[i].id)
 							} else if(radios[i].tagName == 'BUTTON' && radios[i] == button) {
 								lettRes.push(radios[i].id)
 							}
 						}
 
 						// If the poll isn't multi-res, extract the single response from the array
-						if (lettRes.length == 1 && !poll.multiRes) {
+						if (lettRes.length == 1 && !poll.allowMultipleResponses) {
 							lettRes = lettRes[0]
 						}
 
 						if (textarea) {
 							textRes = textarea.value
 						}
-						
+
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
 					}
