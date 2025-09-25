@@ -2,8 +2,8 @@ const axios = require('axios').default
 const tough = require('tough-cookie')
 
 const URL = 'http://localhost:420'
-const classID = 's1gx'
-const guestCount = 20
+const classID = '93nt'
+const guestCount = 30
 const actionMode = 'random'
 
 // Store all user sessions
