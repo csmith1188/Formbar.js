@@ -7,7 +7,7 @@ const { logger } = require("./logger");
 async function awardDigipogs(awardData) {
     try {
         const { from, to } = awardData;
-        const amount = Math.ciel(awardData.amount); // Ensure amount is an integer
+        const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
         const reason = "Awarded";
 
         if (!from || !to || !amount) {
