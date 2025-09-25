@@ -1,6 +1,7 @@
 function getTags() {
-    const tags = [];
-    for (let tag of tagsDiv.children) {
+    const classTags = classroom.tags || [];
+    let tags = [];
+    for (let tag of classTags) {
         if (tag.value === "" || tag.value === "Offline") continue;
         tags.push(tag.value);
     }
@@ -8,8 +9,8 @@ function getTags() {
 }
 
 // Sends the tags to the server
-function sendTags() {
-    const tags = getTags();
+function sendTags(tags) {
+    //const tags = getTags();
     socket.emit('setTags', tags);
 }
 
@@ -18,13 +19,16 @@ function addTagElement(tag) {
     if (tag == "" || tag == "Offline" || tag == null) return
     let tagOption = document.createElement('div')
     tagOption.value = tag
+    tagOption.className = 'tagOption'
     tagOption.textContent = tag
 
     let removeButton = document.createElement('button')
-    removeButton.textContent = '✖'
+    removeButton.className = 'squareButton warningButton'
+    removeButton.innerHTML = '<img src="/img/trash-outline.svg" alt="Remove tag">'
     removeButton.onclick = () => {
         tagsDiv.removeChild(tagOption)
-        sendTags()
+        classroom.tags.splice(classroom.tags.indexOf(tag), 1)
+        sendTags(classroom.tags)
         updateStudentTags()
     }
 
@@ -35,7 +39,7 @@ function addTagElement(tag) {
 // Update the tag buttons for each student
 function updateStudentTags() {
     const tags = getTags();
-    for (const student of usersDiv.children) {
+    for (const student of usersDiv.querySelectorAll('.controlStudent')) {
         // Get student tag elements
         const roomTags = student.querySelector('#roomTags');
         const studTagsSpan = student.querySelector('#studentTags');

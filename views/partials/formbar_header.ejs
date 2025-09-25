@@ -74,7 +74,7 @@ let lmdmIcon = document.getElementById("lmdmIcon");
 
 //document.body.style.backgroundColor = getCookie("theme")
 if (getCookie("theme") == "white") {
-	document.getElementById('lmdm').href = '/css/lightmode.css';
+	document.getElementById('lmdm').href = '';
 	lmdmIcon.src = "/img/moon.svg"
 } else if (getCookie("theme") == "dark") {
 	document.getElementById('lmdm').href = '/css/darkmode.css';
@@ -98,7 +98,7 @@ function toggleTheme() {
 	lmdmIcon.src = "/img/sun.svg"
 	} else {
 	document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
-	document.getElementById('lmdm').href = '/css/lightmode.css';
+	document.getElementById('lmdm').href = '';
 	lmdmIcon.src = "/img/moon.svg";
 	}
 }

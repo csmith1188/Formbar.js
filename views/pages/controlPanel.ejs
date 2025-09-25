@@ -32,7 +32,7 @@
         <div id="timeDiv">
             <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min">
             <p>:</p>
-            <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" placeholder="Sec">
+            <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" max="59" placeholder="Sec" oninput="if(this.value > 59) this.value = 59;">
             <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
             <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
         </div>
@@ -117,13 +117,6 @@
 
         <div class="spacer"></div>
         <p>Poll Buttons</p>
-        
-        <div class="helpIconInformation revampDivAlt">
-            <img src="/img/play-circle-outline.svg" alt="Settings">
-            <div class="helpInformation">
-                <p class="helpTitle">Start Poll</p>
-            </div>
-        </div>
         
         <div class="helpIconInformation revampDivAlt">
             <img src="/img/refresh-circle-outline.svg" alt="Settings">
@@ -212,10 +205,6 @@
                 <button id='pollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
                     <p>Custom Polls</p>
                 </button>
-                <button id='startPoll' class="revampButton mobileHasIcon mobileCircular" onclick='pollCheck()'>
-                    <p>Start Poll</p>
-                    <img src="/img/play-circle-outline.svg" alt="Start Poll Icon">
-                </button>
                 <button id='clearPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='clearPollFunc()'>
                     <p>Clear Poll</p>
                     <img src="/img/refresh-circle-outline.svg" alt="Clear Poll Icon">
@@ -237,9 +226,9 @@
 </div>
 
     <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
-        <h1 class="mobileMenuHeader">Custom Polls</h1>
         <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
-        <div id='pollOptions' class='options customOptions'>
+            <h1 class="mobileMenuHeader">Custom Polls</h1>
+            <div id='pollOptions' class='options customOptions'>
             <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
                 Polls
             </button>
@@ -260,42 +249,47 @@
         </div>
         <div id='newPoll' class='customPolls tabContent' style="padding-bottom:250px;" data-tab-group='polls'>
             <div id="pollResForm">
-                <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
-                <div>
+                <div class="pollInfo revampDiv">
+                    <h2>Poll Info</h2>
+                    <input type='text' id='pollBox' placeholder='Prompt' class="revampButton revampWithText">
+                    <div class="pollChangers">
+                        <div class="pollOptionsEditorOption">
+                            <h2 class="hideMobile">Multiple Answer Poll</h2>
+                            <img class="showMobile pollOptionIcon" src="/img/checkmark-done-outline.svg" alt="Multi-answer Poll">
+                            <input type='checkbox' id='multiRes'>
+                        </div>
+                        
+                        <div class="pollOptionsEditorOption">
+                            <h2 class="hideMobile">Text Responses</h2>
+                            <img class="showMobile pollOptionIcon" src="/img/text-outline.svg" alt="Text Responses">
+                            <input type='checkbox' id='resTextBox' onclick='resTextChange()'>
+                        </div>
+                        
+                        <div class="pollOptionsEditorOption">
+                            <h2 class="hideMobile">Blind Poll</h2>
+                            <img class="showMobile pollOptionIcon" src="/img/eye-off-outline.svg" alt="Blind Poll">
+                            <input type='checkbox' id='blind'>
+                        </div>
+                    </div>
+    
+                    <div class="pollOptionsEditorOption" style="margin-bottom: 20px;">
+                        <button id='resetAnswerNames' class='quickButton revampButton'>Reset Names</button>
+                        <button id='resetColors' class='quickButton revampButton'>Reset Colors</button>
+                    </div>
+    
+                    <div class="pollOptionsEditorOption">
+                        <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
+                        <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
+                    </div>
+                    
+                    <button id="save-poll" class="revampButton acceptButton" style="margin-top: 20px;" onclick="startPoll('current')">Start Without Saving</button>
+                </div>
+                <div class="responses revampDiv">
+                    <h2>Responses</h2>
                     <input type='number' id='resNumber' min='1' max='26' step='1' value='1' hidden>
                     <div id='responses'></div>
                 </div>
                 <button id="addPollRes" class='quickButton revampButton acceptButton' onclick='addAnswer()'>+</button>
-            </div>
-            <div class="pollOptionsEditor revampDiv">
-                <h2 class="pollOptionsEditorHeader">More Options</h2> 
-
-                <div class="pollOptionsEditorOption">
-                    <h2>Multiple Answer Poll</h2>
-                    <input type='checkbox' id='multiRes'>
-                </div>
-                
-                <div class="pollOptionsEditorOption">
-                    <h2>Text Responses</h2>
-                    <input type='checkbox' id='resTextBox' onclick='resTextChange()'>
-                </div>
-                
-                <div class="pollOptionsEditorOption">
-                    <h2>Blind Poll</h2>
-                    <input type='checkbox' id='blind'>
-                </div>
-
-                <div class="pollOptionsEditorOption" style="margin-bottom: 20px;">
-                    <button id='resetAnswerNames' class='quickButton revampButton'>Reset Names</button>
-                    <button id='resetColors' class='quickButton revampButton'>Reset Colors</button>
-                </div>
-
-                <div class="pollOptionsEditorOption">
-                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('user')">Save</button>
-                    <button id="save-poll" class="revampButton acceptButton" onclick="savePollAs('class')">Save as Class Poll</button>
-                </div>
-                
-                <button id="save-poll" class="revampButton acceptButton" style="margin-top: 20px;" onclick="startPoll('current')">Start Without Saving</button>
             </div>
             <div id='generalOptions' style="width: 50%; margin-left: 25%;">
                 
@@ -340,8 +334,15 @@
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
     <h2 class="hideMobile">Tags</h2>
     <h1 class="showMobile mobileMenuHeader">Tags</h1>
-    <div id='tagsList'></div>
-    <div id="tagOptions"></div>
+    <div class="tagsHolder">
+        <div id="tagOptions" class="revampDiv">
+            <div>
+                <textarea class="revampButton revampWithText" id="tagInput" placeholder="Add Tag (tag1, tag2, ...)" style="height: 5.5vh;"></textarea>
+                <button class="circularButton" id="addTagButton"><img src="/img/checkmark-outline.svg"></button>
+            </div>
+        </div>
+        <div id='tagsList' class="revampDiv"></div>
+    </div>
 </div>
 
 <div id="pollPreview" class="revampDiv"></div>
@@ -419,7 +420,6 @@
     => {socket.emit('classKickStudents')})()`>
     Kick All Students
     </button>
-    <!-- Below 2 lines were moved outside the users div, just in case you need to know that-->
     <p><b id='pollCounter'></b></p>
     <p id='responsesCounter'></p>
     <div id='users'>
@@ -668,6 +668,7 @@
 
     // Changes the text for the "Start Class" button depending on the state of the class
     function setClassActiveState(isActive) {
+        classroom.isActive = isActive;
         const startClassButton = document.getElementById('startClass');
         const endClassButton = document.getElementById('endClass');
 
@@ -683,6 +684,7 @@
                 endClassButton.onclick = startClass;
                 endClassButton.id = 'startClass';
             }
+            endPollFunc();
         }
     }
 
@@ -968,6 +970,13 @@
         if(!success) console.log(message);
         alert(message);
     })
+
+    function toggleMoreOptions() {
+        const moreOptions = document.querySelector('.pollOptionsEditor');
+        const moreOptionsArrow = document.getElementById('moreOptionsArrow');
+        moreOptions.classList.toggle('open');
+        moreOptions.classList.contains('open') ? moreOptionsArrow.src = '/img/chevron-down-outline.svg' : moreOptionsArrow.src = '/img/chevron-up-outline.svg';
+    }
 
 </script>
 <script src='/js/controlPanelStudents.js'></script>

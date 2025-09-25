@@ -404,6 +404,13 @@ function addAnswer() {
 
 function removeAnswer(event) {
 	let element = event.target.parentElement;
+
+	if(responsesDiv.childElementCount == 1) { 
+        let removeOnly = confirm("Are you sure you want to remove the only response?");
+
+        if(!removeOnly) return;
+    }
+
 	let elementId = element.id.split('response')[1];
 	element.remove();
 	pollResponses.splice(elementId, 1);
@@ -472,6 +479,8 @@ function startPoll(customPollId) {
 	userIndeterminate.sort()
 	userBreak.sort()
 
+	if(!classroom.isActive) return alert("Please start the class before starting a poll.");
+
 	if (customPollId) {
 		let customPoll
 		if(customPollId == "current") {
@@ -479,6 +488,7 @@ function startPoll(customPollId) {
 				prompt: pollPrompt.value,
 				isBlind: blindCheck.checked,
 				textRes: resTextBox.checked,
+				multiRes: multiRes.checked,
 				answers: pollAnswers,
 				weight: 1,
 				indeterminate: userIndeterminate
@@ -491,7 +501,7 @@ function startPoll(customPollId) {
             prompt: customPoll.prompt,
             pollOptions: customPoll.answers,
             allowTextResponses: customPoll.textRes,
-            allowMultipleResponses: false,
+            allowMultipleResponses: customPoll.multiRes,
             isBlind: customPoll.blind,
             weight: customPoll.weight,
             tags: userTags,
@@ -505,7 +515,7 @@ function startPoll(customPollId) {
             prompt: pollPrompt.value,
             pollOptions: pollAnswers,
             allowTextResponses: resTextBox.checked,
-            allowMultipleResponses: false,
+            allowMultipleResponses: multiRes.checked,
             isBlind: blind,
             weight: 1,
             tags: userTags,
@@ -547,81 +557,6 @@ function editCustomPoll(customPollId) {
 		pollResponses[pollIndex].weight = answer.weight
 	}
 }
-
-function startPollWithoutSaving() {
-	socket.emit('classUpdate')
-	socket.on('classUpdate', (classroomData) => {
-		rooms = classroomData
-	})
-	let userTags = []
-	let userBoxesChecked = []
-	let userIndeterminate = []
-	let pollAnswers = []
-	for (let i = 0; i < resNumber.value; i++) {
-		let pollResponse = pollResponses[i]
-		let pollAnswer = {
-			answer: (pollResponse.answer) ? pollResponse.answer : pollResponse.defaultAnswer,
-			weight: pollResponse.weight,
-			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
-		}
-		pollAnswer.answer = pollAnswer.answer.replaceAll('"', '“')
-		pollAnswer.answer = pollAnswer.answer.replaceAll(',', '‚')
-		pollAnswers.push(pollAnswer)
-	}
-	let multiRes = document.getElementById("multiRes")
-	let selectTagForm = document.getElementsByName('selectTagForm')
-	let allCheckboxes = document.getElementsByName('studentCheckbox')
-	for (let eachTagForm of selectTagForm[0]) {
-		if (eachTagForm.checked) {
-			//for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
-			userTags.push(eachTagForm.value)
-		}
-	}
-
-	for (let eachBox of allCheckboxes) {
-		if (eachBox.checked && !eachBox.indeterminate) {
-			let boxId = eachBox.id.split('_')[1]
-			userBoxesChecked.push(boxId)
-		}
-		if (eachBox.indeterminate) {
-			let boxId = eachBox.id.split('_')[1]
-			userIndeterminate.push(boxId)
-		}
-	}
-
-
-	userTags.sort()
-	userBoxesChecked.sort()
-	userIndeterminate.sort()
-	userBreak.sort()
-
-	let customPoll = {
-		prompt: pollPrompt.value,
-		isBlind: blindCheck.checked,
-		textRes: resTextBox.checked,
-		answers: pollAnswers,
-		weight: 1,
-		indeterminate: userIndeterminate
-	}
-
-	changeTab('mainPolls', 'polls')
-
-	socket.emit('startPoll', {
-		prompt: customPoll.prompt,
-		pollOptions: customPoll.answers,
-		allowTextResponses: customPoll.textRes,
-		allowMultipleResponses: false,
-		isBlind: customPoll.blind,
-		weight: customPoll.weight,
-		tags: userTags,
-		indeterminate: customPoll.indeterminate,
-		studentsAllowedToVote: userBoxesChecked,
-	});
-	
-	clearPoll.style.display = 'block'
-	endPoll.style.display = 'block'
-	changeTab('usersMenu', 'mainTabs')
-};
 
 function unloadPoll() {
 	editPollDialog.open = false
@@ -889,13 +824,9 @@ socket.emit('timerOn')
 socket.on('timerOn', function (time) {
 	if (time) {
 		timerButton.hidden = true
-		document.getElementsByClassName('inputtedTime')[0].hidden = true
-		document.getElementsByClassName('inputtedTime')[1].hidden = true
 		timerStopButton.hidden = false
 	} else {
 		timerButton.hidden = false
-		document.getElementsByClassName('inputtedTime')[0].hidden = false
-		document.getElementsByClassName('inputtedTime')[1].hidden = false
 		timerStopButton.hidden = true
 	}
 })
