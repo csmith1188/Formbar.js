@@ -100,7 +100,7 @@ for (const routeFile of routeFiles) {
 	if (routeFile == '404.js') {
 		continue;
 	}
-	
+
 	const route = require(`./routes/${routeFile}`);
 	route.run(app);
 }

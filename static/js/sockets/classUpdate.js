@@ -94,12 +94,14 @@ socket.on('classUpdate', (classroomData) => {
     className.innerHTML = `<b>Class Name:</b> ${classroomData.className}`
     classCode.innerHTML = `<b>Class Code:</b> ${classroomData.key}`
 
+    let pollCounter = document.getElementById('pollCounter');
+
     // Set the users to the number of students minus the number of offline students and minus one for the teacher
     totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - 1}`
     if (classroomData.poll.prompt != "") {
         pollCounter.innerText = `Poll Prompt: '${classroomData.poll.prompt}'`
     } else {
-        pollCounter.innerText = `Poll Prompt:`
+        pollCounter.innerText = `No Poll Prompt`
     }
 
     const responseCount = classroomData.poll?.totalResponses ?? 0;
@@ -221,42 +223,36 @@ socket.on('classUpdate', (classroomData) => {
         }
     }
 
+    let newTag = document.getElementById('tagInput');
+    newTag.value = '';
+
+    let tagButton = document.getElementById('addTagButton');
+
+    tagButton.onclick = () => {
+        if (newTag.value.includes(',')) {
+            let tags = newTag.value.split(',')
+
+            for (let tag of tags) {
+                if (tag.trim() == '') continue
+                classroom.tags.push(tag.trim())
+                //addTagElement(tag.trim())
+            }
+        } else {
+            //addTagElement(newTag.value)
+            classroom.tags.push(newTag.value)
+        }
+        newTag.value = ''
+
+        sendTags(classroom.tags)
+        updateStudentTags()
+    }
+
     if (!deepObjectEqual(classroom?.tags, classroomData.tags)) {
+        let tagsDiv = document.querySelector('#tagsList');
+        tagsDiv.innerHTML = '';
         for (let tag of classroomData.tags) {
             addTagElement(tag)
         }
-
-        let newTagDiv = document.createElement('div')
-        let newTag = document.createElement('textarea')
-        newTag.className = 'revampButton revampWithText'
-        newTag.type = 'text'
-        newTag.placeholder = 'Add Tag (tag1, tag2, ...)'
-        newTag.style.height = "5.5vh"
-
-        let addTagButton = document.createElement('button')
-        addTagButton.className = 'circularButton'
-        addTagButton.innerHTML = '<img src="/img/checkmark-outline.svg">'
-        addTagButton.onclick = () => {
-            if (newTag.value.includes(',')) {
-                let tags = newTag.value.split(',')
-
-                for (let tag of tags) {
-                    addTagElement(tag.trim())
-                }
-            } else {
-                addTagElement(newTag.value)
-            }
-            newTag.value = ''
-
-            // When a new tag is added, send the new tags to the server
-            sendTags()
-            updateStudentTags()
-        }
-
-        newTagDiv.appendChild(newTag)
-        newTagDiv.appendChild(addTagButton)
-
-        tagOptionsDiv.appendChild(newTagDiv)
 
         // After rebuilding tag options, refresh student tag buttons
         if (typeof updateStudentTags === 'function') {
