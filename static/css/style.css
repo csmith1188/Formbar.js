@@ -178,6 +178,10 @@ button.pressed:hover,
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
+#resTextBox {
+	width: 100%;
+}
+
 #backgroundDarken {
 	width: 100vw;
 	height: 100vh;

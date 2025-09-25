@@ -30,9 +30,9 @@
     </div>
     <div class="revampDiv leftRight timeInfo">
         <div id="timeDiv">
-            <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min">
+            <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min" onkeydown="if(!isFinite(event.key) && event.key !== 'Tab' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Backspace' && event.key !== 'Enter' && event.key !== 'ArrowRight') event.preventDefault();" oninput="if(this.value > 60) this.value = 60;">
             <p>:</p>
-            <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" max="59" placeholder="Sec" oninput="if(this.value > 59) this.value = 59;">
+            <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" max="59" placeholder="Sec" onkeydown="if(!isFinite(event.key) && event.key !== 'Tab' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Backspace' && event.key !== 'Enter' && event.key !== 'ArrowRight') event.preventDefault();" oninput="if(this.value > 59) this.value = 59;">
             <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
             <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
         </div>
