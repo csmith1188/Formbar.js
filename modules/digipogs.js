@@ -48,7 +48,7 @@ async function awardDigipogs(awardData) {
 async function transferDigipogs(transferData) {
     try {
         const { from, to, pin, reason = "" } = transferData;
-        const amount = Math.ciel(awardData.amount); // Ensure amount is an integer
+        const amount = Math.ceil(transferData.amount); // Ensure amount is an integer
 
         if (!from || !to || !amount || !pin || !reason) {
             return { success: false, message: "Missing required fields." };
