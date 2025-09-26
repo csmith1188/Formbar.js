@@ -178,7 +178,7 @@ button.pressed:hover,
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
-#resTextBox {
+textarea#resTextBox {
 	width: 100%;
 }
 
@@ -2451,6 +2451,10 @@ button img {
 
 #loadPoll {
 	margin: auto;
+}
+
+#users .user p {
+	pointer-events: none;
 }
 
 #users .user.hasInfo {
