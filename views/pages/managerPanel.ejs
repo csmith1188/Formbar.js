@@ -196,7 +196,6 @@
                     verifyUserButton.setAttribute("data-user", userData.id)
                     verifyUserButton.innerText = "Verify User"
                     verifyUserButton.onclick = (event) => {
-                        console.log(userData)
                         socket.emit('verifyChange', userData.id)
                         verifyUserButton.remove()
                     }
