@@ -55,9 +55,8 @@ module.exports = {
                     };
 
                     database.run(
-                        'INSERT INTO users(email, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                        'INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)',
                         [
-                            user.email,
                             user.email,
                             user.hashedPassword,
                             user.permissions,
