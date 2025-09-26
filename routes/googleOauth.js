@@ -53,9 +53,7 @@ module.exports = {
 						};
 						// If there is no user, insert them into the database
 						if (!user) {
-							database.run(`INSERT INTO users (email, email, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-								// Set the email to the family name + the given name, while removing spaces and special characters
-								req.user.name.familyName.replace(/[^a-zA-Z]/g, '') + req.user.name.givenName.replace(/[^a-zA-Z]/g, ''),
+							database.run(`INSERT INTO users (email, permissions, API, secret, displayName, verified) VALUES ( ?, ?, ?, ?, ?, ?)`, [
 								req.user.emails[0].value,
 								permissions,
 								newAPI = crypto.randomBytes(64).toString('hex'),

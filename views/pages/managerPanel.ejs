@@ -180,78 +180,13 @@
                 permissionSwitch.onchange = (event) => {
                     socket.emit('permChange', event.target.dataset.userid, event.target.value)
                 }
-                if (userData.permissions == 4) {
-                    let teacherOption = document.createElement("option")
-                    teacherOption.setAttribute("value", 4)
-                    teacherOption.setAttribute("selected", true)
-                    teacherOption.innerText = "Teacher"
-                    permissionSwitch.add(teacherOption)
-                    let modOption = document.createElement("option")
-                    modOption.setAttribute("value", 3)
-                    modOption.innerText = "Mod"
-                    permissionSwitch.add(modOption)
-                    let userOption = document.createElement("option")
-                    userOption.setAttribute("value", 2)
-                    userOption.innerText = "User"
-                    permissionSwitch.add(userOption)
-                    let guestOption = document.createElement("option")
-                    guestOption.setAttribute("value", 1)
-                    guestOption.innerText = "Guest"
-                    permissionSwitch.add(guestOption)
-                } else if (userData.permissions == 3) {
-                    let teacherOption = document.createElement("option")
-                    teacherOption.setAttribute("value", 4)
-                    teacherOption.innerText = "Teacher"
-                    permissionSwitch.add(teacherOption)
-                    let modOption = document.createElement("option")
-                    modOption.setAttribute("value", 3)
-                    modOption.setAttribute("selected", true)
-                    modOption.innerText = "Mod"
-                    permissionSwitch.add(modOption)
-                    let userOption = document.createElement("option")
-                    userOption.setAttribute("value", 2)
-                    userOption.innerText = "User"
-                    permissionSwitch.add(userOption)
-                    let guestOption = document.createElement("option")
-                    guestOption.setAttribute("value", 1)
-                    guestOption.innerText = "Guest"
-                    permissionSwitch.add(guestOption)
-                } else if (userData.permissions == 2) {
-                    let teacherOption = document.createElement("option")
-                    teacherOption.setAttribute("value", 4)
-                    teacherOption.innerText = "Teacher"
-                    permissionSwitch.add(teacherOption)
-                    let modOption = document.createElement("option")
-                    modOption.setAttribute("value", 3)
-                    modOption.innerText = "Mod"
-                    permissionSwitch.add(modOption)
-                    let userOption = document.createElement("option")
-                    userOption.setAttribute("value", 2)
-                    userOption.setAttribute("selected", true)
-                    userOption.innerText = "User"
-                    permissionSwitch.add(userOption)
-                    let guestOption = document.createElement("option")
-                    guestOption.setAttribute("value", 1)
-                    guestOption.innerText = "Guest"
-                    permissionSwitch.add(guestOption)
-                } else if (userData.permissions == 1) {
-                    let teacherOption = document.createElement("option")
-                    teacherOption.setAttribute("value", 4)
-                    teacherOption.innerText = "Teacher"
-                    permissionSwitch.add(teacherOption)
-                    let modOption = document.createElement("option")
-                    modOption.setAttribute("value", 3)
-                    modOption.innerText = "Mod"
-                    permissionSwitch.add(modOption)
-                    let userOption = document.createElement("option")
-                    userOption.setAttribute("value", 2)
-                    userOption.innerText = "User"
-                    permissionSwitch.add(userOption)
-                    let guestOption = document.createElement("option")
-                    guestOption.setAttribute("value", 1)
-                    guestOption.setAttribute("selected", true)
-                    guestOption.innerText = "Guest"
-                    permissionSwitch.add(guestOption)
+                let permissions = ["Guest", "User", "Mod", "Teacher"] 
+                for (let i = 4; i > 0; i--) {
+                    let option = document.createElement("option");
+                    option.setAttribute("value", i);
+                    if (userData.permissions == i) option.setAttribute("selected", true);
+                    option.innerText = permissions[i - 1];
+                    permissionSwitch.add(option);
                 }
                 newUser.appendChild(permissionSwitch)
                 newUser.append(" ")

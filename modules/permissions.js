@@ -43,6 +43,7 @@ const DEFAULT_CLASS_PERMISSIONS = {
 // This defines global socket permissions that define who can use each socket event
 const GLOBAL_SOCKET_PERMISSIONS = {
 	permChange: MANAGER_PERMISSIONS,
+	verifyChange: MANAGER_PERMISSIONS,
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
@@ -60,8 +61,10 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
-	refreshPin: STUDENT_PERMISSIONS,
-	transfer: STUDENT_PERMISSIONS,
+	transferDigipogs: STUDENT_PERMISSIONS,
+	transferDigipogsResult: STUDENT_PERMISSIONS,
+	awardDigipogs: TEACHER_PERMISSIONS,
+	awardDigipogsResponse: TEACHER_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
