@@ -15,7 +15,7 @@ module.exports = {
         });
 
         // For transferring digipogs between users for third party services
-        socket.on('transfer', async (transferData) => {
+        socket.on('transferDigipogs', async (transferData) => {
             const result = await transferDigipogs(transferData);
             socket.emit('transferResponse', jwtSign(result));
         });

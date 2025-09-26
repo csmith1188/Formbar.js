@@ -35,6 +35,7 @@ module.exports = {
             });
         });
 
+        // Define the /profile/:userId? route after
         app.get('/profile/:userId?', isVerified, async (req, res) => {
             try {
                 // Log the request information
