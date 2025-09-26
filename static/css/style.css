@@ -2459,10 +2459,12 @@ button img {
 
 #users .user.hasInfo {
 	cursor: pointer;
+	grid-row: span 3;
 }
 
 #users .user.hiddenInfo *:not(p) {
 	display: none;
+	grid-row: unset;
 }
 
 #addIpForm {
