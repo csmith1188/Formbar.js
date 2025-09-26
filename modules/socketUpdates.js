@@ -7,6 +7,7 @@ const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDEN
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
+const {lastActivities} = require("../sockets/middleware/inactivity");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -539,6 +540,11 @@ class SocketUpdates {
 
                 // Reload just this client
                 socket.emit('reload')
+
+                // If the socket had an associated last activity, remove it
+                if (lastActivities[email] && lastActivities[email][socket.id]) {
+                    delete lastActivities[email][socket.id];
+                }
 
                 // Only clear global user/class state if this was the last active session
                 if (isLastSession && classId) {

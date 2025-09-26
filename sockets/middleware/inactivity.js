@@ -1,34 +1,26 @@
 const { logger } = require("../../modules/logger")
-const { userSocketUpdates } = require("../init");
-const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+const INACTIVITY_LIMIT = 10 * 1000; // 30 minutes
+const lastActivities = {};
 
 module.exports = {
     order: 40,
     run(socket, socketUpdates) {
-        let inactivityTimer;
-
-        // Resets the inactivity timer
-        function resetTimer() {
-            clearTimeout(inactivityTimer);
-
-            const socketUpdates = userSocketUpdates[socket.request.session.email];
-            inactivityTimer = setTimeout(() => {
-                socketUpdates.logout(socket);
-            }, INACTIVITY_LIMIT);
-        }
-
         // Inactivity timeout middleware
         socket.use(([event, ...args], next) => {
             try {
-                resetTimer();
+                // Update the time of the last activity before proceeding
+                const email = socket.request.session.email;
+                if (!lastActivities[email]) {
+                    lastActivities[email] = {};
+                }
+
+                lastActivities[email][socket.id] = {socket, time: Date.now()};
                 next();
             } catch (err) {
                 logger.log('error', err.stack)
             }
         });
-
-        socket.on('disconnect', () => {
-            clearTimeout(inactivityTimer);
-        });
-    }
+    },
+    INACTIVITY_LIMIT,
+    lastActivities
 }
