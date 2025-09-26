@@ -56,7 +56,7 @@ app.use('/js/monaco-loader.js', express.static(__dirname + '/node_modules/monaco
 app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs'))
 
 // Begin checking for any users who have not performed any actions for a specified amount of time
-const INACTIVITY_CHECK_TIME = 5000 // 1 Minute
+const INACTIVITY_CHECK_TIME = 60000 // 1 Minute
 setInterval(() => {
     const currentTime = Date.now();
     for (const email of Object.keys(lastActivities)) {
