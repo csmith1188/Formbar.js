@@ -20,7 +20,7 @@ module.exports = {
                     const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = args;
                     pollData = {
                         prompt: pollPrompt,
-                        pollOptions: Array.isArray(polls) ? polls : [],
+                        answers: Array.isArray(polls) ? polls : [],
                         blind: !!blind,
                         weight: Number(weight ?? 1),
                         tags: Array.isArray(tags) ? tags : [],
@@ -33,19 +33,17 @@ module.exports = {
 
                 await createPoll(classId, {
                     prompt: pollData.prompt,
-                    pollOptions: Array.isArray(pollData.pollOptions) ? pollData.pollOptions : [],
+                    answers: Array.isArray(pollData.answers) ? pollData.answers : [],
                     blind: !!pollData.blind,
                     weight: Number(pollData.weight ?? 1),
                     tags: Array.isArray(pollData.tags) ? pollData.tags : [],
-                    studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : undefined,
+                    studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
                     indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
                     allowTextResponses: !!pollData.allowTextResponses,
                     allowMultipleResponses: !!pollData.allowMultipleResponses,
                     lastResponse: pollData.lastResponse || false
-                }, {
-
-                }, socket.request.session)
-                socket.emit('startPoll')
+                }, socket.request.session);
+                socket.emit('startPoll');
             } catch (err) {
                 logger.log("error", err.stack);
             }

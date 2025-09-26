@@ -499,7 +499,7 @@ function startPoll(customPollId) {
 
         socket.emit('startPoll', {
             prompt: customPoll.prompt,
-            pollOptions: customPoll.answers,
+            answers: customPoll.answers,
             allowTextResponses: !!customPoll.textRes,
             allowMultipleResponses: customPoll.multiRes,
             blind: !!customPoll.blind,
@@ -513,7 +513,7 @@ function startPoll(customPollId) {
 
         socket.emit('startPoll', {
             prompt: pollPrompt.value,
-            pollOptions: pollAnswers,
+            answers: pollAnswers,
             allowTextResponses: resTextBox.checked,
             allowMultipleResponses: multiRes.checked,
             blind: !!blind,

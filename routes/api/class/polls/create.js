@@ -23,7 +23,7 @@ module.exports = {
                 // Check if the request is legacy and remap them if so
                 const pollData = isLegacy ? {
                     prompt: body.pollPrompt,
-                    pollOptions: Array.isArray(body.polls) ? body.polls : [],
+                    answers: Array.isArray(body.polls) ? body.polls : [],
                     blind: body.blind,
                     weight: body.weight,
                     tags: Array.isArray(body.tags) ? body.tags : (body.tags ?? []),

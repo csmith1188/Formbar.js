@@ -35,7 +35,7 @@ describe('startPoll', () => {
     it('should start a poll successfully', async () => {
         await startPollHandler({
             prompt: 'Test Poll',
-            pollOptions: [{}, {}, {}],
+            answers: [{}, {}, {}],
             blind: false,
             weight: 1,
             tags: ['tag1'],
@@ -55,7 +55,7 @@ describe('startPoll', () => {
         // Attempt to start the poll then check if it failed
         await startPollHandler({
             prompt: 'Test Poll',
-            pollOptions: [{}, {}, {}],
+            answers: [{}, {}, {}],
             blind: false,
             weight: 1,
             tags: ['tag1'],
@@ -76,7 +76,7 @@ describe('startPoll', () => {
         // Attempt to start the poll then check if the error was logged
         await startPollHandler({
             prompt: 'Test Poll',
-            pollOptions: [{}, {}, {}],
+            answers: [{}, {}, {}],
             blind: false,
             weight: 1,
             tags: ['tag1'],

@@ -20,8 +20,8 @@ const pogMeterTracker = {
  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, pollOptions, blind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
-        const numberOfResponses = Object.keys(pollOptions).length;
+        const { prompt, answers, blind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const numberOfResponses = Object.keys(answers).length;
         const socketUpdates = userSocketUpdates[userSession.email];
         pogMeterTracker.pogMeterIncreased = [];
 
@@ -33,16 +33,15 @@ async function createPoll(classId, pollData, userSession) {
         // Get class id and check if the class is active before continuing
         const classId = userSession.classId;
         if (!classInformation.classrooms[classId] || !classInformation.classrooms[classId].isActive) {
-            // socket.emit('message', 'This class is not currently active.');
             return 'This class is not currently active.';
         }
 
         // Log poll information
         logger.log('info', `[startPoll] session=(${JSON.stringify(userSession)})`)
-        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) pollOptions=(${JSON.stringify(pollOptions)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
+        logger.log('info', `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) answers=(${JSON.stringify(answers)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
 
         await clearPoll(classId, userSession, false)
-        let generatedColors = generateColors(Object.keys(pollOptions).length)
+        let generatedColors = generateColors(Object.keys(answers).length)
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
 
@@ -68,16 +67,16 @@ async function createPoll(classId, pollData, userSession) {
             let weight = 1
             let color = generatedColors[i]
 
-            if (pollOptions[i].answer) {
-                answer = pollOptions[i].answer
+            if (answers[i].answer) {
+                answer = answers[i].answer
             }
 
-            if (pollOptions[i].weight) {
-                weight = pollOptions[i].weight
+            if (answers[i].weight) {
+                weight = answers[i].weight
             }
 
-            if (pollOptions[i].color) {
-                color = pollOptions[i].color
+            if (answers[i].color) {
+                color = answers[i].color
             }
 
             classInformation.classrooms[classId].poll.responses[answer] = {
