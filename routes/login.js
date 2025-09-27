@@ -25,11 +25,14 @@ module.exports = {
                     token = (await dbGet('SELECT token FROM temp_user_creation_data WHERE secret=?', [code])).token;
                 }
 
-                // If the user is not logged in, render the login page
+                // If the user is already logged in, redirect them to the home page
                 if (req.session.email !== undefined && classInformation.users[req.session.email]) {
                     res.redirect('/');
                     return;
-                } else if (!token) {
+                }
+
+                // If the user is not logged in, render the login page
+                if (!token) {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',

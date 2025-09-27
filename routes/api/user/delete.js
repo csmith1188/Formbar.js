@@ -8,8 +8,12 @@ module.exports = {
         router.get('/user/:id/delete', httpPermCheck("deleteUser"), async (req, res) => {
             try {
                 const userId = req.params.id;
-                await deleteUser(userId)
-                res.status(200).json({ message: 'Success' });
+                const result = await deleteUser(userId)
+                if (result === true) {
+                    res.status(200);
+                } else {
+                    res.status(500).json({ error: result });
+                }
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

@@ -10,7 +10,6 @@ module.exports = {
         router.post('/class/:id/polls/create', classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
             try {
                 const classId = req.params.id;
-                
                 const body = req.body || {};
                 const isLegacy = (
                     body.pollPrompt != null ||
@@ -24,8 +23,8 @@ module.exports = {
                 // Check if the request is legacy and remap them if so
                 const pollData = isLegacy ? {
                     prompt: body.pollPrompt,
-                    pollOptions: Array.isArray(body.polls) ? body.polls : [],
-                    isBlind: body.blind,
+                    answers: Array.isArray(body.polls) ? body.polls : [],
+                    blind: body.blind,
                     weight: body.weight,
                     tags: Array.isArray(body.tags) ? body.tags : (body.tags ?? []),
                     studentsAllowedToVote: Array.isArray(body.boxes) ? body.boxes : undefined,

@@ -17,6 +17,9 @@ const { classInformation } = require('./modules/class/classroom.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { settings } = require('./modules/config.js');
+const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+const { userSocketUpdates } = require("./sockets/init");
+const { userSockets } = require("./modules/socketUpdates");
 const authentication = require('./routes/middleware/authentication.js')
 
 // Set EJS as our view engine
@@ -52,6 +55,24 @@ app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@flo
 app.use('/js/monaco-loader.js', express.static(__dirname + '/node_modules/monaco-editor/min/vs/loader.js'))
 app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs'))
 
+// Begin checking for any users who have not performed any actions for a specified amount of time
+const INACTIVITY_CHECK_TIME = 60000 // 1 Minute
+setInterval(() => {
+    const currentTime = Date.now();
+    for (const email of Object.keys(lastActivities)) {
+        const userSockets = lastActivities[email];
+        for (const [socketId, activity] of Object.entries(userSockets)) {
+            if (currentTime - activity.time > INACTIVITY_LIMIT) {
+                const socketUpdates = userSocketUpdates[email];
+                if (socketUpdates) {
+                    socketUpdates.logout(activity.socket); // Log the user out
+                    delete lastActivities[email]; // Remove the user from the inactivity check
+                }
+            }
+        }
+    }
+}, INACTIVITY_CHECK_TIME)
+
 // Check if an IP is banned
 app.use((req, res, next) => {
 	let ip = req.ip
@@ -71,25 +92,32 @@ app.use((req, res, next) => {
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
+    res.locals = {
+        ...res.locals,
+        MANAGER_PERMISSIONS,
+        TEACHER_PERMISSIONS,
+        MOD_PERMISSIONS,
+        STUDENT_PERMISSIONS,
+        GUEST_PERMISSIONS,
+        BANNED_PERMISSIONS
+    }
+
     // If the user is in a class, then get the user from the class students list
     // This ensures that the user data is always up to date
 	if (req.session.classId) {
         const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-		classInformation.users[req.session.email] = user;
+		if (!user) {
+            res.locals.currentUser = classInformation.users[req.session.email];
+            next();
+            return;
+        }
+
+        classInformation.users[req.session.email] = user;
         res.locals.currentUser = user;
 	} else {
         res.locals.currentUser = classInformation.users[req.session.email];
     }
 
-	res.locals = {
-		...res.locals,
-		MANAGER_PERMISSIONS,
-		TEACHER_PERMISSIONS,
-		MOD_PERMISSIONS,
-		STUDENT_PERMISSIONS,
-		GUEST_PERMISSIONS,
-		BANNED_PERMISSIONS
-	}
 	next()
 })
 

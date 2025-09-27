@@ -486,7 +486,7 @@ function startPoll(customPollId) {
 		if(customPollId == "current") {
 			customPoll = {
 				prompt: pollPrompt.value,
-				isBlind: blindCheck.checked,
+				blind: blindCheck.checked,
 				textRes: resTextBox.checked,
 				multiRes: multiRes.checked,
 				answers: pollAnswers,
@@ -499,10 +499,10 @@ function startPoll(customPollId) {
 
         socket.emit('startPoll', {
             prompt: customPoll.prompt,
-            pollOptions: customPoll.answers,
-            allowTextResponses: customPoll.textRes,
+            answers: customPoll.answers,
+            allowTextResponses: !!customPoll.textRes,
             allowMultipleResponses: customPoll.multiRes,
-            isBlind: customPoll.blind,
+            blind: !!customPoll.blind,
             weight: customPoll.weight,
             tags: userTags,
             indeterminate: customPoll.indeterminate,
@@ -513,10 +513,10 @@ function startPoll(customPollId) {
 
         socket.emit('startPoll', {
             prompt: pollPrompt.value,
-            pollOptions: pollAnswers,
+            answers: pollAnswers,
             allowTextResponses: resTextBox.checked,
             allowMultipleResponses: multiRes.checked,
-            isBlind: blind,
+            blind: !!blind,
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,

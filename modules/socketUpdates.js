@@ -7,6 +7,7 @@ const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDEN
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
+const {lastActivities} = require("../sockets/middleware/inactivity");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -503,9 +504,9 @@ class SocketUpdates {
         try {
             logger.log('info', `[classKickStudents] classId=(${classId})`)
 
-            for (let email of Object.keys(classInformation.classrooms[classId].students)) {
-                if (classInformation.classrooms[classId].students[email].classPermissions < TEACHER_PERMISSIONS) {
-                    this.classKickUser(email, classId);
+            for (const student of Object.values(classInformation.classrooms[classId].students)) {
+                if (student.classPermissions < TEACHER_PERMISSIONS) {
+                    this.classKickUser(student.id, classId);
                 }
             }
         } catch (err) {
@@ -539,6 +540,11 @@ class SocketUpdates {
 
                 // Reload just this client
                 socket.emit('reload')
+
+                // If the socket had an associated last activity, remove it
+                if (lastActivities[email] && lastActivities[email][socket.id]) {
+                    delete lastActivities[email][socket.id];
+                }
 
                 // Only clear global user/class state if this was the last active session
                 if (isLastSession && classId) {
@@ -583,36 +589,6 @@ class SocketUpdates {
                 logger.log('error', err.stack)
             }
         })
-    }
-
-    async startClass(classId) {
-        try {
-            logger.log('info', `[startClass] classId=(${classId})`);
-            await advancedEmitToClass('startClassSound', classId, { api: true });
-
-            // Activate the class and send the class active event
-            classInformation.classrooms[classId].isActive = true;
-            advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
-
-            logger.log('verbose', `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
-    async endClass(classId) {
-        try {
-            logger.log('info', `[endClass] classId=(${classId})`);
-            await advancedEmitToClass('endClassSound', classId, { api: true });
-
-            // Deactivate the class and send the class active event
-            classInformation.classrooms[classId].isActive = false;
-            advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
-
-            logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
     }
 
     getOwnedClasses(email) {
@@ -668,44 +644,6 @@ class SocketUpdates {
             )
         } catch (err) {
             logger.log('error', err.stack);
-        }
-    }
-
-    async deleteCustomPolls(userId) {
-        try {
-            const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
-            if (customPolls.length == 0) return
-
-            await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
-
-            for (let customPoll of customPolls) {
-                await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
-            }
-        } catch (err) {
-            throw err
-        }
-    }
-
-    async deleteClassrooms(userId) {
-        try {
-            const classrooms = await dbGetAll('SELECT * FROM classroom WHERE owner=?', userId)
-            if (classrooms.length == 0) return
-
-            await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
-            for (let classroom of classrooms) {
-                if (classInformation.classrooms[classroom.id]) {
-                    this.endClass(classroom.key.classroom.id)
-                }
-
-                await Promise.all([
-                    dbRun('DELETE FROM classusers WHERE classId=?', classroom.id),
-                    dbRun('DELETE FROM class_polls WHERE classId=?', classroom.id),
-                    dbRun('DELETE FROM plugins WHERE classId=?', classroom.id),
-                    dbRun('DELETE FROM lessons WHERE class=?', classroom.id)
-                ])
-            }
-        } catch (err) {
-            throw err
         }
     }
 
