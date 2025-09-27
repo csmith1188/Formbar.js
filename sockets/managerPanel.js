@@ -37,9 +37,15 @@ module.exports = {
                 logger.log('info', `[verifyUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[verifyUser] user=(${id})`)
 
-                // User from classInformation
-                const user = classInformation.users[id]
-                if (!user) logger.log('warn', `[verifyUser] Could not find user (${id}) in classInformation.users`)
+                // Get user from database
+                const user = await new Promise((resolve, reject) => {
+                    database.get('SELECT * FROM users WHERE id=?', id, (err, user) => {
+                        if (err) reject(err)
+                        resolve(user)
+                    })
+                })
+
+                if (!user) logger.log('warning', `[verifyUser] Could not find user (${id}) in classInformation.users`)
                 
                 // Toggle verified status
                 user.verified ? user.verified = 0 : user.verified = 1

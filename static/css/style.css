@@ -178,6 +178,10 @@ button.pressed:hover,
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
+textarea#resTextBox {
+	width: 100%;
+}
+
 #backgroundDarken {
 	width: 100vw;
 	height: 100vh;
@@ -2449,12 +2453,18 @@ button img {
 	margin: auto;
 }
 
+#users .user p {
+	pointer-events: none;
+}
+
 #users .user.hasInfo {
 	cursor: pointer;
+	grid-row: span 3;
 }
 
 #users .user.hiddenInfo *:not(p) {
 	display: none;
+	grid-row: unset;
 }
 
 #addIpForm {

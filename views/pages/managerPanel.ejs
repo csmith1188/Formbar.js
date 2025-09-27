@@ -159,7 +159,7 @@
             var newUser = document.createElement("div")
             newUser.tabIndex = 0;
             newUser.className = "user hiddenInfo";
-            newUser.setAttribute('onclick', 'showUserInfo(this)')
+            newUser.setAttribute('onclick', 'if(event.target == this) showUserInfo(this);')
             newUser.setAttribute('onkeydown', 'if(event.key == " " || event.key == "Enter") showUserInfo(this)')
             newUser.setAttribute("id", userData.email);
             let userElement = document.createElement("p")
@@ -190,6 +190,17 @@
                 }
                 newUser.appendChild(permissionSwitch)
                 newUser.append(" ")
+                if(!userData.verified) {
+                    let verifyUserButton = document.createElement("button")
+                    verifyUserButton.className = 'quickButton acceptButton revampButton'
+                    verifyUserButton.setAttribute("data-user", userData.id)
+                    verifyUserButton.innerText = "Verify User"
+                    verifyUserButton.onclick = (event) => {
+                        socket.emit('verifyChange', userData.id)
+                        verifyUserButton.remove()
+                    }
+                    newUser.appendChild(verifyUserButton)
+                }
                 let banUserButton = document.createElement("button")
                 banUserButton.className = 'banUser quickButton warningButton revampButton'
                 banUserButton.setAttribute("data-user", userData.id)
