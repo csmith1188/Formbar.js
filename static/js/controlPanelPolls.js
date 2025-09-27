@@ -531,11 +531,6 @@ function startPoll(customPollId) {
 function editCustomPoll(customPollId) {
 	editingPollId = customPollId
 	let customPoll = customPolls[editingPollId]
-	
-
-	if (customPoll.owner == currentUser.id) {
-		editPollDialog.open = true
-	}
 
 	blindCheck.checked = customPoll.blind
 	pollPrompt.value = customPoll.prompt
@@ -559,8 +554,6 @@ function editCustomPoll(customPollId) {
 }
 
 function unloadPoll() {
-	editPollDialog.open = false
-
 	pollPrompt.value = ''
 	resTextBox.checked = false
 	blindCheck.checked = false

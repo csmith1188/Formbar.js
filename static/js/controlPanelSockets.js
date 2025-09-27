@@ -143,6 +143,7 @@ function hoverShowPollDetails(poll, event, isDetails = false) {
 	}
 
 	pollHoverDiv.style.setProperty('--mouseX', event.x - 300 + 'px');
+	if(event.x - 300 < 0) pollHoverDiv.style.setProperty('--mouseX', event.x + 'px');
 	pollHoverDiv.style.setProperty('--mouseY', event.y + 'px');
 	pollHoverDiv.className = 'revampDiv open';
 }
