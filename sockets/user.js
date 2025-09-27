@@ -1,5 +1,4 @@
 const { logger } = require("../modules/logger")
-const { deleteUser } = require("../modules/user");
 
 module.exports = {
     run(socket, socketUpdates) {

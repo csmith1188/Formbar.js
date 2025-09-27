@@ -2,7 +2,7 @@ const { classInformation } = require("./class/classroom");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
 const { advancedEmitToClass } = require("./socketUpdates");
-const { database } = require("./database");
+const { database, dbGetAll, dbRun } = require("./database");
 const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
 
@@ -380,5 +380,6 @@ module.exports = {
     clearPoll,
     pollResponse,
     getPollResponses,
+    deleteCustomPolls,
     pogMeterTracker
 }

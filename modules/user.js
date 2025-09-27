@@ -1,9 +1,10 @@
 const { classInformation } = require('./class/classroom')
-const { database, dbGetAll, dbGet, dbRun} = require('./database')
+const { database, dbGetAll, dbGet, dbRun } = require('./database')
 const { logger } = require('./logger')
 const { userSockets, managerUpdate } = require("./socketUpdates");
 const { userSocketUpdates } = require("../sockets/init");
 const { deleteRooms } = require("./class/class");
+const { deleteCustomPolls } = require("./polls");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -126,14 +127,13 @@ async function deleteUser(userId, userSession) {
         logger.log('info', `[deleteUser] session=(${JSON.stringify(userSession)})`)
         logger.log('info', `[deleteUser] userId=(${userId})`)
 
+        // Get the user's email from their ID and verify they exist
         const user = await dbGet('SELECT * FROM users WHERE id=?', [userId]);
         if (!user) {
-            if (socket && socket.emit) {
-                socket.emit('message', 'User not found')
-            }
-            return
+            return 'User not found'
         }
 
+        // Log the user out if they're currently online
         const userSocketsMap = userSockets[user.email];
         const usersSocketUpdates = userSocketUpdates[user.email];
         if (userSocketsMap && usersSocketUpdates) {
@@ -152,9 +152,8 @@ async function deleteUser(userId, userSession) {
             ])
 
             // await userSocketUpdates.deleteCustomPolls(userId)
-            // await userSocketUpdates.deleteClassrooms(userId)
-            deleteRooms(userId)
-
+            await deleteCustomPolls(userId)
+            await deleteRooms(userId) // Delete any rooms owned by the user
 
             // If the student is online, remove them from any class they're in and update the control panel
             const student = classInformation.users[user.email];
@@ -170,13 +169,14 @@ async function deleteUser(userId, userSession) {
 
             await dbRun('COMMIT')
             await managerUpdate()
-            if (socket && socket.emit) socket.emit('message', 'User deleted successfully')
+            return true
         } catch (err) {
             await dbRun('ROLLBACK')
             throw err
         }
     } catch (err) {
         logger.log('error', err.stack);
+        return 'There was an internal server error. Please try again.';
     }
 }
 
