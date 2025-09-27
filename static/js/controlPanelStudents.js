@@ -149,7 +149,7 @@ function buildStudent(classroom, studentData) {
             newStudent.classList.add('break')
         }
 
-        if(studentData.pollRes.textRes != '' && studentData.pollRes.buttonRes != '') {
+        if(studentData.pollRes.textRes !== '' && studentData.pollRes.buttonRes !== '') {
             let div = document.createElement('div')
             div.style = 'width:24px;height:24px;filter:invert(1);'
             div.innerHTML = '<img src="/img/text-outline.svg">'
