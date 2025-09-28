@@ -399,6 +399,7 @@ module.exports = {
                             accountCreationData.newSecret = newSecret;
                             accountCreationData.hashedPassword = hashedPassword;
                             accountCreationData.permissions = permissions;
+                            accountCreationData.password = undefined;
 
                             // Create JWT token with this information then store it in the temp_user_creation_data in the database
                             // This will be used to finish creating the account once the email is verified
