@@ -7,7 +7,7 @@ const { getUserClass } = require('../modules/user');
 const config = require('../modules/config');
 const jwt = require('jsonwebtoken');
 
-function generateAccessToken(userData, classId, refreshToken) {
+function generateAccessToken(userData, refreshToken) {
     const token = jwt.sign({
         id: userData.id,
         email: userData.email,
@@ -16,7 +16,6 @@ function generateAccessToken(userData, classId, refreshToken) {
         classPermissions: userData.classPermissions,
         classrooms: userData.classrooms,
         activeClass: userData.activeClass,
-        class: classId,
         refreshToken
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
 
@@ -39,31 +38,13 @@ function storeRefreshToken(userId, refreshToken) {
     });
 }
 
-// Retrieves extra data and adds it to the user data provided
+// Retrieves classroom-related data for the user for OAuth
 async function createUserData(userData) {
+    // Get the user's class and classroom data
     const classId = getUserClass(userData.email);
     const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
-    for (const classroomName in classroomData) {
-        // Retrieve all students in the class
-        const classroom = classroomData[classroomName];
-        const classUsers = await dbGetAll('SELECT * FROM classusers WHERE classId=?', [classroom.id]);
 
-        // Add student information from users table
-        for (const student of classUsers) {
-            const studentData = await dbGet('SELECT * FROM users WHERE id=?', [student.studentId]);
-            student.email = studentData.email;
-            student.displayName = studentData.displayName;
-            student.digipogs = studentData.digipogs;
-            student.tags = studentData.tags;
-            student.verified = studentData.verified;
-
-            classUsers[student.email] = student;
-        }
-
-        // Add students to classroom
-        classroom.students = classUsers;
-    }
-    
+    // Set classroom-related data
     userData.classPermissions = null;
     userData.classrooms = classroomData;
     userData.activeClass = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClass : null;
@@ -111,7 +92,7 @@ module.exports = {
                                 userData = await createUserData(userData);
                                 
                                 // Generate new access token
-                                const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
+                                const accessToken = generateAccessToken(userData, refreshTokenData.refresh_token);
                                 const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
                                 res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                             } else {
@@ -140,8 +121,7 @@ module.exports = {
                                     userData = await createUserData(userData);
 
                                     // Generate access token
-                                    const classId = getUserClass(req.session.email);
-                                    const accessToken = generateAccessToken(userData, classId, refreshTokenData.refresh_token);
+                                    const accessToken = generateAccessToken(userData, refreshTokenData.refresh_token);
                                     const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
                                     res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                                 } else {
@@ -249,9 +229,9 @@ module.exports = {
                                 refreshToken = generateRefreshToken(userData);
                                 storeRefreshToken(userData.id, refreshToken);
                             };
+
                             // Generate access token
-                            const classId = getUserClass(userData.email);
-                            const accessToken = generateAccessToken(userData, classId, refreshToken);
+                            const accessToken = generateAccessToken(userData, refreshToken);
                                                 
                             logger.log('verbose', '[post /oauth] Successfully Logged in with oauth');
                             const querySeparator = redirectURL.includes('?') ? '&' : '?'; // In case the redirectURL already has a query string
