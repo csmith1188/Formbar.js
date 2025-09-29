@@ -61,6 +61,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
+    refreshPin: STUDENT_PERMISSIONS,
 	transferDigipogs: STUDENT_PERMISSIONS,
 	transferDigipogsResult: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,

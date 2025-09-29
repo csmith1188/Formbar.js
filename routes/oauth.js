@@ -3,7 +3,7 @@ const { classInformation } = require('../modules/class/classroom');
 const { logNumbers, privateKey } = require('../modules/config');
 const { database, dbGetAll, dbGet } = require('../modules/database');
 const { logger } = require('../modules/logger');
-const { getUserClass } = require('../modules/user');
+const { getUserClass } = require('../modules/user/user');
 const config = require('../modules/config');
 const jwt = require('jsonwebtoken');
 

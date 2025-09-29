@@ -1,5 +1,5 @@
 const { classInformation, getClassIDFromCode } = require("../../modules/class/classroom")
-const { getUser } = require("../../modules/user")
+const { getUser } = require("../../modules/user/user")
 const { logger } = require("../../modules/logger")
 
 module.exports = {
