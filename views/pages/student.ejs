@@ -262,6 +262,14 @@
 						oldLetterRes = lettRes
 						oldTextRes = textRes
 
+						if(lettRes == "remove") {
+							currentUser.pollRes = {buttonRes: '', textRes: '', date: new Date()};
+							oldLetterRes = ''
+							oldTextRes = ''
+
+							textarea.value = ''
+						}
+
 						// Sends user input to the server
 						socket.emit('pollResp', lettRes, textRes)
 					}
