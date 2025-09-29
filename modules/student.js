@@ -131,7 +131,6 @@ function getIdFromEmail(email) {
 }
 
 async function getEmailFromId(userId) {
-    //console.trace("USER ID: ", userId);
     let email = null;
     for (const user of Object.values(classInformation.users)) {
         if (user.id === userId) {

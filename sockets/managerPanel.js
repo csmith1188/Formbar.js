@@ -1,9 +1,10 @@
 const { classInformation } = require("../modules/class/classroom")
-const { database } = require("../modules/database")
+const { database, dbRun, dbGetAll } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")
 const { getUserClass } = require("../modules/user")
 const { io } = require("../modules/webServer")
+const jwt = require("jsonwebtoken");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -32,23 +33,28 @@ module.exports = {
         })
 
         // For managers to swap a user's verified status
+        // Unlike for verified users, unverified users will have their secret for the ID
         socket.on("verifyChange", async (id) => {
             try {
                 logger.log('info', `[verifyUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[verifyUser] user=(${id})`)
 
-                // User from classInformation
-                const user = classInformation.users[id]
-                if (!user) logger.log('warn', `[verifyUser] Could not find user (${id}) in classInformation.users`)
-                
-                // Toggle verified status
-                user.verified ? user.verified = 0 : user.verified = 1
-                database.run('UPDATE users SET verified=? WHERE id=?', [user.verified, id], (err) => {
-                    if (err) logger.log('error', err.stack);
-                });
+                // Get the user from the temp users table
+                const tempUsers = await dbGetAll('SELECT * FROM temp_user_creation_data');
+                let tempUser;
+                for (const user of tempUsers) {
+                    const userData = jwt.decode(user.token);
+                    if (userData.newSecret == id) {
+                        tempUser = userData;
+                        break;
+                    }
+                }
 
-                // Notify the user to reload
-                io.to(`user-${user.email}`).emit('reload')
+                // If a temp user wasn't found, exit
+                // Otherwise, insert their data into the users table, and delete them from the temp user table.
+                if (!tempUser) return;
+                await dbRun('INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)', [tempUser.email, tempUser.hashedPassword, tempUser.permissions, tempUser.newAPI, tempUser.newSecret, tempUser.displayName, 1]);
+                await dbRun('DELETE FROM temp_user_creation_data WHERE secret=?', [tempUser.newSecret]);
             } catch (err) {
                 logger.log('error', err.stack);
             }

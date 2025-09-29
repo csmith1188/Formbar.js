@@ -149,6 +149,16 @@ function buildStudent(classroom, studentData) {
             newStudent.classList.add('break')
         }
 
+        if(studentData.pollRes.textRes !== '' && studentData.pollRes.buttonRes !== '') {
+            let div = document.createElement('div')
+            div.style = 'width:24px;height:24px;filter:invert(1);'
+            div.innerHTML = '<img src="/img/text-outline.svg">'
+            alertSpan.appendChild(div)
+            newStudent.title = studentData.pollRes.textRes;
+        } else {
+            newStudent.title = '';
+        }
+
         let permSwitch = document.createElement('select');
         permSwitch.setAttribute("name", "permSwitch");
         permSwitch.setAttribute("class", "permSwitch revampButton");
