@@ -2659,7 +2659,7 @@ div#tagsList {
 	padding: 10px;
 	gap: 10px;
 	max-height: 400px;
-	overflow: scroll;
+	overflow: auto;
 }
 
 div#tagsList:empty::after {

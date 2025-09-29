@@ -270,6 +270,12 @@
                             <img class="showMobile pollOptionIcon" src="/img/eye-off-outline.svg" alt="Blind Poll">
                             <input type='checkbox' id='blind'>
                         </div>
+                        
+                        <div class="pollOptionsEditorOption">
+                            <h2 class="hideMobile">Allow Vote Changes</h2>
+                            <img class="showMobile pollOptionIcon" src="/img/ban-outline.svg" alt="Allow Vote Changes">
+                            <input type='checkbox' id='allowVoteChanges' checked>
+                        </div>
                     </div>
     
                     <div class="pollOptionsEditorOption" style="margin-bottom: 20px;">
@@ -540,6 +546,7 @@
     let toPollsButton = document.getElementById('toPolls')
     let toPollHistoryButton = document.getElementById('toPollHistory')
     let blindCheck = document.getElementById('blind')
+    let allowVoteChanges = document.getElementById('allowVoteChanges')
     let className = document.getElementById('className')
     let classCode = document.getElementById('classCode')
     let mainPolls = document.getElementById('menuPolls')
