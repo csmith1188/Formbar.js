@@ -21,14 +21,15 @@ const pogMeterTracker = {
 async function createPoll(classId, pollData, userSession) {
     try {
         const { prompt, answers, blind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        let { weight } = pollData;
         const numberOfResponses = Object.keys(answers).length;
         const socketUpdates = userSocketUpdates[userSession.email];
         pogMeterTracker.pogMeterIncreased = [];
 
         // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
-        pollData.weight = Math.floor((pollData.weight || 1) * 100) / 100; // Round to 2 decimal places
-        if (!pollData.weight || isNaN(pollData.weight) || pollData.weight <= 0) weight = 1;
-        let weight = pollData.weight > 5 ? 5 : pollData.weight;
+        weight = Math.floor((weight || 1) * 100) / 100; // Round to 2 decimal places
+        if (!weight || isNaN(weight) || weight <= 0) weight = 1;
+        weight = weight > 5 ? 5 : weight;
 
         // Get class id and check if the class is active before continuing
         const classId = userSession.classId;
