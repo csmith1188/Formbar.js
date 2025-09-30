@@ -695,7 +695,8 @@ body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
 
 details {
 	max-height: 4rem;
-	overflow: hidden;
+	overflow: visible;
+	position: relative;
 	transition: max-height 250ms ease-in-out;
 }
 
@@ -704,8 +705,16 @@ details[open] {
 	grid-row: span 5;
 }
 
-details[open] #reasons {
-	transform: translateY(-80%);
+details #reasons {
+	opacity: 0;
+	pointer-events: none;
+}
+
+details #reasons.open {
+	top: calc(100% + 10px);
+    z-index: 3;
+    pointer-events: all;
+    animation: fadeIn 0.25s ease-in-out 1 forwards;
 }
 
 #helpReason button, #breakReason button {
@@ -720,16 +729,13 @@ details[open] #reasons {
 
 #reasons {
 	backdrop-filter: blur(10px);
-	transform: translateY(80%);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
 	text-align: center;
 	overflow-y: auto;
 	overflow-x: hidden;
-	animation: fadeIn 0.5s;
 	position: absolute;
 	border-radius: 5px;
 	padding: 5px;
-	transition: transform 250ms ease-in-out;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -1195,9 +1201,10 @@ div.break {
 	font-size: 2cqw;
 }
 
-#users details[id^="student"] #alerts * {
+#newMemberListControlPanel details[id^="student"] #alerts * {
 	animation-name: alertWiggle;
 	animation-duration: 0.5s;
+    pointer-events: none;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) {
@@ -2207,6 +2214,7 @@ button.start-custom-poll {
 }
 
 .controlStudent summary {
+	/* flex-wrap: wrap; */
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -2579,7 +2587,7 @@ div.mobileSpacer {
 }
 
 
-#userSortBoxes.options {
+#userSortBoxes.options.sortManager {
 	display: flex;
 	flex-direction: row;
 	justify-content: left;
@@ -2658,7 +2666,7 @@ div#tagsList {
 	padding: 10px;
 	gap: 10px;
 	max-height: 400px;
-	overflow: scroll;
+	overflow: auto;
 }
 
 div#tagsList:empty::after {
@@ -2693,4 +2701,29 @@ div#tagsList {
 .answerWeight {
 	width: 50px;
 	padding: 0;
+}
+
+button.filter,
+button.sort {
+	position: relative;
+}
+
+button.filter.pressed img,
+button.sort div {
+	position: absolute;
+	height: 80%;
+	right: 5%;
+	aspect-ratio: 1;
+}
+
+button.sort img {
+	height: 100%;
+	position: absolute;
+	left: 0;
+	right: 0;
+	opacity: 0;
+}
+
+button.sort img.sortAscendDescendBG {
+	opacity: 0.25;
 }
