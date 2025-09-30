@@ -695,28 +695,26 @@ body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
 
 details {
 	max-height: 4rem;
-	overflow: hidden;
+	overflow: visible;
+	position: relative;
 	transition: max-height 250ms ease-in-out;
 }
 
 details[open] {
 	max-height: 100vh;
 	grid-row: span 5;
-	position: relative;
-	overflow: visible;
 }
 
-details:not([open]) #reasons {
+details #reasons {
 	opacity: 0;
 	pointer-events: none;
 }
 
-details[open] #reasons {
-	transform: translateY(50%);
-	z-index: 3;
-	right: -200px;
-	pointer-events: all;
-	animation: fadeIn 0.25s ease-in-out 1 forwards;
+details #reasons.open {
+	top: calc(100% + 10px);
+    z-index: 3;
+    pointer-events: all;
+    animation: fadeIn 0.25s ease-in-out 1 forwards;
 }
 
 #helpReason button, #breakReason button {
@@ -1203,9 +1201,10 @@ div.break {
 	font-size: 2cqw;
 }
 
-#users details[id^="student"] #alerts * {
+#newMemberListControlPanel details[id^="student"] #alerts * {
 	animation-name: alertWiggle;
 	animation-duration: 0.5s;
+    pointer-events: none;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) {

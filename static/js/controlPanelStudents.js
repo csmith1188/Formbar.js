@@ -29,6 +29,10 @@ function buildStudent(classroom, studentData) {
         if(studentData.id.toString().includes('guest')) newStudent.classList.add('guestStudent')
         newStudent.open = opendetails.indexOf(studentData.id) != -1
 
+        newStudent.onclick = (e) => {
+            if(e.target.id == 'alerts') e.preventDefault();
+        }
+
         newStudent.addEventListener('toggle', () => {
             if (newStudent.open) {
                 if(opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id)
@@ -39,6 +43,7 @@ function buildStudent(classroom, studentData) {
 
         let summary = newStudent.querySelector('summary')
         let alertSpan = newStudent.querySelector('#alerts')
+        let reasons = newStudent.querySelector('#reasons')
         let helpReason = newStudent.querySelector('#helpReason')
         let breakReason = newStudent.querySelector('#breakReason')
         let studentBox = newStudent.querySelector('input[type="checkbox"]')
@@ -82,7 +87,7 @@ function buildStudent(classroom, studentData) {
 
         if (studentData.help) {
             let div = document.createElement('div')
-            //summary.innerHTML += '❗'
+            div.innerHTML += '❗'
             alertSpan.appendChild(div)
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
@@ -135,6 +140,7 @@ function buildStudent(classroom, studentData) {
         if (studentData.break) {
             let div = document.createElement('div')
             div.textContent = '⏱'
+
             alertSpan.appendChild(div)
 
             let endBreakButton = document.createElement('button')
@@ -148,6 +154,10 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(endBreakButton)
 
             newStudent.classList.add('break')
+        }
+
+        alertSpan.onclick = () => {
+            reasons.classList.toggle('open');
         }
 
         if(studentData.pollRes.textRes !== '' && studentData.pollRes.buttonRes !== '') {
