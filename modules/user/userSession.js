@@ -6,6 +6,7 @@ const { userSocketUpdates } = require("../../sockets/init");
 const { deleteCustomPolls } = require("../polls");
 const { deleteRooms } = require("../class/class");
 const { lastActivities } = require("../../sockets/middleware/inactivity");
+const {GUEST_PERMISSIONS} = require("../permissions");
 
 function logout(socket) {
     const email = socket.request.session.email
@@ -47,6 +48,11 @@ function logout(socket) {
                     user.classPermissions = null;
                 }
 
+                // If the user is a guest, then remove them from the global user list
+                if (user.permissions === GUEST_PERMISSIONS) {
+                    delete classInformation.users[email];
+                }
+
                 // If the user was not in a class, then return
                 if (!classId) return;
 
@@ -64,7 +70,10 @@ function logout(socket) {
                     }
 
                     // Update class permissions and virtual bar
-                    this.classUpdate(classId);
+                    const socketUpdates = userSocketUpdates[email];
+                    if (socketUpdates) {
+                        socketUpdates.classUpdate(classId);
+                    }
                 }
 
                 // If this user owns the classroom, end it
