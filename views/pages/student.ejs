@@ -176,7 +176,7 @@
                                         pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
                                     }
                                 }
-								if (!poll.allowMultipleResponses && poll.allowChangeVote) {
+								if (!poll.allowMultipleResponses /*&& poll.allowVoteChanges*/) {
 									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
 								} else if(poll.allowMultipleResponses) {
 									pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
@@ -263,11 +263,11 @@
 						oldTextRes = textRes
 
 						if(lettRes == "remove") {
-							currentUser.pollRes = {buttonRes: '', textRes: '', date: new Date()};
+							currentUser.pollRes = {buttonRes: '', textRes: '', date: null};
 							oldLetterRes = ''
 							oldTextRes = ''
 
-							textarea.value = ''
+							if(textarea) textarea.value = ''
 						}
 
 						// Sends user input to the server

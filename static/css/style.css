@@ -702,10 +702,21 @@ details {
 details[open] {
 	max-height: 100vh;
 	grid-row: span 5;
+	position: relative;
+	overflow: visible;
+}
+
+details:not([open]) #reasons {
+	opacity: 0;
+	pointer-events: none;
 }
 
 details[open] #reasons {
-	transform: translateY(-80%);
+	transform: translateY(50%);
+	z-index: 3;
+	right: -200px;
+	pointer-events: all;
+	animation: fadeIn 0.25s ease-in-out 1 forwards;
 }
 
 #helpReason button, #breakReason button {
@@ -720,16 +731,13 @@ details[open] #reasons {
 
 #reasons {
 	backdrop-filter: blur(10px);
-	transform: translateY(80%);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
 	text-align: center;
 	overflow-y: auto;
 	overflow-x: hidden;
-	animation: fadeIn 0.5s;
 	position: absolute;
 	border-radius: 5px;
 	padding: 5px;
-	transition: transform 250ms ease-in-out;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -2207,6 +2215,7 @@ button.start-custom-poll {
 }
 
 .controlStudent summary {
+	/* flex-wrap: wrap; */
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -2579,7 +2588,7 @@ div.mobileSpacer {
 }
 
 
-#userSortBoxes.options {
+#userSortBoxes.options.sortManager {
 	display: flex;
 	flex-direction: row;
 	justify-content: left;
@@ -2693,4 +2702,29 @@ div#tagsList {
 .answerWeight {
 	width: 50px;
 	padding: 0;
+}
+
+button.filter,
+button.sort {
+	position: relative;
+}
+
+button.filter.pressed img,
+button.sort div {
+	position: absolute;
+	height: 80%;
+	right: 5%;
+	aspect-ratio: 1;
+}
+
+button.sort img {
+	height: 100%;
+	position: absolute;
+	left: 0;
+	right: 0;
+	opacity: 0;
+}
+
+button.sort img.sortAscendDescendBG {
+	opacity: 0.25;
 }
