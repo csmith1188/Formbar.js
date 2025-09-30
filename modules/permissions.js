@@ -16,7 +16,8 @@ const PAGE_PERMISSIONS = {
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
 	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
 	downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
-	logs: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	logs: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	profile: { permissions: STUDENT_PERMISSIONS, classPage: false }
 }
 
 const CLASS_PERMISSIONS = {
