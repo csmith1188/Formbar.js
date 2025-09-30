@@ -287,7 +287,7 @@ function buildStudent(classroom, studentData) {
             }
             digipogButtons.appendChild(sendDigipogs)
         } else {
-            digipogButtons.style = 'display: none'
+            digipogButtons.style.display = 'none'
         }
 
         // Ban and Kick buttons
