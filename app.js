@@ -18,8 +18,7 @@ const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { settings } = require('./modules/config.js');
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
-const { userSocketUpdates } = require("./sockets/init");
-const { userSockets } = require("./modules/socketUpdates");
+const { logout } = require("./modules/user/userSession");
 const authentication = require('./routes/middleware/authentication.js')
 
 // Set EJS as our view engine
@@ -63,11 +62,8 @@ setInterval(() => {
         const userSockets = lastActivities[email];
         for (const [socketId, activity] of Object.entries(userSockets)) {
             if (currentTime - activity.time > INACTIVITY_LIMIT) {
-                const socketUpdates = userSocketUpdates[email];
-                if (socketUpdates) {
-                    socketUpdates.logout(activity.socket); // Log the user out
-                    delete lastActivities[email]; // Remove the user from the inactivity check
-                }
+                logout(activity.socket); // Log the user out
+                delete lastActivities[email]; // Remove the user from the inactivity check
             }
         }
     }

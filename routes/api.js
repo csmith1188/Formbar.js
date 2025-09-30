@@ -3,7 +3,7 @@ const fs = require('fs')
 const router = express.Router()
 const { logger } = require('../modules/logger');
 const { GUEST_PERMISSIONS } = require('../modules/permissions');
-const { getUser } = require('../modules/user');
+const { getUser } = require('../modules/user/user');
 
 module.exports = {
 	run(app) {
