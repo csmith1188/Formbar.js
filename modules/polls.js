@@ -58,7 +58,14 @@ async function createPoll(classId, pollData, userSession) {
         if (studentsAllowedToVote) {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
-            classInformation.classrooms[classId].poll.studentsAllowedToVote = Object.keys(classInformation.classrooms[classId].students)
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = [];
+            for (const student of classInformation.classrooms[classId].students) {
+                // If the student has been excluded by permission, is on break, is offline, or has been manually excluded, do not allow them to vote
+                if (classInformation.classrooms[classId].excludedPermissions.includes(student.classPermissions) || student.break || student.tags.includes('Offline') || student.tags.includes('Excluded')) { 
+                    continue;
+                }
+                classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id.toString());
+            }
         }
 
         // Creates an object for every answer possible the teacher is allowing
@@ -73,7 +80,9 @@ async function createPoll(classId, pollData, userSession) {
             }
 
             if (answers[i].weight) {
-                weight = answers[i].weight
+                if (isNaN(answers[i].weight) || answers[i].weight <= 0) weight = 1
+                weight = Math.floor(answers[i].weight * 100) / 100
+                weight = weight > 5 ? 5 : weight
             }
 
             if (answers[i].color) {
