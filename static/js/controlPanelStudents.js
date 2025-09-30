@@ -261,29 +261,34 @@ function buildStudent(classroom, studentData) {
         }
 
         // Digipog awarding
-        let digipogAwardInput = document.createElement('input');
-        digipogAwardInput.className = 'quickButton revampButton revampWithText digipogAward'
-        digipogAwardInput.placeholder = '0'
-        digipogAwardInput.type = 'number'
-        digipogAwardInput.min = 0
-        digipogAwardInput.value = ''
-        digipogAwardInput.max = 999;
-        digipogAwardInput.oninput = (event) => {
-            if (digipogAwardInput.value > 999) digipogAwardInput.value = 999
-            if (digipogAwardInput.value < 0) digipogAwardInput.value = 0
-            if (digipogAwardInput.value == '') digipogAwardInput.value = 0
-            digipogAwardInput.value = parseInt(digipogAwardInput.value)
-        }
-        digipogButtons.appendChild(digipogAwardInput)
+        // If the user is not a guest, allow awarding digipogs
+        if (studentData.permissions !== GUEST_PERMISSIONS) {
+            let digipogAwardInput = document.createElement('input');
+            digipogAwardInput.className = 'quickButton revampButton revampWithText digipogAward'
+            digipogAwardInput.placeholder = '0'
+            digipogAwardInput.type = 'number'
+            digipogAwardInput.min = 0
+            digipogAwardInput.value = ''
+            digipogAwardInput.max = 999;
+            digipogAwardInput.oninput = (event) => {
+                if (digipogAwardInput.value > 999) digipogAwardInput.value = 999
+                if (digipogAwardInput.value < 0) digipogAwardInput.value = 0
+                if (digipogAwardInput.value == '') digipogAwardInput.value = 0
+                digipogAwardInput.value = parseInt(digipogAwardInput.value)
+            }
+            digipogButtons.appendChild(digipogAwardInput)
 
-        let sendDigipogs = document.createElement('button')
-        sendDigipogs.className = 'quickButton revampButton acceptButton digipogSend'
-        sendDigipogs.setAttribute('data-user', studentData.id)
-        sendDigipogs.textContent = 'Award Digipogs'
-        sendDigipogs.onclick = (event) => {
-            awardDigipogs(studentData.id, digipogAwardInput.value)
+            let sendDigipogs = document.createElement('button')
+            sendDigipogs.className = 'quickButton revampButton acceptButton digipogSend'
+            sendDigipogs.setAttribute('data-user', studentData.id)
+            sendDigipogs.textContent = 'Award Digipogs'
+            sendDigipogs.onclick = (event) => {
+                awardDigipogs(studentData.id, digipogAwardInput.value)
+            }
+            digipogButtons.appendChild(sendDigipogs)
+        } else {
+            digipogButtons.style.display = 'none'
         }
-        digipogButtons.appendChild(sendDigipogs)
 
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')

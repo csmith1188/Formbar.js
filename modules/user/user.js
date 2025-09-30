@@ -1,10 +1,6 @@
-const { classInformation } = require('./class/classroom')
-const { database, dbGetAll, dbGet, dbRun } = require('./database')
-const { logger } = require('./logger')
-const { userSockets, managerUpdate } = require("./socketUpdates");
-const { userSocketUpdates } = require("../sockets/init");
-const { deleteRooms } = require("./class/class");
-const { deleteCustomPolls } = require("./polls");
+const { classInformation } = require('../class/classroom')
+const { database, dbGetAll, dbGet } = require('../database')
+const { logger } = require('../logger')
 
 /**
  * Asynchronous function to get the current user's data.
@@ -122,64 +118,6 @@ async function getUser(api) {
     }
 }
 
-async function deleteUser(userId, userSession) {
-    try {
-        logger.log('info', `[deleteUser] session=(${JSON.stringify(userSession)})`)
-        logger.log('info', `[deleteUser] userId=(${userId})`)
-
-        // Get the user's email from their ID and verify they exist
-        const user = await dbGet('SELECT * FROM users WHERE id=?', [userId]);
-        if (!user) {
-            return 'User not found'
-        }
-
-        // Log the user out if they're currently online
-        const userSocketsMap = userSockets[user.email];
-        const usersSocketUpdates = userSocketUpdates[user.email];
-        if (userSocketsMap && usersSocketUpdates) {
-            const anySocket = Object.values(userSocketsMap)[0];
-            if (anySocket) {
-                usersSocketUpdates.logout(anySocket);
-            }
-        }
-
-        try {
-            await dbRun('BEGIN TRANSACTION')
-            await Promise.all([
-                dbRun('DELETE FROM users WHERE id=?', userId),
-                dbRun('DELETE FROM classusers WHERE studentId=?', userId),
-                dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
-            ])
-
-            // await userSocketUpdates.deleteCustomPolls(userId)
-            await deleteCustomPolls(userId)
-            await deleteRooms(userId) // Delete any rooms owned by the user
-
-            // If the student is online, remove them from any class they're in and update the control panel
-            const student = classInformation.users[user.email];
-            if (student) {
-                const activeClass = classInformation.users[user.email].activeClass;
-                const classroom = classInformation.classrooms[activeClass];
-                delete classInformation.users[user.email];
-                if (classroom) {
-                    delete classroom.students[user.email];
-                    userSocketUpdates.classUpdate();
-                }
-            }
-
-            await dbRun('COMMIT')
-            await managerUpdate()
-            return true
-        } catch (err) {
-            await dbRun('ROLLBACK')
-            throw err
-        }
-    } catch (err) {
-        logger.log('error', err.stack);
-        return 'There was an internal server error. Please try again.';
-    }
-}
-
 /**
  * Gets the classes a user owns from their email.
  * @param email
@@ -276,7 +214,6 @@ async function getEmailFromAPIKey(api) {
 
 module.exports = {
     getUser,
-    deleteUser,
     getUserOwnedClasses,
     getUserClass
 }

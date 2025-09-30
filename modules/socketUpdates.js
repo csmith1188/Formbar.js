@@ -7,7 +7,7 @@ const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDEN
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
-const {lastActivities} = require("../sockets/middleware/inactivity");
+const { lastActivities } = require("../sockets/middleware/inactivity");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -456,29 +456,24 @@ class SocketUpdates {
 
             // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
             if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[email]) {
-                // If the student is a guest, then remove them from the classroom entirely
                 const student = classInformation.classrooms[classId].students[email];
+                student.activeClass = null;
+                student.tags = 'Offline';
+                if (classInformation.users[email]) {
+                    classInformation.users[email] = student;
+                }
+
+                // If the student is a guest, then remove them from the classroom entirely
                 if (student.isGuest) {
                     delete classInformation.classrooms[classId].students[email];
-                    // Also remove guest from global users if they exist there
-                    if (classInformation.users[email]) {
-                        delete classInformation.users[email];
-                    }
-                } else {
-                    student.activeClass = null;
-                    student.tags = 'Offline';
-                    if (classInformation.users[email]) {
-                        classInformation.users[email] = student;
-                    }
                 }
             }
-            logger.log('verbose', `[classKickUser] classInformation=(${JSON.stringify(classInformation)})`);
 
             // If exitClass is true, then remove the user from the classroom entirely
+            // If the user is a guest, then do not try to remove them from the database
             if (exitClass && classInformation.classrooms[classId]) {
-                // Only run database operation for non-guest users
                 if (classInformation.users[email] && !classInformation.users[email].isGuest) {
-                    database.run('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId], () => { });
+                    await dbRun('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId]);
                 }
                 delete classInformation.classrooms[classId].students[email];
             }
@@ -512,83 +507,6 @@ class SocketUpdates {
         } catch (err) {
             logger.log('error', err.stack);
         }
-    }
-
-    logout(socket) {
-        const email = socket.request.session.email
-        const userId = socket.request.session.userId
-        const classId = socket.request.session.classId
-
-        // Remove this socket from the user's active sockets first and determine if this was the last one
-        let isLastSession = false;
-        if (userSockets[email]) {
-            delete userSockets[email][socket.id];
-            if (Object.keys(userSockets[email]).length === 0) {
-                delete userSockets[email];
-                isLastSession = true;
-            }
-        } else {
-            isLastSession = true;
-        }
-
-        // Leave the room only on this socket
-        if (classId) socket.leave(`class-${classId}`)
-
-        socket.request.session.destroy((err) => {
-            try {
-                if (err) throw err
-
-                // Reload just this client
-                socket.emit('reload')
-
-                // If the socket had an associated last activity, remove it
-                if (lastActivities[email] && lastActivities[email][socket.id]) {
-                    delete lastActivities[email][socket.id];
-                }
-
-                // Only clear global user/class state if this was the last active session
-                if (isLastSession && classId) {
-                    const user = classInformation.users[email];
-                    if (user) {
-                        user.activeClass = null;
-                        user.classPermissions = null;
-                    }
-
-                    const classroom = classInformation.classrooms[classId];
-                    if (classroom) {
-                        const student = classroom.students[email];
-                        if (student) {
-                            if (student.isGuest) {
-                                delete classroom.students[email];
-                            } else {
-                                student.activeClass = null;
-                                student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
-                            }
-                        }
-
-                        // Update class permissions and virtual bar
-                        this.classUpdate(classId);
-                    }
-
-                    // If this user owns the classroom, end it
-                    database.get(
-                        'SELECT * FROM classroom WHERE owner=? AND id=?',
-                        [userId, classId],
-                        (err, classroom) => {
-                            if (err) {
-                                logger.log('error', err.stack)
-                            }
-
-                            if (classroom) {
-                                this.endClass(classroom.id);
-                            }
-                        }
-                    )
-                }
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        })
     }
 
     getOwnedClasses(email) {

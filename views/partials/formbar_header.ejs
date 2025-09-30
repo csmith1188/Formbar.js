@@ -32,7 +32,7 @@
 		<% } %>
 	<% } %>
 		</ul>
-	<button class="circularButton" onclick="doFullscreen()"><img id="muteIcon" src="/img/expand-outline.svg" title="Fullscreen"></button>
+	<button class="circularButton" onclick="doFullscreen()"><img src="/img/expand-outline.svg" title="Fullscreen"></button>
 
 	<button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
 		<img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
@@ -44,12 +44,14 @@
 	<script>if(!window.location.href.includes('controlPanel')){document.getElementById('muteButton').remove();document.getElementById('unmuteButton').remove()}</script>
 
 	<% if(locals.currentUser) { %>
-		<button class="mobileMenuButton circularButton" style="margin-left: 10px;" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
+		<button class="mobileMenuButton circularButton" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
 			<img src="/img/menu.svg" alt="Menu Icon">
 		</button>
-		<a href="/profile" class="circularButton hideMobile" style="margin-left: 20px;" title="LM/DM">
-			<img src="/img/person.svg" title="Profile">
-		</a>
+        <% if (locals.currentUser.permissions !== GUEST_PERMISSIONS) { %>
+            <a href="/profile" class="circularButton hideMobile" title="LM/DM">
+                <img src="/img/person.svg" title="Profile">
+            </a>
+        <% } %>
 		<button href="/" id="logoutButton" class="circularButton hideMobile" onclick="logout()">
 			<img id="logoutIcon" src="/img/logout.svg" title="Logout">
 		</button>
