@@ -2,7 +2,7 @@ const { classInformation } = require("../modules/class/classroom")
 const { database, dbRun, dbGetAll } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")
-const { getUserClass } = require("../modules/user")
+const { getUserClass } = require("../modules/user/user")
 const { io } = require("../modules/webServer")
 const jwt = require("jsonwebtoken");
 

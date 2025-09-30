@@ -247,7 +247,7 @@ async function deleteRooms(userId) {
         await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
         for (const classroom of classrooms) {
             if (classInformation.classrooms[classroom.id]) {
-                this.endClass(classroom.id)
+                await endClass(classroom.id)
             }
 
             await Promise.all([

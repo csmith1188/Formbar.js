@@ -16,7 +16,8 @@ const PAGE_PERMISSIONS = {
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
 	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
 	downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
-	logs: { permissions: MANAGER_PERMISSIONS, classPage: false }
+	logs: { permissions: MANAGER_PERMISSIONS, classPage: false },
+	profile: { permissions: STUDENT_PERMISSIONS, classPage: false }
 }
 
 const CLASS_PERMISSIONS = {
@@ -61,6 +62,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
+    refreshPin: STUDENT_PERMISSIONS,
 	transferDigipogs: STUDENT_PERMISSIONS,
 	transferDigipogsResult: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,

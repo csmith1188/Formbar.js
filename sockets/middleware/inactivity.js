@@ -1,5 +1,5 @@
 const { logger } = require("../../modules/logger")
-const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+const INACTIVITY_LIMIT = 60 * 60 * 1000; // 60 minutes
 const lastActivities = {};
 
 module.exports = {
