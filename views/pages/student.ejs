@@ -130,7 +130,7 @@
 					});
 
 					let oldLetterRes = '<%- myRes %>'
-					let oldTextRes = '<%- myTextRes %>'
+					let oldTextRes = currentUser.pollRes.textRes
 
 					let poll = {}
 					let quiz = {}
@@ -176,9 +176,9 @@
                                         pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
                                     }
                                 }
-								if (!poll.allowMultipleResponses) {
+								if (!poll.allowMultipleResponses /*&& poll.allowVoteChanges*/) {
 									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
-								} else {
+								} else if(poll.allowMultipleResponses) {
 									pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
 								}
 							} else {
@@ -222,6 +222,7 @@
 							}
 							for (let eachUnallowedResponse of poll.unallowedResponses) {
 								if (eachUnallowedResponse == currentUser.id) {
+									console.log('hello')
 									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
 								}
 							}
@@ -255,6 +256,18 @@
 
 						if (textarea) {
 							textRes = textarea.value
+						}
+
+						currentUser.pollRes = {buttonRes: lettRes, textRes: textRes, date: new Date()};
+						oldLetterRes = lettRes
+						oldTextRes = textRes
+
+						if(lettRes == "remove") {
+							currentUser.pollRes = {buttonRes: '', textRes: '', date: null};
+							oldLetterRes = ''
+							oldTextRes = ''
+
+							if(textarea) textarea.value = ''
 						}
 
 						// Sends user input to the server

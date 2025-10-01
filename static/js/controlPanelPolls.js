@@ -487,6 +487,7 @@ function startPoll(customPollId) {
 			customPoll = {
 				prompt: pollPrompt.value,
 				blind: blindCheck.checked,
+				allowVoteChanges: !!allowVoteChanges.checked,
 				textRes: resTextBox.checked,
 				multiRes: multiRes.checked,
 				answers: pollAnswers,
@@ -502,6 +503,7 @@ function startPoll(customPollId) {
             answers: customPoll.answers,
             allowTextResponses: !!customPoll.textRes,
             allowMultipleResponses: customPoll.multiRes,
+			allowVoteChanges: !!customPoll.allowVoteChanges,
             blind: !!customPoll.blind,
             weight: customPoll.weight,
             tags: userTags,
@@ -509,14 +511,13 @@ function startPoll(customPollId) {
             studentsAllowedToVote: userBoxesChecked,
         });
 	} else {
-		let blind = blindCheck.checked
-
         socket.emit('startPoll', {
             prompt: pollPrompt.value,
             answers: pollAnswers,
             allowTextResponses: resTextBox.checked,
             allowMultipleResponses: multiRes.checked,
-            blind: !!blind,
+			allowVoteChanges: allowVoteChanges.checked,
+            blind: !!blindCheck.checked,
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,
@@ -532,6 +533,7 @@ function editCustomPoll(customPollId) {
 	editingPollId = customPollId
 	let customPoll = customPolls[editingPollId]
 
+	allowVoteChanges.checked = customPoll.allowVoteChanges
 	blindCheck.checked = customPoll.blind
 	pollPrompt.value = customPoll.prompt
 	resTextBox.checked = customPoll.textRes
@@ -557,6 +559,7 @@ function unloadPoll() {
 	pollPrompt.value = ''
 	resTextBox.checked = false
 	blindCheck.checked = false
+	allowVoteChanges.checked = false
 
 	responseAmountChange(1)
 	resetAnswerNames()
@@ -568,6 +571,7 @@ function savePoll() {
 	let customPoll = customPolls[editingPollId]
 
 	customPoll.blind = blindCheck.checked
+	customPoll.allowVoteChanges = allowVoteChanges.checked
 	customPoll.prompt = prompt.value
 	customPoll.textRes = resTextBox.checked
 
@@ -595,6 +599,7 @@ function savePollAs(pollType) {
 		return;
 	} else {
 		customPoll.blind = blindCheck.checked
+		customPoll.allowVoteChanges = allowVoteChanges.checked
 		customPoll.prompt = pollPrompt.value
 		customPoll.textRes = resTextBox.checked
 		customPoll.public = false

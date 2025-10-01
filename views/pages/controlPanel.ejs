@@ -168,19 +168,18 @@
                 </select>
                 <div id='userFilterBoxes' class='options activeControlTab'>
                     <h2 class='headerText'>Filter by:</h2>
-                    <div class='headBox'>
-                        <button type='button' id='alert' class='filter revampButton'>Alerts</button>
-                        <button type='button' id='polls' class='filter revampButton'>Polls</button>
+                    <div class='headBox' id="userFilterSelections">
+                        
                     </div>
                 </div>
                 <div id='userSortBoxes' class='options'>
                     <h2 class='headerText'>Sort by:</h2>
-                    <div class='headBox'>
-                        <button type='button' id='name' class='sort revampButton'>Name</button>
+                    <div class='headBox' id="userSortSelections">
+                        <!-- <button type='button' id='name' class='sort revampButton'>Name</button>
                         <button type='button' id='pollName' class='sort revampButton'>Poll Name</button>
                         <button type='button' id='pollTime' class='sort revampButton'>Poll Time</button>
                         <button type='button' id='helpTime' class='sort revampButton'>Help Time</button>
-                        <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button>
+                        <button type='button' id='permissions' class='sort pressed revampButton'>Permissions ▼</button> -->
                     </div>
                 </div>
                 <div id='userSelectBoxes' class='options'>
@@ -269,6 +268,12 @@
                             <h2 class="hideMobile">Blind Poll</h2>
                             <img class="showMobile pollOptionIcon" src="/img/eye-off-outline.svg" alt="Blind Poll">
                             <input type='checkbox' id='blind'>
+                        </div>
+                        
+                        <div class="pollOptionsEditorOption">
+                            <h2 class="hideMobile">Allow Vote Changes</h2>
+                            <img class="showMobile pollOptionIcon" src="/img/ban-outline.svg" alt="Allow Vote Changes">
+                            <input type='checkbox' id='allowVoteChanges' checked disabled style="cursor: not-allowed;">
                         </div>
                     </div>
     
@@ -404,24 +409,6 @@
 </details>
 </div>
 <div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
-<div id='lessonMenu' class='tabContent' data-tab-group='mainTabs'>
-    <form method='post' enctype='multipart/form-data'>
-        <input name='spreadsheet' type='file'>
-        <input type='submit' class='quickButton'>
-    </form>
-    <button type='button' id='nextStep'>Next Step</button>
-    <button type='button' id='timerButton'>Start Timer</button>
-    <button type='button' id='timerStopButton' hidden>Stop Timer</button>
-    <button id='kickUsers' onclick=`((event)HH
-    => {socket.emit('classKickStudents')})()`>
-    Kick All Students
-    </button>
-    <p><b id='pollCounter'></b></p>
-    <p id='responsesCounter'></p>
-    <div id='users'>
-    </div>
-</div>
-<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 </body>
 
 </html>
@@ -435,66 +422,6 @@
     let currentSharePollId = null
     let currentSharePollType = null
     let classroom = {}
-
-    const FilterState = {
-        alert: [
-            'Tickets',
-            'Ticket In',
-            'No Ticket'
-        ],
-        polls: [
-            'Poll Response',
-            'Has Responded',
-            'No Response',
-        ]
-    }
-
-    const SortState = {
-        name: [
-            'Name',
-            'Name ▼ (Z-A)',
-            'Name ▲ (A-Z)'
-        ],
-        pollName: [
-            'Poll Name',
-            'Poll Name ▼ (Z-A)',
-            'Poll Name ▲ (A-Z)'
-        ],
-        pollTime: [
-            'Poll Time',
-            'Poll Time ▼',
-            'Poll Time ▲'
-        ],
-        helpTime: [
-            'Help Time',
-            'Help Time',
-        ],
-        permissions: [
-            'Permissions',
-            'Permissions ▼ (Most)',
-            'Permissions ▲ (Least)'
-        ]
-    }
-
-    // 0 = off
-    // 1 = only
-    // 2 = except
-    let filter = {
-        alert: 0,
-        break: 0,
-        polls: 0
-    }
-    // 0 = off
-    // 1 = descending
-    // 2 = ascending
-    let sort = {
-        name: 0,
-        pollName: 0,
-        pollTime: 0,
-        helpTime: 0,
-        permissions: 1
-    }
-
     let vbContainerOuter = document.getElementById('vbContainerOuter');
     let vbContainer = document.getElementById('vbContainer');
     let vbOptions = document.getElementById('VBOptions');
@@ -540,6 +467,7 @@
     let toPollsButton = document.getElementById('toPolls')
     let toPollHistoryButton = document.getElementById('toPollHistory')
     let blindCheck = document.getElementById('blind')
+    let allowVoteChanges = document.getElementById('allowVoteChanges')
     let className = document.getElementById('className')
     let classCode = document.getElementById('classCode')
     let mainPolls = document.getElementById('menuPolls')
@@ -556,7 +484,8 @@
     let permissionsTabButton = document.querySelector('.tab#permissions')
     let generalOptionsDiv = document.getElementById('generalOptions');
     let responsesCounter = document.getElementById('responsesCounter');
-
+    let userFilterSelections = document.getElementById('userFilterSelections')
+    let userSortSelections = document.getElementById('userSortSelections')
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
 
@@ -602,35 +531,7 @@
             document.getElementById(item.elementID).classList.remove('activeControlTab');
             if(item.elementID == optionID) document.getElementById(item.elementID).classList.add('activeControlTab')
         });
-
-
-        // let lastElIndex = sidebarOptionsIDs.indexOf(activeEl);
-
-        // if(last_or_next) {
-        //     //Last Tab
-        //     let newActive = sidebarOptionsIDs[(lastElIndex - 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-        //     let lastButton = sidebarOptionsIDs[(lastElIndex - 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-        //     let nextButton = sidebarOptionsIDs[lastElIndex];
-
-        //     document.getElementById(newActive.elementID).classList.add('activeControlTab');
-
-        //     // vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
-        //     // vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
-
-
-        // } else {
-        //     let newActive = sidebarOptionsIDs[(lastElIndex + 1 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-        //     let nextButton = sidebarOptionsIDs[(lastElIndex + 2 + sidebarOptionsIDs.length) % sidebarOptionsIDs.length];
-        //     let lastButton = sidebarOptionsIDs[lastElIndex];
-        //     document.getElementById(newActive.elementID).classList.add('activeControlTab');
-
-        //     // vbOptionsLast.innerHTML = `<p>${orientation == 'portrait' ? lastButton.mobileOptionName : lastButton.optionName}</p><img src="/img/chevron-up-outline.svg" alt="Last Menu">`;
-        //     // vbOptionsNext.innerHTML = `<p>${orientation == 'portrait' ? nextButton.mobileOptionName : nextButton.optionName}</p><img src="/img/chevron-down-outline.svg" alt="Next Menu">`;
-        // }
     }
-
-    // vbOptionsLast.onclick = () => showOptions(true);
-    // vbOptionsNext.onclick = () => showOptions(false);
 
     
 
@@ -893,57 +794,60 @@
     // Handle settings
     const settings = '<%- settings %>';
 
-    // Handle sorting and filtering
-    // They're stored by their name then a hyphen before the sorting value it is
-    // 0 = off, 1 = descending, 2 = ascending
-    if (settings.sort) {
-        const [sortName, sortValue] = settings.sort.split('-');
-        const allSorts = document.querySelectorAll('.sort');
-        const sortButton = document.getElementById(sortName);
 
-        // Set the correct sort to on
-        Object.keys(sort).forEach(key => sort[key] = 0);
-        sort[sortName] = parseInt(sortValue);
-
-        // Remove arrow from all sorts
-        allSorts.forEach(button => {
-            button.textContent = SortState[button.id][sort[button.id]]
-            button.classList.remove('pressed')
-        });
-
-        // Set the correct sort to pressed
-        sortButton.classList.add('pressed');
-        sortButton.textContent = `${SortState[sortName][sortValue]}`;
+    const FilterState = {
+        answeredPoll: "Answered Poll",
+        alert: "Alerts",
+        canVote: "Can Vote",
+        // byTag: "By Tag"        
     }
 
-    // If there are filters provided, parse them and set the correct filters
-    // This is to preserve filters between page loads
-    if (settings.filter) {
-        try {
-            // Get all filters from settings
-            const filters = JSON.parse(settings.filter);
-            Object.keys(filter).forEach(key => filter[key] = 0);
+    const SortState = {
+        responseOrder: "Response Order",
+        responseText: "Response Text",
+        responseTime: "Response Time",
 
-            // Set the correct filters to on
-            for (const filterName in filters) {
-                const filterValue = filters[filterName];
-                const filterButton = document.getElementById(filterName);
-                if (filterValue === 0) {
-                    filterButton.classList.remove('pressed');
-                    filterButton.textContent = FilterState[filterName][0];
-                } else {
-                    filter[filterName] = parseInt(filterValue);
-                    filterButton.classList.add('pressed');
-                    filterButton.textContent = FilterState[filterName][filterValue];
-                }
-            }
-        } catch (err) {
-            // Set the default filter settings
-            socket.emit('setClassSetting', 'filter', JSON.stringify({
-                alert: 0,
-                polls: 0
-            }));
-        }
+        helpTime: "Help Time",
+
+        permissions: "Permissions"
+    }
+
+    // 0 = off
+    // 1 = only
+    // 2 = except
+    let filter = {}
+    // Keep sort always consistent with FilterState options
+    Object.keys(FilterState).forEach(key => {
+        filter[key] = 0;
+    });
+
+    // 0 = off
+    // 1 = descending
+    // 2 = ascending
+    let sort = {}
+    // Keep sort always consistent with SortState options
+    Object.keys(SortState).forEach(key => {
+        sort[key] = 0;
+    });
+
+    for (const [key, value] of Object.entries(FilterState)) {
+        let filterButton = document.createElement('button');
+        filterButton.type = 'button';
+        filterButton.id = key;
+        filterButton.className = 'filter revampButton';
+        filterButton.innerText = value;
+
+        userFilterSelections.appendChild(filterButton);
+    }
+
+    for (const [key, value] of Object.entries(SortState)) {
+        let sortButton = document.createElement('button');
+        sortButton.type = 'button';
+        sortButton.id = key;
+        sortButton.className = 'sort revampButton';
+        sortButton.innerHTML = value + '<div><img src="/img/swap-vertical.svg" class="sortAscendDescendBG" alt="Ascend / Descend"><img src="/img/swap-vertical-down.svg" class="currentSortIcon"></div>';
+
+        userSortSelections.appendChild(sortButton);
     }
 
     // Handle mute button

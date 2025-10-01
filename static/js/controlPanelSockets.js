@@ -51,7 +51,6 @@ function createTagSelectButtons() {
 				for (const studentTag of studentTags) {
 					if (selectedTagTexts.has(studentTag.textContent)) {
 						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-						studentElement.open = true;
 						studentCheckbox.checked = true;
 						selectedStudents.push(student.id);
 						break;
@@ -64,7 +63,6 @@ function createTagSelectButtons() {
 					for (const response of student.pollRes.buttonRes) {
 						if (selectedTagTexts.has(response)) {
 							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-							studentElement.open = true;
 							studentCheckbox.checked = true;
 							selectedStudents.push(student.email);
 							break;
@@ -74,7 +72,6 @@ function createTagSelectButtons() {
 					// Handle regular polls
 					if (selectedTagTexts.has(student.pollRes.buttonRes)) {
 						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-						studentElement.open = true;
 						studentCheckbox.checked = true;
 						selectedStudents.push(student.id);
 					}
