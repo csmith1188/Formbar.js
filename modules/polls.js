@@ -193,8 +193,7 @@ async function clearPoll(classId, userSession, updateClass = true){
             weight: 1,
             blind: false,
             requiredTags: [],
-            studentsAllowedToVote: [],
-            allowedResponses: [],
+            studentsAllowedToVote: []
         };
 
         // Adds data to the previous poll answers table upon clearing the poll

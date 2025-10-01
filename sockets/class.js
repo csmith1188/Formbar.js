@@ -78,8 +78,8 @@ module.exports = {
 
         /**
          * Changes the voting rights of a user or multiple users
-         * @param {Object} votingData - An object containing the emails and their voting rights.
-         * This should only include emails which should be changed.
+         * @param {Object} votingData - An object containing the user ids and their voting rights.
+         * This should only include ids which should be changed.
          */
         socket.on('changeCanVote', async (votingData) => {
             try {
@@ -89,12 +89,11 @@ module.exports = {
                 const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 for (const userId in votingData) {
                     const votingRight = votingData[userId];
-                    if (votingRight) {
-                        if (!studentsAllowedToVote[userId]) {
-                            studentsAllowedToVote.push(userId);
-                        }
+                    if (votingRight === true && studentsAllowedToVote.includes(userId.toString()) === false) {
+                        // Add the email to the studentBoxes array if it's not already there
+                        studentsAllowedToVote.push(userId);
                     } else {
-                        // Remove all instances of the email from the studentBoxes array
+                        // Remove all instances of the id from the studentBoxes array
                         studentsAllowedToVote.splice(0, studentsAllowedToVote.length, ...studentsAllowedToVote.filter(student => student !== userId));
                     }
 
