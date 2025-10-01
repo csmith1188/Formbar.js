@@ -25,7 +25,7 @@ const allMigrations = [...sqlMigrations, ...jsMigrations].sort((a, b) => a.filen
 
 // Backup the database if there's already a database
 // If there's already a backup, denote it with a number
-if (!fs.existsSync('database/database.db')) {
+if (fs.existsSync('database/database.db')) {
     let backupNumber = fs.existsSync("database/database.bak") ? 1 : 0;
     while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
         backupNumber++;
@@ -118,10 +118,7 @@ async function executeSQLMigration(migration) {
 async function executeJSMigration(migration) {
     try {
         const migrationModule = require(migration.path);
-
-        database.run('BEGIN TRANSACTION');
         await migrationModule.run(database);
-        database.run('COMMIT');
     } catch (err) {
         if (err.message === "ALREADY_DONE") {
             console.log("Unable to complete migration as this migration has already been run. Continuing to next migration.");

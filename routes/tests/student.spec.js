@@ -29,7 +29,7 @@ describe('Student Route', () => {
             [mockemail]: {
                 email: mockemail,
                 permissions: STUDENT_PERMISSIONS,
-                activeClasses: [mockClassId],
+                activeClass: mockClassId,
                 classPermissions: GUEST_PERMISSIONS
             }
         };

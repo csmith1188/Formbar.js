@@ -3,7 +3,7 @@ const fs = require('fs');
 
 initializeDatabase();
 function initializeDatabase() {
-    new Promise((resolve, reject) => {
+    new Promise((resolve) => {
         if (fs.existsSync('./database/database.db')) {
             console.log("Database already exists. Skipping initialization.");
             process.exit(1);

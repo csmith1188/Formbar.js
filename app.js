@@ -5,6 +5,11 @@ const crypto = require('crypto')
 const fs = require('fs')
 require('dotenv').config(); // For environment variables
 
+if (!fs.existsSync('database/database.db')) {
+    console.log('The database file does not exist. Please run "npm run init-db" to initialize the database.');
+    return;
+}
+
 // Custom modules
 const { logger } = require('./modules/logger.js')
 const { MANAGER_PERMISSIONS, TEACHER_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, BANNED_PERMISSIONS } = require('./modules/permissions.js')
@@ -12,8 +17,9 @@ const { classInformation } = require('./modules/class/classroom.js')
 const { initSocketRoutes } = require('./sockets/init.js')
 const { app, io, http, getIpAccess } = require('./modules/webServer.js')
 const { settings } = require('./modules/config.js');
-const { configurePlugins } = require('./modules/plugins.js')
-const authentication = require('./modules/authentication.js')
+const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+const { logout } = require("./modules/user/userSession");
+const authentication = require('./routes/middleware/authentication.js')
 
 // Set EJS as our view engine
 app.set('view engine', 'ejs')
@@ -37,6 +43,7 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 // Use a static folder for web page assets
 app.use(express.static(__dirname + '/static'))
@@ -46,6 +53,21 @@ app.use('/js/floating-ui-core.js', express.static(__dirname + '/node_modules/@fl
 app.use('/js/floating-ui-dom.js', express.static(__dirname + '/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js'))
 app.use('/js/monaco-loader.js', express.static(__dirname + '/node_modules/monaco-editor/min/vs/loader.js'))
 app.use('/js/vs', express.static(__dirname + '/node_modules/monaco-editor/min/vs'))
+
+// Begin checking for any users who have not performed any actions for a specified amount of time
+const INACTIVITY_CHECK_TIME = 60000 // 1 Minute
+setInterval(() => {
+    const currentTime = Date.now();
+    for (const email of Object.keys(lastActivities)) {
+        const userSockets = lastActivities[email];
+        for (const [socketId, activity] of Object.entries(userSockets)) {
+            if (currentTime - activity.time > INACTIVITY_LIMIT) {
+                logout(activity.socket); // Log the user out
+                delete lastActivities[email]; // Remove the user from the inactivity check
+            }
+        }
+    }
+}, INACTIVITY_CHECK_TIME)
 
 // Check if an IP is banned
 app.use((req, res, next) => {
@@ -65,21 +87,33 @@ app.use((req, res, next) => {
 })
 
 // Add currentUser and permission constants to all pages
-// Additionally, handle session expiration
 app.use((req, res, next) => {
-	if (req.session.classId || req.session.classId === null) {
-		res.locals.currentUser = classInformation.users[req.session.email];
-	}
+    res.locals = {
+        ...res.locals,
+        MANAGER_PERMISSIONS,
+        TEACHER_PERMISSIONS,
+        MOD_PERMISSIONS,
+        STUDENT_PERMISSIONS,
+        GUEST_PERMISSIONS,
+        BANNED_PERMISSIONS
+    }
 
-	res.locals = {
-		...res.locals,
-		MANAGER_PERMISSIONS,
-		TEACHER_PERMISSIONS,
-		MOD_PERMISSIONS,
-		STUDENT_PERMISSIONS,
-		GUEST_PERMISSIONS,
-		BANNED_PERMISSIONS
-	}
+    // If the user is in a class, then get the user from the class students list
+    // This ensures that the user data is always up to date
+	if (req.session.classId) {
+        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
+		if (!user) {
+            res.locals.currentUser = classInformation.users[req.session.email];
+            next();
+            return;
+        }
+
+        classInformation.users[req.session.email] = user;
+        res.locals.currentUser = user;
+	} else {
+        res.locals.currentUser = classInformation.users[req.session.email];
+    }
+
 	next()
 })
 
@@ -90,13 +124,10 @@ for (const routeFile of routeFiles) {
 	if (routeFile == '404.js') {
 		continue;
 	}
-	
+
 	const route = require(`./routes/${routeFile}`);
 	route.run(app);
 }
-
-// Initialize plugin routes
-configurePlugins(app);
 
 // Initialize websocket routes
 initSocketRoutes();

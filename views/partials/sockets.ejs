@@ -6,17 +6,27 @@
 	function endBreak() {
 		socket.emit('endBreak')
 		document.getElementById('breakDialog').close()
+		document.getElementById("backgroundDarken").classList.remove('open')
 	}
 
 	socket.on('break', () => {
 		document.getElementById('breakDialog').showModal()
+		document.getElementById("backgroundDarken").classList.add('open')
 	})
 
 	socket.on('message', (message) => {
 		alert(message)
 	})
 
-	socket.on('reload', () => {
-		location.reload()
+	socket.on('reload', (redirectURL) => {
+        if (window.reloadRedirect) {
+            redirectURL = window.reloadRedirect;
+			window.reloadRedirect = null;
+			location.href = redirectURL;
+		} else if (redirectURL) {
+            location.href = redirectURL;
+		} else {
+            location.reload();
+        }
 	})
 </script>

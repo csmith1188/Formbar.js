@@ -6,6 +6,17 @@ const userBreak = []
 // Stores the currently opened student elements
 let opendetails = []
 
+// Checks if all the student boxes are of students currently in the classroom
+function validateStudents(students) {
+    for (const student of usersDiv.children) {
+        if (!student.id) continue;
+
+        if (!students.includes(student.id.replace('student-', '')) && student.id !== 'student-fake') {
+            student.remove()
+        }
+    }
+}
+
 // Create a student in the user list
 function buildStudent(classroom, studentData) {
     const studentTemplateDiv = document.getElementById('student-fake')
@@ -14,14 +25,14 @@ function buildStudent(classroom, studentData) {
         const newStudent = studentTemplateDiv.cloneNode(true)
         newStudent.hidden = false
         newStudent.style.display = 'flex'
-        newStudent.id = `student-${studentData.email}`
-        newStudent.open = opendetails.indexOf(studentData.email) != -1
+        newStudent.id = `student-${studentData.id}`
+        newStudent.open = opendetails.indexOf(studentData.id) != -1
 
         newStudent.addEventListener('click', () => {
             if (newStudent.open) {
-                opendetails.splice(opendetails.indexOf(studentData.email), 1)
+                opendetails.splice(opendetails.indexOf(studentData.id), 1)
             } else {
-                opendetails.push(studentData.email)
+                opendetails.push(studentData.id)
             }
         })
 
@@ -36,19 +47,20 @@ function buildStudent(classroom, studentData) {
         let permDiv = newStudent.querySelector('#permissions')
         let reasonsDiv = newStudent.querySelector('#reasons')
         let extraButtons = newStudent.querySelector('#extraButtons')
+        let digipogButtons = newStudent.querySelector('#digipogButtons')
 
         newStudent.querySelector('#email').textContent = studentData.displayName
-        studentBox.id = 'checkbox_' + studentData.email
-        studentBox.checked = classroom.poll.studentBoxes.indexOf(studentData.email) != -1
+        studentBox.id = 'checkbox_' + studentData.id
+        studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
 
         for (let eachResponse in classroom.poll.responses) {
-            if (studentData.pollRes.textRes) {
+            if (studentData.pollRes.allowTextResponses) {
                 pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = studentData.pollRes.textRes
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.multiRes) {
+            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.allowMultipleResponses) {
                 pollBox.style.color = classroom.poll.responses[eachResponse].color
                 pollBox.textContent = eachResponse
-            } else if (classroom.poll.multiRes && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (classroom.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement('span')
                 tempElem.textContent = eachResponse + ' '
                 tempElem.style.color = classroom.poll.responses[eachResponse].color
@@ -66,29 +78,32 @@ function buildStudent(classroom, studentData) {
         } else {
             newStudent.style.opacity = 1;
         }
+
         if (studentData.help) {
             let div = document.createElement('div')
-            div.textContent = '❗'
+            //summary.innerHTML += '❗'
             alertSpan.appendChild(div)
             newStudent.classList.add('help')
             alertSpan.classList.add('help')
-            if (studentData.help.reason) {
-                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()} `
-            }
 
             let deleteTicketButton = document.createElement('button')
-            deleteTicketButton.classList.add('quickButton')
-            deleteTicketButton.dataset.studentName = studentData.email
+            deleteTicketButton.classList.add('quickButton', 'revampButton', 'noReason')
+            deleteTicketButton.dataset.studentName = studentData.id
             deleteTicketButton.onclick = (event) => {
-                deleteTicket(event.target)
+               deleteTicket(event.target)
             }
             deleteTicketButton.textContent = 'Delete Ticket'
+
+            if (studentData.help.reason) {
+                helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()}`;
+                deleteTicketButton.classList.remove('noReason')
+            }
 
             helpReason.appendChild(deleteTicketButton)
         }
 
         if (studentData.break == true) {
-            userBreak.push(studentData.email)
+            userBreak.push(studentData.id)
         } else if (studentData.break) {
             newStudent.classList.add('break')
             alertSpan.classList.add('break')
@@ -97,18 +112,18 @@ function buildStudent(classroom, studentData) {
             }
 
             let approveBreakButton = document.createElement('button')
-            approveBreakButton.classList.add('quickButton')
-            approveBreakButton.dataset.studentName = studentData.email
+            approveBreakButton.classList.add('quickButton', 'revampButton')
+            approveBreakButton.dataset.studentName = studentData.id
             approveBreakButton.onclick = (event) => {
-                approveBreak(true, studentData.email)
+                approveBreak(true, studentData.id)
             }
             approveBreakButton.textContent = 'Approve Break'
 
             let denyBreakButton = document.createElement('button')
-            denyBreakButton.classList.add('quickButton')
-            denyBreakButton.dataset.studentName = studentData.email
+            denyBreakButton.classList.add('quickButton', 'revampButton')
+            denyBreakButton.dataset.studentName = studentData.id
             denyBreakButton.onclick = (event) => {
-                approveBreak(false, studentData.email)
+                approveBreak(false, studentData.id)
             }
             denyBreakButton.textContent = 'Deny Break'
 
@@ -120,42 +135,67 @@ function buildStudent(classroom, studentData) {
             let div = document.createElement('div')
             div.textContent = '⏱'
             alertSpan.appendChild(div)
+
+            let endBreakButton = document.createElement('button')
+            endBreakButton.classList.add('quickButton', 'revampButton')
+            endBreakButton.dataset.studentName = studentData.id
+            endBreakButton.onclick = (event) => {
+                approveBreak(false, studentData.id)
+            }
+            endBreakButton.textContent = 'End Break'
+
+            breakReason.appendChild(endBreakButton)
+
             newStudent.classList.add('break')
         }
+
+        if(studentData.pollRes.textRes !== '' && studentData.pollRes.buttonRes !== '') {
+            let div = document.createElement('div')
+            div.style = 'width:24px;height:24px;filter:invert(1);'
+            div.innerHTML = '<img src="/img/text-outline.svg">'
+            alertSpan.appendChild(div)
+            newStudent.title = studentData.pollRes.textRes;
+        } else {
+            newStudent.title = '';
+        }
+
+        let permSwitch = document.createElement('select');
+        permSwitch.setAttribute("name", "permSwitch");
+        permSwitch.setAttribute("class", "permSwitch revampButton");
+        permSwitch.setAttribute("data-id", studentData.id);
 
 
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
-            let permSwitch = document.createElement('button')
-            permSwitch.setAttribute("name", "permSwitch");
-            permSwitch.setAttribute("class", "permSwitch");
-            permSwitch.setAttribute("data-email", studentData.email);
-            permSwitch.onclick = (event) => {
-                socket.emit('classPermChange', studentData.email, Number(permission))
-                permSwitch.classList.add('pressed')
-                permSwitch.parentElement.querySelectorAll('.permSwitch').forEach((perm) => {
-                    if (perm != permSwitch) {
-                        perm.classList.remove('pressed')
-                    }
-                })
+            // }
+
+            permSwitch.onchange = (event) => {
+                const newPerm = Number(event.target.value);
+                socket.emit('classPermChange', studentData.id, newPerm)
             }
-            permSwitch.innerHTML = strPerms
+            
+            const option = document.createElement('option');
+            option.value = permission;
+            option.innerText = strPerms;
+            permSwitch.appendChild(option)
+
             if (studentData.classPermissions == permission) {
-                permSwitch.classList.add('pressed')
+                permSwitch.value = permission;
             }
+
             permDiv.appendChild(permSwitch)
         }
 
         // Add each tag as a button to the tag form
-        for (let i = 0; i < classroom.tagNames.length; i++) {
-            let tag = classroom.tagNames[i]
+        for (let i = 0; i < classroom.tags.length; i++) {
+            let tag = classroom.tags[i]
             if (tag == 'Offline') continue
 
             let button = document.createElement('button');
             button.innerHTML = tag
-            button.name = `button${classroom.tagNames[i]}`;
-            button.value = classroom.tagNames[i];
+            button.name = `button${classroom.tags[i]}`;
+            button.value = classroom.tags[i];
             if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
             button.onclick = function () {
                 if (!button.classList.contains('pressed')) {
@@ -201,7 +241,7 @@ function buildStudent(classroom, studentData) {
                     for (let tagButton of roomTagDiv.querySelectorAll('button.pressed')) {
                         tags.push(tagButton.textContent);
                     }
-                    socket.emit('saveTags', studentData.id, tags, studentData.email);
+                    socket.emit('saveTags', studentData.id, tags);
                 }
 
                 createTagSelectButtons();
@@ -220,29 +260,59 @@ function buildStudent(classroom, studentData) {
             roomTagDiv.appendChild(button);
         }
 
+        // Digipog awarding
+        // If the user is not a guest, allow awarding digipogs
+        if (studentData.permissions !== GUEST_PERMISSIONS) {
+            let digipogAwardInput = document.createElement('input');
+            digipogAwardInput.className = 'quickButton revampButton revampWithText digipogAward'
+            digipogAwardInput.placeholder = '0'
+            digipogAwardInput.type = 'number'
+            digipogAwardInput.min = 0
+            digipogAwardInput.value = ''
+            digipogAwardInput.max = 999;
+            digipogAwardInput.oninput = (event) => {
+                if (digipogAwardInput.value > 999) digipogAwardInput.value = 999
+                if (digipogAwardInput.value < 0) digipogAwardInput.value = 0
+                if (digipogAwardInput.value == '') digipogAwardInput.value = 0
+                digipogAwardInput.value = parseInt(digipogAwardInput.value)
+            }
+            digipogButtons.appendChild(digipogAwardInput)
+
+            let sendDigipogs = document.createElement('button')
+            sendDigipogs.className = 'quickButton revampButton acceptButton digipogSend'
+            sendDigipogs.setAttribute('data-user', studentData.id)
+            sendDigipogs.textContent = 'Award Digipogs'
+            sendDigipogs.onclick = (event) => {
+                awardDigipogs(studentData.id, digipogAwardInput.value)
+            }
+            digipogButtons.appendChild(sendDigipogs)
+        } else {
+            digipogButtons.style.display = 'none'
+        }
+
         // Ban and Kick buttons
         let banStudentButton = document.createElement('button')
-        banStudentButton.className = 'banUser quickButton'
-        banStudentButton.setAttribute('data-user', studentData.email)
+        banStudentButton.className = 'banUser quickButton revampButton warningButton'
+        banStudentButton.setAttribute('data-user', studentData.id)
         banStudentButton.textContent = 'Ban User'
         banStudentButton.onclick = (event) => {
-            if (confirm(`Are you sure you want to ban ${studentData.email}?`)) {
-                socket.emit('classBanUser', studentData.email)
+            if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
+                socket.emit('classBanUser', studentData.id)
             }
         }
         extraButtons.appendChild(banStudentButton)
         let kickUserButton = document.createElement('button')
-        kickUserButton.className = 'kickUser quickButton'
-        kickUserButton.setAttribute('data-userid', studentData.email)
+        kickUserButton.className = 'kickUser quickButton revampButton warningButton'
+        kickUserButton.setAttribute('data-userid', studentData.id)
         kickUserButton.onclick = (event) => {
-            if (confirm(`Are you sure you want to kick ${studentData.email}?`)) {
-                socket.emit('classKickUser', studentData.email)
+            if (confirm(`Are you sure you want to kick ${studentData.displayName}?`)) {
+                socket.emit('classKickUser', studentData.id)
             }
         }
         kickUserButton.textContent = 'Kick User'
         extraButtons.appendChild(kickUserButton)
 
-        if (pollBox.textContent == '' && helpReason.textContent == '' && breakReason.textContent == '') {
+        if (helpReason.textContent == '' && breakReason.textContent == '') {
             reasonsDiv.style.display = 'none'
         }
         return newStudent
@@ -252,45 +322,43 @@ function buildStudent(classroom, studentData) {
 // filters and sorts students
 function filterSortChange(classroom) {
     if (!classroom.students) return
-
     let userOrder = Object.keys(classroom.students)
 
-    userOrder = userOrder.filter(email => email != currentUser.email)
-
-    for (let email of userOrder) {
-        document.getElementById(`student-${email}`).style.display = ''
+    userOrder = userOrder.filter(userId => userId != currentUser.id)
+    for (const userId of userOrder) {
+        document.getElementById(`student-${userId}`).style.display = ''
     }
 
     // filter by help
     if (filter.alert) {
-        for (let email of userOrder.slice()) {
-            let studentElement = document.getElementById(`student-${email}`);
+        for (const userId of userOrder.slice()) {
+            let studentElement = document.getElementById(`student-${userId}`);
             if (
                 (
-                    (filter.alert == 1 && !classroom.students[email].help && !classroom.students[email].break) ||
-                    (filter.alert == 2 && (classroom.students[email].help || classroom.students[email].break))
+                    (filter.alert == 1 && !classroom.students[userId].help && !classroom.students[userId].break) ||
+                    (filter.alert == 2 && (classroom.students[userId].help || classroom.students[userId].break))
                 )
             ) {
                 studentElement.style.display = 'none'
-                userOrder.pop(email)
+                userOrder.pop(userId)
             }
         }
     }
 
     // filter by poll
     if (filter.polls) {
-        for (let email of userOrder) {
-            let studentElement = document.getElementById(`student-${email}`);
+        for (const userId of userOrder) {
+            let studentElement = document.getElementById(`student-${userId}`);
             if (
                 (filter.polls == 1 && (
-                        !classroom.students[email].pollRes.buttonRes && !classroom.students[email].pollRes.textRes)
+                        !classroom.students[userId].pollRes.buttonRes && !classroom.students[userId].pollRes.textRes)
                 ) ||
                 (filter.polls == 2 &&
-                    (classroom.students[email].pollRes.buttonRes || classroom.students[email].pollRes.textRes)
+                    (classroom.students[userId].pollRes.buttonRes || classroom.students[userId].pollRes.textRes)
                 )
             ) {
                 studentElement.style.display = 'none'
-                userOrder.pop(email)
+                userOrder.pop(userId)
             }
         }
     }
@@ -449,6 +517,17 @@ function deleteTicket(e) {
     socket.emit('deleteTicket', e.dataset.studentName)
 }
 
-function approveBreak(breakApproval, email) {
-    socket.emit('approveBreak', breakApproval, email)
+function approveBreak(breakApproval, userId) {
+    socket.emit('approveBreak', breakApproval, userId)
+}
+
+function awardDigipogs(userId, amount) {
+    if (amount <= 0 || isNaN(amount)) return
+
+    socket.emit('awardDigipogs', 
+        { from: currentUser.id, to: userId, amount: Number(amount) }
+    )
+    const awardButton = document.querySelector(`button.digipogSend[data-user="${userId}"]`)
+    const awardInput = awardButton.parentElement.querySelector('input.digipogAward');
+    awardInput.value = 0;
 }

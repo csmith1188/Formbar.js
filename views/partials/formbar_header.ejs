@@ -1,103 +1,160 @@
-<style>
-  body {
-    padding-top: 72px;
-  }
-</style>
 <header id="formbarHeader">
-  <a href="/" id="headerLogo">Formbar</a>
-  <% if (locals.currentUser) { %>
-    <% if (currentUser.classPermissions) { %>
-      <a href="/controlPanel" class="headerTab">Panel</a>
-      <% } %>
-        <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
-          <a href="/managerPanel" class="headerTab">Manager</a>
-          <% } %>
-            <% if (!currentUser.classPermissions) { %>
-              <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                <a href="/manageClass" class="headerTab">Manage Class</a>
-                <% } %>
-                  <a href="/selectClass" class="headerTab">Join Class</a>
-                  <% } %>
-                    <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                      <a href="/plugins" class="headerTab">Plugins</a>
-                      <% } %>
-                        <% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-                          <a href="/test" class="headerTab">New Panel</a>
-                          <% } %>
-                            <% if (currentUser.classPermissions) { %>
-                              <button href="/" class="headerTab" title="Change class" onclick="leaveClass()">Change
-                                Class</button>
+	<a href="/" id="headerLogo">
+		<h1>Formbar</h1>
+		<p id="version">v 1.1.0</p>
+	</a>
 
-                              <button href="/" class="headerTab" title="Leave classroom"
-                                onclick="leaveClassroom()">Leave Classroom</button>
-                              <% } %>
-                                <button href="/" id="logoutButton" onclick="logout()">
-                                  <img id="logoutIcon" src="/img/logout.svg" title="Logout">
-                                </button>
-                                <% } %>
-                                  <p id="version">v 1.1.0</p>
-                                  <button onclick="toggleTheme()" id="lmdmBtn" title="LM/DM">
-                                    <img id="lmdmIcon" src="/img/sun.svg">
-                                  </button>
-                                  <button id="muteButton" onclick="toggleMuteSound()"><img id="muteIcon"
-                                      src="img/volume.svg"></button>
-                                  <button id="unmuteButton" onclick="toggleMuteSound()" hidden><img id="unmuteIcon"
-                                      src="img/mute.svg"></button>
+	<div id="headerSpacer"></div>
+
+	<% if (locals.currentUser) { %>
+		<ul>
+		<% if (currentUser && currentUser.activeClass != null) { %>
+           <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton">Panel</a></li>
+    	<% } %>
+		<% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
+			<li>
+				<a href="/managerPanel" class="headerTab revampButton">Manager</a>
+			</li>
+		<% } %>
+		<% if (!(currentUser && currentUser.activeClass != null)) { %>
+			<% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+			  <li><a href="/manageClass" class="headerTab revampButton">Manage Class</a></li>
+			<% } %>
+			<li><a href="/selectClass" class="headerTab revampButton">Join Class</a></li>
+		<% } %>
+		<% if (currentUser && currentUser.activeClass != null) { %>
+			<li>
+				<button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">Classes</button>
+			</li>
+			<li>
+				<button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()">Leave Room</button>
+			</li>
+		<% } %>
+	<% } %>
+		</ul>
+	<button class="circularButton" onclick="doFullscreen()"><img src="/img/expand-outline.svg" title="Fullscreen"></button>
+
+	<button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
+		<img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
+	</button>
+
+	<button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/volume.svg" title="Sound On"></button>
+	<button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()"><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>
+
+	<script>if(!window.location.href.includes('controlPanel')){document.getElementById('muteButton').remove();document.getElementById('unmuteButton').remove()}</script>
+
+	<% if(locals.currentUser) { %>
+		<button class="mobileMenuButton circularButton" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
+			<img src="/img/menu.svg" alt="Menu Icon">
+		</button>
+        <% if (locals.currentUser.permissions !== GUEST_PERMISSIONS) { %>
+            <a href="/profile" class="circularButton hideMobile" title="LM/DM">
+                <img src="/img/person.svg" title="Profile">
+            </a>
+        <% } %>
+		<button href="/" id="logoutButton" class="circularButton hideMobile" onclick="logout()">
+			<img id="logoutIcon" src="/img/logout.svg" title="Logout">
+		</button>
+	<% } %>
 </header>
 <script>
-  let lmdmIcon = document.getElementById("lmdmIcon");
+function doFullscreen() {
+	if (!document.fullscreenElement) {
+	document.documentElement.requestFullscreen();
+	} else {
+	if (document.exitFullscreen) {
+		document.exitFullscreen();
+	}
+	}
+}		
+document.addEventListener('fullscreenchange', (event) => {
+	// if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
+	// else document.getElementById('formbarHeader').style.display = 'flex';
+});
 
-  //document.body.style.backgroundColor = getCookie("theme")
-  if (getCookie("theme") == "white") {
-    document.getElementById('lmdm').href = '/css/lightmode.css';
-    lmdmIcon.src = "/img/moon.svg"
-  } else if (getCookie("theme") == "dark") {
-    document.getElementById('lmdm').href = '/css/darkmode.css';
-    lmdmIcon.src = "/img/sun.svg"
-  }
+let lmdmIcon = document.getElementById("lmdmIcon");
 
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length >= 2) return parts.pop().split(';').shift();
-  }
+//document.body.style.backgroundColor = getCookie("theme")
+if (getCookie("theme") == "white") {
+	document.getElementById('lmdm').href = '';
+	lmdmIcon.src = "/img/moon.svg"
+} else if (getCookie("theme") == "dark") {
+	document.getElementById('lmdm').href = '/css/darkmode.css';
+	lmdmIcon.src = "/img/sun.svg"
+}
 
-  var nextYear = new Date().getFullYear() + 1;
+function getCookie(name) {
+	const value = `; ${document.cookie}`;
+	const parts = value.split(`; ${name}=`);
+	if (parts.length >= 2) return parts.pop().split(';').shift();
+}
 
-  function toggleTheme() {
-    let theme = getCookie("theme");
-    if (!theme) theme = "white"; // If no theme cookie, default to white
-    if (theme === "white") {
-      document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
-      document.getElementById('lmdm').href = '/css/darkmode.css';
-      lmdmIcon.src = "/img/sun.svg"
-    } else {
-      document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
-      document.getElementById('lmdm').href = '/css/lightmode.css';
-      lmdmIcon.src = "/img/moon.svg";
-    }
-  }
+var nextYear = new Date().getFullYear() + 1;
 
-  function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-      socket.emit('logout')
-    }
-  }
+function toggleTheme() {
+	let theme = getCookie("theme");
+	if (!theme) theme = "white"; // If no theme cookie, default to white
+	if (theme === "white") {
+	document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
+	document.getElementById('lmdm').href = '/css/darkmode.css';
+	lmdmIcon.src = "/img/sun.svg"
+	} else {
+	document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
+	document.getElementById('lmdm').href = '';
+	lmdmIcon.src = "/img/moon.svg";
+	}
+}
+
+function logout() {
+	if (confirm('Are you sure you want to logout?')) {
+	socket.emit('logout')
+	}
+}
 
   function leaveClass() {
     if (confirm('Are you sure you want to change classes? This will remove you from the current class session.')) {
+      // Redirect teachers to manageClass, others to selectClass after the server triggers a reload
+      if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
+        window.reloadRedirect = '/manageClass';
+      } else {
+        window.reloadRedirect = '/selectClass';
+      }
       socket.emit('leaveClass')
     }
   }
 
-  function leaveClassroom() {
-    if (confirm('Are you sure you want to leave the classroom?')) {
-      socket.emit('leaveClassroom')
+
+  function leaveRoom() {
+    if (confirm('Are you sure you want to leave the classroom?')) { 
+      socket.emit('leaveRoom')
     }
   }
 
-  if (currentUser && currentUser.activeClasses.length > 0 && currentUser.permissions >= MOD_PERMISSIONS) {
-    const muteButton = document.getElementById("muteButton");
-    muteButton.style.display = "block";
+  if (currentUser && currentUser.activeClass != null && currentUser.permissions >= MOD_PERMISSIONS) {
+      const muteButton = document.getElementById("muteButton");
+      if(muteButton) muteButton.style.display = "block";
   }
 </script>
+
+<div id="errorDialog">
+	<img src="/img/close-circle.svg" alt="Error Icon">
+	<div class="errorDetails">
+		<p id="errorMessage"></p>
+		<!-- <p id="errorCode">0x23</p> An idea, may not be needed but might help in future. --> 
+	</div>
+</div>
+
+<% if(locals.errorMessage) { %>
+	<script>
+		const errorDialog = document.getElementById('errorDialog');
+		const errorMessage = document.getElementById('errorMessage');
+
+		errorMessage.innerText = "<%- errorMessage %>";
+		errorDialog.classList.add('shown');
+		setTimeout(() => {
+			errorDialog.classList.remove('shown');
+		}, 2000);
+	</script>
+<% } %>
+
+<%- include('./mobile_dialogs.ejs') %>

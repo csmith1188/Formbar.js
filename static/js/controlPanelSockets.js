@@ -1,18 +1,18 @@
 const selectPollDiv = document.querySelector('div#selectPoll')
-let selectedTagNames = new Set() // Stores selected tags so they don't get reset when select buttons are recreated
+let selectedClassTags = new Set() // Stores selected tags so they don't get reset when select buttons are recreated
 
 // Creates the tag buttons in the select box
 function createTagSelectButtons() {
 	// Clear every tag in the select box
 	for (const tag of selectPollDiv.children) {
-		if (tag.className === 'switchAll') continue;
+		if (tag.className === 'switchAll revampButton') continue;
 		tag.remove();
 	}
 
 	// Creation of tag buttons in the select box
 	for (let i = 1; i <= currentTags.length; i++) {
 		let tagPoll = document.createElement('button');
-		tagPoll.className = selectedTagNames.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll';
+		tagPoll.className = selectedClassTags.has(currentTags[i - 1]) ? 'pressed' : 'tagPoll revampButton';
 		tagPoll.textContent = currentTags[i - 1];
 		tagPoll.name = currentTags[i - 1];
 
@@ -20,11 +20,11 @@ function createTagSelectButtons() {
 		tagPoll.onclick = () => {
 			let tempTags = []
 			if (tagPoll.className == 'tagPoll') {
-				tagPoll.className = 'pressed';
-				selectedTagNames.add(tagPoll.textContent);
+				tagPoll.className = 'pressed revampButton';
+				selectedClassTags.add(tagPoll.textContent);
 			} else {
-				tagPoll.className = 'tagPoll'
-				selectedTagNames.delete(tagPoll.textContent);
+				tagPoll.className = 'tagPoll revampButton'
+				selectedClassTags.delete(tagPoll.textContent);
 			}
 
 			for (let tag of document.querySelectorAll('#selectPoll button.pressed')) {
@@ -42,7 +42,7 @@ function createTagSelectButtons() {
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			const selectedStudents = []; // Stores the selected students
 			for (const student of students) {
-				const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
+				const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
 				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
 				if (selectedTags.length === 0) continue;
 				if (student.permissions >= TEACHER_PERMISSIONS) continue;
@@ -50,10 +50,10 @@ function createTagSelectButtons() {
 				// Handle tag selections
 				for (const studentTag of studentTags) {
 					if (selectedTagTexts.has(studentTag.textContent)) {
-						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentElement.open = true;
 						studentCheckbox.checked = true;
-						selectedStudents.push(student.email);
+						selectedStudents.push(student.id);
 						break;
 					}
 				}
@@ -63,7 +63,7 @@ function createTagSelectButtons() {
 					// Handle multi-res polls
 					for (const response of student.pollRes.buttonRes) {
 						if (selectedTagTexts.has(response)) {
-							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 							studentElement.open = true;
 							studentCheckbox.checked = true;
 							selectedStudents.push(student.email);
@@ -73,19 +73,19 @@ function createTagSelectButtons() {
 				} else if (typeof student.pollRes.buttonRes === 'string') {
 					// Handle regular polls
 					if (selectedTagTexts.has(student.pollRes.buttonRes)) {
-						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentElement.open = true;
 						studentCheckbox.checked = true;
-						selectedStudents.push(student.email);
+						selectedStudents.push(student.id);
 					}
 				}
 			}
 
 			// If the student is not selected, then unselect them
 			for (const student of students) {
-				if (selectedStudents.indexOf(student.email) === -1) {
-					const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
-					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+				if (selectedStudents.indexOf(student.id) === -1) {
+					const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 					if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
 
 					studentElement.open = false;
@@ -100,6 +100,52 @@ function createTagSelectButtons() {
 			selectPollDiv.appendChild(tagPoll);
 		}
 	}
+}
+
+
+let pollHoverDiv = document.querySelector('div#pollPreview');
+let hoverTimeoutBig = null;
+let hoverCountBig = 500;
+let pollDetailsDiv = document.getElementById('pollDetails');
+pollDetailsDiv.addEventListener('mouseover', (e) => {
+	if(orientation == 'portrait') return; // Don't show on landscape mode
+	hoverTimeoutBig = setTimeout(() => {
+		if(!classroom.poll.status) return; // Don't show if there is no active poll
+		hoverShowPollDetails(classroom.poll, e, true);
+		pollDetailsDiv.classList.add('tutorialDone');
+		if(localStorage.getItem('controlTutorialDone') !== "true") {
+			localStorage.setItem('controlTutorialDone', true);
+		}
+
+	}, hoverCountBig);
+});
+pollDetailsDiv.addEventListener('mouseout', () => {
+	pollHoverDiv.className = 'revampDiv';
+	clearTimeout(hoverTimeoutBig);
+});
+
+if(localStorage.getItem('controlTutorialDone') == "true") {
+	pollDetailsDiv.classList.add('tutorialDone');
+}
+
+function hoverShowPollDetails(poll, event, isDetails = false) {
+	pollHoverDiv.innerHTML = `<h1>${poll.prompt}</h1>`;
+
+	if(!isDetails) {
+		poll.answers.forEach((answer, index) => {
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answer.color}44";>${answer.answer}</button>`
+		});
+	} else {
+		Object.keys(poll.responses).forEach((answer, index) => {
+			let answerDetails = poll.responses[answer];
+			pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answerDetails.color}44";>${answerDetails.answer}</button>`
+		});
+	}
+
+	pollHoverDiv.style.setProperty('--mouseX', event.x - 300 + 'px');
+	if(event.x - 300 < 0) pollHoverDiv.style.setProperty('--mouseX', event.x + 'px');
+	pollHoverDiv.style.setProperty('--mouseY', event.y + 'px');
+	pollHoverDiv.className = 'revampDiv open';
 }
 
 socket.emit('customPollUpdate')
@@ -120,9 +166,23 @@ socket.on('customPollUpdate', (
 
 	// Creation of quick poll buttons in Fast Poll
 	for (let i = 1; i <= 4; i++) {
-		let customPoll = customPolls[i]
+		let customPoll = customPolls[i];
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
+		startButton.className = 'start-custom-poll revampButton'
+
+		// Logic for showing poll details on hover
+		let hoverTimeout = null;
+		let hoverCount = 500;
+		startButton.addEventListener('mouseover', (e) => {
+			if(orientation == 'portrait') return; // Don't show on landscape mode
+			hoverTimeout = setTimeout(() => { hoverShowPollDetails(customPoll, e) }, hoverCount);
+		});
+		startButton.addEventListener('mouseout', () => {
+			pollHoverDiv.className = 'revampDiv';
+			clearTimeout(hoverTimeout);
+		});
+
+
 		startButton.style.gridColumn = 3
 		startButton.textContent = customPoll.name
 		startButton.onclick = () => {
@@ -138,7 +198,7 @@ socket.on('customPollUpdate', (
 	
 	// Creation of switchAll button
 	const switchAll = document.createElement('button')
-	switchAll.className = 'switchAll'
+	switchAll.className = 'switchAll revampButton'
 	switchAll.textContent = 'Switch All'
 
 	function getStudentVotingEligibility() {
@@ -168,10 +228,10 @@ socket.on('customPollUpdate', (
 		switchState = !switchState;
 
 		// Unselect all select tags
-		selectedTagNames.clear();
+		selectedClassTags.clear();
 		for (const tag of selectPollDiv.children) {
 			if (tag.className === 'pressed') {
-				tag.className = "tagPoll";
+				tag.className = "tagPoll revampButton";
 			}
 		}
 
@@ -179,15 +239,17 @@ socket.on('customPollUpdate', (
 		for (const student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
-			const studentElement = document.querySelector(`details[id="student-${student.email}"]`);
-			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`);
+			const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+			const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 
 			if (studentCheckbox) {
 				studentCheckbox.checked = switchState;
-				votingData[student.email] = switchState;
+				votingData[student.id] = switchState;
 				studentElement.open = studentCheckbox.checked;
 			}
 		}
+
+        // Send the voting data to the server to update the students' voting rights
 		socket.emit('changeCanVote', votingData)
 	}
 
@@ -203,7 +265,7 @@ socket.on('customPollUpdate', (
 
 		// Get the student's checkbox
 		// If they do not have one, skip them
-		const studentCheckbox = document.querySelector(`input[id="checkbox_${student.email}"]`)
+		const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`)
 		if (!studentCheckbox) continue;
 
 		// When a student's checkbox is clicked, add all students who have their checkboxes checked to a list
@@ -211,13 +273,13 @@ socket.on('customPollUpdate', (
 		studentCheckbox.onclick = () => {
 			const canStudentVote = studentCheckbox.checked;
 
-			let studentCheckboxes = classroom.poll.studentBoxes;
-			if (studentCheckbox.checked && !studentCheckboxes.includes(student.email)) {
-				studentCheckboxes.push(student.email);
+			let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
+			if (studentCheckbox.checked && !studentsAllowedToVote.includes(student.id.toString())) {
+				studentsAllowedToVote.push(student.id);
 			}
 
 			socket.emit('changeCanVote', {
-				[student.email]: canStudentVote
+				[student.id]: canStudentVote
 			});
 		}
 	}
@@ -265,7 +327,7 @@ socket.on('getPollShareIds', (userPollShares, classPollShares) => {
 })
 
 socket.on("changeClassName", (name) => {
-	className.textContent = `Class Name: ${name}`;
+	className.innerHTML = `<b>Class Name:</b> ${name}`;
 })
 
 socket.on("classPollSave", (pollId) => {
@@ -276,16 +338,16 @@ let selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-tagNames = tagNames.split(",");
+classTags = classTags.split(",");
 //create the form on the poll's settings page to select tags as requirements
-for (let i = 0; i < tagNames.length; i++) {
+for (let i = 0; i < classTags.length; i++) {
 	let checkbox = document.createElement('input');
 	checkbox.type = 'checkbox';
 	checkbox.name = `tagSelector`;
-	checkbox.id = `tagSelector${tagNames[i]}`
-	checkbox.value = tagNames[i];
+	checkbox.id = `tagSelector${classTags[i]}`
+	checkbox.value = classTags[i];
 	let label = document.createElement('label');
-	label.textContent = tagNames[i];
+	label.textContent = classTags[i];
 	label.setAttribute('for', `checkbox${i}`);
 
 	selectTagForm.appendChild(checkbox);

@@ -18,33 +18,10 @@ async function getIpAccess(type) {
 	}, {})
 }
 
-function createSocketFromHttp(req, res) {
-	return {
-		request: {
-			session: req.session.user
-		},
-		handshake: {
-			address: req.ip
-		},
-		emit: (event, message) => {
-			res.send(message);
-		},
-
-		// Store the original request and response
-		// These can only be used if isEmulatedSocket is true
-		req: req,
-		res: res,
-
-		// Used for indicating that this is not a real socket
-		isEmulatedSocket: true
-	}
-}
-
 const { app, io, http } = createServer();
 module.exports = {
 	app,
 	io,
 	http,
-	getIpAccess,
-	createSocketFromHttp
+	getIpAccess
 };
