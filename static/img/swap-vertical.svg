@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+    <!-- Up-facing arrow -->
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M48 208l112-112 112 112M160 113.13V416"/>
+    
+    <!-- Down-facing arrow -->
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M464 304l-112 112-112-112M352 398V96"/>
+  </svg>
