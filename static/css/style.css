@@ -701,6 +701,10 @@ details[open] {
 	grid-row: span 5;
 }
 
+details[id^="student-guest"][open] {
+	grid-row: span 3;
+}
+
 details[open] #reasons {
 	transform: translateY(-80%);
 }
