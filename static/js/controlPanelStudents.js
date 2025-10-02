@@ -179,7 +179,6 @@ function buildStudent(classroom, studentData) {
         for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
             let strPerms = ['Guest', 'Student', 'Mod', 'Teacher']
             strPerms = strPerms[permission - 1]
-            // }
 
             permSwitch.onchange = (event) => {
                 const newPerm = Number(event.target.value);

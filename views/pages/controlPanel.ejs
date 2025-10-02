@@ -533,15 +533,23 @@
         });
     }
 
-    
-
-    // Function runs on page load
-    // Checks if poll is active or not and displays correct output
+    // Handles loading classroom data from the server
+    let loaded = false;
     let rooms;
     socket.on('classUpdate', (classroomData) => {
         rooms = classroomData
+        loaded = true;
     })
     let classTags = '<%= tags %>';
+
+    // If the user is rate limited from sockets, then the data may not populate in the control panel immediately
+    // Therefore, we will keep emitting the classUpdate event until we get the data
+    const checkLoadedInterval = setInterval(() => {
+        if (loaded) {
+            clearInterval(checkLoadedInterval);
+        }
+        socket.emit('classUpdate');
+    }, 1000);
 
     // Alerts the user if they try to start a poll without a prompt or responses
     function pollCheck() {

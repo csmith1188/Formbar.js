@@ -395,7 +395,10 @@ module.exports = {
                 ])
 
                 logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
+
+                // Reload the user's page and update the class
                 io.to(`user-${email}`).emit('reload')
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack);
             }
