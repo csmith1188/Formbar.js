@@ -245,19 +245,18 @@
 						}
 
 						currentUser.pollRes = {buttonRes: lettRes, textRes: textRes, date: new Date()};
-						oldLetterRes = lettRes
-						oldTextRes = textRes
-
-						if(lettRes == "remove") {
+						if (lettRes == "remove") {
 							currentUser.pollRes = {buttonRes: '', textRes: '', date: null};
-							oldLetterRes = ''
-							oldTextRes = ''
-
 							if(textarea) textarea.value = ''
 						}
 
-						// Sends user input to the server
-						socket.emit('pollResp', lettRes, textRes)
+						// If the new input is not the same as the previous input, then send it to the server
+                        // This prevents spamming the server with the same input
+                        if ((lettRes !== oldLetterRes || lettRes === '') && (textRes !== oldTextRes || textRes === '')) {
+                            socket.emit('pollResp', lettRes, textRes)
+                            oldLetterRes = lettRes
+                            oldTextRes = textRes
+                        }
 					}
 
 					socket.on('classUpdate', (classroomData) => {
