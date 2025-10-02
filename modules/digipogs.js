@@ -1,6 +1,7 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
+const config = require("./config");
 
 // awardDigipogsResponse
 // transferResponse
@@ -73,9 +74,19 @@ async function transferDigipogs(transferData) {
         }
 
         const newFromBalance = fromUser.digipogs - amount;
-        const newToBalance = Math.floor(toUser.digipogs + amount * .95); // 5% fee. Math.floor to avoid fractional digipogs
-
+        const newToBalance = Math.ceil(toUser.digipogs + amount * .9); // 10% fee. Round to avoid fractional digipogs
+        
         try {
+            const FB_DEVS = process.env.FB_DEVS.split(",").map(id => parseInt(id)) || [1]; // Ensure it's an array of integers. Default to [1] if not set.
+            const deductedAmount = Math.ceil((amount * .1) / FB_DEVS.length); // Deducted fee divided by number of devs, rounded up to avoid fractional digipogs
+            // Distribute the deducted amount among the devs
+            FB_DEVS.forEach(async (devId) => {
+                const devUser = await dbGet("SELECT * FROM users WHERE id = ?", [devId]);
+                if (devUser) {
+                    const newDevBalance = Math.ceil(devUser.digipogs + deductedAmount / FB_DEVS.length);
+                    await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newDevBalance, devId]);
+                }
+            });
             await Promise.all([
                 dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]),
                 dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to])
