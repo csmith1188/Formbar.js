@@ -20,11 +20,11 @@
 
 	socket.on('reload', (redirectURL) => {
         if (window.reloadRedirect) {
-			redirectURL = window.reloadRedirect;
+            redirectURL = window.reloadRedirect;
 			window.reloadRedirect = null;
 			location.href = redirectURL;
 		} else if (redirectURL) {
-			location.href = redirectURL;
+            location.href = redirectURL;
 		} else {
             location.reload();
         }

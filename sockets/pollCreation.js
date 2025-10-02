@@ -6,21 +6,22 @@ const { createPoll } = require("../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Starts a poll with the data provided (supports legacy positional args)
+        // Starts a poll with the data provided
         socket.on('startPoll', async (...args) => {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-            
+
+                // Support both passing a single object or multiple arguments for backward compatibility
                 let pollData;
-                if (args.length === 1 && args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
+                if (args.length == 1) {
                     pollData = args[0];
                 } else {
                     const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = args;
                     pollData = {
                         prompt: pollPrompt,
-                        pollOptions: Array.isArray(polls) ? polls : [],
-                        isBlind: !!blind,
+                        answers: Array.isArray(polls) ? polls : [],
+                        blind: !!blind,
                         weight: Number(weight ?? 1),
                         tags: Array.isArray(tags) ? tags : [],
                         studentsAllowedToVote: Array.isArray(boxes) ? boxes : undefined,
@@ -30,8 +31,19 @@ module.exports = {
                     }
                 }
 
-                await createPoll(classId, pollData, socket.request.session)
-                socket.emit('startPoll')
+                await createPoll(classId, {
+                    prompt: pollData.prompt,
+                    answers: Array.isArray(pollData.answers) ? pollData.answers : [],
+                    blind: !!pollData.blind,
+                    weight: Number(pollData.weight ?? 1),
+                    tags: Array.isArray(pollData.tags) ? pollData.tags : [],
+                    studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
+                    indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
+                    allowTextResponses: !!pollData.allowTextResponses,
+                    allowMultipleResponses: !!pollData.allowMultipleResponses,
+                    lastResponse: pollData.lastResponse || false
+                }, socket.request.session);
+                socket.emit('startPoll');
             } catch (err) {
                 logger.log("error", err.stack);
             }

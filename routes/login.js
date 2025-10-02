@@ -25,11 +25,14 @@ module.exports = {
                     token = (await dbGet('SELECT token FROM temp_user_creation_data WHERE secret=?', [code])).token;
                 }
 
-                // If the user is not logged in, render the login page
+                // If the user is already logged in, redirect them to the home page
                 if (req.session.email !== undefined && classInformation.users[req.session.email]) {
                     res.redirect('/');
                     return;
-                } else if (!token) {
+                }
+
+                // If the user is not logged in, render the login page
+                if (!token) {
                     logger.log('info', `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
                     res.render('pages/login', {
                         title: 'Login',
@@ -52,9 +55,8 @@ module.exports = {
                     };
 
                     database.run(
-                        'INSERT INTO users(email, email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                        'INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)',
                         [
-                            user.email,
                             user.email,
                             user.hashedPassword,
                             user.permissions,
@@ -90,12 +92,12 @@ module.exports = {
 
                                         // Remove the account creation data from the database
                                         dbRun('DELETE FROM temp_user_creation_data WHERE secret=?', [user.newSecret]);
-                    
+
                                         logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                         logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
-                    
+
                                         managerUpdate()
-                    
+
                                         res.redirect('/')
                                         return;
                                     } catch (err) {
@@ -117,7 +119,7 @@ module.exports = {
                                     });
                                     return;
                                 }
-                    
+
                                 // Handle other errors
                                 logger.log('error', err.stack);
                                 res.render('pages/message', {
@@ -148,9 +150,9 @@ module.exports = {
                     email: req.body.email,
                     loginType: req.body.loginType,
                     userType: req.body.userType,
-                    displayName: req.body.displayName
+                    displayName: req.body.displayName,
+                    classID: req.body.classID
                 };
-
                 logger.log('info', `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`)
                 logger.log('verbose', `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`)
 
@@ -351,12 +353,12 @@ module.exports = {
                                                     req.session.classId = null
                                                     req.session.displayName = userData.displayName;
                                                     req.session.verified = 1;
-                                
+
                                                     logger.log('verbose', `[post /login] session=(${JSON.stringify(req.session)})`)
                                                     logger.log('verbose', `[post /login] classInformation=(${JSON.stringify(classInformation)})`)
-                                
+
                                                     managerUpdate()
-                                
+
                                                     res.redirect('/')
                                                     return;
                                                 } catch (err) {
@@ -378,7 +380,7 @@ module.exports = {
                                                 });
                                                 return;
                                             }
-                                
+
                                             // Handle other errors
                                             logger.log('error', err.stack);
                                             res.render('pages/message', {
@@ -397,6 +399,7 @@ module.exports = {
                             accountCreationData.newSecret = newSecret;
                             accountCreationData.hashedPassword = hashedPassword;
                             accountCreationData.permissions = permissions;
+                            accountCreationData.password = undefined;
 
                             // Create JWT token with this information then store it in the temp_user_creation_data in the database
                             // This will be used to finish creating the account once the email is verified
@@ -417,7 +420,7 @@ module.exports = {
                             sendMail(user.email, 'Formbar Verification', html);
                             if (limitStore.has(user.email) && (Date.now() - limitStore.get(user.email) < RATE_LIMIT)) {
                                 res.render('pages/message', {
-                                    message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now())/1000)} seconds.`,
+                                    message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now()) / 1000)} seconds.`,
                                     title: 'Verification'
                                 });
                             } else {
@@ -435,6 +438,7 @@ module.exports = {
                         }
                     })
                 } else if (user.loginType == 'guest') {
+
                     if (user.displayName.trim() == '') {
                         logger.log('verbose', '[post /login] Invalid display name provided to create guest user');
                         res.render('pages/message', {
@@ -447,9 +451,9 @@ module.exports = {
 
                     // Create a temporary guest user
                     const email = 'guest' + crypto.randomBytes(4).toString('hex');
-                    const student =  new Student(
+                    const student = new Student(
                         email, // email
-                        -1, // Id
+                        `guest_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`, // Unique ID for guest
                         GUEST_PERMISSIONS,
                         null, // API key
                         [], // Owned polls
@@ -465,7 +469,6 @@ module.exports = {
 
                     // Add a cookie to transfer user credentials across site
                     req.session.userId = student.id;
-                    req.session.email = student.email;
                     req.session.email = student.email;
                     req.session.tags = student.tags;
                     req.session.displayName = student.displayName;

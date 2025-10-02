@@ -102,8 +102,6 @@ function isVerified(req, res, next) {
 	}
 }
 
-
-
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
 	try {
