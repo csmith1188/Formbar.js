@@ -61,7 +61,7 @@ async function transferDigipogs(transferData) {
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-        } else if (fromUser.pin !== pin) {
+        } else if (fromUser.pin != pin) {
             return { success: false, message: "Invalid PIN." };
         } else if (fromUser.digipogs < amount) {
             return { success: false, message: "Insufficient funds." };
