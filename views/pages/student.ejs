@@ -157,6 +157,14 @@
                             noPoll.style.display = 'none'
                             pollDiv.style.display = 'block'
 
+                            // Grab the current text response so that it can be preserved if the poll is updated while the user is typing
+                            // This prevents the user from losing their text response if the poll is updated while they are
+                            const responseTextbox = document.getElementById('resTextBox')
+                            let currentTextRes = ''
+                            if (responseTextbox) {
+                                currentTextRes = responseTextbox.value
+                            }
+
                             // Clears the form so that it can be repopulated
                             pollForm.innerHTML = ''
                             pollPromptDisplay.innerText = poll.prompt
@@ -169,7 +177,7 @@
 
                             // Creates all selectable answers and displays them to the user
                             if (poll.allowTextResponses) {
-                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText' value="${oldTextRes}"></textarea>`
+                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText'">${currentTextRes || oldTextRes}</textarea>`
                             }
 
                             for (let response of Object.values(poll.responses)) {
@@ -194,7 +202,6 @@
                         }
 
                         // If the user has responded before on this poll, put their previous responses in the form
-                        const resTextBox = document.getElementById("resTextBox")
                         if (!poll.allowMultipleResponses) {
                             // If the poll isn't multi-res, handle it normally
                             // const oldLetterElement = document.getElementById(oldLetterRes)
@@ -210,11 +217,6 @@
                                     oldLetterElement.checked = true
                                 }
                             }
-                        }
-
-
-                        if (oldTextRes && resTextBox) {
-                            resTextBox.value = oldTextRes
                         }
 					}
 
@@ -252,7 +254,7 @@
 
 						// If the new input is not the same as the previous input, then send it to the server
                         // This prevents spamming the server with the same input
-                        if ((lettRes !== oldLetterRes || lettRes === '') && (textRes !== oldTextRes || textRes === '')) {
+                        if ((lettRes !== oldLetterRes || lettRes === '') || (lettRes === oldLetterRes && (textRes !== oldTextRes || textRes === ''))) {
                             socket.emit('pollResp', lettRes, textRes)
                             oldLetterRes = lettRes
                             oldTextRes = textRes
