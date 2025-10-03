@@ -26,7 +26,7 @@ module.exports = {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-                endClass(classId);
+                endClass(classId, socket.request.session);
             } catch (err) {
                 logger.log('error', err.stack);
                 socket.emit('startClass', 'There was a server error. Please try again');

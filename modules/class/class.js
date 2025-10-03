@@ -6,6 +6,7 @@ const { database, dbGet, dbGetAll, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinRoom");
 const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
+const { clearPoll } = require("../polls");
 
 /**
  * Starts a class session by activating the class, emitting the start class event,
@@ -31,16 +32,18 @@ async function startClass(classId) {
  * Ends a class session by deactivating the class, emitting the end class event,
  * and updating the class state in memory and to connected clients.
  * @param {string|number} classId - The ID of the class to end.
+ * @param {Object} [userSession] - The session object of the user ending the class.
  */
-async function endClass(classId) {
+async function endClass(classId, userSession) {
     try {
         logger.log('info', `[endClass] classId=(${classId})`);
         await advancedEmitToClass('endClassSound', classId, { api: true });
 
         // Deactivate the class and send the class active event
         classInformation.classrooms[classId].isActive = false;
-        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
+        await clearPoll(classId, userSession, true);
 
+        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
         logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
         logger.log('error', err.stack);

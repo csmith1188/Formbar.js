@@ -23,7 +23,7 @@ class Student {
 		this.activeClass = null;
 		this.permissions = permissions;
 		this.classPermissions = null;
-		this.tags = tags;
+		this.tags = tags || [];
 		this.ownedPolls = ownedPolls || [];
 		this.sharedPolls = sharedPolls || [];
 		this.pollRes = {
@@ -37,6 +37,7 @@ class Student {
 		this.pogMeter = 0;
 		this.displayName = displayName;
 		this.isGuest = isGuest;
+        console.log('test', this.tags)
 	};
 };
 
