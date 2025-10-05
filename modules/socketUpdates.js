@@ -154,7 +154,6 @@ function sortStudentsInPoll(classData) {
         }
 
         // Prevent students from being included if they are offline
-        console.log(student.tags)
         if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
             excluded = true;
             included = false;

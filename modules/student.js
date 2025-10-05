@@ -37,7 +37,6 @@ class Student {
 		this.pogMeter = 0;
 		this.displayName = displayName;
 		this.isGuest = isGuest;
-        console.log('test', this.tags)
 	};
 };
 
@@ -96,7 +95,7 @@ async function getStudentsInClass(classId) {
 			userData.API,
 			[],
 			[],
-			userData.tags,
+			userData.tags ? userData.tags.split(',') : [],
 			displayName = userData.displayName,
 			false
 		);

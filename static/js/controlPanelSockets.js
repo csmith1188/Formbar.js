@@ -335,46 +335,52 @@ let selectTags = document.createElement('dialog')
 let closeTags = document.createElement('button');
 let selectTagForm = document.createElement('form');
 selectTagForm.setAttribute('name', 'selectTagForm');
-classTags = classTags.split(",");
-//create the form on the poll's settings page to select tags as requirements
-for (let i = 0; i < classTags.length; i++) {
-	let checkbox = document.createElement('input');
-	checkbox.type = 'checkbox';
-	checkbox.name = `tagSelector`;
-	checkbox.id = `tagSelector${classTags[i]}`
-	checkbox.value = classTags[i];
-	let label = document.createElement('label');
-	label.textContent = classTags[i];
-	label.setAttribute('for', `checkbox${i}`);
 
-	selectTagForm.appendChild(checkbox);
-	selectTagForm.appendChild(label);
+function rebuildSelectTagForm() {
+    selectTagForm.innerHTML = '';
+    const classTags = Array.isArray(classroom.tags) ? classroom.tags : [];
+    for (let i = 0; i < classTags.length; i++) {
+		let checkbox = document.createElement('input');
+		checkbox.type = 'checkbox';
+		checkbox.name = `tagSelector`;
+		checkbox.id = `tagSelector${classTags[i]}`
+		checkbox.value = classTags[i];
+
+		let label = document.createElement('label');
+		label.textContent = classTags[i];
+		label.setAttribute('for', `checkbox${i}`);
+
+		selectTagForm.appendChild(checkbox);
+		selectTagForm.appendChild(label);
+		selectTagForm.appendChild(document.createElement('br'));
+	}
+
+	let tagsAllSame = document.createElement('input');
+	tagsAllSame.type = 'checkbox';
+	tagsAllSame.value = 0 + ':Exact Same Tags'
+	tagsAllSame.name = 'tagSelector';
+
+	let tagsHas = document.createElement('input');
+	tagsHas.type = 'checkbox';
+	tagsHas.value = 1 + ':Has The Tags'
+	tagsHas.name = `tagSelector`;
+
+	let tagsAllSameLabel = document.createElement('label');
+	let tagsHasLabel = document.createElement('label');
+	tagsAllSameLabel.textContent = `Exact Same Tags`;
+	tagsHasLabel.textContent = 'Has The Tags';
+	tagSelectorParagraph = document.createElement('p');
+	tagSelectorParagraph.textContent = 'Pick One Below:';
+	selectTagForm.appendChild(tagSelectorParagraph)
+	selectTagForm.appendChild(tagsAllSame);
+	selectTagForm.appendChild(tagsAllSameLabel);
+	selectTagForm.appendChild(document.createElement('br'));
+	selectTagForm.appendChild(tagsHas);
+	selectTagForm.appendChild(tagsHasLabel);
 	selectTagForm.appendChild(document.createElement('br'));
 }
 
-let tagsAllSame = document.createElement('input');
-tagsAllSame.type = 'checkbox';
-tagsAllSame.value = 0 + ':Exact Same Tags'
-tagsAllSame.name = 'tagSelector';
-
-let tagsHas = document.createElement('input');
-tagsHas.type = 'checkbox';
-tagsHas.value = 1 + ':Has The Tags'
-tagsHas.name = `tagSelector`;
-
-let tagsAllSameLabel = document.createElement('label');
-let tagsHasLabel = document.createElement('label');
-tagsAllSameLabel.textContent = `Exact Same Tags`;
-tagsHasLabel.textContent = 'Has The Tags';
-tagSelectorParagraph = document.createElement('p');
-tagSelectorParagraph.textContent = 'Pick One Below:';
-selectTagForm.appendChild(tagSelectorParagraph)
-selectTagForm.appendChild(tagsAllSame);
-selectTagForm.appendChild(tagsAllSameLabel);
-selectTagForm.appendChild(document.createElement('br'));
-selectTagForm.appendChild(tagsHas);
-selectTagForm.appendChild(tagsHasLabel);
-selectTagForm.appendChild(document.createElement('br'));
+rebuildSelectTagForm();
 selectTags.appendChild(selectTagForm);
 selectTags.appendChild(document.createElement('br'));
 selectTags.appendChild(closeTags);

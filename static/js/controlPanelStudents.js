@@ -198,6 +198,8 @@ function buildStudent(classroom, studentData) {
         }
 
         // Add each tag as a button to the tag form
+        if (!Array.isArray(classroom.tags)) classroom.tags = [];
+        roomTagDiv.innerHTML = '';
         for (let i = 0; i < classroom.tags.length; i++) {
             let tag = classroom.tags[i]
             if (tag == 'Offline') continue
@@ -206,7 +208,7 @@ function buildStudent(classroom, studentData) {
             button.innerHTML = tag
             button.name = `button${classroom.tags[i]}`;
             button.value = classroom.tags[i];
-            if (studentData.tags == null && studentData.tags == undefined) studentData.tags = ''
+            if (!Array.isArray(studentData.tags)) studentData.tags = []
             button.onclick = function () {
                 if (!button.classList.contains('pressed')) {
                     button.classList.add('pressed')
@@ -216,10 +218,8 @@ function buildStudent(classroom, studentData) {
                     studTagsSpan.appendChild(span);
 
                     // If the studentData does not have tags, add the tag
-                    if (studentData.tags) {
-                        studentData.tags = `${studentData.tags},${tag}`;
-                    } else {
-                        studentData.tags = tag;
+                    if (!studentData.tags.includes(tag)) {
+                        studentData.tags.push(tag);
                     }
 
                     // Add to current tags
@@ -235,13 +235,11 @@ function buildStudent(classroom, studentData) {
                     }
 
                     // Remove the tag from the studentData tags
-                    if (studentData) {
-                        studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
-                    }
+                    studentData.tags = studentData.tags.filter(t => t !== tag);
 
                     if (studTagsSpan) {
                         const tagSpan = studTagsSpan.querySelector(`#${tag}`);
-                        tagSpan.remove();
+                        if (tagSpan) tagSpan.remove();
                     }
                 }
 
@@ -257,14 +255,13 @@ function buildStudent(classroom, studentData) {
                 createTagSelectButtons();
             }
 
-            for (ttag of studentData.tags.split(",")) {
-                if (ttag == tag) {
-                    button.classList.add('pressed')
-                    let span = document.createElement('span');
-                    span.textContent = tag;
-                    span.setAttribute('id', tag);
-                    studTagsSpan.appendChild(span);
-                }
+            // Set pressed state for tags already present
+            if (Array.isArray(studentData.tags) && studentData.tags.includes(tag)) {
+                button.classList.add('pressed')
+                let span = document.createElement('span');
+                span.textContent = tag;
+                span.setAttribute('id', tag);
+                studTagsSpan.appendChild(span);
             }
 
             roomTagDiv.appendChild(button);
