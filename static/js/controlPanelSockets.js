@@ -19,7 +19,7 @@ function createTagSelectButtons() {
 		// With every click creates an array with all clicked tags to compare with users
 		tagPoll.onclick = () => {
 			let tempTags = []
-			if (tagPoll.className == 'tagPoll') {
+			if (tagPoll.className == 'tagPoll revampButton') {
 				tagPoll.className = 'pressed revampButton';
 				selectedClassTags.add(tagPoll.textContent);
 			} else {
@@ -36,14 +36,14 @@ function createTagSelectButtons() {
 			}
 			tempTags = tempTags.sort().join();
 
-			const selectedTags = Object.values(document.getElementById('selectPoll').children).filter(tag => tag.className === 'pressed')
+			const selectedTags = Object.values(document.getElementById('selectPoll').children).filter(tag => tag.className === 'pressed revampButton');
 			const selectedTagTexts = new Set(selectedTags.map(tag => tag.textContent));
 
 			// If the student has any of the selected tags, check the checkbox and open their menu
 			const selectedStudents = []; // Stores the selected students
 			for (const student of students) {
 				const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
-				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed');
+				const studentTags = Array.from(studentElement.querySelector('div[id="roomTags"]').children).filter(tag => tag.className === 'pressed revampButton');
 				if (selectedTags.length === 0) continue;
 				if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
