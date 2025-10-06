@@ -2,40 +2,37 @@
 <%- include('../partials/sockets') %>
     <!-- ^^ This means add this file into the contents of the header page -->
     <!-- This is where the title, top buttons, and stylesheet is located -->
-    <body id="colorContent">
+    <body id="colorContent" class="loginPage" role="document" tabindex="0">
         <%- include('../partials/formbar_header') %>
-            <div id="content" class="contentBox">
-                <button id="logInButton" class="pressed quickButton" onclick="changeloginType(this);">Log
-                    in</button>
-                <button id="newAccountButton" class="quickButton" onclick="changeloginType(this);">New
-                    account</button>
-                <button id="guestButton" class="quickButton" onclick="changeloginType(this);">Use as guest</button>
-                <br><br>
+            <h1 id="loginHeader">Login</h1>
+            <div id="content" class="contentBox loginContentBox">
+                <div class="buttons">
+                    <button id="logInButton" class="pressed quickButton revampButton" onclick="changeloginType(this);">Login</button>
+                    <button id="newAccountButton" class="quickButton revampButton" onclick="changeloginType(this);">Register</button>
+                    <button id="guestButton" class="quickButton revampButton" onclick="changeloginType(this);">Guest</button>
+                </div>
                 <!-- The route to post to after redirecting. Only used if the redirect url is specified -->
                 <form id="login" action="login" method="post" style="margin-bottom: 16px;">
                     <input type="hidden" id="route" name="route" value="<%-route%>">
                     <!-- Carries over and submits the redirectURL specified by the user. -->
                     <input type="hidden" id="redirect" name="redirectURL" value="<%-redirectURL%>">
                     <!-- Login Inputs -->
-                    <input type="text" id="displayNameBox" name="displayName" class="loginBox"
+                    <input type="text" id="displayNameBox" name="displayName" class="loginBox revampButton revampWithText"
                            placeholder="Display Name" value="" pattern="[a-zA-Z0-9_ ]+" minlength="5" maxlength="20"
                            title='Display name must be 5-20 characters and contain only letters, numbers, and underscores'
                            required>
-                    <input type="email" id="emailBox" name="email" class="loginBox" placeholder="Email" value="">
-                    <input type="password" id="passwordBox" name="password" class="loginBox" placeholder="Password"
+                    <input type="email" id="emailBox" name="email" class="loginBox revampButton revampWithText" placeholder="Email" value="">
+                    <input type="password" id="passwordBox" name="password" class="loginBox revampButton revampWithText" placeholder="Password"
                         value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\" ~?/\|\\]+"
                         title='Password must be 5-20 characters and contain only letters, numbers, and certain special characters'
                         minlength="5" maxlength="20" required>
-                    <a href="/changepassword" id="forgotPassword" class="quickButton loginBox">Forgot password</a>
                     <!-- User and Login Type -->
                     <input type="hidden" id="loginTypeBox" name="loginType" value="login">
                     <input type="hidden" id="userTypeBox" name="userType" value="user">
-                    <br>
-                    <input type="submit" id="submitButton" class="button unselectable quickButton" value="Log in"
+                    
+                    <input type="submit" id="submitButton" style="margin: auto;margin-top: 20px;" class="button unselectable quickButton revampButton" value="Log in"
                         onsubmit="return false;">
-                    <br>
-                    <span id="orText">Or</span>
-                    <br>
+                    <a href="/changepassword" id="forgotPassword" class="quickButton loginBox revampButton">Forgot password</a>
                 </form>
 
                 <button class="gsi-material-button" id="googleOAuthButton" onclick="loginWithGoogle()">
@@ -80,6 +77,7 @@
         const loginTypeBox = document.getElementById('loginTypeBox');
         const forgotPassword = document.getElementById('forgotPassword');
         const submitButton = document.getElementById('submitButton');
+        const headerText = document.getElementById('loginHeader');
 
         // If the route is not login...
         if (route.value !== 'login') {
@@ -100,6 +98,7 @@
             // Hide or show inputs based on the selected login type
             switch (el) {
                 case loginButton:
+                    headerText.innerText = "Login";
                     passwordBox.classList.remove('hidden');
                     passwordBox.required = true;
                     forgotPassword.classList.remove('hidden');
@@ -111,6 +110,7 @@
                     loginTypeBox.value = 'login';
                     break;
                 case newAccountButton:
+                    headerText.innerText = "Register";
                     passwordBox.classList.remove('hidden');
                     passwordBox.required = true;
                     forgotPassword.classList.add('hidden');
@@ -122,6 +122,7 @@
                     loginTypeBox.value = 'new';
                     break;
                 case guestButton:
+                    headerText.innerText = "Guest";
                     passwordBox.value = null;
                     passwordBox.classList.add('hidden');
                     passwordBox.required = false;

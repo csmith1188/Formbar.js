@@ -1,56 +1,71 @@
 <%- include('../partials/header_content') %>
     <%- include('../partials/sockets') %>
 
-        <body id="colorContent">
+        <body id="colorContent" role="document" tabindex="0">
             <%- include('../partials/formbar_header') %>
-                <div id="content" class="contentBox">
-                    <form action="createClass" method="post" id="selectClassForm" class="hidden">
-                        <h2 class="headerText">Select a class</h2>
-                        <select id="startClassSelect" name="id">
 
-                        </select>
-                        <input type="text" name="submittionType" value="select" hidden>
-                        <input type="submit" id="submitButton" class="quickButton" value="Go" onsubmit="return false;">
-                    </form>
-                    <form action="createClass" method="post" id="createClass">
-                        <h2 class="headerText">Create a class</h2>
-                        <input type="text" id="emailBox" name="name" placeholder="Class Name" value=""
-                            autocomplete="off" required>
-                        <input type="text" name="submittionType" value="create" hidden>
-                        <input type="submit" id="submitButton" class="quickButton" value="Create"
-                            onsubmit="return false;">
-                    </form>
-                    <div id="deleteClassForm" class="hidden">
-                        <h2 class="headerText">Delete a class</h2>
-                        <select id="deleteClassSelect"></select>
-                        <button class="quickButton" onclick="deleteClass()">Delete</button>
+                <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
+                    <button id="classesMenu" class="quickButton tab pressed revampButton" data-tab-group="classTabs">Classes</button>
+                    <button id="createClassMenu" class="quickButton tab revampButton" data-tab-group="classTabs">Create a class</button>
+                </header>
+
+                <div id="content" class="contentBox" style="margin: auto;">
+                    <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
+                        <form action="createClass" method="post" id="selectClassForm">
+                            <label for="manageClassSelect" class="headerText">Manage a class</label>
+                            <select id="manageClassSelect" name="id" class="revampButton">
+    
+                            </select>
+                            <div class="buttonsHolder">
+                                <input type="text" name="submittionType" value="select" hidden>
+                                <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Go" onsubmit="return false;">
+                                <button class="quickButton revampButton warningButton" type="button" onclick="deleteClass()">Delete</button>
+                            </div>
+                            
+
+                        </form>
+                    </div>
+
+                    <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'>
+                        <form action="createClass" method="post" id="createClass">
+                            <label for="emailBox" class="headerText h2">Create a class</label>
+                            
+                            <div class="buttonsHolder">
+                                <input type="text" id="emailBox" name="name" placeholder="Class Name" value=""
+                                    autocomplete="off" class="revampButton revampWithText" required>
+                                <input type="text" name="submittionType" value="create" hidden>
+                                <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Create" style="margin: auto;margin-top: 20px;"
+                                    onsubmit="return false;">
+                            </div>
+                        </form>
                     </div>
                 </div>
         </body>
         <script>
             let startClassForm = document.getElementById("selectClassForm")
-            let deleteClassForm = document.getElementById("deleteClassForm")
-            let startClassSelect = document.getElementById("startClassSelect")
-            let deleteClassSelect = document.getElementById("deleteClassSelect")
+            let manageClassSelect = document.getElementById("manageClassSelect")
 
             function deleteClass() {
-                let classId = deleteClassSelect.value
-                let className = deleteClassSelect.options[deleteClassSelect.selectedIndex].text
+                let classId = manageClassSelect.value
+                let className = manageClassSelect.options[manageClassSelect.selectedIndex].text
 
                 let confirmation = confirm(`are you sure you want to delete the class ${className}`)
                 if (!confirmation) return
 
+                manageClassSelect.options[manageClassSelect.selectedIndex].remove();
                 socket.emit('deleteClass', classId)
             }
 
             socket.emit('getOwnedClasses', currentUser.email)
             socket.on('getOwnedClasses', (ownedClasses) => {
                 if (ownedClasses.length > 0) {
-                    startClassForm.classList.remove("hidden");
-                    deleteClassForm.classList.remove("hidden");
-                } else {
-                    startClassForm.classList.add("hidden");
-                    deleteClassForm.classList.add("hidden");
+                    startClassForm.style.opacity = "1"
+                    startClassForm.style.pointerEvents = "all";
+                } else {                   
+                    startClassForm.style.opacity = "0.5";
+                    startClassForm.style.pointerEvents = "none";
+                    startClassForm.style.opacity = "0.5";
+                    startClassForm.style.pointerEvents = "none";
                     return
                 }
 
@@ -58,8 +73,8 @@
                     let option = document.createElement('option')
                     option.value = classroom.id
                     option.innerText = classroom.name
-                    startClassSelect.appendChild(option.cloneNode(true))
-                    deleteClassSelect.appendChild(option)
+                    manageClassSelect.appendChild(option.cloneNode(true))
                 }
             })
         </script>
+<script src='/js/tabs.js'></script>

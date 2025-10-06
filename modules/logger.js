@@ -24,7 +24,7 @@ function createLoggerTransport(level) {
 	});
 
 	// When the log file is rotated, it resets the error count, saves it to a file, and deletes the old log file.
-	transport.on("rotate", function (oldFilename, newFilename) {
+	transport.on("rotate", function (oldFilename) {
 		// Reset the error log count
 		logNumbers.error = 0;
 
@@ -103,7 +103,7 @@ function createLogger() {
                 handleExceptions: true,
                 format: winston.format.combine(
                     winston.format((info) => {
-                        if (info.message.includes('com.chrome.devtools.json') || info.message.includes('js/chart.umd.js.map')) {
+                        if (info.message && (info.message.includes('com.chrome.devtools.json') || info.message.includes('js/chart.umd.js.map'))) {
                             return; // Ignore 404 errors for unimportant files
                         }
                         return loggingLevels.includes(info.level) ? info : false;

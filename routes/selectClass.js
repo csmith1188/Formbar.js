@@ -1,14 +1,15 @@
-const { isLoggedIn, permCheck } = require("../modules/authentication")
-const { classInformation } = require("../modules/class")
+const { isAuthenticated, permCheck  } = require("./middleware/authentication")
+const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { database } = require("../modules/database")
-const { joinClass } = require("../modules/joinClass")
+const { joinRoomByCode } = require("../modules/joinRoom")
 const { logger } = require("../modules/logger")
-const { setClassOfApiSockets, advancedEmitToClass } = require("../modules/socketUpdates")
+const { setClassOfApiSockets, advancedEmitToClass, userSockets, emitToUser} = require("../modules/socketUpdates")
+const {userSocketUpdates} = require("../sockets/init");
 
 module.exports = {
     run(app) {
-        app.get('/selectClass', isLoggedIn, permCheck, (req, res) => {
+        app.get('/selectClass', isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
         
@@ -43,7 +44,7 @@ module.exports = {
         })
         
         // Adds user to a selected class, typically from the select class page
-        app.post('/selectClass', isLoggedIn, permCheck, async (req, res) => {
+        app.post('/selectClass', isAuthenticated, permCheck, async (req, res) => {
             try {
                 let classId = req.body.id;
 				let classCode = req.body.key;
@@ -102,8 +103,8 @@ module.exports = {
 				}
 
                 logger.log('info', `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`)        
-                let classJoinStatus = await joinClass(classCode, req.session)
 
+                const classJoinStatus = await joinRoomByCode(classCode, req.session)
                 if (typeof classJoinStatus == 'string') {
                     res.render('pages/message', {
                         message: `Error: ${classJoinStatus}`,
@@ -138,17 +139,11 @@ module.exports = {
 					req.session.classId = classId;
 				}
 
-                let classData = classInformation.classrooms[classId]
-                let cpPermissions = Math.min(
-                    classData.permissions.controlPolls,
-                    classData.permissions.manageStudents,
-                    classData.permissions.manageClass
-                )
-
-                advancedEmitToClass('cpUpdate', classId, { classPermissions: cpPermissions }, classInformation.classrooms[classId])
-				req.session.classId = classId
-                setClassOfApiSockets(classInformation.classrooms[classId].students[req.session.email].API, classId)
-        
+				// userSocketUpdates[req.session.email].classUpdate();
+                setClassOfApiSockets(classInformation.users[req.session.email].API, classId)
+				if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+					emitToUser(req.session.email, 'reload');
+				}
                 res.redirect('/')
             } catch (err) {
                 logger.log('error', err.stack);

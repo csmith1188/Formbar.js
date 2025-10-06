@@ -1,8 +1,9 @@
-const { classInformation, getClassIDFromCode } = require("../../modules/class")
-const { getUser } = require("../../modules/user")
+const { classInformation, getClassIDFromCode } = require("../../modules/class/classroom")
+const { getUser } = require("../../modules/user/user")
 const { logger } = require("../../modules/logger")
 
 module.exports = {
+	// Used for checking class permissions such as games, lights, and sounds
     run(router) {
         router.get('/apiPermissionCheck', async (req, res) => {
 			try {
@@ -10,8 +11,7 @@ module.exports = {
 
 				let permissionTypes = {
 					games: null,
-					lights: null,
-					sounds: null
+                    auxiliary: null
 				}
 
 				if (!api) {
@@ -54,8 +54,7 @@ module.exports = {
 
 				const classroom = classInformation.classrooms[user.class]
 				permissionTypes.games = classroom.permissions.games
-				permissionTypes.lights = classroom.permissions.lights
-				permissionTypes.sounds = classroom.permissions.sounds
+				permissionTypes.auxiliary = classroom.permissions.auxiliary
 
 				if (user.classPermissions < permissionTypes[permissionType]) {
 					res.status(403).json({ reason: 'User does not have enough permissions.' })

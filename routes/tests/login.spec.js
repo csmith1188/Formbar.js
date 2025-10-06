@@ -1,8 +1,7 @@
 const request = require('supertest');
-const { createExpressServer } = require("../../modules/tests/tests");
+const { createExpressServer, createTestUser} = require("../../modules/tests/tests");
 const { database } = require('../../modules/database');
 const loginRoute = require('../login');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 // Mocks
@@ -102,6 +101,7 @@ describe('Login Route', () => {
         it('should redirect to home if user is already logged in', async () => {
             // Remove session mock to simulate already being logged in
             app = createExpressServer();
+            createTestUser('mock_email@mock.com');
             app.use((req, res, next) => {
                 req.session = { email: "mock_email@mock.com" };
                 next();

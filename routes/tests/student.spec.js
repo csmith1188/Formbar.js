@@ -1,7 +1,7 @@
 const studentRoute = require('../student');
 const request = require('supertest');
 const { createExpressServer } = require('../../modules/tests/tests');
-const { classInformation } = require('../../modules/class');
+const { classInformation } = require('../../modules/class/classroom');
 const { STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require('../../modules/permissions');
 
 describe('Student Route', () => {
@@ -29,7 +29,7 @@ describe('Student Route', () => {
             [mockemail]: {
                 email: mockemail,
                 permissions: STUDENT_PERMISSIONS,
-                activeClasses: [mockClassId],
+                activeClass: mockClassId,
                 classPermissions: GUEST_PERMISSIONS
             }
         };

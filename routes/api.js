@@ -3,7 +3,7 @@ const fs = require('fs')
 const router = express.Router()
 const { logger } = require('../modules/logger');
 const { GUEST_PERMISSIONS } = require('../modules/permissions');
-const { getUser } = require('../modules/user');
+const { getUser } = require('../modules/user/user');
 
 module.exports = {
 	run(app) {
@@ -14,7 +14,17 @@ module.exports = {
 					// Log the IP and session of the request
 					logger.log('info', `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`)
 
-					// Get the current user
+					// If no API key provided, allow if a session user already exists or it's a digipogs endpoint
+					if (!req.headers.api) {
+						if (req.session && req.session.user) {
+							return next();
+						}
+						if (req.path && req.path.startsWith('/digipogs/')) {
+							return next();
+						}
+					}
+
+					// Get the current user from API key if provided
 					let user = await getUser(req.headers.api)
 
 					// If the user is an instance of Error
@@ -40,6 +50,7 @@ module.exports = {
 					// Set the user in the session
 					if (user) {
 						req.session.user = user
+                        req.session.email = user.email
 					}
 	
 					// Log the authenticated user
@@ -56,6 +67,11 @@ module.exports = {
 			// Middleware function to check API permissions.
 			router.use((req, res, next) => {
 				// Extract user details from the session
+				// Allow digipogs endpoints without API/session permission checks
+				if (req.url && req.url.startsWith('/digipogs/')) {
+					return next();
+				}
+
 				const permissions = req.session.user.permissions
 				const classPermissions = req.session.user.classPermissions
 				let urlPath = req.url
@@ -127,6 +143,11 @@ module.exports = {
 
 			loadRoutes("./api");
 			app.use("/api", router)
+
+			// Ensure API returns JSON for unknown endpoints
+			router.use((req, res) => {
+				res.status(404).json({ error: 'API not found.' })
+			})
 		} catch (err) {
 			logger.log('error', err.stack)
 		}

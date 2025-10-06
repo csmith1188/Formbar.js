@@ -1,4 +1,4 @@
-const { classInformation } = require("../modules/class")
+const { classInformation } = require("../modules/class/classroom")
 const { logger } = require("../modules/logger")
 const { CLASS_SOCKET_PERMISSIONS } = require("../modules/permissions")
 const { advancedEmitToClass, runningTimers } = require("../modules/socketUpdates")
@@ -25,7 +25,7 @@ module.exports = {
                 classData.timer.timeLeft = startTime
                 classData.timer.active = active
                 classData.timer.sound = sound
-                socketUpdates.classPermissionUpdate()
+                socketUpdates.classUpdate();
 
                 if (active) {
                     // Run the function once instantly

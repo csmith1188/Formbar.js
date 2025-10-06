@@ -1,4 +1,4 @@
-const { dbGet, dbGetAll } = require("../../../modules/database");
+const { dbGetAll } = require("../../../modules/database");
 module.exports = {
     async run(database) {
         const columns = await dbGetAll('PRAGMA table_info(plugins)', [], database);

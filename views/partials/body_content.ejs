@@ -1,6 +1,10 @@
-<dialog id="breakDialog" class="contentBox">
+<dialog id="breakDialog" class="contentBox revampDiv">
 	<div id="onBreak">
 		<p style="margin-top: 0;">You are on a break</p>
-		<button class="quickButton" onclick="endBreak()">End Break</button>
+		<button class="quickButton revampButton" onclick="endBreak()" style="margin: auto;">End Break</button>
 	</div>
 </dialog>
+
+<% if(currentUser.break) { %>
+	<script>document.getElementById('breakDialog').showModal();document.getElementById("backgroundDarken").classList.add('open')</script>
+<% } %>

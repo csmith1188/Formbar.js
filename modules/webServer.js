@@ -19,4 +19,9 @@ async function getIpAccess(type) {
 }
 
 const { app, io, http } = createServer();
-module.exports = { app, io, http, getIpAccess };
+module.exports = {
+	app,
+	io,
+	http,
+	getIpAccess
+};

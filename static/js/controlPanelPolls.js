@@ -115,8 +115,9 @@ function resTextChange() {
 	}
 }
 
-function responseAmountChange() {
+function responseAmountChange(responseAmount = null) {
 	responseDivs = document.getElementsByClassName('response')
+	if(responseAmount) resNumber.value = responseAmount;
 	if (resTextBox.checked) {
 		if (resNumber.value < 0) resNumber.value = 0
 	}
@@ -165,7 +166,7 @@ function responseAmountChange() {
 		responseDiv.id = `response${i}`
 
 		let colorPickerButton = document.createElement('button')
-		colorPickerButton.className = 'colorPickerButton'
+		colorPickerButton.className = 'colorPickerButton revampButton'
 		colorPickerButton.id = i
 		colorPickerButton.onclick = (event) => {
 			event.preventDefault()
@@ -189,14 +190,14 @@ function responseAmountChange() {
 		responseDiv.appendChild(colorPickerButton)
 
 		let colorPickerDiv = document.createElement('div')
-		colorPickerDiv.className = 'colorPicker'
+		colorPickerDiv.className = 'colorPicker revampDiv'
 
 		let buttonsDiv = document.createElement('div')
 		buttonsDiv.className = 'buttonsDiv'
 
 		let saveColorButton = document.createElement('button')
-		saveColorButton.className = 'quickButton'
-		saveColorButton.style.width = "100px"
+		saveColorButton.className = 'quickButton revampButton'
+		//saveColorButton.style.width = "100px"
 		saveColorButton.textContent = 'Save Color'
 		saveColorButton.onclick = () => {
 			saveColor(i)
@@ -204,8 +205,8 @@ function responseAmountChange() {
 		buttonsDiv.appendChild(saveColorButton)
 
 		let resetColor = document.createElement('button')
-		resetColor.className = 'quickButton'
-		resetColor.style.width = "100px"
+		resetColor.className = 'quickButton revampButton warningButton'
+		//resetColor.style.width = "100px"
 		resetColor.textContent = 'Reset Color'
 		resetColor.onclick = (event) => {
 			event.preventDefault()
@@ -233,13 +234,11 @@ function responseAmountChange() {
 		newColor.className = 'newColor'
 		colorsDiv.appendChild(newColor)
 
-		colorPickerDiv.appendChild(colorsDiv)
-
 		let hexLabel = document.createElement('label')
 		hexLabel.className = 'hexLabel'
 		hexLabel.textContent = 'Hex '
 		let hexInput = document.createElement('input')
-		hexInput.className = 'hexInput'
+		hexInput.className = 'hexInput revampButton revampWithText'
 		hexInput.type = 'text'
 		hexInput.pattern = '[0-9A-Fa-f]{3,6}'
 		hexInput.onchange = (event) => {
@@ -254,7 +253,7 @@ function responseAmountChange() {
 
 		let answerName = document.createElement('input')
 		answerName.type = 'text'
-		answerName.className = 'answerName'
+		answerName.className = 'answerName revampButton revampWithText'
 		answerName.name = 'answerName'
 		answerName.placeholder = `Answer ${String.fromCharCode(i + 97)} `
 		answerName.value = ''
@@ -263,9 +262,36 @@ function responseAmountChange() {
 		}
 		responseDiv.appendChild(answerName)
 
+		let answerWeight = document.createElement('input')
+		answerWeight.type = 'number'
+		answerWeight.className = 'answerWeight revampButton revampWithText'
+		answerWeight.name = 'answerWeight'
+		answerWeight.step = '0.1';
+		answerWeight.placeholder = `Weight`
+		answerWeight.value = 1
+		answerWeight.onkeydown = (event) => {
+			if(isFinite(event.key)) return;
+			if(
+				event.key === '.' ||
+				event.key === 'Backspace' ||
+				event.key === 'Delete' ||
+				event.key === 'Tab' ||
+				event.key === 'ArrowLeft' ||
+				event.key === 'ArrowRight') return;
+			else event.preventDefault();
+		}
+		answerWeight.onchange = (event) => {
+			if(/^\d*\.?\d*$/.test(event.target.value)) {
+				pollResponses[i].weight = parseFloat(event.target.value);
+			} else {
+				answerWeight.value = pollResponses[i].weight;
+			}
+		}
+		responseDiv.appendChild(answerWeight)
+
 		let removeAnswerButton = document.createElement("button");
-		removeAnswerButton.className = "quickButton";
-		removeAnswerButton.textContent = "X";
+		removeAnswerButton.className = "quickButton revampButton warningButton";
+		removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
 		removeAnswerButton.id = `removeAnswer`;
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
@@ -277,7 +303,7 @@ function responseAmountChange() {
 			colorPickerDiv,
 			() => {
 				FloatingUIDOM.computePosition(colorPickerButton, colorPickerDiv, {
-					placement: 'bottom',
+					placement: 'right-end',
 					middleware: [FloatingUIDOM.offset(10), FloatingUIDOM.flip()]
 				})
 					.then(({ x, y }) => {
@@ -306,10 +332,14 @@ function responseAmountChange() {
 				}
 			]
 		})
+
+		colorPickers[i].base.appendChild(colorsDiv)
+
 		colorPickers[i].on(['color:init', 'color:change'], color => {
-			let newColor = responseDiv.getElementsByClassName('newColor')[0]
+			let newColor = colorPickers[i].base.getElementsByClassName('newColor')[0]
 			let hexInput = responseDiv.getElementsByClassName('hexInput')[0]
 
+			
 			newColor.style.backgroundColor = color.hexString
 			hexInput.value = color.hexString.substring(1)
 		})
@@ -319,7 +349,7 @@ function responseAmountChange() {
 	for (let i = 0; i < responseDivs.length; i++) {
 		let responseDiv = responseDivs[i]
 		let colorPickerButton = responseDiv.getElementsByClassName('colorPickerButton')[0]
-		let oldColor = responseDiv.getElementsByClassName('oldColor')[0]
+		let oldColor = colorPickers[i].base.getElementsByClassName('oldColor')[0]
 
 		pollResponses[i].defaultColor = generatedColors[i]
 		if (!pollResponses[i].color) {
@@ -374,6 +404,13 @@ function addAnswer() {
 
 function removeAnswer(event) {
 	let element = event.target.parentElement;
+
+	if(responsesDiv.childElementCount == 1) { 
+        let removeOnly = confirm("Are you sure you want to remove the only response?");
+
+        if(!removeOnly) return;
+    }
+
 	let elementId = element.id.split('response')[1];
 	element.remove();
 	pollResponses.splice(elementId, 1);
@@ -385,23 +422,6 @@ function removeAnswer(event) {
 	};
 	resNumber.value = parseInt(resNumber.value) - 1;
 };
-
-function modeChange() {
-	let modeP = document.getElementById('modeP')
-	let modeL = document.getElementById('modeL')
-	let modeQ = document.getElementById('modeQ')
-	let modePT = document.getElementById('modePT')
-
-	if (modeP.checked) {
-		socket.emit('modeChange', modeP.value)
-	} else if (modeL.checked) {
-		socket.emit('modeChange', modeL.value)
-	} else if (modeQ.checked) {
-		socket.emit('modeChange', modeQ.value)
-	} else if (modePT.checked) {
-		socket.emit('modeChange', modePT.value)
-	}
-}
 
 // Ends the poll and reloads the users page to stop any more submission
 function clearPollFunc() {
@@ -417,10 +437,6 @@ function endPollFunc() {
 // Starts a new poll that allows students to submit answers
 // Check how many possible responses and if the teacher wants to accept text responses\
 function startPoll(customPollId) {
-	socket.emit('cpUpdate')
-	socket.on('cpUpdate', (newClassroom) => {
-		rooms = newClassroom
-	})
 	let userTags = []
 	let userBoxesChecked = []
 	let userIndeterminate = []
@@ -463,21 +479,51 @@ function startPoll(customPollId) {
 	userIndeterminate.sort()
 	userBreak.sort()
 
-	if (customPollId) {
-		let customPoll = customPolls[customPollId]
+	if(!classroom.isActive) return alert("Please start the class before starting a poll.");
 
+	if (customPollId) {
+		let customPoll
+		if(customPollId == "current") {
+			customPoll = {
+				prompt: pollPrompt.value,
+				blind: blindCheck.checked,
+				allowVoteChanges: !!allowVoteChanges.checked,
+				textRes: resTextBox.checked,
+				multiRes: multiRes.checked,
+				answers: pollAnswers,
+				weight: 1,
+				indeterminate: userIndeterminate
+			}
+		}
+		else customPoll = customPolls[customPollId]
 		changeTab('mainPolls', 'polls')
 
-		let generatedColors = generateColors(customPoll.answers.length)
-		socket.emit('startPoll', customPoll.answers.length, customPoll.textRes, customPoll.prompt, customPoll.answers, customPoll.blind, customPoll.weight, userTags, userBoxesChecked, userIndeterminate, false)
+        socket.emit('startPoll', {
+            prompt: customPoll.prompt,
+            answers: customPoll.answers,
+            allowTextResponses: !!customPoll.textRes,
+            allowMultipleResponses: customPoll.multiRes,
+			allowVoteChanges: !!customPoll.allowVoteChanges,
+            blind: !!customPoll.blind,
+            weight: customPoll.weight,
+            tags: userTags,
+            indeterminate: customPoll.indeterminate,
+            studentsAllowedToVote: userBoxesChecked,
+        });
 	} else {
-		let blind = blindCheck.checked
-
-
-		let generatedColors = generateColors(resNumber.value)
-
-		socket.emit('startPoll', resNumber.value, resTextBox.checked, pollPrompt.value, pollAnswers, blind, 1, userTags, userBoxesChecked, userIndeterminate, multiRes.checked)
-	}
+        socket.emit('startPoll', {
+            prompt: pollPrompt.value,
+            answers: pollAnswers,
+            allowTextResponses: resTextBox.checked,
+            allowMultipleResponses: multiRes.checked,
+			allowVoteChanges: allowVoteChanges.checked,
+            blind: !!blindCheck.checked,
+            weight: 1,
+            tags: userTags,
+            indeterminate: userIndeterminate,
+            studentsAllowedToVote: userBoxesChecked,
+        });
+    }
 	clearPoll.style.display = 'block'
 	endPoll.style.display = 'block'
 	changeTab('usersMenu', 'mainTabs')
@@ -487,10 +533,7 @@ function editCustomPoll(customPollId) {
 	editingPollId = customPollId
 	let customPoll = customPolls[editingPollId]
 
-	if (customPoll.owner == currentUser.id) {
-		editPollDialog.open = true
-	}
-
+	allowVoteChanges.checked = customPoll.allowVoteChanges
 	blindCheck.checked = customPoll.blind
 	pollPrompt.value = customPoll.prompt
 	resTextBox.checked = customPoll.textRes
@@ -513,11 +556,10 @@ function editCustomPoll(customPollId) {
 }
 
 function unloadPoll() {
-	editPollDialog.open = false
-
 	pollPrompt.value = ''
 	resTextBox.checked = false
 	blindCheck.checked = false
+	allowVoteChanges.checked = false
 
 	responseAmountChange(1)
 	resetAnswerNames()
@@ -529,7 +571,8 @@ function savePoll() {
 	let customPoll = customPolls[editingPollId]
 
 	customPoll.blind = blindCheck.checked
-	customPoll.prompt = pollPrompt.value
+	customPoll.allowVoteChanges = allowVoteChanges.checked
+	customPoll.prompt = prompt.value
 	customPoll.textRes = resTextBox.checked
 
 	let pollAnswers = []
@@ -556,6 +599,7 @@ function savePollAs(pollType) {
 		return;
 	} else {
 		customPoll.blind = blindCheck.checked
+		customPoll.allowVoteChanges = allowVoteChanges.checked
 		customPoll.prompt = pollPrompt.value
 		customPoll.textRes = resTextBox.checked
 		customPoll.public = false
@@ -599,20 +643,29 @@ function sharePoll(type) {
 
 function deletePoll(pollId) {
 	let elems = document.querySelectorAll(`.custom-poll-name`)
-	for (elem of elems) {
-		if (elem.innerHTML == customPolls[editingPollId].name) elem.parentElement.remove()
+
+	if (!customPolls[pollId]) {
+		alert('No poll found.')
+		return
 	}
 
-	if (!pollId && !editingPollId) {
+	if (!pollId) {
 		alert('No poll selected')
 		return
 	}
-	if (!pollId) {
-		pollId = editingPollId
-		unloadPoll()
-	}
+	
+	//if (!pollId) {
+	//	pollId = editingPollId
+	//	unloadPoll()
+	//}
 
-	socket.emit('deletePoll', pollId)
+	if(confirm(`Are you sure you would like to delete the poll "${customPolls[pollId].name}"?`)) 
+	{ 
+		for (elem of elems) {
+			if (elem.innerHTML == customPolls[pollId].name) elem.parentElement.remove()
+		}
+		socket.emit('deletePoll', pollId) 
+	};
 }
 
 function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
@@ -631,7 +684,7 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		if (!customPoll) continue
 
 		let customPollDiv = document.createElement('div')
-		customPollDiv.className = 'customPoll'
+		customPollDiv.className = 'customPoll revampDiv'
 
 		let customPollName = document.createElement('p')
 		customPollName.className = 'custom-poll-name'
@@ -646,23 +699,38 @@ function insertCustomPolls(customPollsList, customPollsDiv, emptyText) {
 		}
 		customPollDiv.appendChild(customPollName)
 
+        let buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'customPollButtons'
+
+		let deleteButton = document.createElement('button')
+		deleteButton.className = 'edit-custom-poll revampButton warningButton'
+		deleteButton.style.gridColumn = 2
+		deleteButton.textContent = 'Delete'
+		deleteButton.onclick = () => {
+			deletePoll(customPollId)
+		}
+		if(customPollsDiv.id !== "publicPolls") buttonsDiv.appendChild(deleteButton)
+
 		let editButton = document.createElement('button')
-		editButton.className = 'edit-custom-poll'
+		editButton.className = 'edit-custom-poll revampButton'
 		editButton.style.gridColumn = 2
 		editButton.textContent = 'Edit'
 		editButton.onclick = () => {
+			changeTab('newPoll', 'polls')
 			editCustomPoll(customPollId)
 		}
-		customPollDiv.appendChild(editButton)
+		buttonsDiv.appendChild(editButton)
 
 		let startButton = document.createElement('button')
-		startButton.className = 'start-custom-poll'
+		startButton.className = 'start-custom-poll revampButton acceptButton'
 		startButton.style.gridColumn = 3
 		startButton.textContent = 'Start'
 		startButton.onclick = () => {
 			startPoll(customPollId)
 		}
-		customPollDiv.appendChild(startButton)
+		buttonsDiv.appendChild(startButton)
+
+        customPollDiv.appendChild(buttonsDiv);
 
 		if (customPoll.owner == currentUser.id) {
 			// let shareButton = document.createElement('button')
@@ -713,6 +781,15 @@ document.addEventListener('click', (event) => {
 			colorPickersDiv[i].style.display = 'none'
 		}
 	}
+	if(
+		!event.target.closest('details.controlStudent') &&
+		!event.target.classList.contains('controlStudent')
+	) {
+		let controlStudents = document.getElementsByClassName('controlStudent')
+		for(let controlStudent of controlStudents) {
+			controlStudent.open = false
+		}
+	}
 })
 
 //Make the code above work
@@ -728,8 +805,6 @@ timerButton.addEventListener('click', function () {
 	}
 	socket.emit("timer", time.value * 60 + Number(timeS.value), true)
 	timerButton.hidden = true
-	time.hidden = true
-	timeS.hidden = true
 	timerStopButton.hidden = false
 })
 
@@ -738,8 +813,6 @@ timerStopButton.addEventListener('click', function () {
 	timerButton.hidden = false
 	time.value = ''
 	timeS.value = ''
-	time.hidden = false
-	timeS.hidden = false
 	timerStopButton.hidden = true
 	socket.emit("timer", { turnedOn: false })
 })
@@ -749,13 +822,9 @@ socket.emit('timerOn')
 socket.on('timerOn', function (time) {
 	if (time) {
 		timerButton.hidden = true
-		document.getElementsByClassName('inputtedTime')[0].hidden = true
-		document.getElementsByClassName('inputtedTime')[1].hidden = true
 		timerStopButton.hidden = false
 	} else {
 		timerButton.hidden = false
-		document.getElementsByClassName('inputtedTime')[0].hidden = false
-		document.getElementsByClassName('inputtedTime')[1].hidden = false
 		timerStopButton.hidden = true
 	}
 })

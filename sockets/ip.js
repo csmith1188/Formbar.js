@@ -1,4 +1,4 @@
-const { whitelistedIps, blacklistedIps } = require("../modules/authentication")
+const { whitelistedIps, blacklistedIps } = require("../routes/middleware/authentication")
 const { settings } = require("../modules/config")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")

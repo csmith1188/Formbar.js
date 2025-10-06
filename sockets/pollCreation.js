@@ -1,96 +1,50 @@
-const { classInformation } = require("../modules/class")
+const { classInformation } = require("../modules/class/classroom")
 const { database } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { userSockets } = require("../modules/socketUpdates")
-const { generateColors } = require("../modules/util")
-
-let earnedObject = {
-    earnedDigipogs: []
-};
+const { createPoll } = require("../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
-        // Starts a new poll. Takes the number of responses and whether or not their are text responses
-        socket.on('startPoll', async (resNumber, resTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, multiRes) => {
+        // Starts a poll with the data provided
+        socket.on('startPoll', async (...args) => {
             try {
-                earnedObject.earnedDigipogs = [];
-                // Get class id and check if the class is active before continuing
-                const classId = socket.request.session.classId;
-                if (!classInformation.classrooms[classId].isActive) {
-                    socket.emit('message', 'This class is not currently active.');
-                    return;
-                }
+                const email = socket.request.session.email;
+                const classId = classInformation.users[email].activeClass;
 
-                // Log poll information
-                logger.log('info', `[startPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[startPoll] resNumber=(${resNumber}) resTextBox=(${resTextBox}) pollPrompt=(${pollPrompt}) polls=(${JSON.stringify(polls)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`)
-
-                await socketUpdates.clearPoll()
-                let generatedColors = generateColors(resNumber)
-                logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[socket.request.session.classId].students[socket.request.session.email]})`)
-                if (generatedColors instanceof Error) throw generatedColors
-
-                classInformation.classrooms[classId].mode = 'poll'
-                classInformation.classrooms[classId].poll.blind = blind
-                classInformation.classrooms[classId].poll.status = true
-                
-                if (tags) {
-                    classInformation.classrooms[classId].poll.requiredTags = tags
+                // Support both passing a single object or multiple arguments for backward compatibility
+                let pollData;
+                if (args.length == 1) {
+                    pollData = args[0];
                 } else {
-                    classInformation.classrooms[classId].poll.requiredTags = []
-                }
-
-                if (boxes) {
-                    classInformation.classrooms[classId].poll.studentBoxes = boxes
-                } else {
-                    classInformation.classrooms[classId].poll.studentBoxes = Object.keys(classInformation.classrooms[classId].students)
-                }
-
-                if (indeterminate) {
-                    classInformation.classrooms[classId].poll.studentIndeterminate = indeterminate
-                } else {
-                    classInformation.classrooms[classId].poll.studentIndeterminate = []
-                }
-
-                // Creates an object for every answer possible the teacher is allowing
-                const letterString = 'abcdefghijklmnopqrstuvwxyz'
-                for (let i = 0; i < resNumber; i++) {
-                    let answer = letterString[i]
-                    let weight = 1
-                    let color = generatedColors[i]
-
-                    if (polls[i].answer)
-                        answer = polls[i].answer
-                    if (polls[i].weight)
-                        weight = polls[i].weight
-                    if (polls[i].color)
-                        color = polls[i].color
-
-                    classInformation.classrooms[classId].poll.responses[answer] = {
-                        answer: answer,
-                        weight: weight,
-                        color: color
+                    const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = args;
+                    pollData = {
+                        prompt: pollPrompt,
+                        answers: Array.isArray(polls) ? polls : [],
+                        blind: !!blind,
+                        weight: Number(weight ?? 1),
+                        tags: Array.isArray(tags) ? tags : [],
+                        studentsAllowedToVote: Array.isArray(boxes) ? boxes : undefined,
+                        indeterminate: Array.isArray(indeterminate) ? indeterminate : [],
+                        allowTextResponses: !!responseTextBox,
+                        allowMultipleResponses: !!multiRes,
                     }
                 }
 
-                classInformation.classrooms[classId].poll.weight = weight
-                classInformation.classrooms[classId].poll.textRes = resTextBox
-                classInformation.classrooms[classId].poll.prompt = pollPrompt
-                classInformation.classrooms[classId].poll.multiRes = multiRes
-
-                for (const key in classInformation.classrooms[socket.request.session.classId].students) {
-                    classInformation.classrooms[classId].students[key].pollRes.buttonRes = ''
-                    classInformation.classrooms[classId].students[key].pollRes.textRes = ''
-                }
-
-                logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-
-                socketUpdates.pollUpdate()
-                socketUpdates.virtualBarUpdate()
-                socketUpdates.classPermissionUpdate()
-                socket.emit('startPoll')
+                await createPoll(classId, {
+                    prompt: pollData.prompt,
+                    answers: Array.isArray(pollData.answers) ? pollData.answers : [],
+                    blind: !!pollData.blind,
+                    weight: Number(pollData.weight ?? 1),
+                    tags: Array.isArray(pollData.tags) ? pollData.tags : [],
+                    studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
+                    indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
+                    allowTextResponses: !!pollData.allowTextResponses,
+                    allowMultipleResponses: !!pollData.allowMultipleResponses
+                }, socket.request.session);
+                socket.emit('startPoll');
             } catch (err) {
-                logger.log('error', err.stack);
+                logger.log("error", err.stack);
             }
         })
 
@@ -220,7 +174,7 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        for (let userSocket of Object.values(userSockets)) {
+                        for (const userSocket of Object.values(userSockets)) {
                             socketUpdates.customPollUpdate(userSocket.request.session.email)
                         }
                     } catch (err) {
@@ -231,6 +185,5 @@ module.exports = {
                 logger.log('error', err.stack);
             }
         })
-    },
-    earnedObject
+    }
 }

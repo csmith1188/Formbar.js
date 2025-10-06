@@ -1,5 +1,5 @@
-const { isAuthenticated, isVerified } = require("../modules/authentication")
-const { classInformation } = require("../modules/class")
+const { isAuthenticated, isVerified } = require("./middleware/authentication")
+const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")
 const { TEACHER_PERMISSIONS } = require("../modules/permissions")
@@ -13,7 +13,8 @@ module.exports = {
         app.get('/', isAuthenticated, isVerified, (req, res) => {
             try {
                 logger.log('info', `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-                if (classInformation.users[req.session.email].classPermissions >= TEACHER_PERMISSIONS) {
+                if (classInformation.users[req.session.email].classPermissions >= TEACHER_PERMISSIONS ||
+                    classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
                     res.render('pages/news');
                 } else {
                     res.redirect('/student')
