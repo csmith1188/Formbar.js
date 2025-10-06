@@ -25,8 +25,7 @@ class Classroom {
             blind: false,
 			weight: 1,
 			requiredTags: [],
-			studentsAllowedToVote: [],
-			allowedResponses: []
+			studentsAllowedToVote: []
 		}
 		this.key = key
 		// Ensure permissions is an object, not a JSON string

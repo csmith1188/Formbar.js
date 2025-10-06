@@ -203,8 +203,7 @@ async function clearPoll(classId, userSession, updateClass = true){
             weight: 1,
             blind: false,
             requiredTags: [],
-            studentsAllowedToVote: [],
-            allowedResponses: [],
+            studentsAllowedToVote: []
         };
 
         // Adds data to the previous poll answers table upon clearing the poll
@@ -288,9 +287,14 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const prevRes = classroom.students[email].pollRes.buttonRes;
-    const hasChanged = classroom.poll.allowMultipleResponses ?
+    let hasChanged = classroom.poll.allowMultipleResponses ?
         JSON.stringify(prevRes) !== JSON.stringify(res) :
         prevRes !== res;
+
+    // If the user is removing their response and they previously had no response, do not play sound
+    if (isRemoving && prevRes === '') {
+        hasChanged = false;
+    }
 
     if (hasChanged || classroom.students[email].pollRes.textRes !== textRes) {
         if (isRemoving) {

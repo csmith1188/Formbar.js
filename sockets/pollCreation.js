@@ -40,8 +40,7 @@ module.exports = {
                     studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
                     indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
                     allowTextResponses: !!pollData.allowTextResponses,
-                    allowMultipleResponses: !!pollData.allowMultipleResponses,
-                    lastResponse: pollData.lastResponse || false
+                    allowMultipleResponses: !!pollData.allowMultipleResponses
                 }, socket.request.session);
                 socket.emit('startPoll');
             } catch (err) {

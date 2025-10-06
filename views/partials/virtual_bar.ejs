@@ -64,10 +64,13 @@
     })
 
     // Calls for data
+    let loaded = false
     socket.emit('classUpdate')
 
     // Gets data from server
     socket.on('classUpdate', (classroomData) => {
+        loaded = true;
+
         const newPollData = classroomData.poll
         if (deepObjectEqual(newPollData, pollsData)) return
 
@@ -145,6 +148,15 @@
         pollsData = newPollData
         doughnutChart.update()
     })
+
+    // If the user is rate limited from sockets, then the data may not populate in the control panel immediately
+    // Therefore, we will keep emitting the classUpdate event until we get the data
+    const checkLoadedInterval = setInterval(() => {
+        if (loaded) {
+            clearInterval(checkLoadedInterval);
+        }
+        socket.emit('classUpdate');
+    }, 1000);
 
     // socket.emit('vbTimer')
     socket.on('vbTimer', (newTimeData) => {
