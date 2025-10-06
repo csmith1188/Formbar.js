@@ -542,6 +542,7 @@
         rooms = classroomData
     })
     let classTags = '<%= tags %>';
+    
 
     // Alerts the user if they try to start a poll without a prompt or responses
     function pollCheck() {
@@ -581,6 +582,7 @@
                 endClassButton.id = 'startClass';
             }
             endPollFunc();
+            clearPollFunc();
         }
     }
 

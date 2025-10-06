@@ -303,11 +303,12 @@ function pollResponse(classId, res, textRes, userSession) {
     if (isRemoving) {
         classroom.students[email].pollRes.buttonRes = classroom.poll.allowMultipleResponses ? [] : "";
         classroom.students[email].pollRes.textRes = "";
+        classroom.students[email].pollRes.time = "";
     } else {
         classroom.students[email].pollRes.buttonRes = res;
         classroom.students[email].pollRes.textRes = textRes;
+        classroom.students[email].pollRes.time = new Date();
     }
-    classroom.students[email].pollRes.time = new Date()
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
         const resWeight = classroom.poll.responses[res].weight || 1;

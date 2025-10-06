@@ -184,6 +184,8 @@
 							} else {
 								noPoll.style.display = 'block'
 								pollDiv.style.display = 'none'
+								pollForm.innerHTML = ''
+								pollPromptDisplay.innerText = ''
 							}
 
 							// If the user has responded before on this poll, put their previous responses in the form

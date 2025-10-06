@@ -2,8 +2,8 @@ function getTags() {
     const classTags = classroom.tags || [];
     let tags = [];
     for (let tag of classTags) {
-        if (tag.value === "" || tag.value === "Offline") continue;
-        tags.push(tag.value);
+        if (tag === "" || tag === "Offline") continue;
+        tags.push(tag);
     }
     return tags;
 }

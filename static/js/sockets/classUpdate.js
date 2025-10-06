@@ -37,8 +37,8 @@ socket.on('classUpdate', (classroomData) => {
         let student = classroomData.students[studentId]
 
         if (student.permissions >= 4) continue;
-        student.help.time = new Date(student.help.time)
-        student.pollRes.time = new Date(student.pollRes.time)
+        if(student.help.time) student.help.time = new Date(student.help.time)
+        if(student.pollRes.time) student.pollRes.time  = new Date(student.pollRes.time)
 
         // If the student has no tags, set their tags to an empty string
         let studentTags = student.tags
@@ -247,16 +247,11 @@ socket.on('classUpdate', (classroomData) => {
         updateStudentTags()
     }
 
-    if (!deepObjectEqual(classroom?.tags, classroomData.tags)) {
+    if (!deepObjectEqual(classroom.tags, classroomData.tags)) {
         let tagsDiv = document.querySelector('#tagsList');
         tagsDiv.innerHTML = '';
         for (let tag of classroomData.tags) {
             addTagElement(tag)
-        }
-
-        // After rebuilding tag options, refresh student tag buttons
-        if (typeof updateStudentTags === 'function') {
-            updateStudentTags();
         }
     }
 
