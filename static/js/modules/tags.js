@@ -1,16 +1,15 @@
 function getTags() {
     const classTags = classroom.tags || [];
     let tags = [];
-    for (let tag of classTags) {
-        if (tag.value === "" || tag.value === "Offline") continue;
-        tags.push(tag.value);
+    for (const tag of classTags) {
+        if (tag === "" || tag === "Offline") continue;
+        tags.push(tag);
     }
     return tags;
 }
 
 // Sends the tags to the server
 function sendTags(tags) {
-    //const tags = getTags();
     socket.emit('setTags', tags);
 }
 
@@ -27,7 +26,7 @@ function addTagElement(tag) {
     removeButton.innerHTML = '<img src="/img/trash-outline.svg" alt="Remove tag">'
     removeButton.onclick = () => {
         tagsDiv.removeChild(tagOption)
-        classroom.tags.splice(classroom.tags.indexOf(tag), 1)
+        classroom.tags = classroom.tags.filter(t => t !== tag)
         sendTags(classroom.tags)
         updateStudentTags()
     }
@@ -43,8 +42,8 @@ function updateStudentTags() {
         // Get student tag elements
         const roomTags = student.querySelector('#roomTags');
         const studTagsSpan = student.querySelector('#studentTags');
-        const email = student.id.split('-')[1];
-        const studentData = students.find((student) => student.email === email);
+        const studentId = student.id.split('-')[1];
+        const studentData = students.find((s) => s.id?.toString() === studentId);
 
         // Get tags selected before the update
         const oldTags = [];
@@ -56,17 +55,15 @@ function updateStudentTags() {
 
         // Clear room tags
         if (studTagsSpan) studTagsSpan.innerHTML = '';
-        roomTags.innerHTML = '';
+        if (roomTags) roomTags.innerHTML = '';
 
         // If the student has tags, check if it's a valid tag in tagsDiv children
         // If it's not, then remove the tag from the studentData tags
-        if (studentData && studentData.tags) {
-            for (const tag of studentData.tags.split(',')) {
+        if (studentData && Array.isArray(studentData.tags)) {
+            studentData.tags = studentData.tags.filter(tag => {
                 const tagElement = Array.from(tagsDiv.children).find((tagElement) => tagElement.value === tag);
-                if (!tagElement) {
-                    studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
-                }
-            }
+                return !!tagElement;
+            });
         }
 
         for (const tag of tags) {
@@ -83,10 +80,10 @@ function updateStudentTags() {
                     if (studTagsSpan) studTagsSpan.appendChild(span);
 
                     // If the studentData does not have tags, add the tag
-                    if (studentData.tags) {
-                        studentData.tags = `${studentData.tags},${tag}`;
+                    if (Array.isArray(studentData.tags)) {
+                        if (!studentData.tags.includes(tag)) studentData.tags.push(tag);
                     } else {
-                        studentData.tags = tag;
+                        studentData.tags = [tag];
                     }
 
                     // Add to current tags
@@ -102,13 +99,13 @@ function updateStudentTags() {
                     }
 
                     // Remove the tag from the studentData tags
-                    if (studentData) {
-                        studentData.tags = studentData.tags.split(',').filter(t => t !== tag).join(',');
+                    if (Array.isArray(studentData.tags)) {
+                        studentData.tags = studentData.tags.filter(t => t !== tag);
                     }
 
                     if (studTagsSpan) {
                         const tagSpan = studTagsSpan.querySelector(`#${tag}`);
-                        tagSpan.remove();
+                        if (tagSpan) tagSpan.remove();
                     }
                 }
 
@@ -118,7 +115,7 @@ function updateStudentTags() {
                     for (let tagButton of roomTags.querySelectorAll('button.pressed')) {
                         tags.push(tagButton.textContent);
                     }
-                    socket.emit('saveTags', studentData.id, tags, studentData.email);
+                    socket.emit('saveTags', studentData.id, tags);
                 }
 
                 createTagSelectButtons();
@@ -130,7 +127,7 @@ function updateStudentTags() {
                 }
             }
 
-            roomTags.appendChild(button);
+            if (roomTags) roomTags.appendChild(button);
         }
     }
 }

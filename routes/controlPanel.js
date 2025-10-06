@@ -28,7 +28,7 @@ module.exports = {
                     title: 'Control Panel',
                     pollStatus: classroom.poll.status,
                     settingsPermissions: classroom.permissions.manageClass,
-                    tags: classroom.tags,
+                    tags: JSON.stringify(classroom.tags || []),
                     settings: JSON.stringify(classroom.settings)
                 })
             } catch (err) {

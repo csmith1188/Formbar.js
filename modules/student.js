@@ -23,7 +23,7 @@ class Student {
 		this.activeClass = null;
 		this.permissions = permissions;
 		this.classPermissions = null;
-		this.tags = tags;
+		this.tags = tags || [];
 		this.ownedPolls = ownedPolls || [];
 		this.sharedPolls = sharedPolls || [];
 		this.pollRes = {
@@ -95,7 +95,7 @@ async function getStudentsInClass(classId) {
 			userData.API,
 			[],
 			[],
-			userData.tags,
+			userData.tags ? userData.tags.split(',') : [],
 			displayName = userData.displayName,
 			false
 		);

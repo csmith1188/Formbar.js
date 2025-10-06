@@ -71,10 +71,19 @@ module.exports = {
                             if (classInformation.classrooms[id].students[email]) continue;
 
                             const student = classStudents[email];
-                            if (student.tags) {
-                                student.tags = student.tags.includes("Offline") ? student.tags : "Offline," + student.tags;
-                            } else {
-                                student.tags = "Offline";
+
+                            // Normalize student.tags to an array of strings
+                            if (!Array.isArray(student.tags)) {
+                                if (typeof student.tags === 'string' && student.tags.trim() !== '') {
+                                    student.tags = student.tags.split(',').map(t => t.trim()).filter(Boolean);
+                                } else {
+                                    student.tags = [];
+                                }
+                            }
+
+                            // Ensure 'Offline' is present exactly once at the front
+                            if (!student.tags.includes('Offline')) {
+                                student.tags.unshift('Offline');
                             }
 
                             student.displayName = student.displayName || student.email;

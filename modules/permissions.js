@@ -87,7 +87,6 @@ const CLASS_SOCKET_PERMISSIONS = {
 	getCanVote: STUDENT_PERMISSIONS,
 	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
-	requestConversion: STUDENT_PERMISSIONS,
 	getPreviousPolls: TEACHER_PERMISSIONS,
 }
 
@@ -111,9 +110,6 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classKickStudents: 'manageStudents',
 	approveBreak: 'breakAndHelp',
 	deleteTicket: 'breakAndHelp',
-	changePlugin: 'manageClass',
-	addPlugin: 'manageClass',
-	removePlugin: 'manageClass',
 	startClass: 'manageClass',
 	endClass: 'manageClass',
 	isClassActive: 'manageClass',
@@ -123,7 +119,6 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	classBanUser: 'manageStudents',
 	classUnbanUser: 'manageStudents',
 	awardDigipogs: 'userDefaults',
-	requestConversion: 'userDefaults',
 }
 
 module.exports = {

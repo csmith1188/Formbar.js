@@ -6,6 +6,7 @@ const { database, dbGet, dbGetAll, dbRun } = require("../database");
 const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinRoom");
 const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
+const { clearPoll } = require("../polls");
 
 /**
  * Starts a class session by activating the class, emitting the start class event,
@@ -31,16 +32,18 @@ async function startClass(classId) {
  * Ends a class session by deactivating the class, emitting the end class event,
  * and updating the class state in memory and to connected clients.
  * @param {string|number} classId - The ID of the class to end.
+ * @param {Object} [userSession] - The session object of the user ending the class.
  */
-async function endClass(classId) {
+async function endClass(classId, userSession) {
     try {
         logger.log('info', `[endClass] classId=(${classId})`);
         await advancedEmitToClass('endClassSound', classId, { api: true });
 
         // Deactivate the class and send the class active event
         classInformation.classrooms[classId].isActive = false;
-        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
+        await clearPoll(classId, userSession, true);
 
+        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
         logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
         logger.log('error', err.stack);
@@ -140,20 +143,29 @@ async function leaveRoom(userSession) {
  * Allows a user to join a class by classId.
  * Checks if the user is already in the class, verifies membership, and emits appropriate events.
  * @param {Object} userSession - The session object of the user attempting to join.
- * @param {string|number} classId - The ID of the class to join.
+ * @param {string|number} classId - The ID of the class to join. A key can be provided which will be converted to an ID.
  * @returns {Promise<string|boolean>} Returns true if joined successfully, or an error message string.
  */
 async function joinClass(userSession, classId) {
     try {
         logger.log('info', `[joinClass] session=(${JSON.stringify(userSession)}) classId=${classId}`);
+
+        // Get the user's email and convert class key to ID if necessary
         const email = userSession.email;
+        const classroom = classInformation.classrooms[classId];
+        if (!classroom) {
+            const dbClassroom = await dbGet('SELECT * FROM classroom WHERE key=?', classId);
+            if (dbClassroom) {
+                classId = dbClassroom.id;
+            }
+        }
 
         // Check if the user is in the class to prevent people from joining classes just from the class ID
         if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
             return 'You are not in that class.';
         } else if (!classInformation.classrooms[classId]) {
             const studentId = await getIdFromEmail(email);
-            const classUsers = (await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]));
+            const classUsers = await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]);
             if (!classUsers) {
                 // The owner of the class is not in classUsers, so we need to check if the user is the owner
                 // of the class.

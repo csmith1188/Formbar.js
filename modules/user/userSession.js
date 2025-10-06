@@ -65,7 +65,14 @@ function logout(socket) {
                             delete classroom.students[email];
                         } else {
                             student.activeClass = null;
-                            student.tags = student.tags ? student.tags + ',Offline' : 'Offline';
+
+                            // If the student's tags exist and do not include Offline, then add it
+                            // Otherwise, if the student's tags do not exist, then set it to Offline
+                            if (student.tags && !student.tags.includes('Offline')) {
+                                student.tags.push('Offline');
+                            } else if (!student.tags) {
+                                student.tags = ['Offline'];
+                            }
                         }
                     }
 
