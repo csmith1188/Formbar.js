@@ -17,11 +17,12 @@ module.exports = {
                 if (args.length == 1) {
                     pollData = args[0];
                 } else {
-                    const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes] = args;
+                    const [responseNumber, responseTextBox, pollPrompt, polls, blind, weight, tags, boxes, indeterminate, lastResponse, multiRes, allowVoteChanges] = args;
                     pollData = {
                         prompt: pollPrompt,
                         answers: Array.isArray(polls) ? polls : [],
                         blind: !!blind,
+                        allowVoteChanges: !!allowVoteChanges,
                         weight: Number(weight ?? 1),
                         tags: Array.isArray(tags) ? tags : [],
                         studentsAllowedToVote: Array.isArray(boxes) ? boxes : undefined,
@@ -35,6 +36,7 @@ module.exports = {
                     prompt: pollData.prompt,
                     answers: Array.isArray(pollData.answers) ? pollData.answers : [],
                     blind: !!pollData.blind,
+                    allowVoteChanges: !!pollData.allowVoteChanges,
                     weight: Number(pollData.weight ?? 1),
                     tags: Array.isArray(pollData.tags) ? pollData.tags : [],
                     studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
@@ -58,13 +60,14 @@ module.exports = {
 
                         nextPollId = nextPollId.nextPollId + 1
 
-                        database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+                        database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
                             userId,
                             poll.name,
                             poll.prompt,
                             JSON.stringify(poll.answers),
                             poll.textRes,
                             poll.blind,
+                            poll.allowVoteChanges,
                             poll.weight,
                             poll.public
                         ], (err) => {
@@ -104,12 +107,13 @@ module.exports = {
                                 return
                             }
 
-                            database.run('UPDATE custom_polls SET name=?, prompt=?, answers=?, textRes=?, blind=?, weight=?, public=? WHERE id=?', [
+                            database.run('UPDATE custom_polls SET name=?, prompt=?, answers=?, textRes=?, blind=?, allowVoteChanges=?, weight=?, public=? WHERE id=?', [
                                 poll.name,
                                 poll.prompt,
                                 JSON.stringify(poll.answers),
                                 poll.textRes,
                                 poll.blind,
+                                poll.allowVoteChanges,
                                 poll.weight,
                                 poll.public,
                                 pollId
@@ -135,13 +139,14 @@ module.exports = {
 
                             nextPollId = nextPollId.nextPollId + 1
 
-                            database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
+                            database.run('INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
                                 userId,
                                 poll.name,
                                 poll.prompt,
                                 JSON.stringify(poll.answers),
                                 poll.textRes,
                                 poll.blind,
+                                poll.allowVoteChanges,
                                 poll.weight,
                                 poll.public
                             ], (err) => {

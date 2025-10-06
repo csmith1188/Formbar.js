@@ -91,7 +91,6 @@ module.exports = {
                     const votingRight = votingData[userId];
                     if (votingRight === true && studentsAllowedToVote.includes(userId) === false) {
                         // Add the email to the studentBoxes array if it's not already there
-                        console.log(typeof userId)
                         studentsAllowedToVote.push(userId);
                     } else {
                         // Remove all instances of the id from the studentBoxes array
