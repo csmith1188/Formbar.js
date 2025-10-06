@@ -42,15 +42,14 @@ socket.on('classUpdate', (classroomData) => {
 
         // If the student has no tags, set their tags to an empty string
         let studentTags = student.tags
-        if (student.tags == null || student.tags == "") {
-            studentTags = ""
+        if (!Array.isArray(studentTags) || studentTags === null) {
+            studentTags = []
         }
 
         // If the student is offline, add one to the offline counter
         if (studentTags.includes("Offline")) {
             studentsOffline++
         }
-        studentTags = studentTags.split(",")
 
         // For each tag in student tags, if it's not in current tags, then add it
         for (let tag of studentTags) {
@@ -117,8 +116,8 @@ socket.on('classUpdate', (classroomData) => {
 
         // Add any selected tags to the current tags list
         // This will allow the teacher to filter students by tags
-        if (newStudentData.tags) {
-            for (const tag of newStudentData.tags.split(',')) {
+        if (Array.isArray(newStudentData.tags)) {
+            for (const tag of newStudentData.tags) {
                 if (!currentTags.includes(tag) && tag !== "" && tag !== "Offline") {
                     currentTags.push(tag)
                 }
@@ -234,30 +233,57 @@ socket.on('classUpdate', (classroomData) => {
 
             for (let tag of tags) {
                 if (tag.trim() == '') continue
-                classroom.tags.push(tag.trim())
-                //addTagElement(tag.trim())
+                const clean = tag.trim();
+                if (!Array.isArray(classroom.tags)) classroom.tags = [];
+                if (!classroom.tags.includes(clean)) classroom.tags.push(clean)
+                addTagElement(clean);
             }
         } else {
-            //addTagElement(newTag.value)
-            classroom.tags.push(newTag.value)
+            const clean = newTag.value.trim();
+            if (clean !== '') {
+                if (!Array.isArray(classroom.tags)) classroom.tags = [];
+                if (!classroom.tags.includes(clean)) classroom.tags.push(clean)
+                addTagElement(clean);
+            }
         }
         newTag.value = ''
 
         sendTags(classroom.tags)
         updateStudentTags()
+        createTagSelectButtons();
+        if (typeof rebuildSelectTagForm === 'function') rebuildSelectTagForm();
     }
 
-    if (!deepObjectEqual(classroom?.tags, classroomData.tags)) {
+    const previousTags = Array.isArray(classroom?.tags) ? classroom.tags : [];
+    const incomingTags = Array.isArray(classroomData.tags) ? classroomData.tags : null;
+    const renderTags = (list) => {
         let tagsDiv = document.querySelector('#tagsList');
         tagsDiv.innerHTML = '';
-        for (let tag of classroomData.tags) {
-            addTagElement(tag)
+        for (let tag of list) {
+            addTagElement(tag);
         }
+        if (typeof updateStudentTags === 'function') updateStudentTags();
+        if (typeof rebuildSelectTagForm === 'function') rebuildSelectTagForm();
+    };
 
-        // After rebuilding tag options, refresh student tag buttons
-        if (typeof updateStudentTags === 'function') {
-            updateStudentTags();
+    // Ensure global classroom reflects latest data before rebuilding tag-dependent UI
+    classroom = classroomData;
+
+    if (incomingTags) {
+        if (!deepObjectEqual(previousTags, incomingTags)) {
+            renderTags(incomingTags);
         }
+    } else {
+        // Fallback: fetch tags via REST if not included in socket payload
+        fetch('/api/room/tags')
+            .then(r => r.ok ? r.json() : { tags: [] })
+            .then(data => {
+                const tags = Array.isArray(data.tags) ? data.tags : [];
+                if (!deepObjectEqual(previousTags, tags)) {
+                    renderTags(tags);
+                }
+            })
+            .catch(() => {});
     }
 
     filterSortChange(classroomData)

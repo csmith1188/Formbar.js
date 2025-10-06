@@ -7,7 +7,6 @@ const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDEN
 const { getManagerData } = require("./manager");
 const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
-const { lastActivities } = require("../sockets/middleware/inactivity");
 
 const runningTimers = {}
 const rateLimits = {}
@@ -458,7 +457,7 @@ class SocketUpdates {
             if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[email]) {
                 const student = classInformation.classrooms[classId].students[email];
                 student.activeClass = null;
-                student.tags = 'Offline';
+                student.tags = ['Offline'];
                 if (classInformation.users[email]) {
                     classInformation.users[email] = student;
                 }

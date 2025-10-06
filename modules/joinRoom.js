@@ -82,8 +82,8 @@ async function joinRoomByCode(code, session) {
 			// Set class permissions and clear any previous tags so they don't persist across classes
 			currentUser.classPermissions = classUser.permissions
 			currentUser.activeClass = classroom.id;
-			currentUser.tags = '';
-			classInformation.users[email].tags = '';
+			currentUser.tags = [];
+			classInformation.users[email].tags = [];
 			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => { });
 
 			// Redact the API key from the classroom user to prevent it from being sent anywhere
@@ -131,7 +131,7 @@ async function joinRoomByCode(code, session) {
 			let currentUser = classInformation.users[email]
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
 			currentUser.activeClass = classroom.id
-			currentUser.tags = '';
+			currentUser.tags = [];
 
 			// Redact the API key from the classroom user to prevent it from being sent anywhere
 			const studentAPIKey = currentUser.API;

@@ -26,7 +26,7 @@ module.exports = {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-                endClass(classId);
+                endClass(classId, socket.request.session);
             } catch (err) {
                 logger.log('error', err.stack);
                 socket.emit('startClass', 'There was a server error. Please try again');
@@ -78,8 +78,8 @@ module.exports = {
 
         /**
          * Changes the voting rights of a user or multiple users
-         * @param {Object} votingData - An object containing the emails and their voting rights.
-         * This should only include emails which should be changed.
+         * @param {Object} votingData - An object containing the user ids and their voting rights.
+         * This should only include ids which should be changed.
          */
         socket.on('changeCanVote', async (votingData) => {
             try {
@@ -89,12 +89,12 @@ module.exports = {
                 const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 for (const userId in votingData) {
                     const votingRight = votingData[userId];
-                    if (votingRight) {
-                        if (!studentsAllowedToVote[userId]) {
-                            studentsAllowedToVote.push(userId);
-                        }
+                    if (votingRight === true && studentsAllowedToVote.includes(userId) === false) {
+                        // Add the email to the studentBoxes array if it's not already there
+                        console.log(typeof userId)
+                        studentsAllowedToVote.push(userId);
                     } else {
-                        // Remove all instances of the email from the studentBoxes array
+                        // Remove all instances of the id from the studentBoxes array
                         studentsAllowedToVote.splice(0, studentsAllowedToVote.length, ...studentsAllowedToVote.filter(student => student !== userId));
                     }
 
@@ -396,7 +396,10 @@ module.exports = {
                 ])
 
                 logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
+
+                // Reload the user's page and update the class
                 io.to(`user-${email}`).emit('reload')
+                socketUpdates.classUpdate()
             } catch (err) {
                 logger.log('error', err.stack);
             }

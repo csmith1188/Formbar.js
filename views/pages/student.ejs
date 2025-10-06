@@ -102,7 +102,7 @@
 
 			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 				<script type="text/javascript">
-					//letiable creation
+					// HTML elements for polls
 					let resTextBox = document.getElementById('resTextBox')
 					let pollForm = document.getElementById('pollForm')
 					let pollContent = document.getElementById('pollContent')
@@ -110,8 +110,7 @@
 					let pollPromptDisplay = document.getElementById('pollPrompt')
 					noPoll = document.getElementById('noPoll')
 
-					//stores the answer type that will be used in the student form
-					//
+					// Stores the answer type that will be used in the student form
 					let multiAnswer = ""
 
 					// For answering polls using only the keyboard
@@ -131,7 +130,6 @@
 
 					let oldLetterRes = '<%- myRes %>'
 					let oldTextRes = currentUser.pollRes.textRes
-
 					let poll = {}
 					let quiz = {}
 					let votingRight = false
@@ -141,11 +139,11 @@
 						document.getElementById('remove').checked = false;
 					}
 
-					function updatePageLoop() {
+					function updatePage() {
 						pollForm = document.getElementById('pollForm');
 						pollPromptDisplay = document.getElementById('pollPrompt');
 
-						if(pollDiv.querySelector("#remove")) {
+						if( pollDiv.querySelector("#remove")) {
 							pollDiv.querySelector("#remove").remove()
 						}
 						if (poll.allowMultipleResponses) {
@@ -153,83 +151,74 @@
 						} else {
 							multiAnswer = "button"
 						}
-						if (votingRight) {
-							pollContent.style.display = 'block'
 
-							if (poll.status) {
-								noPoll.style.display = 'none'
-								pollDiv.style.display = 'block'
+                        pollContent.style.display = 'block'
+                        if (poll.status) {
+                            noPoll.style.display = 'none'
+                            pollDiv.style.display = 'block'
 
-								pollForm.innerHTML = ''
-								pollPromptDisplay.innerText = poll.prompt
-								// Creates all selectable answers and displays them to the user
-								if (poll.allowTextResponses) {
-									pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText' value="${oldTextRes}"></textarea>`
-								}
-                                for (let response of Object.values(poll.responses)) {
-                                    if(multiAnswer !== 'button') {
-                                        response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+                            // Grab the current text response so that it can be preserved if the poll is updated while the user is typing
+                            // This prevents the user from losing their text response if the poll is updated while they are
+                            const responseTextbox = document.getElementById('resTextBox')
+                            let currentTextRes = ''
+                            if (responseTextbox) {
+                                currentTextRes = responseTextbox.value
+                            }
 
-                                        pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
-                                    } else {
-                                        response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-                                        pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
-                                    }
+                            // Clears the form so that it can be repopulated
+                            pollForm.innerHTML = ''
+                            pollPromptDisplay.innerText = poll.prompt
+
+                            // If the user cannot vote, then display a message instead of the form
+                            if (!votingRight) {
+                                pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
+                                return
+                            }
+
+                            // Creates all selectable answers and displays them to the user
+                            if (poll.allowTextResponses) {
+                                const sanitizedTextResponse = ((currentTextRes || oldTextRes || '') + '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText'>${sanitizedTextResponse}</textarea>`
+							}
+
+                            for (let response of Object.values(poll.responses)) {
+                                if(multiAnswer !== 'button') {
+                                    response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+
+                                    pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
+                                } else {
+                                    response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+                                    pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
                                 }
-								if (!poll.allowMultipleResponses /*&& poll.allowVoteChanges*/) {
-									pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
-								} else if(poll.allowMultipleResponses) {
-									pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
-								}
-							} else {
-								noPoll.style.display = 'block'
-								pollDiv.style.display = 'none'
-							}
+                            }
 
-							// If the user has responded before on this poll, put their previous responses in the form
-							const resTextBox = document.getElementById("resTextBox")
-							if (!poll.allowMultipleResponses) {
-								// If the poll isn't multi-res, handle it normally
-								// const oldLetterElement = document.getElementById(oldLetterRes)
-								// if (oldLetterRes && oldLetterElement) {
-								// 	oldLetterElement.checked = true
-								// }
-							} else {
-								// If the poll is multi-res, split the response and check all of them
-								const splitLetterRes = currentUser.pollRes.buttonRes;
-								for (const splitLetter of splitLetterRes) {
-									const oldLetterElement = document.getElementById(splitLetter)
-									if (oldLetterElement) {
-										oldLetterElement.checked = true
-									}
-								}
-							}
+                            if (!poll.allowMultipleResponses /*&& poll.allowVoteChanges*/) {
+                                pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
+                            } else if(poll.allowMultipleResponses) {
+                                pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
+                            }
+                        } else {
+                            noPoll.style.display = 'block'
+                            pollDiv.style.display = 'none'
+                        }
 
-
-							if (oldTextRes && resTextBox) {
-								resTextBox.value = oldTextRes
-							}
-						}
-					}
-
-					function updatePage() {
-						if (poll.allowedResponses.length > 0) {
-							for (let eachAllowedResponse of poll.allowedResponses) {
-								if (eachAllowedResponse == currentUser.id) {
-									updatePageLoop()
-									return
-								}
-							}
-							for (let eachUnallowedResponse of poll.unallowedResponses) {
-								if (eachUnallowedResponse == currentUser.id) {
-									console.log('hello')
-									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
-								}
-							}
-						}
-						else if (poll.allowedResponses.length == 0) {
-							updatePageLoop()
-						}
+                        // If the user has responded before on this poll, put their previous responses in the form
+                        if (!poll.allowMultipleResponses) {
+                            // If the poll isn't multi-res, handle it normally
+                            // const oldLetterElement = document.getElementById(oldLetterRes)
+                            // if (oldLetterRes && oldLetterElement) {
+                            // 	oldLetterElement.checked = true
+                            // }
+                        } else {
+                            // If the poll is multi-res, split the response and check all of them
+                            const splitLetterRes = currentUser.pollRes.buttonRes;
+                            for (const splitLetter of splitLetterRes) {
+                                const oldLetterElement = document.getElementById(splitLetter)
+                                if (oldLetterElement) {
+                                    oldLetterElement.checked = true
+                                }
+                            }
+                        }
 					}
 
 					// Submits the users answer to the poll
@@ -259,19 +248,23 @@
 						}
 
 						currentUser.pollRes = {buttonRes: lettRes, textRes: textRes, date: new Date()};
-						oldLetterRes = lettRes
-						oldTextRes = textRes
-
-						if(lettRes == "remove") {
+						if (lettRes == "remove") {
 							currentUser.pollRes = {buttonRes: '', textRes: '', date: null};
-							oldLetterRes = ''
-							oldTextRes = ''
-
 							if(textarea) textarea.value = ''
 						}
 
-						// Sends user input to the server
-						socket.emit('pollResp', lettRes, textRes)
+						// If the new input is not the same as the previous input, then send it to the server
+                        // This prevents spamming the server with the same input
+                        const letterChanged = (Array.isArray(lettRes) || Array.isArray(oldLetterRes))
+							? !deepObjectEqual(lettRes, oldLetterRes)
+							: lettRes !== oldLetterRes;
+						const textChanged = textRes !== oldTextRes;
+
+						if (letterChanged || textChanged) {
+							socket.emit('pollResp', lettRes, textRes);
+							oldLetterRes = lettRes;
+							oldTextRes = textRes;
+						}
 					}
 
 					socket.on('classUpdate', (classroomData) => {
@@ -309,17 +302,16 @@
 						}
 					});
 
+                    // If there's an active poll, then request the current user's voting rights from the server
 					if (poll.status) {
 						socket.emit('getCanVote', currentUser.id)
 					}
+
+                    // Update the user's voting rights when the server sends an update
 					socket.on('getCanVote', (newVotingRight) => {
 						votingRight = newVotingRight
-						if (newVotingRight) {
-							updatePage()
-						} else {
-							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
-						}
-					})
+                        updatePage()
+                    })
 
 					//help ticket/break button
 

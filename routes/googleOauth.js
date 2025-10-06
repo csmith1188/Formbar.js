@@ -72,7 +72,7 @@ module.exports = {
 										userData.API,
 										[], // Owned polls
 										[], // Shared polls
-										userData.tags,
+										userData.tags ? userData.tags.split(',') : [],
 										userData.displayName,
 										false
 									);
@@ -113,7 +113,7 @@ module.exports = {
 										userData.API,
 										[], // Owned polls
 										[], // Shared polls
-										userData.tags,
+										userData.tags ? userData.tags.split(',') : [],
 										userData.displayName,
 										false
 									);
@@ -146,7 +146,7 @@ module.exports = {
 									userData.API,
 									[], // Owned polls
 									[], // Shared polls
-									userData.tags,
+									userData.tags ? userData.tags.split(',') : [],
 									userData.displayName,
 									false
 								);
