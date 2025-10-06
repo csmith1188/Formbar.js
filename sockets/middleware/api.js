@@ -4,6 +4,7 @@ const { logger } = require("../../modules/logger")
 const { userSockets } = require("../../modules/socketUpdates")
 const { Student } = require("../../modules/student")
 const { getUserClass } = require("../../modules/user/user")
+const { classKickStudent } = require("../../modules/class/kick");
 
 module.exports = {
     order: 10,
@@ -46,7 +47,7 @@ module.exports = {
                                 socket.emit('setClass', socket.request.session.classId)
                                 socket.on('disconnect', () => {
                                     if (!userSockets[socket.request.session.email]) {
-                                        socketUpdates.classKickUser(socket.request.session.email, socket.request.session.classId, false)
+                                        classKickStudent(socket.request.session.email, socket.request.session.classId, false)
                                     }
                                 })
 

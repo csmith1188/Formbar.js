@@ -15,7 +15,7 @@
             <header id="quickMenu" class="fullWidth">
                 <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
                 <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
-                <!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
+                <button id="bannedUsersMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">Banned Users</button>
             </header>
 
             <div id="usersMenu" class="tabContent default usersMenuBox" data-tab-group="mainTabs">
@@ -27,8 +27,7 @@
                     <button type="button" id="name" class="sort revampButton">Name</button>
                     <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
                 </div>
-                <div id="users">
-                </div>
+                <div id="users"></div>
             </div>
             <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
                 <div class="revampDiv ipMenuDiv">
@@ -51,6 +50,9 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div id="bannedUsersMenu">
+                <div id="users"></div>
             </div>
             <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
                 <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>

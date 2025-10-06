@@ -6,6 +6,8 @@ const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
 const { getEmailFromId } = require("../modules/student");
+const { BANNED_PERMISSIONS } = require("../modules/permissions");
+const { classKickStudents, classKickStudent } = require("../modules/class/kick");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -91,7 +93,6 @@ module.exports = {
                     const votingRight = votingData[userId];
                     if (votingRight === true && studentsAllowedToVote.includes(userId) === false) {
                         // Add the email to the studentBoxes array if it's not already there
-                        console.log(typeof userId)
                         studentsAllowedToVote.push(userId);
                     } else {
                         // Remove all instances of the id from the studentBoxes array
@@ -251,13 +252,13 @@ module.exports = {
          * Kicks a user from the classroom
          * @param {string} email - The email of the user to kick.
          */
-        socket.on('classKickUser', (email) => {
+        socket.on('classKickStudent', (email) => {
             try {
                 logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classKickUser] email=(${email})`)
 
                 const classId = socket.request.session.classId
-                socketUpdates.classKickUser(email, classId)
+                classKickStudent(email, classId)
                 advancedEmitToClass('leaveSound', classId, {})
             } catch (err) {
                 logger.log('error', err.stack)
@@ -270,7 +271,8 @@ module.exports = {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId
-                socketUpdates.classKickStudents(classId)
+                classKickStudents(classId)
+
                 socketUpdates.classUpdate(classId)
                 advancedEmitToClass('kickStudentsSound', classId, { api: true })
             } catch (err) {
@@ -313,10 +315,9 @@ module.exports = {
                             classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = 0
                         }
 
-                        socketUpdates.classKickUser(email)
-                        socketUpdates.classBannedUsersUpdate()
+                        classKickStudent(email, classId);
+                        // socketUpdates.classBannedUsersUpdate()
                         socketUpdates.classUpdate();
-                        advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${email}`)
                     } catch (err) {
                         logger.log('error', err.stack)
@@ -386,14 +387,20 @@ module.exports = {
                 const email = await getEmailFromId(userId);
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
+
                 classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
                 classInformation.users[email].classPermissions = newPerm
-
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,
                     classInformation.classrooms[socket.request.session.classId].id,
                     classInformation.classrooms[socket.request.session.classId].students[email].id
                 ])
+
+                if (newPerm === BANNED_PERMISSIONS) {
+                    classKickStudent(userId, socket.request.session.classId, { exitRoom: true, ban: true });
+                    advancedEmitToClass('leaveSound', classId, {})
+                    return;
+                }
 
                 logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
 

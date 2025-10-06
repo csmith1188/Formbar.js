@@ -307,22 +307,26 @@ function buildStudent(classroom, studentData) {
         }
 
         // Ban and Kick buttons
-        let banStudentButton = document.createElement('button')
-        banStudentButton.className = 'banUser quickButton revampButton warningButton'
-        banStudentButton.setAttribute('data-user', studentData.id)
-        banStudentButton.textContent = 'Ban User'
-        banStudentButton.onclick = (event) => {
-            if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
-                socket.emit('classBanUser', studentData.id)
+        if (currentUser.permissions === GUEST_PERMISSIONS) {
+            const banStudentButton = document.createElement('button')
+            banStudentButton.className = 'banUser quickButton revampButton warningButton'
+            banStudentButton.setAttribute('data-user', studentData.id)
+            banStudentButton.textContent = 'Ban User'
+            banStudentButton.onclick = (event) => {
+                if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
+                    socket.emit('classPermChange', studentData.id, 0)
+                }
             }
+
+            extraButtons.appendChild(banStudentButton)
         }
-        extraButtons.appendChild(banStudentButton)
-        let kickUserButton = document.createElement('button')
+
+        const kickUserButton = document.createElement('button')
         kickUserButton.className = 'kickUser quickButton revampButton warningButton'
         kickUserButton.setAttribute('data-userid', studentData.id)
-        kickUserButton.onclick = (event) => {
+        kickUserButton.onclick = () => {
             if (confirm(`Are you sure you want to kick ${studentData.displayName}?`)) {
-                socket.emit('classKickUser', studentData.id)
+                socket.emit('classKickStudent', studentData.id)
             }
         }
         kickUserButton.textContent = 'Kick User'

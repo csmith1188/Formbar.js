@@ -1,0 +1,63 @@
+<%- include('../partials/header_content') %>
+<%- include('../partials/sockets') %>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #otherText {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+<%- include('../partials/formbar_header') %>
+<h1 class="headerText">Links</h1>
+<div id="links">
+</div>
+
+<%- include('../partials/body_content') %>
+</body>
+
+</html>
+
+<script type="text/javascript">
+    const linksDiv = document.getElementById('plugins')
+
+    console.log(currentUser)
+    fetch(`/api/room/${currentUser.activeClass}/links`, {
+        headers: {
+            'Content-Type': 'application/json',
+            'API': currentUser.API
+        }
+    }).then(res => {
+        console.log(res)
+    });
+
+    // socket.emit('pluginUpdate')
+    // socket.on('pluginUpdate', (plugins) => {
+    //     let br = document.createElement('br')
+    //     linksDiv.innerHTML = ''
+    //
+    //     if (plugins.length == 0) {
+    //         linksDiv.innerHTML = '<p style="font-size: 18px;">No links provided for this classroom.</p>'
+    //         return
+    //     }
+    //
+    //     for (const plugin of plugins) {
+    //         const link = document.createElement('a')
+    //         link.className = 'quickButton'
+    //         link.href = plugin.url
+    //         link.target = '_blank'
+    //         link.innerText = plugin.name
+    //         linksDiv.append(link)
+    //         linksDiv.append(br.cloneNode(true))
+    //     }
+    // })
+</script>
+<%- include('../partials/footer_content') %>

@@ -7,6 +7,7 @@ const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinRoom");
 const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
 const { clearPoll } = require("../polls");
+const { classKickStudent } = require("./kick");
 
 /**
  * Starts a class session by activating the class, emitting the start class event,
@@ -228,7 +229,7 @@ function leaveClass(userSession, classId) {
         // Kick the user from the classroom entirely if they're a guest
         // If not, kick them from the session
         advancedEmitToClass('leaveSound', userSession.classId, {});
-        socketUpdates.classKickUser(user.id, classId, classInformation.users[email].isGuest);
+        classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
     } catch (err) {
         logger.log('error', err.stack)

@@ -19,7 +19,7 @@ module.exports = {
                 if (classId instanceof Error) throw classId
                 if (classId) {
                     classInformation.classrooms[classId].students[email].permissions = newPerm
-                    if (classInformation.classrooms[classId].students[email].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation.classrooms[classId].students)[0] == email) {
+                    if (classInformation.classrooms[classId].students[email].permissions < TEACHER_PERMISSIONS && Object.keys(classInformation.classrooms[classId].students)[0] === email) {
                         socketUpdates.endClass(classId)
                     }
                     

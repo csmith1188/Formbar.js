@@ -1,39 +1,24 @@
-const { isAuthenticated, permCheck  } = require("./middleware/authentication")
+const { isAuthenticated, permCheck } = require("./middleware/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
-const { database } = require("../modules/database")
+const { database, dbGetAll } = require("../modules/database")
 const { joinRoomByCode } = require("../modules/joinRoom")
 const { logger } = require("../modules/logger")
-const { setClassOfApiSockets, advancedEmitToClass, userSockets, emitToUser} = require("../modules/socketUpdates")
-const {userSocketUpdates} = require("../sockets/init");
+const { setClassOfApiSockets, userSockets, emitToUser } = require("../modules/socketUpdates")
 
 module.exports = {
     run(app) {
-        app.get('/selectClass', isAuthenticated, permCheck, (req, res) => {
+        app.get('/selectClass', isAuthenticated, permCheck, async (req, res) => {
             try {
                 logger.log('info', `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-        
-                database.all(
-                    'SELECT classroom.name, classroom.id FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.email=?',
-                    [req.session.email],
-                    (err, joinedClasses) => {
-                        try {
-                            if (err) throw err
-        
-                            logger.log('verbose', `[get /selectClass] joinedClasses=(${JSON.stringify(joinedClasses)})`)
-                            res.render('pages/selectClass', {
-                                title: 'Select Class',
-                                joinedClasses: joinedClasses
-                            })
-                        } catch (err) {
-                            logger.log('error', err.stack);
-                            res.render('pages/message', {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: 'Error'
-                            })
-                        }
-                    }
-                )
+
+                // Get all classes the user is in then render the select class page
+                let joinedClasses = await dbGetAll('SELECT classroom.name, classroom.id, classUsers.permissions FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.email=?', [req.session.email]);
+                joinedClasses = joinedClasses.filter(classroom => classroom.permissions !== 0);
+                res.render('pages/selectClass', {
+                    title: 'Select Class',
+                    joinedClasses: joinedClasses
+                });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {
