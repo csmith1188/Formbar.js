@@ -16,7 +16,7 @@ const testData = {
  * @param {number} [permissions=5] - The permissions level of the user
  */
 function createTestUser(email, classId, permissions = 5) {
-    const student = new Student(email, 1, permissions, 0, [], [], '', '', false);;
+    const student = new Student(email, 1, permissions, 0, [], [], [], '', false);
     classInformation.users[email] = student;
 
     // If a class id is provided, also create the student in the class

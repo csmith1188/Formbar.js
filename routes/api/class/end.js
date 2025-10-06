@@ -9,7 +9,7 @@ module.exports = {
         router.post('/class/:id/end', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
                 const classId = req.params.id;
-                endClass(classId);
+                endClass(classId, req.session.user);
                 res.status(200).json({ message: 'Success' });
             } catch (err) {
                 logger.log('error', err.stack);

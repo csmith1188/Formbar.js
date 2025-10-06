@@ -533,15 +533,11 @@
         });
     }
 
-    
-
-    // Function runs on page load
-    // Checks if poll is active or not and displays correct output
+    // Handles loading classroom data from the server
     let rooms;
     socket.on('classUpdate', (classroomData) => {
         rooms = classroomData
     })
-    let classTags = '<%= tags %>';
 
     // Alerts the user if they try to start a poll without a prompt or responses
     function pollCheck() {
@@ -793,6 +789,7 @@
 
     // Handle settings
     const settings = <%- settings %>;
+    window.settings = settings;
 
 
     const FilterState = {
@@ -830,6 +827,10 @@
         sort[key] = 0;
     });
 
+    // Expose for other scripts that rely on these being globals
+    window.filter = filter;
+    window.sort = sort;
+
     for (const [key, value] of Object.entries(FilterState)) {
         let filterButton = document.createElement('button');
         filterButton.type = 'button';
@@ -866,7 +867,6 @@
     }
 
     socket.on('awardDigipogsResponse', ({ success, message }) => {
-        if(!success) console.log(message);
         alert(message);
     })
 
@@ -880,8 +880,8 @@
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>
-<script src='/js/sockets/classUpdate.js'></script>
 <script src='/js/modules/tags.js'></script>
+<script src='/js/sockets/classUpdate.js'></script>
 <script src='/js/controlPanelSockets.js'></script>
 
 <%- include('../partials/footer_content') %>

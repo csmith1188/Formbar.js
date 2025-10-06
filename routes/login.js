@@ -72,6 +72,7 @@ module.exports = {
                                 database.get('SELECT * FROM users WHERE email=?', [user.email], (err, userData) => {
                                     try {
                                         if (err) throw err;
+
                                         classInformation.users[userData.email] = new Student(
                                             userData.email,
                                             userData.id,
@@ -79,7 +80,7 @@ module.exports = {
                                             userData.API,
                                             [],
                                             [],
-                                            userData.tags,
+                                            userData.tags ? userData.tags.split(',') : [],
                                             userData.displayName,
                                             false
                                         );
@@ -225,7 +226,7 @@ module.exports = {
                                     userData.API,
                                     JSON.parse(userData.ownedPolls),
                                     JSON.parse(userData.sharedPolls),
-                                    userData.tags,
+                                    userData.tags ? userData.tags.split(',') : [],
                                     userData.displayName,
                                     false
                                 )
@@ -236,7 +237,7 @@ module.exports = {
                             // Add a cookie to transfer user credentials across site
                             req.session.userId = userData.id;
                             req.session.email = userData.email;
-                            req.session.tags = userData.tags;
+                            req.session.tags = userData.tags ? userData.tags.split(',') : [];
                             req.session.displayName = userData.displayName;
                             req.session.verified = userData.verified;
                             // Log the login post
@@ -343,7 +344,7 @@ module.exports = {
                                                         userData.API,
                                                         [],
                                                         [],
-                                                        userData.tags,
+                                                        userData.tags ? userData.tags.split(',') : [],
                                                         userData.displayName,
                                                         false
                                                     );
@@ -458,7 +459,7 @@ module.exports = {
                         null, // API key
                         [], // Owned polls
                         [], // Shared polls
-                        "", // Tags
+                        [], // Tags
                         user.displayName,
                         true
                     );

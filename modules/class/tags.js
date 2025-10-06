@@ -25,17 +25,17 @@ async function setTags(tags, userSession) {
         if (!classId || !classInformation.classrooms[classId]) return;
         classInformation.classrooms[classId].tags = tags;
 
-        // Prune student tags to only allowed ones and persist
-        for (const student of Object.values(classInformation.classrooms[classId].students)) {
+		for (const student of Object.values(classInformation.classrooms[classId].students)) {
             if (student.classPermissions == 0 || student.classPermissions >= 5) continue;
-            if (!student.tags) student.tags = '';
+			if (!student.tags) student.tags = [];
 
-            let studentTags = student.tags.split(',').filter(Boolean);
+			let studentTags = [];
+            studentTags = student.tags.filter(Boolean);
             studentTags = studentTags.filter(tag => tags.includes(tag));
-            student.tags = studentTags.toString();
+			student.tags = studentTags;
 
             try {
-                await dbRun('UPDATE users SET tags = ? WHERE email = ?', [student.tags, student.email]);
+				await dbRun('UPDATE users SET tags = ? WHERE email = ?', [studentTags.join(','), student.email]);
             } catch (err) {
                 logger.log('error', err.stack);
             }
@@ -73,9 +73,9 @@ async function saveTags(studentId, tags, userSession) {
             normalized.push('Offline');
         }
 
-        // Store in memory and in the database
-        classInformation.classrooms[userSession.classId].students[email].tags = normalized.toString();
-        await dbRun('UPDATE users SET tags = ? WHERE id = ?', [normalized.toString(), studentId]);
+		// Store in memory (as array) and in the database (as comma-separated string for legacy column)
+		classInformation.classrooms[userSession.classId].students[email].tags = normalized;
+		await dbRun('UPDATE users SET tags = ? WHERE id = ?', [normalized.join(','), studentId]);
     } catch (err) {
         logger.log('error', err.stack)
     }

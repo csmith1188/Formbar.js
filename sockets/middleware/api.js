@@ -31,7 +31,7 @@ module.exports = {
                                         userData.API,
                                         null,
                                         null,
-                                        userData.tags,
+                                        userData.tags ? userData.tags.split(',') : [],
                                         userData.displayName,
                                         false
                                     )
