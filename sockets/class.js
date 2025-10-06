@@ -89,8 +89,9 @@ module.exports = {
                 const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
                 for (const userId in votingData) {
                     const votingRight = votingData[userId];
-                    if (votingRight === true && studentsAllowedToVote.includes(userId.toString()) === false) {
+                    if (votingRight === true && studentsAllowedToVote.includes(userId) === false) {
                         // Add the email to the studentBoxes array if it's not already there
+                        console.log(typeof userId)
                         studentsAllowedToVote.push(userId);
                     } else {
                         // Remove all instances of the id from the studentBoxes array

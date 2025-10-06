@@ -177,8 +177,9 @@
 
                             // Creates all selectable answers and displays them to the user
                             if (poll.allowTextResponses) {
-                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText'">${currentTextRes || oldTextRes}</textarea>`
-                            }
+                                const sanitizedTextResponse = ((currentTextRes || oldTextRes || '') + '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText'>${sanitizedTextResponse}</textarea>`
+							}
 
                             for (let response of Object.values(poll.responses)) {
                                 if(multiAnswer !== 'button') {
@@ -254,11 +255,16 @@
 
 						// If the new input is not the same as the previous input, then send it to the server
                         // This prevents spamming the server with the same input
-                        if ((lettRes !== oldLetterRes || lettRes === '') || (lettRes === oldLetterRes && (textRes !== oldTextRes || textRes === ''))) {
-                            socket.emit('pollResp', lettRes, textRes)
-                            oldLetterRes = lettRes
-                            oldTextRes = textRes
-                        }
+                        const letterChanged = (Array.isArray(lettRes) || Array.isArray(oldLetterRes))
+							? !deepObjectEqual(lettRes, oldLetterRes)
+							: lettRes !== oldLetterRes;
+						const textChanged = textRes !== oldTextRes;
+
+						if (letterChanged || textChanged) {
+							socket.emit('pollResp', lettRes, textRes);
+							oldLetterRes = lettRes;
+							oldTextRes = textRes;
+						}
 					}
 
 					socket.on('classUpdate', (classroomData) => {
