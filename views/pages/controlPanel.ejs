@@ -40,24 +40,32 @@
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
         <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
-        <button id='bannedStudentsMenu' title="Banned Students" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/banned.svg" alt="Banned Students Icon"></button>
+        <button id='bannedStudentsMenu' title="Banned Students" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/ban-outline.svg" alt="Banned Students Icon"></button>
         <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
         <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
         <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
-
     </div>
-    <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
-    <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
 </header>
 
 <div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
-    
 </div>
 
 <div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Poll Timer</h1>
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+</div>
+
+<div id="bannedStudentsMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <h1 class="mobileMenuHeader">Banned Students</h1>
+    <table id="bannedUsersTable" class="revampDiv" style="margin: 0 auto; text-align: center;">
+        <thead>
+        <tr>
+            <th>Display Name</th>
+        </tr>
+        </thead>
+        <tbody id="bannedUsersBody"></tbody>
+    </table>
 </div>
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
@@ -409,7 +417,6 @@
     <div id="extraButtons"></div>
 </details>
 </div>
-<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 </body>
 
 </html>
@@ -479,7 +486,7 @@
     let permissionsDiv = document.querySelector('#permissionsList')
     let tagsDiv = document.querySelector('#tagsList');
     let tagOptionsDiv = document.querySelector('#tagOptions');
-    let bannedTabButton = document.querySelector('.tab#bannedMenu')
+    let bannedUsersBody = document.getElementById('bannedUsersBody');
     let pollsTabButton = document.querySelector('.tab#pollsMenu')
     let settingsTabButton = document.querySelector('.tab#settingsMenu')
     let permissionsTabButton = document.querySelector('.tab#permissions')

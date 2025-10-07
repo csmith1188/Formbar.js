@@ -20,6 +20,9 @@ function validateStudents(students) {
 // Create a student in the user list
 function buildStudent(classroom, studentData) {
     const studentTemplateDiv = document.getElementById('student-fake')
+    if (studentData.classPermissions === BANNED_PERMISSIONS) {
+        return;
+    }
 
     if (studentData.classPermissions < currentUser.classPermissions) {
         const newStudent = studentTemplateDiv.cloneNode(true)
@@ -307,7 +310,7 @@ function buildStudent(classroom, studentData) {
         }
 
         // Ban and Kick buttons
-        if (currentUser.permissions === GUEST_PERMISSIONS) {
+        if (studentData.permissions !== GUEST_PERMISSIONS) {
             const banStudentButton = document.createElement('button')
             banStudentButton.className = 'banUser quickButton revampButton warningButton'
             banStudentButton.setAttribute('data-user', studentData.id)

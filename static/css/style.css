@@ -1592,6 +1592,14 @@ button:disabled:hover {
 	background-color: var(--bg-dark-red) !important;
 }
 
+.unbanBtnSmall {
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    min-width: auto;
+    border-radius: 4px;
+}
+
 
 .revampButton.acceptButton,
 .circularButton.acceptButton {

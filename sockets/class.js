@@ -385,24 +385,26 @@ module.exports = {
         socket.on('classPermChange', async (userId, newPerm) => {
             try {
                 const email = await getEmailFromId(userId);
+                const classId = socket.request.session.classId;
                 logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
 
-                classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
+                classInformation.classrooms[classId].students[email].classPermissions = newPerm
                 classInformation.users[email].classPermissions = newPerm
                 database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
                     newPerm,
-                    classInformation.classrooms[socket.request.session.classId].id,
-                    classInformation.classrooms[socket.request.session.classId].students[email].id
+                    classInformation.classrooms[classId].id,
+                    classInformation.classrooms[classId].students[email].id
                 ])
 
+                // If the new permission is BANNED_PERMISSIONS, kick the user from the class and ban them
                 if (newPerm === BANNED_PERMISSIONS) {
-                    classKickStudent(userId, socket.request.session.classId, { exitRoom: true, ban: true });
+                    classKickStudent(userId, classId, { exitRoom: true, ban: true });
                     advancedEmitToClass('leaveSound', classId, {})
                     return;
                 }
 
-                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
+                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`)
 
                 // Reload the user's page and update the class
                 io.to(`user-${email}`).emit('reload')

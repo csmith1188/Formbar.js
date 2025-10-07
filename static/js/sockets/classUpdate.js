@@ -33,12 +33,43 @@ socket.on('classUpdate', (classroomData) => {
     classId = classroomData.id
     currentTags = []
     let studentsOffline = 0
-    for (const studentId of Object.keys(classroomData.students)) {
-        let student = classroomData.students[studentId]
+    let studentsBanned = 0
+    for (const [studentId, student] of Object.entries(classroomData.students)) {
+        if (student.classPermissions === BANNED_PERMISSIONS) {
+            studentsBanned += 1;
+
+            // If the element for the banned user already exists, then do not add a new one
+            if (document.getElementById(`banned-${student.id}`)) {
+                continue;
+            }
+
+            const bannedUserRow = document.createElement('tr')
+            bannedUserRow.id = `banned-${student.id}`
+
+            const nameCell = document.createElement('td')
+            nameCell.innerText = student.displayName || 'Unknown'
+            bannedUserRow.appendChild(nameCell)
+
+            const unbanButton = document.createElement('button')
+            unbanButton.className = 'revampButton unbanBtnSmall'
+            unbanButton.type = 'button'
+            unbanButton.title = 'Unban'
+            unbanButton.textContent = 'Unban'
+            unbanButton.onclick = () => {
+                socket.emit('classPermChange', student.id, GUEST_PERMISSIONS)
+            }
+
+            const actionCell = document.createElement('td')
+            actionCell.appendChild(unbanButton)
+            bannedUserRow.appendChild(actionCell)
+
+            bannedUsersBody.appendChild(bannedUserRow)
+            continue;
+        }
 
         if (student.permissions >= 4) continue;
-        if(student.help.time) student.help.time = new Date(student.help.time)
-        if(student.pollRes.time) student.pollRes.time  = new Date(student.pollRes.time)
+        if (student.help.time) student.help.time = new Date(student.help.time)
+        if (student.pollRes.time) student.pollRes.time  = new Date(student.pollRes.time)
 
         // If the student has no tags, set their tags to an empty string
         let studentTags = student.tags
@@ -96,7 +127,7 @@ socket.on('classUpdate', (classroomData) => {
     let pollCounter = document.getElementById('pollCounter');
 
     // Set the users to the number of students minus the number of offline students and minus one for the teacher
-    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - 1}`
+    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - studentsBanned - 1}`
     if (classroomData.poll.prompt != "") {
         pollCounter.innerText = `Poll Prompt: '${classroomData.poll.prompt}'`
     } else {
@@ -136,31 +167,17 @@ socket.on('classUpdate', (classroomData) => {
         studentElement.replaceWith(buildStudent(classroomData, newStudentData))
     }
 
-    totalUsers.innerHTML = `<b>Users:</b> ${Object.keys(classroomData.students).length - studentsOffline - 1}`
-
     for (let studentElement of document.getElementsByClassName('student')) {
         if (!classroomData.students[studentElement.id.replace('student-', '')]) {
             studentElement.remove()
         }
     }
 
-    // Commented because the banned tab is not used/functioning
-    // @TODO: Fix the banned tab
-    // if (currentUser.classPermissions >= newClassroom.permissions.manageStudents) {
-    // 	bannedTabButton.style.display = ''
-    // } else {
-    // 	bannedTabButton.style.display = 'none'
-
-    // 	if (bannedTabButton.classList.contains('pressed')) {
-    // 		changeTab('usersMenu', 'mainTabs')
-    // 	}
-    // }
-
     if (currentUser.classPermissions >= classroomData.permissions.controlPolls) {
         pollsTabButton.style.display = ''
     } else {
         pollsTabButton.style.display = 'none'
-
+z
         if (pollsTabButton.classList.contains('pressed')) {
             changeTab('usersMenu', 'mainTabs')
         }
