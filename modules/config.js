@@ -38,7 +38,7 @@ function generateKeyPair() {
     }
 }
 
-async function getConfig() {
+function getConfig() {
     let publicKey;
     let privateKey;
 
@@ -60,7 +60,7 @@ async function getConfig() {
     // If there is no .env file, create one from the template
     if (!fs.existsSync('.env')) fs.copyFileSync('.env-template', '.env');
     
-    const formbarDevPool = await dbGet("SELECT * FROM digipog_pools WHERE id = 0");
+    const formbarDevPool = dbGet("SELECT * FROM digipog_pools WHERE id = 0");
     if (!formbarDevPool) {
         dbRun("INSERT INTO digipog_pools (id, name, description, amount) VALUES (?, ?, ?, ?)", [0, "Formbar Developer Pool", "Formbar Developer pog pool. Accumulates from the 10% tax on digipog transactions.", 0]);
         dbRun("INSERT INTO digipog_pool_users (id, owner) VALUES (?, ?)", [1, "0"]);
