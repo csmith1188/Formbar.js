@@ -445,6 +445,20 @@ function filterSortChange(classroom) {
         }
     }
 
+    if (filter.cantVote) {
+        for (const userId of userOrder.slice()) {
+            let studentElement = document.getElementById(`student-${userId}`);
+            let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
+            if (studentCheckbox || studentCheckbox.checked) {
+                studentElement.style.display = 'none'
+                const index = userOrder.indexOf(userId);
+                if (index > -1) {
+                    userOrder.splice(index, 1);
+                }
+            }
+        }
+    }
+
     // sort by response order
     if (sort.responseOrder == 1) {
         let responsesIndexes = Object.keys(classroom.poll.responses);
