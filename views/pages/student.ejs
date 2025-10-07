@@ -192,11 +192,20 @@
                                 }
                             }
 
-                            if (!poll.allowMultipleResponses /*&& poll.allowVoteChanges*/) {
+                            if (!poll.allowMultipleResponses && poll.allowVoteChanges) {
                                 pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
                             } else if(poll.allowMultipleResponses) {
                                 pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
                             }
+
+							
+							let radios = document.getElementsByName('poll')
+
+							if(!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
+								radios.forEach((res => {
+									res.disabled = true;
+								}))
+							}
                         } else {
                             noPoll.style.display = 'block'
                             pollDiv.style.display = 'none'
@@ -245,6 +254,13 @@
 
 						if (textarea) {
 							textRes = textarea.value
+						}
+
+						if(!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
+							radios.forEach((res => {
+								res.disabled = true;
+							}))
+							return;
 						}
 
 						currentUser.pollRes = {buttonRes: lettRes, textRes: textRes, date: new Date()};

@@ -37,8 +37,8 @@ socket.on('classUpdate', (classroomData) => {
         let student = classroomData.students[studentId]
 
         if (student.permissions >= 4) continue;
-        student.help.time = new Date(student.help.time)
-        student.pollRes.time = new Date(student.pollRes.time)
+        if(student.help.time) student.help.time = new Date(student.help.time)
+        if(student.pollRes.time) student.pollRes.time  = new Date(student.pollRes.time)
 
         // If the student has no tags, set their tags to an empty string
         let studentTags = student.tags
