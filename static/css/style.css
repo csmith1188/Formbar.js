@@ -705,6 +705,10 @@ details[open] {
 	grid-row: span 5;
 }
 
+details[id^="student-guest"][open] {
+	grid-row: span 3;
+}
+
 details #reasons {
 	opacity: 0;
 	pointer-events: none;

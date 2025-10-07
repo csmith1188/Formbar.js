@@ -273,7 +273,7 @@
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Allow Vote Changes</h2>
                             <img class="showMobile pollOptionIcon" src="/img/ban-outline.svg" alt="Allow Vote Changes">
-                            <input type='checkbox' id='allowVoteChanges' checked disabled style="cursor: not-allowed;">
+                            <input type='checkbox' id='allowVoteChanges' checked>
                         </div>
                     </div>
     
@@ -577,6 +577,7 @@
                 endClassButton.id = 'startClass';
             }
             endPollFunc();
+            clearPollFunc();
         }
     }
 

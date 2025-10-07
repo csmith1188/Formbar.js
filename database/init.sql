@@ -36,22 +36,23 @@ CREATE TABLE IF NOT EXISTS "classusers"
 
 CREATE TABLE IF NOT EXISTS "custom_polls"
 (
-    "id"      INTEGER NOT NULL UNIQUE,
-    "owner"   TEXT,
-    "name"    TEXT,
-    "prompt"  TEXT,
-    "answers" TEXT    NOT NULL,
-    "textRes" INTEGER NOT NULL DEFAULT 0 CHECK ("textRes" IN (0, 1)),
-    "blind"   INTEGER NOT NULL DEFAULT 0 CHECK ("blind" IN (0, 1)),
-    "weight"  INTEGER NOT NULL DEFAULT 1,
-    "public"  INTEGER NOT NULL DEFAULT 0 CHECK ("public" IN (0, 1)),
+    "id"                INTEGER NOT NULL UNIQUE,
+    "owner"             TEXT,
+    "name"              TEXT,
+    "prompt"            TEXT,
+    "answers"           TEXT    NOT NULL,
+    "textRes"           INTEGER NOT NULL DEFAULT 0 CHECK ("textRes" IN (0, 1)),
+    "blind"             INTEGER NOT NULL DEFAULT 0 CHECK ("blind" IN (0, 1)),
+    "allowVoteChanges"  INTEGER NOT NULL DEFAULT 1 CHECK ("allowVoteChanges" IN (0, 1)),
+    "weight"            INTEGER NOT NULL DEFAULT 1,
+    "public"            INTEGER NOT NULL DEFAULT 0 CHECK ("public" IN (0, 1)),
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
-INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "weight", "public") VALUES (1, NULL, 'TUTD', 'Thumbs?', '[{"answer":"Up","weight":0.9,"color":"#00FF00"},{"answer":"Wiggle","weight":1,"color":"#00FFFF"},{"answer":"Down","weight":1.1,"color":"#FF0000"}]', 0, 0, 1, 1);
-INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "weight", "public") VALUES (2, NULL, 'True/False', 'True or False', '[{"answer":"True","weight":1,"color":"#00FF00"},{"answer":"False","weight":1,"color":"#FF0000"}]', 0, 0, 1, 1);
-INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "weight", "public") VALUES (3, NULL, 'Done/Ready?', 'Done/Ready?', '[{"answer":"Yes","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1);
-INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "weight", "public") VALUES (4, NULL, 'Multiple Choice', 'Multiple Choice', '[{"answer":"A","weight":1,"color":"#FF0000"},{"answer":"B","weight":1,"color":"#0000FF"},{"answer":"C","weight":1,"color":"#FFFF00"},{"answer":"D","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1);
+INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (1, NULL, 'TUTD', 'Thumbs?', '[{"answer":"Up","weight":0.9,"color":"#00FF00"},{"answer":"Wiggle","weight":1,"color":"#00FFFF"},{"answer":"Down","weight":1.1,"color":"#FF0000"}]', 0, 0, 1, 1, 1);
+INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (2, NULL, 'True/False', 'True or False', '[{"answer":"True","weight":1,"color":"#00FF00"},{"answer":"False","weight":1,"color":"#FF0000"}]', 0, 0, 1, 1, 1);
+INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (3, NULL, 'Done/Ready?', 'Done/Ready?', '[{"answer":"Yes","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1, 1);
+INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (4, NULL, 'Multiple Choice', 'Multiple Choice', '[{"answer":"A","weight":1,"color":"#FF0000"},{"answer":"B","weight":1,"color":"#0000FF"},{"answer":"C","weight":1,"color":"#FFFF00"},{"answer":"D","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1, 1);
 
 CREATE TABLE IF NOT EXISTS "ip_blacklist"
 (
