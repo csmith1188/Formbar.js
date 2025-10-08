@@ -64,9 +64,19 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	refreshApiKey: STUDENT_PERMISSIONS,
     refreshPin: STUDENT_PERMISSIONS,
 	transferDigipogs: STUDENT_PERMISSIONS,
-	transferDigipogsResult: STUDENT_PERMISSIONS,
+	transferResponse: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	awardDigipogsResponse: TEACHER_PERMISSIONS,
+	poolCreate: STUDENT_PERMISSIONS,
+	poolCreateResponse: STUDENT_PERMISSIONS,
+	poolDelete: STUDENT_PERMISSIONS,
+	poolDeleteResponse: STUDENT_PERMISSIONS,
+	poolAddMember: STUDENT_PERMISSIONS,
+	poolAddMemberResponse: STUDENT_PERMISSIONS,
+	poolRemoveMember: STUDENT_PERMISSIONS,
+	poolRemoveMemberResponse: STUDENT_PERMISSIONS,
+	poolPayout: STUDENT_PERMISSIONS,
+	poolPayoutResponse: STUDENT_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event

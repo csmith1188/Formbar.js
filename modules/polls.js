@@ -93,7 +93,8 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].poll.responses[answer] = {
                 answer: answer,
                 weight: weight,
-                color: color
+                color: color,
+                correct: answers[i].correct
             }
         }
 

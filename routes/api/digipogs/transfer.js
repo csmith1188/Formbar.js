@@ -1,7 +1,6 @@
 const { logger } = require("../../../modules/logger");
 const { httpPermCheck } = require("../../middleware/permissionCheck");
 const { transferDigipogs } = require("../../../modules/digipogs");
-const { jwtSign } = require("../../../sockets/digipogs");
 
 module.exports = {
     run(router) {
@@ -10,9 +9,9 @@ module.exports = {
             try {
                 const result = await transferDigipogs(req.body);
                 if (result.success) {
-                    res.status(200).json({ token: jwtSign(result) });
+                    res.status(200).json(result);
                 } else {
-                    res.status(400).json({ token: jwtSign(result) });
+                    res.status(400).json(result);
                 }
             } catch (err) {
                 logger.log('error', err.stack);
