@@ -10,8 +10,6 @@ module.exports = {
 				let { api, permissionType, classId } = req.query
 
 				let permissionTypes = {
-					lights: null,
-					sounds: null,
 					games: null,
                     auxiliary: null
 				}
@@ -57,8 +55,6 @@ module.exports = {
 				const classroom = classInformation.classrooms[user.classId]
 				permissionTypes.games = classroom.permissions.games
 				permissionTypes.auxiliary = classroom.permissions.auxiliary
-				permissionTypes.lights = classroom.permissions.lights
-				permissionTypes.sounds = classroom.permissions.sounds
 
 				if (user.classPermissions < permissionTypes[permissionType]) {
 					res.status(403).json({ reason: 'User does not have enough permissions.' })
