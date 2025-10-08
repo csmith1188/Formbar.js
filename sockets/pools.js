@@ -6,6 +6,7 @@ module.exports = {
         socket.on("poolCreate", async (data) => {
             try {
                 const { name, description } = data;
+
                 if (typeof name !== "string" || name.length <= 0 || name.length > 50) {
                     return socket.emit("poolCreateResponse", { success: false, message: "Invalid pool name." });
                 }
@@ -14,16 +15,18 @@ module.exports = {
                 }
 
                 const result = await dbRun("INSERT INTO digipog_pools (name, description, amount) VALUES (?, ?, 0)", [name, description]);
-                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE user_id = ?", [socket.request.session.user.id]);
+                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE id = ?", [socket.request.session.userId]);
+                
                 if (member.owner && member.owner.split(',').length >= 5) {
                     return socket.emit("poolCreateResponse", { success: false, message: "You can only own up to 5 pools." });
                 }
 
+
                 // Add the pool to the user's owned pools
                 if (member) {
-                    dbRun("UPDATE digipog_pool_users SET owner = ? WHERE user_id = ?", [member.owner ? member.owner + `,${result.lastID}` : `${result.lastID}`, socket.request.session.user.id]);
+                    dbRun("UPDATE digipog_pool_users SET owner = ? WHERE id = ?", [member.owner ? member.owner + `,${result}` : `${result}`, socket.request.session.userId]);
                 } else {
-                    dbRun("INSERT INTO digipog_pool_users (user_id, owner) VALUES (?, ?)", [socket.request.session.user.id, result.lastID]);
+                    dbRun("INSERT INTO digipog_pool_users (id, owner) VALUES (?, ?)", [socket.request.session.userId, result]);
                 }
             } catch (err) {
                 logger.log('error', err.stack);
@@ -37,14 +40,14 @@ module.exports = {
                     return socket.emit("poolDeleteResponse", { success: false, message: "Invalid pool ID." });
                 }
 
-                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE user_id = ?", [socket.request.session.user.id]);
+                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE id = ?", [socket.request.session.userId]);
                 if (!member || !member.owner || !member.owner.split(',').includes(poolId.toString())) {
                     return socket.emit("poolDeleteResponse", { success: false, message: "You do not own this pool." });
                 }
 
                 // Remove the pool from the database
                 const newOwnerList = member.owner.split(',').filter(id => id !== poolId.toString()).join(',');
-                await dbRun("UPDATE digipog_pool_users SET owner = ? WHERE user_id = ?", [newOwnerList, socket.request.session.user.id]);
+                await dbRun("UPDATE digipog_pool_users SET owner = ? WHERE id = ?", [newOwnerList, socket.request.session.userId]);
                 await dbRun("UPDATE digipog_pool_users SET member = TRIM(REPLACE(REPLACE(member, ?, ''), ',,', ',')) WHERE member LIKE ?", [poolId.toString(), `%${poolId}%`]);
                 await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
 
@@ -60,11 +63,11 @@ module.exports = {
                 if (typeof poolId !== "number" || poolId < 0) {
                     return socket.emit("poolAddMemberResponse", { success: false, message: "Invalid pool ID." });
                 }
-                if (typeof userId !== "number" || (userId <= 0) && (userId !== socket.request.session.user.id)) {
+                if (typeof userId !== "number" || (userId <= 0) && (userId !== socket.request.session.userId)) {
                     return socket.emit("poolAddMemberResponse", { success: false, message: "Invalid user ID." });
                 }
 
-                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE user_id = ?", [socket.request.session.user.id]);
+                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE id = ?", [socket.request.session.userId]);
                 if (!member || !member.owner || !member.owner.split(',').includes(poolId.toString())) {
                     return socket.emit("poolAddMemberResponse", { success: false, message: "You do not own this pool." });
                 }
@@ -80,7 +83,7 @@ module.exports = {
                 }
 
                 poolMembers.push(userId.toString());
-                await dbRun("UPDATE digipog_pool_users SET member = ? WHERE user_id = ?", [poolMembers.join(','), socket.request.session.user.id]);
+                await dbRun("UPDATE digipog_pool_users SET member = ? WHERE id = ?", [poolMembers.join(','), socket.request.session.userId]);
 
                 return socket.emit("poolAddMemberResponse", { success: true, message: "User added to pool successfully." });
             } catch (err) {
@@ -94,11 +97,11 @@ module.exports = {
                 if (typeof poolId !== "number" || poolId < 0) {
                     return socket.emit("poolRemoveMemberResponse", { success: false, message: "Invalid pool ID." });
                 }
-                if (typeof userId !== "number" || (userId <= 0) && (userId !== socket.request.session.user.id)) {
+                if (typeof userId !== "number" || (userId <= 0) && (userId !== socket.request.session.userId)) {
                     return socket.emit("poolRemoveMemberResponse", { success: false, message: "Invalid user ID." });
                 }
 
-                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE user_id = ?", [socket.request.session.user.id]);
+                const member = await dbGet("SELECT * FROM digipog_pool_users WHERE id = ?", [socket.request.session.userId]);
                 if (!member || !member.owner || !member.owner.split(',').includes(poolId.toString())) {
                     return socket.emit("poolRemoveMemberResponse", { success: false, message: "You do not own this pool." });
                 }
@@ -109,7 +112,7 @@ module.exports = {
                 }
 
                 const newMemberList = poolMembers.filter(id => id !== userId.toString()).join(',');
-                await dbRun("UPDATE digipog_pool_users SET member = ? WHERE user_id = ?", [newMemberList, socket.request.session.user.id]);
+                await dbRun("UPDATE digipog_pool_users SET member = ? WHERE id = ?", [newMemberList, socket.request.session.userId]);
 
                 return socket.emit("poolRemoveMemberResponse", { success: true, message: "User removed from pool successfully." });
             } catch (err) {
@@ -132,8 +135,8 @@ module.exports = {
                     const user = await dbGet("SELECT * FROM users WHERE id = ?", [member.id]);
                     if (user) {
                         const newBalance = user.digipogs + Math.floor(pool.amount / members.length);
-                        await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, user.id]);
-                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, user.id, pool.id, Math.floor(pool.amount / members.length), `Payout from pool ${pool.name}`, Date.now()]);
+                        await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, userId]);
+                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, userId, pool.id, Math.floor(pool.amount / members.length), `Payout from pool ${pool.name}`, Date.now()]);
                     }
                 }
 
