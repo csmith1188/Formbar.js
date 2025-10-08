@@ -208,13 +208,14 @@ function buildStudent(classroom, studentData) {
 
         // Add each tag as a button to the tag form
         if (!Array.isArray(classroom.tags)) classroom.tags = [];
-        roomTagDiv.innerHTML = '';
+        //roomTagDiv.innerHTML = '';
         for (let i = 0; i < classroom.tags.length; i++) {
             let tag = classroom.tags[i]
             if (tag == 'Offline') continue
 
             let button = document.createElement('button');
             button.innerHTML = tag
+            button.classList.add('revampButton')
             button.name = `button${classroom.tags[i]}`;
             button.value = classroom.tags[i];
             if (!Array.isArray(studentData.tags)) studentData.tags = []
@@ -435,6 +436,20 @@ function filterSortChange(classroom) {
             let studentElement = document.getElementById(`student-${userId}`);
             let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
             if (!studentCheckbox || !studentCheckbox.checked) {
+                studentElement.style.display = 'none'
+                const index = userOrder.indexOf(userId);
+                if (index > -1) {
+                    userOrder.splice(index, 1);
+                }
+            }
+        }
+    }
+
+    if (filter.cantVote) {
+        for (const userId of userOrder.slice()) {
+            let studentElement = document.getElementById(`student-${userId}`);
+            let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
+            if (studentCheckbox || studentCheckbox.checked) {
                 studentElement.style.display = 'none'
                 const index = userOrder.indexOf(userId);
                 if (index > -1) {

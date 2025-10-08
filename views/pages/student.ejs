@@ -287,6 +287,16 @@
                         const newPoll = classroomData.poll;
                         if (deepObjectEqual(poll, newPoll)) return;
 
+						if(poll.startTime !== undefined && poll.startTime !== newPoll.startTime) {
+							currentUser.pollRes = {
+								buttonRes: '',
+								textRes: '',
+								date: null
+							}
+							oldLetterRes = '';
+							oldTextRes = '';
+						}
+
                         poll = newPoll;
                         if (poll.status) {
                             socket.emit('getCanVote', currentUser.id);
