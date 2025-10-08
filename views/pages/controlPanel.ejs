@@ -388,8 +388,15 @@
 </dialog>
 <%- include('../partials/body_content') %>
 
+<div class="studentTagAdder">
+    
+</div>
+
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
+        <button class="studentTagsButton revampButton circularButton">
+            <img src="/img/pricetags-outline.svg" alt="Tags Icon">
+        </button>
         <span id="alerts"></span>
         <span>
             <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
@@ -797,6 +804,7 @@
         answeredPoll: "Answered Poll",
         alert: "Alerts",
         canVote: "Can Vote",
+        cantVote: "Can't Vote",
         // byTag: "By Tag"        
     }
 
@@ -804,9 +812,7 @@
         responseOrder: "Response Order",
         responseText: "Response Text",
         responseTime: "Response Time",
-
         helpTime: "Help Time",
-
         permissions: "Permissions"
     }
 
