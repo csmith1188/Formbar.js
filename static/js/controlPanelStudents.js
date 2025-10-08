@@ -58,15 +58,6 @@ function buildStudent(classroom, studentData) {
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
         studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
-        studentBox.onclick = () => {
-            const canStudentVote = studentBox.checked;
-            let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
-            if (studentBox.checked && !studentsAllowedToVote.includes(studentData.id.toString())) {
-                studentsAllowedToVote.push(studentData.id.toString());
-            }
-
-            socket.emit('changeCanVote', { [studentData.id]: canStudentVote });
-        }
 
         for (let eachResponse in classroom.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
