@@ -13,7 +13,37 @@ const endpointWhitelistMap = [
     'getActiveClass'
 ]
 
-function classPermCheck(classPermission) {
+/**
+ * Middleware to check if a user has the required global permission.
+ * @param {string|number} permission - The required permission level for the user.
+ * @returns {Function} Express middleware function.
+ */
+function hasPermission(permission) {
+    return function (req, res, next) {
+        try {
+            const user = classInformation.users[req.session.email];
+            if (!user) {
+                return res.status(401).json({error: 'User not found'});
+            }
+
+            if (user.permissions >= permission) {
+                next();
+            } else {
+                res.status(403).json({ message: 'You do not have permission to access this resource.' });
+            }
+        } catch (err) {
+            logger.log('error', err.stack);
+            res.status(500).json({ error: 'There was a server error try again.' });
+        }
+    }
+}
+
+/**
+ * Middleware to check if a user has the required class permission.
+ * @param {string|number} classPermission - The required permission level for the class.
+ * @returns {Function} Express middleware function.
+ */
+function hasClassPermission(classPermission) {
     return async function(req, res, next) {
         try {
             const classId = req.params.id;
@@ -101,6 +131,7 @@ function httpPermCheck(event){
 }
 
 module.exports = {
-    classPermCheck,
+    hasPermission,
+    hasClassPermission,
     httpPermCheck
 };

@@ -100,14 +100,12 @@ module.exports = {
                                         managerUpdate()
 
                                         res.redirect('/')
-                                        return;
                                     } catch (err) {
                                         logger.log('error', err.stack);
                                         res.render('pages/message', {
                                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                             title: 'Error'
                                         });
-                                        return;
                                     }
                                 });
                             } catch (err) {
@@ -361,14 +359,12 @@ module.exports = {
                                                     managerUpdate()
 
                                                     res.redirect('/')
-                                                    return;
                                                 } catch (err) {
                                                     logger.log('error', err.stack);
                                                     res.render('pages/message', {
                                                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                                         title: 'Error'
                                                     });
-                                                    return;
                                                 }
                                             });
                                         } catch (err) {

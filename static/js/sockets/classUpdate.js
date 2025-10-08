@@ -34,11 +34,14 @@ socket.on('classUpdate', (classroomData) => {
     currentTags = []
     let studentsOffline = 0
     let studentsBanned = 0
+    const currentlyBannedIds = new Set(); // Tracks currently banned user IDs
+
     for (const [studentId, student] of Object.entries(classroomData.students)) {
         if (student.classPermissions === BANNED_PERMISSIONS) {
             studentsBanned += 1;
+            currentlyBannedIds.add(student.id);
 
-            // If the element for the banned user already exists, then do not add a new one
+            // If the element for the banned user already exists, update it if needed
             if (document.getElementById(`banned-${student.id}`)) {
                 continue;
             }
@@ -121,6 +124,15 @@ socket.on('classUpdate', (classroomData) => {
         }
     }
 
+    // Clean up any banned user entries that are no longer banned
+    const bannedRows = bannedUsersBody.querySelectorAll('tr[id^="banned-"]');
+    bannedRows.forEach(row => {
+        const userId = Number(row.id.replace('banned-', ''));
+        if (!currentlyBannedIds.has(userId)) {
+            row.remove();
+        }
+    });
+
     className.innerHTML = `<b>Class Name:</b> ${classroomData.className}`
     classCode.innerHTML = `<b>Class Code:</b> ${classroomData.key}`
 
@@ -177,7 +189,7 @@ socket.on('classUpdate', (classroomData) => {
         pollsTabButton.style.display = ''
     } else {
         pollsTabButton.style.display = 'none'
-z
+
         if (pollsTabButton.classList.contains('pressed')) {
             changeTab('usersMenu', 'mainTabs')
         }

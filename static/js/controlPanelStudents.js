@@ -317,7 +317,14 @@ function buildStudent(classroom, studentData) {
             banStudentButton.textContent = 'Ban User'
             banStudentButton.onclick = (event) => {
                 if (confirm(`Are you sure you want to ban ${studentData.displayName}?`)) {
+                    // Send a request to change the student's permissions to BANNED_PERMISSIONS
                     socket.emit('classPermChange', studentData.id, 0)
+
+                    // Remove their student element from the page
+                    const studentElement = document.getElementById(`student-${studentData.id}`);
+                    if (studentElement) {
+                        studentElement.remove()
+                    }
                 }
             }
 

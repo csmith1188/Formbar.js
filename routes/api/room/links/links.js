@@ -1,12 +1,12 @@
 const { logger } = require("../../../../modules/logger");
 const { GUEST_PERMISSIONS } = require("../../../../modules/permissions");
-const { classPermCheck } = require("../../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../../middleware/permissionCheck");
 const { dbGet } = require("../../../../modules/database");
 
 module.exports = {
     run(router) {
         // Retrieves all links for a class from the database
-        router.get('/room/:id/links', classPermCheck(GUEST_PERMISSIONS), async (req, res) => {
+        router.get('/room/:id/links', hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const links = await dbGet('SELECT name, url FROM links WHERE classId = ?', [classId]);

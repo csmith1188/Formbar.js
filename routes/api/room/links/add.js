@@ -1,12 +1,12 @@
 const { logger } = require("../../../../modules/logger");
 const { TEACHER_PERMISSIONS } = require("../../../../modules/permissions");
-const { classPermCheck } = require("../../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../../middleware/permissionCheck");
 const { dbRun } = require("../../../../modules/database");
 
 module.exports = {
     run(router) {
         // Adds a link to a class by id
-        router.post('/class/:id/links/add', classPermCheck(TEACHER_PERMISSIONS), async (req, res) => {
+        router.post('/class/:id/links/add', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const { name, url } = req.body;

@@ -72,12 +72,14 @@ async function joinRoomByCode(code, session) {
 		}
 
 		if (classUser) {
-			// Get the student's session data ready to transport into new class
-			let currentUser = classInformation.users[email]
+			// If the user is banned, then don't let them join
 			if (classUser.permissions <= BANNED_PERMISSIONS) {
 				logger.log('info', '[joinClass] User is banned')
 				return 'You are banned from that class.'
 			}
+
+            // Get the student's session data ready to transport into new class
+            let currentUser = classInformation.users[email]
 
 			// Set class permissions and clear any previous tags so they don't persist across classes
 			currentUser.classPermissions = classUser.permissions

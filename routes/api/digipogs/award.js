@@ -1,12 +1,12 @@
 const { logger } = require("../../../modules/logger");
-const { classPermCheck } = require("../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("../../../modules/permissions");
 const { awardDigipogs } = require("../../../modules/digipogs");
 
 module.exports = {
     run(router) {
         // Awards digipogs to a user
-        router.post('/digipogs/award', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+        router.post('/digipogs/award', hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
                 const result = await awardDigipogs(req.body);
                 if (result.success) {

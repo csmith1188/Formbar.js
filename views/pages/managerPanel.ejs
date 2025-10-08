@@ -52,7 +52,17 @@
                 </div>
             </div>
             <div id="bannedUsersMenu">
-                <div id="users"></div>
+                <h1 class="mobileMenuHeader">Banned Users</h1>
+                <table id="bannedUsersTable" class="revampDiv" style="margin: 0 auto; text-align: center;">
+                    <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Display Name</th>
+                        <th>Date Banned</th>
+                    </tr>
+                    </thead>
+                    <tbody id="bannedUsersBody"></tbody>
+                </table>
             </div>
             <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
                 <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>
@@ -67,6 +77,7 @@
         const ipListToggle = document.getElementById('toggleIpListButton')
         const whitelistButton = document.querySelector('button#whitelist');
         const blacklistButton = document.querySelector('button#blacklist');
+        const bannedUsersBody = document.getElementById('bannedUsersMenu');
 
         function setWhitelistHeader({ target }) {
             if(target == whitelistButton && !whitelistButton.classList.contains('pressed')) {
@@ -86,7 +97,6 @@
             if(orientation == 'landscape') {
                 // Desktop
                 userDiv.classList.toggle('hiddenInfo');
-                return;
             } else {
                 // Mobile
                 backgroundDarken.className = 'open';
@@ -99,7 +109,6 @@
                 });
 
                 managerPaneluserDialog.showModal();
-                return;
             }
         }
 
@@ -207,8 +216,8 @@
                 banUserButton.className = 'banUser quickButton warningButton revampButton'
                 banUserButton.setAttribute("data-user", userData.id)
                 banUserButton.innerText = "Ban User"
-                banUserButton.onclick = (event) => {
-                    socket.emit('banUser', { id: userData.id })
+                banUserButton.onclick = async (event) => {
+                    const banUserResponse = fetch('')
                 }
                 newUser.appendChild(banUserButton)
                 let deleteUserButton = document.createElement("button")
@@ -223,23 +232,27 @@
                                 'Content-Type': 'application/json',
                                 'API': currentUser.API
                             }
-                        })
-                        .then(async (res) => {
+                        }).then(async (res) => {
                             if (!res.ok) {
                                 let data
-                                try { data = await res.json() } catch (e) { /* noop */ }
+                                try { data = await res.json() } catch (err) { /* noop */ }
                                 const message = (data && (data.error || data.message)) || 'Failed to delete user.'
                                 throw new Error(message)
                             }
                             return res.json()
-                        })
-                        .then(() => {
-                            const key = Object.keys(users).find(k => users[k] && users[k].id === userData.id)
-                            if (key) delete users[key]
-                            const el = document.getElementById(userData.email)
-                            if (el && el.parentElement) el.parentElement.removeChild(el)
-                        })
-                        .catch((err) => {
+                        }).then(() => {
+                            // Find the user in the users object and delete them
+                            const key = Object.keys(users).find(key => users[key] && users[key].id === userData.id)
+                            if (key) {
+                                delete users[key]
+                            }
+
+                            // Remove the user element from the page
+                            const userElement = document.getElementById(userData.email)
+                            if (userElement && userElement.parentElement) {
+                                userElement.parentElement.removeChild(userElement)
+                            }
+                        }).catch((err) => {
                             alert(err.message || 'There was an error deleting the user.')
                         })
                     }
@@ -350,6 +363,7 @@
             }
         }).then(async rawData => {
             const managerData = await rawData.json();
+            console.log(managerData);
             users = managerData.users;
 
             filterSortChange()

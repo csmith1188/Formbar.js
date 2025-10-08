@@ -1,10 +1,10 @@
-
 const { classInformation } = require("./classroom");
 const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
 const { setClassOfApiSockets, userSockets } = require("../socketUpdates");
 const { dbRun } = require("../database");
 const { userSocketUpdates } = require("../../sockets/init");
+const { BANNED_PERMISSIONS } = require("../permissions");
 
 // Kicks a student from a class
 // If exitRoom is set to true, then it will fully remove the student from the class;
@@ -17,7 +17,7 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         // Check if user exists in classInformation.users before trying to modify
         if (classInformation.users[email]) {
             // Remove user from class session
-            classInformation.users[email].classPermissions = null;
+            classInformation.users[email].classPermissions = options.ban ? BANNED_PERMISSIONS : null;
             classInformation.users[email].activeClass = null;
             setClassOfApiSockets(classInformation.users[email].API, null);
         }
@@ -42,8 +42,8 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         if (options.exitRoom && classInformation.classrooms[classId]) {
             if (classInformation.users[email] && !classInformation.users[email].isGuest && !options.ban) {
                 await dbRun('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId]);
+                delete classInformation.classrooms[classId].students[email];
             }
-            delete classInformation.classrooms[classId].students[email];
         }
 
         // Update the control panel

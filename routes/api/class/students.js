@@ -1,5 +1,5 @@
 const { logger } = require("../../../modules/logger")
-const { classPermCheck } = require("../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../middleware/permissionCheck");
 const { classInformation } = require("../../../modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS} = require("../../../modules/permissions");
 const { dbGetAll } = require("../../../modules/database");
@@ -7,7 +7,7 @@ const { dbGetAll } = require("../../../modules/database");
 module.exports = {
     run(router) {
         // Gets the students of a class
-		router.get('/class/:id/students', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+		router.get('/class/:id/students', hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
 			try {
 				// Get the class key from the request parameters and log the request details
 				const classId = req.params.id;
