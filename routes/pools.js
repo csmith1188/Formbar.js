@@ -1,6 +1,6 @@
 const { dbGet, dbGetAll } = require('../modules/database');
 const { logger } = require('../modules/logger');
-const { isVerified, permCheck } = require('../modules/authentication');
+const { isVerified, permCheck } = require('middleware/authentication');
 
 module.exports = {
     run(app) {
@@ -15,10 +15,10 @@ module.exports = {
                 for (const poolId of [...ownedPools, ...memberPools]) {
                     const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [poolId]);
                     pool.members = await dbGetAll("SELECT id FROM digipog_pool_users WHERE member LIKE ?", [`%${poolId}%`]);
-                    pool.owner = await dbGet("SELECT email FROM users WHERE id = ?", [pool.owner]);
+                    pool.owner = await dbGet("SELECT id FROM digipog_pool_users WHERE owner LIKE ?", [`%${poolId}%`]);
                     if (pool) pools.push(pool);
                 }
-                res.render('pages/ools', {
+                res.render('pages/pools', {
                     title: 'Digipog Pools',
                     pools: pools,
                     ownedPools: ownedPools,
