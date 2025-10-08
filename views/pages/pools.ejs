@@ -19,6 +19,10 @@
                     border-spacing: 0;
                 }
 
+                tr {
+                    position: relative;
+                }
+
                 div.transactionHistory {
                     width: 100%;
                     height: 100vh;
@@ -60,14 +64,25 @@
                         <th>Members</th>
                         <th>Description</th>
                         <th>Amount</th>
+                        <th>Options</th>
                     </tr>
 
                     <% JSON.parse(pools).forEach(function(pool) { %>
-                        <tr>
-                            <td><%= pool.owner.id %></td>
+                        <tr id="pool-<%=pool.id%>">
+                            <td><%= pool.owner.id == currentUser.id ? "You" : pool.owner.id %></td>
                             <td><%= pool.members.length > 0 ? pool.members : "None" %></td>
                             <td class="description" title="<%= pool.description %>"><%= pool.description %></td>
                             <td><%= pool.amount %></td>
+                            <td><% if(pool.owner.id == currentUser.id) { %>
+                                    <button class="revampButton acceptButton squareButton" style="padding: 5px;">
+                                        <img src="/img/pencil-outline.svg" alt="" style="filter: invert(0) !important">
+                                    </button>
+                                <% } else { %>
+                                    <button class="revampButton acceptButton squareButton" style="padding: 5px;cursor: not-allowed;" disabled>
+                                        <img src="/img/pencil-outline.svg" alt="" style="filter: invert(0) !important">
+                                    </button>
+                                <% } %>
+                            </td>
                         </tr>
                     <% }); %>
                 </table>
@@ -95,7 +110,5 @@
             socket.on('poolPayoutResponse', (data) => {
                 console.log(data)
             })
-            
-            
         </script>
 </html>
