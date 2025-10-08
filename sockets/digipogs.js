@@ -14,5 +14,4 @@ module.exports = {
             socket.emit('transferResponse', result);
         });
     },
-    jwtSign
 }
