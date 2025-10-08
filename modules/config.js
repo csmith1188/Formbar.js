@@ -1,6 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
-const { dbGet } = require("./database");
+const { dbGet, dbRun } = require("./database");
 require('dotenv').config();
 
 /**
