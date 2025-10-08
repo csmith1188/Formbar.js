@@ -119,6 +119,6 @@ module.exports = {
 
             await dbRun("UPDATE digipog_pools SET amount = 0 WHERE id = ?", [poolId]);
             return socket.emit("poolPayoutResponse", { success: true, message: "Pool payout successful." });
-        })
+        });
     }
 }
