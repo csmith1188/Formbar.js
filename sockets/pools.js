@@ -13,7 +13,7 @@ module.exports = {
             const result = await dbRun("INSERT INTO digipog_pools (name, description, amount) VALUES (?, ?, 0)", [name, description]);
             const member = await dbGet("SELECT * FROM digipog_pool_users WHERE user_id = ?", [socket.request.session.user.id]) 
 
-            if (member.owener && member.owner.split(',').length >= 5) {
+            if (member.owner && member.owner.split(',').length >= 5) {
                 return socket.emit("poolCreateResponse", { success: false, message: "You can only own up to 5 pools." });
             }
 
