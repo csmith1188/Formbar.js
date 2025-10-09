@@ -1,10 +1,4 @@
-const jwt = require("jsonwebtoken");
-const { privateKey } = require("../modules/config");
 const { awardDigipogs, transferDigipogs } = require("../modules/digipogs");
-
-function jwtSign(payload) {
-    return jwt.sign(payload, privateKey, { algorithm: 'RS256' }, { expiresIn: '1h' });
-}
 
 module.exports = {
     run(socket) {
@@ -17,8 +11,7 @@ module.exports = {
         // For transferring digipogs between users for third party services
         socket.on('transferDigipogs', async (transferData) => {
             const result = await transferDigipogs(transferData);
-            socket.emit('transferResponse', jwtSign(result));
+            socket.emit('transferResponse', result);
         });
     },
-    jwtSign
 }

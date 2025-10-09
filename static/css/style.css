@@ -705,6 +705,10 @@ details[open] {
 	grid-row: span 5;
 }
 
+details[id^="student-guest"][open] {
+	grid-row: span 3;
+}
+
 details #reasons {
 	opacity: 0;
 	pointer-events: none;
@@ -2726,4 +2730,13 @@ button.sort img {
 
 button.sort img.sortAscendDescendBG {
 	opacity: 0.25;
+}
+
+button.studentTagsButton {
+	padding: 0;
+	position: absolute;
+	right: 0;
+	margin-right: 5px;
+	height: 35px !important;
+	width: 35px !important;
 }
