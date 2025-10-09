@@ -1,7 +1,7 @@
 const { logger } = require("../../../../modules/logger");
 const { GUEST_PERMISSIONS } = require("../../../../modules/permissions");
 const { hasClassPermission } = require("../../../middleware/permissionCheck");
-const { dbGet } = require("../../../../modules/database");
+const { dbGetAll } = require("../../../../modules/database");
 
 module.exports = {
     run(router) {
@@ -9,8 +9,12 @@ module.exports = {
         router.get('/room/:id/links', hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
-                const links = await dbGet('SELECT name, url FROM links WHERE classId = ?', [classId]);
-                res.status(200).json(links);
+                const links = await dbGetAll('SELECT name, url FROM links WHERE classId = ?', [classId]);
+
+                if (links) {
+                    console.log('links:', links)
+                    res.status(200).json(links);
+                }
             } catch (err) {
                 logger.log('error', err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });

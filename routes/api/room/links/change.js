@@ -1,13 +1,12 @@
 const { logger } = require("../../../../modules/logger");
-const { classInformation } = require("../../../../modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("../../../../modules/permissions");
 const { hasClassPermission } = require("../../../middleware/permissionCheck");
 const { dbRun } = require("../../../../modules/database");
 
 module.exports = {
     run(router) {
-        // Changes a link in a class by id
-        router.post('/class/:id/links/change', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        // Changes a link in a room by id
+        router.post('/room/:id/links/change', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const { name, url } = req.body;

@@ -5,8 +5,8 @@ const { dbRun } = require("../../../../modules/database");
 
 module.exports = {
     run(router) {
-        // Adds a link to a class by id
-        router.post('/class/:id/links/add', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        // Adds a link to a room by id
+        router.post('/room/:id/links/add', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const { name, url } = req.body;

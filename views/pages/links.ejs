@@ -36,7 +36,24 @@
             'API': currentUser.API
         }
     }).then(res => {
-        console.log(res)
+        const links = res.json();
+        let br = document.createElement('br')
+        linksDiv.innerHTML = ''
+
+        if (links.length == 0) {
+            linksDiv.innerHTML = '<p style="font-size: 18px;">No links provided for this classroom.</p>'
+            return
+        }
+
+        for (const link of links) {
+            const link = document.createElement('a')
+            link.className = 'quickButton'
+            link.href = link.url
+            link.target = '_blank'
+            link.innerText = link.name
+            linksDiv.append(link)
+            linksDiv.append(br.cloneNode(true))
+        }
     });
 
     // socket.emit('pluginUpdate')

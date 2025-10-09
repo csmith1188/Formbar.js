@@ -1,5 +1,4 @@
 const { logger } = require("../../../../modules/logger");
-const { classInformation } = require("../../../../modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("../../../../modules/permissions");
 const { hasClassPermission } = require("../../../middleware/permissionCheck");
 const { dbRun } = require("../../../../modules/database");
@@ -7,7 +6,7 @@ const { dbRun } = require("../../../../modules/database");
 module.exports = {
     run(router) {
         // Removes a link to a class by id
-        router.post('/class/:id/links/remove', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        router.post('/room/:id/links/remove', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const { name } = req.body;

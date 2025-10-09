@@ -47,11 +47,16 @@ function hasClassPermission(classPermission) {
     return async function(req, res, next) {
         try {
             const classId = req.params.id;
-            const hasPermissions = await checkUserClassPermission(req.session.user.id, classId, classPermission);
-            if (hasPermissions) {
-                next()
+            const classroom = classInformation.classrooms[classId];
+            if (classroom) {
+                const user = classroom.students[req.session.user.email];
+                if (user.classPermissions >= classPermission) {
+                    next()
+                } else {
+                    res.status(403).json({ message: 'Unauthorized' });
+                }
             } else {
-                res.status(403).json({ message: 'Unauthorized' });
+                res.status(403).json({ message: 'This class is not currently active.' });
             }
         } catch (err) {
             logger.log('error', err.stack);
