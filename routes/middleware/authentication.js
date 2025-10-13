@@ -163,22 +163,23 @@ function permCheck(req, res, next) {
 	}
 }
 
-function checkIPBanned() {
-	if (settings.whitelistActive && Object.keys(whitelistedIps).length > 0) {
-		const isWhitelisted = Object.values(whitelistedIps).some(value => ip.startsWith(value.ip))
-		if (!isWhitelisted) {
-			return true;
-		}
-	}
-	
-	if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
-		const isBlacklisted = Object.values(blacklistedIps).some(value => ip.startsWith(value.ip))
-		if (isBlacklisted) {
-			return true;
-		}
-	}
-	
-	return false;
+function checkIPBanned(ip) {
+    if (!ip) return false;
+    if (settings.whitelistActive && Object.keys(whitelistedIps).length > 0) {
+        const isWhitelisted = Object.values(whitelistedIps).some(value => ip.startsWith(value.ip))
+        if (!isWhitelisted) {
+            return true;
+        }
+    }
+    
+    if (settings.blacklistActive && Object.keys(blacklistedIps).length > 0) {
+        const isBlacklisted = Object.values(blacklistedIps).some(value => ip.startsWith(value.ip))
+        if (isBlacklisted) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 module.exports = {

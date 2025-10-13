@@ -1,12 +1,12 @@
 const { logger } = require("../../../modules/logger");
-const { classPermCheck } = require("../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../middleware/permissionCheck");
 const { endClass } = require("../../../modules/class/class");
 const { CLASS_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Ends the current class session
-        router.post('/class/:id/end', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+        router.post('/class/:id/end', hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 endClass(classId, req.session.user);

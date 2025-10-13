@@ -19,6 +19,7 @@
     let MOD_PERMISSIONS = Number('<%- MOD_PERMISSIONS %>')
     let STUDENT_PERMISSIONS = Number('<%- STUDENT_PERMISSIONS %>')
     let GUEST_PERMISSIONS = Number('<%- GUEST_PERMISSIONS %>')
+    let BANNED_PERMISSIONS = Number('<%- BANNED_PERMISSIONS %>')
     let currentUser = null
     if ('<%- locals.currentUser %>' != '')
       currentUser = JSON.parse('<%- JSON.stringify(locals.currentUser) %>')

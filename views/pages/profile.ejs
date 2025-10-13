@@ -77,6 +77,9 @@
                         </div>
                     </div>
                 </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="revampButton" id="transactionsBtn">Transactions</button>
+                </div>
             </div>
         </body>
         <script>
@@ -108,6 +111,7 @@
 
             function revealApiKey() {
                 let showHideApi = document.getElementById('showHideApi');
+                if (!apiKey) return;
                 apiKey.innerHTML = '<strong>API Key:</strong> ' + apiKeyValue;
                 showHideApi.setAttribute("onclick", "hideApiKey()");
                 showHideApi.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide API Key">';
@@ -115,7 +119,7 @@
 
             function hideApiKey() {
                 let showHideApi = document.getElementById('showHideApi');
-
+                if (!apiKey) return;
                 apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 3)}`;
                 showHideApi.setAttribute("onclick", "revealApiKey()");
                 showHideApi.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal API Key">';
@@ -123,6 +127,7 @@
 
             function revealPin() {
                 let showHidePin = document.getElementById('showHidePin');
+                if (!pin) return;
                 pin.innerHTML = '<strong>PIN:</strong> ' + pinValue;
                 showHidePin.setAttribute("onclick", "hidePin()");
                 showHidePin.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide Pin">';
@@ -130,14 +135,26 @@
 
             function hidePin() {
                 let showHidePin = document.getElementById('showHidePin');
-
+                if (!pin) return;
                 pin.innerHTML = `<strong>PIN:</strong> ${'█'.repeat(pinValue.length)}`;
                 showHidePin.setAttribute("onclick", "revealPin()");
                 showHidePin.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal Pin">';
             }
 
-            hideApiKey();
-            hidePin();
+            if (apiKey) hideApiKey();
+            if (pin) hidePin();
+
+            // Handle transactions button, depending on if it's the user's own profile or not
+            const userIdElement = document.getElementById('userId');
+            const userIdText = userIdElement ? userIdElement.textContent.replace(/[^0-9]/g, '') : '';
+            const transactionsButton = document.getElementById('transactionsBtn');
+            transactionsButton.onclick = () => {
+                if (<%- isOwnProfile ? 'true' : 'false' %>) {
+                    location.href = '/profile/transactions';
+                } else {
+                    location.href = `/profile/transactions/${userIdText}`;
+                }
+            };
 
             function updatePin() {
                 const currentPin = document.getElementById('currentPin').value;
@@ -193,12 +210,13 @@
             
             socket.on('apiKeyUpdated', (data) => {
                 apiKeyValue = data;
-                const apiKey = document.getElementById('apiKey');
+                const apiKeyEl = document.getElementById('apiKey');
                 const apiKeyButton = document.getElementById('apiKeyButton');
+                if (!apiKeyEl || !apiKeyButton) return;
                 if (apiKeyButton.innerHTML.includes('Hide API Key')) {
-                    apiKey.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '</p>';
+                    apiKeyEl.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '</p>';
                 } else {
-                    apiKey.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
+                    apiKeyEl.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
                 }
             });
         </script>

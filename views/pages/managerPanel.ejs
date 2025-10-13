@@ -10,25 +10,25 @@
         <script src="/js/tabs.js" defer></script>
     </head>
 
-    <body role="document" tabindex="0">
+    <body id="colorContent" role="document" tabindex="0">
         <%- include('../partials/formbar_header') %>
             <header id="quickMenu" class="fullWidth">
                 <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
                 <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
-                <!-- <button id="settingsMenu" class="quickButton tab" data-tab-group="mainTabs">Settings</button> -->
+                <button id="bannedUsersMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">Banned Users</button>
             </header>
 
             <div id="usersMenu" class="tabContent default usersMenuBox" data-tab-group="mainTabs">
                 <!-- <div id="userFilterBoxes" class="options">
                         <h2 class="headerText">Filter</h2>
                     </div> -->
-                <div id="userSortBoxes" class="options sortManager">
-                    <h2 class="headerText">Sort by:</h2>
+            <div id="userSortBoxes" class="options sortManager" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                    <h2 class="headerText" style="margin: 0; white-space: nowrap;">Sort by:</h2>
                     <button type="button" id="name" class="sort revampButton">Name</button>
                     <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
+                    <input type="text" id="userSearch" class="revampButton revampWithText" placeholder="Search by name" style="flex: 1 1 auto; min-width: 0;">
                 </div>
-                <div id="users">
-                </div>
+                <div id="users"></div>
             </div>
             <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
                 <div class="revampDiv ipMenuDiv">
@@ -42,7 +42,7 @@
                 <div id="whitelistedMembers" class="revampDiv">
                     <div id="whitelistHeader">
                         <h1 id="whitelistedMembersHeader">Blacklist</h1>
-                        <button id="toggleIpListButton" class="quickButton ipListToggle revampButton" onclick="toggleIpList()">Toggle</button>
+                        <button id="toggleIpListButton" class="quickButton ipListToggle revampButton">Enable</button>
                     </div>
                     <div id="whitelistedMemberList">
                         <div class="whitelistIp">
@@ -50,6 +50,22 @@
                             <button class="revampButton warningButton" onclick="alert('Not yet implemented, will need server-side work for this.')">Delete</button> -->
                         </div>
                     </div>
+                </div>
+            </div>
+            <div id="bannedUsersMenu" class="tabContent" data-tab-group="mainTabs">
+                <h1 class="mobileMenuHeader">Banned Users</h1>
+                <div class="revampDiv">
+                    <input id="bannedSearch" type="text" class="revampButton revampWithText" placeholder="Search by email or name">
+                    <table id="bannedUsersTable">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Display Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bannedUsersBody"></tbody>
+                    </table>
                 </div>
             </div>
             <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
@@ -65,16 +81,13 @@
         const ipListToggle = document.getElementById('toggleIpListButton')
         const whitelistButton = document.querySelector('button#whitelist');
         const blacklistButton = document.querySelector('button#blacklist');
+        const bannedUsersBody = document.getElementById('bannedUsersBody');
+        const bannedUsersSearch = document.getElementById('bannedSearch');
 
-        function setWhitelistHeader({ target }) {
-            if(target == whitelistButton && !whitelistButton.classList.contains('pressed')) {
-                whitelistHeaderH1.innerText = 'Whitelist';
-            } else if(target == whitelistButton && whitelistButton.classList.contains('pressed') || target == blacklistButton && !blacklistButton.classList.contains('pressed')) {
-                whitelistHeaderH1.innerText = 'Blacklist';
-            }
-
-            socket.emit('ipUpdate')
-            // Sets the button
+        function onIpTabClick(event) {
+            const currentType = event.currentTarget.id; // 'whitelist' or 'blacklist'
+            whitelistHeaderH1.innerText = currentType.charAt(0).toUpperCase() + currentType.slice(1);
+            loadIps(currentType);
         }
 
         let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
@@ -84,7 +97,6 @@
             if(orientation == 'landscape') {
                 // Desktop
                 userDiv.classList.toggle('hiddenInfo');
-                return;
             } else {
                 // Mobile
                 backgroundDarken.className = 'open';
@@ -97,20 +109,30 @@
                 });
 
                 managerPaneluserDialog.showModal();
-                return;
             }
         }
 
-        function toggleIpList() {
-            ipListToggle.onclick = (event) => {
-                socket.emit('toggleIpList', whitelistHeaderH1.innerHTML.toLowerCase())
-            }
+        async function toggleActiveList() {
+            // Toggle the active state of the currently viewed list
+            const type = whitelistHeaderH1.innerHTML.toLowerCase();
+            await fetch(`/api/ip/${type}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+
+            // Refresh both lists
+            await Promise.all([loadIps('whitelist'), loadIps('blacklist')]);
         }
 
-        setWhitelistHeader(whitelistButton)
+        // Initialize header/button based on which tab is currently pressed
+        if (whitelistButton.classList.contains('pressed')) {
+            whitelistHeaderH1.innerText = 'Whitelist';
+            loadIps('whitelist');
+        } else {
+            whitelistHeaderH1.innerText = 'Blacklist';
+            loadIps('blacklist');
+        }
 
-        whitelistButton.addEventListener('click', setWhitelistHeader);
-        blacklistButton.addEventListener('click', setWhitelistHeader);
+        whitelistButton.addEventListener('click', onIpTabClick);
+        blacklistButton.addEventListener('click', onIpTabClick);
+        ipListToggle.addEventListener('click', toggleActiveList);
 
         let users = {}
 
@@ -177,8 +199,17 @@
                 permissionSwitch.setAttribute("class", "permSwitch revampButton")
                 permissionSwitch.setAttribute("data-userid", userData.email)
                 permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
-                permissionSwitch.onchange = (event) => {
-                    socket.emit('permChange', event.target.dataset.userid, event.target.value)
+                permissionSwitch.onchange = async (event) => {
+                    try {
+                        const email = event.target.dataset.userid;
+                        const perm = event.target.value;
+                        const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
+                        if (!res.ok) {
+                            throw new Error('Failed to update permissions');
+                        }
+                    } catch (err) {
+                        alert(err.message || 'There was an error updating permissions.');
+                    }
                 }
                 let permissions = ["Guest", "User", "Mod", "Teacher"] 
                 for (let i = 4; i > 0; i--) {
@@ -195,9 +226,14 @@
                     verifyUserButton.className = 'quickButton acceptButton revampButton'
                     verifyUserButton.setAttribute("data-user", userData.id)
                     verifyUserButton.innerText = "Verify User"
-                    verifyUserButton.onclick = (event) => {
-                        socket.emit('verifyChange', userData.id)
-                        verifyUserButton.remove()
+                    verifyUserButton.onclick = async (event) => {
+                        try {
+                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                            if (!res.ok) throw new Error('Failed to verify user');
+                            verifyUserButton.remove()
+                        } catch (err) {
+                            alert(err.message || 'There was an error verifying the user.')
+                        }
                     }
                     newUser.appendChild(verifyUserButton)
                 }
@@ -205,8 +241,22 @@
                 banUserButton.className = 'banUser quickButton warningButton revampButton'
                 banUserButton.setAttribute("data-user", userData.id)
                 banUserButton.innerText = "Ban User"
-                banUserButton.onclick = (event) => {
-                    socket.emit('banUser', { id: userData.id })
+                banUserButton.onclick = async (event) => {
+                    try {
+                        if (confirm(`Are you sure you want to ban ${userData.displayName}?`)) {
+                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/ban`);
+                            if (!res.ok) {
+                                throw new Error('Failed to ban user');
+                            }
+
+                            const bannedUserId = Object.keys(users).find(email => users[email] && users[email].id === userData.id)
+                            if (bannedUserId) users[bannedUserId].permissions = 0;
+                            filterSortChange();
+                            renderBannedUsers();
+                        }
+                    } catch (err) {
+                        alert(err.message || 'There was an issue banning the user.');
+                    }
                 }
                 newUser.appendChild(banUserButton)
                 let deleteUserButton = document.createElement("button")
@@ -221,23 +271,27 @@
                                 'Content-Type': 'application/json',
                                 'API': currentUser.API
                             }
-                        })
-                        .then(async (res) => {
+                        }).then(async (res) => {
                             if (!res.ok) {
                                 let data
-                                try { data = await res.json() } catch (e) { /* noop */ }
+                                try { data = await res.json() } catch (err) { /* noop */ }
                                 const message = (data && (data.error || data.message)) || 'Failed to delete user.'
                                 throw new Error(message)
                             }
                             return res.json()
-                        })
-                        .then(() => {
-                            const key = Object.keys(users).find(k => users[k] && users[k].id === userData.id)
-                            if (key) delete users[key]
-                            const el = document.getElementById(userData.email)
-                            if (el && el.parentElement) el.parentElement.removeChild(el)
-                        })
-                        .catch((err) => {
+                        }).then(() => {
+                            // Find the user in the users object and delete them
+                            const key = Object.keys(users).find(key => users[key] && users[key].id === userData.id)
+                            if (key) {
+                                delete users[key]
+                            }
+
+                            // Remove the user element from the page
+                            const userElement = document.getElementById(userData.email)
+                            if (userElement && userElement.parentElement) {
+                                userElement.parentElement.removeChild(userElement)
+                            }
+                        }).catch((err) => {
                             alert(err.message || 'There was an error deleting the user.')
                         })
                     }
@@ -268,7 +322,11 @@
                 users = Object.fromEntries(Object.entries(users).sort((a, b) => a[1].permissions - b[1].permissions))
             }
 
+            const searchValue = (document.getElementById('userSearch')?.value || '').toLowerCase();
             for (const user of Object.values(users)) {
+                // Hide globally banned users from main list (permissions === 0)
+                if ((user.permissions ?? 1) === 0) continue;
+                if (searchValue && !(user.displayName || '').toLowerCase().includes(searchValue)) continue;
                 usersDiv.appendChild(buildUser(user))
             }
         }
@@ -351,64 +409,114 @@
             users = managerData.users;
 
             filterSortChange()
+            renderBannedUsers();
         })
 
         socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
             users = tempUsers
             filterSortChange()
+            renderBannedUsers();
         })
 
-        socket.emit('ipUpdate')
-        socket.on('ipUpdate', (type, active, ips) => {
-            if(type == 'whitelist' && whitelistHeaderH1.innerText.toLowerCase() == 'whitelist') {
-                ipListToggle.innerText = active ? 'Disable' : 'Enable'
-                if(active) ipListToggle.classList.add('pressed')
-                else ipListToggle.classList.remove('pressed')
-            } else if(type == 'blacklist' && whitelistHeaderH1.innerText.toLowerCase() == 'blacklist') {
-                ipListToggle.innerText = active ? 'Disable' : 'Enable'
-                if(active) ipListToggle.classList.add('pressed')
-                else ipListToggle.classList.remove('pressed')
+        document.getElementById('userSearch')?.addEventListener('input', filterSortChange);
+
+        function fetchBannedUsers() {
+            return Object.values(users || {}).filter(user => (user.permissions ?? 1) === 0);
+        }
+
+        async function renderBannedUsers() {
+            const bannedRows = await fetchBannedUsers();
+            const query = (bannedUsersSearch?.value || '').toLowerCase();
+            bannedUsersBody.innerHTML = '';
+            
+            // If there are no banned users, indicate that to the manager
+            if (!bannedRows || bannedRows.length === 0) {
+                const emptyRow = document.createElement('tr');
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 3;
+                emptyCell.textContent = 'No banned users.';
+                emptyRow.appendChild(emptyCell);
+                bannedUsersBody.appendChild(emptyRow);
+                return;
             }
 
-            // sets button to enable/disable depending on state of list
+            for (const user of bannedRows) {
+                if (query && !(user.email?.toLowerCase().includes(query) || (user.displayName || '').toLowerCase().includes(query))) continue;
+                const row = document.createElement('tr');
+                const tdEmail = document.createElement('td');
+                tdEmail.textContent = user.email;
+
+                const tdName = document.createElement('td');
+                tdName.textContent = user.displayName || '';
+
+                const actions = document.createElement('td');
+                actions.className = 'actionsCell';
+                const unbanButton = document.createElement('button');
+                unbanButton.className = 'revampButton acceptButton';
+                unbanButton.textContent = 'Unban';
+                unbanButton.onclick = async () => {
+                    await fetch(`/api/user/${encodeURIComponent(user.id)}/unban`);
+                    // Refresh manager data and table
+                    const raw = await fetch('/api/manager');
+                    const data = await raw.json();
+                    users = data.users;
+                    renderBannedUsers();
+                };
+
+                actions.appendChild(unbanButton);
+                row.appendChild(tdEmail);
+                row.appendChild(tdName);
+                row.appendChild(actions);
+                bannedUsersBody.appendChild(row);
+            }
+        }
+
+        bannedUsersSearch?.addEventListener('input', renderBannedUsers);
+        renderBannedUsers();
+
+        async function loadIps(type) {
+            const res = await fetch(`/api/ip/${type}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const active = data.active;
+            const ips = data.ips || [];
+
+            // Always reflect only the current tab's state
+            const currentTab = whitelistHeaderH1.innerText.toLowerCase();
+            if (type === currentTab) {
+                ipListToggle.innerText = active ? 'Disable' : 'Enable'
+                ipListToggle.classList.toggle('pressed', !!active)
+            }
 
             let ipListDiv
             if (type == 'whitelist') ipListDiv = whitelistIpsDiv
             else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
 
             ipListDiv.innerHTML = ''
-
-            for (let ip of Object.values(ips)) {
+            for (let ip of ips) {
                 let ipDiv = document.createElement('div')
                 ipDiv.id = ip.id
                 ipDiv.className = 'ipDiv'
                 let ipName = document.createElement('input')
                 ipName.type = 'text'
+                ipName.className = 'revampButton revampWithText'
                 ipName.value = ip.ip
                 ipName.placeholder = 'IP Address'
-                ipName.onchange = (event) => {
+                ipName.onchange = async (event) => {
                     if (!event.target.checkValidity()) {
                         event.target.reportValidity()
                         return
                     }
-
-                    socket.emit(
-                        'changeIp',
-                        event.target.parentElement.parentElement.id,
-                        event.target.parentElement.id,
-                        event.target.value
-                    )
+                    await fetch(`/api/ip/${type}/${ipDiv.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: event.target.value }) });
+                    loadIps(type);
                 }
                 ipDiv.appendChild(ipName)
                 let removeIp = document.createElement('button')
-                removeIp.className = 'quickButton'
-                removeIp.innerText = 'Remove Ip'
-                removeIp.onclick = (event) => {
-                    socket.emit(
-                        'removeIp',
-                        event.target.parentElement.parentElement.id,
-                        event.target.parentElement.id
-                    )
+                removeIp.className = 'quickButton revampButton warningButton'
+                removeIp.innerText = 'Remove IP'
+                removeIp.onclick = async (event) => {
+                    await fetch(`/api/ip/${type}/${ipDiv.id}`, { method: 'DELETE' });
+                    loadIps(type);
                 }
                 ipDiv.appendChild(removeIp)
                 ipListDiv.appendChild(ipDiv)
@@ -430,17 +538,14 @@
             let submitIp = document.createElement('button')
             submitIp.className = 'quickButton revampButton'
             submitIp.innerText = 'Add IP'
-            submitIp.onclick = (event) => {
+            submitIp.onclick = async (event) => {
                 let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`)
-
-                socket.emit(
-                    'addIp',
-                    newIp.parentElement.parentElement.id,
-                    newIp.value
-                )
+                await fetch(`/api/ip/${event.target.parentElement.parentElement.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: newIp.value }) });
+                loadIps(event.target.parentElement.parentElement.id);
             }
             addIpForm.append(submitIp)
             ipListDiv.append(addIpForm)
-        })
+        }
+
+        // Initial load handled above
     </script>
-    <% - include('../partials/footer_content') %>
