@@ -154,7 +154,7 @@
     const checkLoadedInterval = setInterval(() => {
         if (loaded) {
             clearInterval(checkLoadedInterval);
-            return;
+        }
         }
         socket.emit('classUpdate');
     }, 1000);
