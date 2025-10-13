@@ -1318,9 +1318,20 @@ div.break {
 
 #users #roomTags {
 	display: flex;
-	flex-flow: wrap;
-	justify-content: space-evenly;
-	align-items: flex-start;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+#roomTags {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
 }
 
 #saveButton {
