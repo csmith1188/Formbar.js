@@ -39,7 +39,7 @@
 				</div>
 				<%- include('../partials/body_content') %>
 
-					<dialog id="requestBreakDialog" class="contentBox revampDiv" on="console.log">
+					<dialog id="requestBreakDialog" class="contentBox revampDiv">
 						<script>document.getElementById("requestBreakDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 						<form
 							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
@@ -143,9 +143,10 @@
 						pollForm = document.getElementById('pollForm');
 						pollPromptDisplay = document.getElementById('pollPrompt');
 
-						if( pollDiv.querySelector("#remove")) {
+						if (pollDiv.querySelector("#remove")) {
 							pollDiv.querySelector("#remove").remove()
 						}
+
 						if (poll.allowMultipleResponses) {
 							multiAnswer = "checkbox"
 						} else {
@@ -154,62 +155,115 @@
 
                         pollContent.style.display = 'block'
                         if (poll.status) {
-                            noPoll.style.display = 'none'
-                            pollDiv.style.display = 'block'
+							noPoll.style.display = 'none';
+							pollDiv.style.display = 'block';
 
-                            // Grab the current text response so that it can be preserved if the poll is updated while the user is typing
-                            // This prevents the user from losing their text response if the poll is updated while they are
-                            const responseTextbox = document.getElementById('resTextBox')
-                            let currentTextRes = ''
-                            if (responseTextbox) {
-                                currentTextRes = responseTextbox.value
-                            }
+							// Grab the existing textarea if it exists
+							const responseTextbox = document.getElementById('resTextBox');
+							let currentTextRes = '';
+							let selectionStart = 0, selectionEnd = 0;
+							let wasFocused = false;
 
-                            // Clears the form so that it can be repopulated
-                            pollForm.innerHTML = ''
-                            pollPromptDisplay.innerText = poll.prompt
-
-                            // If the user cannot vote, then display a message instead of the form
-                            if (!votingRight) {
-                                pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
-                                return
-                            }
-
-                            // Creates all selectable answers and displays them to the user
-                            if (poll.allowTextResponses) {
-                                const sanitizedTextResponse = ((currentTextRes || oldTextRes || '') + '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                                pollForm.innerHTML += `<textarea name="resText" cols="20" rows="5" id="resTextBox" class='revampButton revampWithText'>${sanitizedTextResponse}</textarea>`
+							if (responseTextbox) {
+								currentTextRes = responseTextbox.value;
+								selectionStart = responseTextbox.selectionStart;
+								selectionEnd = responseTextbox.selectionEnd;
+								wasFocused = document.activeElement === responseTextbox;
 							}
 
-                            for (let response of Object.values(poll.responses)) {
-                                if(multiAnswer !== 'button') {
-                                    response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
+							// Update the poll prompt
+							pollPromptDisplay.innerText = poll.prompt;
 
-                                    pollForm.innerHTML += `<input type='checkbox' name="poll" class="revampButton pollButton" id="${response.answer}" style="--color: ${response.color}44;--theme-color: ${response.color};"/>${response.answer}`;
-                                } else {
-                                    response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-                                    pollForm.innerHTML += `<button name="poll" class="revampButton pollButton ${response.answer == currentUser.pollRes.buttonRes ? 'activePollButton' : ''}" id="${response.answer}" style="background: ${response.color}44;--color: ${response.color};--theme-color: black;" onclick="submitPoll(this)">${response.answer}</button>`;
-                                }
-                            }
-
-                            if (!poll.allowMultipleResponses && poll.allowVoteChanges) {
-                                pollDiv.innerHTML += `<button class="revampButton" name="poll" id="remove" value="remove" onclick="submitPoll(this)">Remove Vote</button>`
-                            } else if(poll.allowMultipleResponses) {
-                                pollDiv.innerHTML += `<button class="revampButton" id="remove" onclick="submitPoll(this)">Submit</button>`
-                            }
-
-							
-							let radios = document.getElementsByName('poll')
-
-							if(!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
-								radios.forEach((res => {
-									res.disabled = true;
-								}))
+							// If user cannot vote
+							const mayNotAnswer = document.getElementById('pollControl');
+							if (!votingRight) {
+								pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`;
+								return;
+							} else if (votingRight && mayNotAnswer) {
+								mayNotAnswer.remove();
 							}
-                        } else {
-                            noPoll.style.display = 'block'
-                            pollDiv.style.display = 'none'
-                        }
+
+
+							// Only create textarea if it doesn't exist
+							let textarea = responseTextbox;
+							if (poll.allowTextResponses && !responseTextbox) {
+								textarea = document.createElement('textarea');
+								textarea.name = 'resText';
+								textarea.cols = 20;
+								textarea.rows = 5;
+								textarea.id = 'resTextBox';
+								textarea.className = 'revampButton revampWithText';
+								pollForm.appendChild(textarea);
+							}
+
+							// Set the value of the student's text response if it exists
+							if (poll.allowTextResponses && textarea) {
+								textarea.value = (currentTextRes || oldTextRes || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+								if (wasFocused) {
+									textarea.focus();
+									textarea.setSelectionRange(selectionStart, selectionEnd);
+								}
+							}
+
+							// Clear old response buttons
+							const responseButtons = Array.from(pollForm.querySelectorAll('.pollButton'));
+							responseButtons.forEach(btn => btn.remove());
+
+							// Add new response options
+							for (let response of Object.values(poll.responses)) {
+								response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // sanitize
+								if (multiAnswer !== 'button') {
+									const checkbox = document.createElement('input');
+									checkbox.type = 'checkbox';
+									checkbox.name = 'poll';
+									checkbox.className = 'revampButton pollButton';
+									checkbox.id = response.answer;
+									checkbox.style.cssText = `--color: ${response.color}44;--theme-color: ${response.color};`;
+									pollForm.appendChild(checkbox);
+									pollForm.appendChild(document.createTextNode(response.answer));
+								} else {
+									const btn = document.createElement('button');
+									btn.name = 'poll';
+									btn.className = `revampButton pollButton ${response.answer === currentUser.pollRes.buttonRes ? 'activePollButton' : ''}`;
+									btn.id = response.answer;
+									btn.style.cssText = `background: ${response.color}44;--color: ${response.color};--theme-color: black;`;
+									btn.textContent = response.answer;
+									btn.onclick = () => submitPoll(btn);
+									pollForm.appendChild(btn);
+								}
+							}
+
+							// Remove / Submit buttons
+							let removeBtn = pollDiv.querySelector('#remove');
+							if (removeBtn) removeBtn.remove(); // remove old
+							if (!poll.allowMultipleResponses && poll.allowVoteChanges) {
+								const btn = document.createElement('button');
+								btn.className = 'revampButton';
+								btn.name = 'poll';
+								btn.id = 'remove';
+								btn.value = 'remove';
+								btn.textContent = 'Remove Vote';
+								btn.onclick = () => submitPoll(btn);
+								pollDiv.appendChild(btn);
+							} else if (poll.allowMultipleResponses) {
+								const btn = document.createElement('button');
+								btn.className = 'revampButton';
+								btn.id = 'remove';
+								btn.textContent = 'Submit';
+								btn.onclick = () => submitPoll(btn);
+								pollDiv.appendChild(btn);
+							}
+
+							// Disable radios if needed
+							if (!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
+								const radios = pollForm.querySelectorAll('[name="poll"]');
+								radios.forEach(r => r.disabled = true);
+							}
+
+						} else {
+							noPoll.style.display = 'block';
+							pollDiv.style.display = 'none';
+						}
 
                         // If the user has responded before on this poll, put their previous responses in the form
                         if (!poll.allowMultipleResponses) {

@@ -12,7 +12,6 @@ module.exports = {
                 const links = await dbGetAll('SELECT name, url FROM links WHERE classId = ?', [classId]);
 
                 if (links) {
-                    console.log('links:', links)
                     res.status(200).json(links);
                 }
             } catch (err) {
