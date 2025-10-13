@@ -1,11 +1,8 @@
-const { whitelistedIps, blacklistedIps } = require("../routes/middleware/authentication");
 const { classInformation } = require("./class/classroom");
-const { settings } = require("./config");
-const { database, dbGetAll, dbRun } = require("./database");
+const { database } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("./manager");
-const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
 
 const runningTimers = {}
@@ -490,40 +487,6 @@ class SocketUpdates {
             )
         } catch (err) {
             logger.log('error', err.stack);
-        }
-    }
-
-    ipUpdate(type, email) {
-        try {
-            logger.log('info', `[ipUpdate] email=(${email})`)
-
-            let ipList = {}
-            if (type == 'whitelist') {
-                ipList = whitelistedIps
-            } else if (type == 'blacklist') {
-                ipList = blacklistedIps
-            }
-
-            if (type) {
-                if (email) io.to(`user-${email}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
-                else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
-            } else {
-                this.ipUpdate('whitelist', email)
-                this.ipUpdate('blacklist', email)
-            }
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
-    async reloadPageByIp(include, ip) {
-        for (let userSocket of await io.fetchSockets()) {
-            let userIp = userSocket.handshake.address
-
-            if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
-            if ((include && userIp.startsWith(ip)) || (!include && !userIp.startsWith(ip))) {
-                userSocket.emit('reload')
-            }
         }
     }
 
