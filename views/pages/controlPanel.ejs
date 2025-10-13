@@ -58,14 +58,17 @@
 
 <div id="bannedStudentsMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Banned Students</h1>
-    <table id="bannedUsersTable" class="revampDiv" style="margin: 0 auto; text-align: center;">
+    <div class="revampDiv">
+    <table id="bannedStudentsTable">
         <thead>
         <tr>
             <th>Display Name</th>
+            <th></th>
         </tr>
         </thead>
         <tbody id="bannedUsersBody"></tbody>
     </table>
+    </div>
 </div>
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
@@ -374,6 +377,26 @@
             <button class="revampButton warningButton" onclick="regenerateAccessCode()">
                 Regenerate Code
             </button>
+        </div>
+		<div class="revampDiv" id="classLinks" style="margin-top: 20px; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
+            <h2>Class Links</h2>
+			<div id="classLinksInputs" style="margin-top: 10px;">
+				<input type="text" id="newLinkName" class="revampButton revampWithText" placeholder="Link name">
+				<input type="url" id="newLinkUrl" class="revampButton revampWithText" placeholder="https://example.com">
+				<button class="revampButton acceptButton" style="width: fit-content;" onclick="addClassLink()">Add</button>
+			</div>
+			<div class="linksTableWrapper">
+				<table id="classLinksTable">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>URL</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody id="classLinksBody"></tbody>
+				</table>
+			</div>
         </div>
     </div>
 </div>
@@ -797,6 +820,118 @@
     // Handle settings
     const settings = <%- settings %>;
     window.settings = settings;
+
+    // Class Links management (teachers only)
+    const classLinksBody = document.getElementById('classLinksBody');
+    const newLinkName = document.getElementById('newLinkName');
+    const newLinkUrl = document.getElementById('newLinkUrl');
+
+    function renderLinks(links) {
+        if (!classLinksBody) return;
+        classLinksBody.innerHTML = '';
+        if (!Array.isArray(links) || links.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 3;
+            td.textContent = 'No links yet.';
+            tr.appendChild(td);
+            classLinksBody.appendChild(tr);
+            return;
+        }
+
+        for (const item of links) {
+            const tr = document.createElement('tr');
+            const nameTd = document.createElement('td');
+            const urlTd = document.createElement('td');
+            const actionsTd = document.createElement('td');
+            actionsTd.className = 'actionsCell';
+
+            const nameP = document.createElement('p');
+            nameP.href = /^https?:\/\//i.test(item.url) ? item.url : `https://${item.url}`;
+            nameP.target = '_blank';
+            nameP.rel = 'noopener noreferrer';
+            nameP.textContent = item.name;
+
+            nameTd.appendChild(nameP);
+            urlTd.textContent = item.url;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'revampButton warningButton';
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = () => removeClassLink(item.name);
+            actionsTd.appendChild(removeBtn);
+
+            tr.appendChild(nameTd);
+            tr.appendChild(urlTd);
+            tr.appendChild(actionsTd);
+            classLinksBody.appendChild(tr);
+        }
+    }
+
+    function loadClassLinks() {
+        if (!classLinksBody || !currentUser?.activeClass) return;
+        fetch(`/api/room/${currentUser.activeClass}/links`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            }
+        }).then(r => r.json()).then(renderLinks).catch(() => {
+            if (classLinksBody) {
+                classLinksBody.innerHTML = '';
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 3;
+                td.textContent = 'Failed to load links.';
+                tr.appendChild(td);
+                classLinksBody.appendChild(tr);
+            }
+        });
+    }
+
+    function addClassLink() {
+        if (!currentUser?.activeClass) return;
+        const name = newLinkName?.value?.trim();
+        const url = newLinkUrl?.value?.trim();
+        if (!name || !url) return alert('Please enter a name and URL.');
+        fetch(`/api/room/${currentUser.activeClass}/links/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            },
+            body: JSON.stringify({ name, url })
+        }).then(response => {
+            if (!response.ok) throw new Error();
+            newLinkName.value = '';
+            newLinkUrl.value = '';
+            loadClassLinks();
+        }).catch(() => alert('Failed to add link.'));
+    }
+
+    function removeClassLink(name) {
+        if (!currentUser?.activeClass) return;
+        fetch(`/api/room/${currentUser.activeClass}/links/remove`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            },
+            body: JSON.stringify({ name })
+        }).then(response => {
+            if (!response.ok) throw new Error();
+            loadClassLinks();
+        }).catch(() => alert('Failed to remove link.'));
+    }
+
+    // Load links when settings tab is opened
+    document.getElementById('settingsMenu')?.addEventListener('click', (event) => {
+        // If clicking the tab button, ignore; load when content visible
+        if (event.target && event.target.id === 'settingsMenu' && classLinksBody?.childElementCount === 0) {
+            loadClassLinks();
+        }
+    });
+    // Also try to load once on page load in case settings tab is defaulted later
+    loadClassLinks();
 
 
     const FilterState = {

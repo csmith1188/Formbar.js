@@ -54,7 +54,7 @@ socket.on('classUpdate', (classroomData) => {
             bannedUserRow.appendChild(nameCell)
 
             const unbanButton = document.createElement('button')
-            unbanButton.className = 'revampButton unbanBtnSmall'
+            unbanButton.className = 'revampButton acceptButton'
             unbanButton.type = 'button'
             unbanButton.title = 'Unban'
             unbanButton.textContent = 'Unban'
@@ -63,8 +63,15 @@ socket.on('classUpdate', (classroomData) => {
             }
 
             const actionCell = document.createElement('td')
+            actionCell.className = 'actionsCell'
             actionCell.appendChild(unbanButton)
             bannedUserRow.appendChild(actionCell)
+
+            // Remove empty-state row if present before adding first banned student
+            const emptyStateRow = bannedUsersBody.querySelector('tr:not([id])')
+            if (emptyStateRow) {
+                bannedUsersBody.innerHTML = ''
+            }
 
             bannedUsersBody.appendChild(bannedUserRow)
             continue;
@@ -124,7 +131,7 @@ socket.on('classUpdate', (classroomData) => {
         }
     }
 
-    // Clean up any banned user entries that are no longer banned
+    // Clean up any banned user entries that are no longer banned; show empty state if none
     const bannedRows = bannedUsersBody.querySelectorAll('tr[id^="banned-"]');
     bannedRows.forEach(row => {
         const userId = Number(row.id.replace('banned-', ''));
@@ -132,6 +139,15 @@ socket.on('classUpdate', (classroomData) => {
             row.remove();
         }
     });
+    if (currentlyBannedIds.size === 0) {
+        bannedUsersBody.innerHTML = '';
+        const emptyRow = document.createElement('tr');
+        const emptyCell = document.createElement('td');
+        emptyCell.colSpan = 2;
+        emptyCell.textContent = 'No banned students.';
+        emptyRow.appendChild(emptyCell);
+        bannedUsersBody.appendChild(emptyRow);
+    }
 
     className.innerHTML = `<b>Class Name:</b> ${classroomData.className}`
     classCode.innerHTML = `<b>Class Code:</b> ${classroomData.key}`
@@ -280,7 +296,7 @@ socket.on('classUpdate', (classroomData) => {
         sendTags(classroom.tags)
         updateStudentTags()
         createTagSelectButtons();
-        if (typeof rebuildSelectTagForm === 'function') rebuildSelectTagForm();
+        rebuildSelectTagForm();
     }
 
     const previousTags = Array.isArray(classroom?.tags) ? classroom.tags : [];
@@ -291,8 +307,8 @@ socket.on('classUpdate', (classroomData) => {
         for (let tag of list) {
             addTagElement(tag);
         }
-        if (typeof updateStudentTags === 'function') updateStudentTags();
-        if (typeof rebuildSelectTagForm === 'function') rebuildSelectTagForm();
+        updateStudentTags();
+        rebuildSelectTagForm();
     };
 
     // Ensure global classroom reflects latest data before rebuilding tag-dependent UI

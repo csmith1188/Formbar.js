@@ -522,7 +522,7 @@ class SocketUpdates {
 
             if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
             if ((include && userIp.startsWith(ip)) || (!include && !userIp.startsWith(ip))) {
-                user.socket.emit('reload')
+                userSocket.emit('reload')
             }
         }
     }

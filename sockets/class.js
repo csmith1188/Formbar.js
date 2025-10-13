@@ -5,7 +5,7 @@ const { advancedEmitToClass, setClassOfApiSockets, emitToUser} = require("../mod
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
-const { getEmailFromId } = require("../modules/student");
+const { getEmailFromId, getIdFromEmail } = require("../modules/student");
 const { BANNED_PERMISSIONS } = require("../modules/permissions");
 const { classKickStudents, classKickStudent } = require("../modules/class/kick");
 
@@ -316,7 +316,7 @@ module.exports = {
                         }
 
                         classKickStudent(email, classId);
-                        // socketUpdates.classBannedUsersUpdate()
+                        socketUpdates.classBannedUsersUpdate();
                         socketUpdates.classUpdate();
                         socket.emit('message', `Banned ${email}`)
                     } catch (err) {
@@ -329,7 +329,7 @@ module.exports = {
                 socket.emit('message', 'There was a server error try again.')
             }
         })
-
+        
         /**
          * Unbans a user from the classroom
          * @param {string} email - The email of the user to unban.
@@ -361,8 +361,15 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        if (classInformation.classrooms[classId].students[email])
-                            classInformation.classrooms[classId].students[email].permissions = 1
+                        if (classInformation.classrooms[classId].students[email]) {
+                            classInformation.classrooms[classId].students[email].classPermissions = 1;
+                        }
+
+                        // After unbanning, remove the user from the class so they rejoin fresh next time
+                        getIdFromEmail(email).then((userId) => {
+                            classKickStudent(userId, classId, { exitRoom: true, ban: false });
+                            socketUpdates.classUpdate();
+                        }).catch(() => {});
 
                         socketUpdates.classBannedUsersUpdate()
                         socket.emit('message', `Unbanned ${email}`)
@@ -404,9 +411,9 @@ module.exports = {
                 }
 
                 // If the student's previous permissions were banned and the new permissions are higher, then
-                // kick them from the class to allow them to rejoin.
+                // kick them from the class to allow them to rejoin. Await to ensure UI reflects immediately.
                 if (oldPerm === BANNED_PERMISSIONS && newPerm > BANNED_PERMISSIONS) {
-                    classKickStudent(userId, classId);
+                    await classKickStudent(userId, classId, { exitRoom: true, ban: false });
                     socketUpdates.classUpdate();
                     return;
                 }

@@ -27,33 +27,35 @@
 </html>
 
 <script type="text/javascript">
-    const linksDiv = document.getElementById('plugins')
+    const linksDiv = document.getElementById('links')
+    const ensureAbsoluteUrl = (url) => (/^https?:\/\//i.test(url) ? url : `https://${url}`)
 
-    console.log(currentUser)
     fetch(`/api/room/${currentUser.activeClass}/links`, {
         headers: {
             'Content-Type': 'application/json',
             'API': currentUser.API
         }
-    }).then(res => {
-        const links = res.json();
-        let br = document.createElement('br')
+    }).then(res => res.json()).then((links) => {
+        const br = document.createElement('br')
         linksDiv.innerHTML = ''
 
-        if (links.length == 0) {
+        if (!Array.isArray(links) || links.length === 0) {
             linksDiv.innerHTML = '<p style="font-size: 18px;">No links provided for this classroom.</p>'
             return
         }
 
-        for (const link of links) {
-            const link = document.createElement('a')
-            link.className = 'quickButton'
-            link.href = link.url
-            link.target = '_blank'
-            link.innerText = link.name
-            linksDiv.append(link)
+        for (const item of links) {
+            const a = document.createElement('a')
+            a.className = 'quickButton revampButton'
+            a.href = ensureAbsoluteUrl(item.url)
+            a.target = '_blank'
+            a.rel = 'noopener noreferrer'
+            a.innerText = item.name
+            linksDiv.append(a)
             linksDiv.append(br.cloneNode(true))
         }
+    }).catch(() => {
+        linksDiv.innerHTML = '<p style="font-size: 18px;">Failed to load links.</p>'
     });
 
     // socket.emit('pluginUpdate')

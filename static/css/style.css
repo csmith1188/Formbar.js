@@ -1097,6 +1097,20 @@ div .tabContent {
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
+	min-height: 0;
+	flex: 1 1 auto;
+	overflow: auto;
+}
+
+#usersMenu.usersMenuBox #users,
+div#usersMenu.usersMenuBox #users,
+div#usersMenu.tabContent.usersMenuBox #users {
+	flex: 1 1 auto;
+	overflow: auto;
+}
+
+#users .user.hasInfo {
+	grid-row: auto !important;
 }
 
 #users {
@@ -1158,6 +1172,70 @@ div .tabContent {
 	justify-content: center;
 	align-items: stretch;
 	gap: 20px;
+}
+
+/* Class Links layout overrides */
+#classLinks {
+	display: block;
+	width: 80%;
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Override generic #settingsFunc div flex for the class links container */
+#settingsFunc #classLinks {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 12px;
+}
+
+#classLinksInputs {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+#classLinksInputs input.revampButton.revampWithText {
+	flex: 1 1 240px;
+	min-width: 160px;
+}
+
+#classLinksInputs button {
+	white-space: nowrap;
+}
+
+#linksList > div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.linksTableWrapper {
+	margin-top: 12px;
+	max-height: 300px;
+	overflow: auto;
+}
+
+#classLinksTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#classLinksTable th, #classLinksTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#classLinksTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
 }
 
 #studentTags span{
@@ -2290,6 +2368,107 @@ button.start-custom-poll {
 }
 /* 2000 lines!!! */
 
+.sortManager#userSortBoxes {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+#userSearch {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Manager Panel - Banned Users */
+#bannedUsersMenu {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+#bannedUsersMenu .mobileMenuHeader {
+	margin: 6px 0 8px;
+	font-size: 22px;
+	line-height: 1.2;
+}
+
+#bannedUsersMenu .revampDiv {
+	padding: 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding-bottom: 16px;
+	width: 80%;
+	max-width: 1100px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#bannedUsersTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#bannedUsersTable th, #bannedUsersTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#bannedUsersTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
+}
+
+#bannedSearch {
+	margin-bottom: 8px !important;
+	width: 100%;
+}
+
+/* Control Panel - Banned Students */
+#bannedStudentsMenu {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+#bannedStudentsMenu .mobileMenuHeader {
+	margin: 6px 0 8px;
+	font-size: 22px;
+	line-height: 1.2;
+}
+
+#bannedStudentsMenu .revampDiv {
+	padding: 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding-bottom: 16px;
+	width: 80%;
+	max-width: 1100px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#bannedStudentsTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#bannedStudentsTable th, #bannedStudentsTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#bannedStudentsTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
+}
+
 .custom-poll-name {
 	font-weight: bold;
 	font-size: 32px;
@@ -2487,10 +2666,32 @@ button img {
 }
 
 #addIpForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+}
+
+.ipDiv button.quickButton {
+	height: 32px;
+	padding: 0 12px;
+	font-size: 14px;
+}
+
+.ipDiv input[type="text"] {
+	width: 180px;
+	min-width: 150px;
+	max-width: 220px;
+	font-size: 14px;
+	margin-right: 5px;
+}
+
+.ipDiv {
 	display: flex;
-	justify-content: center;
 	align-items: center;
-	flex-direction: row;
+	gap: 6px;
+	margin-bottom: 10px;
+	flex-wrap: nowrap;
 }
 
 .joinClassForm {

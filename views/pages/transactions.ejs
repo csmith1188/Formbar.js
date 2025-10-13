@@ -44,7 +44,7 @@
 
             
             <div class="transactionHistory">
-                <h1>Showing transactions for user with ID <%- userId %>.</h1>
+                <h1>Transactions for <%- displayName %></h1>
 
                 <table class="revampDiv">
                     <tr>
@@ -59,11 +59,15 @@
                         <% let transactionRange = transactions.slice(i*10, i*10+10); %>
                         <% transactionRange.forEach(function(transaction) { %>
                             <tr data-page="<%- i %>" style="display: none;">
+                                <%
+                                    const date = new Date(Number(transaction.date));
+                                    const valid = !isNaN(date);
+                                %>
                                 <td><%= transaction.from_user %></td>
                                 <td><%= transaction.to_user %></td>
                                 <td><%= transaction.amount %></td>
                                 <td><%= transaction.reason %></td>
-                                <td><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
+                                <td><%= valid ? `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}` : 'Not tracked' %></td>
                             </tr>
                         <% }); %>
                     <% } %>
