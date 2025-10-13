@@ -50,6 +50,9 @@ function hasClassPermission(classPermission) {
             const classroom = classInformation.classrooms[classId];
             if (classroom) {
                 const user = classroom.students[req.session.user.email];
+                if (!user) {
+                    return res.status(401).json({ error: 'User not found in this class.' });
+                }
                 if (user.classPermissions >= classPermission) {
                     next()
                 } else {
