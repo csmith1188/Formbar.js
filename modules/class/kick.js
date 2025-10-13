@@ -4,7 +4,7 @@ const { getEmailFromId } = require("../student");
 const { setClassOfApiSockets, userSockets } = require("../socketUpdates");
 const { dbRun } = require("../database");
 const { userSocketUpdates } = require("../../sockets/init");
-const { BANNED_PERMISSIONS } = require("../permissions");
+const { TEACHER_PERMISSIONS, BANNED_PERMISSIONS } = require("../permissions");
 
 // Kicks a student from a class
 // If exitRoom is set to true, then it will fully remove the student from the class;
