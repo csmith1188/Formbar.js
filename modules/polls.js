@@ -93,11 +93,13 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].poll.responses[answer] = {
                 answer: answer,
                 weight: weight,
-                color: color
+                color: color,
+                correct: answers[i].correct
             }
         }
 
         // Set the poll's data in the classroom
+        classInformation.classrooms[classId].poll.startTime = Date.now();
         classInformation.classrooms[classId].poll.weight = weight
         classInformation.classrooms[classId].poll.allowTextResponses = allowTextResponses
         classInformation.classrooms[classId].poll.prompt = prompt

@@ -61,15 +61,6 @@ function buildStudent(classroom, studentData) {
         newStudent.querySelector('#email').textContent = studentData.displayName
         studentBox.id = 'checkbox_' + studentData.id
         studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString())
-        studentBox.onclick = () => {
-            const canStudentVote = studentBox.checked;
-            let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
-            if (studentBox.checked && !studentsAllowedToVote.includes(studentData.id.toString())) {
-                studentsAllowedToVote.push(studentData.id.toString());
-            }
-
-            socket.emit('changeCanVote', { [studentData.id]: canStudentVote });
-        }
 
         for (let eachResponse in classroom.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
@@ -211,13 +202,14 @@ function buildStudent(classroom, studentData) {
 
         // Add each tag as a button to the tag form
         if (!Array.isArray(classroom.tags)) classroom.tags = [];
-        roomTagDiv.innerHTML = '';
+        //roomTagDiv.innerHTML = '';
         for (let i = 0; i < classroom.tags.length; i++) {
             let tag = classroom.tags[i]
             if (tag == 'Offline') continue
 
             let button = document.createElement('button');
             button.innerHTML = tag
+            button.classList.add('revampButton')
             button.name = `button${classroom.tags[i]}`;
             button.value = classroom.tags[i];
             if (!Array.isArray(studentData.tags)) studentData.tags = []
@@ -449,6 +441,20 @@ function filterSortChange(classroom) {
             let studentElement = document.getElementById(`student-${userId}`);
             let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
             if (!studentCheckbox || !studentCheckbox.checked) {
+                studentElement.style.display = 'none'
+                const index = userOrder.indexOf(userId);
+                if (index > -1) {
+                    userOrder.splice(index, 1);
+                }
+            }
+        }
+    }
+
+    if (filter.cantVote) {
+        for (const userId of userOrder.slice()) {
+            let studentElement = document.getElementById(`student-${userId}`);
+            let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
+            if (studentCheckbox || studentCheckbox.checked) {
                 studentElement.style.display = 'none'
                 const index = userOrder.indexOf(userId);
                 if (index > -1) {

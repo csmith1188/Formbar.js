@@ -41,18 +41,18 @@ module.exports = {
 				}
 
 				// Check if there is a class id set for the user
-				if (!user.class) {
+				if (!user.classId) {
 					res.status(403).json({ reason: 'User is not in a class.' })
 					return
 				}
 
 				// Check if the user is in the requested class
-				if (user.class != classId) {
+				if (user.classId != classId) {
 					res.status(403).json({ reason: 'User is not in the requested class.' })
 					return
 				}
 
-				const classroom = classInformation.classrooms[user.class]
+				const classroom = classInformation.classrooms[user.classId]
 				permissionTypes.games = classroom.permissions.games
 				permissionTypes.auxiliary = classroom.permissions.auxiliary
 
