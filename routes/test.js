@@ -1,4 +1,4 @@
-const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
+// const { isAuthenticated, permCheck, isVerified } = require("../modules/authentication")
 const { classInformation } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
 const { logger } = require("../modules/logger")

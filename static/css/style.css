@@ -279,7 +279,7 @@ dialog {
 }
 
 #content {
-	height: auto;
+	height: 100%;
 	width: 600px;
 	margin: 0 auto;
 	padding: 100px 10px 10px;
@@ -864,7 +864,7 @@ hr {
 }
 
 .headerText {
-	margin: 0;
+	margin-top: 2em;
 }
 
 .headBox {
@@ -1552,7 +1552,7 @@ article ul {
 #content div.buttons {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
+	/* justify-content: space-between; */
 	align-items: center;
 	margin-bottom: 50px;
     gap: 20px;
@@ -1869,7 +1869,7 @@ a.link:visited {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	height: 100%;
+	height: auto;
 	width: 100%;
 }
 
@@ -1884,12 +1884,35 @@ a.link:visited {
 
 #classesMenu .buttonsHolder button,
 #classesMenu .buttonsHolder input {
-	width: 100%;
+	width: 200%;
 }
 
 #classesMenu form,
 #createClassMenu form {
-	gap: 30px;
+	gap: 10px;
+}
+
+#createClassButtons {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	justify-content: center;
+	gap: 10px;
+	width: 100% !important;
+}
+
+#createClassButtons input[type="submit"] {
+    width: 60%;
+    align-self: center;
+}
+
+#createClassButtons input {
+	width: 80%;
+}
+
+#createClassButtons button {
+	width: 60%;
+	align-self: center;
 }
 
 #VBDiv {
@@ -2711,6 +2734,7 @@ button img {
     align-items: center;
     flex-direction: row;
     gap: 10px;
+	margin-top: 10px;
 }
 
 #newPoll.tabContent {
