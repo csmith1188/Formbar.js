@@ -694,7 +694,6 @@ body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
 }
 
 details {
-	width: 300px;
 	max-height: 4rem;
 	overflow: visible;
 	position: relative;
@@ -2979,12 +2978,11 @@ div.accordionButtons {
 	display: flex;
 	justify-content: space-between;
 	padding: 0 5px;
-    height: 40px;
+    height: 56px;
+    gap: 5px;
 }
 
 button.accordionButton {
-	width: 36px;
-	height: 36px;
 	margin: 0;
 }
 
@@ -3060,7 +3058,7 @@ div.accordionButtons button:nth-child(7),
 }
 
 .accordionButton.active {
-	height: 40px;
+	height: 56px;
 	border-bottom: none;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
@@ -3095,11 +3093,11 @@ div.accordionPopup.open {
 	height: 120px;
 }
 
-div.accordionPopup.helpAcc.open {
+div.accordionPopup.borderLeft.open {
 	border-top-left-radius: 0;
 }
 
-div.accordionPopup.kickBanAcc.open {
+div.accordionPopup.borderRight.open {
 	border-top-right-radius: 0;
 }
 
