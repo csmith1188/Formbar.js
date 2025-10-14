@@ -442,6 +442,7 @@
     #permissions.tabContent,
     #tags.tabContent,
     #settingsMenu.tabContent,
+    #bannedStudentsMenu.tabContent,
     #previousPollsMenu.tabContent,
     #pollsMenu.tabContent,
     #sortingFilterMenu.tabContent,
@@ -522,6 +523,7 @@
 
     #permissions.tabContent > button.backButton,
     #tags.tabContent > button.backButton,
+    #bannedStudentsMenu.tabContent > button.backButton,
     #settingsMenu.tabContent > button.backButton,
     #previousPollsMenu.tabContent > button.backButton,
     #pollsMenu.tabContent > button.backButton,
