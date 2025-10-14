@@ -3078,7 +3078,7 @@ div.accordionPopup {
 	background: var(--light-red);
 	border-color: var(--lightMode-button-border);
 	outline: none;
-    
+    overflow: hidden;    
 
     transition:
         0.2s ease-in-out border-top-left-radius,
