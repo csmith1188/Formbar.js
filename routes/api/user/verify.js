@@ -1,11 +1,13 @@
 const { logger } = require("../../../modules/logger")
 const { dbRun, dbGetAll } = require("../../../modules/database");
 const jwt = require('jsonwebtoken');
+const { hasPermission } = require("../../middleware/permissionCheck");
+const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Verify a pending user
-        router.post('/user/:id/verify', async (req, res) => {
+        router.post('/user/:id/verify', hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
                 const id = req.params.id;
                 const tempUsers = await dbGetAll('SELECT * FROM temp_user_creation_data');
