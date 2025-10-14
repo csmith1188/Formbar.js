@@ -5,7 +5,9 @@ const { advancedEmitToClass, setClassOfApiSockets, emitToUser} = require("../mod
 const { generateKey } = require("../modules/util")
 const { io } = require("../modules/webServer")
 const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
-const { getEmailFromId } = require("../modules/student");
+const { getEmailFromId, getIdFromEmail } = require("../modules/student");
+const { BANNED_PERMISSIONS } = require("../modules/permissions");
+const { classKickStudents, classKickStudent } = require("../modules/class/kick");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -250,13 +252,13 @@ module.exports = {
          * Kicks a user from the classroom
          * @param {string} email - The email of the user to kick.
          */
-        socket.on('classKickUser', (email) => {
+        socket.on('classKickStudent', (email) => {
             try {
                 logger.log('info', `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[classKickUser] email=(${email})`)
 
                 const classId = socket.request.session.classId
-                socketUpdates.classKickUser(email, classId)
+                classKickStudent(email, classId)
                 advancedEmitToClass('leaveSound', classId, {})
             } catch (err) {
                 logger.log('error', err.stack)
@@ -269,7 +271,8 @@ module.exports = {
                 logger.log('info', `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
 
                 const classId = socket.request.session.classId
-                socketUpdates.classKickStudents(classId)
+                classKickStudents(classId)
+
                 socketUpdates.classUpdate(classId)
                 advancedEmitToClass('kickStudentsSound', classId, { api: true })
             } catch (err) {
@@ -312,10 +315,9 @@ module.exports = {
                             classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = 0
                         }
 
-                        socketUpdates.classKickUser(email)
-                        socketUpdates.classBannedUsersUpdate()
+                        classKickStudent(email, classId);
+                        socketUpdates.classBannedUsersUpdate();
                         socketUpdates.classUpdate();
-                        advancedEmitToClass('leaveSound', classId, {})
                         socket.emit('message', `Banned ${email}`)
                     } catch (err) {
                         logger.log('error', err.stack)
@@ -327,7 +329,7 @@ module.exports = {
                 socket.emit('message', 'There was a server error try again.')
             }
         })
-
+        
         /**
          * Unbans a user from the classroom
          * @param {string} email - The email of the user to unban.
@@ -359,8 +361,15 @@ module.exports = {
                     try {
                         if (err) throw err
 
-                        if (classInformation.classrooms[classId].students[email])
-                            classInformation.classrooms[classId].students[email].permissions = 1
+                        if (classInformation.classrooms[classId].students[email]) {
+                            classInformation.classrooms[classId].students[email].classPermissions = 1;
+                        }
+
+                        // After unbanning, remove the user from the class so they rejoin fresh next time
+                        getIdFromEmail(email).then((userId) => {
+                            classKickStudent(userId, classId, { exitRoom: true, ban: false });
+                            socketUpdates.classUpdate();
+                        }).catch(() => {});
 
                         socketUpdates.classBannedUsersUpdate()
                         socket.emit('message', `Unbanned ${email}`)
@@ -383,22 +392,37 @@ module.exports = {
         socket.on('classPermChange', async (userId, newPerm) => {
             try {
                 const email = await getEmailFromId(userId);
-                logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`)
-                classInformation.classrooms[socket.request.session.classId].students[email].classPermissions = newPerm
-                classInformation.users[email].classPermissions = newPerm
+                const classId = socket.request.session.classId;
+                const oldPerm = classInformation.classrooms[classId].students[email].classPermissions || BANNED_PERMISSIONS;
+                logger.log('info', `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                logger.log('info', `[classPermChange] user=(${email}) newPerm=(${newPerm})`);
 
-                database.run('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [
-                    newPerm,
-                    classInformation.classrooms[socket.request.session.classId].id,
-                    classInformation.classrooms[socket.request.session.classId].students[email].id
-                ])
+                // Update the permission in the classInformation and in the database
+                classInformation.classrooms[classId].students[email].classPermissions = newPerm;
+                classInformation.users[email].classPermissions = newPerm;
+                await dbRun('UPDATE classusers SET permissions=? WHERE classId=? AND studentId=?', [newPerm, classInformation.classrooms[classId].id, classInformation.classrooms[classId].students[email].id])
 
-                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[socket.request.session.classId].students[email])})`)
+                // If the new permission is BANNED_PERMISSIONS, kick the user from the class and ban them
+                if (newPerm === BANNED_PERMISSIONS) {
+                    classKickStudent(userId, classId, { exitRoom: true, ban: true });
+                    advancedEmitToClass('leaveSound', classId, {});
+                    socketUpdates.classUpdate();
+                    return;
+                }
+
+                // If the student's previous permissions were banned and the new permissions are higher, then
+                // kick them from the class to allow them to rejoin. Await to ensure UI reflects immediately.
+                if (oldPerm === BANNED_PERMISSIONS && newPerm > BANNED_PERMISSIONS) {
+                    await classKickStudent(userId, classId, { exitRoom: true, ban: false });
+                    socketUpdates.classUpdate();
+                    return;
+                }
+
+                logger.log('verbose', `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
 
                 // Reload the user's page and update the class
-                io.to(`user-${email}`).emit('reload')
-                socketUpdates.classUpdate()
+                io.to(`user-${email}`).emit('reload');
+                socketUpdates.classUpdate();
             } catch (err) {
                 logger.log('error', err.stack);
             }

@@ -271,14 +271,13 @@ function responseAmountChange(responseAmount = null) {
 		answerWeight.value = 1
 		answerWeight.onkeydown = (event) => {
 			if(isFinite(event.key)) return;
-			if(
-				event.key === '.' ||
+			if (event.key === '.' ||
 				event.key === 'Backspace' ||
 				event.key === 'Delete' ||
 				event.key === 'Tab' ||
 				event.key === 'ArrowLeft' ||
-				event.key === 'ArrowRight') return;
-			else event.preventDefault();
+				event.key === 'ArrowRight'
+            ) {} else event.preventDefault();
 		}
 		answerWeight.onchange = (event) => {
 			if(/^\d*\.?\d*$/.test(event.target.value)) {

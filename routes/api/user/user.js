@@ -40,6 +40,6 @@ module.exports = {
                 logger.log('error', err.stack);
                 res.status(500).send(`Error: ${err.message}`);
             }
-        })
+        });
     }
 }

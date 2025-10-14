@@ -27,5 +27,13 @@ module.exports = {
                 })
             }
         })
+
+        // IP banned page
+        app.get('/ip-banned', (req, res) => {
+            res.render('pages/message', {
+                message: 'Your IP has been banned',
+                title: 'IP Banned'
+            })
+        })
     }
 }

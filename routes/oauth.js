@@ -14,7 +14,6 @@ function generateAccessToken(userData, refreshToken) {
         displayName: userData.displayName,
         permissions: userData.permissions,
         classPermissions: userData.classPermissions,
-        classrooms: userData.classrooms,
         activeClass: userData.activeClass,
         refreshToken
     }, privateKey, { algorithm: 'RS256' }, { expiresIn: '30m' });
@@ -38,15 +37,11 @@ function storeRefreshToken(userId, refreshToken) {
     });
 }
 
-// Retrieves classroom-related data for the user for OAuth
+// Retrieves user data for OAuth
 async function createUserData(userData) {
-    // Get the user's class and classroom data
+    // Get the user's class and set classPermissions
     const classId = getUserClass(userData.email);
-    const classroomData = await dbGetAll('SELECT * FROM classroom WHERE owner=?', [userData.id]);
-
-    // Set classroom-related data
     userData.classPermissions = null;
-    userData.classrooms = classroomData;
     userData.activeClass = classInformation.users[userData.email] ? classInformation.users[userData.email].activeClass : null;
     if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[userData.email]) {
         userData.classPermissions = classInformation.classrooms[classId].students[userData.email].classPermissions;
@@ -168,7 +163,7 @@ module.exports = {
 
                 if (!email) {
                     res.render('pages/message', {
-                        message: 'Please enter a an email',
+                        message: 'Please enter an email',
                         title: 'Login'
                     });
                     return;
@@ -228,7 +223,7 @@ module.exports = {
                             } else {
                                 refreshToken = generateRefreshToken(userData);
                                 storeRefreshToken(userData.id, refreshToken);
-                            };
+                            }
 
                             // Generate access token
                             const accessToken = generateAccessToken(userData, refreshToken);

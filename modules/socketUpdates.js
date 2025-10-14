@@ -1,11 +1,8 @@
-const { whitelistedIps, blacklistedIps } = require("../routes/middleware/authentication");
 const { classInformation } = require("./class/classroom");
-const { settings } = require("./config");
-const { database, dbGetAll, dbRun } = require("./database");
+const { database } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("./manager");
-const { getEmailFromId } = require("./student");
 const { io } = require("./webServer");
 
 const runningTimers = {}
@@ -437,77 +434,6 @@ class SocketUpdates {
         }
     }
 
-    // Kicks a user from a class
-    // If exitClass is set to true, then it will fully remove the user from the class;
-    // Otherwise, it will just remove the user from the class session while keeping them registered to the classroom.
-    async classKickUser(userId, classId = this.socket.request.session.classId, exitClass = true) {
-        try {
-            const email = await getEmailFromId(userId);
-            logger.log('info', `[classKickUser] email=(${email}) classId=(${classId}) exitClass=${exitClass}`);
-
-            // Check if user exists in classInformation.users before trying to modify
-            if (classInformation.users[email]) {
-                // Remove user from class session
-                classInformation.users[email].classPermissions = null;
-                classInformation.users[email].activeClass = null;
-                setClassOfApiSockets(classInformation.users[email].API, null);
-            }
-
-            // Mark the user as offline in the class and remove them from the active classes if the classroom is loaded into memory
-            if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[email]) {
-                const student = classInformation.classrooms[classId].students[email];
-                student.activeClass = null;
-                student.tags = ['Offline'];
-                if (classInformation.users[email]) {
-                    classInformation.users[email] = student;
-                }
-
-                // If the student is a guest, then remove them from the classroom entirely
-                if (student.isGuest) {
-                    delete classInformation.classrooms[classId].students[email];
-                }
-            }
-
-            // If exitClass is true, then remove the user from the classroom entirely
-            // If the user is a guest, then do not try to remove them from the database
-            if (exitClass && classInformation.classrooms[classId]) {
-                if (classInformation.users[email] && !classInformation.users[email].isGuest) {
-                    await dbRun('DELETE FROM classusers WHERE studentId=? AND classId=?', [classInformation.users[email].id, classId]);
-                }
-                delete classInformation.classrooms[classId].students[email];
-            }
-
-            // Update the control panel
-            this.classUpdate(classId);
-
-            // If the user is logged in, then handle the user's session
-            if (userSockets[email]) {
-                for (const userSocket of Object.values(userSockets[email])) {
-                    userSocket.leave(`class-${classId}`);
-                    userSocket.request.session.classId = null;
-                    userSocket.request.session.save();
-                    userSocket.emit('reload');
-                }
-            }
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
-    classKickStudents(classId) {
-        try {
-            logger.log('info', `[classKickStudents] classId=(${classId})`)
-
-            for (const student of Object.values(classInformation.classrooms[classId].students)) {
-                if (student.classPermissions < TEACHER_PERMISSIONS) {
-                    this.classKickUser(student.id, classId);
-                }
-            }
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
     getOwnedClasses(email) {
         try {
             logger.log('info', `[getOwnedClasses] email=(${email})`)
@@ -561,40 +487,6 @@ class SocketUpdates {
             )
         } catch (err) {
             logger.log('error', err.stack);
-        }
-    }
-
-    ipUpdate(type, email) {
-        try {
-            logger.log('info', `[ipUpdate] email=(${email})`)
-
-            let ipList = {}
-            if (type == 'whitelist') {
-                ipList = whitelistedIps
-            } else if (type == 'blacklist') {
-                ipList = blacklistedIps
-            }
-
-            if (type) {
-                if (email) io.to(`user-${email}`).emit('ipUpdate', type, settings[`${type}Active`], ipList)
-                else io.emit('ipUpdate', type, settings[`${type}Active`], ipList)
-            } else {
-                this.ipUpdate('whitelist', email)
-                this.ipUpdate('blacklist', email)
-            }
-        } catch (err) {
-            logger.log('error', err.stack);
-        }
-    }
-
-    async reloadPageByIp(include, ip) {
-        for (let userSocket of await io.fetchSockets()) {
-            let userIp = userSocket.handshake.address
-
-            if (userIp.startsWith('::ffff:')) userIp = userIp.slice(7)
-            if ((include && userIp.startsWith(ip)) || (!include && !userIp.startsWith(ip))) {
-                user.socket.emit('reload')
-            }
         }
     }
 

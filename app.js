@@ -41,6 +41,20 @@ io.use((socket, next) => {
 	sessionMiddleware(socket.request, socket.request.res || {}, next)
 })
 
+// Block socket connections from banned IPs
+io.use((socket, next) => {
+    try {
+        let ip = socket.handshake.address;
+        if (ip && ip.startsWith('::ffff:')) ip = ip.slice(7);
+        if (authentication.checkIPBanned(ip)) {
+            return next(new Error('IP banned'))
+        }
+        next();
+    } catch (err) {
+        next(err);
+    }
+})
+
 // Allows express to parse requests
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
@@ -71,20 +85,26 @@ setInterval(() => {
 
 // Check if an IP is banned
 app.use((req, res, next) => {
-	let ip = req.ip
-	if (!ip) return next();
-	if (ip.startsWith('::ffff:')) ip = ip.slice(7)
+    let ip = req.ip;
+    if (!ip) return next();
+    if (ip.startsWith('::ffff:')) ip = ip.slice(7);
 
-	const isIPBanned = authentication.checkIPBanned()
-	if (isIPBanned) {
-		res.render('pages/message', {
-			message: 'Your IP has been banned',
-			title: 'Banned'
-		});
-	}
+    // Check if the user is ip banned
+    // If the user is not ip banned and is on the ip-banned page, redirect them to the home page
+    const isIPBanned = authentication.checkIPBanned(ip)
+    if (req.path === '/ip-banned' && isIPBanned) {
+        return next();
+    } else if (req.path === '/ip-banned' && !isIPBanned) {
+        return res.redirect('/');
+    }
 
-	next()
-})
+    // Redirect to the IP banned page if they are banned
+    if (isIPBanned) {
+        return res.redirect('/ip-banned');
+    }
+
+    next();
+});
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
@@ -120,13 +140,13 @@ app.use((req, res, next) => {
 // Import HTTP routes
 const routeFiles = fs.readdirSync('./routes/').filter(file => file.endsWith('.js'));
 for (const routeFile of routeFiles) {
-	// Skip for now as it will be handled later
-	if (routeFile == '404.js') {
-		continue;
-	}
+    // Skip for now as it will be handled later
+    if (routeFile == '404.js') {
+        continue;
+    }
 
-	const route = require(`./routes/${routeFile}`);
-	route.run(app);
+    const route = require(`./routes/${routeFile}`);
+    route.run(app);
 }
 
 // Initialize websocket routes
@@ -136,11 +156,11 @@ initSocketRoutes();
 require('./routes/404.js').run(app);
 
 http.listen(settings.port, async () => {
-	authentication.whitelistedIps = await getIpAccess('whitelist');
-	authentication.blacklistedIps = await getIpAccess('blacklist');
-	console.log(`Running on port: ${settings.port}`);
-	if (!settings.emailEnabled) console.log('Email functionality is disabled.');
-	if (!settings.googleOauthEnabled) console.log('Google Oauth functionality is disabled.');
-	if (!settings.emailEnabled || !settings.googleOauthEnabled) console.log('To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki')
-	logger.log('info', 'Start');
+    Object.assign(authentication.whitelistedIps, await getIpAccess('whitelist'));
+    Object.assign(authentication.blacklistedIps, await getIpAccess('blacklist'));
+    console.log(`Running on port: ${settings.port}`);
+    if (!settings.emailEnabled) console.log('Email functionality is disabled.');
+    if (!settings.googleOauthEnabled) console.log('Google Oauth functionality is disabled.');
+    if (!settings.emailEnabled || !settings.googleOauthEnabled) console.log('To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki')
+    logger.log('info', 'Start');
 });
