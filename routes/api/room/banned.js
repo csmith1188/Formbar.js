@@ -1,12 +1,13 @@
 const { dbGetAll } = require("../../../modules/database");
 const { logger } = require("../../../modules/logger");
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../middleware/permissionCheck");
 const { classInformation } = require("../../../modules/class/classroom");
+const { TEACHER_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Get banned users for a class
-        router.get('/class/:id/banned', httpPermCheck('classBannedUsersUpdate'), async (req, res) => {
+        router.get('/class/:id/banned', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 logger.log('info', `[get api/class/${classId}/banned] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
