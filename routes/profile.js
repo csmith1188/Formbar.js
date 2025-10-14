@@ -7,6 +7,51 @@ const { MANAGER_PERMISSIONS } = require("../modules/permissions");
 
 module.exports = {
     run(app) {
+        // Handle displaying people's transactions
+        app.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
+            try {
+                // Log the request information
+                logger.log('info', `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+
+                // Check if the user has permission to view these transactions (either their own or they are a manager)
+                const userId = req.params.userId || req.session.userId;
+                if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
+                    res.render('pages/message', {
+                        message: 'You do not have permission to view these transactions.',
+                        title: 'Error'
+                    });
+                    return;
+                }
+
+                // Get the transactions from the database
+                const transactions = await dbGetAll('SELECT * FROM transactions WHERE from_user = ? OR to_user = ? ORDER BY date DESC', [userId, userId]);
+                if (!transactions) {
+                    logger.log('error', 'No transactions found for user');
+                    res.render('pages/message', {
+                        message: 'No transactions found for this user.',
+                        title: 'Transactions'
+                    });
+                    return;
+                }
+
+                // Get the user's display name
+                const userDisplayName = (await dbGet('SELECT displayName FROM users WHERE id = ?', [userId]))?.displayName || "Unknown User";
+
+                // Render the transactions page with the retrieved transactions
+                res.render('pages/transactions', {
+                    title: 'Transactions',
+                    transactions: transactions,
+                    displayName: userDisplayName,
+                });
+            } catch (err) {
+                logger.log('error', err.stack);
+                res.render('pages/message', {
+                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                    title: 'Error'
+                });
+            }
+        });
+
         // Handle displaying the profile page
         app.get('/profile/:userId?', isVerified, permCheck, async (req, res) => {
             try {
@@ -44,49 +89,8 @@ module.exports = {
                     id: userId,
                     API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
                     pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : "Hidden"
-                });
-            } catch (err) {
-                logger.log('error', err.stack);
-                res.render('pages/message', {
-                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                    title: 'Error'
-                });
-            }
-        });
-
-        // Handle displaying people's transactions
-        app.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
-            try {
-                // Log the request information
-                logger.log('info', `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
-                // Check if the user has permission to view these transactions (either their own or they are a manager)
-                const userId = req.params.userId || req.session.userId;
-                if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-                    res.render('pages/message', {
-                        message: 'You do not have permission to view these transactions.',
-                        title: 'Error'
-                    });
-                    return;
-                }
-
-                // Get the transactions from the database
-                const transactions = await dbGetAll('SELECT * FROM transactions WHERE from_user = ? OR to_user = ? ORDER BY date DESC', [userId, userId]);
-                if (!transactions) {
-                    logger.log('error', 'No transactions found for user');
-                    res.render('pages/message', {
-                        message: 'No transactions found for this user.',
-                        title: 'Transactions'
-                    });
-                    return;
-                }
-
-                // Render the transactions page with the retrieved transactions
-                res.render('pages/transactions', {
-                    title: 'Transactions',
-                    transactions: transactions,
-                    userId: userId
+                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : "Hidden",
+                    isOwnProfile: req.session.userId === userId
                 });
             } catch (err) {
                 logger.log('error', err.stack);

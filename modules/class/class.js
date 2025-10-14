@@ -7,6 +7,7 @@ const { classInformation } = require('./classroom');
 const { joinRoomByCode } = require("../joinRoom");
 const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
 const { clearPoll } = require("../polls");
+const { classKickStudent } = require("./kick");
 
 /**
  * Starts a class session by activating the class, emitting the start class event,
@@ -51,12 +52,11 @@ async function endClass(classId, userSession) {
 }
 
 /**
- * Checks if the user has permissions for the perm level that the class has an action set at.
- * For example, manageClass. CLASS_PERMISSIONS contains every one of these permissions, so
- * they're easy to access.
- * @param userId - The user's id to check the permissions of.
- * @param permission - The class permission to check against. Ex: CLASS_PERMISSIONS.MANAGE_CLASS
- * @returns {Promise<Boolean>}
+ * Checks if the user has the required permission level for a class action.
+ * @param {string|number} userId - The user's ID to check permissions for.
+ * @param {string|number} classId - The class ID to check against.
+ * @param {string} permission - The class permission to check (e.g., CLASS_PERMISSIONS.MANAGE_CLASS).
+ * @returns {Promise<boolean>} Resolves to true if the user has permission, false otherwise.
  */
 async function checkUserClassPermission(userId, classId, permission) {
     const email = await getEmailFromId(userId);
@@ -228,7 +228,7 @@ function leaveClass(userSession, classId) {
         // Kick the user from the classroom entirely if they're a guest
         // If not, kick them from the session
         advancedEmitToClass('leaveSound', userSession.classId, {});
-        socketUpdates.classKickUser(user.id, classId, classInformation.users[email].isGuest);
+        classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
     } catch (err) {
         logger.log('error', err.stack)

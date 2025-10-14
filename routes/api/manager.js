@@ -1,21 +1,17 @@
 const { logger } = require("../../modules/logger")
 const { MANAGER_PERMISSIONS } = require("../../modules/permissions");
 const { getManagerData } = require("../../modules/manager");
+const { hasPermission } = require("../middleware/permissionCheck");
 
 module.exports = {
     run(router) {
         // Retrieves manager data
-        router.get('/manager', async (req, res) => {
+        router.get('/manager', hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
                 // Grab the user from the session
                 const user = req.session.user;
                 logger.log('info', `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 logger.log('verbose', `[get api/manager] response=(${JSON.stringify(user)})`);
-
-                // If the user does not have manager permissions, return a 403 error
-                if (user.permissions < MANAGER_PERMISSIONS) {
-                    return res.status(403).json({ error: 'You do not have permission to access this resource.' });
-                }
 
                 // Grab manager data and send it back as a JSON responses
                 const { users, classrooms } = await getManagerData();

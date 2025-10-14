@@ -1,11 +1,11 @@
-const { classPermCheck } = require("../../../middleware/permissionCheck");
+const { hasClassPermission } = require("../../../middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("../../../../modules/permissions");
 const { deleteHelpTicket } = require("../../../../modules/class/help");
 
 module.exports = {
     run(router) {
         // Deletes a help ticket in a class by class ID and user ID
-        router.get('/class/:id/students/:userId/help/delete', classPermCheck(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
+        router.get('/class/:id/students/:userId/help/delete', hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
             try {
                 const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
                 if (result === true) {
