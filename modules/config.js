@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { dbGet, dbRun } = require("./database");
 require('dotenv').config();
 
-/**
+/*
  * Generates a new RSA key pair and saves them to files.
  * Private and public keys are to be used to make Formbar OAuth more secure.
  * The private key is used to sign the data, and the public key is used to check the signature.
