@@ -18,18 +18,32 @@ function initSocketRoutes() {
         for (const middleware of middlewares) {
             middleware.run(socket, socketUpdates);
         }
+
+        const skippedFiles = ['init.js', 'middleware', 'tests'];
+        const loadSockets = (directory) => {
+            // If the directory is marked to be skipped, skip it
+            if (skippedFiles.includes(directory)) return;
+
+            // Read all files in the directory
+            // If a file is a directory, recursively call loadSockets on it
+            // If a file is a .js file, require it and call its run function with (socket, socketUpdates)
+            const files = fs.readdirSync(`./sockets/${directory}`);
+            for (const file of files) {
+                // If the file is in the skippedFiles array, skip it
+                if (skippedFiles.includes(file)) continue;
+
+                const fullPath = `${directory}/${file}`;
+                if (fs.statSync(`./sockets/${fullPath}`).isDirectory()) {
+                    loadSockets(fullPath);
+                } else if (file.endsWith('.js')) {
+                    const route = require(fullPath);
+                    route.run(socket, socketUpdates);
+                }
+            }
+        };
         
         // Import socket routes
-        const socketRouteFiles = fs.readdirSync('./sockets').filter(file => file.endsWith('.js'));
-        for (const socketRouteFile of socketRouteFiles) {
-            // Skip as this is the file initializing all of them
-            if (socketRouteFile == "init.js") {
-                continue;
-            }
-
-            const route = require(`./${socketRouteFile}`);
-            route.run(socket, socketUpdates);
-        }
+        loadSockets('.')
     })
 }
 

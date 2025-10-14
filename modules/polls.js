@@ -50,12 +50,6 @@ async function createPoll(classId, pollData, userSession) {
         classInformation.classrooms[classId].poll.blind = blind
         classInformation.classrooms[classId].poll.status = true
 
-        if (tags) {
-            classInformation.classrooms[classId].poll.requiredTags = tags
-        } else {
-            classInformation.classrooms[classId].poll.requiredTags = []
-        }
-
         if (studentsAllowedToVote) {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
@@ -182,6 +176,38 @@ async function endPoll(classId, userSession) {
 }
 
 /**
+ * Saves the current poll data to the poll history table in the database.
+ * @param {number} classId - The ID of the class whose poll should be saved.
+ */
+async function savePollToHistory(classId) {
+    // logger.log('info', `[saveEndedPoll] session=(${JSON.stringify(userSession)})`)
+    const classroom = classInformation.classrooms[classId];
+    if (!classroom) return;
+
+    const date = new Date()
+    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`
+    const data = {
+        prompt: classroom.poll.prompt,
+        responses: classroom.poll.responses,
+        allowMultipleResponses: classroom.poll.allowMultipleResponses,
+        blind: classroom.poll.blind,
+        allowTextResponses: classroom.poll.allowTextResponses,
+        names: [],
+        letter: [],
+        text: []
+    }
+
+    for (const key in classInformation.classrooms[classId].students) {
+        data.names.push(classInformation.classrooms[classId].students[key].email)
+        data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
+        data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
+    }
+
+    dbRun('INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)', [classId, JSON.stringify(data), formattedDate]);
+    logger.log('verbose', '[endPoll] saved poll to history');
+}
+
+/**
  * Clears the current poll in the specified class, optionally updates the class state,
  * and saves poll answers to the database.
  *
@@ -205,7 +231,6 @@ async function clearPoll(classId, userSession, updateClass = true){
             prompt: "",
             weight: 1,
             blind: false,
-            requiredTags: [],
             studentsAllowedToVote: []
         };
 
@@ -263,16 +288,18 @@ function pollResponse(classId, res, textRes, userSession) {
     const classroom = classInformation.classrooms[classId];
     const socketUpdates = userSocketUpdates[email];
 
+    // If there's no poll or the poll is not active, return
     if (!classroom.poll || !classroom.poll.status) {
         return;
     }
 
+    // If the user's response has not changed, return
     const prevRes = classroom.students[email].pollRes.buttonRes;
     let hasChanged = classroom.poll.allowMultipleResponses ?
         JSON.stringify(prevRes) !== JSON.stringify(res) :
         prevRes !== res;
 
-    if(!classroom.poll.allowVoteChanges && prevRes !== '' && (JSON.stringify(prevRes) !== JSON.stringify(res))) {
+    if (!classroom.poll.allowVoteChanges && prevRes !== '' && (JSON.stringify(prevRes) !== JSON.stringify(res))) {
         return;
     }
 
@@ -399,6 +426,7 @@ async function deleteCustomPolls(userId) {
 module.exports = {
     createPoll,
     endPoll,
+    savePollToHistory,
     clearPoll,
     pollResponse,
     getPollResponses,
