@@ -676,9 +676,6 @@ function doAccordionButton(button, which) {
     accordion.classList.remove("borderLeft");
     accordion.classList.remove("borderRight");
 
-    console.log({ button, allowedButtons, accordion });
-    console.log(button == allowedButtons[0], button == allowedButtons[allowedButtons.length - 1]);
-
     if (button == allowedButtons[0] && !accordion.classList.contains("borderLeft")) {
         accordion.classList.add("borderLeft");
     }

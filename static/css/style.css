@@ -1114,9 +1114,12 @@ div#usersMenu.tabContent.usersMenuBox #users {
 }
 
 #users {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    align-content: flex-start;
 }
 
 #users details[id^="student"],
@@ -1124,12 +1127,8 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 5px;
-	width: 25%;
+	width: 100%;
 	font-size: larger;
-	margin-top: 2.5vh;
-	margin-left: 2.5vw;
-	margin-right: 2.5vw;
-	margin-bottom: 15cqh;
 	height: fit-content;
 	background-color: var(--bg-light-blue);
 	min-width: 300px;
@@ -1291,16 +1290,18 @@ div.break {
 
 #users div:not(#reasons, #reasons *, #alerts *) {
 	padding: 1vh;
-	display: flex;
-	flex-wrap: wrap;
-	border-radius: var(--borderRadius);
-	background: var(--lightMode-menu-bg);
-	border: 2px solid var(--lightMode-menu-border);
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	gap: 10px;
-	height: min-content;
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: var(--borderRadius);
+    background: var(--lightMode-menu-bg);
+    border: 2px solid var(--lightMode-menu-border);
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 10px;
+    height: min-content;
+    width: 100%;
+    text-align: left;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) p {
@@ -2028,12 +2029,13 @@ div.sideBySide {
 #VBDiv #newMemberListControlPanel {
 	gap: 20px;
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	grid-auto-rows: min-content;
+	align-items: start;
 	position: relative;
 	padding-top: 70px;
 	padding-left: 20px;
 	padding-right: 20px;
-	grid-auto-rows: min-content;
 	overflow: auto;
 }
 
@@ -2043,6 +2045,17 @@ div.sideBySide {
 	left: 30px;
 }
 
+div.user {
+
+	flex-direction: column;
+	cursor: pointer;
+	max-height: unset;
+	height: min-content;
+	padding: 0 !important;
+	flex-shrink: 0 !important;
+	min-width: 100px;
+}
+
 .controlStudent {
 	flex-direction: column;
 	cursor: pointer;
@@ -2050,6 +2063,8 @@ div.sideBySide {
 	height: min-content;
 	padding: 0 !important;
 	flex-shrink: 0 !important;
+    width: 100%;
+	min-width: 400px;
 }
 
 .controlStudent summary {
@@ -2678,12 +2693,6 @@ button img {
 	cursor: pointer;
 	grid-row: span 3;
 }
-
-#users .user.hiddenInfo *:not(p) {
-	display: none;
-	grid-row: unset;
-}
-
 #addIpForm {
     display: flex;
     justify-content: center;
@@ -2901,7 +2910,8 @@ div#tagsList {
 	overflow: auto;
 }
 
-div#tagsList:empty::after {
+div#tagsList:empty::after,
+div.roomTags:empty::after {
 	content: "No tags added";
 	font-style: italic;
 	opacity: 0.5;
@@ -3058,7 +3068,7 @@ div.accordionButtons button:nth-child(7),
 }
 
 .accordionButton.active {
-	height: 56px;
+	height: 56px !important;
 	border-bottom: none;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
@@ -3105,6 +3115,10 @@ div.accordionOptions {
     display: none;
     height: 100%;
     width: 100%;
+}
+
+div.accordionOptions * {
+    color: black !important;
 }
 
 div.accordionOptions.active {
