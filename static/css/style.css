@@ -694,10 +694,12 @@ body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
 }
 
 details {
+	width: 300px;
 	max-height: 4rem;
 	overflow: visible;
 	position: relative;
 	transition: max-height 250ms ease-in-out;
+	padding-bottom: 5px !important;
 }
 
 details[open] {
@@ -1631,7 +1633,7 @@ button:disabled:hover {
 	border-radius: var(--borderRadius);
 }
 
-.circularButton:hover {
+.circularButton:hover:not(.accordionButton) {
 	background-color: var(--lightMode-button-hover-bg);
 	transform: scale(var(--button-hover-scale));
 }
@@ -1691,7 +1693,8 @@ button:disabled:hover {
 
 
 .revampButton.acceptButton,
-.circularButton.acceptButton {
+.circularButton.acceptButton,
+.squareButton.acceptButton {
 	background-color: hsl(120, 94%, 74%) !important;
 	color: white !important;
 	border: 2px solid var(--color-green) !important;
@@ -1699,8 +1702,15 @@ button:disabled:hover {
 }
 
 .revampButton.acceptButton:hover,
-.circularButton.acceptButton:hover {
+.circularButton.acceptButton:hover,
+.squareButton.acceptButton:hover {
 	background-color: hsl(120, 94%, 44%) !important;
+}
+
+.revampButton.acceptButton img,
+.circularButton.acceptButton img,
+.squareButton.acceptButton img {
+	filter: invert(0) !important;
 }
 
 #news {
@@ -2904,9 +2914,14 @@ div#tagsList div {
 	font-size: 1.25rem;
 	width: 100%;
 	display: flex;
-	justify-content: space-between;
+	justify-content: start;
 	align-items: center;
 	gap: 5px;
+}
+
+div#tagsList div p {
+	flex: 1 1 auto;
+	text-align: left;
 }
 
 div#tagsList div button {
@@ -2959,4 +2974,101 @@ button.studentTagsButton {
 	margin-right: 5px;
 	height: 35px !important;
 	width: 35px !important;
+}
+
+div.accordionButtons {
+	display: flex;
+	justify-content: space-between;
+	padding: 0 5px;
+}
+
+button.accordionButton {
+	width: 36px;
+	height: 36px;
+	margin: 0;
+}
+
+p.userTextResponse {
+	padding: 0 10px;
+	margin-top: 0;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.helpAccButton {
+	background: var(--light-red) !important;
+}
+
+.breakAccButton {
+	background: var(--light-orange) !important;
+}
+
+.textAccButton {
+	background: var(--light-yellow) !important;
+}
+
+.permsAccButton {
+	background: var(--light-green) !important;
+}
+
+.digipogsAccButton {
+	background: var(--light-blue) !important;
+}
+
+.tagsAccButton {
+	background: var(--light-purple) !important;
+}
+
+.kickBanButton {
+	background: var(--light-pink) !important;
+}
+
+.accordionButton {
+	padding: 2px;
+	border-top-right-radius: 999px;
+	border-top-left-radius: 999px;
+	border-bottom-right-radius: 999px;
+	border-bottom-left-radius: 999px;
+}
+
+.accordionButton:hover {
+	filter: brightness(0.7);
+}
+
+.accordionButton img {
+	width: 80% !important;
+	height: unset !important;
+	aspect-ratio: 1 !important;
+	filter: invert(0) !important;
+}
+
+.accordionButton.active {
+	height: 40px;
+	border-bottom: none;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	outline: none;
+}
+
+div.accordionPopup {
+	display: none;
+	margin: 5px;
+	margin-top: 0;
+	background: var(--light-red);
+	border-color: var(--lightMode-button-border);
+	outline: none;
+}
+
+div.accordionPopup.open {
+	display: block;
+	height: 120px;
+}
+
+div.accordionPopup.helpAccButton.open {
+	border-top-left-radius: 0;
+}
+
+div.accordionPopup.kickBanButton.open {
+	border-top-right-radius: 0;
 }

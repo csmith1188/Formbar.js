@@ -635,3 +635,52 @@ function awardDigipogs(userId, amount) {
     const awardInput = awardButton.parentElement.querySelector('input.digipogAward');
     awardInput.value = 0;
 }
+
+function doAccordionButton(button, which) {
+    const studentElement = button.closest('details');
+    const accordion = studentElement.querySelector('div.accordionPopup');
+    const otherButtons = studentElement.querySelectorAll('button.accordionButton');
+    const selectedButton = studentElement.querySelector('button.accordionButton.active');
+    const student = students.find((e) => e.id == studentElement.id.split('student-')[1]);
+
+    if(button == selectedButton) {
+        accordion.className = 'accordionPopup revampDiv';
+        button.classList.remove('active');
+        return;
+    }
+
+    otherButtons.forEach((e) => e.classList.remove('active'));
+    button.classList.add('active');
+
+    switch(which) {
+        case 0: // Help Button
+            accordion.className = 'accordionPopup revampDiv helpAccButton open';
+            break;
+        
+        case 1: // Break Button
+            accordion.className = 'accordionPopup revampDiv breakAccButton open';
+            break;
+        
+        case 2: // Text Response Button
+            accordion.className = 'accordionPopup revampDiv textAccButton open';
+            break;
+            
+        case 3: // Permissions Button
+            accordion.className = 'accordionPopup revampDiv permsAccButton open';
+            break;
+        
+        case 4: // Digipogs Button
+            accordion.className = 'accordionPopup revampDiv digipogsAccButton open';
+            break;
+            
+        case 5: // Tags Button
+            accordion.className = 'accordionPopup revampDiv tagsAccButton open';
+            break;
+        
+        case 6: // Ban / Kick Button
+            accordion.className = 'accordionPopup revampDiv kickBanButton open';
+            break;
+    }
+
+    console.log('Doing accordion button: ', which, ' for user: ', student.id);
+}

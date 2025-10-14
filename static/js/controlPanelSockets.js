@@ -395,8 +395,8 @@ closeTags.addEventListener('click', function () {
 
 socket.emit('classBannedUsersUpdate')
 socket.on('classBannedUsersUpdate', (bannedStudents) => {
-	let bannedDiv = document.querySelector('#bannedMenu.tabContent')
-	bannedDiv.innerHTML = ''
+	//let bannedDiv = document.querySelector('#bannedMenu.tabContent')
+	//bannedDiv.innerHTML = ''
 
 	for (let bannedStudent of bannedStudents) {
 		let bannedStudentDiv = document.createElement('div')

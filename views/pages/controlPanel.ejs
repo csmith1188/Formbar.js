@@ -426,10 +426,7 @@
 
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
-        <button class="studentTagsButton revampButton circularButton">
-            <img src="/img/pricetags-outline.svg" alt="Tags Icon">
-        </button>
-        <span id="alerts"></span>
+        <span id="alerts" style="display: none;"></span>
         <span>
             <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
         </span>
@@ -441,12 +438,28 @@
             <div id="breakReason"></div>
         </div>
     </summary>
-    <div id="permissions"></div>
-    <div id="roomTags"></div>
-    <div id="digipogButtons"></div>
-    <div id="extraButtons"></div>
+    <p class="userTextResponse">Text Response</p>
+
+    <div id="permissions" style="display: none;"></div>
+    <div id="roomTags" style="display: none;"></div>
+    <div id="digipogButtons" style="display: none;"></div>
+    <div id="extraButtons" style="display: none;"></div>
+
+    <div class="accordionButtons">
+        <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this, 0)"><img src="/img/hand-right-outline.svg" alt="Help Ticket"></button>
+        <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this, 1)"><img src="/img/umbrella-outline.svg" alt="Break"></button>
+        <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this, 2)"><img src="/img/text-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton permsAccButton"       onclick="doAccordionButton(this, 3)"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
+        <button class="accordionButton circularButton digipogsAccButton"    onclick="doAccordionButton(this, 4)"><img src="/img/digipog.svg" alt="Digipogs"></button>
+        <button class="accordionButton circularButton tagsAccButton"        onclick="doAccordionButton(this, 5)"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton kickBanButton"        onclick="doAccordionButton(this, 6)"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
+    </div>
+
+    <div class="accordionPopup revampDiv">
+
+    </div>
+
 </details>
-</div>
 </body>
 
 </html>

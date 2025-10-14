@@ -108,7 +108,7 @@ div.helpIconInformation.revampDivAlt {
 	outline: 2px solid #0004;
 }
 
-.circularButton:hover,
+.circularButton:hover:not(.accordionButton),
 .squareButton:hover,
 .mobileCircular:hover {
 	background-color: var(--darkMode-button-hover-bg) !important;
