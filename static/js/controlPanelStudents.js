@@ -45,7 +45,6 @@ function buildStudent(classroom, studentData) {
         })
 
         let summary = newStudent.querySelector('summary')
-        let alertSpan = newStudent.querySelector('#alerts')
         let reasons = newStudent.querySelector('#reasons')
         let helpReason = newStudent.querySelector('#helpReason')
         let breakReason = newStudent.querySelector('#breakReason')
@@ -88,12 +87,13 @@ function buildStudent(classroom, studentData) {
             newStudent.style.opacity = 1;
         }
 
+        newStudent.querySelector('button.helpAccButton').classList.add('hidden');
+        newStudent.querySelector('button.breakAccButton').classList.add('hidden');
+
         if (studentData.help) {
-            let div = document.createElement('div')
-            div.innerHTML += '❗'
-            alertSpan.appendChild(div)
+            let accordionOptions = newStudent.querySelector('div.accordionOptions.helpOptions');
+
             newStudent.classList.add('help')
-            alertSpan.classList.add('help')
 
             let deleteTicketButton = document.createElement('button')
             deleteTicketButton.classList.add('quickButton', 'revampButton', 'noReason')
@@ -108,14 +108,15 @@ function buildStudent(classroom, studentData) {
                 deleteTicketButton.classList.remove('noReason')
             }
 
-            helpReason.appendChild(deleteTicketButton)
+            accordionOptions.appendChild(deleteTicketButton)
+            newStudent.querySelector('button.helpAccButton').classList.remove('hidden');
         }
 
         if (studentData.break == true) {
             userBreak.push(studentData.id)
         } else if (studentData.break) {
+            let accordionOptions = newStudent.querySelector('div.accordionOptions.breakOptions');
             newStudent.classList.add('break')
-            alertSpan.classList.add('break')
             if (studentData.break) {
                 breakReason.textContent = `"${studentData.break}"`
             }
@@ -136,16 +137,12 @@ function buildStudent(classroom, studentData) {
             }
             denyBreakButton.textContent = 'Deny Break'
 
-            breakReason.appendChild(approveBreakButton)
-            breakReason.appendChild(denyBreakButton)
+            accordionOptions.appendChild(approveBreakButton)
+            accordionOptions.appendChild(denyBreakButton)
+            newStudent.querySelector('button.breakAccButton').classList.remove('hidden');
         }
 
         if (studentData.break) {
-            let div = document.createElement('div')
-            div.textContent = '⏱'
-
-            alertSpan.appendChild(div)
-
             let endBreakButton = document.createElement('button')
             endBreakButton.classList.add('quickButton', 'revampButton')
             endBreakButton.dataset.studentName = studentData.id
@@ -159,18 +156,14 @@ function buildStudent(classroom, studentData) {
             newStudent.classList.add('break')
         }
 
-        alertSpan.onclick = () => {
-            reasons.classList.toggle('open');
-        }
-
         if(studentData.pollRes.textRes !== '' && studentData.pollRes.buttonRes !== '') {
-            let div = document.createElement('div')
-            div.style = 'width:24px;height:24px;filter:invert(1);'
-            div.innerHTML = '<img src="/img/text-outline.svg">'
-            alertSpan.appendChild(div)
-            newStudent.title = studentData.pollRes.textRes;
+            newStudent.querySelector('button.textAccButton').classList.remove('hidden');
+            newStudent.querySelector('#fullTextResponse').textContent = studentData.pollRes.textRes;
+            newStudent.querySelector('#userTextResponse').textContent = studentData.pollRes.textRes;
         } else {
-            newStudent.title = '';
+            newStudent.querySelector('button.textAccButton').classList.add('hidden');
+            newStudent.querySelector('#fullTextResponse').textContent = '';
+            newStudent.querySelector('#userTextResponse').textContent = '';
         }
 
         let permSwitch = document.createElement('select');
@@ -644,43 +637,48 @@ function doAccordionButton(button, which) {
     const student = students.find((e) => e.id == studentElement.id.split('student-')[1]);
 
     if(button == selectedButton) {
-        accordion.className = 'accordionPopup revampDiv';
+        accordion.classList.remove('open')
         button.classList.remove('active');
         return;
     }
 
+    Array.from(accordion.children).forEach((e) => { e.classList.remove('active') });
     otherButtons.forEach((e) => e.classList.remove('active'));
     button.classList.add('active');
 
-    switch(which) {
-        case 0: // Help Button
-            accordion.className = 'accordionPopup revampDiv helpAccButton open';
-            break;
-        
-        case 1: // Break Button
-            accordion.className = 'accordionPopup revampDiv breakAccButton open';
-            break;
-        
-        case 2: // Text Response Button
-            accordion.className = 'accordionPopup revampDiv textAccButton open';
-            break;
-            
-        case 3: // Permissions Button
-            accordion.className = 'accordionPopup revampDiv permsAccButton open';
-            break;
-        
-        case 4: // Digipogs Button
-            accordion.className = 'accordionPopup revampDiv digipogsAccButton open';
-            break;
-            
-        case 5: // Tags Button
-            accordion.className = 'accordionPopup revampDiv tagsAccButton open';
-            break;
-        
-        case 6: // Ban / Kick Button
-            accordion.className = 'accordionPopup revampDiv kickBanButton open';
-            break;
+    const studentOptions = {
+        0: {
+            className: 'helpAcc',
+            query: 'helpOptions',
+        },
+        1: {
+            className: 'breakAcc',
+            query: 'breakOptions',
+        },
+        2: {
+            className: 'textAcc',
+            query: 'textOptions',
+        },
+        3: {
+            className: 'permsAcc',
+            query: 'permsOptions',
+        },
+        4: {
+            className: 'digipogsAcc',
+            query: 'digipogOptions',
+        },
+        5: {
+            className: 'tagsAcc',
+            query: 'tagOptions',
+        },
+        6: {
+            className: 'kickBanAcc',
+            query: 'kickBanOptions',
+        }
     }
 
-    console.log('Doing accordion button: ', which, ' for user: ', student.id);
+    const info = studentOptions[which];
+
+    accordion.className = `accordionPopup revampDiv ${info.className} open`;
+    accordion.querySelector('div.accordionOptions.' + info.query).classList.add('active');
 }

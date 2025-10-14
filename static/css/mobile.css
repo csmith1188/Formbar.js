@@ -737,7 +737,7 @@
         font-size: 4vh !important;
     }
 
-    .circularButton {
+    .circularButton:not(.accordionButton) {
         width: 40px !important;
         height: 40px !important;
     }

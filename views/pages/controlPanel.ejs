@@ -438,25 +438,36 @@
             <div id="breakReason"></div>
         </div>
     </summary>
-    <p class="userTextResponse">Text Response</p>
-
-    <div id="permissions" style="display: none;"></div>
-    <div id="roomTags" style="display: none;"></div>
-    <div id="digipogButtons" style="display: none;"></div>
-    <div id="extraButtons" style="display: none;"></div>
+    <p id="userTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
     <div class="accordionButtons">
         <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this, 0)"><img src="/img/hand-right-outline.svg" alt="Help Ticket"></button>
         <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this, 1)"><img src="/img/umbrella-outline.svg" alt="Break"></button>
         <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this, 2)"><img src="/img/text-outline.svg" alt="Text Response"></button>
-        <button class="accordionButton circularButton permsAccButton"       onclick="doAccordionButton(this, 3)"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
-        <button class="accordionButton circularButton digipogsAccButton"    onclick="doAccordionButton(this, 4)"><img src="/img/digipog.svg" alt="Digipogs"></button>
-        <button class="accordionButton circularButton tagsAccButton"        onclick="doAccordionButton(this, 5)"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
-        <button class="accordionButton circularButton kickBanButton"        onclick="doAccordionButton(this, 6)"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
+        <button class="accordionButton circularButton"       onclick="doAccordionButton(this, 3)"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
+        <button class="accordionButton circularButton"    onclick="doAccordionButton(this, 4)"><img src="/img/digipog.svg" alt="Digipogs"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this, 5)"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this, 6)"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
     </div>
 
     <div class="accordionPopup revampDiv">
-
+        <div class="accordionOptions helpOptions"></div>
+        <div class="accordionOptions breakOptions"></div>
+        <div class="accordionOptions textOptions">
+            <p id="fullTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+        <div class="accordionOptions permsOptions">
+            <div id="permissions"></div>
+        </div>
+        <div class="accordionOptions digipogOptions">
+            <div id="digipogButtons"></div>
+        </div>
+        <div class="accordionOptions tagOptions">
+            <div id="roomTags"></div>
+        </div>
+        <div class="accordionOptions kickBanOptions">
+            <div id="extraButtons"></div>
+        </div>
     </div>
 
 </details>

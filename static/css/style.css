@@ -699,7 +699,6 @@ details {
 	overflow: visible;
 	position: relative;
 	transition: max-height 250ms ease-in-out;
-	padding-bottom: 5px !important;
 }
 
 details[open] {
@@ -2914,7 +2913,7 @@ div#tagsList div {
 	font-size: 1.25rem;
 	width: 100%;
 	display: flex;
-	justify-content: start;
+	justify-content: space-between;
 	align-items: center;
 	gap: 5px;
 }
@@ -2980,6 +2979,7 @@ div.accordionButtons {
 	display: flex;
 	justify-content: space-between;
 	padding: 0 5px;
+    height: 40px;
 }
 
 button.accordionButton {
@@ -2988,7 +2988,7 @@ button.accordionButton {
 	margin: 0;
 }
 
-p.userTextResponse {
+p#userTextResponse {
 	padding: 0 10px;
 	margin-top: 0;
 	text-overflow: ellipsis;
@@ -2996,31 +2996,42 @@ p.userTextResponse {
 	white-space: nowrap;
 }
 
-.helpAccButton {
+p#userTextResponse:empty {
+    display: none;
+}
+
+div.accordionButtons button:nth-child(1),
+.helpAcc {
 	background: var(--light-red) !important;
 }
 
-.breakAccButton {
+div.accordionButtons button:nth-child(2),
+.breakAcc {
 	background: var(--light-orange) !important;
 }
 
-.textAccButton {
+div.accordionButtons button:nth-child(3),
+.textAcc {
 	background: var(--light-yellow) !important;
 }
 
-.permsAccButton {
+div.accordionButtons button:nth-child(4),
+.permsAcc {
 	background: var(--light-green) !important;
 }
 
-.digipogsAccButton {
+div.accordionButtons button:nth-child(5),
+.digipogsAcc {
 	background: var(--light-blue) !important;
 }
 
-.tagsAccButton {
+div.accordionButtons button:nth-child(6),
+.tagsAcc {
 	background: var(--light-purple) !important;
 }
 
-.kickBanButton {
+div.accordionButtons button:nth-child(7),
+.kickBanAcc {
 	background: var(--light-pink) !important;
 }
 
@@ -3030,6 +3041,11 @@ p.userTextResponse {
 	border-top-left-radius: 999px;
 	border-bottom-right-radius: 999px;
 	border-bottom-left-radius: 999px;
+
+    transition:
+        0.2s ease-in-out border-bottom-left-radius,
+        0.2s ease-in-out border-bottom-right-radius,
+        0.2s ease-in-out height;
 }
 
 .accordionButton:hover {
@@ -3052,23 +3068,67 @@ p.userTextResponse {
 }
 
 div.accordionPopup {
-	display: none;
-	margin: 5px;
+    opacity: 0;
+	margin: 0 5px;
+    padding: 10px;
+    height: 0px;
+	border-top-left-radius: var(--borderRadius);
+	border-top-right-radius: var(--borderRadius);
 	margin-top: 0;
 	background: var(--light-red);
 	border-color: var(--lightMode-button-border);
 	outline: none;
+    
+
+    transition:
+        0.2s ease-in-out border-top-left-radius,
+        0.2s ease-in-out border-top-right-radius,
+        0.2s ease-in-out opacity,
+        0.2s ease-in-out height;
 }
 
 div.accordionPopup.open {
+	margin: 5px;
+	margin-top: 0;
+    opacity: 1;
 	display: block;
 	height: 120px;
 }
 
-div.accordionPopup.helpAccButton.open {
+div.accordionPopup.helpAcc.open {
 	border-top-left-radius: 0;
 }
 
-div.accordionPopup.kickBanButton.open {
+div.accordionPopup.kickBanAcc.open {
 	border-top-right-radius: 0;
+}
+
+div.accordionOptions {
+    display: none;
+    height: 100%;
+    width: 100%;
+}
+
+div.accordionOptions.active {
+    display: block;
+}
+
+
+
+div.accordionOptions.textOptions p#fullTextResponse {
+    margin: 0;
+    height: 100%;
+    overflow: scroll;
+}
+
+div.accordionOptions.permsOptions select.permSwitch {
+    width: 100%;
+}
+
+div.accordionOptions.kickBanOptions div#extraButtons {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
