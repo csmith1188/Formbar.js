@@ -3106,6 +3106,7 @@ div.accordionPopup {
     transition:
         0.2s ease-in-out border-top-left-radius,
         0.2s ease-in-out border-top-right-radius,
+        0.2s ease-in-out background,
         0.2s ease-in-out opacity,
         0.2s ease-in-out height;
 }
