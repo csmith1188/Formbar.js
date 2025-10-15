@@ -174,3 +174,8 @@ dialog {
 td, th {
 	border-bottom: 3px solid var(--darkMode-menu-border);
 }
+
+.newClassPage {
+	background-color: var(--darkMode-menu-bg);
+	border-color: var(--darkMode-menu-border);
+}

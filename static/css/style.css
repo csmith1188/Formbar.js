@@ -279,7 +279,7 @@ dialog {
 }
 
 #content {
-	height: 100%;
+	height: auto;
 	width: 600px;
 	margin: 0 auto;
 	padding: 100px 10px 10px;
@@ -864,7 +864,7 @@ hr {
 }
 
 .headerText {
-	margin-top: 2em;
+	margin: 0;
 }
 
 .headBox {
@@ -1552,7 +1552,7 @@ article ul {
 #content div.buttons {
 	display: flex;
 	flex-direction: row;
-	/* justify-content: space-between; */
+	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 50px;
     gap: 20px;
@@ -1869,7 +1869,7 @@ a.link:visited {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	height: auto;
+	height: 100%;
 	width: 100%;
 }
 
@@ -1884,35 +1884,12 @@ a.link:visited {
 
 #classesMenu .buttonsHolder button,
 #classesMenu .buttonsHolder input {
-	width: 200%;
+	width: 100%;
 }
 
 #classesMenu form,
 #createClassMenu form {
-	gap: 10px;
-}
-
-#createClassButtons {
-	display: flex;
-	flex-direction: row;
-	align-items: stretch;
-	justify-content: center;
-	gap: 10px;
-	width: 100% !important;
-}
-
-#createClassButtons input[type="submit"] {
-    width: 60%;
-    align-self: center;
-}
-
-#createClassButtons input {
-	width: 80%;
-}
-
-#createClassButtons button {
-	width: 60%;
-	align-self: center;
+	gap: 30px;
 }
 
 #VBDiv {
@@ -2734,7 +2711,6 @@ button img {
     align-items: center;
     flex-direction: row;
     gap: 10px;
-	margin-top: 10px;
 }
 
 #newPoll.tabContent {
@@ -2983,4 +2959,69 @@ button.studentTagsButton {
 	margin-right: 5px;
 	height: 35px !important;
 	width: 35px !important;
+}
+
+
+/*
+ ::::::::  :::            :::      ::::::::   ::::::::  :::::::::: :::::::: 
+:+:    :+: :+:          :+: :+:   :+:    :+: :+:    :+: :+:       :+:    :+:    
++:+        +:+         +:+   +:+  +:+        +:+        +:+       +:+         
++#+        +#+        +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#  +#++:++#++    
++#+        +#+        +#+     +#+        +#+        +#+ +#+              +#+    
+#+#    #+# #+#        #+#     #+# #+#    #+# #+#    #+# #+#       #+#    #+# 
+ ########  ########## ###     ###  ########   ########  ########## ######## 
+*/
+.newClassPage #content {
+	height: 100%;
+	width: 600px !important;
+	margin: 0 auto;
+	padding: 100px 10px 10px;
+	border: 2px;
+	overflow: auto;
+	position: relative;
+	text-align: center;
+}
+
+.newClassPage .headerText {
+	font-size: 30px;
+	font-weight: 700;
+}
+
+.newClassPage #content div.buttons {
+	display: flex;
+	flex-direction: row;
+	/* justify-content: space-between; */
+	align-items: center;
+	margin-bottom: 50px;
+    gap: 20px;
+}
+
+.newClassPage #classesMenu,
+#classesMenu form,
+#createClassMenu,
+#createClassMenu form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: auto;
+	width: 100% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder input {
+	width: 200% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 60%;
+    gap: 20px;
+    row-gap: 10px;
+}
+
+.newClassPage #createClassButtons {
+	width: 100% !important
 }
