@@ -13,71 +13,66 @@
 
                 <div id="content" class="contentBox" style="margin: auto;">
                     <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
-                        <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                            <form action="createClass" method="post" id="selectClassForm">
-                                <label for="manageClassSelect" class="headerText">Manage a class</label>
-                                <select id="manageClassSelect" name="id" class="revampButton">
-
-                                </select>
-                                <div class="buttonsHolder">
-                                    <input type="text" name="submittionType" value="select" hidden>
-                                    <input type="submit" id="submitButton" class="quickButton revampButton pressed"
-                                        value="Go" onsubmit="return false;">
-                                    <button class="quickButton revampButton warningButton" type="button"
-                                        onclick="deleteClass()">Delete</button>
-                                </div>
-
-
-                            </form>
-
-                            <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
-                            <form action="createClass" method="post" id="createClass">
-                                <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a class</label>
-
-                                <div class="buttonsHolder createClassButtons" id="createClassButtons">
-                                    <input type="text" id="classNameBox" name="name" placeholder="Class Name" value=""
-                                        autocomplete="off" class="revampButton revampWithText" required>
-                                    <input type="text" name="submittionType" value="create" hidden>
-                                    <input type="submit" id="submitButton" class="quickButton revampButton pressed"
-                                        value="Create" onsubmit="return false;">
-                                </div>
-                            </form>
-                            <!-- </div> -->
-                            <% } %>
-
-                    </div>
-
-
-
-                    <label for="joinedKey" class="headerText">Join a class</label>
-                    <% if (joinedClasses.length> 0) { %>
+                        <label for="joinedKey" class="headerText">Enter a class</label>
                         <form action="selectClass" method="post" class="joinClassForm">
                             <select id="joinedKey" name="id" required class="revampButton">
-                                <option value="" disabled selected>Joined classes</option>
-                                <% for(let joinedClass of joinedClasses) { %>
-                                    <option value="<%- joinedClass.id %>">
-                                        <%- joinedClass.name %>
-                                    </option>
-                                    <% } %>
+                                <% if (joinedClasses.length> 0) { %>
+                                    <option value="" disabled selected>Joined classes</option>
+                                    <% for(let joinedClass of joinedClasses) { %>
+                                        <option value="<%- joinedClass.id %>">
+                                            <%- joinedClass.name %>
+                                        </option>
+                                        <% } %>
                             </select>
                             <input type="submit" id="submitJoinedButton"
                                 class="button unselectable revampButton quickButton" value="Submit"
                                 onsubmit="return false;">
                         </form>
                         <% } %>
+                            <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                                <form action="createClass" method="post" id="selectClassForm">
+                                    <div class="buttonsHolder">
+                                        <input type="text" name="submittionType" value="select" hidden>
+                                        <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                                            value="Go" onsubmit="return false;"> -->
+                                        <button class="quickButton revampButton warningButton" type="button"
+                                            onclick="deleteClass()" style="margin-top: 40px">Delete</button>
+                                    </div>
 
-                            <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px;">
-                                <input type="text" required name="key" id="joinKey" placeholder="Class code"
-                                    class="revampButton revampWithText">
-                                <input type="submit" id="submitJoinButton"
-                                    class="button unselectable revampButton quickButton" value="Submit"
-                                    onsubmit="return false;">
-                            </form>
+
+                                </form>
+
+                                <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
+                                <form action="createClass" method="post" id="createClass">
+                                    <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a
+                                        class</label>
+
+                                    <div class="buttonsHolder createClassButtons" id="createClassButtons">
+                                        <input type="text" id="classNameBox" name="name" placeholder="Class Name"
+                                            value="" autocomplete="off" class="revampButton revampWithText" required>
+                                        <input type="text" name="submittionType" value="create" hidden>
+                                        <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                                            value="Create" onsubmit="return false;">
+                                    </div>
+                                </form>
+                                <!-- </div> -->
+                                <% } %>
+
+                    </div>
+
+                    <label for="selectClass" class="headerText">Join a class with code</label>
+
+                    <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px;">
+                        <input type="text" required name="key" id="joinKey" placeholder="Class code"
+                            class="revampButton revampWithText">
+                        <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
+                            value="Submit" onsubmit="return false;">
+                    </form>
                 </div>
         </body>
         <script>
             let startClassForm = document.getElementById("selectClassForm")
-            let manageClassSelect = document.getElementById("manageClassSelect")
+            let manageClassSelect = document.getElementById("joinedKey")
 
             function deleteClass() {
                 let classId = manageClassSelect.value
