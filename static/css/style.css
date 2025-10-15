@@ -1083,7 +1083,7 @@ div .tabContent {
 
 .usersMenuBox {
 	margin: auto;
-	width: 60%;
+	width: 80%;
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
