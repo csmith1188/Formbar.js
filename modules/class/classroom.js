@@ -36,7 +36,7 @@ class Classroom {
 			this.permissions = DEFAULT_CLASS_PERMISSIONS
 		}
 		this.pollHistory = pollHistory || []
-		this.tags = tags || ['Offline'];
+		this.tags = tags || ['Offline', 'Excluded'];
 		this.settings = settings || {
 			mute: false,
 			filter: '',
