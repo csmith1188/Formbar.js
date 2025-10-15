@@ -62,7 +62,7 @@ module.exports = {
         socket.on("poolAddMember", async (data) => {
             try {
                 const { poolId, userId } = data;
-                if (typeof poolId !== "number" || poolId < 0) {
+                if (typeof poolId !== "number") {
                     return socket.emit("poolAddMemberResponse", { success: false, message: "Invalid pool ID." });
                 }
                 if (typeof userId !== "number" || (userId <= 0)) {
@@ -102,7 +102,7 @@ module.exports = {
         socket.on("poolRemoveMember", async (data) => {
             try {
                 const { poolId, userId } = data;
-                if (typeof poolId !== "number" || poolId < 0) {
+                if (typeof poolId !== "number") {
                     return socket.emit("poolRemoveMemberResponse", { success: false, message: "Invalid pool ID." });
                 }
                 if (typeof userId !== "number" || (userId <= 0)) {

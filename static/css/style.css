@@ -1204,6 +1204,12 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	align-items: center;
 }
 
+#links {
+	display: flex;
+	justify-content: center;
+	gap: 10px;
+}
+
 .linksTableWrapper {
 	margin-top: 12px;
 	max-height: 300px;
@@ -1357,7 +1363,7 @@ div.break {
 
 .break,
 .break summary {
-	border-color: #ffff00 !important;
+	/* border-color: #ffff00 !important; */
 }
 
 #breakReason button {
@@ -1366,7 +1372,7 @@ div.break {
 
 .help,
 .help summary {
-	border-color: #ff0000 !important;
+	/* border-color: #ff0000 !important; */
 }
 
 #helpReason button {
@@ -3179,4 +3185,9 @@ p.accordionTitle {
 	justify-content: center;
 	align-items: center;
 	gap: 20px;
+}
+
+.linkButton img {
+	filter: invert(0) !important;
+	margin-right: 8px;
 }

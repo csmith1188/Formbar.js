@@ -29,7 +29,8 @@
                 }
 
                 div.transactionHistory {
-                    width: 100%;
+                    margin: auto;
+                    width: 80%;
                     height: 100vh;
                     display: flex;
                     justify-content: start;
@@ -113,6 +114,9 @@
                             <td>
                                 <div style="display: flex; gap: 5px; justify-content: center;">
                                     <% if(pool.owner.id == currentUser.id) { %>
+                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pool.id %>)">
+                                            <img src="/img/cash-outline.svg" alt="Payout" style="filter: invert(0) !important">
+                                        </button>
                                         <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pool.id %>;">
                                             <img src="/img/person.svg" alt="Add or Remove Members" style="filter: invert(0) !important">
                                         </button>
