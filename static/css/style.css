@@ -721,16 +721,6 @@ details #reasons.open {
     animation: fadeIn 0.25s ease-in-out 1 forwards;
 }
 
-#helpReason button, #breakReason button {
-	width: 100%;
-	margin-top: 10px;
-	font-size: 14px;
-}
-
-#helpReason button.noReason, #breakReason button.noReason {
-	margin-top: 0;
-}
-
 #reasons {
 	backdrop-filter: blur(10px);
 	box-shadow: 0 10px 17px rgba(0, 0, 0, 0.78);
@@ -1401,20 +1391,6 @@ div.break {
 	margin: auto;		
 }
 
-#helpReason, #breakReason {
-	display: inline-block;
-	overflow-wrap: break-word;
-	text-align: center;
-	border-radius: 5px;
-	max-width: 400px;
-	height: 100%;
-	margin: 5px;
-}
-
-#helpReason p, #breakReason p {
-	font-size: 1.1cqw;
-}
-
 #helpReason:empty, #breakReason:empty, #response:empty {
 	display: none !important;
 }
@@ -2058,7 +2034,6 @@ div.user {
 
 .controlStudent {
 	flex-direction: column;
-	cursor: pointer;
 	max-height: unset;
 	height: min-content;
 	padding: 0 !important;
@@ -2069,6 +2044,7 @@ div.user {
 
 .controlStudent summary {
 	padding: 10px;
+	cursor: pointer;
 }
 
 body:not(:has(header#formbarHeader[style="display: none;"])) {
@@ -2987,8 +2963,7 @@ button.studentTagsButton {
 div.accordionButtons {
 	display: flex;
 	justify-content: space-between;
-	padding: 0 5px;
-    height: 56px;
+	padding: 0 15px;
     gap: 5px;
 }
 
@@ -3008,39 +2983,78 @@ p#userTextResponse:empty {
     display: none;
 }
 
+details[open] div.accordionPreviews {
+	display: none;
+}
+
+div.accordionPreviews {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 5px;
+	padding: 0 15px;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+
+div.accordionPreviews div {
+	width: 100%;
+	height: 3px;
+	border: none;
+}
+
+div.accordionPreviews div:nth-child(1),
 div.accordionButtons button:nth-child(1),
 .helpAcc {
 	background: var(--light-red) !important;
 }
 
+div.accordionPreviews div:nth-child(2),
 div.accordionButtons button:nth-child(2),
 .breakAcc {
 	background: var(--light-orange) !important;
 }
 
+div.accordionPreviews div:nth-child(3),
 div.accordionButtons button:nth-child(3),
 .textAcc {
 	background: var(--light-yellow) !important;
 }
 
+div.accordionPreviews div:nth-child(4),
 div.accordionButtons button:nth-child(4),
 .permsAcc {
 	background: var(--light-green) !important;
 }
 
+div.accordionPreviews div:nth-child(5),
 div.accordionButtons button:nth-child(5),
 .digipogsAcc {
 	background: var(--light-blue) !important;
 }
 
+div.accordionPreviews div:nth-child(6),
 div.accordionButtons button:nth-child(6),
 .tagsAcc {
 	background: var(--light-purple) !important;
 }
 
+div.accordionPreviews div:nth-child(7),
 div.accordionButtons button:nth-child(7),
 .kickBanAcc {
 	background: var(--light-pink) !important;
+}
+
+button.accordionButton.accButtonDisabled {
+	cursor: not-allowed !important;
+	filter: saturate(0.25) brightness(0.3);
+	scale: 0.85 !important;
+}
+
+div.accordionPreview.accButtonDisabled {
+	filter: saturate(0.25) brightness(0.3);
 }
 
 .accordionButton {
@@ -3077,8 +3091,9 @@ div.accordionButtons button:nth-child(7),
 
 div.accordionPopup {
     opacity: 0;
-	margin: 0 5px;
-    padding: 10px;
+	margin: 0 15px;
+	margin-bottom: 10px;
+    padding: 0 !important;
     height: 0px;
 	border-top-left-radius: var(--borderRadius);
 	border-top-right-radius: var(--borderRadius);
@@ -3096,7 +3111,7 @@ div.accordionPopup {
 }
 
 div.accordionPopup.open {
-	margin: 5px;
+	margin: 15px;
 	margin-top: 0;
     opacity: 1;
 	display: block;
@@ -3113,6 +3128,11 @@ div.accordionPopup.borderRight.open {
 
 div.accordionOptions {
     display: none;
+	overflow: auto;
+	padding: 10px;
+	flex-direction: column;
+	justify-content: space-evenly;
+	align-items: center;
     height: 100%;
     width: 100%;
 }
@@ -3122,7 +3142,7 @@ div.accordionOptions * {
 }
 
 div.accordionOptions.active {
-    display: block;
+    display: flex;
 }
 
 
@@ -3143,4 +3163,19 @@ div.accordionOptions.kickBanOptions div#extraButtons {
     justify-content: center;
     align-items: center;
     gap: 20px;
+}
+
+p.accordionTitle {
+	margin: 5px 0;
+	font-size: 22px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.breakApprovalButtons {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
 }

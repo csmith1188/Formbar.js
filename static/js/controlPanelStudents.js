@@ -33,12 +33,13 @@ function buildStudent(classroom, studentData) {
         newStudent.open = opendetails.indexOf(studentData.id) != -1;
 
         newStudent.onclick = (e) => {
-            if (e.target.id == "alerts") e.preventDefault();
         };
 
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
-                if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
+                if (opendetails.indexOf(studentData.id) == -1) { opendetails.push(studentData.id);
+                let leftMostButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
+                doAccordionButton(leftMostButton, true); }
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
             }
@@ -87,8 +88,8 @@ function buildStudent(classroom, studentData) {
             newStudent.style.opacity = 1;
         }
 
-        newStudent.querySelector("button.helpAccButton").classList.add("hidden");
-        newStudent.querySelector("button.breakAccButton").classList.add("hidden");
+        newStudent.querySelectorAll(".helpAccButton").forEach(e => e.classList.add("accButtonDisabled"));
+        newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.add("accButtonDisabled"));
 
         if (studentData.help) {
             let accordionOptions = newStudent.querySelector("div.accordionOptions.helpOptions");
@@ -101,20 +102,24 @@ function buildStudent(classroom, studentData) {
             deleteTicketButton.onclick = (event) => {
                 deleteTicket(event.target);
             };
-            deleteTicketButton.textContent = "Delete Ticket";
+            deleteTicketButton.textContent = "Delete";
 
+            
             if (studentData.help.reason) {
                 helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()}`;
                 deleteTicketButton.classList.remove("noReason");
             }
 
             accordionOptions.appendChild(deleteTicketButton);
-            newStudent.querySelector("button.helpAccButton").classList.remove("hidden");
+            newStudent.querySelectorAll(".helpAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
+
         }
 
         if (studentData.break == true) {
             userBreak.push(studentData.id);
-        } else if (studentData.break) {
+        } else if (studentData.break && studentData.break !== true) {
+            let newDiv = document.createElement("div");
+            newDiv.classList.add("breakApprovalButtons");
             let accordionOptions = newStudent.querySelector("div.accordionOptions.breakOptions");
             newStudent.classList.add("break");
             if (studentData.break) {
@@ -127,7 +132,7 @@ function buildStudent(classroom, studentData) {
             approveBreakButton.onclick = (event) => {
                 approveBreak(true, studentData.id);
             };
-            approveBreakButton.textContent = "Approve Break";
+            approveBreakButton.textContent = "Approve";
 
             let denyBreakButton = document.createElement("button");
             denyBreakButton.classList.add("quickButton", "revampButton");
@@ -135,14 +140,17 @@ function buildStudent(classroom, studentData) {
             denyBreakButton.onclick = (event) => {
                 approveBreak(false, studentData.id);
             };
-            denyBreakButton.textContent = "Deny Break";
+            denyBreakButton.textContent = "Deny";
 
-            accordionOptions.appendChild(approveBreakButton);
-            accordionOptions.appendChild(denyBreakButton);
-            newStudent.querySelector("button.breakAccButton").classList.remove("hidden");
+            newDiv.appendChild(approveBreakButton);
+            newDiv.appendChild(denyBreakButton);
+
+            accordionOptions.appendChild(newDiv);
+            newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
+
         }
 
-        if (studentData.break) {
+        if (studentData.break == true) {
             let endBreakButton = document.createElement("button");
             endBreakButton.classList.add("quickButton", "revampButton");
             endBreakButton.dataset.studentName = studentData.id;
@@ -154,14 +162,15 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(endBreakButton);
 
             newStudent.classList.add("break");
+            newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
         }
 
         if (studentData.pollRes.textRes !== "" && studentData.pollRes.buttonRes !== "") {
-            newStudent.querySelector("button.textAccButton").classList.remove("hidden");
+            newStudent.querySelectorAll(".textAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
             newStudent.querySelector("#fullTextResponse").textContent = studentData.pollRes.textRes;
             newStudent.querySelector("#userTextResponse").textContent = studentData.pollRes.textRes;
         } else {
-            newStudent.querySelector("button.textAccButton").classList.add("hidden");
+            newStudent.querySelectorAll(".textAccButton").forEach(e => e.classList.add("accButtonDisabled"));
             newStudent.querySelector("#fullTextResponse").textContent = "";
             newStudent.querySelector("#userTextResponse").textContent = "";
         }
@@ -285,6 +294,7 @@ function buildStudent(classroom, studentData) {
             sendDigipogs.className = "quickButton revampButton acceptButton digipogSend";
             sendDigipogs.setAttribute("data-user", studentData.id);
             sendDigipogs.textContent = "Award Digipogs";
+            sendDigipogs.style.whiteSpace = "nowrap";
             sendDigipogs.onclick = (event) => {
                 awardDigipogs(studentData.id, digipogAwardInput.value);
             };
@@ -325,10 +335,6 @@ function buildStudent(classroom, studentData) {
         };
         kickUserButton.textContent = "Kick User";
         extraButtons.appendChild(kickUserButton);
-
-        if (helpReason.textContent == "" && breakReason.textContent == "") {
-            reasonsDiv.style.display = "none";
-        }
         return newStudent;
     }
 }
@@ -617,15 +623,17 @@ function awardDigipogs(userId, amount) {
     awardInput.value = 0;
 }
 
-function doAccordionButton(button, which) {
+function doAccordionButton(button, forceOpen = false) {
+    if(button.classList.contains("accButtonDisabled")) return;
+
     const studentElement = button.closest("details");
     const accordion = studentElement.querySelector("div.accordionPopup");
     const otherButtons = studentElement.querySelectorAll("button.accordionButton");
-    const allowedButtons = studentElement.querySelectorAll("button.accordionButton:not(.hidden)");
+    const allowedButtons = studentElement.querySelectorAll("button.accordionButton:not(.accButtonDisabled)");
     const selectedButton = studentElement.querySelector("button.accordionButton.active");
     const student = students.find((e) => e.id == studentElement.id.split("student-")[1]);
 
-    if (button == selectedButton) {
+    if (button == selectedButton && !forceOpen) {
         accordion.classList.remove("open");
         button.classList.remove("active");
         return;
@@ -668,7 +676,7 @@ function doAccordionButton(button, which) {
         },
     };
 
-    const info = studentOptions[which];
+    const info = studentOptions[button.dataset.option];
 
     accordion.className = `accordionPopup revampDiv ${info.className} open`;
     accordion.querySelector("div.accordionOptions." + info.query).classList.add("active");
@@ -676,11 +684,11 @@ function doAccordionButton(button, which) {
     accordion.classList.remove("borderLeft");
     accordion.classList.remove("borderRight");
 
-    if (button == allowedButtons[0] && !accordion.classList.contains("borderLeft")) {
+    if (button == otherButtons[0] && !accordion.classList.contains("borderLeft")) {
         accordion.classList.add("borderLeft");
     }
 
-    if (button == allowedButtons[allowedButtons.length - 1] && !accordion.classList.contains("borderRight")) {
+    if (button == otherButtons[otherButtons.length - 1] && !accordion.classList.contains("borderRight")) {
         accordion.classList.add("borderRight");
     }
 }
