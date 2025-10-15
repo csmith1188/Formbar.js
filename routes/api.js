@@ -25,7 +25,7 @@ module.exports = {
 					}
 
 					// Get the current user from API key if provided
-					let user = await getUser(req.headers.api)
+					let user = await getUser({ api: req.headers.api, email: req.session.email });
 
 					// If the user is an instance of Error
 					if (user instanceof Error) {
