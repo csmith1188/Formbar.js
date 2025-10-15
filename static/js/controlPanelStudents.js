@@ -624,6 +624,7 @@ function awardDigipogs(userId, amount) {
 }
 
 function doAccordionButton(button, forceOpen = false) {
+    if (!button) return;
     if(button.classList.contains("accButtonDisabled")) return;
 
     const studentElement = button.closest("details");
