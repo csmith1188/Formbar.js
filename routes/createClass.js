@@ -1,7 +1,7 @@
 const { permCheck, isAuthenticated} = require("./middleware/authentication")
 const { classInformation, Classroom } = require("../modules/class/classroom")
 const { logNumbers } = require("../modules/config")
-const { database } = require("../modules/database")
+const { database, dbRun, dbGet } = require("../modules/database")
 const { logger } = require("../modules/logger")
 const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS} = require("../modules/permissions")
 const { setClassOfApiSockets, userSockets, emitToUser} = require("../modules/socketUpdates")
@@ -36,15 +36,14 @@ module.exports = {
                                 }
                             }
 
-                            for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
-                                if (!permissions[permission]) {
+                            for (let permission of Object.keys(permissions)) {
+                                if (typeof permissions[permission] != 'number' || permissions[permission] < 1 || permissions[permission] > 5) {
                                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
                                 }
+                                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [permissions[permission], id]).catch((err) => {
+                                    logger.log('error', err.stack)
+                                })
                             }
-
-                            database.run('UPDATE classroom SET permissions=? WHERE key=?', [JSON.stringify(permissions), key], (err) => {
-                                if (err) logger.log('error', err.stack)
-                            })
                         }
 
                         // Create classroom
@@ -108,13 +107,13 @@ module.exports = {
                     const key = generateKey(4);
 
                     // Add classroom to the database
-                    database.run('INSERT INTO classroom(name, owner, key, permissions, tags) VALUES(?, ?, ?, ?, ?)', [className, req.session.userId, key, JSON.stringify(DEFAULT_CLASS_PERMISSIONS), null], (err) => {
+                    database.run('INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)', [className, req.session.userId, key, null], (err) => {
                         try {
                             if (err) throw err
 
                             logger.log('verbose', '[post /createClass] Added classroom to database')
 
-                            database.get('SELECT id, name, key, permissions, tags FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
+                            database.get('SELECT id, name, key, tags FROM classroom WHERE name = ? AND owner = ?', [className, req.session.userId], async (err, classroom) => {
                                 try {
                                     if (err) throw err
 
@@ -127,12 +126,25 @@ module.exports = {
                                         return
                                     }
 
+                                    let permissions = await dbGet('SELECT * FROM class_permissions WHERE classId = ?', [classroom.id]);
+                                    if (!permissions) {
+                                        permissions = { ...DEFAULT_CLASS_PERMISSIONS };
+                                        await dbRun('INSERT INTO class_permissions (classId) VALUES (?)', [classroom.id]);
+                                    }
+
+                                    const parsedPermissions = {};
+                                    for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
+                                        parsedPermissions[permission] = permissions[permission] || DEFAULT_CLASS_PERMISSIONS[permission];
+                                    }
+
+                                    classroom.permissions = parsedPermissions;
+
                                     let makeClassStatus = await makeClass(
                                         classroom.id,
                                         classroom.name,
                                         classroom.key,
                                         req.session.userId,
-                                        JSON.parse(classroom.permissions),
+                                        classroom.permissions,
                                         [],
                                         [],
                                         classroom.tags
@@ -163,7 +175,7 @@ module.exports = {
                         }
                     })
                 } else {
-                    database.get("SELECT classroom.id, classroom.name, classroom.key, classroom.permissions, classroom.tags, classroom.plugins, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
+                    database.get("SELECT classroom.id, classroom.name, classroom.key, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?", [classId], async (err, classroom) => {
                         try {
                             if (err) throw err
 
@@ -176,7 +188,15 @@ module.exports = {
                                 return
                             }
 
-                            classroom.permissions = JSON.parse(classroom.permissions)
+                            
+                            // Ensure class_permissions exists and normalize permissions to include defaults
+                            let permissionsRow = await dbGet('SELECT * FROM class_permissions WHERE classId = ?', [classroom.id]);
+                            let parsedPermissions = {};
+                            for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
+                                parsedPermissions[permission] = (permissionsRow[permission] != null) ? permissionsRow[permission] : DEFAULT_CLASS_PERMISSIONS[permission];
+                            }
+                            
+                            classroom.permissions = parsedPermissions;
                             classroom.sharedPolls = JSON.parse(classroom.sharedPolls)
                             classroom.pollHistory = JSON.parse(classroom.pollHistory)
 
