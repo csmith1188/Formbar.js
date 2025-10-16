@@ -213,7 +213,7 @@
             const membersOptions = document.querySelector('.membersOptions');
 
             function memberOption(add=true) {
-                const poolId = parseInt(membersOptions.dataset.poolId) || -1;
+                const poolId = parseInt(membersOptions.dataset.poolId);
                 if(poolId < 0) return;
 
                 let userIdInputId = add ? "addMemberUserId" : "removeMemberUserId";
