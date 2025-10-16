@@ -38,7 +38,7 @@ module.exports = {
 
                 res.render('pages/pools', {
                     title: 'Digipog Pools',
-                    pools: JSON.stringify(pools) || [], // Filter out null values
+                    pools: JSON.stringify(pools.filter(p => p)), // Filter out null values
                     ownedPools: JSON.stringify(ownedPools),
                     memberPools: JSON.stringify(memberPools),
                     userId: userId,
