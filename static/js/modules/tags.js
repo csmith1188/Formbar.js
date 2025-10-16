@@ -78,6 +78,7 @@ function updateStudentTags() {
                     let span = document.createElement('span');
                     span.textContent = tag;
                     span.setAttribute('id', tag);
+                    span.className = 'revampTag'
                     if (studTagsSpan) studTagsSpan.appendChild(span);
 
                     // If the studentData does not have tags, add the tag

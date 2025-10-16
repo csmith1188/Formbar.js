@@ -1083,7 +1083,7 @@ div .tabContent {
 
 .usersMenuBox {
 	margin: auto;
-	width: 80%;
+	width: 60%;
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
@@ -1141,6 +1141,7 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	order: 3;
 	display: flex;
 	justify-content: space-evenly;
+	gap: 5px;
 }
 
 #tagOptions div {
@@ -1204,12 +1205,6 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	align-items: center;
 }
 
-#links {
-	display: flex;
-	justify-content: center;
-	gap: 10px;
-}
-
 .linksTableWrapper {
 	margin-top: 12px;
 	max-height: 300px;
@@ -1233,11 +1228,24 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	white-space: nowrap;
 }
 
-#studentTags span{
-	border: 3px var(--theme-color) solid;
-	font-size: 1cqw;
+#studentTags span.revampTag {
+	display: flex;
+    justify-content: center;
+    align-items: center;
 	text-align: center;
-	margin: 1px;
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	background-color: var(--lightMode-button-bg);
+	border: 2px solid var(--lightMode-button-border);
+	outline: 2px solid #fff4;
+	border-radius: 5px;
+	font-size: 12px;
+	padding: 0px 5px;
+	transform-origin: center; 	
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s transform ease-in-out;
 }
 
 div.break {
@@ -1935,14 +1943,6 @@ div.sideBySide {
 	flex: 1 1 auto;
 }
 
-#VBOptions .options {
-	position: absolute;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
 #vbOptionsLast,
 #vbOptionsNext {
 	z-index: 5;
@@ -2001,10 +2001,17 @@ div.sideBySide {
 #VBOptions .options {
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: start;
 	align-items: center;
-	height: 100%;
 	transform: scale(1);
+	position: absolute;
+	top: 0;
+	width: calc(100% - 40px);
+	height: calc(100% - 90px);
+	overflow: scroll;
+	padding: 0;
+	margin: 90px 20px;
+	margin-bottom: 0;
 }
 
 #VBDiv #newMemberListControlPanel {
@@ -3187,6 +3194,39 @@ p.accordionTitle {
 }
 
 .linkButton img {
-	filter: invert(0) !important;
+	filter: invert(0) drop-shadow(0 0 0.5rem black) !important;
 	margin-right: 8px;
+}
+
+.managePanelUsers .user {
+	gap: 20px !important;
+	padding: 0 20px !important;
+  	justify-content: left;
+}
+
+.managePanelUsers .user p {
+	text-align: left;
+	flex: 1 1 auto;
+}
+
+#searchUsers {
+	position: absolute;
+	top: 20px;
+	right: 80px;
+	width: 0;
+	height: 48px;
+	opacity: 0;
+	transition: 0.2s ease-in-out width, 0.2s ease-in-out opacity;
+}
+
+#searchUsers.shown {
+	width: 250px;
+	opacity: 1;
+}
+
+#searchUsersBtn {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	margin-right:0;
 }
