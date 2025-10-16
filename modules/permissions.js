@@ -35,7 +35,7 @@ const CLASS_PERMISSIONS = {
 
 // Defines the default permissions for people in a class
 const DEFAULT_CLASS_PERMISSIONS = {
-	games: MOD_PERMISSIONS, // Control the games	
+	links: MOD_PERMISSIONS, // Control the links page	
 	controlPolls: MOD_PERMISSIONS,	
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS, // Approve break and help requests
