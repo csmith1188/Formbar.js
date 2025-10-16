@@ -742,6 +742,10 @@
         width: 40px !important;
         height: 40px !important;
     }
+    
+    details.controlStudent {
+        min-width: unset;
+    }
 
     div.sideBySide {
         height: calc(100% - 100px) !important;

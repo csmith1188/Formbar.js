@@ -996,8 +996,11 @@
     const FilterState = {
         answeredPoll: "Answered Poll",
         alert: "Alerts",
-        canVote: "Can Vote",
-        cantVote: "Can't Vote",
+        canVote: {
+            0: 'Can Vote',
+            1: 'Can Vote',
+            2: 'Cannot Vote'
+        },
         // byTag: "By Tag"        
     }
 
@@ -1032,11 +1035,13 @@
     window.sort = sort;
 
     for (const [key, value] of Object.entries(FilterState)) {
+        let valueNew = value;
+        if (typeof valueNew == 'object') valueNew = value[0]; // If it's an array, get the first value (for canVote)
         let filterButton = document.createElement('button');
         filterButton.type = 'button';
         filterButton.id = key;
         filterButton.className = 'filter revampButton';
-        filterButton.innerText = value;
+        filterButton.innerText = valueNew;
 
         userFilterSelections.appendChild(filterButton);
     }

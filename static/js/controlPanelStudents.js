@@ -355,6 +355,7 @@ if (settings.filter) {
             if (filterElement) {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML = FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                if(filterType == 'canVote') filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
     }
@@ -430,7 +431,7 @@ function filterSortChange(classroom) {
         }
     }
 
-    if (filter.canVote) {
+    if (filter.canVote == 1) {
         for (const userId of userOrder.slice()) {
             let studentElement = document.getElementById(`student-${userId}`);
             let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
@@ -444,11 +445,11 @@ function filterSortChange(classroom) {
         }
     }
 
-    if (filter.cantVote) {
+    if (filter.canVote == 2) {
         for (const userId of userOrder.slice()) {
             let studentElement = document.getElementById(`student-${userId}`);
             let studentCheckbox = studentElement.querySelector(`#checkbox_${userId}`);
-            if (studentCheckbox || studentCheckbox.checked) {
+            if (!studentCheckbox || studentCheckbox.checked) {
                 studentElement.style.display = "none";
                 const index = userOrder.indexOf(userId);
                 if (index > -1) {
@@ -539,15 +540,33 @@ function filterSortChange(classroom) {
 for (let filterElement of document.getElementsByClassName("filter")) {
     filterElement.onclick = (event) => {
         let filterElement = event.target;
-        filter[filterElement.id] == 1 ? (filter[filterElement.id] = 0) : (filter[filterElement.id] = 1);
 
-        if (filter[filterElement.id] == 0) {
-            filterElement.classList.remove("pressed");
-            filterElement.textContent = FilterState[filterElement.id];
+        if(filterElement.id == 'canVote') {
+            if(filter[filterElement.id] >= 2) {
+                filter[filterElement.id] = 0;
+            } else {
+                filter[filterElement.id] += 1;
+            }
+
+            if (filter[filterElement.id] == 0) {
+                filterElement.classList.remove("pressed");
+            } else {
+                filterElement.classList.add("pressed");
+            }
+            filterElement.textContent = FilterState[filterElement.id][filter[filterElement.id]];
         } else {
-            filterElement.classList.add("pressed");
-            filterElement.innerHTML = FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+            filter[filterElement.id] == 1 ? (filter[filterElement.id] = 0) : (filter[filterElement.id] = 1);
+
+            if (filter[filterElement.id] == 0) {
+                filterElement.classList.remove("pressed");
+                filterElement.textContent = FilterState[filterElement.id];
+            } else {
+                filterElement.classList.add("pressed");
+                filterElement.innerHTML = FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+            }
         }
+
+        
 
         // Update the filter settings in the database
         socket.emit("setClassSetting", "filter", filter);
