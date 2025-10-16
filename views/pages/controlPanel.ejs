@@ -172,7 +172,10 @@
             </div>
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
-                <input type="text" placeholder="Search" id="Search Users">
+                <input type="text" placeholder="Search Users" id="searchUsers" class="revampButton revampWithText" oninput="searchUsers()" autocomplete="off">
+                <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown')">
+                    <img src="/img/search-outline.svg" alt="Open Search">
+                </button>
             </div>
             <div id='VBOptions' class="revampDiv">
                 <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button> -->
@@ -421,10 +424,6 @@
 </dialog>
 <%- include('../partials/body_content') %>
 
-<div class="studentTagAdder">
-    
-</div>
-
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
         <span id="alerts" style="display: none;"></span>
@@ -432,7 +431,7 @@
             <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
         </span>
         <span id="email"></span>
-        <span id="studentTags"></span>
+        <span id="studentTags" style="display: none;"></span>
         <div id="response"></div>
         <div class="accordionPreviews">
             <div class="accordionPreview helpAccButton"></div>
@@ -686,6 +685,20 @@
         if (confirm('Are you sure you want to kick all students?')) {
             socket.emit('classKickStudents');
         }
+    }
+
+    function searchUsers() {
+        const searchInput = document.getElementById('searchUsers').value.toLowerCase();
+        const userElements = usersDiv.querySelectorAll('.controlStudent');
+
+        userElements.forEach(userElement => {
+            const email = !userElement.classList.contains('offline') ? userElement.querySelector('#email').textContent.toLowerCase() : userElement.querySelector('summary').textContent.toLowerCase();
+            if (email.includes(searchInput)) {
+                userElement.style.display = '';
+            } else {
+                userElement.style.display = 'none';
+            }
+        });
     }
 
     const previousPollsDiv = document.getElementById('previousPolls');
@@ -983,8 +996,11 @@
     const FilterState = {
         answeredPoll: "Answered Poll",
         alert: "Alerts",
-        canVote: "Can Vote",
-        cantVote: "Can't Vote",
+        canVote: {
+            0: 'Can Vote',
+            1: 'Can Vote',
+            2: 'Cannot Vote'
+        },
         // byTag: "By Tag"        
     }
 
@@ -1019,11 +1035,13 @@
     window.sort = sort;
 
     for (const [key, value] of Object.entries(FilterState)) {
+        let valueNew = value;
+        if (typeof valueNew == 'object') valueNew = value[0]; // If it's an array, get the first value (for canVote)
         let filterButton = document.createElement('button');
         filterButton.type = 'button';
         filterButton.id = key;
         filterButton.className = 'filter revampButton';
-        filterButton.innerText = value;
+        filterButton.innerText = valueNew;
 
         userFilterSelections.appendChild(filterButton);
     }
