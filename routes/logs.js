@@ -1,7 +1,7 @@
 const { permCheck, isAuthenticated} = require("./middleware/authentication");
 const { logger } = require("../modules/logger");
 const fs = require('fs');
-const {logNumbers} = require("../modules/config");
+const { logNumbers } = require("../modules/config");
 
 module.exports = {
     run(app) {
@@ -9,8 +9,14 @@ module.exports = {
         app.get('/logs', isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log('info', `[get /logs] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`)
-
-                const logs = fs.readdirSync('./logs').filter((fileName) => fileName.endsWith('.log'));
+                const logs = fs.readdirSync('./logs').filter((fileName) => fileName.endsWith('.log')).filter((fileName) => {
+                    try {
+                        const stat = fs.statSync(`./logs/${fileName}`);
+                        return stat.size > 0; // Exclude empty log files
+                    } catch (e) {
+                        return false;
+                    }
+                });
                 res.render('pages/logs', { logs, title: 'Logs', });
             } catch (err) {
                 logger.log('error', err.stack);
@@ -35,7 +41,7 @@ module.exports = {
                 }
 
                 const content = fs.readFileSync(`./logs/${logFileName}`, 'utf8');
-                res.render('pages/logs', { content: content });
+                res.render('pages/logs', { content: content, title: logFileName });
             } catch (err) {
                 logger.log('error', err.stack);
                 res.render('pages/message', {

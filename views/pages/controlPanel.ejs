@@ -40,23 +40,35 @@
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
         <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
+        <button id='bannedStudentsMenu' title="Banned Students" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/ban-outline.svg" alt="Banned Students Icon"></button>
         <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
         <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
         <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
-
     </div>
-    <!-- <button id='bannedMenu' class='quickButton tab' data-tab-group='mainTabs'>Banned Users</button> -->
-    <!-- <button id='lessonMenu' class='quickButton tab' data-tab-group='mainTabs'>Make a Lesson</button> -->
 </header>
 
 <div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
-    
 </div>
 
 <div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Poll Timer</h1>
     <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+</div>
+
+<div id="bannedStudentsMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
+    <h1 class="mobileMenuHeader">Banned Students</h1>
+    <div class="revampDiv">
+    <table id="bannedStudentsTable">
+        <thead>
+        <tr>
+            <th>Display Name</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody id="bannedUsersBody"></tbody>
+    </table>
+    </div>
 </div>
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
@@ -160,6 +172,10 @@
             </div>
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
+                <input type="text" placeholder="Search Users" id="searchUsers" class="revampButton revampWithText" oninput="searchUsers()" autocomplete="off">
+                <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown')">
+                    <img src="/img/search-outline.svg" alt="Open Search">
+                </button>
             </div>
             <div id='VBOptions' class="revampDiv">
                 <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button> -->
@@ -273,7 +289,7 @@
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Allow Vote Changes</h2>
                             <img class="showMobile pollOptionIcon" src="/img/ban-outline.svg" alt="Allow Vote Changes">
-                            <input type='checkbox' id='allowVoteChanges' checked disabled style="cursor: not-allowed;">
+                            <input type='checkbox' id='allowVoteChanges' checked>
                         </div>
                     </div>
     
@@ -366,6 +382,26 @@
                 Regenerate Code
             </button>
         </div>
+		<div class="revampDiv" id="classLinks" style="margin-top: 20px; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
+            <h2>Class Links</h2>
+			<div id="classLinksInputs" style="margin-top: 10px;">
+				<input type="text" id="newLinkName" class="revampButton revampWithText" placeholder="Link name">
+				<input type="url" id="newLinkUrl" class="revampButton revampWithText" placeholder="https://example.com">
+				<button class="revampButton acceptButton" style="width: fit-content;" onclick="addClassLink()">Add</button>
+			</div>
+			<div class="linksTableWrapper">
+				<table id="classLinksTable">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>URL</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody id="classLinksBody"></tbody>
+				</table>
+			</div>
+        </div>
     </div>
 </div>
 <dialog id='sharePollDialog'>
@@ -390,25 +426,65 @@
 
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
-        <span id="alerts"></span>
+        <span id="alerts" style="display: none;"></span>
         <span>
             <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
         </span>
         <span id="email"></span>
-        <span id="studentTags"></span>
+        <span id="studentTags" style="display: none;"></span>
         <div id="response"></div>
-        <div id="reasons" class="revampDiv">
-            <div id="helpReason"></div>
-            <div id="breakReason"></div>
+        <div class="accordionPreviews">
+            <div class="accordionPreview helpAccButton"></div>
+            <div class="accordionPreview breakAccButton"></div>
+            <div class="accordionPreview textAccButton"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
         </div>
     </summary>
-    <div id="permissions"></div>
-    <div id="roomTags"></div>
-    <div id="digipogButtons"></div>
-    <div id="extraButtons"></div>
+    <p id="userTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <div class="accordionButtons">
+        <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this)" data-option="0"><img src="/img/hand-right-outline.svg" alt="Help Ticket"></button>
+        <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this)" data-option="1"><img src="/img/umbrella-outline.svg" alt="Break"></button>
+        <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this)" data-option="2"><img src="/img/text-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"       onclick="doAccordionButton(this)" data-option="3"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
+        <button class="accordionButton circularButton"    onclick="doAccordionButton(this)" data-option="4"><img src="/img/digipog.svg" alt="Digipogs"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="5"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="6"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
+    </div>
+
+    <div class="accordionPopup revampDiv">
+        <div class="accordionOptions helpOptions">
+            <p id="helpReason" class="accordionTitle">Help Ticket</p>
+        </div>
+        <div class="accordionOptions breakOptions">
+            <p id="breakReason" class="accordionTitle">Break</p>
+        </div>
+        <div class="accordionOptions textOptions">
+            <p class="accordionTitle">Text Response</p>
+            <p id="fullTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+        <div class="accordionOptions permsOptions">
+            <p class="accordionTitle">Permissions</p>
+            <div id="permissions"></div>
+        </div>
+        <div class="accordionOptions digipogOptions">
+            <p class="accordionTitle">Digipogs</p>
+            <div id="digipogButtons"></div>
+        </div>
+        <div class="accordionOptions tagOptions">
+            <p class="accordionTitle">Tags</p>
+            <div id="roomTags" class="roomTags"></div>
+        </div>
+        <div class="accordionOptions kickBanOptions">
+            <p class="accordionTitle">Extras</p>
+            <div id="extraButtons"></div>
+        </div>
+    </div>
+
 </details>
-</div>
-<div id='bannedMenu' class='tabContent' data-tab-group='mainTabs'></div>
 </body>
 
 </html>
@@ -478,7 +554,7 @@
     let permissionsDiv = document.querySelector('#permissionsList')
     let tagsDiv = document.querySelector('#tagsList');
     let tagOptionsDiv = document.querySelector('#tagOptions');
-    let bannedTabButton = document.querySelector('.tab#bannedMenu')
+    let bannedUsersBody = document.getElementById('bannedUsersBody');
     let pollsTabButton = document.querySelector('.tab#pollsMenu')
     let settingsTabButton = document.querySelector('.tab#settingsMenu')
     let permissionsTabButton = document.querySelector('.tab#permissions')
@@ -576,7 +652,6 @@
                 endClassButton.onclick = startClass;
                 endClassButton.id = 'startClass';
             }
-            endPollFunc();
         }
     }
 
@@ -610,6 +685,20 @@
         if (confirm('Are you sure you want to kick all students?')) {
             socket.emit('classKickStudents');
         }
+    }
+
+    function searchUsers() {
+        const searchInput = document.getElementById('searchUsers').value.toLowerCase();
+        const userElements = usersDiv.querySelectorAll('.controlStudent');
+
+        userElements.forEach(userElement => {
+            const email = !userElement.classList.contains('offline') ? userElement.querySelector('#email').textContent.toLowerCase() : userElement.querySelector('summary').textContent.toLowerCase();
+            if (email.includes(searchInput)) {
+                userElement.style.display = '';
+            } else {
+                userElement.style.display = 'none';
+            }
+        });
     }
 
     const previousPollsDiv = document.getElementById('previousPolls');
@@ -791,11 +880,127 @@
     const settings = <%- settings %>;
     window.settings = settings;
 
+    // Class Links management (teachers only)
+    const classLinksBody = document.getElementById('classLinksBody');
+    const newLinkName = document.getElementById('newLinkName');
+    const newLinkUrl = document.getElementById('newLinkUrl');
+
+    function renderLinks(links) {
+        if (!classLinksBody) return;
+        classLinksBody.innerHTML = '';
+        if (!Array.isArray(links) || links.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 3;
+            td.textContent = 'No links yet.';
+            tr.appendChild(td);
+            classLinksBody.appendChild(tr);
+            return;
+        }
+
+        for (const item of links) {
+            const tr = document.createElement('tr');
+            const nameTd = document.createElement('td');
+            const urlTd = document.createElement('td');
+            const actionsTd = document.createElement('td');
+            actionsTd.className = 'actionsCell';
+
+            const nameP = document.createElement('p');
+            nameP.href = /^https?:\/\//i.test(item.url) ? item.url : `https://${item.url}`;
+            nameP.target = '_blank';
+            nameP.rel = 'noopener noreferrer';
+            nameP.textContent = item.name;
+
+            nameTd.appendChild(nameP);
+            urlTd.textContent = item.url;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'revampButton warningButton';
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = () => removeClassLink(item.name);
+            actionsTd.appendChild(removeBtn);
+
+            tr.appendChild(nameTd);
+            tr.appendChild(urlTd);
+            tr.appendChild(actionsTd);
+            classLinksBody.appendChild(tr);
+        }
+    }
+
+    function loadClassLinks() {
+        if (!classLinksBody || !currentUser?.activeClass) return;
+        fetch(`/api/room/${currentUser.activeClass}/links`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            }
+        }).then(r => r.json()).then(renderLinks).catch(() => {
+            if (classLinksBody) {
+                classLinksBody.innerHTML = '';
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 3;
+                td.textContent = 'Failed to load links.';
+                tr.appendChild(td);
+                classLinksBody.appendChild(tr);
+            }
+        });
+    }
+
+    function addClassLink() {
+        if (!currentUser?.activeClass) return;
+        const name = newLinkName?.value?.trim();
+        const url = newLinkUrl?.value?.trim();
+        if (!name || !url) return alert('Please enter a name and URL.');
+        fetch(`/api/room/${currentUser.activeClass}/links/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            },
+            body: JSON.stringify({ name, url })
+        }).then(response => {
+            if (!response.ok) throw new Error();
+            newLinkName.value = '';
+            newLinkUrl.value = '';
+            loadClassLinks();
+        }).catch(() => alert('Failed to add link.'));
+    }
+
+    function removeClassLink(name) {
+        if (!currentUser?.activeClass) return;
+        fetch(`/api/room/${currentUser.activeClass}/links/remove`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
+            },
+            body: JSON.stringify({ name })
+        }).then(response => {
+            if (!response.ok) throw new Error();
+            loadClassLinks();
+        }).catch(() => alert('Failed to remove link.'));
+    }
+
+    // Load links when settings tab is opened
+    document.getElementById('settingsMenu')?.addEventListener('click', (event) => {
+        // If clicking the tab button, ignore; load when content visible
+        if (event.target && event.target.id === 'settingsMenu' && classLinksBody?.childElementCount === 0) {
+            loadClassLinks();
+        }
+    });
+    // Also try to load once on page load in case settings tab is defaulted later
+    loadClassLinks();
+
 
     const FilterState = {
         answeredPoll: "Answered Poll",
         alert: "Alerts",
-        canVote: "Can Vote",
+        canVote: {
+            0: 'Can Vote',
+            1: 'Can Vote',
+            2: 'Cannot Vote'
+        },
         // byTag: "By Tag"        
     }
 
@@ -803,9 +1008,7 @@
         responseOrder: "Response Order",
         responseText: "Response Text",
         responseTime: "Response Time",
-
         helpTime: "Help Time",
-
         permissions: "Permissions"
     }
 
@@ -832,11 +1035,13 @@
     window.sort = sort;
 
     for (const [key, value] of Object.entries(FilterState)) {
+        let valueNew = value;
+        if (typeof valueNew == 'object') valueNew = value[0]; // If it's an array, get the first value (for canVote)
         let filterButton = document.createElement('button');
         filterButton.type = 'button';
         filterButton.id = key;
         filterButton.className = 'filter revampButton';
-        filterButton.innerText = value;
+        filterButton.innerText = valueNew;
 
         userFilterSelections.appendChild(filterButton);
     }

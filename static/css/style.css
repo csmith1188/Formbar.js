@@ -705,6 +705,10 @@ details[open] {
 	grid-row: span 5;
 }
 
+details[id^="student-guest"][open] {
+	grid-row: span 3;
+}
+
 details #reasons {
 	opacity: 0;
 	pointer-events: none;
@@ -715,16 +719,6 @@ details #reasons.open {
     z-index: 3;
     pointer-events: all;
     animation: fadeIn 0.25s ease-in-out 1 forwards;
-}
-
-#helpReason button, #breakReason button {
-	width: 100%;
-	margin-top: 10px;
-	font-size: 14px;
-}
-
-#helpReason button.noReason, #breakReason button.noReason {
-	margin-top: 0;
 }
 
 #reasons {
@@ -1093,12 +1087,29 @@ div .tabContent {
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
+	min-height: 0;
+	flex: 1 1 auto;
+	overflow: auto;
+}
+
+#usersMenu.usersMenuBox #users,
+div#usersMenu.usersMenuBox #users,
+div#usersMenu.tabContent.usersMenuBox #users {
+	flex: 1 1 auto;
+	overflow: auto;
+}
+
+#users .user.hasInfo {
+	grid-row: auto !important;
 }
 
 #users {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    align-content: flex-start;
 }
 
 #users details[id^="student"],
@@ -1106,12 +1117,8 @@ div .tabContent {
 	box-shadow: 0 0 0px black;
 	border: 3px var(--theme-color) solid;
 	border-radius: 5px;
-	width: 25%;
+	width: 100%;
 	font-size: larger;
-	margin-top: 2.5vh;
-	margin-left: 2.5vw;
-	margin-right: 2.5vw;
-	margin-bottom: 15cqh;
 	height: fit-content;
 	background-color: var(--bg-light-blue);
 	min-width: 300px;
@@ -1134,6 +1141,7 @@ div .tabContent {
 	order: 3;
 	display: flex;
 	justify-content: space-evenly;
+	gap: 5px;
 }
 
 #tagOptions div {
@@ -1156,11 +1164,88 @@ div .tabContent {
 	gap: 20px;
 }
 
-#studentTags span{
-	border: 3px var(--theme-color) solid;
-	font-size: 1cqw;
+/* Class Links layout overrides */
+#classLinks {
+	display: block;
+	width: 80%;
+	max-width: 800px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Override generic #settingsFunc div flex for the class links container */
+#settingsFunc #classLinks {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 12px;
+}
+
+#classLinksInputs {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+#classLinksInputs input.revampButton.revampWithText {
+	flex: 1 1 240px;
+	min-width: 160px;
+}
+
+#classLinksInputs button {
+	white-space: nowrap;
+}
+
+#linksList > div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.linksTableWrapper {
+	margin-top: 12px;
+	max-height: 300px;
+	overflow: auto;
+}
+
+#classLinksTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#classLinksTable th, #classLinksTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#classLinksTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
+}
+
+#studentTags span.revampTag {
+	display: flex;
+    justify-content: center;
+    align-items: center;
 	text-align: center;
-	margin: 1px;
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	background-color: var(--lightMode-button-bg);
+	border: 2px solid var(--lightMode-button-border);
+	outline: 2px solid #fff4;
+	border-radius: 5px;
+	font-size: 12px;
+	padding: 0px 5px;
+	transform-origin: center; 	
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s transform ease-in-out;
 }
 
 div.break {
@@ -1209,16 +1294,18 @@ div.break {
 
 #users div:not(#reasons, #reasons *, #alerts *) {
 	padding: 1vh;
-	display: flex;
-	flex-wrap: wrap;
-	border-radius: var(--borderRadius);
-	background: var(--lightMode-menu-bg);
-	border: 2px solid var(--lightMode-menu-border);
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	gap: 10px;
-	height: min-content;
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: var(--borderRadius);
+    background: var(--lightMode-menu-bg);
+    border: 2px solid var(--lightMode-menu-border);
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 10px;
+    height: min-content;
+    width: 100%;
+    text-align: left;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) p {
@@ -1236,9 +1323,20 @@ div.break {
 
 #users #roomTags {
 	display: flex;
-	flex-flow: wrap;
-	justify-content: space-evenly;
-	align-items: flex-start;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+#roomTags {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
 }
 
 #saveButton {
@@ -1273,7 +1371,7 @@ div.break {
 
 .break,
 .break summary {
-	border-color: #ffff00 !important;
+	/* border-color: #ffff00 !important; */
 }
 
 #breakReason button {
@@ -1282,7 +1380,7 @@ div.break {
 
 .help,
 .help summary {
-	border-color: #ff0000 !important;
+	/* border-color: #ff0000 !important; */
 }
 
 #helpReason button {
@@ -1305,20 +1403,6 @@ div.break {
 	grid-template-columns: repeat(3, 1fr);
 	gap: 20px;
 	margin: auto;		
-}
-
-#helpReason, #breakReason {
-	display: inline-block;
-	overflow-wrap: break-word;
-	text-align: center;
-	border-radius: 5px;
-	max-width: 400px;
-	height: 100%;
-	margin: 5px;
-}
-
-#helpReason p, #breakReason p {
-	font-size: 1.1cqw;
 }
 
 #helpReason:empty, #breakReason:empty, #response:empty {
@@ -1538,7 +1622,7 @@ button:disabled:hover {
 	border-radius: var(--borderRadius);
 }
 
-.circularButton:hover {
+.circularButton:hover:not(.accordionButton) {
 	background-color: var(--lightMode-button-hover-bg);
 	transform: scale(var(--button-hover-scale));
 }
@@ -1588,18 +1672,33 @@ button:disabled:hover {
 	background-color: var(--bg-dark-red) !important;
 }
 
+.unbanBtnSmall {
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    min-width: auto;
+    border-radius: 4px;
+}
+
 
 .revampButton.acceptButton,
-.circularButton.acceptButton {
-	background-color: hsl(120, 94%, 74%);
-	color: white !important;
-	border: 2px solid var(--color-green);
+.circularButton.acceptButton,
+.squareButton.acceptButton {
+	background-color: hsl(120, 94%, 74%) !important;
+	border: 2px solid var(--color-green) !important;
 	color: black !important;
 }
 
 .revampButton.acceptButton:hover,
-.circularButton.acceptButton:hover {
+.circularButton.acceptButton:hover,
+.squareButton.acceptButton:hover {
 	background-color: hsl(120, 94%, 44%) !important;
+}
+
+.revampButton.acceptButton img,
+.circularButton.acceptButton img,
+.squareButton.acceptButton img {
+	filter: invert(0) !important;
 }
 
 #news {
@@ -1844,14 +1943,6 @@ div.sideBySide {
 	flex: 1 1 auto;
 }
 
-#VBOptions .options {
-	position: absolute;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
 #vbOptionsLast,
 #vbOptionsNext {
 	z-index: 5;
@@ -1910,21 +2001,29 @@ div.sideBySide {
 #VBOptions .options {
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: start;
 	align-items: center;
-	height: 100%;
 	transform: scale(1);
+	position: absolute;
+	top: 0;
+	width: calc(100% - 40px);
+	height: calc(100% - 90px);
+	overflow: scroll;
+	padding: 0;
+	margin: 90px 20px;
+	margin-bottom: 0;
 }
 
 #VBDiv #newMemberListControlPanel {
 	gap: 20px;
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	grid-auto-rows: min-content;
+	align-items: start;
 	position: relative;
 	padding-top: 70px;
 	padding-left: 20px;
 	padding-right: 20px;
-	grid-auto-rows: min-content;
 	overflow: auto;
 }
 
@@ -1934,17 +2033,30 @@ div.sideBySide {
 	left: 30px;
 }
 
-.controlStudent {
+div.user {
+
 	flex-direction: column;
 	cursor: pointer;
 	max-height: unset;
 	height: min-content;
 	padding: 0 !important;
 	flex-shrink: 0 !important;
+	min-width: 100px;
+}
+
+.controlStudent {
+	flex-direction: column;
+	max-height: unset;
+	height: min-content;
+	padding: 0 !important;
+	flex-shrink: 0 !important;
+    width: 100%;
+	min-width: 400px;
 }
 
 .controlStudent summary {
 	padding: 10px;
+	cursor: pointer;
 }
 
 body:not(:has(header#formbarHeader[style="display: none;"])) {
@@ -2278,6 +2390,107 @@ button.start-custom-poll {
 }
 /* 2000 lines!!! */
 
+.sortManager#userSortBoxes {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+}
+
+#userSearch {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Manager Panel - Banned Users */
+#bannedUsersMenu {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+#bannedUsersMenu .mobileMenuHeader {
+	margin: 6px 0 8px;
+	font-size: 22px;
+	line-height: 1.2;
+}
+
+#bannedUsersMenu .revampDiv {
+	padding: 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding-bottom: 16px;
+	width: 80%;
+	max-width: 1100px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#bannedUsersTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#bannedUsersTable th, #bannedUsersTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#bannedUsersTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
+}
+
+#bannedSearch {
+	margin-bottom: 8px !important;
+	width: 100%;
+}
+
+/* Control Panel - Banned Students */
+#bannedStudentsMenu {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+#bannedStudentsMenu .mobileMenuHeader {
+	margin: 6px 0 8px;
+	font-size: 22px;
+	line-height: 1.2;
+}
+
+#bannedStudentsMenu .revampDiv {
+	padding: 12px;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding-bottom: 16px;
+	width: 80%;
+	max-width: 1100px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#bannedStudentsTable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#bannedStudentsTable th, #bannedStudentsTable td {
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--lightMode-menu-border);
+	line-height: 1.2;
+}
+
+#bannedStudentsTable td.actionsCell {
+	text-align: right;
+	width: 1%;
+	white-space: nowrap;
+}
+
 .custom-poll-name {
 	font-weight: bold;
 	font-size: 32px;
@@ -2468,17 +2681,33 @@ button img {
 	cursor: pointer;
 	grid-row: span 3;
 }
-
-#users .user.hiddenInfo *:not(p) {
-	display: none;
-	grid-row: unset;
+#addIpForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
 }
 
-#addIpForm {
+.ipDiv button.quickButton {
+	height: 32px;
+	padding: 0 12px;
+	font-size: 14px;
+}
+
+.ipDiv input[type="text"] {
+	width: 180px;
+	min-width: 150px;
+	max-width: 220px;
+	font-size: 14px;
+	margin-right: 5px;
+}
+
+.ipDiv {
 	display: flex;
-	justify-content: center;
 	align-items: center;
-	flex-direction: row;
+	gap: 6px;
+	margin-bottom: 10px;
+	flex-wrap: nowrap;
 }
 
 .joinClassForm {
@@ -2669,7 +2898,8 @@ div#tagsList {
 	overflow: auto;
 }
 
-div#tagsList:empty::after {
+div#tagsList:empty::after,
+div.roomTags:empty::after {
 	content: "No tags added";
 	font-style: italic;
 	opacity: 0.5;
@@ -2683,6 +2913,11 @@ div#tagsList div {
 	justify-content: space-between;
 	align-items: center;
 	gap: 5px;
+}
+
+div#tagsList div p {
+	flex: 1 1 auto;
+	text-align: left;
 }
 
 div#tagsList div button {
@@ -2726,4 +2961,334 @@ button.sort img {
 
 button.sort img.sortAscendDescendBG {
 	opacity: 0.25;
+}
+
+button.studentTagsButton {
+	padding: 0;
+	position: absolute;
+	right: 0;
+	margin-right: 5px;
+	height: 35px !important;
+	width: 35px !important;
+}
+
+div.accordionButtons {
+	display: flex;
+	justify-content: space-between;
+	padding: 0 15px;
+    gap: 5px;
+}
+
+button.accordionButton {
+	margin: 0;
+}
+
+p#userTextResponse {
+	padding: 0 10px;
+	margin-top: 0;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+p#userTextResponse:empty {
+    display: none;
+}
+
+details[open] div.accordionPreviews {
+	display: none;
+}
+
+div.accordionPreviews {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 5px;
+	padding: 0 15px;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+
+div.accordionPreviews div {
+	width: 100%;
+	height: 3px;
+	border: none;
+}
+
+div.accordionPreviews div:nth-child(1),
+div.accordionButtons button:nth-child(1),
+.helpAcc {
+	background: var(--light-red) !important;
+}
+
+div.accordionPreviews div:nth-child(2),
+div.accordionButtons button:nth-child(2),
+.breakAcc {
+	background: var(--light-orange) !important;
+}
+
+div.accordionPreviews div:nth-child(3),
+div.accordionButtons button:nth-child(3),
+.textAcc {
+	background: var(--light-yellow) !important;
+}
+
+div.accordionPreviews div:nth-child(4),
+div.accordionButtons button:nth-child(4),
+.permsAcc {
+	background: var(--light-green) !important;
+}
+
+div.accordionPreviews div:nth-child(5),
+div.accordionButtons button:nth-child(5),
+.digipogsAcc {
+	background: var(--light-blue) !important;
+}
+
+div.accordionPreviews div:nth-child(6),
+div.accordionButtons button:nth-child(6),
+.tagsAcc {
+	background: var(--light-purple) !important;
+}
+
+div.accordionPreviews div:nth-child(7),
+div.accordionButtons button:nth-child(7),
+.kickBanAcc {
+	background: var(--light-pink) !important;
+}
+
+button.accordionButton.accButtonDisabled {
+	cursor: not-allowed !important;
+	filter: saturate(0.25) brightness(0.3);
+	scale: 0.85 !important;
+}
+
+div.accordionPreview.accButtonDisabled {
+	filter: saturate(0.25) brightness(0.3);
+}
+
+.accordionButton {
+	padding: 2px;
+	border-top-right-radius: 999px;
+	border-top-left-radius: 999px;
+	border-bottom-right-radius: 999px;
+	border-bottom-left-radius: 999px;
+
+    transition:
+        0.2s ease-in-out border-bottom-left-radius,
+        0.2s ease-in-out border-bottom-right-radius,
+        0.2s ease-in-out height;
+}
+
+.accordionButton:hover {
+	filter: brightness(0.7);
+}
+
+.accordionButton img {
+	width: 80% !important;
+	height: unset !important;
+	aspect-ratio: 1 !important;
+	filter: invert(0) !important;
+}
+
+.accordionButton.active {
+	height: 56px !important;
+	border-bottom: none;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	outline: none;
+}
+
+div.accordionPopup {
+    opacity: 0;
+	margin: 0 15px;
+	margin-bottom: 10px;
+    padding: 0 !important;
+    height: 0px;
+	border-top-left-radius: var(--borderRadius);
+	border-top-right-radius: var(--borderRadius);
+	margin-top: 0;
+	background: var(--light-red);
+	border-color: var(--lightMode-button-border);
+	outline: none;
+    overflow: hidden;    
+
+    transition:
+        0.2s ease-in-out border-top-left-radius,
+        0.2s ease-in-out border-top-right-radius,
+        0.2s ease-in-out background,
+        0.2s ease-in-out opacity,
+        0.2s ease-in-out height;
+}
+
+div.accordionPopup.open {
+	margin: 15px;
+	margin-top: 0;
+    opacity: 1;
+	display: block;
+	height: 120px;
+}
+
+div.accordionPopup.borderLeft.open {
+	border-top-left-radius: 0;
+}
+
+div.accordionPopup.borderRight.open {
+	border-top-right-radius: 0;
+}
+
+div.accordionOptions {
+    display: none;
+	overflow: auto;
+	padding: 10px;
+	flex-direction: column;
+	justify-content: space-evenly;
+	align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+div.accordionOptions * {
+    color: black !important;
+}
+
+div.accordionOptions.active {
+    display: flex;
+}
+
+
+
+div.accordionOptions.textOptions p#fullTextResponse {
+    margin: 0;
+    height: 100%;
+    overflow: scroll;
+}
+
+div.accordionOptions.permsOptions select.permSwitch {
+    width: 100%;
+}
+
+div.accordionOptions.kickBanOptions div#extraButtons {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+p.accordionTitle {
+	margin: 5px 0;
+	font-size: 22px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.breakApprovalButtons {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+.linkButton img {
+	filter: invert(0) drop-shadow(0 0 0.5rem black) !important;
+	margin-right: 8px;
+}
+
+/*
+ ::::::::  :::            :::      ::::::::   ::::::::  :::::::::: :::::::: 
+:+:    :+: :+:          :+: :+:   :+:    :+: :+:    :+: :+:       :+:    :+:    
++:+        +:+         +:+   +:+  +:+        +:+        +:+       +:+         
++#+        +#+        +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#  +#++:++#++    
++#+        +#+        +#+     +#+        +#+        +#+ +#+              +#+    
+#+#    #+# #+#        #+#     #+# #+#    #+# #+#    #+# #+#       #+#    #+# 
+ ########  ########## ###     ###  ########   ########  ########## ######## 
+*/
+.newClassPage #content {
+	height: 100%;
+	width: 600px !important;
+	margin: 0 auto;
+	padding: 100px 10px 10px;
+	border: 2px;
+	overflow: auto;
+	position: relative;
+	text-align: center;
+}
+
+.newClassPage .headerText {
+	font-size: 30px;
+	font-weight: 700;
+}
+
+.newClassPage #content div.buttons {
+	display: flex;
+	flex-direction: row;
+	/* justify-content: space-between; */
+	align-items: center;
+	margin-bottom: 50px;
+    gap: 20px;
+}
+
+.newClassPage #classesMenu,
+#classesMenu form,
+#createClassMenu,
+#createClassMenu form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: auto;
+	width: 100% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder input {
+	width: 200% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 60%;
+    gap: 20px;
+    row-gap: 10px;
+}
+
+.newClassPage #createClassButtons {
+	width: 100% !important
+.managePanelUsers .user {
+	gap: 20px !important;
+	padding: 0 20px !important;
+  	justify-content: left;
+}
+
+.managePanelUsers .user p {
+	text-align: left;
+	flex: 1 1 auto;
+}
+
+#searchUsers {
+	position: absolute;
+	top: 20px;
+	right: 80px;
+	width: 0;
+	height: 48px;
+	opacity: 0;
+	transition: 0.2s ease-in-out width, 0.2s ease-in-out opacity;
+}
+
+#searchUsers.shown {
+	width: 250px;
+	opacity: 1;
+}
+
+#searchUsersBtn {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	margin-right:0;
 }

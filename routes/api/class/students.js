@@ -1,13 +1,13 @@
 const { logger } = require("../../../modules/logger")
-const { classInformation, getClassUsers } = require("../../../modules/class/classroom")
-const { classPermCheck } = require("../../middleware/permissionCheck");
-const { CLASS_PERMISSIONS } = require("../../../modules/permissions");
+const { hasClassPermission } = require("../../middleware/permissionCheck");
+const { classInformation } = require("../../../modules/class/classroom");
+const { CLASS_PERMISSIONS, GUEST_PERMISSIONS} = require("../../../modules/permissions");
 const { dbGetAll } = require("../../../modules/database");
 
 module.exports = {
     run(router) {
         // Gets the students of a class
-		router.get('/class/:id/students', classPermCheck(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+		router.get('/class/:id/students', hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
 			try {
 				// Get the class key from the request parameters and log the request details
 				const classId = req.params.id;
@@ -19,6 +19,21 @@ module.exports = {
 				if (classUsers.error) {
 					logger.log('info', `[get api/class/${classId}] ${classUsers}`);
 					res.status(404).json(classUsers);
+					return;
+				}
+
+				// Guest users cannot be found in the database, so if the classroom exists, then add them to the list
+				const classroom = classInformation.classrooms[classId];
+				if (classroom) {
+					for (const [studentId, studentInfo] of Object.entries(classroom.students)) {
+						if (studentInfo.permissions === GUEST_PERMISSIONS && !classUsers.find(user => user.id === studentId)) {
+							classUsers.push({
+								id: studentId,
+								displayName: studentInfo.displayName || 'Guest',
+								classPermissions: 0
+							});
+						}
+					}
 				}
 
 				// Send the students of the class as a JSON response

@@ -11,13 +11,16 @@ const PAGE_PERMISSIONS = {
 	controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
+    links: { permissions: GUEST_PERMISSIONS, classPage: true },
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
 	managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
 	downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
 	logs: { permissions: MANAGER_PERMISSIONS, classPage: false },
-	profile: { permissions: STUDENT_PERMISSIONS, classPage: false }
+	profile: { permissions: STUDENT_PERMISSIONS, classPage: false },
+	pools: { permissions: STUDENT_PERMISSIONS, classPage: false },
+	transactions: { permissions: STUDENT_PERMISSIONS, classPage: false }
 }
 
 const CLASS_PERMISSIONS = {
@@ -43,30 +46,30 @@ const DEFAULT_CLASS_PERMISSIONS = {
 
 // This defines global socket permissions that define who can use each socket event
 const GLOBAL_SOCKET_PERMISSIONS = {
-	permChange: MANAGER_PERMISSIONS,
-	verifyChange: MANAGER_PERMISSIONS,
 	deleteClass: TEACHER_PERMISSIONS,
 	getOwnedClasses: TEACHER_PERMISSIONS,
 	logout: GUEST_PERMISSIONS,
-	deleteUser: MANAGER_PERMISSIONS,
-	banUser: MANAGER_PERMISSIONS,
-	ipUpdate: MANAGER_PERMISSIONS,
-	addIp: MANAGER_PERMISSIONS,
-	removeIp: MANAGER_PERMISSIONS,
-	changeIp: MANAGER_PERMISSIONS,
-	toggleIpList: MANAGER_PERMISSIONS,
 	saveTags: TEACHER_PERMISSIONS,
 	setTags: TEACHER_PERMISSIONS,
-	passwordUpdate: MANAGER_PERMISSIONS,
 	joinClass: GUEST_PERMISSIONS,
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
     refreshPin: STUDENT_PERMISSIONS,
 	transferDigipogs: STUDENT_PERMISSIONS,
-	transferDigipogsResult: STUDENT_PERMISSIONS,
+	transferResponse: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	awardDigipogsResponse: TEACHER_PERMISSIONS,
+	poolCreate: STUDENT_PERMISSIONS,
+	poolCreateResponse: STUDENT_PERMISSIONS,
+	poolDelete: STUDENT_PERMISSIONS,
+	poolDeleteResponse: STUDENT_PERMISSIONS,
+	poolAddMember: STUDENT_PERMISSIONS,
+	poolAddMemberResponse: STUDENT_PERMISSIONS,
+	poolRemoveMember: STUDENT_PERMISSIONS,
+	poolRemoveMemberResponse: STUDENT_PERMISSIONS,
+	poolPayout: STUDENT_PERMISSIONS,
+	poolPayoutResponse: STUDENT_PERMISSIONS,
 }
 
 // This defines socket permissions for the class that define who can use each socket event
@@ -106,7 +109,7 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 	sharePollToClass: 'controlPolls',
 	removeClassPollShare: 'controlPolls',
 	classPermChange: 'manageStudents',
-	classKickUser: 'manageStudents',
+	classKickStudent: 'manageStudents',
 	classKickStudents: 'manageStudents',
 	approveBreak: 'breakAndHelp',
 	deleteTicket: 'breakAndHelp',

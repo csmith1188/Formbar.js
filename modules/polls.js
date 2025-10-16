@@ -20,7 +20,7 @@ const pogMeterTracker = {
  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, answers, blind, tags, studentsAllowedToVote, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, answers, blind, tags, studentsAllowedToVote, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
         let { weight } = pollData;
         const numberOfResponses = Object.keys(answers).length;
         const socketUpdates = userSocketUpdates[userSession.email];
@@ -46,6 +46,7 @@ async function createPoll(classId, pollData, userSession) {
         logger.log('verbose', `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`)
         if (generatedColors instanceof Error) throw generatedColors
 
+        classInformation.classrooms[classId].poll.allowVoteChanges = allowVoteChanges;
         classInformation.classrooms[classId].poll.blind = blind
         classInformation.classrooms[classId].poll.status = true
 
@@ -92,11 +93,13 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].poll.responses[answer] = {
                 answer: answer,
                 weight: weight,
-                color: color
+                color: color,
+                correct: answers[i].correct
             }
         }
 
         // Set the poll's data in the classroom
+        classInformation.classrooms[classId].poll.startTime = Date.now();
         classInformation.classrooms[classId].poll.weight = weight
         classInformation.classrooms[classId].poll.allowTextResponses = allowTextResponses
         classInformation.classrooms[classId].poll.prompt = prompt
@@ -264,6 +267,15 @@ function pollResponse(classId, res, textRes, userSession) {
         return;
     }
 
+    const prevRes = classroom.students[email].pollRes.buttonRes;
+    let hasChanged = classroom.poll.allowMultipleResponses ?
+        JSON.stringify(prevRes) !== JSON.stringify(res) :
+        prevRes !== res;
+
+    if(!classroom.poll.allowVoteChanges && prevRes !== '' && (JSON.stringify(prevRes) !== JSON.stringify(res))) {
+        return;
+    }
+
     const isRemoving = res === 'remove' || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
     if (!classroom.poll.studentsAllowedToVote.includes(user.id.toString()) && !isRemoving) {
         return;
@@ -286,11 +298,6 @@ function pollResponse(classId, res, textRes, userSession) {
         }
     }
 
-    const prevRes = classroom.students[email].pollRes.buttonRes;
-    let hasChanged = classroom.poll.allowMultipleResponses ?
-        JSON.stringify(prevRes) !== JSON.stringify(res) :
-        prevRes !== res;
-
     // If the user is removing their response and they previously had no response, do not play sound
     if (isRemoving && prevRes === '') {
         hasChanged = false;
@@ -307,11 +314,12 @@ function pollResponse(classId, res, textRes, userSession) {
     if (isRemoving) {
         classroom.students[email].pollRes.buttonRes = classroom.poll.allowMultipleResponses ? [] : "";
         classroom.students[email].pollRes.textRes = "";
+        classroom.students[email].pollRes.time = "";
     } else {
         classroom.students[email].pollRes.buttonRes = res;
         classroom.students[email].pollRes.textRes = textRes;
+        classroom.students[email].pollRes.time = new Date();
     }
-    classroom.students[email].pollRes.time = new Date()
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
         const resWeight = classroom.poll.responses[res].weight || 1;
@@ -321,7 +329,8 @@ function pollResponse(classId, res, textRes, userSession) {
         classroom.students[email].pogMeter += pogMeterIncrease;
         if (classroom.students[email].pogMeter >= 500) {
             classroom.students[email].pogMeter -= 500;
-            database.run('UPDATE users SET digipogs = digipogs + 1 WHERE id = ?', [user.id], (err) => {
+            let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 3 digipogs
+            database.run('UPDATE users SET digipogs = digipogs + ? WHERE id = ?', [addPogs, user.id], (err) => {
                 if (err) {
                     logger.log('error', err.stack);
                 } else {

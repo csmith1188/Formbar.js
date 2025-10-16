@@ -1,7 +1,7 @@
 <header id="formbarHeader">
 	<a href="/" id="headerLogo">
 		<h1>Formbar</h1>
-		<p id="version">v 1.1.0</p>
+		<p id="version">v 2.0.0</p>
 	</a>
 
 	<div id="headerSpacer"></div>
@@ -17,14 +17,14 @@
 			</li>
 		<% } %>
 		<% if (!(currentUser && currentUser.activeClass != null)) { %>
-			<% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-			  <li><a href="/manageClass" class="headerTab revampButton">Manage Class</a></li>
-			<% } %>
-			<li><a href="/selectClass" class="headerTab revampButton">Join Class</a></li>
+			<li><a href="/selectClass" class="headerTab revampButton">Classes</a></li>
 		<% } %>
 		<% if (currentUser && currentUser.activeClass != null) { %>
 			<li>
 				<button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">Classes</button>
+			</li>
+			<li>
+				<a href="/links" class="headerTab revampButton" title="Links">Links</a>
 			</li>
 			<li>
 				<button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()">Leave Room</button>
@@ -32,7 +32,6 @@
 		<% } %>
 	<% } %>
 		</ul>
-	<button class="circularButton" onclick="doFullscreen()"><img src="/img/expand-outline.svg" title="Fullscreen"></button>
 
 	<button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
 		<img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
@@ -58,19 +57,6 @@
 	<% } %>
 </header>
 <script>
-function doFullscreen() {
-	if (!document.fullscreenElement) {
-	document.documentElement.requestFullscreen();
-	} else {
-	if (document.exitFullscreen) {
-		document.exitFullscreen();
-	}
-	}
-}		
-document.addEventListener('fullscreenchange', (event) => {
-	// if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
-	// else document.getElementById('formbarHeader').style.display = 'flex';
-});
 
 let lmdmIcon = document.getElementById("lmdmIcon");
 
@@ -114,11 +100,7 @@ function logout() {
   function leaveClass() {
     if (confirm('Are you sure you want to change classes? This will remove you from the current class session.')) {
       // Redirect teachers to manageClass, others to selectClass after the server triggers a reload
-      if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
-        window.reloadRedirect = '/manageClass';
-      } else {
-        window.reloadRedirect = '/selectClass';
-      }
+      window.reloadRedirect = '/selectClass';
       socket.emit('leaveClass')
     }
   }

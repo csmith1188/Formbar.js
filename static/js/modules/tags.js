@@ -54,7 +54,7 @@ function updateStudentTags() {
         }
 
         // Clear room tags
-        if (studTagsSpan) studTagsSpan.innerHTML = '';
+        // if (studTagsSpan) studTagsSpan.innerHTML = '';
         if (roomTags) roomTags.innerHTML = '';
 
         // If the student has tags, check if it's a valid tag in tagsDiv children
@@ -70,6 +70,7 @@ function updateStudentTags() {
             let button = document.createElement('button');
             button.innerHTML = tag
             button.name = `button${tag}`;
+            button.classList.add('revampButton')
             button.value = tag;
             button.onclick = function () {
                 if (!button.classList.contains('pressed')) {
@@ -77,6 +78,7 @@ function updateStudentTags() {
                     let span = document.createElement('span');
                     span.textContent = tag;
                     span.setAttribute('id', tag);
+                    span.className = 'revampTag'
                     if (studTagsSpan) studTagsSpan.appendChild(span);
 
                     // If the studentData does not have tags, add the tag

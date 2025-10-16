@@ -59,6 +59,7 @@
     div#news {
         margin: 0;
         width: 100%;
+        padding: 10px;
     }
 
     .headBox button {
@@ -199,7 +200,7 @@
 
     #usersMenu.tabContent #users {
         display: flex;
-        justify-content: center;
+        justify-content: start;
         align-items: center;
         flex-direction: column;
     }
@@ -295,6 +296,8 @@
 
     details.controlStudent {
         overflow: unset;
+        min-width: unset;
+
     }
 
     #VBDiv {
@@ -442,6 +445,7 @@
     #permissions.tabContent,
     #tags.tabContent,
     #settingsMenu.tabContent,
+    #bannedStudentsMenu.tabContent,
     #previousPollsMenu.tabContent,
     #pollsMenu.tabContent,
     #sortingFilterMenu.tabContent,
@@ -522,6 +526,7 @@
 
     #permissions.tabContent > button.backButton,
     #tags.tabContent > button.backButton,
+    #bannedStudentsMenu.tabContent > button.backButton,
     #settingsMenu.tabContent > button.backButton,
     #previousPollsMenu.tabContent > button.backButton,
     #pollsMenu.tabContent > button.backButton,
@@ -735,9 +740,13 @@
         font-size: 4vh !important;
     }
 
-    .circularButton {
+    .circularButton:not(.accordionButton) {
         width: 40px !important;
         height: 40px !important;
+    }
+    
+    details.controlStudent {
+        min-width: unset;
     }
 
     div.sideBySide {

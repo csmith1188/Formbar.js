@@ -1,11 +1,12 @@
 const { logger } = require("../../../modules/logger");
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { hasPermission } = require("../../middleware/permissionCheck");
 const { deleteUser } = require("../../../modules/user/userSession");
+const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
 
 module.exports = {
     run(router) {
         // Deletes a user from Formbar
-        router.get('/user/:id/delete', httpPermCheck("deleteUser"), async (req, res) => {
+        router.get('/user/:id/delete', hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
                 const userId = req.params.id;
                 const result = await deleteUser(userId)
