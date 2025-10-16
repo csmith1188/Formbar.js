@@ -133,9 +133,15 @@ module.exports = {
         socket.on("poolPayout", async (data) => {
             try {
                 const { poolId } = data;
-                if (typeof poolId !== "number" || poolId <= 0) {
+                if (typeof poolId !== "number" || poolId < 0) {
                     return socket.emit("poolPayoutResponse", { success: false, message: "Invalid pool ID." });
                 }
+
+                const me = await dbGet("SELECT * FROM digipog_pool_users WHERE id = ?", [socket.request.session.userId]);
+                if (!me || !me.owner || !me.owner.split(',').includes(poolId.toString())) {
+                    return socket.emit("poolPayoutResponse", { success: false, message: "You do not own this pool." });
+                }
+
                 const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [poolId]);
                 if (!pool) {
                     return socket.emit("poolPayoutResponse", { success: false, message: "Pool not found." });
@@ -146,7 +152,7 @@ module.exports = {
                     if (user) {
                         const newBalance = user.digipogs + Math.floor(pool.amount / members.length);
                         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, member.id]);
-                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, member.id, pool.id, Math.floor(pool.amount / members.length), `Payout from pool ${pool.name}`, Date.now()]);
+                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, member.id, pool.id, Math.floor(pool.amount / members.length), `Pool Payout`, Date.now()]);
                     }
                 }
 

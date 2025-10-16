@@ -150,6 +150,10 @@
                 </table>
             </div>
 
+            <button class="revampButton" style="position: fixed; bottom: 20px; left: 20px; padding: 15px 25px; font-size: 18px;" onclick="location.href = '/profile/transactions'">
+                Transactions
+            </button>
+
             <button class="revampButton acceptButton" style="position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; font-size: 18px;" onclick="createPool()">
                 Create Pool
             </button>
@@ -224,7 +228,14 @@
                 } else {
                     socket.emit('poolRemoveMember', { poolId: poolId, userId: parseInt(userId) });
                 }
+            }
 
+            function poolPayout(poolId2) {
+                const poolId = parseInt(poolId2)
+
+                let confirmation = confirm("Are you sure you want to payout this pool? This will distribute the pool's amount evenly among all members.");
+
+                if(confirmation) socket.emit('poolPayout', { poolId: poolId });
             }
         </script>
 </html>

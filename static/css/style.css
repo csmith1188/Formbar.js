@@ -1083,7 +1083,7 @@ div .tabContent {
 
 .usersMenuBox {
 	margin: auto;
-	width: 80%;
+	width: 60%;
 	display: flex;
 	flex-direction: column;
 	justify-content: stretch;
@@ -3189,4 +3189,15 @@ p.accordionTitle {
 .linkButton img {
 	filter: invert(0) !important;
 	margin-right: 8px;
+}
+
+.managePanelUsers .user {
+	gap: 20px !important;
+	padding: 0 20px !important;
+  	justify-content: left;
+}
+
+.managePanelUsers .user p {
+	text-align: left;
+	flex: 1 1 auto;
 }
