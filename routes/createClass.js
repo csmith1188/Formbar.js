@@ -126,7 +126,7 @@ module.exports = {
                                         return
                                     }
 
-                                    const permissions = await dbGet('SELECT * FROM class_permissions WHERE classId = ?', [classroom.id]);
+                                    let permissions = await dbGet('SELECT * FROM class_permissions WHERE classId = ?', [classroom.id]);
                                     if (!permissions) {
                                         permissions = { ...DEFAULT_CLASS_PERMISSIONS };
                                         await dbRun('INSERT INTO class_permissions (classId) VALUES (?)', [classroom.id]);
