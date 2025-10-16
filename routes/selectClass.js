@@ -15,7 +15,7 @@ module.exports = {
                 // Get all classes the user is in then render the select class page
                 let joinedClasses = await dbGetAll('SELECT classroom.name, classroom.id, classUsers.permissions FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.email=?', [req.session.email]);
                 joinedClasses = joinedClasses.filter(classroom => classroom.permissions !== 0);
-                res.render('pages/selectClass', {
+                res.render('pages/classes', {
                     title: 'Select Class',
                     joinedClasses: joinedClasses
                 });

@@ -3198,6 +3198,68 @@ p.accordionTitle {
 	margin-right: 8px;
 }
 
+/*
+ ::::::::  :::            :::      ::::::::   ::::::::  :::::::::: :::::::: 
+:+:    :+: :+:          :+: :+:   :+:    :+: :+:    :+: :+:       :+:    :+:    
++:+        +:+         +:+   +:+  +:+        +:+        +:+       +:+         
++#+        +#+        +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#  +#++:++#++    
++#+        +#+        +#+     +#+        +#+        +#+ +#+              +#+    
+#+#    #+# #+#        #+#     #+# #+#    #+# #+#    #+# #+#       #+#    #+# 
+ ########  ########## ###     ###  ########   ########  ########## ######## 
+*/
+.newClassPage #content {
+	height: 100%;
+	width: 600px !important;
+	margin: 0 auto;
+	padding: 100px 10px 10px;
+	border: 2px;
+	overflow: auto;
+	position: relative;
+	text-align: center;
+}
+
+.newClassPage .headerText {
+	font-size: 30px;
+	font-weight: 700;
+}
+
+.newClassPage #content div.buttons {
+	display: flex;
+	flex-direction: row;
+	/* justify-content: space-between; */
+	align-items: center;
+	margin-bottom: 50px;
+    gap: 20px;
+}
+
+.newClassPage #classesMenu,
+#classesMenu form,
+#createClassMenu,
+#createClassMenu form {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: auto;
+	width: 100% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder input {
+	width: 200% !important;
+}
+
+.newClassPage #classesMenu .buttonsHolder {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 60%;
+    gap: 20px;
+    row-gap: 10px;
+}
+
+.newClassPage #createClassButtons {
+	width: 100% !important
 .managePanelUsers .user {
 	gap: 20px !important;
 	padding: 0 20px !important;
