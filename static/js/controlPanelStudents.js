@@ -221,6 +221,7 @@ function buildStudent(classroom, studentData) {
                     button.classList.add("pressed");
                     let span = document.createElement("span");
                     span.textContent = tag;
+                    span.className = 'revampTag'
                     span.setAttribute("id", tag);
                     studTagsSpan.appendChild(span);
 
@@ -268,6 +269,7 @@ function buildStudent(classroom, studentData) {
                 let span = document.createElement("span");
                 span.textContent = tag;
                 span.setAttribute("id", tag);
+                span.className = 'revampTag'
                 studTagsSpan.appendChild(span);
             }
 

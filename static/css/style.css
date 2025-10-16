@@ -1141,6 +1141,7 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	order: 3;
 	display: flex;
 	justify-content: space-evenly;
+	gap: 5px;
 }
 
 #tagOptions div {
@@ -1227,11 +1228,24 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	white-space: nowrap;
 }
 
-#studentTags span{
-	border: 3px var(--theme-color) solid;
-	font-size: 1cqw;
+#studentTags span.revampTag {
+	display: flex;
+    justify-content: center;
+    align-items: center;
 	text-align: center;
-	margin: 1px;
+	cursor: pointer;
+	font-family: "Outfit", sans-serif;
+	color: white !important;
+	background-color: var(--lightMode-button-bg);
+	border: 2px solid var(--lightMode-button-border);
+	outline: 2px solid #fff4;
+	border-radius: 5px;
+	font-size: 12px;
+	padding: 0px 5px;
+	transform-origin: center; 	
+	transition: 
+		0.2s background-color ease-in-out,
+		0.2s transform ease-in-out;
 }
 
 div.break {
