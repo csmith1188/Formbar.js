@@ -230,7 +230,7 @@ module.exports = {
 
                         if (classroom) {
                             if (classInformation.classrooms[classId]) {
-                                socketUpdates.endClass(classroom.key, classroom.id)
+                                endClass(classroom.key, classroom.id)
                             }
 
                             database.run('DELETE FROM classroom WHERE id=?', classroom.id)
