@@ -145,8 +145,8 @@ module.exports = {
                     const user = await dbGet("SELECT * FROM users WHERE id = ?", [member.id]);
                     if (user) {
                         const newBalance = user.digipogs + Math.floor(pool.amount / members.length);
-                        await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, userId]);
-                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, userId, pool.id, Math.floor(pool.amount / members.length), `Payout from pool ${pool.name}`, Date.now()]);
+                        await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, member.id]);
+                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [null, member.id, pool.id, Math.floor(pool.amount / members.length), `Payout from pool ${pool.name}`, Date.now()]);
                     }
                 }
 
