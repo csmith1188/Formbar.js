@@ -76,7 +76,9 @@
             a.rel = 'noopener noreferrer'
             a.innerText = item.name
             const favicon = document.createElement('img')
-            favicon.src = `/links/getLinkFavicon?url=${(new URL(ensureAbsoluteUrl('https://www.google.com/s2/favicons?domain=' + item.url + '?sz=64')))}`
+            // Extract domain from item.url and use it for the Google favicon service
+            const domain = (function(u) { try { return (new URL(ensureAbsoluteUrl(u))).hostname; } catch { return u; } })(item.url);
+            favicon.src = `/links/getLinkFavicon?url=https://www.google.com/s2/favicons?domain=${domain}&sz=64`
             a.prepend(favicon)
             favicon.width = 24;
             favicon.height = 24;
