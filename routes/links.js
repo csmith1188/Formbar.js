@@ -22,10 +22,24 @@ module.exports = {
 
         app.get('/links/getLinkFavicon', async (req, res) => {
             const imageUrl = req.query.url;
-            if(!imageUrl.includes('https://www.google.com/s2/favicons?domain=')) return res.status(500).send('Error fetching image');
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(imageUrl);
+            } catch (e) {
+                return res.status(400).send('Invalid URL');
+            }
+            // Allowlist checks
+            if (
+                parsedUrl.protocol !== 'https:' ||
+                parsedUrl.hostname !== 'www.google.com' ||
+                parsedUrl.pathname !== '/s2/favicons' ||
+                !parsedUrl.searchParams.has('domain')
+            ) {
+                return res.status(400).send('Error fetching image');
+            }
 
             try {
-                const response = await fetch(imageUrl);
+                const response = await fetch(imageUrl, { redirect: 'error' });
                 if (response.ok) {
                     const arrayBuffer = await response.arrayBuffer();
                     const buffer = Buffer.from(arrayBuffer);
