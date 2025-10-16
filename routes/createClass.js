@@ -107,7 +107,7 @@ module.exports = {
                     const key = generateKey(4);
 
                     // Add classroom to the database
-                    database.run('INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?, ?)', [className, req.session.userId, key, null], (err) => {
+                    database.run('INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)', [className, req.session.userId, key, null], (err) => {
                         try {
                             if (err) throw err
 
