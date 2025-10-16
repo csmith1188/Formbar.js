@@ -36,7 +36,6 @@
             'API': currentUser.API
         }
     }).then(res => res.json()).then((links) => {
-        const br = document.createElement('br')
         linksDiv.innerHTML = ''
 
         if (!Array.isArray(links) || links.length === 0) {
@@ -46,13 +45,19 @@
 
         for (const item of links) {
             const a = document.createElement('a')
-            a.className = 'quickButton revampButton'
+            a.className = 'quickButton revampButton linkButton'
             a.href = ensureAbsoluteUrl(item.url)
             a.target = '_blank'
             a.rel = 'noopener noreferrer'
             a.innerText = item.name
+            const favicon = document.createElement('img')
+            favicon.src = `https://www.google.com/s2/favicons?domain=${(new URL(ensureAbsoluteUrl(item.url))).hostname}?sz=64`
+            a.prepend(favicon)
+            // Show default on error
+            favicon.onerror = () => {
+                favicon.src = '/img/favicon.png'
+            }
             linksDiv.append(a)
-            linksDiv.append(br.cloneNode(true))
         }
     }).catch(() => {
         linksDiv.innerHTML = '<p style="font-size: 18px;">Failed to load links.</p>'

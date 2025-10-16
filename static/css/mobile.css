@@ -59,6 +59,7 @@
     div#news {
         margin: 0;
         width: 100%;
+        padding: 10px;
     }
 
     .headBox button {
@@ -199,7 +200,7 @@
 
     #usersMenu.tabContent #users {
         display: flex;
-        justify-content: center;
+        justify-content: start;
         align-items: center;
         flex-direction: column;
     }
@@ -737,7 +738,7 @@
         font-size: 4vh !important;
     }
 
-    .circularButton {
+    .circularButton:not(.accordionButton) {
         width: 40px !important;
         height: 40px !important;
     }
