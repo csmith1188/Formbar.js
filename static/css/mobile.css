@@ -296,6 +296,8 @@
 
     details.controlStudent {
         overflow: unset;
+        min-width: unset;
+
     }
 
     #VBDiv {
