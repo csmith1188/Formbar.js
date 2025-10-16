@@ -3259,7 +3259,9 @@ p.accordionTitle {
 }
 
 .newClassPage #createClassButtons {
-	width: 100% !important
+	width: 100% !important;
+}
+
 .managePanelUsers .user {
 	gap: 20px !important;
 	padding: 0 20px !important;
