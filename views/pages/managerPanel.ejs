@@ -93,25 +93,6 @@
         let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
         let backgroundDarken = document.getElementById("backgroundDarken");
 
-        function showUserInfo(userDiv) {
-            if(orientation == 'landscape') {
-                // Desktop
-                userDiv.classList.toggle('hiddenInfo');
-            } else {
-                // Mobile
-                backgroundDarken.className = 'open';
-
-                managerPaneluserDialog.innerHTML = mobileDialogBackButton;
-                Array.from(userDiv.children).forEach(child => {
-                    let newChild = child.cloneNode(true);
-                    newChild.onclick = child.onclick;
-                    managerPaneluserDialog.appendChild(newChild);
-                });
-
-                managerPaneluserDialog.showModal();
-            }
-        }
-
         async function toggleActiveList() {
             // Toggle the active state of the currently viewed list
             const type = whitelistHeaderH1.innerHTML.toLowerCase();

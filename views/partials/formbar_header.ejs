@@ -32,7 +32,6 @@
 		<% } %>
 	<% } %>
 		</ul>
-	<button class="circularButton" onclick="doFullscreen()"><img src="/img/expand-outline.svg" title="Fullscreen"></button>
 
 	<button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
 		<img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
@@ -58,19 +57,6 @@
 	<% } %>
 </header>
 <script>
-function doFullscreen() {
-	if (!document.fullscreenElement) {
-	document.documentElement.requestFullscreen();
-	} else {
-	if (document.exitFullscreen) {
-		document.exitFullscreen();
-	}
-	}
-}		
-document.addEventListener('fullscreenchange', (event) => {
-	// if(document.fullscreenElement) document.getElementById('formbarHeader').style.display = 'none';
-	// else document.getElementById('formbarHeader').style.display = 'flex';
-});
 
 let lmdmIcon = document.getElementById("lmdmIcon");
 
