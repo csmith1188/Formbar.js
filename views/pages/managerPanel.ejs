@@ -28,7 +28,7 @@
                     <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
                     <input type="text" id="userSearch" class="revampButton revampWithText" placeholder="Search by name" style="flex: 1 1 auto; min-width: 0;">
                 </div>
-                <div id="users"></div>
+                <div id="users" class="managePanelUsers"></div>
             </div>
             <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
                 <div class="revampDiv ipMenuDiv">
@@ -92,25 +92,6 @@
 
         let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
         let backgroundDarken = document.getElementById("backgroundDarken");
-
-        function showUserInfo(userDiv) {
-            if(orientation == 'landscape') {
-                // Desktop
-                userDiv.classList.toggle('hiddenInfo');
-            } else {
-                // Mobile
-                backgroundDarken.className = 'open';
-
-                managerPaneluserDialog.innerHTML = mobileDialogBackButton;
-                Array.from(userDiv.children).forEach(child => {
-                    let newChild = child.cloneNode(true);
-                    newChild.onclick = child.onclick;
-                    managerPaneluserDialog.appendChild(newChild);
-                });
-
-                managerPaneluserDialog.showModal();
-            }
-        }
 
         async function toggleActiveList() {
             // Toggle the active state of the currently viewed list

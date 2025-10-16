@@ -1,0 +1,65 @@
+#mainContent, #topBar {
+    display: flex;
+}
+
+#mainContent {
+    width: 100vw - 10px;
+    margin: 1px;
+    justify-content: center;
+    gap: 5px;
+    border: 5px solid black;
+    padding: 0.25em
+}
+
+#topBar {
+    width: 100vw - 10px;
+    margin: 1px;
+    border: 5px solid black;
+    padding: 0.25em;
+    justify-content: space-between;
+}
+
+#mainContent *, #topBar * {
+    /* text-align: center; */
+    margin: 1px;
+    border: 5px solid black;
+    padding: 0.25em
+}
+
+#mainContent div {
+    background-color: lightgray;
+    display: flex;
+    flex-direction: column;
+}
+
+#centerContent {
+    flex-grow: 1;
+}
+
+#leftSidebar {
+    flex-grow: 1;
+    left: 0;
+}
+
+#rightSidebar {
+    flex-grow: 1;
+    right: 0;
+}
+
+#studentList {
+    flex-grow: 1;
+}
+
+#virtualbar {
+    aspect-ratio: 1/1;
+    max-width: 500px;
+    justify-self: center;
+}
+
+#previousPolls {
+    flex-grow: 1;
+}
+
+#settings {
+    flex-grow: 1;
+}

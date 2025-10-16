@@ -356,7 +356,8 @@ function pollResponse(classId, res, textRes, userSession) {
         classroom.students[email].pogMeter += pogMeterIncrease;
         if (classroom.students[email].pogMeter >= 500) {
             classroom.students[email].pogMeter -= 500;
-            database.run('UPDATE users SET digipogs = digipogs + 1 WHERE id = ?', [user.id], (err) => {
+            let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 3 digipogs
+            database.run('UPDATE users SET digipogs = digipogs + ? WHERE id = ?', [addPogs, user.id], (err) => {
                 if (err) {
                     logger.log('error', err.stack);
                 } else {

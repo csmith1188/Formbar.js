@@ -15,6 +15,7 @@
                 }
 
                 table {
+                    outline: none !important;
                     border-spacing: 0;
                 }
 
@@ -63,8 +64,8 @@
                                     const date = new Date(Number(transaction.date));
                                     const valid = !isNaN(date);
                                 %>
-                                <td><%= transaction.from_user %></td>
-                                <td><%= transaction.to_user %></td>
+                                <td><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
+                                <td><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
                                 <td><%= transaction.amount %></td>
                                 <td><%= transaction.reason %></td>
                                 <td><%= valid ? `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}` : 'Not tracked' %></td>
@@ -75,8 +76,8 @@
                     <% for(let i=0;i<transactions.length % 10;i++) { %>
                         <% let transaction = transactions[Math.floor(transactions.length / 10) * 10 + i]; %>
                         <tr data-page="<%- Math.floor(transactions.length / 10) %>" style="display: none;">
-                            <td><%= transaction.from_user %></td>
-                            <td><%= transaction.to_user %></td>
+                            <td><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
+                            <td><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
                             <td><%= transaction.amount %></td>
                             <td><%= transaction.reason %></td>
                             <td><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
@@ -88,6 +89,10 @@
                     <button onclick="lastPage()" id="backButton" class="revampButton">&lt;&lt;</button>
                     <button onclick="nextPage()" id="forwardButton" class="revampButton">&gt;&gt;</button>
                 </div>
+
+                <button class="revampButton" style="position: fixed; bottom: 20px; left: 20px; padding: 15px 25px; font-size: 18px;" onclick="location.href = '/pools'">
+                    Pog Pools
+                </button>
             </div>
         </body>
         
@@ -95,6 +100,8 @@
         <script>
             let backButton = document.getElementById('backButton');
             let forwardButton = document.getElementById('forwardButton');
+
+            let trans = <%- JSON.stringify(transactions) %>
 
             let currentPage = 0;
             const totalPages = Math.floor(<%- transactions.length %> / 10) + (<%- transactions.length % 10 === 0 ? 0 : 1 %>);

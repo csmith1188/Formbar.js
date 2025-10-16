@@ -45,9 +45,9 @@ async function awardDigipogs(awardData) {
     }
 }
 
-async function transferDigipogs(transferData, pool = false) {
+async function transferDigipogs(transferData) {
     try {
-        const { from, to, pin, reason = "" } = transferData;
+        const { from, to, pin, reason = "", pool = false } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
         // Validate input
@@ -75,6 +75,9 @@ async function transferDigipogs(transferData, pool = false) {
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
+
+            console.log("Transferring to pool with ID:", to);
+
             const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to]);
             if (!pool) return { success: false, message: "Recipient pool not found." };
             dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);

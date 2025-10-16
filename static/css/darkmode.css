@@ -82,7 +82,8 @@ button.pressed.revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
-.revampButton {
+.revampButton,
+#studentTags span.revampTag {
 	background-color: var(--darkMode-button-bg);
 	border: 2px solid var(--darkMode-button-border);
 	outline: 2px solid #0004;
@@ -108,7 +109,7 @@ div.helpIconInformation.revampDivAlt {
 	outline: 2px solid #0004;
 }
 
-.circularButton:hover,
+.circularButton:hover:not(.accordionButton),
 .squareButton:hover,
 .mobileCircular:hover {
 	background-color: var(--darkMode-button-hover-bg) !important;
@@ -173,4 +174,9 @@ dialog {
 
 td, th {
 	border-bottom: 3px solid var(--darkMode-menu-border);
+}
+
+.newClassPage {
+	background-color: var(--darkMode-menu-bg);
+	border-color: var(--darkMode-menu-border);
 }

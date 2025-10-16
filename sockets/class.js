@@ -231,7 +231,7 @@ module.exports = {
 
                         if (classroom) {
                             if (classInformation.classrooms[classId]) {
-                                socketUpdates.endClass(classroom.key, classroom.id)
+                                endClass(classroom.key, classroom.id)
                             }
 
                             database.run('DELETE FROM classroom WHERE id=?', classroom.id)
@@ -435,23 +435,17 @@ module.exports = {
          * @param {number} level - The level to set the permission to.
          * This can be 1, 2, 3, 4, 5 with guest permissions being 1.
          */
-        socket.on('setClassPermissionSetting', (permission, level) => {
+        socket.on('setClassPermissionSetting', async (permission, level) => {
             try {
                 logger.log('info', `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
                 logger.log('info', `[setClassPermissionSetting] permission=(${permission}) level=(${level})`)
 
                 const classId = socket.request.session.classId
                 classInformation.classrooms[classId].permissions[permission] = level
-                database.run('UPDATE classroom SET permissions=? WHERE id=?', [JSON.stringify(classInformation.classrooms[classId].permissions), classId], (err) => {
-                    try {
-                        if (err) throw err
-
-                        logger.log('info', `[setClassPermissionSetting] ${permission} set to ${level}`)
-                        socketUpdates.classUpdate()
-                    } catch (err) {
-                        logger.log('error', err.stack)
-                    }
+                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
+                    logger.log('error', err.stack)
                 })
+                socketUpdates.classUpdate(classId)
             } catch (err) {
                 logger.log('error', err.stack)
             }

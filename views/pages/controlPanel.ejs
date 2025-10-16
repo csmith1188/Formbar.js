@@ -172,6 +172,10 @@
             </div>
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
+                <input type="text" placeholder="Search Users" id="searchUsers" class="revampButton revampWithText" oninput="searchUsers()" autocomplete="off">
+                <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown')">
+                    <img src="/img/search-outline.svg" alt="Open Search">
+                </button>
             </div>
             <div id='VBOptions' class="revampDiv">
                 <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button> -->
@@ -420,33 +424,67 @@
 </dialog>
 <%- include('../partials/body_content') %>
 
-<div class="studentTagAdder">
-    
-</div>
-
 <details id="student-fake" class="controlStudent revampDiv" style="opacity: 0.65; order: 9997; display: none;" hidden>
     <summary>
-        <button class="studentTagsButton revampButton circularButton">
-            <img src="/img/pricetags-outline.svg" alt="Tags Icon">
-        </button>
-        <span id="alerts"></span>
+        <span id="alerts" style="display: none;"></span>
         <span>
             <input type="checkbox" id="checkbox_fake" name="studentCheckbox">
         </span>
         <span id="email"></span>
-        <span id="studentTags"></span>
+        <span id="studentTags" style="display: none;"></span>
         <div id="response"></div>
-        <div id="reasons" class="revampDiv">
-            <div id="helpReason"></div>
-            <div id="breakReason"></div>
+        <div class="accordionPreviews">
+            <div class="accordionPreview helpAccButton"></div>
+            <div class="accordionPreview breakAccButton"></div>
+            <div class="accordionPreview textAccButton"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
+            <div class="accordionPreview"></div>
         </div>
     </summary>
-    <div id="permissions"></div>
-    <div id="roomTags"></div>
-    <div id="digipogButtons"></div>
-    <div id="extraButtons"></div>
+    <p id="userTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+    <div class="accordionButtons">
+        <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this)" data-option="0"><img src="/img/hand-right-outline.svg" alt="Help Ticket"></button>
+        <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this)" data-option="1"><img src="/img/umbrella-outline.svg" alt="Break"></button>
+        <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this)" data-option="2"><img src="/img/text-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"       onclick="doAccordionButton(this)" data-option="3"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
+        <button class="accordionButton circularButton"    onclick="doAccordionButton(this)" data-option="4"><img src="/img/digipog.svg" alt="Digipogs"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="5"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="6"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
+    </div>
+
+    <div class="accordionPopup revampDiv">
+        <div class="accordionOptions helpOptions">
+            <p id="helpReason" class="accordionTitle">Help Ticket</p>
+        </div>
+        <div class="accordionOptions breakOptions">
+            <p id="breakReason" class="accordionTitle">Break</p>
+        </div>
+        <div class="accordionOptions textOptions">
+            <p class="accordionTitle">Text Response</p>
+            <p id="fullTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+        <div class="accordionOptions permsOptions">
+            <p class="accordionTitle">Permissions</p>
+            <div id="permissions"></div>
+        </div>
+        <div class="accordionOptions digipogOptions">
+            <p class="accordionTitle">Digipogs</p>
+            <div id="digipogButtons"></div>
+        </div>
+        <div class="accordionOptions tagOptions">
+            <p class="accordionTitle">Tags</p>
+            <div id="roomTags" class="roomTags"></div>
+        </div>
+        <div class="accordionOptions kickBanOptions">
+            <p class="accordionTitle">Extras</p>
+            <div id="extraButtons"></div>
+        </div>
+    </div>
+
 </details>
-</div>
 </body>
 
 </html>
@@ -647,6 +685,20 @@
         if (confirm('Are you sure you want to kick all students?')) {
             socket.emit('classKickStudents');
         }
+    }
+
+    function searchUsers() {
+        const searchInput = document.getElementById('searchUsers').value.toLowerCase();
+        const userElements = usersDiv.querySelectorAll('.controlStudent');
+
+        userElements.forEach(userElement => {
+            const email = !userElement.classList.contains('offline') ? userElement.querySelector('#email').textContent.toLowerCase() : userElement.querySelector('summary').textContent.toLowerCase();
+            if (email.includes(searchInput)) {
+                userElement.style.display = '';
+            } else {
+                userElement.style.display = 'none';
+            }
+        });
     }
 
     const previousPollsDiv = document.getElementById('previousPolls');
@@ -944,8 +996,11 @@
     const FilterState = {
         answeredPoll: "Answered Poll",
         alert: "Alerts",
-        canVote: "Can Vote",
-        cantVote: "Can't Vote",
+        canVote: {
+            0: 'Can Vote',
+            1: 'Can Vote',
+            2: 'Cannot Vote'
+        },
         // byTag: "By Tag"        
     }
 
@@ -980,11 +1035,13 @@
     window.sort = sort;
 
     for (const [key, value] of Object.entries(FilterState)) {
+        let valueNew = value;
+        if (typeof valueNew == 'object') valueNew = value[0]; // If it's an array, get the first value (for canVote)
         let filterButton = document.createElement('button');
         filterButton.type = 'button';
         filterButton.id = key;
         filterButton.className = 'filter revampButton';
-        filterButton.innerText = value;
+        filterButton.innerText = valueNew;
 
         userFilterSelections.appendChild(filterButton);
     }
