@@ -1204,12 +1204,6 @@ div#usersMenu.tabContent.usersMenuBox #users {
 	align-items: center;
 }
 
-#links {
-	display: flex;
-	justify-content: center;
-	gap: 10px;
-}
-
 .linksTableWrapper {
 	margin-top: 12px;
 	max-height: 300px;
@@ -3187,7 +3181,7 @@ p.accordionTitle {
 }
 
 .linkButton img {
-	filter: invert(0) !important;
+	filter: invert(0) drop-shadow(0 0 0.5rem black) !important;
 	margin-right: 8px;
 }
 
@@ -3200,4 +3194,26 @@ p.accordionTitle {
 .managePanelUsers .user p {
 	text-align: left;
 	flex: 1 1 auto;
+}
+
+#searchUsers {
+	position: absolute;
+	top: 20px;
+	right: 80px;
+	width: 0;
+	height: 48px;
+	opacity: 0;
+	transition: 0.2s ease-in-out width, 0.2s ease-in-out opacity;
+}
+
+#searchUsers.shown {
+	width: 250px;
+	opacity: 1;
+}
+
+#searchUsersBtn {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	margin-right:0
 }

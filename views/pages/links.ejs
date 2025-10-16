@@ -12,12 +12,37 @@
             margin-top: 1rem;
             margin-bottom: 1rem;
         }
+        #links {
+            display: grid;
+            width: 30%;
+            margin: auto;
+            margin-top: 10px;
+            grid-template-columns: repeat(3, 1fr);
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #links:empty::before {
+            content: "No links yet.";
+            font-size: 18px;
+        }
+
+        .linkButton {
+            justify-content: left;
+            padding: 5px 20px;
+        }
+
+        .linkButton img {
+            margin-right: auto;
+        }
     </style>
 </head>
 
 <body>
 <%- include('../partials/formbar_header') %>
-<h1 class="headerText">Links</h1>
+<h1 class="headerText">Class Links</h1>
 <div id="links">
 </div>
 
@@ -51,12 +76,51 @@
             a.rel = 'noopener noreferrer'
             a.innerText = item.name
             const favicon = document.createElement('img')
-            favicon.src = `https://www.google.com/s2/favicons?domain=${(new URL(ensureAbsoluteUrl(item.url))).hostname}?sz=64`
+            favicon.src = `/links/getLinkFavicon?url=${(new URL(ensureAbsoluteUrl('https://www.google.com/s2/favicons?domain=' + item.url + '?sz=64')))}`
             a.prepend(favicon)
+            favicon.width = 24;
+            favicon.height = 24;
+
             // Show default on error
             favicon.onerror = () => {
                 favicon.src = '/img/favicon.png'
             }
+        
+            favicon.onload = () => {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = favicon.naturalWidth;
+                canvas.height = favicon.naturalHeight;
+
+                // Draw the image onto the canvas
+                context.drawImage(favicon, 0, 0);
+
+                // Get the image data
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                // Calculate the dominant color
+                let r = 0, g = 0, b = 0, total = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    r += data[i];     // Red
+                    g += data[i + 1]; // Green
+                    b += data[i + 2]; // Blue
+                    total++;
+                }
+                r = Math.floor(r / total);
+                g = Math.floor(g / total);
+                b = Math.floor(b / total);
+
+                // Use the dominant color (e.g., set as background color)
+                a.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+                if((r*0.299 + g*0.587 + b*0.114) > 186){
+                    a.style.color = 'black !important';
+                } else {
+                    a.style.color = 'white';
+                }
+            };
+
             linksDiv.append(a)
         }
     }).catch(() => {
