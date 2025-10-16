@@ -1677,7 +1677,6 @@ button:disabled:hover {
 .circularButton.acceptButton,
 .squareButton.acceptButton {
 	background-color: hsl(120, 94%, 74%) !important;
-	color: white !important;
 	border: 2px solid var(--color-green) !important;
 	color: black !important;
 }
