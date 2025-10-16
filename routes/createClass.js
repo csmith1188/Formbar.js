@@ -144,7 +144,7 @@ module.exports = {
                                         classroom.name,
                                         classroom.key,
                                         req.session.userId,
-                                        JSON.parse(classroom.permissions),
+                                        classroom.permissions,
                                         [],
                                         [],
                                         classroom.tags
