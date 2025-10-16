@@ -1943,14 +1943,6 @@ div.sideBySide {
 	flex: 1 1 auto;
 }
 
-#VBOptions .options {
-	position: absolute;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
 #vbOptionsLast,
 #vbOptionsNext {
 	z-index: 5;
@@ -2009,10 +2001,17 @@ div.sideBySide {
 #VBOptions .options {
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
+	justify-content: start;
 	align-items: center;
-	height: 100%;
 	transform: scale(1);
+	position: absolute;
+	top: 0;
+	width: calc(100% - 40px);
+	height: calc(100% - 90px);
+	overflow: scroll;
+	padding: 0;
+	margin: 90px 20px;
+	margin-bottom: 0;
 }
 
 #VBDiv #newMemberListControlPanel {
