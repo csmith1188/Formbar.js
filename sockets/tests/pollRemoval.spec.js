@@ -1,5 +1,5 @@
-const { run: pollCreationRun } = require('../pollCreation');
-const { run: pollRemovalRun } = require('../pollRemoval');
+const { run: pollCreationRun } = require('../polls/pollCreation');
+const { run: pollRemovalRun } = require('../polls/pollRemoval');
 const { createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
 const { userSocketUpdates } = require("../init");
 

@@ -429,8 +429,9 @@ function clearPollFunc() {
 }
 
 function endPollFunc() {
-	socket.emit('endPoll')
-	socket.emit('getPreviousPolls', currentPreviousPollIndex);
+	// socket.emit('endPoll')
+	socket.emit('updatePoll', { status: false });
+    socket.emit('getPreviousPolls', currentPreviousPollIndex);
 }
 
 // Starts a new poll that allows students to submit answers

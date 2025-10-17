@@ -114,25 +114,6 @@ function sortStudentsInPoll(classData) {
         let included = false;
         let excluded = false;
 
-        // Check if the student passes the tags test
-        if (classData.poll.requiredTags.length > 0) {
-            let studentTags = student.tags.split(",");
-            if (classData.poll.requiredTags[0][0] == "0") {
-                if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-                    included = true;
-                } else {
-                    excluded = true;
-                }
-            } else if (classData.poll.requiredTags[0][0] == "1") {
-                let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
-                if (correctTags == classData.poll.requiredTags.length - 1) {
-                    included = true;
-                } else {
-                    excluded = true;
-                }
-            }
-        }
-
         // Check if the student's checkbox was checked (studentsAllowedToVote stores student ids)
         if (classData.poll.studentsAllowedToVote.includes(student.id.toString())) {
             included = true;
@@ -187,7 +168,7 @@ function getPollResponseInformation(classData) {
         }
 
         for (const studentData of Object.values(classData.students)) {
-            if (studentData.break == true || totalStudentsExcluded.includes(studentData.email)) {
+            if (studentData.break === true || totalStudentsExcluded.includes(studentData.email)) {
                 continue;
             }
 
@@ -212,12 +193,12 @@ function getPollResponseInformation(classData) {
         }
     }
 
-    if (totalResponses == 0) {
+    if (totalResponses === 0) {
         totalStudentsIncluded = Object.keys(classData.students)
         for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
             const studentName = totalStudentsIncluded[i];
             const student = classData.students[studentName];
-            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
+            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions === GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
                 totalStudentsIncluded.splice(i, 1);
             }
         }

@@ -248,6 +248,7 @@ socket.on('customPollUpdate', (
 		}
 
         // Send the voting data to the server to update the students' voting rights
+        console.log('voting data:', votingData)
 		socket.emit('changeCanVote', votingData)
 	}
 
@@ -421,10 +422,9 @@ socket.on('startPoll', () => {
 	changeTab('usersMenu', 'mainTabs')
 })
 
-socket.on('endPoll', () => {
+socket.on('updatePoll', (newData) => {
 	endPoll.style.display = 'none'
 })
-
 
 // Handle sound events
 const socketSounds = {

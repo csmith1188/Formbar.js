@@ -4,28 +4,23 @@ const { logger } = require('../logger')
 
 /**
  * Asynchronous function to get the current user's data.
- * @param {Object} api - The API key for the user.
+ * @param {Object} userIdentifier - Either the API key or email for the user.
  * @returns {Promise|Object} A promise that resolves to the user's data or an error object.
  */
-async function getUser(api) {
+async function getUser(userIdentifier) {
     try {
-        // Log the request details
-        logger.log('info', `[getUser]`)
+        // Log the request details and get the email
+        const email = userIdentifier.email || await getEmailFromAPIKey(userIdentifier.api);
 
-        // Get the email associated with the API key in the request headers
-        let email = await getEmailFromAPIKey(api)
+        // If an error happens, throw the error
+        if (email instanceof Error) throw email;
+        if (email.error) throw email;
 
-        // If the email is an instance of Error, throw the error
-        if (email instanceof Error) throw email
-        
-        // If an error occurs, return the error
-        if (email.error) return email
-
-        // Get the class code of the user
-        let classId = getUserClass(email)
+        // Get the class code of the user and check if the user is in a class
+        let classId = getUserClass(email);
 
         // If the class code is an instance of Error, throw the error
-        if (classId instanceof Error) throw classId
+        if (classId instanceof Error) throw classId;
 
         // Query the database for the user's data
         let dbUser = await new Promise((resolve, reject) => {

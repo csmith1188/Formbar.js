@@ -100,7 +100,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 const CLASS_SOCKET_PERMISSION_MAPPER = {
 	startPoll: 'controlPolls',
 	clearPoll: 'controlPolls',
-	endPoll: 'controlPolls',
+    updatePoll: 'controlPolls',
 	customPollUpdate: 'controlPolls',
 	savePoll: 'controlPolls',
 	deletePoll: 'controlPolls',
