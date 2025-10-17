@@ -296,6 +296,8 @@
 
     details.controlStudent {
         overflow: unset;
+        min-width: unset;
+
     }
 
     #VBDiv {
@@ -741,6 +743,10 @@
     .circularButton:not(.accordionButton) {
         width: 40px !important;
         height: 40px !important;
+    }
+    
+    details.controlStudent {
+        min-width: unset;
     }
 
     div.sideBySide {

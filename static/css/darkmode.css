@@ -82,7 +82,8 @@ button.pressed.revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
-.revampButton {
+.revampButton,
+#studentTags span.revampTag {
 	background-color: var(--darkMode-button-bg);
 	border: 2px solid var(--darkMode-button-border);
 	outline: 2px solid #0004;
