@@ -35,13 +35,15 @@ const CLASS_PERMISSIONS = {
 
 // Defines the default permissions for people in a class
 const DEFAULT_CLASS_PERMISSIONS = {
-	games: MOD_PERMISSIONS, // Control the games	
+	links: MOD_PERMISSIONS, // Control the links page	
 	controlPolls: MOD_PERMISSIONS,	
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS, // Approve break and help requests
 	manageClass: TEACHER_PERMISSIONS,
     auxiliary: MOD_PERMISSIONS, // Controls the FormPix lights and sounds
-    userDefaults: GUEST_PERMISSIONS
+    userDefaults: GUEST_PERMISSIONS,
+	seePoll: GUEST_PERMISSIONS, // View polls
+	votePoll: STUDENT_PERMISSIONS, // Vote in polls
 }
 
 // This defines global socket permissions that define who can use each socket event
