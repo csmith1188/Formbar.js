@@ -116,60 +116,45 @@ async function createPoll(classId, pollData, userSession) {
  * @param {number} classId - The ID of the class.
  * @param {Object} userSession - The user session object.
  */
-async function endPoll(classId, userSession) {
+// async function endPoll(classId, userSession) {
+//     try {
+//         logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
+//         classInformation.classrooms[classId].poll.status = false
+//
+//         const socketUpdates = userSocketUpdates[userSession.email];
+//         socketUpdates.classUpdate();
+//
+//         logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
+//     } catch (err) {
+//         logger.log('error', err.stack);
+//     }
+// }
+
+async function updatePoll(classId, options, userSession) {
     try {
-        logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
+        // If no classId or options are provided, then return
+        const classId = socket.request.session.classId;
+        if (!classId || !options) return;
 
-        let data = { prompt: '', names: [], letter: [], text: [] }
-        let dateConfig = new Date()
-        let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+        // If the classroom is not found, then return
+        const classroom = classInformation.classrooms[classId];
+        if (!classroom) return;
 
-        data.prompt = classInformation.classrooms[classId].poll.prompt
-        data.responses = classInformation.classrooms[classId].poll.responses
-        data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
-        data.blind = classInformation.classrooms[classId].poll.blind
-        data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
+        // For each option, update the poll options if it exists in the poll object
+        for (const option of Object.keys(options)) {
+            const value = options[option];
+            if (option === 'status' && value === false) {
+                savePollToHistory(classId);
+            }
 
-        for (const key in classInformation.classrooms[classId].students) {
-            data.names.push(classInformation.classrooms[classId].students[key].email)
-            data.letter.push(classInformation.classrooms[classId].students[key].pollRes.buttonRes)
-            data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
+            if (classroom.poll[option]) {
+                classroom.poll[option] = value;
+            }
         }
 
-        await new Promise((resolve, reject) => {
-            database.run(
-                'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-                [classId, JSON.stringify(data), date], (err) => {
-                    if (err) {
-                        logger.log('error', err.stack);
-                        reject(new Error(err));
-                    } else {
-                        logger.log('verbose', '[endPoll] saved poll to history');
-                        resolve();
-                    }
-                }
-            );
-        });
-
-        let latestPoll = await new Promise((resolve, reject) => {
-            database.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
-                classId
-            ], (err, poll) => {
-                if (err) {
-                    logger.log("error", err.stack);
-                    reject(new Error(err));
-                } else resolve(poll);
-            });
-        });
-
-        latestPoll.data = JSON.parse(latestPoll.data);
-        classInformation.classrooms[classId].pollHistory.push(latestPoll);
-        classInformation.classrooms[classId].poll.status = false
-
+        // Get the user's socket updates and call a class update
         const socketUpdates = userSocketUpdates[userSession.email];
         socketUpdates.classUpdate();
-
-        logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -180,6 +165,11 @@ async function endPoll(classId, userSession) {
  * @param {number} classId - The ID of the class whose poll should be saved.
  */
 async function savePollToHistory(classId) {
+    try {
+
+    } catch (err) {
+
+    }
     // logger.log('info', `[saveEndedPoll] session=(${JSON.stringify(userSession)})`)
     const classroom = classInformation.classrooms[classId];
     if (!classroom) return;
@@ -219,7 +209,7 @@ async function clearPoll(classId, userSession, updateClass = true){
     try {
         const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
-            await endPoll(classId, userSession)
+            await updatePoll(classId, { status: false }, userSession);
         }
 
         classInformation.classrooms[classId].poll.responses = {};
@@ -426,7 +416,7 @@ async function deleteCustomPolls(userId) {
 
 module.exports = {
     createPoll,
-    endPoll,
+    updatePoll,
     savePollToHistory,
     clearPoll,
     pollResponse,

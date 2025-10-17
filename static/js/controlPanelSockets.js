@@ -422,10 +422,9 @@ socket.on('startPoll', () => {
 	changeTab('usersMenu', 'mainTabs')
 })
 
-socket.on('endPoll', () => {
+socket.on('updatePoll', (newData) => {
 	endPoll.style.display = 'none'
 })
-
 
 // Handle sound events
 const socketSounds = {

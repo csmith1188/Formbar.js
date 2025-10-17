@@ -1,20 +1,10 @@
 const { classInformation } = require("../../modules/class/classroom")
 const { database, dbRun } = require("../../modules/database")
 const { logger } = require("../../modules/logger")
-const { endPoll, clearPoll } = require("../../modules/polls");
+const { clearPoll } = require("../../modules/polls");
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('endPoll', async () => {
-            try {
-                const email = socket.request.session.email;
-                const classId = classInformation.users[email].activeClass;
-                await endPoll(classId, socket.request.session);
-            } catch (err) {
-                logger.log('error', err.stack);
-            }
-        });
-
         socket.on('deletePoll', async (pollId) => {
             const { userId } = socket.request.session;
             const ip = socket.handshake.address;
