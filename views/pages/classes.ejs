@@ -68,7 +68,16 @@
                             </div>
                     </div>
 
-                    
+                    <label for="selectClass" class="headerText">Join a class with code</label>
+
+                    <form action="selectClass" method="post" class="joinClassForm"
+                        style="margin-top: 20px; justify-content: space-between;">
+                        <input type="text" required name="key" id="joinKey" placeholder="Class code"
+                            class="revampButton revampWithText" style="flex-grow: 2;">
+                        <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
+                            value="Submit" onsubmit="return false;" style="flex-grow: 1;">
+                    </form>
+
                 </div>
         </body>
         <script>
@@ -99,13 +108,14 @@
                         //startClassForm.style.pointerEvents = "none";
                         return
                     }
-
-                    for (let classroom of ownedClasses) {
-                        let option = document.createElement('option')
-                        option.value = classroom.id
-                        option.innerText = classroom.name
-                        option.classList.add("joinOwnedClassOption")
-                        manageClassSelect.appendChild(option.cloneNode(true))
+                    if (ownedClasses.length > 0) {
+                        for (let classroom of ownedClasses) {
+                            let option = document.createElement('option')
+                            option.value = classroom.id
+                            option.innerText = classroom.name
+                            option.classList.add("joinOwnedClassOption")
+                            manageClassSelect.appendChild(option.cloneNode(true))
+                        }
                     }
                     updateDeleteButtonState()
                 })
