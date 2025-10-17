@@ -16,8 +16,8 @@
                         <label for="joinedKey" class="headerText">Enter a class</label>
                         <form class="joinClassForm">
                             <select id="joinedKey" name="id" required class="revampButton">
-                                <% if (joinedClasses.length> 0) { %>
-                                    <option value="" disabled selected>Classes</option>
+                                <option value="" disabled selected>Classes</option>
+                                <% if (joinedClasses.length > 0) { %>
                                     <% for(let joinedClass of joinedClasses) { %>
                                         <option value="<%- joinedClass.id %>" class="joinClassOption">
                                             <%- joinedClass.name %>
@@ -25,50 +25,54 @@
                                         <% } %>
                             </select>
 
-                            <input type="submit" id="submitJoinedButton"
-                                class="button unselectable revampButton quickButton" value="Go">
+                            <% } %>
+                                <input type="submit" id="submitJoinedButton"
+                                    class="button unselectable revampButton quickButton" value="Go">
                         </form>
-                        <% } %>
-                            <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                                <form action="createClass" method="post" id="selectClassForm">
-                                    <div class="buttonsHolder">
-                                        <input type="text" name="submittionType" value="select" hidden>
-                                        <input type="submit" id="submitButton" class="quickButton revampButton pressed"
-                                            value="Go" onsubmit="return false;">
-                                        <button id="deleteButton" class="quickButton revampButton warningButton unselectable" type="button"
-                                            onclick="deleteClass()" style="margin-top: 40px" disabled>Delete</button>
-                                    </div>
+
+                        <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                            <form action="createClass" method="post" id="selectClassForm">
+                                <div class="buttonsHolder">
+                                    <input type="text" name="submissionType" value="select" hidden>
+                                    <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                                            value="Go" onsubmit="return false;"> -->
+                                    <button id="deleteButton"
+                                        class="quickButton revampButton warningButton unselectable" type="button"
+                                        onclick="deleteClass()" style="margin-top: 40px" disabled>Delete</button>
+                                </div>
 
 
-                                </form>
+                            </form>
 
-                                <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
-                                <form action="createClass" method="post" id="createClass">
-                                    <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a
-                                        class</label>
+                            <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
+                            <form action="createClass" method="post" id="createClass">
+                                <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a
+                                    class</label>
 
-                                    <div class="buttonsHolder createClassButtons" id="createClassButtons" style="display: flex">
-                                        <input type="text" id="classNameBox" name="name" placeholder="Class Name"
-                                            value="" autocomplete="off" class="revampButton revampWithText" required>
-                                        <input type="text" name="submittionType" value="create" hidden>
-                                        <input type="submit" id="submitButton" class="quickButton revampButton pressed"
-                                            value="Create" onsubmit="return false;">
-                                    </div>
-                                </form>
-                                <!-- </div> -->
-                                <% } %>
-                                
-                        <label for="selectClass" class="headerText">Join a class with code</label>
+                                <div class="buttonsHolder createClassButtons" id="createClassButtons"
+                                    style="display: flex">
+                                    <input type="text" id="classNameBox" name="name" placeholder="Class Name" value=""
+                                        autocomplete="off" class="revampButton revampWithText" required style="flex-grow: 2">
+                                    <input type="text" name="submittionType" value="create" hidden>
+                                    <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                                        value="Create" onsubmit="return false;" style="flex-grow: 1;">
+                                </div>
+                            </form>
+                            <!-- </div> -->
+                            <% } %>
 
-                        <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px; justify-content: space-between;">
-                            <input type="text" required name="key" id="joinKey" placeholder="Class code"
-                                class="revampButton revampWithText" style="flex-grow: 2;">
-                            <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
-                                value="Submit" onsubmit="return false;" style="flex-grow: 1;">
-                        </form>
                     </div>
 
-                    
+                    <label for="selectClass" class="headerText">Join a class with code</label>
+
+                    <form action="selectClass" method="post" class="joinClassForm"
+                        style="margin-top: 20px; justify-content: space-between;">
+                        <input type="text" required name="key" id="joinKey" placeholder="Class code"
+                            class="revampButton revampWithText" style="flex-grow: 2;">
+                        <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
+                            value="Submit" onsubmit="return false;" style="flex-grow: 1;">
+                    </form>
+
                 </div>
         </body>
         <script>
@@ -99,13 +103,14 @@
                         //startClassForm.style.pointerEvents = "none";
                         return
                     }
-
-                    for (let classroom of ownedClasses) {
-                        let option = document.createElement('option')
-                        option.value = classroom.id
-                        option.innerText = classroom.name
-                        option.classList.add("joinOwnedClassOption")
-                        manageClassSelect.appendChild(option.cloneNode(true))
+                    if (ownedClasses.length > 0) {
+                        for (let classroom of ownedClasses) {
+                            let option = document.createElement('option')
+                            option.value = classroom.id
+                            option.innerText = classroom.name
+                            option.classList.add("joinOwnedClassOption")
+                            manageClassSelect.appendChild(option.cloneNode(true))
+                        }
                     }
                     updateDeleteButtonState()
                 })
