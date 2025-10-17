@@ -29,6 +29,7 @@
                                 <input type="submit" id="submitJoinedButton"
                                     class="button unselectable revampButton quickButton" value="Go">
                         </form>
+
                         <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
                             <form action="createClass" method="post" id="selectClassForm">
                                 <div class="buttonsHolder">
@@ -71,10 +72,11 @@
                         <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
                             value="Submit" onsubmit="return false;" style="flex-grow: 1;">
                     </form>
+
                 </div>
         </body>
         <script>
-            let startClassForm = document.getElementById("selectClassForm")
+            //let startClassForm = document.getElementById("selectClassForm")
             let manageClassSelect = document.getElementById("joinedKey")
 
             function deleteClass() {
@@ -94,11 +96,11 @@
                 socket.emit('getOwnedClasses', currentUser.email)
                 socket.on('getOwnedClasses', (ownedClasses) => {
                     if (ownedClasses.length > 0) {
-                        startClassForm.style.opacity = "1"
-                        startClassForm.style.pointerEvents = "all";
+                        //startClassForm.style.opacity = "1"
+                        //startClassForm.style.pointerEvents = "all";
                     } else {
-                        startClassForm.style.opacity = "0.5";
-                        startClassForm.style.pointerEvents = "none";
+                        //startClassForm.style.opacity = "0.5";
+                        //startClassForm.style.pointerEvents = "none";
                         return
                     }
                     if (ownedClasses.length > 0) {
