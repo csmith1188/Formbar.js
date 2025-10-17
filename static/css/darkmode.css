@@ -89,6 +89,15 @@ button.pressed.revampButton:hover {
 	outline: 2px solid #0004;
 }
 
+div.verticalLine {
+	height: 80%;
+	min-width: 2px;
+	max-width: 2px;
+	background: #fffa;
+	margin: 0 25px;
+}
+
+
 .revampButton:not(.revampWithText):hover {
 	background-color: var(--darkMode-button-hover-bg);
 }
