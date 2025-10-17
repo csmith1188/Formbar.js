@@ -17,7 +17,7 @@
                         <form class="joinClassForm">
                             <select id="joinedKey" name="id" required class="revampButton">
                                 <option value="" disabled selected>Classes</option>
-                                <% if (joinedClasses.length> 0) { %>
+                                <% if (joinedClasses.length > 0) { %>
                                     <% for(let joinedClass of joinedClasses) { %>
                                         <option value="<%- joinedClass.id %>" class="joinClassOption">
                                             <%- joinedClass.name %>
@@ -32,7 +32,7 @@
                         <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
                             <form action="createClass" method="post" id="selectClassForm">
                                 <div class="buttonsHolder">
-                                    <input type="text" name="submittionType" value="select" hidden>
+                                    <input type="text" name="submissionType" value="select" hidden>
                                     <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
                                             value="Go" onsubmit="return false;"> -->
                                     <button id="deleteButton"
