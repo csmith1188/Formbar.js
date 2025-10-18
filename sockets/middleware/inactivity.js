@@ -1,4 +1,4 @@
-const { logger } = require("../../modules/logger")
+const { logger } = require("../../modules/logger");
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 60 minutes
 const lastActivities = {};
 
@@ -14,13 +14,13 @@ module.exports = {
                     lastActivities[email] = {};
                 }
 
-                lastActivities[email][socket.id] = {socket, time: Date.now()};
+                lastActivities[email][socket.id] = { socket, time: Date.now() };
                 next();
             } catch (err) {
-                logger.log('error', err.stack)
+                logger.log("error", err.stack);
             }
         });
     },
     INACTIVITY_LIMIT,
-    lastActivities
-}
+    lastActivities,
+};
