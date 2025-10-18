@@ -6,5 +6,6 @@
   "useTabs": false,
   "printWidth": 150,
   "arrowParens": "always",
-  "endOfLine": "auto"
+  "endOfLine": "auto",
+  "plugins": ["prettier-plugin-ejs"]
 }
