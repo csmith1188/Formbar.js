@@ -199,57 +199,41 @@
             
             newUser.appendChild(userElement)
             if (userData.permissions < currentUser.permissions) {
-                newUser.classList.add('hasInfo')
-                let permissionSwitchLabel = document.createElement("label");
-                permissionSwitchLabel.setAttribute("for", "permSwitch")
-                permissionSwitchLabel.innerText = "Users Permissions: "
-                newUser.appendChild(permissionSwitchLabel)
-                let permissionSwitch = document.createElement("select")
-                permissionSwitch.setAttribute("name", "permSwitch")
-                permissionSwitch.setAttribute("class", "permSwitch revampButton")
-                permissionSwitch.setAttribute("data-userid", userData.email)
-                permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
-                permissionSwitch.onchange = async (event) => {
-                    try {
-                        const email = event.target.dataset.userid;
-                        const perm = event.target.value;
-                        const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
-                        if (!res.ok) {
-                            throw new Error('Failed to update permissions');
-                        }
-                    } catch (err) {
-                        alert(err.message || 'There was an error updating permissions.');
-                    }
-                }
-                let permissions = ["Guest", "User", "Mod", "Teacher"] 
-                for (let i = 4; i > 0; i--) {
-                    let option = document.createElement("option");
-                    option.setAttribute("value", i);
-                    if (userData.permissions == i) option.setAttribute("selected", true);
-                    option.innerText = permissions[i - 1];
-                    permissionSwitch.add(option);
-                }
-                newUser.appendChild(permissionSwitch)
-                newUser.append(" ")
-                if(!userData.verified) {
-                    let verifyUserButton = document.createElement("button")
-                    verifyUserButton.className = 'quickButton acceptButton revampButton'
-                    verifyUserButton.setAttribute("data-user", userData.id)
-                    verifyUserButton.innerText = "Verify User"
-                    verifyUserButton.onclick = async (event) => {
-                        try {
-                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                            if (!res.ok) throw new Error('Failed to verify user');
-                            verifyUserButton.remove()
-                        } catch (err) {
-                            alert(err.message || 'There was an error verifying the user.')
-                        }
-                    }
-                    newUser.appendChild(verifyUserButton)
-                }
-
-                // If the user is verified, then offer the ability to ban them
+                // If the user is verified, then offer the ability to change permissions and ban them
                 if (userData.verified) {
+                    newUser.classList.add('hasInfo')
+                    let permissionSwitchLabel = document.createElement("label");
+                    permissionSwitchLabel.setAttribute("for", "permSwitch")
+                    permissionSwitchLabel.innerText = "Users Permissions: "
+                    newUser.appendChild(permissionSwitchLabel)
+                    let permissionSwitch = document.createElement("select")
+                    permissionSwitch.setAttribute("name", "permSwitch")
+                    permissionSwitch.setAttribute("class", "permSwitch revampButton")
+                    permissionSwitch.setAttribute("data-userid", userData.email)
+                    permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
+                    permissionSwitch.onchange = async (event) => {
+                        try {
+                            const email = event.target.dataset.userid;
+                            const perm = event.target.value;
+                            const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
+                            if (!res.ok) {
+                                throw new Error('Failed to update permissions');
+                            }
+                        } catch (err) {
+                            alert(err.message || 'There was an error updating permissions.');
+                        }
+                    }
+                    let permissions = ["Guest", "User", "Mod", "Teacher"]
+                    for (let i = 4; i > 0; i--) {
+                        let option = document.createElement("option");
+                        option.setAttribute("value", i);
+                        if (userData.permissions == i) option.setAttribute("selected", true);
+                        option.innerText = permissions[i - 1];
+                        permissionSwitch.add(option);
+                    }
+                    newUser.appendChild(permissionSwitch)
+                    newUser.append(" ")
+
                     let banUserButton = document.createElement("button")
                     banUserButton.className = 'banUser quickButton warningButton revampButton'
                     banUserButton.setAttribute("data-user", userData.id)
@@ -272,6 +256,21 @@
                         }
                     }
                     newUser.appendChild(banUserButton)
+                } else {
+                    let verifyUserButton = document.createElement("button")
+                    verifyUserButton.className = 'quickButton acceptButton revampButton'
+                    verifyUserButton.setAttribute("data-user", userData.id)
+                    verifyUserButton.innerText = "Verify User"
+                    verifyUserButton.onclick = async (event) => {
+                        try {
+                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                            if (!res.ok) throw new Error('Failed to verify user');
+                            verifyUserButton.remove()
+                        } catch (err) {
+                            alert(err.message || 'There was an error verifying the user.')
+                        }
+                    }
+                    newUser.appendChild(verifyUserButton)
                 }
 
                 let deleteUserButton = document.createElement("button")

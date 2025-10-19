@@ -455,8 +455,7 @@ async function deleteCustomPolls(userId) {
         const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
         if (customPolls.length == 0) return
 
-        await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
-
+        await dbRun('DELETE FROM custom_polls WHERE owner=?', userId)
         for (let customPoll of customPolls) {
             await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
         }
