@@ -161,48 +161,102 @@
         function buildUser(userData) {
             var newUser = document.createElement("div")
             newUser.tabIndex = 0;
-            newUser.className = "user hiddenInfo";
-            newUser.setAttribute('onclick', 'if(event.target == this) showUserInfo(this);')
-            newUser.setAttribute('onkeydown', 'if(event.key == " " || event.key == "Enter") showUserInfo(this)')
+            newUser.className = "user";
             newUser.setAttribute("id", userData.email);
+            
+            // Create a paragraph element that contains the clickable name and info
             let userElement = document.createElement("p")
-            userElement.innerText += userData.displayName
+            userElement.style.display = 'flex'
+            userElement.style.flexDirection = 'column'
+            userElement.style.gap = '4px'
+            
+            // Create a clickable name element that links to profile
+            // If the user isn't verified, then they will not be clickable as they don't have a profile
+            let nameLink = document.createElement(userData.verified ? "a" : "span")
+            nameLink.href = `/profile/${encodeURIComponent(userData.id)}`
+            nameLink.innerText = userData.displayName
+            nameLink.style.textDecoration = 'none'
+            nameLink.style.color = 'inherit'
+            nameLink.style.fontWeight = 'bold'
+            nameLink.onclick = (e) => e.stopPropagation() // Prevent triggering the parent div's onclick
+
+            // Add user ID and email in smaller text
+            let detailsText = document.createElement("small")
+            detailsText.style.opacity = '0.7'
+            detailsText.style.fontSize = '0.85em'
+            
+            // Truncate ID if it's longer than 20 characters
+            let displayId = userData.id;
+            if (displayId && displayId.toString().length > 20) {
+                displayId = displayId.toString().substring(0, 20) + '...';
+            }
+            
+            detailsText.innerText = `ID: ${displayId} | ${userData.email}`
+            detailsText.title = `ID: ${userData.id} | ${userData.email}` // Full ID on hover
+            
+            userElement.appendChild(nameLink)
+            userElement.appendChild(detailsText)
             
             newUser.appendChild(userElement)
             if (userData.permissions < currentUser.permissions) {
-                newUser.classList.add('hasInfo')
-                let permissionSwitchLabel = document.createElement("label");
-                permissionSwitchLabel.setAttribute("for", "permSwitch")
-                permissionSwitchLabel.innerText = "Users Permissions: "
-                newUser.appendChild(permissionSwitchLabel)
-                let permissionSwitch = document.createElement("select")
-                permissionSwitch.setAttribute("name", "permSwitch")
-                permissionSwitch.setAttribute("class", "permSwitch revampButton")
-                permissionSwitch.setAttribute("data-userid", userData.email)
-                permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
-                permissionSwitch.onchange = async (event) => {
-                    try {
-                        const email = event.target.dataset.userid;
-                        const perm = event.target.value;
-                        const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
-                        if (!res.ok) {
-                            throw new Error('Failed to update permissions');
+                // If the user is verified, then offer the ability to change permissions and ban them
+                if (userData.verified) {
+                    newUser.classList.add('hasInfo')
+                    let permissionSwitchLabel = document.createElement("label");
+                    permissionSwitchLabel.setAttribute("for", "permSwitch")
+                    permissionSwitchLabel.innerText = "Users Permissions: "
+                    newUser.appendChild(permissionSwitchLabel)
+                    let permissionSwitch = document.createElement("select")
+                    permissionSwitch.setAttribute("name", "permSwitch")
+                    permissionSwitch.setAttribute("class", "permSwitch revampButton")
+                    permissionSwitch.setAttribute("data-userid", userData.email)
+                    permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
+                    permissionSwitch.onchange = async (event) => {
+                        try {
+                            const email = event.target.dataset.userid;
+                            const perm = event.target.value;
+                            const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
+                            if (!res.ok) {
+                                throw new Error('Failed to update permissions');
+                            }
+                        } catch (err) {
+                            alert(err.message || 'There was an error updating permissions.');
                         }
-                    } catch (err) {
-                        alert(err.message || 'There was an error updating permissions.');
                     }
-                }
-                let permissions = ["Guest", "User", "Mod", "Teacher"] 
-                for (let i = 4; i > 0; i--) {
-                    let option = document.createElement("option");
-                    option.setAttribute("value", i);
-                    if (userData.permissions == i) option.setAttribute("selected", true);
-                    option.innerText = permissions[i - 1];
-                    permissionSwitch.add(option);
-                }
-                newUser.appendChild(permissionSwitch)
-                newUser.append(" ")
-                if(!userData.verified) {
+                    let permissions = ["Guest", "User", "Mod", "Teacher"]
+                    for (let i = 4; i > 0; i--) {
+                        let option = document.createElement("option");
+                        option.setAttribute("value", i);
+                        if (userData.permissions == i) option.setAttribute("selected", true);
+                        option.innerText = permissions[i - 1];
+                        permissionSwitch.add(option);
+                    }
+                    newUser.appendChild(permissionSwitch)
+                    newUser.append(" ")
+
+                    let banUserButton = document.createElement("button")
+                    banUserButton.className = 'banUser quickButton warningButton revampButton'
+                    banUserButton.setAttribute("data-user", userData.id)
+                    banUserButton.innerText = "Ban User"
+                    banUserButton.onclick = async (event) => {
+                        try {
+                            if (confirm(`Are you sure you want to ban ${userData.displayName}?`)) {
+                                const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/ban`);
+                                if (!res.ok) {
+                                    throw new Error('Failed to ban user');
+                                }
+
+                                const bannedUserId = Object.keys(users).find(email => users[email] && users[email].id === userData.id)
+                                if (bannedUserId) users[bannedUserId].permissions = 0;
+                                filterSortChange();
+                                renderBannedUsers();
+                            }
+                        } catch (err) {
+                            alert(err.message || 'There was an issue banning the user.');
+                        }
+                    }
+                    newUser.appendChild(banUserButton)
+                } else {
                     let verifyUserButton = document.createElement("button")
                     verifyUserButton.className = 'quickButton acceptButton revampButton'
                     verifyUserButton.setAttribute("data-user", userData.id)
@@ -218,28 +272,7 @@
                     }
                     newUser.appendChild(verifyUserButton)
                 }
-                let banUserButton = document.createElement("button")
-                banUserButton.className = 'banUser quickButton warningButton revampButton'
-                banUserButton.setAttribute("data-user", userData.id)
-                banUserButton.innerText = "Ban User"
-                banUserButton.onclick = async (event) => {
-                    try {
-                        if (confirm(`Are you sure you want to ban ${userData.displayName}?`)) {
-                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/ban`);
-                            if (!res.ok) {
-                                throw new Error('Failed to ban user');
-                            }
 
-                            const bannedUserId = Object.keys(users).find(email => users[email] && users[email].id === userData.id)
-                            if (bannedUserId) users[bannedUserId].permissions = 0;
-                            filterSortChange();
-                            renderBannedUsers();
-                        }
-                    } catch (err) {
-                        alert(err.message || 'There was an issue banning the user.');
-                    }
-                }
-                newUser.appendChild(banUserButton)
                 let deleteUserButton = document.createElement("button")
                 deleteUserButton.className = 'deleteUser quickButton revampButton warningButton'
                 deleteUserButton.setAttribute("data-userid", userData.id)
@@ -289,11 +322,19 @@
             let newUser = ''
             let breakButton = document.getElementById("break")
 
-            //sort by name
+            //sort by name (using displayName)
             if (sort.name == 1) {
-                users = Object.fromEntries(Object.entries(users).sort())
+                users = Object.fromEntries(Object.entries(users).sort((user1, user2) => {
+                    const nameA = (user1[1].displayName || '').toLowerCase()
+                    const nameB = (user2[1].displayName || '').toLowerCase()
+                    return nameA.localeCompare(nameB)
+                }))
             } else if (sort.name == 2) {
-                users = Object.fromEntries(Object.entries(users).sort().reverse())
+                users = Object.fromEntries(Object.entries(users).sort((user1, user2) => {
+                    const nameA = (user1[1].displayName || '').toLowerCase()
+                    const nameB = (user2[1].displayName || '').toLowerCase()
+                    return nameB.localeCompare(nameA)
+                }))
             }
 
             //sort by permissions

@@ -24,7 +24,6 @@ class Classroom {
             allowMultipleResponses: false,
             blind: false,
 			weight: 1,
-			requiredTags: [],
 			studentsAllowedToVote: []
 		}
 		this.key = key

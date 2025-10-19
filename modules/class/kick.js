@@ -1,9 +1,8 @@
 const { classInformation } = require("./classroom");
 const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
-const { setClassOfApiSockets, userSockets } = require("../socketUpdates");
+const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socketUpdates");
 const { dbRun } = require("../database");
-const { userSocketUpdates } = require("../../sockets/init");
 const { TEACHER_PERMISSIONS, BANNED_PERMISSIONS } = require("../permissions");
 
 // Kicks a student from a class
@@ -46,12 +45,9 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
             }
         }
 
-        // Update the control panel
+        // Update the control panel on all tabs
         const userSocket = userSockets[email];
-        const socketUpdates = userSocketUpdates[email];
-        if (socketUpdates) {
-            socketUpdates.classUpdate(classId);
-        }
+        userUpdateSocket(email, 'classUpdate', classId);
 
         // If the user is logged in, then handle the user's session
         if (userSocket) {

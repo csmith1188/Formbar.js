@@ -1859,7 +1859,22 @@ a.link:visited {
 	font-size: 64px;
 }
 
-#classesMenu,
+#classesMenu {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	padding: 0 !important;
+}
+
+#classesMenu > *:not(div.verticalLine) {
+	width: 100%;
+	height: 100%;
+	border-radius: var(--borderRadius);
+}
+
 #classesMenu form,
 #createClassMenu,
 #createClassMenu form {
@@ -1873,21 +1888,32 @@ a.link:visited {
 
 #classesMenu .buttonsHolder {
 	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+	flex-direction: column;
+	justify-content: center;
 	align-items: center;
 	width: 60%;
 	gap: 20px;
 }
 
-#classesMenu .buttonsHolder button,
-#classesMenu .buttonsHolder input {
-	width: 100%;
-}
-
 #classesMenu form,
 #createClassMenu form {
 	gap: 30px;
+}
+
+#classesMenu .classButtons {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: row;
+	gap: 20px;
+}
+
+div.verticalLine {
+	height: 80%;
+	min-width: 2px;
+	max-width: 2px;
+	background: #000a;
+	margin: 0 25px;
 }
 
 #VBDiv {
@@ -3209,13 +3235,16 @@ p.accordionTitle {
 */
 .newClassPage #content {
 	height: 100%;
-	width: 600px !important;
+	width: 100% !important;
 	margin: 0 auto;
 	padding: 100px 10px 10px;
 	border: 2px;
 	overflow: auto;
 	position: relative;
 	text-align: center;
+
+	display: flex;
+	flex-direction: row;
 }
 
 .newClassPage .headerText {
@@ -3232,10 +3261,10 @@ p.accordionTitle {
     gap: 20px;
 }
 
-.newClassPage #classesMenu,
-#classesMenu form,
-#createClassMenu,
-#createClassMenu form {
+.newClassPage .classesMenu,
+.classesMenu form,
+.createClassMenu,
+.createClassMenu form {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -3244,11 +3273,11 @@ p.accordionTitle {
 	width: 100% !important;
 }
 
-.newClassPage #classesMenu .buttonsHolder input {
+.newClassPage .classesMenu .buttonsHolder input {
 	width: 200% !important;
 }
 
-.newClassPage #classesMenu .buttonsHolder {
+.newClassPage .classesMenu .buttonsHolder {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -3258,17 +3287,58 @@ p.accordionTitle {
     row-gap: 10px;
 }
 
-.newClassPage #createClassButtons {
-	width: 100% !important
+.newClassPage .createClassButtons {
+	width: 100% !important;
+}
+
 .managePanelUsers .user {
 	gap: 20px !important;
 	padding: 0 20px !important;
   	justify-content: left;
+	flex-wrap: nowrap !important;
+	overflow: hidden;
+	cursor: default !important;
 }
 
 .managePanelUsers .user p {
 	text-align: left;
 	flex: 1 1 auto;
+	min-width: 0;
+	pointer-events: auto !important;
+}
+
+.managePanelUsers .user a {
+	display: block;
+	margin-bottom: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.managePanelUsers .user small {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: block;
+}
+
+.managePanelUsers .user a:hover {
+	text-decoration: underline !important;
+}
+
+.managePanelUsers .user label,
+.managePanelUsers .user select,
+.managePanelUsers .user button {
+	flex-shrink: 1;
+	white-space: nowrap;
+	min-width: fit-content;
+	cursor: pointer;
+}
+
+.managePanelUsers .user button {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 #searchUsers {

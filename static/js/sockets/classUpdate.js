@@ -225,10 +225,6 @@ socket.on('classUpdate', (classroomData) => {
         permissionsTabButton.style.display = ''
     } else {
         permissionsTabButton.style.display = 'none'
-
-        if (permissionsTabButton.classList.contains('pressed')) {
-            changeTab('plugins', 'settingsTabs')
-        }
     }
 
     if (classroom?.poll?.status != classroomData.poll.status) {

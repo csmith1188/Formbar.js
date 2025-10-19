@@ -61,54 +61,6 @@ module.exports = {
             await leaveRoom(socket.request.session);
         });
 
-        /**
-         * Retrieves the voting rights of a user
-         * @param {number} id - The id of the user to check.
-         */
-        socket.on('getCanVote', async (userId) => {
-            try {
-                logger.log('info', `[getCanVote] userId=(${userId}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const classId = socket.request.session.classId;
-                const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
-                const canVote = studentsAllowedToVote.includes(userId.toString());
-                socket.emit('getCanVote', canVote);
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        });
-
-        /**
-         * Changes the voting rights of a user or multiple users
-         * @param {Object} votingData - An object containing the user ids and their voting rights.
-         * This should only include ids which should be changed.
-         */
-        socket.on('changeCanVote', async (votingData) => {
-            try {
-                logger.log('info', `[changeCanVote] votingData=(${JSON.stringify(votingData)}) ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                const classId = socket.request.session.classId;
-                const studentsAllowedToVote = classInformation.classrooms[classId].poll.studentsAllowedToVote;
-                for (const userId in votingData) {
-                    const votingRight = votingData[userId];
-                    if (votingRight === true && studentsAllowedToVote.includes(userId) === false) {
-                        // Add the email to the studentBoxes array if it's not already there
-                        studentsAllowedToVote.push(userId);
-                    } else {
-                        // Remove all instances of the id from the studentBoxes array
-                        studentsAllowedToVote.splice(0, studentsAllowedToVote.length, ...studentsAllowedToVote.filter(student => student !== userId));
-                    }
-
-                    // Emit the voting right to the user
-                    const email = await getEmailFromId(userId);
-                    emitToUser(email, 'getCanVote', votingRight);
-                }
-                socketUpdates.classUpdate(classId);
-            } catch(err) {
-                logger.log('error', err.stack)
-            }
-        });
-
         socket.on('getActiveClass', () => {
             try {
                 const api = socket.request.session.api;
@@ -230,7 +182,7 @@ module.exports = {
 
                         if (classroom) {
                             if (classInformation.classrooms[classId]) {
-                                endClass(classroom.key, classroom.id)
+                                socketUpdates.endClass(classroom.key, classroom.id)
                             }
 
                             database.run('DELETE FROM classroom WHERE id=?', classroom.id)
