@@ -1,13 +1,13 @@
-const studentRoute = require("../student");
-const request = require("supertest");
-const { createExpressServer } = require("../../modules/tests/tests");
-const { classInformation } = require("../../modules/class/classroom");
-const { STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions");
+const studentRoute = require('../student');
+const request = require('supertest');
+const { createExpressServer } = require('../../modules/tests/tests');
+const { classInformation } = require('../../modules/class/classroom');
+const { STUDENT_PERMISSIONS, GUEST_PERMISSIONS } = require('../../modules/permissions');
 
-describe("Student Route", () => {
+describe('Student Route', () => {
     let app;
-    const mockemail = "testuser";
-    const mockClassId = "testclass123";
+    const mockemail = 'testuser';
+    const mockClassId = 'testclass123';
 
     beforeEach(() => {
         // Create a new Express app instance
@@ -18,7 +18,7 @@ describe("Student Route", () => {
             req.session = {
                 email: mockemail,
                 classId: mockClassId,
-                tags: [],
+                tags: []
             };
             req.query = {};
             next();
@@ -30,8 +30,8 @@ describe("Student Route", () => {
                 email: mockemail,
                 permissions: STUDENT_PERMISSIONS,
                 activeClass: mockClassId,
-                classPermissions: GUEST_PERMISSIONS,
-            },
+                classPermissions: GUEST_PERMISSIONS
+            }
         };
 
         classInformation.classrooms = {
@@ -43,32 +43,34 @@ describe("Student Route", () => {
                         classPermissions: GUEST_PERMISSIONS,
                         pollRes: {
                             buttonRes: null,
-                            textRes: null,
-                        },
-                    },
+                            textRes: null
+                        }
+                    }
                 },
                 lesson: {
-                    title: "Test Lesson",
-                },
-            },
+                    title: 'Test Lesson'
+                }
+            }
         };
 
         // Apply the student route
         studentRoute.run(app);
     });
 
-    describe("GET /student", () => {
-        it("should render student page with user information", async () => {
-            const response = await request(app).get("/student").expect(200);
+    describe('GET /student', () => {
+        it('should render student page with user information', async () => {
+            const response = await request(app)
+                .get('/student')
+                .expect(200);
 
-            expect(response.body.view).toBe("pages/student");
-            expect(response.body.options.title).toBe("Student");
+            expect(response.body.view).toBe('pages/student');
+            expect(response.body.options.title).toBe('Student');
             expect(response.body.options.user).toBeDefined();
             expect(response.body.options.myRes).toBeNull();
             expect(response.body.options.myTextRes).toBeNull();
         });
 
-        it("should redirect to login when user is not logged in", async () => {
+        it('should redirect to login when user is not logged in', async () => {
             // Remove session mock to simulate not logged in
             app = createExpressServer();
             app.use((req, res, next) => {
@@ -77,9 +79,11 @@ describe("Student Route", () => {
             });
             studentRoute.run(app);
 
-            const response = await request(app).get("/student").expect(302);
+            const response = await request(app)
+                .get('/student')
+                .expect(302);
 
-            expect(response.headers.location).toBe("/login");
+            expect(response.headers.location).toBe('/login');
         });
     });
 });

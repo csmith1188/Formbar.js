@@ -1,6 +1,6 @@
-const { logger } = require("../../modules/logger");
-const { rateLimits, PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
-const { TEACHER_PERMISSIONS } = require("../../modules/permissions");
+const { logger } = require("../../modules/logger")
+const { rateLimits, PASSIVE_SOCKETS} = require("../../modules/socketUpdates")
+const {TEACHER_PERMISSIONS} = require("../../modules/permissions");
 
 module.exports = {
     order: 0,
@@ -12,33 +12,33 @@ module.exports = {
                     return;
                 }
 
-                const email = socket.request.session.email;
-                const currentTime = Date.now();
-                const timeFrame = 5000;
-                const limit = socket.request.session.permissions >= TEACHER_PERMISSIONS ? 15 : 8;
+                const email = socket.request.session.email
+                const currentTime = Date.now()
+                const timeFrame = 5000
+                const limit = socket.request.session.permissions >= TEACHER_PERMISSIONS ? 15 : 8
                 if (!rateLimits[email]) {
-                    rateLimits[email] = {};
+                    rateLimits[email] = {}
                 }
 
-                const userRequests = rateLimits[email];
-                userRequests[event] = userRequests[event] || [];
+                const userRequests = rateLimits[email]
+                userRequests[event] = userRequests[event] || []
                 while (userRequests[event].length && currentTime - userRequests[event][0] > timeFrame) {
                     userRequests[event].shift();
-                    userRequests["hasBeenMessaged"] = false;
+                    userRequests['hasBeenMessaged'] = false;
                 }
 
                 if (userRequests[event].length >= limit) {
-                    if (!userRequests["hasBeenMessaged"] && !PASSIVE_SOCKETS.includes(event)) {
-                        socket.emit("message", `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.`);
+                    if (!userRequests['hasBeenMessaged'] && !PASSIVE_SOCKETS.includes(event)) {
+                        socket.emit('message', `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.`)
                     }
-                    userRequests["hasBeenMessaged"] = true;
+                    userRequests['hasBeenMessaged'] = true;
                 } else {
-                    userRequests[event].push(currentTime);
-                    next();
+                    userRequests[event].push(currentTime)
+                    next()
                 }
             } catch (err) {
-                logger.log("error", err.stack);
+                logger.log('error', err.stack);
             }
-        });
-    },
-};
+        })        
+    }
+}

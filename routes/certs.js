@@ -1,24 +1,24 @@
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");
-const fs = require("fs");
+const fs = require('fs');
 
 module.exports = {
     run(app) {
         try {
-            app.get("/certs", (req, res) => {
+            app.get('/certs', (req, res) => {
                 try {
-                    const pem = fs.readFileSync("publicKey.pem", "utf8");
+                    const pem = fs.readFileSync('publicKey.pem', 'utf8');
                     res.json({ publicKey: pem });
                 } catch (err) {
-                    logger.log("error", err.stack);
-                    res.render("pages/message", {
+                    logger.log('error', err.stack);
+                    res.render('pages/message', {
                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                        title: "Error",
+                        title: 'Error'
                     });
                 }
             });
         } catch (err) {
-            logger.log("error", err.stack);
+            logger.log('error', err.stack);
         }
-    },
-};
+    }
+}

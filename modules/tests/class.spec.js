@@ -1,10 +1,10 @@
-const { getClassIDFromCode, getClassUsers, classInformation } = require("../class/classroom");
+const { getClassIDFromCode, getClassUsers, classInformation} = require('../class/classroom');
 const { database } = require("../database");
 const { testData } = require("./tests");
 
-it("should get class users", async () => {
+it('should get class users', async () => {
     database.get.mockImplementation((query, params, callback) => {
-        if (query.includes("SELECT id FROM classroom WHERE key = ?")) {
+        if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
             if (params[0] !== testData.code) {
                 // Simulate that the class is not found by returning null
                 callback(null, null);
@@ -16,20 +16,16 @@ it("should get class users", async () => {
     });
 
     database.all.mockImplementation((query, params, callback) => {
-        if (
-            query.includes(
-                "SELECT DISTINCT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?"
-            )
-        ) {
+        if (query.includes('SELECT DISTINCT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?')) {
             if (params[0] !== testData.code) {
                 // Simulate that the class does not exist by returning null
                 callback(null, null);
             } else {
                 // Simulate that users are found in the class
-                callback(null, [{ id: 1, email: "user123", permissions: 1, classPermissions: 1 }]);
+                callback(null, [{ id: 1, email: 'user123', permissions: 1, classPermissions: 1 }]);
             }
         } else {
-            callback(new Error("Unexpected query"));
+            callback(new Error('Unexpected query'));
         }
     });
 
@@ -38,22 +34,23 @@ it("should get class users", async () => {
         user123: {
             loggedIn: false,
             id: 1,
-            email: "user123",
+            email: 'user123',
             permissions: 1,
             classPermissions: 1,
             help: null,
             break: null,
-            pogMeter: 0,
-        },
+            pogMeter: 0
+        }
     });
 });
+
 
 describe("getClassIdFromCode", () => {
     beforeEach(() => {
         jest.resetAllMocks();
 
         database.get.mockImplementation((query, params, callback) => {
-            if (query.includes("SELECT id FROM classroom WHERE key = ?")) {
+            if (query.includes('SELECT id FROM classroom WHERE key = ?')) {
                 if (params[0] !== testData.code) {
                     // Simulate no class found
                     callback(null, null);
@@ -62,18 +59,18 @@ describe("getClassIdFromCode", () => {
                     callback(null, { id: 1 });
                 }
             } else {
-                callback(new Error("Unexpected query"));
+                callback(new Error('Unexpected query'));
             }
         });
-    });
+    })
 
-    it("should find class id with valid class code", async () => {
+    it('should find class id with valid class code', async () => {
         const classId = await getClassIDFromCode(testData.code);
         expect(classId).toBe(1);
     });
 
-    it("should return null for invalid class code", async () => {
-        const classId = await getClassIDFromCode("invalidkey");
+    it('should return null for invalid class code', async () => {
+        const classId = await getClassIDFromCode('invalidkey');
         expect(classId).toBe(null);
     });
 });

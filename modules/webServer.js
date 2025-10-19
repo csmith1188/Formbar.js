@@ -11,17 +11,17 @@ function createServer() {
 }
 
 async function getIpAccess(type) {
-    const ipList = await dbGetAll(`SELECT id, ip FROM ip_${type}`);
-    return ipList.reduce((ips, ip) => {
-        ips[ip.id] = ip;
-        return ips;
-    }, {});
+	const ipList = await dbGetAll(`SELECT id, ip FROM ip_${type}`)
+	return ipList.reduce((ips, ip) => {
+		ips[ip.id] = ip
+		return ips
+	}, {})
 }
 
 const { app, io, http } = createServer();
 module.exports = {
-    app,
-    io,
-    http,
-    getIpAccess,
+	app,
+	io,
+	http,
+	getIpAccess
 };

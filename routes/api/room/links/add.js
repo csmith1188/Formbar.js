@@ -6,7 +6,7 @@ const { dbRun } = require("../../../../modules/database");
 module.exports = {
     run(router) {
         // Adds a link to a room by id
-        router.post("/room/:id/links/add", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        router.post('/room/:id/links/add', hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const { name, url } = req.body;
@@ -16,14 +16,12 @@ module.exports = {
                 }
 
                 // Add the link to the database
-                await dbRun("INSERT INTO links (classId, name, url) VALUES (?, ?, ?)", [classId, name, url]);
+                await dbRun('INSERT INTO links (classId, name, url) VALUES (?, ?, ?)', [classId, name, url]);
                 res.status(200).json({ message: "Link added successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({
-                    error: `There was an internal server error. Please try again.`,
-                });
+                logger.log('error', err.stack);
+                res.status(500).json({ error: `There was an internal server error. Please try again.` });
             }
         });
-    },
-};
+    }
+}

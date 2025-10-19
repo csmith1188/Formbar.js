@@ -9,8 +9,8 @@ let opendetails = [];
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
-        if (student.tagName.toLowerCase() == "input") continue;
-        if (student.tagName.toLowerCase() == "button") continue;
+        if(student.tagName.toLowerCase() == 'input') continue;
+        if(student.tagName.toLowerCase() == 'button') continue;
         if (!student.id) continue;
 
         if (!students.includes(student.id.replace("student-", "")) && student.id !== "student-fake") {
@@ -34,7 +34,8 @@ function buildStudent(classroom, studentData) {
         if (studentData.id.toString().includes("guest")) newStudent.classList.add("guestStudent");
         newStudent.open = opendetails.indexOf(studentData.id) != -1;
 
-        newStudent.onclick = (e) => {};
+        newStudent.onclick = (e) => {
+        };
 
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
@@ -89,8 +90,8 @@ function buildStudent(classroom, studentData) {
             newStudent.style.opacity = 1;
         }
 
-        newStudent.querySelectorAll(".helpAccButton").forEach((e) => e.classList.add("accButtonDisabled"));
-        newStudent.querySelectorAll(".breakAccButton").forEach((e) => e.classList.add("accButtonDisabled"));
+        newStudent.querySelectorAll(".helpAccButton").forEach(e => e.classList.add("accButtonDisabled"));
+        newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.add("accButtonDisabled"));
 
         if (studentData.help) {
             let accordionOptions = newStudent.querySelector("div.accordionOptions.helpOptions");
@@ -105,13 +106,15 @@ function buildStudent(classroom, studentData) {
             };
             deleteTicketButton.textContent = "Delete";
 
+            
             if (studentData.help.reason) {
                 helpReason.textContent = `"${studentData.help.reason}" at ${studentData.help.time.toLocaleTimeString()}`;
                 deleteTicketButton.classList.remove("noReason");
             }
 
             accordionOptions.appendChild(deleteTicketButton);
-            newStudent.querySelectorAll(".helpAccButton").forEach((e) => e.classList.remove("accButtonDisabled"));
+            newStudent.querySelectorAll(".helpAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
+
         }
 
         if (studentData.break == true) {
@@ -145,7 +148,8 @@ function buildStudent(classroom, studentData) {
             newDiv.appendChild(denyBreakButton);
 
             accordionOptions.appendChild(newDiv);
-            newStudent.querySelectorAll(".breakAccButton").forEach((e) => e.classList.remove("accButtonDisabled"));
+            newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
+
         }
 
         if (studentData.break == true) {
@@ -160,15 +164,15 @@ function buildStudent(classroom, studentData) {
             breakReason.appendChild(endBreakButton);
 
             newStudent.classList.add("break");
-            newStudent.querySelectorAll(".breakAccButton").forEach((e) => e.classList.remove("accButtonDisabled"));
+            newStudent.querySelectorAll(".breakAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
         }
 
         if (studentData.pollRes.textRes !== "" && studentData.pollRes.buttonRes !== "") {
-            newStudent.querySelectorAll(".textAccButton").forEach((e) => e.classList.remove("accButtonDisabled"));
+            newStudent.querySelectorAll(".textAccButton").forEach(e => e.classList.remove("accButtonDisabled"));
             newStudent.querySelector("#fullTextResponse").textContent = studentData.pollRes.textRes;
             newStudent.querySelector("#userTextResponse").textContent = studentData.pollRes.textRes;
         } else {
-            newStudent.querySelectorAll(".textAccButton").forEach((e) => e.classList.add("accButtonDisabled"));
+            newStudent.querySelectorAll(".textAccButton").forEach(e => e.classList.add("accButtonDisabled"));
             newStudent.querySelector("#fullTextResponse").textContent = "";
             newStudent.querySelector("#userTextResponse").textContent = "";
         }
@@ -217,7 +221,7 @@ function buildStudent(classroom, studentData) {
                     button.classList.add("pressed");
                     let span = document.createElement("span");
                     span.textContent = tag;
-                    span.className = "revampTag";
+                    span.className = 'revampTag'
                     span.setAttribute("id", tag);
                     studTagsSpan.appendChild(span);
 
@@ -265,7 +269,7 @@ function buildStudent(classroom, studentData) {
                 let span = document.createElement("span");
                 span.textContent = tag;
                 span.setAttribute("id", tag);
-                span.className = "revampTag";
+                span.className = 'revampTag'
                 studTagsSpan.appendChild(span);
             }
 
@@ -350,9 +354,8 @@ if (settings.filter) {
             let filterElement = document.querySelector(".filter#" + filterType);
             if (filterElement) {
                 filterElement.classList.add("pressed");
-                filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
-                if (filterType == "canVote") filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
+                filterElement.innerHTML = FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                if(filterType == 'canVote') filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
     }
@@ -538,8 +541,8 @@ for (let filterElement of document.getElementsByClassName("filter")) {
     filterElement.onclick = (event) => {
         let filterElement = event.target;
 
-        if (filterElement.id == "canVote") {
-            if (filter[filterElement.id] >= 2) {
+        if(filterElement.id == 'canVote') {
+            if(filter[filterElement.id] >= 2) {
                 filter[filterElement.id] = 0;
             } else {
                 filter[filterElement.id] += 1;
@@ -559,10 +562,11 @@ for (let filterElement of document.getElementsByClassName("filter")) {
                 filterElement.textContent = FilterState[filterElement.id];
             } else {
                 filterElement.classList.add("pressed");
-                filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                filterElement.innerHTML = FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
             }
         }
+
+        
 
         // Update the filter settings in the database
         socket.emit("setClassSetting", "filter", filter);
@@ -644,7 +648,7 @@ function awardDigipogs(userId, amount) {
 
 function doAccordionButton(button, forceOpen = false) {
     if (!button) return;
-    if (button.classList.contains("accButtonDisabled")) return;
+    if(button.classList.contains("accButtonDisabled")) return;
 
     const studentElement = button.closest("details");
     const accordion = studentElement.querySelector("div.accordionPopup");
