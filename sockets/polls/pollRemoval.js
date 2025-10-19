@@ -1,5 +1,5 @@
 const { classInformation } = require("../../modules/class/classroom")
-const { database, dbRun } = require("../../modules/database")
+const { dbRun, dbGet } = require("../../modules/database")
 const { logger } = require("../../modules/logger");
 
 module.exports = {
@@ -33,8 +33,8 @@ module.exports = {
                     throw err;
                 }
 
-                // Update in-memory structures
-                for (const classroom of Object.values(classInformation)) {
+                // Update classrooms
+                for (const classroom of Object.values(classInformation.classrooms)) {
                     let updatePolls = false;
 
                     classroom.sharedPolls = classroom.sharedPolls?.filter(id => id !== pollId) || [];

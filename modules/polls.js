@@ -121,7 +121,6 @@ async function createPoll(classId, pollData, userSession) {
  * - updatePoll(classId, {status: true}, session) - Resumes the poll
  * - updatePoll(classId, {studentsAllowedToVote: ['1', '2']}, session) - Changes who can vote
  * - updatePoll(classId, {}, session) - Clears the poll (empty object)
- * - updatePoll(classId, {clear: true}, session) - Clears the poll (backwards compatibility)
  */
 async function updatePoll(classId, options, userSession) {
     try {
@@ -159,13 +158,9 @@ async function updatePoll(classId, options, userSession) {
                 savePollToHistory(classId);
             }
 
-            // Update the property if it exists in the poll object if the class is active
-            if (classroom.isActive) {
-                if (option in classroom.poll) {
-                    classroom.poll[option] = value;
-                }
-            } else {
-                return 'This class is not currently active.';
+            // Update the property if it exists in the poll object
+            if (option in classroom.poll) {
+                classroom.poll[option] = value;
             }
         }
 

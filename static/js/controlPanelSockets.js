@@ -36,59 +36,71 @@ function createTagSelectButtons() {
 			}
 			tempTags = tempTags.sort().join();
 
-			// If the student has any of the selected tags, check the checkbox and open their menu
-			const selectedStudents = []; // Stores the selected students
-			for (const student of students) {
-				const studentTags = student.tags;
-				if (selectedClassTags.length === 0) continue;
-				if (student.permissions >= TEACHER_PERMISSIONS) continue;
+		// If the student has any of the selected tags, check the checkbox and open their menu
+		const selectedStudents = []; // Stores the selected students
+		let studentsAllowedToVote = [];
+		
+		for (const student of students) {
+			const studentTags = student.tags;
+			if (selectedClassTags.length === 0) continue;
+			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
-				// Handle poll response selections
-				if (Array.isArray(student.pollRes.buttonRes)) { // Check if the poll is multi-res
-					// Handle multi-res polls
-					for (const response of student.pollRes.buttonRes) {
-						if (selectedClassTags.has(response)) {
-							const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-							studentCheckbox.checked = true;
-							studentCheckbox.dispatchEvent(new Event('change'));
-							selectedStudents.push(student.email);
-							break;
-						}
-					}
-				} else if (typeof student.pollRes.buttonRes === 'string') {
-					// Handle regular polls
-					if (selectedClassTags.has(student.pollRes.buttonRes)) {
+			let studentSelected = false;
+
+			// Handle poll response selections
+			if (Array.isArray(student.pollRes.buttonRes)) {
+				// Handle multi-res polls
+				for (const response of student.pollRes.buttonRes) {
+					if (selectedClassTags.has(response)) {
 						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentCheckbox.checked = true;
-						studentCheckbox.dispatchEvent(new Event('change'));
 						selectedStudents.push(student.id);
+						studentSelected = true;
+						break;
 					}
 				}
+			} else if (typeof student.pollRes.buttonRes === 'string') {
+				// Handle regular polls
+				if (selectedClassTags.has(student.pollRes.buttonRes)) {
+					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
+					studentCheckbox.checked = true;
+					selectedStudents.push(student.id);
+					studentSelected = true;
+				}
+			}
 
-				// Handle tag selections
+			// Handle tag selections
+			if (!studentSelected) {
 				for (const studentTag of studentTags) {
 					if (selectedClassTags.has(studentTag)) {
 						const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
 						studentCheckbox.checked = true;
-						studentCheckbox.dispatchEvent(new Event('change'));
 						selectedStudents.push(student.id);
+						studentSelected = true;
 						break;
 					}
 				}
 			}
 
-			// If the student is not selected, then unselect them
-			for (const student of students) {
-				if (selectedStudents.indexOf(student.id) === -1) {
-					const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
-					const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-					if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
-
-					studentElement.open = false;
-					studentCheckbox.checked = false;
-					studentCheckbox.dispatchEvent(new Event('change'));
-				}
+			if (studentSelected) {
+				studentsAllowedToVote.push(student.id.toString());
 			}
+		}
+
+		// If the student is not selected, then unselect them
+		for (const student of students) {
+			if (selectedStudents.indexOf(student.id) === -1) {
+				const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+				const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
+				if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+
+				studentElement.open = false;
+				studentCheckbox.checked = false;
+			}
+		}
+
+		// Send the updated voting list to the server
+		socket.emit('updatePoll', { studentsAllowedToVote });
 		}
 
 		if (selectPollDiv.children[i]) {
@@ -241,7 +253,6 @@ socket.on('customPollUpdate', (
 
 			if (studentCheckbox) {
 				studentCheckbox.checked = switchState;
-				studentCheckbox.dispatchEvent(new Event('change'));
 				if (switchState) {
 					studentsAllowedToVote.push(student.id.toString());
 				}
@@ -250,7 +261,6 @@ socket.on('customPollUpdate', (
 		}
 
         // Send the updated voting list to the server
-        console.log('students allowed to vote:', studentsAllowedToVote)
 		socket.emit('updatePoll', { studentsAllowedToVote })
 	}
 
@@ -402,9 +412,11 @@ socket.on('startPoll', () => {
 	changeTab('usersMenu', 'mainTabs')
 })
 
-socket.on('updatePoll', (newData) => {
-	endPoll.style.display = 'none'
-})
+socket.on('classUpdate', (classroomData) => {
+	if (classroomData && classroomData.poll && classroomData.poll.status === false) {
+		endPoll.style.display = 'none';
+	}
+});
 
 // Handle sound events
 const socketSounds = {
