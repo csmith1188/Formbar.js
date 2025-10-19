@@ -3295,11 +3295,50 @@ p.accordionTitle {
 	gap: 20px !important;
 	padding: 0 20px !important;
   	justify-content: left;
+	flex-wrap: nowrap !important;
+	overflow: hidden;
+	cursor: default !important;
 }
 
 .managePanelUsers .user p {
 	text-align: left;
 	flex: 1 1 auto;
+	min-width: 0;
+	pointer-events: auto !important;
+}
+
+.managePanelUsers .user a {
+	display: block;
+	margin-bottom: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+.managePanelUsers .user small {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: block;
+}
+
+.managePanelUsers .user a:hover {
+	text-decoration: underline !important;
+}
+
+.managePanelUsers .user label,
+.managePanelUsers .user select,
+.managePanelUsers .user button {
+	flex-shrink: 1;
+	white-space: nowrap;
+	min-width: fit-content;
+	cursor: pointer;
+}
+
+.managePanelUsers .user button {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 #searchUsers {

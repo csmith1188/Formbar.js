@@ -128,33 +128,50 @@
 						}
 					});
 
-					let oldLetterRes = '<%- myRes %>'
-					let oldTextRes = currentUser.pollRes.textRes
-					let poll = {}
-					let quiz = {}
-					let votingRight = false
+			let oldLetterRes = '<%- myRes %>'
+			let oldTextRes = currentUser.pollRes.textRes
+			let poll = {}
+			let quiz = {}
+			let votingRight = false
 
-					function unselectRemove(event) {
-						event.preventDefault();
-						document.getElementById('remove').checked = false;
-					}
+		// Calculate voting rights based on poll data
+		function updateVotingRight() {
+			if (!poll || !poll.status) {
+				votingRight = false;
+				return;
+			}
+			// Check personal canVote flag (set by server for privacy)
+			// Fallback to checking studentsAllowedToVote array for backwards compatibility
+			if (poll.canVote !== undefined) {
+				votingRight = poll.canVote;
+			} else if (poll.studentsAllowedToVote) {
+				votingRight = poll.studentsAllowedToVote.includes(currentUser.id.toString());
+			} else {
+				votingRight = false;
+			}
+		}
 
-					function updatePage() {
-						pollForm = document.getElementById('pollForm');
-						pollPromptDisplay = document.getElementById('pollPrompt');
+			function unselectRemove(event) {
+				event.preventDefault();
+				document.getElementById('remove').checked = false;
+			}
 
-						if (pollDiv.querySelector("#remove")) {
-							pollDiv.querySelector("#remove").remove()
-						}
+			function updatePage() {
+				pollForm = document.getElementById('pollForm');
+				pollPromptDisplay = document.getElementById('pollPrompt');
 
-						if (poll.allowMultipleResponses) {
-							multiAnswer = "checkbox"
-						} else {
-							multiAnswer = "button"
-						}
+				if (pollDiv.querySelector("#remove")) {
+					pollDiv.querySelector("#remove").remove()
+				}
 
-                        pollContent.style.display = 'block'
-                        if (poll.status) {
+				if (poll.allowMultipleResponses) {
+					multiAnswer = "checkbox"
+				} else {
+					multiAnswer = "button"
+				}
+
+				pollContent.style.display = 'block'
+				if (poll.status) {
 							noPoll.style.display = 'none';
 							pollDiv.style.display = 'block';
 
@@ -351,11 +368,9 @@
 							oldTextRes = '';
 						}
 
-                        poll = newPoll;
-                        if (poll.status) {
-                            socket.emit('getCanVote', currentUser.id);
-                        }
-                        updatePage();
+                    poll = newPoll;
+                    updateVotingRight();
+                    updatePage();
 					});
 
 					socket.on('pollResp', (voteData) => {
@@ -382,22 +397,14 @@
 						}
 					});
 
-                    // If there's an active poll, then request the current user's voting rights from the server
-					if (poll.status) {
-						socket.emit('getCanVote', currentUser.id)
-					}
+			// Calculate initial voting rights from poll data
+			updateVotingRight();
 
-                    // Update the user's voting rights when the server sends an update
-					socket.on('getCanVote', (newVotingRight) => {
-						votingRight = newVotingRight
-                        updatePage()
-                    })
+			//help ticket/break button
 
-					//help ticket/break button
-
-					socket.on("helpSuccess", () => {
-						alert("Help ticket sent")
-					})
+			socket.on("helpSuccess", () => {
+				alert("Help ticket sent")
+			})
 
 					function help() {
 						let reason = document.getElementById('ticket').value
@@ -434,6 +441,4 @@
 					}
 				</script>
 				<% } %>
-
-				<%- include('../partials/footer_content') %>
 </html>

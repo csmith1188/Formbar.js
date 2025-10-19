@@ -17,13 +17,34 @@ const PASSIVE_SOCKETS = [
     'customPollUpdate',
     'classBannedUsersUpdate',
     'isClassActive',
-    'getCanVote',
     'setClassSetting'
 ];
 
 async function emitToUser(email, event, ...data) {
     for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
+    }
+}
+
+/**
+ * Calls a SocketUpdates method on all sockets for a user
+ * @param {string} email - The user's email
+ * @param {string} methodName - The name of the SocketUpdates method to call (e.g., 'classUpdate', 'customPollUpdate')
+ * @param {...any} args - Arguments to pass to the method
+ */
+async function userUpdateSocket(email, methodName, ...args) {
+    // Dynamically load to prevent circular dependency error
+    const { userSocketUpdates } = require('../sockets/init');
+
+    // If user has no socket connections yet, then return
+    if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
+        return;
+    }
+    
+    for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+        if (socketUpdates && typeof socketUpdates[methodName] === 'function') {
+            socketUpdates[methodName](...args);
+        }
     }
 }
 
@@ -114,25 +135,6 @@ function sortStudentsInPoll(classData) {
         let included = false;
         let excluded = false;
 
-        // Check if the student passes the tags test
-        if (classData.poll.requiredTags.length > 0) {
-            let studentTags = student.tags.split(",");
-            if (classData.poll.requiredTags[0][0] == "0") {
-                if (classData.poll.requiredTags.slice(1).join() == student.tags) {
-                    included = true;
-                } else {
-                    excluded = true;
-                }
-            } else if (classData.poll.requiredTags[0][0] == "1") {
-                let correctTags = classData.poll.requiredTags.slice(1).filter(tag => studentTags.includes(tag)).length;
-                if (correctTags == classData.poll.requiredTags.length - 1) {
-                    included = true;
-                } else {
-                    excluded = true;
-                }
-            }
-        }
-
         // Check if the student's checkbox was checked (studentsAllowedToVote stores student ids)
         if (classData.poll.studentsAllowedToVote.includes(student.id.toString())) {
             included = true;
@@ -187,7 +189,7 @@ function getPollResponseInformation(classData) {
         }
 
         for (const studentData of Object.values(classData.students)) {
-            if (studentData.break == true || totalStudentsExcluded.includes(studentData.email)) {
+            if (studentData.break === true || totalStudentsExcluded.includes(studentData.email)) {
                 continue;
             }
 
@@ -212,12 +214,12 @@ function getPollResponseInformation(classData) {
         }
     }
 
-    if (totalResponses == 0) {
+    if (totalResponses === 0) {
         totalStudentsIncluded = Object.keys(classData.students)
         for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
             const studentName = totalStudentsIncluded[i];
             const student = classData.students[studentName];
-            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions == GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
+            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions === GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
                 totalStudentsIncluded.splice(i, 1);
             }
         }
@@ -231,11 +233,6 @@ function getPollResponseInformation(classData) {
 }
 
 function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
-    // Redact sensitive information if the user does not have teacher permissions
-    if (!hasTeacherPermissions && !options.restrictToControlPanel) {
-        classData.poll.studentsAllowedToVote = undefined;
-    }
-
     return {
         id: classData.id,
         className: classData.className,
@@ -316,6 +313,7 @@ class SocketUpdates {
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
                 const classReturnData = structuredClone(getClassUpdateData(classData, hasTeacherPermissions));
+
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
                 advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
                 this.customPollUpdate();
@@ -524,5 +522,6 @@ module.exports = {
     advancedEmitToClass,
     setClassOfApiSockets,
     managerUpdate,
+    userUpdateSocket,
     SocketUpdates
 };

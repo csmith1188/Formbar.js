@@ -1,4 +1,4 @@
-const { run: pollCreationRun } = require('../pollCreation');
+const { run: pollCreationRun } = require('../polls/pollCreation');
 const { classInformation } = require("../../modules/class/classroom");
 const { logger } = require("../../modules/logger");
 const { generateColors } = require("../../modules/util");

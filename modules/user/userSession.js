@@ -1,12 +1,11 @@
-const { userSockets, managerUpdate } = require("../socketUpdates");
+const { userSockets, managerUpdate, userUpdateSocket } = require("../socketUpdates");
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
 const { logger } = require("../logger");
-const { userSocketUpdates } = require("../../sockets/init");
 const { deleteCustomPolls } = require("../polls");
-const { deleteRooms } = require("../class/class");
+const { deleteRooms, endClass } = require("../class/class");
 const { lastActivities } = require("../../sockets/middleware/inactivity");
-const {GUEST_PERMISSIONS} = require("../permissions");
+const { GUEST_PERMISSIONS } = require("../permissions");
 
 function logout(socket) {
     const email = socket.request.session.email
@@ -77,10 +76,7 @@ function logout(socket) {
                     }
 
                     // Update class permissions and virtual bar
-                    const socketUpdates = userSocketUpdates[email];
-                    if (socketUpdates) {
-                        socketUpdates.classUpdate(classId);
-                    }
+                    userUpdateSocket(email, 'classUpdate', classId);
                 }
 
                 // If this user owns the classroom, end it
@@ -109,16 +105,22 @@ async function deleteUser(userId, userSession) {
         logger.log('info', `[deleteUser] session=(${JSON.stringify(userSession)})`)
         logger.log('info', `[deleteUser] userId=(${userId})`)
 
-        // Get the user's email from their ID and verify they exist
+        // Get the user's data from their ID and verify they exist
+        // If not found in users table, check if they're an unverified user in temp_user_creation_data
         const user = await dbGet('SELECT * FROM users WHERE id=?', [userId]);
+        let tempUser;
         if (!user) {
-            return 'User not found'
+            tempUser = await dbGet('SELECT * FROM temp_user_creation_data WHERE secret=?', [userId]);
+            if (!tempUser) {
+                return 'User not found';
+            }
+
+            await dbRun('DELETE FROM temp_user_creation_data WHERE secret=?', [userId]);
         }
 
         // Log the user out if they're currently online
-        const userSocketsMap = userSockets[user.email];
-        const usersSocketUpdates = userSocketUpdates[user.email];
-        if (userSocketsMap && usersSocketUpdates) {
+        const userSocketsMap = userSockets[user ? user.email : tempUser.email];
+        if (userSocketsMap) {
             const anySocket = Object.values(userSocketsMap)[0];
             if (anySocket) {
                 logout(anySocket);
@@ -126,30 +128,34 @@ async function deleteUser(userId, userSession) {
         }
 
         try {
-            await dbRun('BEGIN TRANSACTION')
-            await Promise.all([
-                dbRun('DELETE FROM users WHERE id=?', userId),
-                dbRun('DELETE FROM classusers WHERE studentId=?', userId),
-                dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
-            ])
-
-            // await userSocketUpdates.deleteCustomPolls(userId)
-            await deleteCustomPolls(userId)
-            await deleteRooms(userId) // Delete any rooms owned by the user
-
-            // If the student is online, remove them from any class they're in and update the control panel
-            const student = classInformation.users[user.email];
-            if (student) {
-                const activeClass = classInformation.users[user.email].activeClass;
-                const classroom = classInformation.classrooms[activeClass];
-                delete classInformation.users[user.email];
-                if (classroom) {
-                    delete classroom.students[user.email];
-                    userSocketUpdates.classUpdate();
+            if (user) {
+                await dbRun('BEGIN TRANSACTION')
+            
+                // For verified users, delete from all related tables
+                await Promise.all([
+                    dbRun('DELETE FROM users WHERE id=?', userId),
+                    dbRun('DELETE FROM classusers WHERE studentId=?', userId),
+                    dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
+                ])
+    
+                await deleteCustomPolls(userId)
+                await deleteRooms(userId) // Delete any rooms owned by the user
+    
+                // If the student is online, remove them from any class they're in and update the control panel
+                const student = classInformation.users[user.email];
+                if (student) {
+                    const activeClass = classInformation.users[user.email].activeClass;
+                    const classroom = classInformation.classrooms[activeClass];
+                    delete classInformation.users[user.email];
+                    if (classroom) {
+                        delete classroom.students[user.email];
+                        userUpdateSocket(user.email, 'classUpdate');
+                    }
                 }
+    
+                await dbRun('COMMIT')
             }
-
-            await dbRun('COMMIT')
+            
             await managerUpdate()
             return true
         } catch (err) {
