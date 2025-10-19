@@ -300,6 +300,18 @@
 
     }
 
+    #classesMenu {
+        flex-direction: column !important;
+    }
+
+    div.verticalLine {
+        max-width: 80% !important;
+        min-width: 80% !important;
+        min-height: 2px;
+        max-height: 2px;
+        margin: 25px 0 !important;
+    }
+
     #VBDiv {
         width: 100% !important;
     }

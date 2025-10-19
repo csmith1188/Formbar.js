@@ -13,38 +13,36 @@
 
                 <div id="content" class="contentBox" style="margin: auto;">
                     <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
+                        <form class="joinClassForm revampDiv">
                         <label for="joinedKey" class="headerText">Enter a class</label>
-                        <form class="joinClassForm">
-                            <select id="joinedKey" name="id" required class="revampButton">
+                        <select id="joinedKey" name="id" required class="revampButton" autocomplete="off">
+                                <option value="-1" disabled selected>Classes</option>
                                 <% if (joinedClasses.length> 0) { %>
-                                    <option value="" disabled selected>Classes</option>
                                     <% for(let joinedClass of joinedClasses) { %>
                                         <option value="<%- joinedClass.id %>" class="joinClassOption">
                                             <%- joinedClass.name %>
                                         </option>
                                         <% } %>
+                                <% } %>
                             </select>
 
-                            <input type="submit" id="submitJoinedButton"
-                                class="button unselectable revampButton quickButton" value="Go">
+                            <div class="classButtons">
+                                <input type="submit" id="submitJoinedButton"
+                                    class="button unselectable revampButton quickButton" value="Go">
+    
+                                <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                                    <input type="button" id="deleteButton"
+                                        class="button unselectable revampButton quickButton warningButton" value="Delete Class"
+                                        onclick="deleteClass()">
+                                <% } %>
+                            </div>
                         </form>
-                        <% } %>
                             <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-                                <form action="createClass" method="post" id="selectClassForm">
-                                    <div class="buttonsHolder">
-                                        <input type="text" name="submittionType" value="select" hidden>
-                                        <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
-                                            value="Go" onsubmit="return false;"> -->
-                                        <button id="deleteButton" class="quickButton revampButton warningButton unselectable" type="button"
-                                            onclick="deleteClass()" style="margin-top: 40px" disabled>Delete</button>
-                                    </div>
 
+                                <div class="verticalLine"></div>
 
-                                </form>
-
-                                <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
-                                <form action="createClass" method="post" id="createClass">
-                                    <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a
+                                <form action="createClass" class="revampDiv" method="post" id="createClass">
+                                    <label for="emailBox" class="headerText h2">Create a
                                         class</label>
 
                                     <div class="buttonsHolder createClassButtons" id="createClassButtons" style="display: flex">
@@ -55,23 +53,25 @@
                                             value="Create" onsubmit="return false;">
                                     </div>
                                 </form>
-                                <!-- </div> -->
                                 <% } %>
+                            <div class="verticalLine"></div>
+                        
+                            <div class="selectClassDiv">
 
+                                <form action="selectClass" method="post" class="joinClassForm revampDiv">
+                                <label for="selectClass" class="headerText">Join a class with code</label>
+                                <input type="text" required name="key" id="joinKey" placeholder="Class code"
+                                        class="revampButton revampWithText">
+                                    <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
+                                        value="Submit" onsubmit="return false;">
+                                </form>
+                            </div>
                     </div>
 
-                    <label for="selectClass" class="headerText">Join a class with code</label>
-
-                    <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px; justify-content: space-between;">
-                        <input type="text" required name="key" id="joinKey" placeholder="Class code"
-                            class="revampButton revampWithText" style="flex-grow: 2;">
-                        <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
-                            value="Submit" onsubmit="return false;" style="flex-grow: 1;">
-                    </form>
                 </div>
         </body>
         <script>
-            let startClassForm = document.getElementById("selectClassForm")
+            //let startClassForm = document.getElementById("selectClassForm")
             let manageClassSelect = document.getElementById("joinedKey")
 
             function deleteClass() {
@@ -91,20 +91,21 @@
                 socket.emit('getOwnedClasses', currentUser.email)
                 socket.on('getOwnedClasses', (ownedClasses) => {
                     if (ownedClasses.length > 0) {
-                        startClassForm.style.opacity = "1"
-                        startClassForm.style.pointerEvents = "all";
+                        //startClassForm.style.opacity = "1"
+                        //startClassForm.style.pointerEvents = "all";
                     } else {
-                        startClassForm.style.opacity = "0.5";
-                        startClassForm.style.pointerEvents = "none";
+                        //startClassForm.style.opacity = "0.5";
+                        //startClassForm.style.pointerEvents = "none";
                         return
                     }
-
-                    for (let classroom of ownedClasses) {
-                        let option = document.createElement('option')
-                        option.value = classroom.id
-                        option.innerText = classroom.name
-                        option.classList.add("joinOwnedClassOption")
-                        manageClassSelect.appendChild(option.cloneNode(true))
+                    if (ownedClasses.length > 0) {
+                        for (let classroom of ownedClasses) {
+                            let option = document.createElement('option')
+                            option.value = classroom.id
+                            option.innerText = classroom.name
+                            option.classList.add("joinOwnedClassOption")
+                            manageClassSelect.appendChild(option.cloneNode(true))
+                        }
                     }
                     updateDeleteButtonState()
                 })

@@ -1,6 +1,6 @@
-const { logger } = require("../modules/logger")
-const { pollResponse } = require('../modules/polls');
-const { classInformation } = require("../modules/class/classroom");
+const { logger } = require("../../modules/logger")
+const { pollResponse } = require('../../modules/polls');
+const { classInformation } = require("../../modules/class/classroom");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -12,6 +12,6 @@ module.exports = {
             } catch (err) {
                 logger.log('error', err.stack);
             }
-        })
+        });
     }
 }

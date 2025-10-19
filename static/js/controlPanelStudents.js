@@ -20,7 +20,7 @@ function validateStudents(students) {
 }
 
 // Create a student in the user list
-function buildStudent(classroom, studentData) {
+function buildStudent(classroomData, studentData) {
     const studentTemplateDiv = document.getElementById("student-fake");
     if (studentData.classPermissions === BANNED_PERMISSIONS) {
         return;
@@ -62,19 +62,39 @@ function buildStudent(classroom, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroom.poll.studentsAllowedToVote.includes(studentData.id.toString());
+        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id.toString());
 
-        for (let eachResponse in classroom.poll.responses) {
+        // Attach onclick handler for voting rights
+        // Store student ID for closure to avoid capturing the entire studentData object
+        const studentId = studentData.id.toString();
+        studentBox.onclick = () => {
+            const canStudentVote = studentBox.checked;
+
+            // Get current voting list from the global classroom object
+            // Now that the parameter is named classroomData, 'classroom' refers to the global
+            let studentsAllowedToVote = [...(classroomData.poll.studentsAllowedToVote || [])];
+            
+            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
+                studentsAllowedToVote.push(studentId);
+            } else if (!canStudentVote) {
+                studentsAllowedToVote = studentsAllowedToVote.filter(id => id !== studentId);
+            }
+
+            // Send the complete updated list to the server
+            socket.emit('updatePoll', { studentsAllowedToVote });
+        };
+
+        for (let eachResponse in classroomData.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
-                pollBox.style.color = classroom.poll.responses[eachResponse].color;
+                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
                 pollBox.textContent = studentData.pollRes.textRes;
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroom.poll.allowMultipleResponses) {
-                pollBox.style.color = classroom.poll.responses[eachResponse].color;
+            } else if (eachResponse == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
+                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
                 pollBox.textContent = eachResponse;
-            } else if (classroom.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
                 let tempElem = document.createElement("span");
                 tempElem.textContent = eachResponse + " ";
-                tempElem.style.color = classroom.poll.responses[eachResponse].color;
+                tempElem.style.color = classroomData.poll.responses[eachResponse].color;
                 pollBox.appendChild(tempElem);
             }
         }
@@ -204,17 +224,17 @@ function buildStudent(classroom, studentData) {
         }
 
         // Add each tag as a button to the tag form
-        if (!Array.isArray(classroom.tags)) classroom.tags = [];
+        if (!Array.isArray(classroomData.tags)) classroomData.tags = [];
         //roomTagDiv.innerHTML = '';
-        for (let i = 0; i < classroom.tags.length; i++) {
-            let tag = classroom.tags[i];
+        for (let i = 0; i < classroomData.tags.length; i++) {
+            let tag = classroomData.tags[i];
             if (tag == "Offline") continue;
 
             let button = document.createElement("button");
             button.innerHTML = tag;
             button.classList.add("revampButton");
-            button.name = `button${classroom.tags[i]}`;
-            button.value = classroom.tags[i];
+            button.name = `button${classroomData.tags[i]}`;
+            button.value = classroomData.tags[i];
             if (!Array.isArray(studentData.tags)) studentData.tags = [];
             button.onclick = function () {
                 if (!button.classList.contains("pressed")) {

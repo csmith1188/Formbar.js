@@ -23,7 +23,7 @@
                            required>
                     <input type="email" id="emailBox" name="email" class="loginBox revampButton revampWithText" placeholder="Email" value="">
                     <input type="password" id="passwordBox" name="password" class="loginBox revampButton revampWithText" placeholder="Password"
-                        value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]<>,.:;'\" ~?/\|\\]+"
+                        value="" pattern="[a-zA-Z0-9!@#$%^&*()\-_+=\{\}\[\]&lt;&gt;,.:;'&quot; ~?/\|\\]+"
                         title='Password must be 5-20 characters and contain only letters, numbers, and certain special characters'
                         minlength="5" maxlength="20" required>
                     <!-- User and Login Type -->
@@ -34,6 +34,24 @@
                         onsubmit="return false;">
                     <a href="/changepassword" id="forgotPassword" class="quickButton loginBox revampButton">Forgot password</a>
                 </form>
+
+                <!-- Verification status message -->
+                <div id="verificationMessage" style="display: none;">
+                    <p class="loginBox" style="text-align: center; font-size: 18px; margin-bottom: 16px;">
+                        Please check your email for a verification link.
+                    </p>
+                    <div class="loginBox revampButton revampWithText" style="background: var(--lightMode-button-bg); border: 2px solid var(--lightMode-button-border); padding: 12px; text-align: left; cursor: default;">
+                        <div style="font-size: 16px; opacity: 0.7; margin-right: 4px">Email sent to:</div>
+                        <div id="emailDisplay" style="font-size: 16px; font-weight: 500; word-break: break-word;"></div>
+                    </div>
+                    <button id="resendButton" class="quickButton revampButton loginBox" onclick="resendVerification()" style="margin-top: 16px;">
+                        Resend Verification Email
+                    </button>
+                    <p id="resendStatus" class="loginBox" style="text-align: center; margin-top: 12px; font-size: 14px; min-height: 20px;"></p>
+                    <p class="loginBox" style="text-align: center; font-size: 14px; opacity: 0.7; margin-top: 12px;">
+                        Didn't receive it? Check your spam folder.
+                    </p>
+                </div>
 
                 <button class="gsi-material-button" id="googleOAuthButton" onclick="loginWithGoogle()">
                     <div class="gsi-material-button-state"></div>
@@ -63,7 +81,6 @@
             </div>
     </body>
 
-    <%- include('../partials/footer_content') %>
     <script type="text/javascript">
         // Prevent submission if a field is blank
         const form = document.getElementById('login');
@@ -169,9 +186,71 @@
 
         <% if (!googleOauthEnabled) { %>
             const googleOAuthButton = document.getElementById('googleOAuthButton');
-            const orText = document.getElementById('orText')
+            const orText = document.getElementById('orText');
             googleOAuthButton.style.display = 'none';
-            orText.style.display = 'none';
+            if (orText) orText.style.display = 'none';
+        <% } %>
+
+        // Handle verification route
+        <% if (typeof route !== 'undefined' && route === 'verify') { %>
+            const verificationMessage = document.getElementById('verificationMessage');
+            const emailDisplay = document.getElementById('emailDisplay');
+            const loginForm = document.getElementById('login');
+            const verificationEmail = '<%= email %>';
+            const verificationSecret = '<%= secret %>';
+            
+            // Hide the login form and show verification message
+            loginForm.style.display = 'none';
+            document.querySelector('.buttons').style.display = 'none';
+            document.getElementById('googleOAuthButton').style.display = 'none';
+            verificationMessage.style.display = 'block';
+            emailDisplay.innerText = verificationEmail;
+            headerText.innerText = '';
+
+            async function resendVerification() {
+                const resendButton = document.getElementById('resendButton');
+                const resendStatus = document.getElementById('resendStatus');
+                
+                resendButton.disabled = true;
+                resendStatus.innerText = 'Sending...';
+                resendStatus.style.color = '';
+                
+                try {
+                    const response = await fetch('/resend-verification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            email: verificationEmail,
+                            secret: verificationSecret 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        resendStatus.innerText = data.message || 'Email sent successfully!';
+                        resendStatus.style.color = 'green';
+                        setTimeout(() => {
+                            resendButton.disabled = false;
+                        }, 60000); // 60 second cooldown
+                    } else {
+                        resendStatus.innerText = data.error || 'Failed to send email.';
+                        resendStatus.style.color = 'red';
+                        if (data.waitTime) {
+                            setTimeout(() => {
+                                resendButton.disabled = false;
+                                resendStatus.innerText = '';
+                            }, data.waitTime * 1000);
+                        } else {
+                            resendButton.disabled = false;
+                        }
+                    }
+                } catch (err) {
+                    resendStatus.innerText = 'An error occurred. Please try again.';
+                    resendStatus.style.color = 'red';
+                    resendButton.disabled = false;
+                }
+            }
         <% } %>
     </script>
 </html>

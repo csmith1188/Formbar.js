@@ -422,15 +422,16 @@ function removeAnswer(event) {
 	resNumber.value = parseInt(resNumber.value) - 1;
 };
 
-// Ends the poll and reloads the users page to stop any more submission
+// Clears the poll and reloads the users page to stop any more submission
 function clearPollFunc() {
-	socket.emit('clearPoll')
+	socket.emit('updatePoll', {})
 	clearPoll.style.display = 'none'
 }
 
 function endPollFunc() {
-	socket.emit('endPoll')
-	socket.emit('getPreviousPolls', currentPreviousPollIndex);
+	// socket.emit('endPoll')
+	socket.emit('updatePoll', { status: false });
+    socket.emit('getPreviousPolls', currentPreviousPollIndex);
 }
 
 // Starts a new poll that allows students to submit answers

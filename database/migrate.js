@@ -23,9 +23,9 @@ const jsMigrations = fs.readdirSync('./database/migrations/JSMigrations')
 // Combine and sort all migrations
 const allMigrations = [...sqlMigrations, ...jsMigrations].sort((a, b) => a.filename.localeCompare(b.filename));
 
-// Backup the database if there's already a database
+// Backup the database if there's already a database, unless the SKIP_BACKUP flag is set
 // If there's already a backup, denote it with a number
-if (fs.existsSync('database/database.db')) {
+if (fs.existsSync('database/database.db') && !process.env.SKIP_BACKUP) {
     let backupNumber = fs.existsSync("database/database.bak") ? 1 : 0;
     while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
         backupNumber++;

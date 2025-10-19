@@ -37,7 +37,7 @@ module.exports = {
                             }
 
                             for (let permission of Object.keys(permissions)) {
-                                if (typeof permissions[permission] != 'number' || permissions[permission] < 1 || permissions[permission] > 5 || !permissions[permission]) {
+                                if (typeof permissions[permission] != 'number' || permissions[permission] < 1 || permissions[permission] > 5) {
                                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission]
                                 }
                                 dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [permissions[permission], id]).catch((err) => {
