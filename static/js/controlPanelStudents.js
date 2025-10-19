@@ -72,7 +72,7 @@ function buildStudent(classroomData, studentData) {
 
             // Get current voting list from the global classroom object
             // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let studentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
+            let studentsAllowedToVote = [...(classroomData.poll.studentsAllowedToVote || [])];
             
             if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
                 studentsAllowedToVote.push(studentId);
