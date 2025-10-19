@@ -17,13 +17,34 @@ const PASSIVE_SOCKETS = [
     'customPollUpdate',
     'classBannedUsersUpdate',
     'isClassActive',
-    'getCanVote',
     'setClassSetting'
 ];
 
 async function emitToUser(email, event, ...data) {
     for (const socket of Object.values(userSockets[email])) {
         socket.emit(event, ...data)
+    }
+}
+
+/**
+ * Calls a SocketUpdates method on all sockets for a user
+ * @param {string} email - The user's email
+ * @param {string} methodName - The name of the SocketUpdates method to call (e.g., 'classUpdate', 'customPollUpdate')
+ * @param {...any} args - Arguments to pass to the method
+ */
+async function userUpdateSocket(email, methodName, ...args) {
+    // Dynamically load to prevent circular dependency error
+    const { userSocketUpdates } = require('../sockets/init');
+
+    // If user has no socket connections yet, then return
+    if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
+        return;
+    }
+    
+    for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+        if (socketUpdates && typeof socketUpdates[methodName] === 'function') {
+            socketUpdates[methodName](...args);
+        }
     }
 }
 
@@ -212,11 +233,6 @@ function getPollResponseInformation(classData) {
 }
 
 function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
-    // Redact sensitive information if the user does not have teacher permissions
-    if (!hasTeacherPermissions && !options.restrictToControlPanel) {
-        classData.poll.studentsAllowedToVote = undefined;
-    }
-
     return {
         id: classData.id,
         className: classData.className,
@@ -297,6 +313,7 @@ class SocketUpdates {
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
                 const classReturnData = structuredClone(getClassUpdateData(classData, hasTeacherPermissions));
+
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
                 advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
                 this.customPollUpdate();
@@ -505,5 +522,6 @@ module.exports = {
     advancedEmitToClass,
     setClassOfApiSockets,
     managerUpdate,
+    userUpdateSocket,
     SocketUpdates
 };

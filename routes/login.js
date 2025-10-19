@@ -1,5 +1,5 @@
 const { hash, compare } = require('../modules/crypto');
-const { database, dbRun, dbGet } = require("../modules/database");
+const { database, dbRun, dbGet, dbGetAll } = require("../modules/database");
 const { classInformation } = require("../modules/class/classroom");
 const { settings, logNumbers } = require("../modules/config");
 const { logger } = require("../modules/logger");
@@ -163,7 +163,36 @@ module.exports = {
                     database.get('SELECT users.*, CASE WHEN shared_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT shared_polls.pollId) END as sharedPolls, CASE WHEN custom_polls.id IS NULL THEN json_array() ELSE json_group_array(DISTINCT custom_polls.id) END as ownedPolls FROM users LEFT JOIN shared_polls ON shared_polls.userId = users.id LEFT JOIN custom_polls ON custom_polls.owner = users.id WHERE users.email=?', [user.email], async (err, userData) => {
                         try {
                             // Check if a user with that name was not found in the database
-                            if (!userData.email) {
+                            if (!userData || !userData.email) {
+                                // Check if they're an unverified user in temp_user_creation_data
+                                const tempUsers = await dbGetAll('SELECT * FROM temp_user_creation_data');
+                                let tempUser = null;
+                                
+                                for (const temp of tempUsers) {
+                                    const decoded = jwt.decode(temp.token);
+                                    if (decoded && decoded.email === user.email) {
+                                        // Verify password matches
+                                        const passwordMatches = await compare(user.password, decoded.hashedPassword);
+                                        if (passwordMatches) {
+                                            tempUser = { ...decoded, secret: temp.secret };
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (tempUser) {
+                                    logger.log('verbose', '[post /login] User exists but is unverified')
+                                    res.render('pages/login', {
+                                        title: 'Verify Email',
+                                        redirectURL: undefined,
+                                        googleOauthEnabled: settings.googleOauthEnabled,
+                                        route: 'verify',
+                                        email: user.email,
+                                        secret: tempUser.secret
+                                    });
+                                    return;
+                                }
+                                
                                 logger.log('verbose', '[post /login] User does not exist')
                                 res.render('pages/message', {
                                     message: 'No user found with that email.',
@@ -480,6 +509,53 @@ module.exports = {
                 })
             }
         })
+
+        // Resend verification email
+        app.post('/resend-verification', async (req, res) => {
+            try {
+                const { email, secret } = req.body;
+                logger.log('info', `[post /resend-verification] ip=(${req.ip}) email=(${email})`);
+                
+                // Check rate limit
+                if (limitStore.has(email) && (Date.now() - limitStore.get(email) < RATE_LIMIT)) {
+                    const waitTime = Math.ceil((limitStore.get(email) + RATE_LIMIT - Date.now()) / 1000);
+                    res.status(429).json({ 
+                        error: `Please wait ${waitTime} seconds before resending.`,
+                        waitTime 
+                    });
+                    return;
+                }
+                
+                // Verify the secret matches
+                const tempUser = await dbGet('SELECT * FROM temp_user_creation_data WHERE secret=?', [secret]);
+                if (!tempUser) {
+                    res.status(404).json({ error: 'Verification request not found or expired.' });
+                    return;
+                }
+
+                // 
+                const decoded = jwt.decode(tempUser.token);
+                if (decoded.email !== email) {
+                    res.status(400).json({ error: 'Invalid request.' });
+                    return;
+                }
+                
+                // Get the web address for Formbar to send in the email and create the HTML content for the email
+                const location = `${req.protocol}://${req.get('host')}`;
+                const html = `
+                <h1>Verify your email</h1>
+                <p>Click the link below to verify your email address with Formbar</p>
+                    <a href='${location}/login?code=${secret}'>Verify Email</a>
+                `;
+                
+                // Send the email
+                sendMail(email, 'Formbar Verification', html);
+                res.status(200).json({ message: 'Verification email sent successfully.' });
+            } catch (err) {
+                logger.log('error', err.stack);
+                res.status(500).json({ error: 'There was an error sending the email.' });
+            }
+        });
 
     }
 }

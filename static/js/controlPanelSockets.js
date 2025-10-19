@@ -232,7 +232,7 @@ socket.on('customPollUpdate', (
 			}
 		}
 
-		const votingData = {};
+		let studentsAllowedToVote = [];
 		for (const student of Object.values(students)) {
 			if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
@@ -242,14 +242,16 @@ socket.on('customPollUpdate', (
 			if (studentCheckbox) {
 				studentCheckbox.checked = switchState;
 				studentCheckbox.dispatchEvent(new Event('change'));
-				votingData[student.id] = switchState;
+				if (switchState) {
+					studentsAllowedToVote.push(student.id.toString());
+				}
 				studentElement.open = studentCheckbox.checked;
 			}
 		}
 
-        // Send the voting data to the server to update the students' voting rights
-        console.log('voting data:', votingData)
-		socket.emit('changeCanVote', votingData)
+        // Send the updated voting list to the server
+        console.log('students allowed to vote:', studentsAllowedToVote)
+		socket.emit('updatePoll', { studentsAllowedToVote })
 	}
 
 	if (selectPollDiv.children[0]) {
@@ -258,31 +260,9 @@ socket.on('customPollUpdate', (
 		selectPollDiv.appendChild(switchAll);
 	}
 
-	for (const student of Object.values(students)) {
-		// If the student is a teacher, skip them
-		if (student.permissions >= TEACHER_PERMISSIONS) continue
-
-		// Get the student's checkbox
-		// If they do not have one, skip them
-		const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`)
-		if (!studentCheckbox) continue;
-
-		// When a student's checkbox is clicked, add all students who have their checkboxes checked to a list
-		// Send this to the server to update student's voting rights
-		studentCheckbox.onclick = () => {
-			const canStudentVote = studentCheckbox.checked;
-
-			let studentsAllowedToVote = classroom.poll.studentsAllowedToVote;
-			if (studentCheckbox.checked && !studentsAllowedToVote.includes(student.id.toString())) {
-				studentsAllowedToVote.push(student.id);
-			}
-
-			socket.emit('changeCanVote', {
-				[student.id]: canStudentVote
-			});
-		}
-	}
-
+	// Checkbox onclick handlers are now attached directly in buildStudent() function
+	// This ensures handlers persist even when student elements are rebuilt on classUpdate
+	
 	createTagSelectButtons();
 	insertCustomPolls(publicCustomPolls, publicPollsDiv, 'There are no public custom polls.')
 	insertCustomPolls(classroomCustomPolls, classPollsDiv, 'This class has no custom polls.')

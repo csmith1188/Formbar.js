@@ -1,7 +1,6 @@
 const { classInformation } = require("../../modules/class/classroom")
 const { database, dbRun } = require("../../modules/database")
-const { logger } = require("../../modules/logger")
-const { clearPoll } = require("../../modules/polls");
+const { logger } = require("../../modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -56,17 +55,6 @@ module.exports = {
                 logger.info('[deletePoll] deleted');
             } catch (err) {
                 logger.error(err.stack);
-            }
-        });
-
-        // End the current poll. Does not take any arguments
-        socket.on('clearPoll', async () => {
-            try {
-                const email = socket.request.session.email;
-                const classId = classInformation.users[email].activeClass;
-                await clearPoll(classId, socket.request.session);
-            } catch (err) {
-                logger.log('error', err.stack);
             }
         });
     }

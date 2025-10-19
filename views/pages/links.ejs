@@ -37,6 +37,13 @@
         .linkButton img {
             margin-right: auto;
         }
+
+        #noLinksMessage {
+            font-size: 18px;
+            text-align: center;
+            white-space: nowrap;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 
@@ -61,7 +68,7 @@
         linksDiv.innerHTML = ''
 
         if (!Array.isArray(links) || links.length === 0) {
-            linksDiv.innerHTML = '<p style="font-size: 18px;">No links provided for this classroom.</p>'
+            linksDiv.innerHTML = '<p id="noLinksMessage">No links provided for this classroom.</p>'
             return
         }
 

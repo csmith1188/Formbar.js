@@ -1,14 +1,29 @@
 const { SocketUpdates } = require("../modules/socketUpdates");
 const { io } = require("../modules/webServer");
 const fs = require("fs");
-const userSocketUpdates = {}; // Stores the socket update events for users
+const userSocketUpdates = {}; // Stores the socket update events for users (keyed by email, then socket.id)
 
 // Initializes all the websocket routes
 function initSocketRoutes() {
     io.on('connection', async (socket) => {
         const socketUpdates = new SocketUpdates(socket);
         if (socket.request.session.email) {
-            userSocketUpdates[socket.request.session.email] = socketUpdates;
+            const email = socket.request.session.email;
+            // Store multiple socket updates per user, keyed by socket.id
+            if (!userSocketUpdates[email]) {
+                userSocketUpdates[email] = {};
+            }
+            userSocketUpdates[email][socket.id] = socketUpdates;
+
+            // Cleanup on disconnect
+            socket.on('disconnect', () => {
+                if (userSocketUpdates[email] && userSocketUpdates[email][socket.id]) {
+                    delete userSocketUpdates[email][socket.id];
+                    if (Object.keys(userSocketUpdates[email]).length === 0) {
+                        delete userSocketUpdates[email];
+                    }
+                }
+            });
         }
 
         // Import middleware

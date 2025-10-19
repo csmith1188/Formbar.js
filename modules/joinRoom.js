@@ -2,8 +2,7 @@ const { logger } = require("./logger");
 const { Classroom, classInformation } = require("./class/classroom");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
-const { advancedEmitToClass, setClassOfApiSockets } = require("./socketUpdates");
-const { userSocketUpdates } = require("../sockets/init");
+const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("./socketUpdates");
 
 async function joinRoomByCode(code, session) {
 	try {
@@ -105,10 +104,8 @@ async function joinRoomByCode(code, session) {
 			// Set the class of the API socket
 			setClassOfApiSockets(studentAPIKey, classroom.id);
 
-			// Only call classUpdate if userSocketUpdates exists for this email (guests don't have this)
-			if (userSocketUpdates[email]) {
-				userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true });
-			}
+			// Call classUpdate on all user's tabs
+			userUpdateSocket(email, 'classUpdate', classroom.id, { restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -152,10 +149,8 @@ async function joinRoomByCode(code, session) {
 
 			setClassOfApiSockets(studentAPIKey, classroom.id);
 
-			// Only call classUpdate if userSocketUpdates exists for this email (guests don't have this)
-			if (userSocketUpdates[email]) {
-				userSocketUpdates[email].classUpdate(classroom.id, { restrictToControlPanel: true })
-			}
+			// Call classUpdate on all user's tabs
+			userUpdateSocket(email, 'classUpdate', classroom.id, { restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true

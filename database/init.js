@@ -40,7 +40,8 @@ function initializeDatabase() {
                     resolve();
                 });
 
-                // Run the migrations after initialization
+                // Set flag to skip backup during init, then run the migrations
+                process.env.SKIP_BACKUP = 'true';
                 require('./migrate.js');
             });
         });
