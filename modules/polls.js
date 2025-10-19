@@ -144,11 +144,13 @@ async function createPoll(classId, pollData, userSession) {
  */
 async function updatePoll(classId, options, userSession) {
     try {
+        // If no classId or options provided, return false
         if (!classId || !options) {
             logger.log('info', '[updatePoll] Missing classId or options');
             return false;
         }
 
+        // If the classroom does not exist, return false
         const classroom = classInformation.classrooms[classId];
         if (!classroom) {
             logger.log('info', '[updatePoll] Classroom not found');
@@ -157,15 +159,9 @@ async function updatePoll(classId, options, userSession) {
 
         logger.log('info', `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
 
-        // Handle empty object {} as clear poll request
+        // If an empty object is sent, clear the current poll
         const optionsKeys = Object.keys(options);
         if (optionsKeys.length === 0) {
-            await clearPoll(classId, userSession);
-            return true;
-        }
-
-        // Handle special "clear" option to reset the entire poll (backwards compatibility)
-        if (options.clear === true) {
             await clearPoll(classId, userSession);
             return true;
         }
@@ -182,19 +178,13 @@ async function updatePoll(classId, options, userSession) {
                 savePollToHistory(classId);
             }
 
-            // Special handling: resume poll when status is set to true
-            if (option === 'status' && value === true && classroom.poll.status === false) {
-                // Only allow resuming if there's actually a poll to resume
-                if (!classroom.poll.prompt || Object.keys(classroom.poll.responses).length === 0) {
-                    logger.log('info', '[updatePoll] Cannot resume poll - no poll data exists');
-                    return false;
+            // Update the property if it exists in the poll object if the class is active
+            if (classroom.isActive) {
+                if (option in classroom.poll) {
+                    classroom.poll[option] = value;
                 }
-                logger.log('info', '[updatePoll] Resuming poll');
-            }
-
-            // Update the property if it exists in the poll object
-            if (option in classroom.poll) {
-                classroom.poll[option] = value;
+            } else {
+                return 'This class is not currently active.';
             }
         }
 

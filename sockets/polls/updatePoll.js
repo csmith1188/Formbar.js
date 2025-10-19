@@ -31,12 +31,12 @@ module.exports = {
                     return;
                 }
 
-                const success = await updatePoll(classId, options, socket.request.session);
-                if (success) {
+                const result = await updatePoll(classId, options, socket.request.session);
+                if (result === true) {
                     logger.log('verbose', `[updatePoll socket] Poll updated successfully`);
                 } else {
                     logger.log('info', `[updatePoll socket] Poll update failed`);
-                    socket.emit('message', 'Failed to update poll');
+                    socket.emit('message', 'Failed to update poll: ' + (typeof result === 'string' ? result : 'Unknown error'));
                 }
             } catch (err) {
                 logger.log('error', err.stack);
