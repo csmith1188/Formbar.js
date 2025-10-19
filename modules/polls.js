@@ -305,7 +305,7 @@ async function clearPoll(classId, userSession, updateClass = true){
             }
         }
 
-        if (updateClass) {
+        if (updateClass && userSession) {
             userUpdateSocket(userSession.email, 'classUpdate', classId, { global: true });
         }
     } catch (err) {
