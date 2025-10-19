@@ -110,25 +110,6 @@ async function createPoll(classId, pollData, userSession) {
 }
 
 /**
- * Ends the current poll in the specified class, saves poll data to history, and updates the class state.
- * @param {number} classId - The ID of the class.
- * @param {Object} userSession - The user session object.
- */
-// async function endPoll(classId, userSession) {
-//     try {
-//         logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
-//         classInformation.classrooms[classId].poll.status = false
-//
-//         const socketUpdates = userSocketUpdates[userSession.email];
-//         socketUpdates.classUpdate();
-//
-//         logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-//     } catch (err) {
-//         logger.log('error', err.stack);
-//     }
-// }
-
-/**
  * Updates poll properties dynamically. Can update individual properties or clear the entire poll.
  * @param {number} classId - The ID of the class.
  * @param {Object} options - An object containing poll properties to update.
