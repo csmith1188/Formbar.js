@@ -1,233 +1,218 @@
 <%- include('../partials/header_content') %>
-<%- include('../partials/sockets') %>
+    <%- include('../partials/sockets') %>
 
-<body id="colorContent" role="document" tabindex="0" class="newClassPage">
-    <%- include('../partials/formbar_header') %>
+        <body id="colorContent" role="document" tabindex="0" class="newClassPage">
+            <%- include('../partials/formbar_header') %>
 
-    <!-- <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
+                <!-- <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
                     <button id="classesMenu" class="quickButton tab pressed revampButton"
                         data-tab-group="classTabs">Classes</button>
                     <button id="createClassMenu" class="quickButton tab revampButton" data-tab-group="classTabs">Create
                         a class</button>
                 </header> -->
 
-    <div id="content" class="contentBox" style="margin: auto">
-        <div id="classesMenu" class="tabContent default" data-tab-group="classTabs">
-            <label for="joinedKey" class="headerText">Enter a class</label>
-            <form class="joinClassForm">
-                <select id="joinedKey" name="id" required class="revampButton">
-                    <% if (joinedClasses.length> 0) { %>
-                    <option value="" disabled selected>Classes</option>
-                    <% for(let joinedClass of joinedClasses) { %>
-                    <option value="<%- joinedClass.id %>" class="joinClassOption"><%- joinedClass.name %></option>
-                    <% } %>
-                </select>
+                <div id="content" class="contentBox" style="margin: auto;">
+                    <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
+                        <label for="joinedKey" class="headerText">Enter a class</label>
+                        <form class="joinClassForm">
+                            <select id="joinedKey" name="id" required class="revampButton">
+                                <% if (joinedClasses.length> 0) { %>
+                                    <option value="" disabled selected>Classes</option>
+                                    <% for(let joinedClass of joinedClasses) { %>
+                                        <option value="<%- joinedClass.id %>" class="joinClassOption">
+                                            <%- joinedClass.name %>
+                                        </option>
+                                        <% } %>
+                            </select>
 
-                <input type="submit" id="submitJoinedButton" class="button unselectable revampButton quickButton" value="Go" />
-            </form>
-            <% } %>
-            <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
-            <form action="createClass" method="post" id="selectClassForm">
-                <div class="buttonsHolder">
-                    <input type="text" name="submittionType" value="select" hidden />
-                    <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                            <input type="submit" id="submitJoinedButton"
+                                class="button unselectable revampButton quickButton" value="Go">
+                        </form>
+                        <% } %>
+                            <% if (currentUser.permissions>= TEACHER_PERMISSIONS) { %>
+                                <form action="createClass" method="post" id="selectClassForm">
+                                    <div class="buttonsHolder">
+                                        <input type="text" name="submittionType" value="select" hidden>
+                                        <!-- <input type="submit" id="submitButton" class="quickButton revampButton pressed"
                                             value="Go" onsubmit="return false;"> -->
-                    <button
-                        id="deleteButton"
-                        class="quickButton revampButton warningButton unselectable"
-                        type="button"
-                        onclick="deleteClass()"
-                        style="margin-top: 40px"
-                        disabled
-                    >
-                        Delete
-                    </button>
+                                        <button id="deleteButton" class="quickButton revampButton warningButton unselectable" type="button"
+                                            onclick="deleteClass()" style="margin-top: 40px" disabled>Delete</button>
+                                    </div>
+
+
+                                </form>
+
+                                <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
+                                <form action="createClass" method="post" id="createClass">
+                                    <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a
+                                        class</label>
+
+                                    <div class="buttonsHolder createClassButtons" id="createClassButtons" style="display: flex">
+                                        <input type="text" id="classNameBox" name="name" placeholder="Class Name"
+                                            value="" autocomplete="off" class="revampButton revampWithText" required>
+                                        <input type="text" name="submittionType" value="create" hidden>
+                                        <input type="submit" id="submitButton" class="quickButton revampButton pressed"
+                                            value="Create" onsubmit="return false;">
+                                    </div>
+                                </form>
+                                <!-- </div> -->
+                                <% } %>
+
+                    </div>
+
+                    <label for="selectClass" class="headerText">Join a class with code</label>
+
+                    <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px; justify-content: space-between;">
+                        <input type="text" required name="key" id="joinKey" placeholder="Class code"
+                            class="revampButton revampWithText" style="flex-grow: 2;">
+                        <input type="submit" id="submitJoinButton" class="button unselectable revampButton quickButton"
+                            value="Submit" onsubmit="return false;" style="flex-grow: 1;">
+                    </form>
                 </div>
-            </form>
+        </body>
+        <script>
+            let startClassForm = document.getElementById("selectClassForm")
+            let manageClassSelect = document.getElementById("joinedKey")
 
-            <!-- <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'> -->
-            <form action="createClass" method="post" id="createClass">
-                <label for="emailBox" class="headerText h2" style="margin-top: 40px">Create a class</label>
+            function deleteClass() {
+                let classId = manageClassSelect.value
+                let className = manageClassSelect.options[manageClassSelect.selectedIndex].text
 
-                <div class="buttonsHolder createClassButtons" id="createClassButtons" style="display: flex">
-                    <input
-                        type="text"
-                        id="classNameBox"
-                        name="name"
-                        placeholder="Class Name"
-                        value=""
-                        autocomplete="off"
-                        class="revampButton revampWithText"
-                        required
-                    />
-                    <input type="text" name="submittionType" value="create" hidden />
-                    <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Create" onsubmit="return false;" />
-                </div>
-            </form>
-            <!-- </div> -->
-            <% } %>
-        </div>
+                let confirmation = confirm(`are you sure you want to delete the class ${className}`)
+                if (!confirmation) return
 
-        <label for="selectClass" class="headerText">Join a class with code</label>
+                manageClassSelect.options[manageClassSelect.selectedIndex].remove();
+                socket.emit('deleteClass', classId)
 
-        <form action="selectClass" method="post" class="joinClassForm" style="margin-top: 20px; justify-content: space-between">
-            <input type="text" required name="key" id="joinKey" placeholder="Class code" class="revampButton revampWithText" style="flex-grow: 2" />
-            <input
-                type="submit"
-                id="submitJoinButton"
-                class="button unselectable revampButton quickButton"
-                value="Submit"
-                onsubmit="return false;"
-                style="flex-grow: 1"
-            />
-        </form>
-    </div>
-</body>
-<script>
-    let startClassForm = document.getElementById("selectClassForm");
-    let manageClassSelect = document.getElementById("joinedKey");
-
-    function deleteClass() {
-        let classId = manageClassSelect.value;
-        let className = manageClassSelect.options[manageClassSelect.selectedIndex].text;
-
-        let confirmation = confirm(`are you sure you want to delete the class ${className}`);
-        if (!confirmation) return;
-
-        manageClassSelect.options[manageClassSelect.selectedIndex].remove();
-        socket.emit("deleteClass", classId);
-
-        setTimeout(() => window.location.reload(), 200);
-    }
-
-    if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
-        socket.emit("getOwnedClasses", currentUser.email);
-        socket.on("getOwnedClasses", (ownedClasses) => {
-            if (ownedClasses.length > 0) {
-                startClassForm.style.opacity = "1";
-                startClassForm.style.pointerEvents = "all";
-            } else {
-                startClassForm.style.opacity = "0.5";
-                startClassForm.style.pointerEvents = "none";
-                return;
+                setTimeout(() => window.location.reload(), 200);
             }
 
-            for (let classroom of ownedClasses) {
-                let option = document.createElement("option");
-                option.value = classroom.id;
-                option.innerText = classroom.name;
-                option.classList.add("joinOwnedClassOption");
-                manageClassSelect.appendChild(option.cloneNode(true));
+            if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
+                socket.emit('getOwnedClasses', currentUser.email)
+                socket.on('getOwnedClasses', (ownedClasses) => {
+                    if (ownedClasses.length > 0) {
+                        startClassForm.style.opacity = "1"
+                        startClassForm.style.pointerEvents = "all";
+                    } else {
+                        startClassForm.style.opacity = "0.5";
+                        startClassForm.style.pointerEvents = "none";
+                        return
+                    }
+
+                    for (let classroom of ownedClasses) {
+                        let option = document.createElement('option')
+                        option.value = classroom.id
+                        option.innerText = classroom.name
+                        option.classList.add("joinOwnedClassOption")
+                        manageClassSelect.appendChild(option.cloneNode(true))
+                    }
+                    updateDeleteButtonState()
+                })
             }
-            updateDeleteButtonState();
-        });
-    }
 
-    function updateDeleteButtonState() {
-        const btn = document.getElementById("deleteButton");
-        if (!manageClassSelect || !btn) return;
-        const idx = manageClassSelect.selectedIndex;
-        if (idx < 0) {
-            btn.disabled = true;
-            btn.classList.add("unselectable");
-            return;
-        }
-        const opt = manageClassSelect.options[idx];
-        if (opt && opt.classList.contains("joinOwnedClassOption")) {
-            btn.disabled = false;
-            btn.classList.remove("unselectable");
-        } else {
-            btn.disabled = true;
-            btn.classList.add("unselectable");
-        }
-    }
-
-    if (manageClassSelect) {
-        manageClassSelect.addEventListener("change", updateDeleteButtonState);
-    }
-    updateDeleteButtonState();
-
-    function enterClass() {
-        if (!manageClassSelect) return false;
-        const selectedIndex = manageClassSelect.selectedIndex;
-        if (selectedIndex < 0) {
-            return false;
-        }
-
-        const selectedOption = manageClassSelect.options[selectedIndex];
-        if (!selectedOption) {
-            return false;
-        }
-
-        if (selectedOption.classList.contains("joinClassOption")) {
-            try {
-                const classId = manageClassSelect.value;
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = "selectClass";
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = "id";
-                input.value = classId;
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            } catch (e) {
-                console.error(e);
+            function updateDeleteButtonState() {
+                const btn = document.getElementById('deleteButton')
+                if (!manageClassSelect || !btn) return
+                const idx = manageClassSelect.selectedIndex
+                if (idx < 0) { btn.disabled = true; btn.classList.add('unselectable'); return }
+                const opt = manageClassSelect.options[idx]
+                if (opt && opt.classList.contains('joinOwnedClassOption')) {
+                    btn.disabled = false
+                    btn.classList.remove('unselectable')
+                } else {
+                    btn.disabled = true
+                    btn.classList.add('unselectable')
+                }
             }
-            return false;
-        } else if (selectedOption.classList.contains("joinOwnedClassOption")) {
-            try {
-                const classId = manageClassSelect.value;
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = "createClass";
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = "id";
-                input.value = classId;
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            } catch (e) {
-                console.error(e);
+
+            if (manageClassSelect) {
+                manageClassSelect.addEventListener('change', updateDeleteButtonState)
             }
-            return false;
-        } else {
-            return false;
-        }
-    }
+            updateDeleteButtonState()
 
-    if (document.getElementById("joinedKey")) {
-        document.getElementById("joinedKey").addEventListener("input", (event) => {
-            if (event.target.value) {
-                document.getElementById("submitJoinedButton").classList.remove("unselectable");
-            } else {
-                document.getElementById("submitJoinedButton").classList.add("unselectable");
+            function enterClass() {
+                if (!manageClassSelect) return false;
+                const selectedIndex = manageClassSelect.selectedIndex;
+                if (selectedIndex < 0) {
+                    return false;
+                }
+
+                const selectedOption = manageClassSelect.options[selectedIndex];
+                if (!selectedOption) {
+                    return false;
+                }
+
+                if (selectedOption.classList.contains("joinClassOption")) {
+                    try {
+                        const classId = manageClassSelect.value;
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'selectClass';
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'id';
+                        input.value = classId;
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    return false;
+                } else if (selectedOption.classList.contains("joinOwnedClassOption")) {
+                    try {
+                        const classId = manageClassSelect.value;
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'createClass';
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'id';
+                        input.value = classId;
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    return false;
+                } else {
+                    return false
+                }
             }
-        });
-    }
 
-    // Attach a submit handler to the first join form so pressing the Go button triggers enterClass()
-    const joinedForm = document.querySelector(".joinClassForm");
-    if (joinedForm) {
-        joinedForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            enterClass();
-        });
-    }
+            if (document.getElementById("joinedKey")) {
+                document.getElementById("joinedKey").addEventListener('input', (event) => {
+                    if (event.target.value) {
+                        document.getElementById("submitJoinedButton").classList.remove("unselectable")
+                    } else {
+                        document.getElementById("submitJoinedButton").classList.add("unselectable")
+                    }
+                })
+            }
 
-    document.getElementById("joinKey").addEventListener("input", (event) => {
-        if (event.target.value) {
-            document.getElementById("submitJoinButton").classList.remove("unselectable");
-        } else {
-            document.getElementById("submitJoinButton").classList.add("unselectable");
-        }
-    });
+            // Attach a submit handler to the first join form so pressing the Go button triggers enterClass()
+            const joinedForm = document.querySelector('.joinClassForm');
+            if (joinedForm) {
+                joinedForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    enterClass();
+                });
+            }
 
-    socket.on("joinClass", (success) => {
-        if (success === true) {
-            window.location.href = "/student";
-        }
-    });
-</script>
+            document.getElementById("joinKey").addEventListener('input', (event) => {
+                if (event.target.value) {
+                    document.getElementById("submitJoinButton").classList.remove("unselectable")
+                } else {
+                    document.getElementById("submitJoinButton").classList.add("unselectable")
+                }
+            })
+
+            socket.on('joinClass', (success) => {
+                if (success === true) {
+                    window.location.href = '/student';
+                }
+            });
+
+
+        </script>

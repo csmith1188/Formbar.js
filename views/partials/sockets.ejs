@@ -1,32 +1,32 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script defer>
-    let socket = io();
+	let socket = io()
 
-    function endBreak() {
-        socket.emit("endBreak");
-        document.getElementById("breakDialog").close();
-        document.getElementById("backgroundDarken").classList.remove("open");
-    }
+	function endBreak() {
+		socket.emit('endBreak')
+		document.getElementById('breakDialog').close()
+		document.getElementById("backgroundDarken").classList.remove('open')
+	}
 
-    socket.on("break", () => {
-        document.getElementById("breakDialog").showModal();
-        document.getElementById("backgroundDarken").classList.add("open");
-    });
+	socket.on('break', () => {
+		document.getElementById('breakDialog').showModal()
+		document.getElementById("backgroundDarken").classList.add('open')
+	})
 
-    socket.on("message", (message) => {
-        alert(message);
-    });
+	socket.on('message', (message) => {
+		alert(message)
+	})
 
-    socket.on("reload", (redirectURL) => {
+	socket.on('reload', (redirectURL) => {
         if (window.reloadRedirect) {
             redirectURL = window.reloadRedirect;
-            window.reloadRedirect = null;
+			window.reloadRedirect = null;
+			location.href = redirectURL;
+		} else if (redirectURL) {
             location.href = redirectURL;
-        } else if (redirectURL) {
-            location.href = redirectURL;
-        } else {
+		} else {
             location.reload();
         }
-    });
+	})
 </script>

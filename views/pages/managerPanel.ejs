@@ -1,342 +1,330 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/sockets') %>
-<!DOCTYPE html>
-<html lang="en">
+    <!DOCTYPE html>
+    <html lang="en">
+
     <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="/js/tabs.js" defer></script>
     </head>
 
     <body id="colorContent" role="document" tabindex="0">
         <%- include('../partials/formbar_header') %>
-        <header id="quickMenu" class="fullWidth">
-            <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
-            <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
-            <button id="bannedUsersMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">Banned Users</button>
-        </header>
+            <header id="quickMenu" class="fullWidth">
+                <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
+                <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
+                <button id="bannedUsersMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">Banned Users</button>
+            </header>
 
-        <div id="usersMenu" class="tabContent default usersMenuBox" data-tab-group="mainTabs">
-            <!-- <div id="userFilterBoxes" class="options">
+            <div id="usersMenu" class="tabContent default usersMenuBox" data-tab-group="mainTabs">
+                <!-- <div id="userFilterBoxes" class="options">
                         <h2 class="headerText">Filter</h2>
                     </div> -->
-            <div id="userSortBoxes" class="options sortManager" style="display: flex; align-items: center; gap: 10px; width: 100%">
-                <h2 class="headerText" style="margin: 0; white-space: nowrap">Sort by:</h2>
-                <button type="button" id="name" class="sort revampButton">Name</button>
-                <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
-                <input
-                    type="text"
-                    id="userSearch"
-                    class="revampButton revampWithText"
-                    placeholder="Search by name"
-                    style="flex: 1 1 auto; min-width: 0"
-                />
-            </div>
-            <div id="users" class="managePanelUsers"></div>
-        </div>
-        <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
-            <div class="revampDiv ipMenuDiv">
-                <div class="revampDiv spaceBetween ipTabsHead" style="margin-bottom: 20px">
-                    <button id="whitelist" class="quickButton tab revampButton" style="margin-right: 10px" data-tab-group="ipTabs">Whitelist</button>
-                    <button id="blacklist" class="quickButton tab pressed revampButton" data-tab-group="ipTabs">Blacklist</button>
+            <div id="userSortBoxes" class="options sortManager" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                    <h2 class="headerText" style="margin: 0; white-space: nowrap;">Sort by:</h2>
+                    <button type="button" id="name" class="sort revampButton">Name</button>
+                    <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
+                    <input type="text" id="userSearch" class="revampButton revampWithText" placeholder="Search by name" style="flex: 1 1 auto; min-width: 0;">
                 </div>
-                <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
-                <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
+                <div id="users" class="managePanelUsers"></div>
             </div>
-            <div id="whitelistedMembers" class="revampDiv">
-                <div id="whitelistHeader">
-                    <h1 id="whitelistedMembersHeader">Blacklist</h1>
-                    <button id="toggleIpListButton" class="quickButton ipListToggle revampButton">Enable</button>
+            <div id="ipMenu" class="tabContent" data-tab-group="mainTabs">
+                <div class="revampDiv ipMenuDiv">
+                    <div class="revampDiv spaceBetween ipTabsHead" style="margin-bottom: 20px;">
+                        <button id="whitelist" class="quickButton tab revampButton" style="margin-right: 10px;" data-tab-group="ipTabs">Whitelist</button>
+                        <button id="blacklist" class="quickButton tab pressed revampButton" data-tab-group="ipTabs">Blacklist</button>
+                    </div>
+                    <div id="whitelist" class="tabContent" data-tab-group="ipTabs"></div>
+                    <div id="blacklist" class="tabContent default" data-tab-group="ipTabs"></div>
                 </div>
-                <div id="whitelistedMemberList">
-                    <div class="whitelistIp">
-                        <!-- <p>NotImplemented</p>
+                <div id="whitelistedMembers" class="revampDiv">
+                    <div id="whitelistHeader">
+                        <h1 id="whitelistedMembersHeader">Blacklist</h1>
+                        <button id="toggleIpListButton" class="quickButton ipListToggle revampButton">Enable</button>
+                    </div>
+                    <div id="whitelistedMemberList">
+                        <div class="whitelistIp">
+                            <!-- <p>NotImplemented</p>
                             <button class="revampButton warningButton" onclick="alert('Not yet implemented, will need server-side work for this.')">Delete</button> -->
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div id="bannedUsersMenu" class="tabContent" data-tab-group="mainTabs">
-            <h1 class="mobileMenuHeader">Banned Users</h1>
-            <div class="revampDiv">
-                <input id="bannedSearch" type="text" class="revampButton revampWithText" placeholder="Search by email or name" />
-                <table id="bannedUsersTable">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Display Name</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="bannedUsersBody"></tbody>
-                </table>
+            <div id="bannedUsersMenu" class="tabContent" data-tab-group="mainTabs">
+                <h1 class="mobileMenuHeader">Banned Users</h1>
+                <div class="revampDiv">
+                    <input id="bannedSearch" type="text" class="revampButton revampWithText" placeholder="Search by email or name">
+                    <table id="bannedUsersTable">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Display Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bannedUsersBody"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px">
-            <button type="button" class="revampButton" style="margin-right: 10px" onclick="location.href = '/logs'">View Logs</button>
-            <button type="button" class="revampButton" onclick="downloadDatabase()">Download Database</button>
-        </div>
-        <%- include('../partials/body_content') %>
+            <div style="display: flex;justify-content: center;align-items: center;margin-top: 20px;">
+                <button type="button" class="revampButton" style="margin-right: 10px;" onclick="location.href = '/logs'">View Logs</button>
+                <button type="button" class="revampButton" onclick="downloadDatabase()">Download Database</button>
+            </div>
+            <%- include('../partials/body_content') %>
     </body>
-</html>
-<script>
-    const whitelistHeaderH1 = document.querySelector("h1#whitelistedMembersHeader");
-    const ipListToggle = document.getElementById("toggleIpListButton");
-    const whitelistButton = document.querySelector("button#whitelist");
-    const blacklistButton = document.querySelector("button#blacklist");
-    const bannedUsersBody = document.getElementById("bannedUsersBody");
-    const bannedUsersSearch = document.getElementById("bannedSearch");
 
-    function onIpTabClick(event) {
-        const currentType = event.currentTarget.id; // 'whitelist' or 'blacklist'
-        whitelistHeaderH1.innerText = currentType.charAt(0).toUpperCase() + currentType.slice(1);
-        loadIps(currentType);
-    }
+    </html>
+    <script>
+        const whitelistHeaderH1 = document.querySelector('h1#whitelistedMembersHeader');
+        const ipListToggle = document.getElementById('toggleIpListButton')
+        const whitelistButton = document.querySelector('button#whitelist');
+        const blacklistButton = document.querySelector('button#blacklist');
+        const bannedUsersBody = document.getElementById('bannedUsersBody');
+        const bannedUsersSearch = document.getElementById('bannedSearch');
 
-    let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
-    let backgroundDarken = document.getElementById("backgroundDarken");
+        function onIpTabClick(event) {
+            const currentType = event.currentTarget.id; // 'whitelist' or 'blacklist'
+            whitelistHeaderH1.innerText = currentType.charAt(0).toUpperCase() + currentType.slice(1);
+            loadIps(currentType);
+        }
 
-    async function toggleActiveList() {
-        // Toggle the active state of the currently viewed list
-        const type = whitelistHeaderH1.innerHTML.toLowerCase();
-        await fetch(`/api/ip/${type}/toggle`, { method: "POST", headers: { "Content-Type": "application/json" } });
+        let managerPaneluserDialog = document.getElementById("managerPanel-userDialog");
+        let backgroundDarken = document.getElementById("backgroundDarken");
 
-        // Refresh both lists
-        await Promise.all([loadIps("whitelist"), loadIps("blacklist")]);
-    }
+        async function toggleActiveList() {
+            // Toggle the active state of the currently viewed list
+            const type = whitelistHeaderH1.innerHTML.toLowerCase();
+            await fetch(`/api/ip/${type}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
 
-    // Initialize header/button based on which tab is currently pressed
-    if (whitelistButton.classList.contains("pressed")) {
-        whitelistHeaderH1.innerText = "Whitelist";
-        loadIps("whitelist");
-    } else {
-        whitelistHeaderH1.innerText = "Blacklist";
-        loadIps("blacklist");
-    }
+            // Refresh both lists
+            await Promise.all([loadIps('whitelist'), loadIps('blacklist')]);
+        }
 
-    whitelistButton.addEventListener("click", onIpTabClick);
-    blacklistButton.addEventListener("click", onIpTabClick);
-    ipListToggle.addEventListener("click", toggleActiveList);
+        // Initialize header/button based on which tab is currently pressed
+        if (whitelistButton.classList.contains('pressed')) {
+            whitelistHeaderH1.innerText = 'Whitelist';
+            loadIps('whitelist');
+        } else {
+            whitelistHeaderH1.innerText = 'Blacklist';
+            loadIps('blacklist');
+        }
 
-    let users = {};
+        whitelistButton.addEventListener('click', onIpTabClick);
+        blacklistButton.addEventListener('click', onIpTabClick);
+        ipListToggle.addEventListener('click', toggleActiveList);
 
-    const FilterState = {};
+        let users = {}
 
-    const SortState = {
-        name: ["Name", "Name ▼", "Name ▲"],
-        permissions: ["Permissions", "Permissions ▼", "Permissions ▲"],
-    };
+        const FilterState = {
+        }
 
-    // 0 = off
-    // 1 = only
-    // 2 = except
-    let filter = {};
-    // 0 = off
-    // 1 = descending
-    // 2 = ascending
-    let sort = {
-        name: 0,
-        permissions: 1,
-    };
+        const SortState = {
+            name: [
+                'Name',
+                'Name ▼',
+                'Name ▲'
+            ],
+            permissions: [
+                'Permissions',
+                'Permissions ▼',
+                'Permissions ▲'
+            ]
+        }
 
-    let usersDiv = document.getElementById("users");
-    let ipHeaderDiv = document.getElementById("whitelistHeader");
-    let whitelistIpsDiv = document.querySelector(".tabContent#ipMenu .tabContent#whitelist");
-    let blacklistIpsDiv = document.querySelector(".tabContent#ipMenu .tabContent#blacklist");
+        // 0 = off
+        // 1 = only
+        // 2 = except
+        let filter = {
+        }
+        // 0 = off
+        // 1 = descending
+        // 2 = ascending
+        let sort = {
+            name: 0,
+            permissions: 1
+        }
 
-    function camelCaseToNormal(str) {
-        let result = str.replace(/([A-Z])/g, " $1");
-        result = result.charAt(0).toUpperCase() + result.slice(1);
-        return result;
-    }
+        let usersDiv = document.getElementById('users')
+        let ipHeaderDiv = document.getElementById('whitelistHeader');
+        let whitelistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#whitelist')
+        let blacklistIpsDiv = document.querySelector('.tabContent#ipMenu .tabContent#blacklist')
 
-    // makes user elements
-    function buildUser(userData) {
-        var newUser = document.createElement("div");
-        newUser.tabIndex = 0;
-        newUser.className = "user hiddenInfo";
-        newUser.setAttribute("onclick", "if(event.target == this) showUserInfo(this);");
-        newUser.setAttribute("onkeydown", 'if(event.key == " " || event.key == "Enter") showUserInfo(this)');
-        newUser.setAttribute("id", userData.email);
-        let userElement = document.createElement("p");
-        userElement.innerText += userData.displayName;
+        function camelCaseToNormal(str) {
+            let result = str.replace(/([A-Z])/g, " $1")
+            result = result.charAt(0).toUpperCase() + result.slice(1)
+            return result
+        }
 
-        newUser.appendChild(userElement);
-        if (userData.permissions < currentUser.permissions) {
-            newUser.classList.add("hasInfo");
-            let permissionSwitchLabel = document.createElement("label");
-            permissionSwitchLabel.setAttribute("for", "permSwitch");
-            permissionSwitchLabel.innerText = "Users Permissions: ";
-            newUser.appendChild(permissionSwitchLabel);
-            let permissionSwitch = document.createElement("select");
-            permissionSwitch.setAttribute("name", "permSwitch");
-            permissionSwitch.setAttribute("class", "permSwitch revampButton");
-            permissionSwitch.setAttribute("data-userid", userData.email);
-            permissionSwitch.addEventListener("click", (event) => {
-                event.stopPropagation();
-            });
-            permissionSwitch.onchange = async (event) => {
-                try {
-                    const email = event.target.dataset.userid;
-                    const perm = event.target.value;
-                    const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ perm }),
-                    });
-                    if (!res.ok) {
-                        throw new Error("Failed to update permissions");
-                    }
-                } catch (err) {
-                    alert(err.message || "There was an error updating permissions.");
-                }
-            };
-            let permissions = ["Guest", "User", "Mod", "Teacher"];
-            for (let i = 4; i > 0; i--) {
-                let option = document.createElement("option");
-                option.setAttribute("value", i);
-                if (userData.permissions == i) option.setAttribute("selected", true);
-                option.innerText = permissions[i - 1];
-                permissionSwitch.add(option);
-            }
-            newUser.appendChild(permissionSwitch);
-            newUser.append(" ");
-            if (!userData.verified) {
-                let verifyUserButton = document.createElement("button");
-                verifyUserButton.className = "quickButton acceptButton revampButton";
-                verifyUserButton.setAttribute("data-user", userData.id);
-                verifyUserButton.innerText = "Verify User";
-                verifyUserButton.onclick = async (event) => {
+        // makes user elements
+        function buildUser(userData) {
+            var newUser = document.createElement("div")
+            newUser.tabIndex = 0;
+            newUser.className = "user hiddenInfo";
+            newUser.setAttribute('onclick', 'if(event.target == this) showUserInfo(this);')
+            newUser.setAttribute('onkeydown', 'if(event.key == " " || event.key == "Enter") showUserInfo(this)')
+            newUser.setAttribute("id", userData.email);
+            let userElement = document.createElement("p")
+            userElement.innerText += userData.displayName
+            
+            newUser.appendChild(userElement)
+            if (userData.permissions < currentUser.permissions) {
+                newUser.classList.add('hasInfo')
+                let permissionSwitchLabel = document.createElement("label");
+                permissionSwitchLabel.setAttribute("for", "permSwitch")
+                permissionSwitchLabel.innerText = "Users Permissions: "
+                newUser.appendChild(permissionSwitchLabel)
+                let permissionSwitch = document.createElement("select")
+                permissionSwitch.setAttribute("name", "permSwitch")
+                permissionSwitch.setAttribute("class", "permSwitch revampButton")
+                permissionSwitch.setAttribute("data-userid", userData.email)
+                permissionSwitch.addEventListener('click', (event) => { event.stopPropagation() })
+                permissionSwitch.onchange = async (event) => {
                     try {
-                        const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/verify`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                        });
-                        if (!res.ok) throw new Error("Failed to verify user");
-                        verifyUserButton.remove();
-                    } catch (err) {
-                        alert(err.message || "There was an error verifying the user.");
-                    }
-                };
-                newUser.appendChild(verifyUserButton);
-            }
-            let banUserButton = document.createElement("button");
-            banUserButton.className = "banUser quickButton warningButton revampButton";
-            banUserButton.setAttribute("data-user", userData.id);
-            banUserButton.innerText = "Ban User";
-            banUserButton.onclick = async (event) => {
-                try {
-                    if (confirm(`Are you sure you want to ban ${userData.displayName}?`)) {
-                        const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/ban`);
+                        const email = event.target.dataset.userid;
+                        const perm = event.target.value;
+                        const res = await fetch(`/api/user/${encodeURIComponent(email)}/perm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ perm }) });
                         if (!res.ok) {
-                            throw new Error("Failed to ban user");
+                            throw new Error('Failed to update permissions');
                         }
-
-                        const bannedUserId = Object.keys(users).find((email) => users[email] && users[email].id === userData.id);
-                        if (bannedUserId) users[bannedUserId].permissions = 0;
-                        filterSortChange();
-                        renderBannedUsers();
+                    } catch (err) {
+                        alert(err.message || 'There was an error updating permissions.');
                     }
-                } catch (err) {
-                    alert(err.message || "There was an issue banning the user.");
                 }
-            };
-            newUser.appendChild(banUserButton);
-            let deleteUserButton = document.createElement("button");
-            deleteUserButton.className = "deleteUser quickButton revampButton warningButton";
-            deleteUserButton.setAttribute("data-userid", userData.id);
-            deleteUserButton.onclick = (event) => {
-                event.stopPropagation();
-                if (confirm("Are you sure you want to delete this user?")) {
-                    fetch(`/api/user/${encodeURIComponent(userData.id)}/delete`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            API: currentUser.API,
-                        },
-                    })
-                        .then(async (res) => {
+                let permissions = ["Guest", "User", "Mod", "Teacher"] 
+                for (let i = 4; i > 0; i--) {
+                    let option = document.createElement("option");
+                    option.setAttribute("value", i);
+                    if (userData.permissions == i) option.setAttribute("selected", true);
+                    option.innerText = permissions[i - 1];
+                    permissionSwitch.add(option);
+                }
+                newUser.appendChild(permissionSwitch)
+                newUser.append(" ")
+                if(!userData.verified) {
+                    let verifyUserButton = document.createElement("button")
+                    verifyUserButton.className = 'quickButton acceptButton revampButton'
+                    verifyUserButton.setAttribute("data-user", userData.id)
+                    verifyUserButton.innerText = "Verify User"
+                    verifyUserButton.onclick = async (event) => {
+                        try {
+                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                            if (!res.ok) throw new Error('Failed to verify user');
+                            verifyUserButton.remove()
+                        } catch (err) {
+                            alert(err.message || 'There was an error verifying the user.')
+                        }
+                    }
+                    newUser.appendChild(verifyUserButton)
+                }
+                let banUserButton = document.createElement("button")
+                banUserButton.className = 'banUser quickButton warningButton revampButton'
+                banUserButton.setAttribute("data-user", userData.id)
+                banUserButton.innerText = "Ban User"
+                banUserButton.onclick = async (event) => {
+                    try {
+                        if (confirm(`Are you sure you want to ban ${userData.displayName}?`)) {
+                            const res = await fetch(`/api/user/${encodeURIComponent(userData.id)}/ban`);
                             if (!res.ok) {
-                                let data;
-                                try {
-                                    data = await res.json();
-                                } catch (err) {
-                                    /* noop */
-                                }
-                                const message = (data && (data.error || data.message)) || "Failed to delete user.";
-                                throw new Error(message);
+                                throw new Error('Failed to ban user');
                             }
-                            return res.json();
-                        })
-                        .then(() => {
+
+                            const bannedUserId = Object.keys(users).find(email => users[email] && users[email].id === userData.id)
+                            if (bannedUserId) users[bannedUserId].permissions = 0;
+                            filterSortChange();
+                            renderBannedUsers();
+                        }
+                    } catch (err) {
+                        alert(err.message || 'There was an issue banning the user.');
+                    }
+                }
+                newUser.appendChild(banUserButton)
+                let deleteUserButton = document.createElement("button")
+                deleteUserButton.className = 'deleteUser quickButton revampButton warningButton'
+                deleteUserButton.setAttribute("data-userid", userData.id)
+                deleteUserButton.onclick = (event) => {
+                    event.stopPropagation()
+                    if (confirm('Are you sure you want to delete this user?')) {
+                        fetch(`/api/user/${encodeURIComponent(userData.id)}/delete`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'API': currentUser.API
+                            }
+                        }).then(async (res) => {
+                            if (!res.ok) {
+                                let data
+                                try { data = await res.json() } catch (err) { /* noop */ }
+                                const message = (data && (data.error || data.message)) || 'Failed to delete user.'
+                                throw new Error(message)
+                            }
+                            return res.json()
+                        }).then(() => {
                             // Find the user in the users object and delete them
-                            const key = Object.keys(users).find((key) => users[key] && users[key].id === userData.id);
+                            const key = Object.keys(users).find(key => users[key] && users[key].id === userData.id)
                             if (key) {
-                                delete users[key];
+                                delete users[key]
                             }
 
                             // Remove the user element from the page
-                            const userElement = document.getElementById(userData.email);
+                            const userElement = document.getElementById(userData.email)
                             if (userElement && userElement.parentElement) {
-                                userElement.parentElement.removeChild(userElement);
+                                userElement.parentElement.removeChild(userElement)
                             }
+                        }).catch((err) => {
+                            alert(err.message || 'There was an error deleting the user.')
                         })
-                        .catch((err) => {
-                            alert(err.message || "There was an error deleting the user.");
-                        });
+                    }
                 }
-            };
-            deleteUserButton.innerText = "Delete User";
-            newUser.appendChild(deleteUserButton);
-        }
-        return newUser;
-    }
-
-    // filters and sorts users
-    function filterSortChange() {
-        usersDiv.innerHTML = "";
-        let newUser = "";
-        let breakButton = document.getElementById("break");
-
-        //sort by name
-        if (sort.name == 1) {
-            users = Object.fromEntries(Object.entries(users).sort());
-        } else if (sort.name == 2) {
-            users = Object.fromEntries(Object.entries(users).sort().reverse());
+                deleteUserButton.innerText = "Delete User"
+                newUser.appendChild(deleteUserButton)
+            }
+            return newUser
         }
 
-        //sort by permissions
-        if (sort.permissions == 1) {
-            users = Object.fromEntries(Object.entries(users).sort((a, b) => b[1].permissions - a[1].permissions));
-        } else if (sort.permissions == 2) {
-            users = Object.fromEntries(Object.entries(users).sort((a, b) => a[1].permissions - b[1].permissions));
+        // filters and sorts users
+        function filterSortChange() {
+            usersDiv.innerHTML = ''
+            let newUser = ''
+            let breakButton = document.getElementById("break")
+
+            //sort by name
+            if (sort.name == 1) {
+                users = Object.fromEntries(Object.entries(users).sort())
+            } else if (sort.name == 2) {
+                users = Object.fromEntries(Object.entries(users).sort().reverse())
+            }
+
+            //sort by permissions
+            if (sort.permissions == 1) {
+                users = Object.fromEntries(Object.entries(users).sort((a, b) => b[1].permissions - a[1].permissions))
+            } else if (sort.permissions == 2) {
+                users = Object.fromEntries(Object.entries(users).sort((a, b) => a[1].permissions - b[1].permissions))
+            }
+
+            const searchValue = (document.getElementById('userSearch')?.value || '').toLowerCase();
+            for (const user of Object.values(users)) {
+                // Hide globally banned users from main list (permissions === 0)
+                if ((user.permissions ?? 1) === 0) continue;
+                if (searchValue && !(user.displayName || '').toLowerCase().includes(searchValue)) continue;
+                usersDiv.appendChild(buildUser(user))
+            }
         }
 
-        const searchValue = (document.getElementById("userSearch")?.value || "").toLowerCase();
-        for (const user of Object.values(users)) {
-            // Hide globally banned users from main list (permissions === 0)
-            if ((user.permissions ?? 1) === 0) continue;
-            if (searchValue && !(user.displayName || "").toLowerCase().includes(searchValue)) continue;
-            usersDiv.appendChild(buildUser(user));
-        }
-    }
-
-    // Makes an API request to download the database
-    function downloadDatabase() {
-        fetch("/downloadDatabase", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-            .then((response) => response.blob())
-            .then((blob) => {
+        // Makes an API request to download the database
+        function downloadDatabase() {
+            fetch('/downloadDatabase', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.blob()).then(blob => {
                 // Create a link with the blob to download the database
-                const link = document.createElement("a");
+                const link = document.createElement('a');
                 const url = window.URL.createObjectURL(blob);
                 link.href = url;
-                link.download = "database.db";
+                link.download = 'database.db';
 
                 // Append the link and click it to activate the download
                 document.body.appendChild(link);
@@ -345,208 +333,200 @@
                 // Remove the download link
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(link);
-            })
-            .catch((error) => {
-                console.error("Error downloading the file:", error);
+            }).catch(error => {
+                console.error('Error downloading the file:', error);
             });
-    }
+        }
 
-    // sets filters
-    for (let filterElement of document.getElementsByClassName("filter")) {
-        filterElement.onclick = () => {
-            filter[filterElement.id] += 1;
-            if (filter[filterElement.id] > 2) {
-                filter[filterElement.id] = 0;
+        // sets filters
+        for (let filterElement of document.getElementsByClassName('filter')) {
+            filterElement.onclick = () => {
+                filter[filterElement.id] += 1
+                if (filter[filterElement.id] > 2) {
+                    filter[filterElement.id] = 0
+                }
+                if (filter[filterElement.id] == 0) filterElement.classList.remove('pressed')
+                else filterElement.classList.add('pressed')
+                filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]]
+                filterSortChange()
             }
-            if (filter[filterElement.id] == 0) filterElement.classList.remove("pressed");
-            else filterElement.classList.add("pressed");
-            filterElement.innerText = FilterState[filterElement.id][filter[filterElement.id]];
-            filterSortChange();
-        };
-    }
+        }
 
-    // sets sorts
-    for (let sortElement of document.getElementsByClassName("sort")) {
-        sortElement.onclick = () => {
-            for (let sortType of Object.keys(sort)) {
-                if (sortType != sortElement.id) {
-                    sort[sortType] = 0;
-                    let otherSortElements = document.querySelector(".sort#" + sortType);
-                    if (otherSortElements) {
-                        otherSortElements.classList.remove("pressed");
-                        otherSortElements.innerText = SortState[sortType][sort[sortType]];
+        // sets sorts
+        for (let sortElement of document.getElementsByClassName('sort')) {
+            sortElement.onclick = () => {
+                for (let sortType of Object.keys(sort)) {
+                    if (sortType != sortElement.id) {
+                        sort[sortType] = 0
+                        let otherSortElements = document.querySelector('.sort#' + sortType)
+                        if (otherSortElements) {
+                            otherSortElements.classList.remove('pressed')
+                            otherSortElements.innerText = SortState[sortType][sort[sortType]]
+                        }
                     }
                 }
-            }
-            sort[sortElement.id] += 1;
-            if (sortElement.id == "helpTime" && sort[sortElement.id] > 1) {
-                sort[sortElement.id] = 0;
-            } else if (sort[sortElement.id] > 2) {
-                sort[sortElement.id] = 0;
-            }
-            if (sort[sortElement.id] == 0) sortElement.classList.remove("pressed");
-            else sortElement.classList.add("pressed");
-            sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]];
-            filterSortChange();
-        };
-    }
-
-    const managerData = fetch("/api/manager", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            API: currentUser.API,
-        },
-    }).then(async (rawData) => {
-        const managerData = await rawData.json();
-        users = managerData.users;
-
-        filterSortChange();
-        renderBannedUsers();
-    });
-
-    socket.on("managerUpdate", (tempUsers, tempClassrooms) => {
-        users = tempUsers;
-        filterSortChange();
-        renderBannedUsers();
-    });
-
-    document.getElementById("userSearch")?.addEventListener("input", filterSortChange);
-
-    function fetchBannedUsers() {
-        return Object.values(users || {}).filter((user) => (user.permissions ?? 1) === 0);
-    }
-
-    async function renderBannedUsers() {
-        const bannedRows = await fetchBannedUsers();
-        const query = (bannedUsersSearch?.value || "").toLowerCase();
-        bannedUsersBody.innerHTML = "";
-
-        // If there are no banned users, indicate that to the manager
-        if (!bannedRows || bannedRows.length === 0) {
-            const emptyRow = document.createElement("tr");
-            const emptyCell = document.createElement("td");
-            emptyCell.colSpan = 3;
-            emptyCell.textContent = "No banned users.";
-            emptyRow.appendChild(emptyCell);
-            bannedUsersBody.appendChild(emptyRow);
-            return;
-        }
-
-        for (const user of bannedRows) {
-            if (query && !(user.email?.toLowerCase().includes(query) || (user.displayName || "").toLowerCase().includes(query))) continue;
-            const row = document.createElement("tr");
-            const tdEmail = document.createElement("td");
-            tdEmail.textContent = user.email;
-
-            const tdName = document.createElement("td");
-            tdName.textContent = user.displayName || "";
-
-            const actions = document.createElement("td");
-            actions.className = "actionsCell";
-            const unbanButton = document.createElement("button");
-            unbanButton.className = "revampButton acceptButton";
-            unbanButton.textContent = "Unban";
-            unbanButton.onclick = async () => {
-                await fetch(`/api/user/${encodeURIComponent(user.id)}/unban`);
-                // Refresh manager data and table
-                const raw = await fetch("/api/manager");
-                const data = await raw.json();
-                users = data.users;
-                renderBannedUsers();
-            };
-
-            actions.appendChild(unbanButton);
-            row.appendChild(tdEmail);
-            row.appendChild(tdName);
-            row.appendChild(actions);
-            bannedUsersBody.appendChild(row);
-        }
-    }
-
-    bannedUsersSearch?.addEventListener("input", renderBannedUsers);
-    renderBannedUsers();
-
-    async function loadIps(type) {
-        const res = await fetch(`/api/ip/${type}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const active = data.active;
-        const ips = data.ips || [];
-
-        // Always reflect only the current tab's state
-        const currentTab = whitelistHeaderH1.innerText.toLowerCase();
-        if (type === currentTab) {
-            ipListToggle.innerText = active ? "Disable" : "Enable";
-            ipListToggle.classList.toggle("pressed", !!active);
-        }
-
-        let ipListDiv;
-        if (type == "whitelist") ipListDiv = whitelistIpsDiv;
-        else if (type == "blacklist") ipListDiv = blacklistIpsDiv;
-
-        ipListDiv.innerHTML = "";
-        for (let ip of ips) {
-            let ipDiv = document.createElement("div");
-            ipDiv.id = ip.id;
-            ipDiv.className = "ipDiv";
-            let ipName = document.createElement("input");
-            ipName.type = "text";
-            ipName.className = "revampButton revampWithText";
-            ipName.value = ip.ip;
-            ipName.placeholder = "IP Address";
-            ipName.onchange = async (event) => {
-                if (!event.target.checkValidity()) {
-                    event.target.reportValidity();
-                    return;
+                sort[sortElement.id] += 1
+                if (sortElement.id == 'helpTime' && sort[sortElement.id] > 1) {
+                    sort[sortElement.id] = 0
                 }
-                await fetch(`/api/ip/${type}/${ipDiv.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ip: event.target.value }),
-                });
-                loadIps(type);
-            };
-            ipDiv.appendChild(ipName);
-            let removeIp = document.createElement("button");
-            removeIp.className = "quickButton revampButton warningButton";
-            removeIp.innerText = "Remove IP";
-            removeIp.onclick = async (event) => {
-                await fetch(`/api/ip/${type}/${ipDiv.id}`, { method: "DELETE" });
-                loadIps(type);
-            };
-            ipDiv.appendChild(removeIp);
-            ipListDiv.appendChild(ipDiv);
+                else if (sort[sortElement.id] > 2) {
+                    sort[sortElement.id] = 0
+                }
+                if (sort[sortElement.id] == 0) sortElement.classList.remove('pressed')
+                else sortElement.classList.add('pressed')
+                sortElement.innerText = SortState[sortElement.id][sort[sortElement.id]]
+                filterSortChange()
+            }
         }
 
-        let addIpForm = document.createElement("div");
-        addIpForm.id = "addIpForm";
-        let newIp = document.createElement("input");
-        newIp.id = "newIp";
-        newIp.className = "revampButton revampWithText";
-        newIp.type = "text";
-        newIp.placeholder = "IP Address";
-        newIp.onchange = (event) => {
-            if (!event.target.checkValidity()) {
-                event.target.reportValidity();
+        const managerData = fetch('/api/manager', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'API': currentUser.API
             }
-        };
-        addIpForm.append(newIp);
-        let submitIp = document.createElement("button");
-        submitIp.className = "quickButton revampButton";
-        submitIp.innerText = "Add IP";
-        submitIp.onclick = async (event) => {
-            let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`);
-            await fetch(`/api/ip/${event.target.parentElement.parentElement.id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ip: newIp.value }),
-            });
-            loadIps(event.target.parentElement.parentElement.id);
-        };
-        addIpForm.append(submitIp);
-        ipListDiv.append(addIpForm);
-    }
+        }).then(async rawData => {
+            const managerData = await rawData.json();
+            users = managerData.users;
 
-    // Initial load handled above
-</script>
+            filterSortChange()
+            renderBannedUsers();
+        })
+
+        socket.on('managerUpdate', (tempUsers, tempClassrooms) => {
+            users = tempUsers
+            filterSortChange()
+            renderBannedUsers();
+        })
+
+        document.getElementById('userSearch')?.addEventListener('input', filterSortChange);
+
+        function fetchBannedUsers() {
+            return Object.values(users || {}).filter(user => (user.permissions ?? 1) === 0);
+        }
+
+        async function renderBannedUsers() {
+            const bannedRows = await fetchBannedUsers();
+            const query = (bannedUsersSearch?.value || '').toLowerCase();
+            bannedUsersBody.innerHTML = '';
+            
+            // If there are no banned users, indicate that to the manager
+            if (!bannedRows || bannedRows.length === 0) {
+                const emptyRow = document.createElement('tr');
+                const emptyCell = document.createElement('td');
+                emptyCell.colSpan = 3;
+                emptyCell.textContent = 'No banned users.';
+                emptyRow.appendChild(emptyCell);
+                bannedUsersBody.appendChild(emptyRow);
+                return;
+            }
+
+            for (const user of bannedRows) {
+                if (query && !(user.email?.toLowerCase().includes(query) || (user.displayName || '').toLowerCase().includes(query))) continue;
+                const row = document.createElement('tr');
+                const tdEmail = document.createElement('td');
+                tdEmail.textContent = user.email;
+
+                const tdName = document.createElement('td');
+                tdName.textContent = user.displayName || '';
+
+                const actions = document.createElement('td');
+                actions.className = 'actionsCell';
+                const unbanButton = document.createElement('button');
+                unbanButton.className = 'revampButton acceptButton';
+                unbanButton.textContent = 'Unban';
+                unbanButton.onclick = async () => {
+                    await fetch(`/api/user/${encodeURIComponent(user.id)}/unban`);
+                    // Refresh manager data and table
+                    const raw = await fetch('/api/manager');
+                    const data = await raw.json();
+                    users = data.users;
+                    renderBannedUsers();
+                };
+
+                actions.appendChild(unbanButton);
+                row.appendChild(tdEmail);
+                row.appendChild(tdName);
+                row.appendChild(actions);
+                bannedUsersBody.appendChild(row);
+            }
+        }
+
+        bannedUsersSearch?.addEventListener('input', renderBannedUsers);
+        renderBannedUsers();
+
+        async function loadIps(type) {
+            const res = await fetch(`/api/ip/${type}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const active = data.active;
+            const ips = data.ips || [];
+
+            // Always reflect only the current tab's state
+            const currentTab = whitelistHeaderH1.innerText.toLowerCase();
+            if (type === currentTab) {
+                ipListToggle.innerText = active ? 'Disable' : 'Enable'
+                ipListToggle.classList.toggle('pressed', !!active)
+            }
+
+            let ipListDiv
+            if (type == 'whitelist') ipListDiv = whitelistIpsDiv
+            else if (type == 'blacklist') ipListDiv = blacklistIpsDiv
+
+            ipListDiv.innerHTML = ''
+            for (let ip of ips) {
+                let ipDiv = document.createElement('div')
+                ipDiv.id = ip.id
+                ipDiv.className = 'ipDiv'
+                let ipName = document.createElement('input')
+                ipName.type = 'text'
+                ipName.className = 'revampButton revampWithText'
+                ipName.value = ip.ip
+                ipName.placeholder = 'IP Address'
+                ipName.onchange = async (event) => {
+                    if (!event.target.checkValidity()) {
+                        event.target.reportValidity()
+                        return
+                    }
+                    await fetch(`/api/ip/${type}/${ipDiv.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: event.target.value }) });
+                    loadIps(type);
+                }
+                ipDiv.appendChild(ipName)
+                let removeIp = document.createElement('button')
+                removeIp.className = 'quickButton revampButton warningButton'
+                removeIp.innerText = 'Remove IP'
+                removeIp.onclick = async (event) => {
+                    await fetch(`/api/ip/${type}/${ipDiv.id}`, { method: 'DELETE' });
+                    loadIps(type);
+                }
+                ipDiv.appendChild(removeIp)
+                ipListDiv.appendChild(ipDiv)
+            }
+
+            let addIpForm = document.createElement('div')
+            addIpForm.id = 'addIpForm'
+            let newIp = document.createElement('input')
+            newIp.id = 'newIp'
+            newIp.className = 'revampButton revampWithText'
+            newIp.type = 'text'
+            newIp.placeholder = 'IP Address'
+            newIp.onchange = (event) => {
+                if (!event.target.checkValidity()) {
+                    event.target.reportValidity()
+                }
+            }
+            addIpForm.append(newIp)
+            let submitIp = document.createElement('button')
+            submitIp.className = 'quickButton revampButton'
+            submitIp.innerText = 'Add IP'
+            submitIp.onclick = async (event) => {
+                let newIp = document.querySelector(`#${event.target.parentElement.parentElement.id} #newIp`)
+                await fetch(`/api/ip/${event.target.parentElement.parentElement.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: newIp.value }) });
+                loadIps(event.target.parentElement.parentElement.id);
+            }
+            addIpForm.append(submitIp)
+            ipListDiv.append(addIpForm)
+        }
+
+        // Initial load handled above
+    </script>

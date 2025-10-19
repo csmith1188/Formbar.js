@@ -1,90 +1,80 @@
 <%- include('../partials/header_content') %>
-<%- include('../partials/sockets') %>
+    <%- include('../partials/sockets') %>
 
-<body id="colorContent" role="document" tabindex="0">
-    <%- include('../partials/formbar_header') %>
+        <body id="colorContent" role="document" tabindex="0">
+            <%- include('../partials/formbar_header') %>
 
-    <header id="quickMenu" style="margin: 0 auto; position: absolute; left: 50%; transform: translate(-50%)">
-        <button id="classesMenu" class="quickButton tab pressed revampButton" data-tab-group="classTabs">Classes</button>
-        <button id="createClassMenu" class="quickButton tab revampButton" data-tab-group="classTabs">Create a class</button>
-    </header>
+                <header id="quickMenu" style="margin: 0 auto;position: absolute;left: 50%;transform: translate(-50%);">
+                    <button id="classesMenu" class="quickButton tab pressed revampButton" data-tab-group="classTabs">Classes</button>
+                    <button id="createClassMenu" class="quickButton tab revampButton" data-tab-group="classTabs">Create a class</button>
+                </header>
 
-    <div id="content" class="contentBox" style="margin: auto">
-        <div id="classesMenu" class="tabContent default" data-tab-group="classTabs">
-            <form action="createClass" method="post" id="selectClassForm">
-                <label for="manageClassSelect" class="headerText">Manage a class</label>
-                <select id="manageClassSelect" name="id" class="revampButton"></select>
-                <div class="buttonsHolder">
-                    <input type="text" name="submittionType" value="select" hidden />
-                    <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Go" onsubmit="return false;" />
-                    <button class="quickButton revampButton warningButton" type="button" onclick="deleteClass()">Delete</button>
+                <div id="content" class="contentBox" style="margin: auto;">
+                    <div id="classesMenu" class="tabContent default" data-tab-group='classTabs'>
+                        <form action="createClass" method="post" id="selectClassForm">
+                            <label for="manageClassSelect" class="headerText">Manage a class</label>
+                            <select id="manageClassSelect" name="id" class="revampButton">
+    
+                            </select>
+                            <div class="buttonsHolder">
+                                <input type="text" name="submittionType" value="select" hidden>
+                                <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Go" onsubmit="return false;">
+                                <button class="quickButton revampButton warningButton" type="button" onclick="deleteClass()">Delete</button>
+                            </div>
+                            
+
+                        </form>
+                    </div>
+
+                    <div id="createClassMenu" class="tabContent" data-tab-group='classTabs'>
+                        <form action="createClass" method="post" id="createClass">
+                            <label for="emailBox" class="headerText h2">Create a class</label>
+                            
+                            <div class="buttonsHolder">
+                                <input type="text" id="emailBox" name="name" placeholder="Class Name" value=""
+                                    autocomplete="off" class="revampButton revampWithText" required>
+                                <input type="text" name="submittionType" value="create" hidden>
+                                <input type="submit" id="submitButton" class="quickButton revampButton pressed" value="Create" style="margin: auto;margin-top: 20px;"
+                                    onsubmit="return false;">
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
-        </div>
+        </body>
+        <script>
+            let startClassForm = document.getElementById("selectClassForm")
+            let manageClassSelect = document.getElementById("manageClassSelect")
 
-        <div id="createClassMenu" class="tabContent" data-tab-group="classTabs">
-            <form action="createClass" method="post" id="createClass">
-                <label for="emailBox" class="headerText h2">Create a class</label>
+            function deleteClass() {
+                let classId = manageClassSelect.value
+                let className = manageClassSelect.options[manageClassSelect.selectedIndex].text
 
-                <div class="buttonsHolder">
-                    <input
-                        type="text"
-                        id="emailBox"
-                        name="name"
-                        placeholder="Class Name"
-                        value=""
-                        autocomplete="off"
-                        class="revampButton revampWithText"
-                        required
-                    />
-                    <input type="text" name="submittionType" value="create" hidden />
-                    <input
-                        type="submit"
-                        id="submitButton"
-                        class="quickButton revampButton pressed"
-                        value="Create"
-                        style="margin: auto; margin-top: 20px"
-                        onsubmit="return false;"
-                    />
-                </div>
-            </form>
-        </div>
-    </div>
-</body>
-<script>
-    let startClassForm = document.getElementById("selectClassForm");
-    let manageClassSelect = document.getElementById("manageClassSelect");
+                let confirmation = confirm(`are you sure you want to delete the class ${className}`)
+                if (!confirmation) return
 
-    function deleteClass() {
-        let classId = manageClassSelect.value;
-        let className = manageClassSelect.options[manageClassSelect.selectedIndex].text;
+                manageClassSelect.options[manageClassSelect.selectedIndex].remove();
+                socket.emit('deleteClass', classId)
+            }
 
-        let confirmation = confirm(`are you sure you want to delete the class ${className}`);
-        if (!confirmation) return;
+            socket.emit('getOwnedClasses', currentUser.email)
+            socket.on('getOwnedClasses', (ownedClasses) => {
+                if (ownedClasses.length > 0) {
+                    startClassForm.style.opacity = "1"
+                    startClassForm.style.pointerEvents = "all";
+                } else {                   
+                    startClassForm.style.opacity = "0.5";
+                    startClassForm.style.pointerEvents = "none";
+                    startClassForm.style.opacity = "0.5";
+                    startClassForm.style.pointerEvents = "none";
+                    return
+                }
 
-        manageClassSelect.options[manageClassSelect.selectedIndex].remove();
-        socket.emit("deleteClass", classId);
-    }
-
-    socket.emit("getOwnedClasses", currentUser.email);
-    socket.on("getOwnedClasses", (ownedClasses) => {
-        if (ownedClasses.length > 0) {
-            startClassForm.style.opacity = "1";
-            startClassForm.style.pointerEvents = "all";
-        } else {
-            startClassForm.style.opacity = "0.5";
-            startClassForm.style.pointerEvents = "none";
-            startClassForm.style.opacity = "0.5";
-            startClassForm.style.pointerEvents = "none";
-            return;
-        }
-
-        for (let classroom of ownedClasses) {
-            let option = document.createElement("option");
-            option.value = classroom.id;
-            option.innerText = classroom.name;
-            manageClassSelect.appendChild(option.cloneNode(true));
-        }
-    });
-</script>
-<script src="/js/tabs.js"></script>
+                for (let classroom of ownedClasses) {
+                    let option = document.createElement('option')
+                    option.value = classroom.id
+                    option.innerText = classroom.name
+                    manageClassSelect.appendChild(option.cloneNode(true))
+                }
+            })
+        </script>
+<script src='/js/tabs.js'></script>

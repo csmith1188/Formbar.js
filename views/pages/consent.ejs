@@ -1,14 +1,14 @@
 <%- include('../partials/header_content') %>
 <%- include('../partials/formbar_header') %>
-<form id="consent-form" action="/transfer" method="get">
-    <input type="hidden" name="data" value="<%=data%>" />
-    <input type="hidden" name="to" value="<%=to%>" />
-    <input type="hidden" name="redirect" value="<%=redirect%>" />
-    <div id="consent-text">
-        <p><%= receiverText %> has requested to transfer <%= amount %> digipogs from your account.</p>
-        <p>Reason: <%= reason %></p>
-    </div>
-    <button type="submit" name="consent" value="true">Accept</button>
-    <button type="submit" name="consent" value="false">Decline</button>
-</form>
+    <form id='consent-form' action='/transfer' method='get'>
+        <input type='hidden' name='data' value='<%=data%>'>
+        <input type='hidden' name='to' value='<%=to%>'>
+        <input type='hidden' name='redirect' value='<%=redirect%>'>
+        <div id='consent-text'>
+            <p><%= receiverText %> has requested to transfer <%= amount %> digipogs from your account.</p>
+            <p>Reason: <%= reason %></p>
+        </div>
+        <button type='submit' name='consent' value='true'>Accept</button>
+        <button type='submit' name='consent' value='false'>Decline</button>
+    </form>
 <%- include('../partials/footer_content') %>

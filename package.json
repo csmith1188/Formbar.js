@@ -10,9 +10,7 @@
 		"init-db": "node database/init.js",
 		"migrate": "node database/migrate.js",
 		"format": "prettier --write \"**/*.js\"",
-		"format:check": "prettier --check \"**/*.js\"",
-		"format:ejs": "prettier --write \"**/*.ejs\"",
-		"format:check:ejs": "prettier --check \"**/*.ejs\""
+		"format:check": "prettier --check \"**/*.js\""
 	},
 	"repository": {
 		"type": "git",
@@ -51,7 +49,6 @@
 		"passport": "^0.7.0",
 		"passport-google-oauth20": "^2.0.0",
 		"prettier": "^3.6.2",
-		"prettier-plugin-ejs": "^1.0.3",
 		"querystring": "^0.2.1",
 		"socket.io": "^4.5.4",
 		"socket.io-client": "^4.8.1",
