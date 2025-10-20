@@ -51,33 +51,31 @@ async function transferDigipogs(transferData) {
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
         // Validate input
-        if (!from || !to || !amount || !pin || reason === undefined) {
+        if (!from || (!to && to !== 0) || !amount || !pin || reason === undefined) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
-        } else if (from === to) {
+        } else if (from === to && !pool) {
             return { success: false, message: "Cannot transfer to the same account." };
         }
-
+        
         // Fetch sender
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-        // Validate PIN and funds
+            // Validate PIN and funds
         } else if (fromUser.pin != pin) {
             return { success: false, message: "Invalid PIN." };
         } else if (fromUser.digipogs < amount) {
             return { success: false, message: "Insufficient funds." };
         }
-
+    
+        
         // Calculate taxed amount
         const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
-
-            console.log("Transferring to pool with ID:", to);
-
             const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to]);
             if (!pool) return { success: false, message: "Recipient pool not found." };
             dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
