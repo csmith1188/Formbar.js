@@ -300,8 +300,35 @@
 
     }
 
+    div.transactionButtons button {
+        width: 4cqh !important;
+        height: 4cqh !important;
+    }
+
     #classesMenu {
         flex-direction: column !important;
+    }
+
+    div.transactionHistory {
+        width: 100% !important;
+    }
+    
+    #classLinks {
+        width: 100% !important;
+    }
+
+    .urlCell {
+        font-size: 12px;
+    }
+
+    .manageHeader {
+        flex-wrap: wrap;
+    }
+
+    .userButtonDiv {
+        flex-direction: column;
+        gap: 5px;
+        padding: 15px 0;
     }
 
     div.verticalLine {
@@ -622,6 +649,16 @@
         display: flex !important;
     }
 
+    *.showMobileCell {
+        display: table-cell !important;
+    }
+
+    #apiKeyButton button {
+        margin-right: 0;
+        width: 36px;
+        height: 36px;
+    }
+
     .ongoingButtons {
         gap: 20px !important;
     }
@@ -712,7 +749,7 @@
 
     p#apiKey {
         min-width: 0 !important;
-        overflow: hidden !important;
+        overflow: auto !important;
     }
 
     div.pogMeter {

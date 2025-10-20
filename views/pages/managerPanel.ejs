@@ -12,7 +12,7 @@
 
     <body id="colorContent" role="document" tabindex="0">
         <%- include('../partials/formbar_header') %>
-            <header id="quickMenu" class="fullWidth">
+            <header id="quickMenu" class="fullWidth manageHeader">
                 <button id="usersMenu" class="quickButton tab pressed revampButton" data-tab-group="mainTabs">Users</button>
                 <button id="ipMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">IP Addresses</button>
                 <button id="bannedUsersMenu" class="quickButton tab revampButton" data-tab-group="mainTabs">Banned Users</button>
@@ -23,7 +23,7 @@
                         <h2 class="headerText">Filter</h2>
                     </div> -->
             <div id="userSortBoxes" class="options sortManager" style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                    <h2 class="headerText" style="margin: 0; white-space: nowrap;">Sort by:</h2>
+                    <h2 class="headerText hideMobile" style="margin: 0; white-space: nowrap;">Sort by:</h2>
                     <button type="button" id="name" class="sort revampButton">Name</button>
                     <button type="button" id="permissions" class="sort pressed revampButton">Permissions ▼</button>
                     <input type="text" id="userSearch" class="revampButton revampWithText" placeholder="Search by name" style="flex: 1 1 auto; min-width: 0;">
@@ -198,14 +198,21 @@
             userElement.appendChild(detailsText)
             
             newUser.appendChild(userElement)
+                
+            let buttonDiv = document.createElement("div");
+            buttonDiv.classList.add('userButtonDiv');
+            
             if (userData.permissions < currentUser.permissions) {
                 // If the user is verified, then offer the ability to change permissions and ban them
+
                 if (userData.verified) {
                     newUser.classList.add('hasInfo')
                     let permissionSwitchLabel = document.createElement("label");
                     permissionSwitchLabel.setAttribute("for", "permSwitch")
                     permissionSwitchLabel.innerText = "Users Permissions: "
+                    permissionSwitchLabel.classList.add('hideMobile')
                     newUser.appendChild(permissionSwitchLabel)
+
                     let permissionSwitch = document.createElement("select")
                     permissionSwitch.setAttribute("name", "permSwitch")
                     permissionSwitch.setAttribute("class", "permSwitch revampButton")
@@ -231,8 +238,7 @@
                         option.innerText = permissions[i - 1];
                         permissionSwitch.add(option);
                     }
-                    newUser.appendChild(permissionSwitch)
-                    newUser.append(" ")
+                    buttonDiv.appendChild(permissionSwitch)
 
                     let banUserButton = document.createElement("button")
                     banUserButton.className = 'banUser quickButton warningButton revampButton'
@@ -255,7 +261,7 @@
                             alert(err.message || 'There was an issue banning the user.');
                         }
                     }
-                    newUser.appendChild(banUserButton)
+                    buttonDiv.appendChild(banUserButton)
                 } else {
                     let verifyUserButton = document.createElement("button")
                     verifyUserButton.className = 'quickButton acceptButton revampButton'
@@ -270,7 +276,7 @@
                             alert(err.message || 'There was an error verifying the user.')
                         }
                     }
-                    newUser.appendChild(verifyUserButton)
+                    buttonDiv.appendChild(verifyUserButton)
                 }
 
                 let deleteUserButton = document.createElement("button")
@@ -311,8 +317,9 @@
                     }
                 }
                 deleteUserButton.innerText = "Delete User"
-                newUser.appendChild(deleteUserButton)
+                buttonDiv.appendChild(deleteUserButton)
             }
+            newUser.appendChild(buttonDiv)
             return newUser
         }
 

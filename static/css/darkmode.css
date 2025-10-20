@@ -140,7 +140,7 @@ div.helpIconInformation.revampDivAlt {
 }
 
 
-#users div:not(#reasons, #reasons *, #alerts *) {
+#users div:not(#reasons, #reasons *, #alerts *, .userButtonDiv) {
 	background: var(--darkMode-menu-bg);
 	border: 2px solid var(--darkMode-menu-border);
 }

@@ -36,7 +36,6 @@
             <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
             <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
         </div>
-        <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
         <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
         <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
         <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
@@ -58,6 +57,7 @@
 
 <div id="bannedStudentsMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Banned Students</h1>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
     <div class="revampDiv">
     <table id="bannedStudentsTable">
         <thead>
@@ -173,7 +173,7 @@
             <div id="newMemberListControlPanel" class="revampDiv">
                 <h1>Members</h1>
                 <input type="text" placeholder="Search Users" id="searchUsers" class="revampButton revampWithText" oninput="searchUsers()" autocomplete="off">
-                <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown')">
+                <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown');this.parentElement.children[0].classList.toggle('hideMobile')">
                     <img src="/img/search-outline.svg" alt="Open Search">
                 </button>
             </div>
@@ -213,6 +213,7 @@
         
         <div id="controlFooter" class="revampDiv">
             <div class="ongoingButtons">
+                <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
                 <button id='previousPollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
                     <p>Previous Polls</p>
                 </button>
@@ -902,6 +903,7 @@
             const tr = document.createElement('tr');
             const nameTd = document.createElement('td');
             const urlTd = document.createElement('td');
+            urlTd.className = 'urlCell';
             const actionsTd = document.createElement('td');
             actionsTd.className = 'actionsCell';
 

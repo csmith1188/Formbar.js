@@ -49,38 +49,22 @@
 
                 <table class="revampDiv">
                     <tr>
-                        <th>From:</th>
-                        <th>To:</th>
+                        <th class="hideMobile">From:</th>
+                        <th class="hideMobile">To:</th>
                         <th>Amount</th>
-                        <th>Type</th>
-                        <th>Date</th>
+                        <th>Reason</th>
+                        <th class="hideMobile">Date</th>
                     </tr>
-
-                    <% for(let i=0;i<Math.floor(transactions.length / 10);i++) { %>
-                        <% let transactionRange = transactions.slice(i*10, i*10+10); %>
-                        <% transactionRange.forEach(function(transaction) { %>
-                            <tr data-page="<%- i %>" style="display: none;">
-                                <%
-                                    const date = new Date(Number(transaction.date));
-                                    const valid = !isNaN(date);
-                                %>
-                                <td><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
-                                <td><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
-                                <td><%= transaction.amount %></td>
-                                <td><%= transaction.reason %></td>
-                                <td><%= valid ? `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}` : 'Not tracked' %></td>
-                            </tr>
-                        <% }); %>
-                    <% } %>
 
                     <% for(let i=0;i<transactions.length % 10;i++) { %>
                         <% let transaction = transactions[Math.floor(transactions.length / 10) * 10 + i]; %>
                         <tr data-page="<%- Math.floor(transactions.length / 10) %>" style="display: none;">
-                            <td><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
-                            <td><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
-                            <td><%= transaction.amount %></td>
+                            <td class="hideMobile"><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
+                            <td class="hideMobile"><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
+                            <td class="hideMobile"><%= transaction.amount %></td>
+                            <td class="showMobileCell"><%= transaction.to_user == currentUser.id ? '+' + transaction.amount : '-' + transaction.amount %></td>
                             <td><%= transaction.reason %></td>
-                            <td><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
+                            <td class="hideMobile"><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
                         </tr>
                     <% } %>
                 </table>
