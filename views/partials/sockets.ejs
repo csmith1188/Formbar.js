@@ -9,9 +9,16 @@
 		document.getElementById("backgroundDarken").classList.remove('open')
 	}
 
-	socket.on('break', () => {
-		document.getElementById('breakDialog').showModal()
-		document.getElementById("backgroundDarken").classList.add('open')
+	socket.on('break', (isApproved) => {
+        const breakDialog = document.getElementById('breakDialog');
+        const backgroundDarken = document.getElementById('backgroundDarken');
+        if (isApproved) {
+            breakDialog.showModal();
+            backgroundDarken.classList.add('open');
+        } else {
+            breakDialog.close();
+            backgroundDarken.classList.remove('open');
+        }
 	})
 
 	socket.on('message', (message) => {

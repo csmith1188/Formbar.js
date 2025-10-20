@@ -17,7 +17,6 @@ function sendHelpTicket(reason, userSession) {
         // Log the request and deny it if the user has already requested help for the same reason
         logger.log('info', `[help] session=(${JSON.stringify(userSession)})`);
         const student = classInformation.classrooms[classId].students[email];
-        const socketUpdates = userSocketUpdates[email];
         if (student.help.reason === reason) {
             return 'You have already requested help for this reason.';
         }
@@ -32,7 +31,12 @@ function sendHelpTicket(reason, userSession) {
         advancedEmitToClass('helpSound', classId, {});
 
         logger.log('verbose', `[help] user=(${JSON.stringify(student)}`);
-        socketUpdates.classUpdate(classId);
+
+        // @TODO: TEMP FIX
+        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+            socketUpdates.classUpdate(classId);
+            break;
+        }
         return true;
     } catch (err) {
         logger.log('error', err.stack)
@@ -51,9 +55,11 @@ async function deleteHelpTicket(studentId, userSession) {
         classInformation.classrooms[classId].students[studentEmail].help = false;
         logger.log('verbose', `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[classId].students[studentEmail])})`);
 
-        // Send new data to the class
-        const socketUpdates = userSocketUpdates[email];
-        socketUpdates.classUpdate(classId);
+        // @TODO: TEMP FIX
+        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+            socketUpdates.classUpdate(classId);
+            break;
+        }
         return true;
     } catch (err) {
         logger.log('error', err.stack);

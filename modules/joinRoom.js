@@ -105,7 +105,7 @@ async function joinRoomByCode(code, session) {
 			setClassOfApiSockets(studentAPIKey, classroom.id);
 
 			// Call classUpdate on all user's tabs
-			userUpdateSocket(email, 'classUpdate', classroom.id, { restrictToControlPanel: true });
+			userUpdateSocket(email, 'classUpdate', classroom.id, { global: false, restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -150,7 +150,7 @@ async function joinRoomByCode(code, session) {
 			setClassOfApiSockets(studentAPIKey, classroom.id);
 
 			// Call classUpdate on all user's tabs
-			userUpdateSocket(email, 'classUpdate', classroom.id, { restrictToControlPanel: true });
+			userUpdateSocket(email, 'classUpdate', classroom.id, { global: false, restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true

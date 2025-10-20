@@ -312,7 +312,7 @@ class SocketUpdates {
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
-                const classReturnData = structuredClone(getClassUpdateData(classData, hasTeacherPermissions));
+                const classReturnData = structuredClone(getClassUpdateData(classData, false));
 
                 advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
                 advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
@@ -321,8 +321,8 @@ class SocketUpdates {
                 const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                 if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
                     // If the user requesting class information is a student, then only send them the information
-                    io.to(`user-${userData.email}`).emit('classUpdate', classReturnData);
-                } else if (options.restrictToControlPanel) {
+                    this.socket.emit('classUpdate', classReturnData);
+                } else if (options.restrictToControlPanel || userData.classPermissions >= controlPanelPermissions) {
                     // If it's restricted to the control panel, then only send it to people with control panel access
                     advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
                 } else {
