@@ -1106,7 +1106,6 @@ div#usersMenu.tabContent.usersMenuBox #users {
 #users {
 	gap: 20px;
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
     align-items: stretch;
     align-content: flex-start;
@@ -1292,7 +1291,7 @@ div.break {
     pointer-events: none;
 }
 
-#users div:not(#reasons, #reasons *, #alerts *) {
+#users div:not(#reasons, #reasons *, #alerts *, .userButtonDiv) {
 	padding: 1vh;
     display: flex;
     flex-wrap: wrap;
@@ -1306,6 +1305,13 @@ div.break {
     height: min-content;
     width: 100%;
     text-align: left;
+}
+
+.userButtonDiv {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
 }
 
 #users div:not(#reasons, #reasons *, #alerts *) p {
@@ -1371,7 +1377,7 @@ div.break {
 
 .break,
 .break summary {
-	/* border-color: #ffff00 !important; */
+	border-color: #ffff00 !important;
 }
 
 #breakReason button {
@@ -1380,7 +1386,7 @@ div.break {
 
 .help,
 .help summary {
-	/* border-color: #ff0000 !important; */
+	border-color: #ff0000 !important;
 }
 
 #helpReason button {
@@ -2034,7 +2040,7 @@ div.sideBySide {
 	top: 0;
 	width: calc(100% - 40px);
 	height: calc(100% - 90px);
-	overflow: scroll;
+	overflow: auto;
 	padding: 0;
 	margin: 90px 20px;
 	margin-bottom: 0;
@@ -2489,14 +2495,13 @@ button.start-custom-poll {
 }
 
 #bannedStudentsMenu .revampDiv {
-	padding: 12px;
+	margin: 90px 12px;
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
 	padding-bottom: 16px;
 	width: 80%;
 	max-width: 1100px;
-	margin: 0 auto;
 	text-align: left;
 }
 
@@ -2790,6 +2795,10 @@ div.mobileSpacer {
 }
 
 *.showMobile {
+	display: none;
+}
+
+*.showMobileCell {
 	display: none;
 }
 
@@ -3224,15 +3233,6 @@ p.accordionTitle {
 	margin-right: 8px;
 }
 
-/*
- ::::::::  :::            :::      ::::::::   ::::::::  :::::::::: :::::::: 
-:+:    :+: :+:          :+: :+:   :+:    :+: :+:    :+: :+:       :+:    :+:    
-+:+        +:+         +:+   +:+  +:+        +:+        +:+       +:+         
-+#+        +#+        +#++:++#++: +#++:++#++ +#++:++#++ +#++:++#  +#++:++#++    
-+#+        +#+        +#+     +#+        +#+        +#+ +#+              +#+    
-#+#    #+# #+#        #+#     #+# #+#    #+# #+#    #+# #+#       #+#    #+# 
- ########  ########## ###     ###  ########   ########  ########## ######## 
-*/
 .newClassPage #content {
 	height: 100%;
 	width: 100% !important;
