@@ -5,6 +5,7 @@ const { advancedEmitToClass, userUpdateSocket } = require("./socketUpdates");
 const { database, dbGetAll, dbRun } = require("./database");
 const { MANAGER_PERMISSIONS } = require("./permissions");
 const { getEmailFromId } = require("./student");
+const {userSocketUpdates} = require("../sockets/init");
 
 // Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
@@ -146,9 +147,6 @@ async function updatePoll(classId, options, userSession) {
             return true;
         }
 
-        // Track if studentsAllowedToVote changed for notifications
-        const oldStudentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
-
         // Update each poll property
         for (const option of Object.keys(options)) {
             const value = options[option];
@@ -164,25 +162,13 @@ async function updatePoll(classId, options, userSession) {
             }
         }
 
-        // Notify users if voting rights changed by sending them a targeted classUpdate
-        if (options.studentsAllowedToVote !== undefined) {
-            const newStudentsAllowedToVote = options.studentsAllowedToVote;
-            
-            // Find users whose voting rights changed
-            const added = newStudentsAllowedToVote.filter(id => !oldStudentsAllowedToVote.includes(id));
-            const removed = oldStudentsAllowedToVote.filter(id => !newStudentsAllowedToVote.includes(id));
-
-            // Send targeted classUpdate to affected users so they get the updated poll data
-            for (const userId of [...added, ...removed]) {
-                const email = await getEmailFromId(userId);
-                if (email) {
-                    userUpdateSocket(email, 'classUpdate', classId);
-                }
-            }
-        }
-
         // Broadcast update to all tabs
-        userUpdateSocket(userSession.email, 'classUpdate', classId, { global: true });
+        // @TODO: Temporary fix, please move update functions outside of their class, or into the classroom class.
+        const socketUpdate = userSocketUpdates[userSession.email];
+        for (const socketId in socketUpdate) {
+            socketUpdate[socketId].classUpdate(classId, { global: true });
+            break; // only needs to be called once because it's global
+        }
         return true;
     } catch (err) {
         logger.log('error', err.stack);
