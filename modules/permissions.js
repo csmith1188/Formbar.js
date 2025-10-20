@@ -11,7 +11,7 @@ const PAGE_PERMISSIONS = {
 	controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
 	student: { permissions: GUEST_PERMISSIONS, classPage: true },
 	virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
-    links: { permissions: GUEST_PERMISSIONS, classPage: true },
+	links: { permissions: GUEST_PERMISSIONS, classPage: true },
 	manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
 	selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
@@ -24,13 +24,13 @@ const PAGE_PERMISSIONS = {
 }
 
 const CLASS_PERMISSIONS = {
-    GAMES: 'games',
-    CONTROL_POLLS: 'controlPolls',
-    MANAGE_STUDENTS: 'manageStudents',
-    MANAGE_CLASS: 'manageClass',
-    BREAK_AND_HELP: 'breakAndHelp',
-    AUXILIARY: 'auxiliary',
-    USER_DEFAULTS: 'userDefaults',
+	GAMES: 'games',
+	CONTROL_POLLS: 'controlPolls',
+	MANAGE_STUDENTS: 'manageStudents',
+	MANAGE_CLASS: 'manageClass',
+	BREAK_AND_HELP: 'breakAndHelp',
+	AUXILIARY: 'auxiliary',
+	USER_DEFAULTS: 'userDefaults',
 }
 
 // Defines the default permissions for people in a class
@@ -40,8 +40,8 @@ const DEFAULT_CLASS_PERMISSIONS = {
 	manageStudents: TEACHER_PERMISSIONS,
 	breakAndHelp: MOD_PERMISSIONS, // Approve break and help requests
 	manageClass: TEACHER_PERMISSIONS,
-    auxiliary: MOD_PERMISSIONS, // Controls the FormPix lights and sounds
-    userDefaults: GUEST_PERMISSIONS,
+	auxiliary: MOD_PERMISSIONS, // Controls the FormPix lights and sounds
+	userDefaults: GUEST_PERMISSIONS,
 	seePoll: GUEST_PERMISSIONS, // View polls
 	votePoll: STUDENT_PERMISSIONS, // Vote in polls
 }
@@ -57,7 +57,7 @@ const GLOBAL_SOCKET_PERMISSIONS = {
 	joinRoom: GUEST_PERMISSIONS,
 	getActiveClass: GUEST_PERMISSIONS,
 	refreshApiKey: STUDENT_PERMISSIONS,
-    refreshPin: STUDENT_PERMISSIONS,
+	refreshPin: STUDENT_PERMISSIONS,
 	transferDigipogs: STUDENT_PERMISSIONS,
 	transferResponse: STUDENT_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
@@ -83,14 +83,13 @@ const CLASS_SOCKET_PERMISSIONS = {
 	vbTimer: GUEST_PERMISSIONS,
 	leaveClass: GUEST_PERMISSIONS,
 	leaveRoom: GUEST_PERMISSIONS,
-    classUpdate: GUEST_PERMISSIONS,
+	classUpdate: GUEST_PERMISSIONS,
 	setClassSetting: TEACHER_PERMISSIONS,
 	setClassPermissionSetting: MANAGER_PERMISSIONS,
 	classPoll: MOD_PERMISSIONS,
+	updatePoll: MOD_PERMISSIONS,
 	timer: TEACHER_PERMISSIONS,
 	timerOn: TEACHER_PERMISSIONS,
-	getCanVote: STUDENT_PERMISSIONS,
-	changeCanVote: TEACHER_PERMISSIONS,
 	awardDigipogs: TEACHER_PERMISSIONS,
 	getPreviousPolls: TEACHER_PERMISSIONS,
 }
@@ -99,8 +98,7 @@ const CLASS_SOCKET_PERMISSIONS = {
 // Example: To start a poll, you first need the controlPolls permission
 const CLASS_SOCKET_PERMISSION_MAPPER = {
 	startPoll: 'controlPolls',
-	clearPoll: 'controlPolls',
-	endPoll: 'controlPolls',
+	updatePoll: 'controlPolls',
 	customPollUpdate: 'controlPolls',
 	savePoll: 'controlPolls',
 	deletePoll: 'controlPolls',
@@ -128,17 +126,17 @@ const CLASS_SOCKET_PERMISSION_MAPPER = {
 
 module.exports = {
 	// Permissions
-    MANAGER_PERMISSIONS,
-    TEACHER_PERMISSIONS,
-    MOD_PERMISSIONS,
-    STUDENT_PERMISSIONS,
-    GUEST_PERMISSIONS,
-    BANNED_PERMISSIONS,
+	MANAGER_PERMISSIONS,
+	TEACHER_PERMISSIONS,
+	MOD_PERMISSIONS,
+	STUDENT_PERMISSIONS,
+	GUEST_PERMISSIONS,
+	BANNED_PERMISSIONS,
 
 	// Page permissions
-    PAGE_PERMISSIONS,
-    CLASS_PERMISSIONS,
-    DEFAULT_CLASS_PERMISSIONS,
+	PAGE_PERMISSIONS,
+	CLASS_PERMISSIONS,
+	DEFAULT_CLASS_PERMISSIONS,
 
 	// Socket permissions
 	GLOBAL_SOCKET_PERMISSIONS,

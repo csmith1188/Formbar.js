@@ -1,7 +1,6 @@
 const { logger } = require("../logger");
 const { classInformation } = require("./classroom");
-const { userSocketUpdates } = require("../../sockets/init");
-const { advancedEmitToClass } = require("../socketUpdates");
+const { advancedEmitToClass, userUpdateSocket } = require("../socketUpdates");
 const { getEmailFromId } = require("../student");
 const { io } = require("../webServer");
 
@@ -21,12 +20,11 @@ function requestBreak(reason, userSession) {
         // Get the student, play the break sound, and set the break reason
         const classroom = classInformation.classrooms[classId];
         const student = classroom.students[email];
-        const socketUpdates = userSocketUpdates[email];
         advancedEmitToClass('breakSound', classId, {});
         student.break = reason;
 
         logger.log('verbose', `[requestBreak] user=(${JSON.stringify(classroom.students[email])})`);
-        socketUpdates.classUpdate(classId);
+        userUpdateSocket(email, 'classUpdate', classId);
         return true;
     } catch (err) {
         logger.log('error', err.stack);
@@ -42,14 +40,13 @@ async function approveBreak(breakApproval, userId, userSession) {
         const classId = userSession.classId;
         const classroom = classInformation.classrooms[classId];
         const student = classroom.students[email];
-        const socketUpdates = userSocketUpdates[email];
         student.break = breakApproval;
         logger.log('verbose', `[approveBreak] user=(${JSON.stringify(classroom.students[email])})`);
 
         if (breakApproval) {
             io.to(`user-${email}`).emit('break');
         }
-        socketUpdates.classUpdate();
+        userUpdateSocket(email, 'classUpdate', classId);
         return true;
     } catch (err) {
         logger.log('error', err.stack)
@@ -62,11 +59,10 @@ function endBreak(userSession) {
 
         const classroom = classInformation.classrooms[userSession.classId];
         const student = classInformation.users[userSession.email];
-        const socketUpdates = userSocketUpdates[userSession.email];
         student.break = false
 
         logger.log('verbose', `[endBreak] user=(${JSON.stringify(classroom.students[userSession.email])})`);
-        socketUpdates.classUpdate();
+        userUpdateSocket(userSession.email, 'classUpdate', userSession.classId);
         return true;
     } catch (err) {
         logger.log('error', err.stack)

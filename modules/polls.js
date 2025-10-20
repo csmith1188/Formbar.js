@@ -1,10 +1,10 @@
 const { classInformation } = require("./class/classroom");
 const { logger } = require("./logger");
 const { generateColors } = require("./util");
-const { advancedEmitToClass } = require("./socketUpdates");
+const { advancedEmitToClass, userUpdateSocket } = require("./socketUpdates");
 const { database, dbGetAll, dbRun } = require("./database");
-const { userSocketUpdates } = require("../sockets/init");
 const { MANAGER_PERMISSIONS } = require("./permissions");
+const { getEmailFromId } = require("./student");
 
 // Stores an object containing the pog meter increases for users in a poll
 // This is only stored in an object because Javascript passes objects as references
@@ -23,7 +23,6 @@ async function createPoll(classId, pollData, userSession) {
         const { prompt, answers, blind, tags, studentsAllowedToVote, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
         let { weight } = pollData;
         const numberOfResponses = Object.keys(answers).length;
-        const socketUpdates = userSocketUpdates[userSession.email];
         pogMeterTracker.pogMeterIncreased = [];
 
         // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
@@ -31,8 +30,7 @@ async function createPoll(classId, pollData, userSession) {
         if (!weight || isNaN(weight) || weight <= 0) weight = 1;
         weight = weight > 5 ? 5 : weight;
 
-        // Get class id and check if the class is active before continuing
-        const classId = userSession.classId;
+        // Check if the class is active before continuing
         if (!classInformation.classrooms[classId] || !classInformation.classrooms[classId].isActive) {
             return 'This class is not currently active.';
         }
@@ -50,19 +48,13 @@ async function createPoll(classId, pollData, userSession) {
         classInformation.classrooms[classId].poll.blind = blind
         classInformation.classrooms[classId].poll.status = true
 
-        if (tags) {
-            classInformation.classrooms[classId].poll.requiredTags = tags
-        } else {
-            classInformation.classrooms[classId].poll.requiredTags = []
-        }
-
         if (studentsAllowedToVote) {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote
         } else {
             classInformation.classrooms[classId].poll.studentsAllowedToVote = [];
-            for (const student of classInformation.classrooms[classId].students) {
+            for (const student of Object.values(classInformation.classrooms[classId].students)) {
                 // If the student has been excluded by permission, is on break, is offline, or has been manually excluded, do not allow them to vote
-                if (classInformation.classrooms[classId].excludedPermissions.includes(student.classPermissions) || student.break || student.tags.includes('Offline') || student.tags.includes('Excluded')) { 
+                if (classInformation.classrooms[classId].excludedPermissions && classInformation.classrooms[classId].excludedPermissions.includes(student.classPermissions) || student.break || student.tags && (student.tags.includes('Offline') || student.tags.includes('Excluded'))) { 
                     continue;
                 }
                 classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id.toString());
@@ -111,30 +103,114 @@ async function createPoll(classId, pollData, userSession) {
 
         // Log data about the class then call the appropriate update functions
         logger.log('verbose', `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
-        socketUpdates.classUpdate()
+        userUpdateSocket(userSession.email, 'classUpdate', classId, { global: true })
     } catch (err) {
         logger.log('error', err.stack);
     }
 }
 
 /**
- * Ends the current poll in the specified class, saves poll data to history, and updates the class state.
+ * Updates poll properties dynamically. Can update individual properties or clear the entire poll.
  * @param {number} classId - The ID of the class.
+ * @param {Object} options - An object containing poll properties to update.
  * @param {Object} userSession - The user session object.
+ * @returns {Promise<boolean>} True if successful, false otherwise.
+ * 
+ * Examples:
+ * - updatePoll(classId, {status: false}, session) - Ends the poll
+ * - updatePoll(classId, {status: true}, session) - Resumes the poll
+ * - updatePoll(classId, {studentsAllowedToVote: ['1', '2']}, session) - Changes who can vote
+ * - updatePoll(classId, {}, session) - Clears the poll (empty object)
  */
-async function endPoll(classId, userSession) {
+async function updatePoll(classId, options, userSession) {
     try {
-        logger.log('info', `[endPoll] session=(${JSON.stringify(userSession)})`)
+        // If no classId or options provided, return false
+        if (!classId || !options) {
+            logger.log('info', '[updatePoll] Missing classId or options');
+            return false;
+        }
 
-        let data = { prompt: '', names: [], letter: [], text: [] }
-        let dateConfig = new Date()
-        let date = `${dateConfig.getMonth() + 1}/${dateConfig.getDate()}/${dateConfig.getFullYear()}`
+        // If the classroom does not exist, return false
+        const classroom = classInformation.classrooms[classId];
+        if (!classroom) {
+            logger.log('info', '[updatePoll] Classroom not found');
+            return false;
+        }
 
-        data.prompt = classInformation.classrooms[classId].poll.prompt
-        data.responses = classInformation.classrooms[classId].poll.responses
-        data.allowMultipleResponses = classInformation.classrooms[classId].poll.allowMultipleResponses
-        data.blind = classInformation.classrooms[classId].poll.blind
-        data.allowTextResponses = classInformation.classrooms[classId].poll.allowTextResponses
+        logger.log('info', `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
+
+        // If an empty object is sent, clear the current poll
+        const optionsKeys = Object.keys(options);
+        if (optionsKeys.length === 0) {
+            await clearPoll(classId, userSession);
+            return true;
+        }
+
+        // Track if studentsAllowedToVote changed for notifications
+        const oldStudentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
+
+        // Update each poll property
+        for (const option of Object.keys(options)) {
+            const value = options[option];
+
+            // Special handling: save to history when ending poll
+            if (option === 'status' && value === false && classroom.poll.status === true) {
+                savePollToHistory(classId);
+            }
+
+            // Update the property if it exists in the poll object
+            if (option in classroom.poll) {
+                classroom.poll[option] = value;
+            }
+        }
+
+        // Notify users if voting rights changed by sending them a targeted classUpdate
+        if (options.studentsAllowedToVote !== undefined) {
+            const newStudentsAllowedToVote = options.studentsAllowedToVote;
+            
+            // Find users whose voting rights changed
+            const added = newStudentsAllowedToVote.filter(id => !oldStudentsAllowedToVote.includes(id));
+            const removed = oldStudentsAllowedToVote.filter(id => !newStudentsAllowedToVote.includes(id));
+
+            // Send targeted classUpdate to affected users so they get the updated poll data
+            for (const userId of [...added, ...removed]) {
+                const email = await getEmailFromId(userId);
+                if (email) {
+                    userUpdateSocket(email, 'classUpdate', classId);
+                }
+            }
+        }
+
+        // Broadcast update to all tabs
+        userUpdateSocket(userSession.email, 'classUpdate', classId, { global: true });
+        return true;
+    } catch (err) {
+        logger.log('error', err.stack);
+        return false;
+    }
+}
+
+/**
+ * Saves the current poll data to the poll history table in the database.
+ * @param {number} classId - The ID of the class whose poll should be saved.
+ */
+async function savePollToHistory(classId) {
+    try {
+        const classroom = classInformation.classrooms[classId];
+        if (!classroom) return;
+
+        const date = new Date()
+        const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`
+        const data = {
+            prompt: classroom.poll.prompt,
+            responses: classroom.poll.responses,
+            allowMultipleResponses: classroom.poll.allowMultipleResponses,
+            blind: classroom.poll.blind,
+            allowTextResponses: classroom.poll.allowTextResponses,
+            names: [],
+            letter: [],
+            text: []
+        }
 
         for (const key in classInformation.classrooms[classId].students) {
             data.names.push(classInformation.classrooms[classId].students[key].email)
@@ -142,40 +218,9 @@ async function endPoll(classId, userSession) {
             data.text.push(classInformation.classrooms[classId].students[key].pollRes.textRes)
         }
 
-        await new Promise((resolve, reject) => {
-            database.run(
-                'INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)',
-                [classId, JSON.stringify(data), date], (err) => {
-                    if (err) {
-                        logger.log('error', err.stack);
-                        reject(new Error(err));
-                    } else {
-                        logger.log('verbose', '[endPoll] saved poll to history');
-                        resolve();
-                    }
-                }
-            );
-        });
+        dbRun('INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)', [classId, JSON.stringify(data), formattedDate]);
 
-        let latestPoll = await new Promise((resolve, reject) => {
-            database.get('SELECT * FROM poll_history WHERE class=? ORDER BY id DESC LIMIT 1', [
-                classId
-            ], (err, poll) => {
-                if (err) {
-                    logger.log("error", err.stack);
-                    reject(new Error(err));
-                } else resolve(poll);
-            });
-        });
-
-        latestPoll.data = JSON.parse(latestPoll.data);
-        classInformation.classrooms[classId].pollHistory.push(latestPoll);
-        classInformation.classrooms[classId].poll.status = false
-
-        const socketUpdates = userSocketUpdates[userSession.email];
-        socketUpdates.classUpdate();
-
-        logger.log('verbose', `[endPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`)
+        logger.log('verbose', '[endPoll] saved poll to history');
     } catch (err) {
         logger.log('error', err.stack);
     }
@@ -191,9 +236,8 @@ async function endPoll(classId, userSession) {
  */
 async function clearPoll(classId, userSession, updateClass = true){
     try {
-        const socketUpdates = userSocketUpdates[userSession.email];
         if (classInformation.classrooms[classId].poll.status) {
-            await endPoll(classId, userSession)
+            await updatePoll(classId, { status: false }, userSession);
         }
 
         classInformation.classrooms[classId].poll.responses = {};
@@ -205,7 +249,6 @@ async function clearPoll(classId, userSession, updateClass = true){
             prompt: "",
             weight: 1,
             blind: false,
-            requiredTags: [],
             studentsAllowedToVote: []
         };
 
@@ -238,8 +281,8 @@ async function clearPoll(classId, userSession, updateClass = true){
             }
         }
 
-        if (updateClass) {
-            socketUpdates.classUpdate(classId);
+        if (updateClass && userSession) {
+            userUpdateSocket(userSession.email, 'classUpdate', classId, { global: true });
         }
     } catch (err) {
         logger.log('error', err.stack);
@@ -261,18 +304,19 @@ function pollResponse(classId, res, textRes, userSession) {
     const email = userSession.email;
     const user = classInformation.users[email];
     const classroom = classInformation.classrooms[classId];
-    const socketUpdates = userSocketUpdates[email];
 
+    // If there's no poll or the poll is not active, return
     if (!classroom.poll || !classroom.poll.status) {
         return;
     }
 
+    // If the user's response has not changed, return
     const prevRes = classroom.students[email].pollRes.buttonRes;
     let hasChanged = classroom.poll.allowMultipleResponses ?
         JSON.stringify(prevRes) !== JSON.stringify(res) :
         prevRes !== res;
 
-    if(!classroom.poll.allowVoteChanges && prevRes !== '' && (JSON.stringify(prevRes) !== JSON.stringify(res))) {
+    if (!classroom.poll.allowVoteChanges && prevRes !== '' && (JSON.stringify(prevRes) !== JSON.stringify(res))) {
         return;
     }
 
@@ -342,7 +386,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
     logger.log('verbose', `[pollResp] user=(${classroom.students[userSession.email]})`)
 
-    socketUpdates.classUpdate(classId, { global: true });
+    userUpdateSocket(email, 'classUpdate', classId, { global: true });
 }
 
 /**
@@ -387,8 +431,7 @@ async function deleteCustomPolls(userId) {
         const customPolls = await dbGetAll('SELECT * FROM custom_polls WHERE owner=?', userId)
         if (customPolls.length == 0) return
 
-        await dbRun('DELETE FROM custom_polls WHERE userId=?', customPolls[0].userId)
-
+        await dbRun('DELETE FROM custom_polls WHERE owner=?', userId)
         for (let customPoll of customPolls) {
             await dbRun('DELETE FROM shared_polls WHERE pollId=?', customPoll.pollId)
         }
@@ -399,7 +442,8 @@ async function deleteCustomPolls(userId) {
 
 module.exports = {
     createPoll,
-    endPoll,
+    updatePoll,
+    savePollToHistory,
     clearPoll,
     pollResponse,
     getPollResponses,
