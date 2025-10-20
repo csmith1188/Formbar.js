@@ -21,7 +21,6 @@ module.exports = {
                     return socket.emit("poolCreateResponse", { success: false, message: "You can only own up to 5 pools." });
                 }
 
-
                 // Add the pool to the user's owned pools
                 if (member) {
                     dbRun("UPDATE digipog_pool_users SET owner = ? WHERE id = ?", [member.owner ? member.owner + `,${result}` : `${result}`, socket.request.session.userId]);
