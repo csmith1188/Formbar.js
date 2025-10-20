@@ -13,16 +13,16 @@
                     <div id="editPinForm">
                         <div class="editPinInputs">
                             <label for="currentPin">Current PIN:</label>
-                            <input type="password" id="currentPin" name="currentPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                            <input type="password" id="currentPin" name="currentPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required autocomplete="off">
                         </div>
                         <div class="editPinInputs">
                             <label for="newPin">New PIN:</label>
-                            <input type="password" id="newPin" name="newPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                            <input type="password" id="newPin" name="newPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required autocomplete="off">
                         </div>
                         
                         <div class="editPinInputs">
                             <label for="confirmNewPin">Confirm New PIN:</label>
-                            <input type="password" id="confirmNewPin" name="confirmNewPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required>
+                            <input type="password" id="confirmNewPin" name="confirmNewPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required autocomplete="off">
                         </div>
 
                         <div class="editPinInputs" style="margin-top: 20px;">
@@ -46,7 +46,7 @@
                 <div class="sensitiveInfo">
                     <p id='apiKey'><strong>API Key:</strong> █</p>
                     <div id='apiKeyButton'>
-                        <button onclick="copyApiKey()" class="squareButton">
+                        <button onclick="copyApiKey()" class="squareButton hideMobile">
                             <img src="/img/clipboard-outline.svg" alt="Refresh API Key">
                         </button>
                         <button id="showHideApi" onclick="revealApiKey()" class="squareButton" title="Reveal API Key">
@@ -116,6 +116,8 @@
                 apiKey.innerHTML = '<strong>API Key:</strong> ' + apiKeyValue;
                 showHideApi.setAttribute("onclick", "hideApiKey()");
                 showHideApi.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide API Key">';
+
+                if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'none';
             }
 
             function hideApiKey() {
@@ -124,6 +126,8 @@
                 apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 3)}`;
                 showHideApi.setAttribute("onclick", "revealApiKey()");
                 showHideApi.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal API Key">';
+
+                if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'block';
             }
 
             function revealPin() {
