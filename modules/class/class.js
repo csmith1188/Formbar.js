@@ -113,7 +113,6 @@ async function leaveRoom(userSession) {
         const classId = userSession.classId;
         const email = userSession.email;
         const studentId = await getIdFromEmail(email);
-        const socketUpdates = userSocketUpdates[email];
 
         // Remove the user from the class
         delete classInformation.classrooms[classId].students[email];
@@ -128,7 +127,9 @@ async function leaveRoom(userSession) {
         }
 
         // Update the class and play leave sound
-        socketUpdates.classUpdate(classId);
+        for (const socketUpdate of Object.values(userSocketUpdates[email])) {
+            socketUpdate.classUpdate(classId);
+        }
 
         // Play leave sound and reload the user's page
         await advancedEmitToClass('leaveSound', classId, {});

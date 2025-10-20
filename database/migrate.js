@@ -76,12 +76,8 @@ async function executeSQLMigration(migration) {
             database.exec(migrationSQL, (err) => {
                 if (err) {
                     database.run('ROLLBACK');
-                    if (err.message.includes("duplicate column name")) {
-                        console.log("Unable to complete migration as this migration has already been run. Continuing to next migration.");
-                        resolve();
-                    } else {
-                        reject(err);
-                    }
+                    console.log("Unable to complete migration as this migration has already been run, or an error has occurred. Continuing to next migration.");
+                    resolve();
                 } else {
                     database.run('COMMIT', (err) => {
                         if (err) {
