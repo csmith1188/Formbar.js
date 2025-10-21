@@ -34,8 +34,13 @@ function buildStudent(classroomData, studentData) {
         if (studentData.id.toString().includes("guest")) newStudent.classList.add("guestStudent");
         newStudent.open = opendetails.indexOf(studentData.id) != -1;
 
-        newStudent.onclick = (e) => {
-        };
+        if(new Date().getMonth() == 9 && new Date().getDate() >= 15 && new Date().getDate() <= 25) {
+            let santaHat = document.createElement("img");
+            santaHat.src = "/img/hats/santa.png";
+            santaHat.alt = "Santa Hat";
+            santaHat.classList.add("student-hat");
+            newStudent.querySelector("summary").appendChild(santaHat);
+        }
 
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
@@ -103,6 +108,14 @@ function buildStudent(classroomData, studentData) {
             // Add offline icon
             summary.textContent += `💤`;
             newStudent.classList.add("offline");
+
+            if(new Date().getMonth() == 9 && new Date().getDate() >= 15 && new Date().getDate() <= 25) {
+                let santaHat = document.createElement("img");
+                santaHat.src = "/img/hats/santa.png";
+                santaHat.alt = "Santa Hat";
+                santaHat.classList.add("student-hat");
+                newStudent.querySelector("summary").appendChild(santaHat);
+            }
 
             // Lower the opacity to indicate offline status
             newStudent.style.opacity = 0.65;

@@ -1401,15 +1401,23 @@ div.break {
 
 
 #permissionsList {
-	display: grid;
+	display: flex;
 	justify-content: space-evenly;
 	border-radius: 10px;
 	margin: 1vh;
 	width: 80%;
-	font-size: 1.5cqw;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 20px;
 	margin: auto;		
+}
+
+td.permissionCell {
+	padding: 5px;
+}
+
+input.permissionRadio {
+	margin: auto;
+	--theme-color: red
 }
 
 #helpReason:empty, #breakReason:empty, #response:empty {
@@ -2803,7 +2811,13 @@ div.mobileSpacer {
 	display: none;
 }
 
-
+.student-hat {
+	position: absolute;
+	left: -20px;
+	top: -20px;
+	width: 40px;
+	transform: rotate(-45deg);
+}
 
 *:not(details)[hidden] {
 	display: none !important;
