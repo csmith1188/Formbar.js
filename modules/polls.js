@@ -291,6 +291,12 @@ function pollResponse(classId, res, textRes, userSession) {
     const user = classInformation.users[email];
     const classroom = classInformation.classrooms[classId];
 
+    // If the classroom does not exist, return
+    if (!classroom) {
+        logger.log('warning', `[pollResp WARNING] session=(${JSON.stringify(userSession)}) - Classroom not found for classId ${classId}`);
+        return;
+    }
+
     // If there's no poll or the poll is not active, return
     if (!classroom.poll || !classroom.poll.status) {
         return;
