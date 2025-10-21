@@ -25,11 +25,15 @@ module.exports = {
 
                 // Get the transactions from the database
                 const transactions = await dbGetAll('SELECT * FROM transactions WHERE from_user = ? OR to_user = ? ORDER BY date DESC', [userId, userId]);
-                if (!transactions) {
-                    logger.log('error', 'No transactions found for user');
-                    res.render('pages/message', {
-                        message: 'No transactions found for this user.',
-                        title: 'Transactions'
+                if (!transactions || transactions.length === 0) {
+                    logger.log('info', 'No transactions found for user');
+                    // Still render the page, just with an empty array
+                    const userDisplayName = (await dbGet('SELECT displayName FROM users WHERE id = ?', [userId]))?.displayName || "Unknown User";
+                    res.render('pages/transactions', {
+                        title: 'Transactions',
+                        transactions: [],
+                        displayName: userDisplayName,
+                        currentUserId: req.session.userId
                     });
                     return;
                 }
@@ -42,6 +46,7 @@ module.exports = {
                     title: 'Transactions',
                     transactions: transactions,
                     displayName: userDisplayName,
+                    currentUserId: req.session.userId
                 });
             } catch (err) {
                 logger.log('error', err.stack);

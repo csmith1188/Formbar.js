@@ -1106,7 +1106,8 @@ div#usersMenu.tabContent.usersMenuBox #users {
 #users {
 	gap: 20px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: stretch;
     align-content: flex-start;
 }
