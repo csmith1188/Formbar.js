@@ -113,7 +113,7 @@ async function joinRoomByCode(code, session) {
 			// If the user is not a guest, then insert them into the database
 			if (!user.isGuest) {
 				await new Promise((resolve, reject) => {
-					database.run('INSERT INTO classusers(classId, studentId, permissions, digiPogs) VALUES(?, ?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults, 0], (err) => {
+					database.run('INSERT INTO classusers(classId, studentId, permissions) VALUES(?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults], (err) => {
 						if (err) {
 							reject(err)
 							return
