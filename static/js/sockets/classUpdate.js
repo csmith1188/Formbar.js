@@ -275,7 +275,7 @@ socket.on('classUpdate', (classroomData) => {
                 permissionCell.className = 'permissionCell';
                 
                 let permissionRadio = document.createElement('input');
-                permissionRadio.type = 'radio';
+                permissionRadio.type = 'checkbox';
                 permissionRadio.className = 'permissionRadio';
                 permissionRadio.name = permission;
 
