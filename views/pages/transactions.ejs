@@ -78,7 +78,7 @@
                     <% } %>
                 </table>
 
-                <p style="margin-top: 10px; font-size: 16px;">Page: 1 / 1</p>
+                <p id="pageDisplay" style="margin-top: 10px; font-size: 16px;">Page: 1 / <%- Math.ceil(transactions.length / 10) %></p>
 
                 <div class="buttons">
                     <button onclick="lastPage()" id="backButton" class="revampButton">&lt;&lt;</button>
@@ -112,7 +112,7 @@
                     row.style.display = '';
                 });
                 
-                document.querySelector('p').innerText = `Page: ${page + 1} / ${totalPages}`;
+                document.getElementById('pageDisplay').innerText = `Page: ${page + 1} / ${totalPages}`;
 
                 currentPage == 0 ? backButton.style.display = 'none' : backButton.style.display = 'block';
                 currentPage == totalPages - 1 ? forwardButton.style.display = 'none' : forwardButton.style.display = 'block';
