@@ -47,6 +47,10 @@
             <div class="transactionHistory">
                 <h1>Transactions for <%- displayName %></h1>
 
+                <% if (transactions.length === 0) { %>
+                    <p style="margin-top: 30px; font-size: 18px; color: #666;">No transactions found for this user.</p>
+                <% } else { %>
+
                 <table class="revampDiv">
                     <tr>
                         <th class="hideMobile">From:</th>
@@ -56,23 +60,32 @@
                         <th class="hideMobile">Date</th>
                     </tr>
 
-                    <% for(let i=0;i<transactions.length % 10;i++) { %>
-                        <% let transaction = transactions[Math.floor(transactions.length / 10) * 10 + i]; %>
-                        <tr data-page="<%- Math.floor(transactions.length / 10) %>" style="display: none;">
+                    <% for(let i=0; i < transactions.length; i++) { %>
+                        <%
+                            let transaction = transactions[i];
+                            let page = Math.floor(i / 10);
+                            const date = new Date(Number(transaction.date));
+                            const valid = !isNaN(date);
+                        %>
+                        <tr data-page="<%- page %>" style="display: none;">
                             <td class="hideMobile"><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
                             <td class="hideMobile"><%= transaction.to_user ? transaction.to_user : 'Pool: ' + transaction.pool %></td>
                             <td class="hideMobile"><%= transaction.amount %></td>
-                            <td class="showMobileCell"><%= transaction.to_user == currentUser.id ? '+' + transaction.amount : '-' + transaction.amount %></td>
+                            <td class="showMobileCell"><%= transaction.amount %></td>
                             <td><%= transaction.reason %></td>
-                            <td class="hideMobile"><%= new Date(Math.floor(transaction.date)).toLocaleDateString() + ' at ' + new Date(Math.floor(transaction.date)).toLocaleTimeString() %></td>
+                            <td class="hideMobile"><%= valid ? `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}` : 'Not tracked' %></td>
                         </tr>
                     <% } %>
                 </table>
+
+                <p style="margin-top: 10px; font-size: 16px;">Page: 1 / 1</p>
 
                 <div class="buttons">
                     <button onclick="lastPage()" id="backButton" class="revampButton">&lt;&lt;</button>
                     <button onclick="nextPage()" id="forwardButton" class="revampButton">&gt;&gt;</button>
                 </div>
+
+                <% } %>
 
                 <button class="revampButton" style="position: fixed; bottom: 20px; left: 20px; padding: 15px 25px; font-size: 18px;" onclick="location.href = '/pools'">
                     Pog Pools
@@ -80,7 +93,7 @@
             </div>
         </body>
         
-                    
+        <% if (transactions.length > 0) { %>        
         <script>
             let backButton = document.getElementById('backButton');
             let forwardButton = document.getElementById('forwardButton');
@@ -88,7 +101,7 @@
             let trans = <%- JSON.stringify(transactions) %>
 
             let currentPage = 0;
-            const totalPages = Math.floor(<%- transactions.length %> / 10) + (<%- transactions.length % 10 === 0 ? 0 : 1 %>);
+            const totalPages = Math.ceil(<%- transactions.length %> / 10);
             
             function showPage(page) {
                 document.querySelectorAll('tr[data-page]').forEach(row => {
@@ -121,4 +134,5 @@
             
             showPage(0);
         </script>
+        <% } %>
 </html>
