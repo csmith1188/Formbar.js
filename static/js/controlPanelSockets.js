@@ -82,8 +82,8 @@ function createTagSelectButtons() {
 				}
 			}
 
-			if (studentSelected) {
-				studentsAllowedToVote.push(student.id.toString());
+			if (studentSelected && !studentsAllowedToVote.includes(student.id)) {
+				studentsAllowedToVote.push(student.id);
 			}
 		}
 
@@ -253,8 +253,8 @@ socket.on('customPollUpdate', (
 
 			if (studentCheckbox) {
 				studentCheckbox.checked = switchState;
-				if (switchState) {
-					studentsAllowedToVote.push(student.id.toString());
+				if (switchState && !studentsAllowedToVote.includes(student.id)) {
+					studentsAllowedToVote.push(student.id);
 				}
 				studentElement.open = studentCheckbox.checked;
 			}

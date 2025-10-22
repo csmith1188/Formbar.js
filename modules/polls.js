@@ -58,7 +58,10 @@ async function createPoll(classId, pollData, userSession) {
                 if (classInformation.classrooms[classId].excludedPermissions && classInformation.classrooms[classId].excludedPermissions.includes(student.classPermissions) || student.break || student.tags && (student.tags.includes('Offline') || student.tags.includes('Excluded'))) { 
                     continue;
                 }
-                classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id.toString());
+
+                if (!studentsAllowedToVote.includes(student.id)) {
+                    classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id);
+                }
             }
         }
 

@@ -10,7 +10,7 @@ async function joinRoomByCode(code, session) {
 		logger.log('info', `[joinClass] email=(${email}) classCode=(${code})`)
 
 		// Find the id of the class from the database
-		const classroom = await new Promise((resolve, reject) => {
+		const classroomDb = await new Promise((resolve, reject) => {
 			database.get('SELECT * FROM classroom WHERE key=?', [code], (err, classroom) => {
 				if (err) {
 					reject(err)
@@ -21,20 +21,20 @@ async function joinRoomByCode(code, session) {
 		})
 
 		// Check to make sure there was a class with that code
-		if (!classroom) {
+		if (!classroomDb) {
 			logger.log('info', '[joinClass] No class with that code')
 			return 'No class with that code'
 		}
 
-		if (classroom.tags) {
-			classroom.tags = classroom.tags.split(",");
+		if (classroomDb.tags) {
+			classroomDb.tags = classroomDb.tags.split(",");
 		} else {
-			classroom.tags = [];
+			classroomDb.tags = [];
 		}
 
 		// Load the classroom into the classInformation object if it's not already loaded
-		if (!classInformation.classrooms[classroom.id]) {
-			classInformation.classrooms[classroom.id] = new Classroom(classroom.id, classroom.name, classroom.key, classroom.owner, classroom.permissions, classroom.sharedPolls, classroom.pollHistory, classroom.tags)
+		if (!classInformation.classrooms[classroomDb.id]) {
+			classInformation.classrooms[classroomDb.id] = new Classroom(classroomDb.id, classroomDb.name, classroomDb.key, classroomDb.owner, classroomDb.permissions, classroomDb.sharedPolls, classroomDb.pollHistory, classroomDb.tags)
 		}
 
 		// Find the id of the user who is trying to join the class
@@ -60,7 +60,7 @@ async function joinRoomByCode(code, session) {
 		if (!user.isGuest) {
 			// Add the two id's to the junction table to link the user and class
 			classUser = await new Promise((resolve, reject) => {
-				database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroom.id, user.id], (err, classUser) => {
+				database.get('SELECT * FROM classusers WHERE classId=? AND studentId=?', [classroomDb.id, user.id], (err, classUser) => {
 					if (err) {
 						reject(err)
 						return
@@ -82,25 +82,30 @@ async function joinRoomByCode(code, session) {
 
 			// Set class permissions and clear any previous tags so they don't persist across classes
 			currentUser.classPermissions = classUser.permissions
-			currentUser.activeClass = classroom.id;
+			currentUser.activeClass = classroomDb.id;
 			currentUser.tags = [];
 			classInformation.users[email].tags = [];
 			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => { });
 
 			// Add the student to the newly created class
-			classInformation.classrooms[classroom.id].students[email] = currentUser
-			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(currentUser.id)
-			classInformation.users[email].activeClass = classroom.id
-			advancedEmitToClass('joinSound', classroom.id, {})
+            const classroom = classInformation.classrooms[classroomDb.id];
+			classroom.students[email] = currentUser
+            if (!classroom.poll.studentsAllowedToVote.includes(currentUser.id)) {
+                classroom.poll.studentsAllowedToVote.push(currentUser.id)
+            }
+
+            // Set the active class of the user
+			classInformation.users[email].activeClass = classroomDb.id
+			advancedEmitToClass('joinSound', classroomDb.id, {})
 
 			// Set session class and classId
-			session.classId = classroom.id;
+			session.classId = classroomDb.id;
 
 			// Set the class of the API socket
-			setClassOfApiSockets(currentUser.API, classroom.id);
+			setClassOfApiSockets(currentUser.API, classroomDb.id);
 
 			// Call classUpdate on all user's tabs
-			userUpdateSocket(email, 'classUpdate', classroom.id, { global: false, restrictToControlPanel: true });
+			userUpdateSocket(email, 'classUpdate', classroomDb.id, { global: false, restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
@@ -108,7 +113,7 @@ async function joinRoomByCode(code, session) {
 			// If the user is not a guest, then insert them into the database
 			if (!user.isGuest) {
 				await new Promise((resolve, reject) => {
-					database.run('INSERT INTO classusers(classId, studentId, permissions) VALUES(?, ?, ?)', [classroom.id, user.id, classInformation.classrooms[classroom.id].permissions.userDefaults], (err) => {
+					database.run('INSERT INTO classusers(classId, studentId, permissions) VALUES(?, ?, ?)', [classroomDb.id, user.id, classInformation.classrooms[classroomDb.id].permissions.userDefaults], (err) => {
 						if (err) {
 							reject(err)
 							return
@@ -121,26 +126,28 @@ async function joinRoomByCode(code, session) {
 			}
 
 			// Grab the user from the users list
-			const classData = classInformation.classrooms[classroom.id];
+			const classData = classInformation.classrooms[classroomDb.id];
 			let currentUser = classInformation.users[email]
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
-			currentUser.activeClass = classroom.id
+			currentUser.activeClass = classroomDb.id
 			currentUser.tags = [];
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
-			classData.poll.studentsAllowedToVote.push(currentUser.id)
-			classInformation.users[email].activeClass = classroom.id
+            if (!classData.poll.studentsAllowedToVote.includes(currentUser.id)) {
+                classData.poll.studentsAllowedToVote.push(currentUser.id)
+            }
+			classInformation.users[email].activeClass = classroomDb.id
 			const controlPanelPermissions = Math.min(
 				classData.permissions.controlPolls,
 				classData.permissions.manageStudents,
 				classData.permissions.manageClass
 			)
 
-			setClassOfApiSockets(studentAPIKey, classroom.id);
+			setClassOfApiSockets(studentAPIKey, classroomDb.id);
 
 			// Call classUpdate on all user's tabs
-			userUpdateSocket(email, 'classUpdate', classroom.id, { global: false, restrictToControlPanel: true });
+			userUpdateSocket(email, 'classUpdate', classroomDb.id, { global: false, restrictToControlPanel: true });
 
 			logger.log('verbose', `[joinClass] classInformation=(${classInformation})`)
 			return true
