@@ -32,9 +32,10 @@ async function awardDigipogs(awardData) {
         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to]);
 
         try {
-            await dbRun("INSERT INTO transactions (from_user, to_user, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
                 from,
                 to,
+                null,
                 amount,
                 reason,
                 Date.now(),
@@ -125,7 +126,7 @@ async function transferDigipogs(transferData) {
             }
 
             try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
+                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
                     from,
                     to,
                     null,
