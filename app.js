@@ -83,6 +83,13 @@ setInterval(() => {
     }
 }, INACTIVITY_CHECK_TIME)
 
+// Clean up expired refresh tokens from the database
+const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60 // 1 hour
+authentication.cleanRefreshTokens();
+setInterval(async () => {
+    authentication.cleanRefreshTokens();
+}, REFRESH_TOKEN_CHECK_TIME)
+
 // Check if an IP is banned
 app.use((req, res, next) => {
     let ip = req.ip;

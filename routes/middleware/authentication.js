@@ -2,6 +2,7 @@ const { logger } = require("../../modules/logger")
 const { classInformation } = require("../../modules/class/classroom")
 const { logNumbers, settings } = require("../../modules/config")
 const { TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions")
+const { dbGetAll, dbRun } = require("../../modules/database");
 
 const whitelistedIps = {}
 const blacklistedIps = {}
@@ -14,6 +15,20 @@ const loginOnlyRoutes = [
 	'/logs',
 	'/apikey',
 ] // Routes that can be accessed without being in a class
+
+// Removes expired refresh tokens from the database
+async function cleanRefreshTokens() {
+    try {
+        const refreshTokens = await dbGetAll('SELECT * FROM refresh_tokens');
+        for (const refreshToken of refreshTokens) {
+            if (Date.now() >= refreshToken.exp) {
+                await dbRun('DELETE FROM refresh_tokens WHERE refresh_token = ?', [refreshToken.refresh_token]);
+            }
+        }
+    } catch (err) {
+        logger.log('error', err.stack);
+    }
+}
 
 /*
 Check if user has logged in
@@ -183,6 +198,8 @@ function checkIPBanned(ip) {
 }
 
 module.exports = {
+    cleanRefreshTokens,
+
 	// Whitelisted/Blacklisted IP addresses
 	whitelistedIps,
 	blacklistedIps,
