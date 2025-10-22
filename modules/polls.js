@@ -83,7 +83,6 @@ async function createPoll(classId, pollData, userSession) {
 
         // Set the poll's data in the classroom
         classroom.poll.startTime = Date.now();
-        classroom.poll.weight = weight;
         classroom.poll.allowTextResponses = allowTextResponses;
         classroom.poll.prompt = prompt;
         classroom.poll.allowMultipleResponses = allowMultipleResponses;
