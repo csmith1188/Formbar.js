@@ -6,7 +6,7 @@ const { classInformation } = require("../../../modules/class/classroom");
 module.exports = {
     run(router) {
         // Retrieves whether a class is currently active or not from the class ID provided
-        router.get('/class/:id/active', httpPermCheck("isClassActive"), async (req, res) => {
+        router.get("/class/:id/active", httpPermCheck("isClassActive"), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const classroom = classInformation.classrooms[classId];
@@ -18,9 +18,9 @@ module.exports = {
                 const isActive = isClassActive(classId);
                 res.status(200).json({ isActive });
             } catch (err) {
-                logger.log('error', err.stack);
+                logger.log("error", err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });
             }
         });
-    }
-}
+    },
+};
