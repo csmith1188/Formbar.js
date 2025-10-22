@@ -8,9 +8,9 @@ const { lastActivities } = require("../../sockets/middleware/inactivity");
 const { GUEST_PERMISSIONS } = require("../permissions");
 
 function logout(socket) {
-    const email = socket.request.session.email
-    const userId = socket.request.session.userId
-    const classId = socket.request.session.classId
+    const email = socket.request.session.email;
+    const userId = socket.request.session.userId;
+    const classId = socket.request.session.classId;
 
     // Remove this socket from the user's active sockets first and determine if this was the last one
     let isLastSession = false;
@@ -25,14 +25,14 @@ function logout(socket) {
     }
 
     // Leave the room only on this socket
-    if (classId) socket.leave(`class-${classId}`)
+    if (classId) socket.leave(`class-${classId}`);
 
     socket.request.session.destroy((err) => {
         try {
-            if (err) throw err
+            if (err) throw err;
 
             // Reload just this client
-            socket.emit('reload')
+            socket.emit("reload");
 
             // If the socket had an associated last activity, remove it
             if (lastActivities[email] && lastActivities[email][socket.id]) {
@@ -67,55 +67,51 @@ function logout(socket) {
 
                             // If the student's tags exist and do not include Offline, then add it
                             // Otherwise, if the student's tags do not exist, then set it to Offline
-                            if (student.tags && !student.tags.includes('Offline')) {
-                                student.tags.push('Offline');
+                            if (student.tags && !student.tags.includes("Offline")) {
+                                student.tags.push("Offline");
                             } else if (!student.tags) {
-                                student.tags = ['Offline'];
+                                student.tags = ["Offline"];
                             }
                         }
                     }
 
                     // Update class permissions and virtual bar
-                    userUpdateSocket(email, 'classUpdate', classId);
+                    userUpdateSocket(email, "classUpdate", classId);
                 }
 
                 // If this user owns the classroom, end it
-                database.get(
-                    'SELECT * FROM classroom WHERE owner=? AND id=?',
-                    [userId, classId],
-                    (err, classroom) => {
-                        if (err) {
-                            logger.log('error', err.stack)
-                        }
-
-                        if (classroom) {
-                            endClass(classroom.id);
-                        }
+                database.get("SELECT * FROM classroom WHERE owner=? AND id=?", [userId, classId], (err, classroom) => {
+                    if (err) {
+                        logger.log("error", err.stack);
                     }
-                )
+
+                    if (classroom) {
+                        endClass(classroom.id);
+                    }
+                });
             }
         } catch (err) {
-            logger.log('error', err.stack)
+            logger.log("error", err.stack);
         }
-    })
+    });
 }
 
 async function deleteUser(userId, userSession) {
     try {
-        logger.log('info', `[deleteUser] session=(${JSON.stringify(userSession)})`)
-        logger.log('info', `[deleteUser] userId=(${userId})`)
+        logger.log("info", `[deleteUser] session=(${JSON.stringify(userSession)})`);
+        logger.log("info", `[deleteUser] userId=(${userId})`);
 
         // Get the user's data from their ID and verify they exist
         // If not found in users table, check if they're an unverified user in temp_user_creation_data
-        const user = await dbGet('SELECT * FROM users WHERE id=?', [userId]);
+        const user = await dbGet("SELECT * FROM users WHERE id=?", [userId]);
         let tempUser;
         if (!user) {
-            tempUser = await dbGet('SELECT * FROM temp_user_creation_data WHERE secret=?', [userId]);
+            tempUser = await dbGet("SELECT * FROM temp_user_creation_data WHERE secret=?", [userId]);
             if (!tempUser) {
-                return 'User not found';
+                return "User not found";
             }
 
-            await dbRun('DELETE FROM temp_user_creation_data WHERE secret=?', [userId]);
+            await dbRun("DELETE FROM temp_user_creation_data WHERE secret=?", [userId]);
         }
 
         // Log the user out if they're currently online
@@ -129,18 +125,18 @@ async function deleteUser(userId, userSession) {
 
         try {
             if (user) {
-                await dbRun('BEGIN TRANSACTION')
-            
+                await dbRun("BEGIN TRANSACTION");
+
                 // For verified users, delete from all related tables
                 await Promise.all([
-                    dbRun('DELETE FROM users WHERE id=?', userId),
-                    dbRun('DELETE FROM classusers WHERE studentId=?', userId),
-                    dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
-                ])
-    
-                await deleteCustomPolls(userId)
-                await deleteRooms(userId) // Delete any rooms owned by the user
-    
+                    dbRun("DELETE FROM users WHERE id=?", userId),
+                    dbRun("DELETE FROM classusers WHERE studentId=?", userId),
+                    dbRun("DELETE FROM shared_polls WHERE userId=?", userId),
+                ]);
+
+                await deleteCustomPolls(userId);
+                await deleteRooms(userId); // Delete any rooms owned by the user
+
                 // If the student is online, remove them from any class they're in and update the control panel
                 const student = classInformation.users[user.email];
                 if (student) {
@@ -149,26 +145,26 @@ async function deleteUser(userId, userSession) {
                     delete classInformation.users[user.email];
                     if (classroom) {
                         delete classroom.students[user.email];
-                        userUpdateSocket(user.email, 'classUpdate');
+                        userUpdateSocket(user.email, "classUpdate");
                     }
                 }
-    
-                await dbRun('COMMIT')
+
+                await dbRun("COMMIT");
             }
-            
-            await managerUpdate()
-            return true
+
+            await managerUpdate();
+            return true;
         } catch (err) {
-            await dbRun('ROLLBACK')
-            throw err
+            await dbRun("ROLLBACK");
+            throw err;
         }
     } catch (err) {
-        logger.log('error', err.stack);
-        return 'There was an internal server error. Please try again.';
+        logger.log("error", err.stack);
+        return "There was an internal server error. Please try again.";
     }
 }
 
 module.exports = {
     logout,
-    deleteUser
-}
+    deleteUser,
+};
