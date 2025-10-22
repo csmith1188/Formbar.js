@@ -87,11 +87,6 @@ async function joinRoomByCode(code, session) {
 			classInformation.users[email].tags = [];
 			database.run('UPDATE users SET tags = ? WHERE id = ?', ['', user.id], () => { });
 
-			// Redact the API key from the classroom user to prevent it from being sent anywhere
-			const studentAPIKey = currentUser.API;
-			currentUser = structuredClone(currentUser);
-			currentUser.API = undefined;
-
 			// Add the student to the newly created class
 			classInformation.classrooms[classroom.id].students[email] = currentUser
 			classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(currentUser.id)
@@ -102,7 +97,7 @@ async function joinRoomByCode(code, session) {
 			session.classId = classroom.id;
 
 			// Set the class of the API socket
-			setClassOfApiSockets(studentAPIKey, classroom.id);
+			setClassOfApiSockets(currentUser.API, classroom.id);
 
 			// Call classUpdate on all user's tabs
 			userUpdateSocket(email, 'classUpdate', classroom.id, { global: false, restrictToControlPanel: true });
@@ -131,11 +126,6 @@ async function joinRoomByCode(code, session) {
 			currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS
 			currentUser.activeClass = classroom.id
 			currentUser.tags = [];
-
-			// Redact the API key from the classroom user to prevent it from being sent anywhere
-			const studentAPIKey = currentUser.API;
-			currentUser = structuredClone(currentUser);
-			currentUser.API = undefined;
 
 			// Add the student to the newly created class
 			classData.students[email] = currentUser
