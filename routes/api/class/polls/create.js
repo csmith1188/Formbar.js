@@ -27,7 +27,6 @@ module.exports = {
                           blind: body.blind,
                           weight: body.weight,
                           tags: Array.isArray(body.tags) ? body.tags : (body.tags ?? []),
-                          studentsAllowedToVote: Array.isArray(body.boxes) ? body.boxes : undefined,
                           indeterminate: Array.isArray(body.indeterminate) ? body.indeterminate : [],
                           allowTextResponses: !!body.responseTextBox,
                           allowMultipleResponses: !!body.multiRes,

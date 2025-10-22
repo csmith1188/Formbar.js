@@ -51,7 +51,6 @@ async function createPoll(classId, pollData, userSession) {
         classroom.poll.allowVoteChanges = allowVoteChanges;
         classroom.poll.blind = blind;
         classroom.poll.status = true;
-        classroom.poll.studentsAllowedToVote = [1, 2];
 
         // Creates an object for every answer possible the teacher is allowing
         const letterString = "abcdefghijklmnopqrstuvwxyz";
@@ -111,7 +110,6 @@ async function createPoll(classId, pollData, userSession) {
  * Examples:
  * - updatePoll(classId, {status: false}, session) - Ends the poll
  * - updatePoll(classId, {status: true}, session) - Resumes the poll
- * - updatePoll(classId, {studentsAllowedToVote: ['1', '2']}, session) - Changes who can vote
  * - updatePoll(classId, {}, session) - Clears the poll (empty object)
  */
 async function updatePoll(classId, options, userSession) {
@@ -226,7 +224,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
             prompt: "",
             weight: 1,
             blind: false,
-            studentsAllowedToVote: [],
         };
 
         // Adds data to the previous poll answers table upon clearing the poll
@@ -301,6 +298,10 @@ function pollResponse(classId, res, textRes, userSession) {
         return;
     }
 
+    if (classroom.allowedRespondants.includes(user.id)) {
+        return;
+    }
+
     // If the user's response has not changed, return
     const prevRes = classroom.students[email].pollRes.buttonRes;
     let hasChanged = classroom.poll.allowMultipleResponses ? JSON.stringify(prevRes) !== JSON.stringify(res) : prevRes !== res;
@@ -310,7 +311,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const isRemoving = res === "remove" || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentsAllowedToVote.includes(user.id.toString()) && !isRemoving) {
+    if (!classroom.allowedRespondants.includes(user.id) && !isRemoving) {
         return;
     }
 

@@ -136,18 +136,10 @@
 
 		// Calculate voting rights based on poll data
 		function updateVotingRight() {
-			if (!poll || !poll.status) {
-				votingRight = false;
-				return;
-			}
-			// Check personal canVote flag (set by server for privacy)
-			// Fallback to checking studentsAllowedToVote array for backwards compatibility
-			if (poll.canVote !== undefined) {
-				votingRight = poll.canVote;
-			} else if (poll.studentsAllowedToVote) {
-				votingRight = poll.studentsAllowedToVote.includes(currentUser.id.toString());
+			if (classroomData.allowedRespondants.length === 0) {
+				votingRight = true; // Everyone can vote
 			} else {
-				votingRight = false;
+				votingRight = classroomData.allowedRespondants.includes(currentUser.id);
 			}
 		}
 

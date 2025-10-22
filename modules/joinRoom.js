@@ -103,7 +103,7 @@ async function joinRoomByCode(code, session) {
 
             // Add the student to the newly created class
             classInformation.classrooms[classroom.id].students[email] = currentUser;
-            classInformation.classrooms[classroom.id].poll.studentsAllowedToVote.push(currentUser.id);
+            classInformation.classrooms[classroom.id].allowedRespondants.push(currentUser.id);
             classInformation.users[email].activeClass = classroom.id;
             advancedEmitToClass("joinSound", classroom.id, {});
 
@@ -152,7 +152,7 @@ async function joinRoomByCode(code, session) {
 
             // Add the student to the newly created class
             classData.students[email] = currentUser;
-            classData.poll.studentsAllowedToVote.push(currentUser.id);
+            classData.allowedRespondants.push(currentUser.id);
             classInformation.users[email].activeClass = classroom.id;
             const controlPanelPermissions = Math.min(
                 classData.permissions.controlPolls,
