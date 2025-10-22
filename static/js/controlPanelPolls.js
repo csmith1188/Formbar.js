@@ -251,6 +251,30 @@ function responseAmountChange(responseAmount = null) {
 
 		responseDiv.appendChild(colorPickerDiv)
 
+		let correctAnswer = document.createElement('input')
+		correctAnswer.type = 'checkbox'
+		correctAnswer.className = 'correctAnswer'
+		correctAnswer.name = 'correctAnswer'
+		correctAnswer.title = 'Mark as Correct Answer'
+
+		// Only one correct answer for non-multiple response polls
+		if (!document.getElementById('multiRes').checked) {
+			correctAnswer.onclick = () => {
+				let correctAnswers = document.getElementsByClassName('correctAnswer')
+				for (let j = 0; j < correctAnswers.length; j++) {
+					if (j != i) {
+						correctAnswers[j].checked = false
+						pollResponses[j].correct = false
+					}
+				}
+			}
+		}
+
+		correctAnswer.onchange = (event) => {
+			pollResponses[i].correct = event.target.checked;
+		}
+		responseDiv.appendChild(correctAnswer)
+
 		let answerName = document.createElement('input')
 		answerName.type = 'text'
 		answerName.className = 'answerName revampButton revampWithText'
@@ -290,7 +314,7 @@ function responseAmountChange(responseAmount = null) {
 
 		let removeAnswerButton = document.createElement("button");
 		removeAnswerButton.className = "quickButton revampButton warningButton";
-		removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
+		removeAnswerButton.innerHTML = "<img src='/img/icons/close-outline.svg' alt='Remove Answer' />";
 		removeAnswerButton.id = `removeAnswer`;
 		removeAnswerButton.onclick = removeAnswer;
 		responseDiv.appendChild(removeAnswerButton);
@@ -446,7 +470,8 @@ function startPoll(customPollId) {
 		let pollAnswer = {
 			answer: (pollResponse.answer) ? pollResponse.answer : pollResponse.defaultAnswer,
 			weight: pollResponse.weight,
-			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor
+			color: (pollResponse.color) ? pollResponse.color : pollResponse.defaultColor,
+			correct: pollResponse.correct || false
 		}
 		pollAnswer.answer = pollAnswer.answer.replaceAll('"', '“')
 		pollAnswer.answer = pollAnswer.answer.replaceAll(',', '‚')

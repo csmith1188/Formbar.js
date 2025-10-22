@@ -396,6 +396,13 @@ dialog {
 
 #headerLogo h1 {
 	margin: 0;
+	z-index: 3;
+}
+
+input.correctAnswer {
+	margin: 0;
+	width: 44px !important;
+	height: 44px !important;
 }
 
 #headerLogo,
@@ -1410,15 +1417,31 @@ div.break {
 	justify-content: space-evenly;
 	border-radius: 10px;
 	margin: 1vh;
-	width: 80%;
+	width: 60%;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 20px;
 	margin: auto;		
 }
 
+div.defaultPermSelect {
+	position: absolute;
+	bottom: 5px;
+	left: 5px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
 td.permissionCell,
 th.permissionHeader {
 	border: 3px solid var(--lightMode-menu-border);
+}
+
+td.permissionCell {
+	height: 55px;
+	width: 55px;
 }
 
 th.permissionHeader {
@@ -1441,6 +1464,15 @@ th.permissionHeader {
 .permissionOn {
 	background-color: #4dca4d;
 	color: black !important;
+}
+
+.permissionOff img {
+	height: 100%;
+	filter: invert(1);
+}
+
+.permissionOn img {
+	height: 100%;
 }
 
 input.permissionRadio {

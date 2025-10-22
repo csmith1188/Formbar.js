@@ -255,14 +255,35 @@ socket.on('classUpdate', (classroomData) => {
         permissionHeader.textContent = '';
         permissionsTableHeader.appendChild(permissionHeader);
 
-        for (const permissionOption of permissionOptions) {
+        let newPermSort = permissionOptions.slice().sort((a, b) => a.permissionLevel - b.permissionLevel);
+        let userDefaultPermSelect = document.getElementById('userDefaultPermSelect');
+
+        for (const permissionOption of newPermSort) {
+            if(permissionOption.permissionLevel == permissionOptions[0].permissionLevel) continue;
+
             let permissionHeader = document.createElement('th');
             permissionHeader.className = 'permissionHeader'
             permissionHeader.textContent = permissionOption.name;
             permissionsTableHeader.appendChild(permissionHeader);
+
+            if(userDefaultPermSelect.querySelector(`option[value='${permissionOption.permissionLevel}']`)) continue;
+            let newOption = document.createElement('option');
+            newOption.value = permissionOption.permissionLevel;
+            newOption.text = permissionOption.name;
+            userDefaultPermSelect.appendChild(newOption);
+
+            userDefaultPermSelect.onchange = () => {
+                socket.emit('setClassPermissionSetting', 'userDefaults', Number(userDefaultPermSelect.value));
+            }
         }
 
+
         for (let [permission, permissionLevel] of Object.entries(classroomData.permissions)) {
+            if(permission.toLowerCase() == 'userdefaults') {
+                userDefaultPermSelect.value = permissionLevel;
+                continue;
+            }
+
             let permissionRow = document.createElement('tr');
             permissionRow.className = 'permissionRow';
 
@@ -271,7 +292,9 @@ socket.on('classUpdate', (classroomData) => {
             permissionNameCell.textContent = camelCaseToNormal(permission);
             permissionRow.appendChild(permissionNameCell);
 
-            for (const option of permissionOptions) {
+            for (const option of newPermSort) {
+                if(option.permissionLevel == permissionOptions[0].permissionLevel) continue;
+
                 let permissionCell = document.createElement('td');
                 permissionCell.className = 'permissionCell';
                 
@@ -280,29 +303,32 @@ socket.on('classUpdate', (classroomData) => {
                 permissionRadio.className = 'permissionRadio';
                 permissionRadio.name = permission;
                 permissionRadio.style.display = 'none';
+                permissionRadio.value = option.permissionLevel;
 
-                let permissionOff = document.createElement('span');
-                permissionOff.innerText = 'X';
+                let permissionOff = document.createElement('div');
+                permissionOff.innerHTML = '<img src="/img/icons/close-outline.svg" alt="Permission Level Off">';
                 permissionOff.style.display = 'none';
                 permissionOff.className = 'permissionOff';
                 permissionOff.dataset.permissionLevel = option.permissionLevel;
-                permissionOff.onclick = () => { permissionRadio.click() }
+                permissionOff.onclick = () => { permissionRadio.click(); }
                 permissionCell.appendChild(permissionOff);
 
-                let permissionOn = document.createElement('span');
-                permissionOn.innerText = '✓';
+                let permissionOn = document.createElement('div');
+                permissionOn.innerHTML = '<img src="/img/icons/checkmark-outline.svg" alt="Permission Level On">';
                 permissionOn.style.display = 'none';
                 permissionOn.className = 'permissionOn';
                 permissionOn.dataset.permissionLevel = option.permissionLevel;
-                permissionOn.onclick = () => { permissionRadio.click() }
+                permissionOn.onclick = () => { permissionRadio.click(); }
                 permissionCell.appendChild(permissionOn);
 
                 permissionCell.appendChild(permissionRadio);
                 permissionRow.appendChild(permissionCell);
                 permTableBody.appendChild(permissionRow);
 
-                if (option.permissionLevel == permissionLevel) {
-                    permissionRadio.checked = true;
+                if(permissionLevel == option.permissionLevel) permissionRadio.checked = true;
+
+
+                if (option.permissionLevel == permissionLevel || option.permissionLevel > permissionLevel) {
                     permissionOn.style.display = '';
                     permissionOff.style.display = 'none';
                 } else {
@@ -312,44 +338,30 @@ socket.on('classUpdate', (classroomData) => {
 
                 permissionRadio.onchange = (event) => {
                     let radio = event.target;
+
+
                     if (radio.checked) {
-                        socket.emit('setClassPermissionSetting', permission, option.permissionLevel);
+                        socket.emit('setClassPermissionSetting', permission, Number(radio.value));
                     }
 
                     event.target.closest('tr').querySelectorAll('span').forEach(span => {
-                        if (Number(span.dataset.permissionLevel) === option.permissionLevel) {
+                        if ((Number(span.dataset.permissionLevel) === radio.value) || (Number(span.dataset.permissionLevel) > radio.value)) {
                             if (span.innerText === '✓') {
                                 span.style.display = '';
                             } else {
                                 span.style.display = 'none';
                             }
-                        } else {
-                            span.style.display = 'none';
+                        } else if ((Number(span.dataset.permissionLevel) < radio.value)) {
+                            if (span.innerText === 'X') {
+                                span.style.display = '';
+                            } else {
+                                span.style.display = 'none';
+                            }
                         }
                     });
                     
                 }
             }
-
-
-
-
-        //     let permissionLabel = document.createElement('label')
-        //     permissionLabel.className = 'permissionLabel revampDiv'
-        //     permissionLabel.textContent = camelCaseToNormal(permission)
-
-        //     let permissionSelect = document.createElement('select')
-        //     permissionSelect.className = 'permissionSelect revampButton'
-        //     permissionSelect.id = permission
-        //     permissionSelect.onchange = (event) => {
-        //         let select = event.target
-        //         socket.emit('setClassPermissionSetting', select.id, select.options[select.selectedIndex].value)
-        //     }
-
-            
-
-        //     permissionLabel.appendChild(permissionSelect)
-        //     permissionsDiv.appendChild(permissionLabel)
         }
         permTableHead.appendChild(permissionsTableHeader);
         permissionsDiv.appendChild(permissionsTable);
