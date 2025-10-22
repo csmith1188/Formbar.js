@@ -228,9 +228,6 @@
 
 							// Add new response options
 							for (let response of Object.values(poll.responses)) {
-                                // Sanitize
-								<%= response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); %>
-
                                 if (multiAnswer !== 'button') {
 									const checkbox = document.createElement('input');
 									checkbox.type = 'checkbox';
