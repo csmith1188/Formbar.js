@@ -228,8 +228,7 @@
 
 							// Add new response options
 							for (let response of Object.values(poll.responses)) {
-								response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // sanitize
-								if (multiAnswer !== 'button') {
+                                if (multiAnswer !== 'button') {
 									const checkbox = document.createElement('input');
 									checkbox.type = 'checkbox';
 									checkbox.name = 'poll';
@@ -368,9 +367,9 @@
 							oldTextRes = '';
 						}
 
-                    poll = newPoll;
-                    updateVotingRight();
-                    updatePage();
+                        poll = newPoll;
+                        updateVotingRight();
+                        updatePage();
 					});
 
 					socket.on('pollResp', (voteData) => {

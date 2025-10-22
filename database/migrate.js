@@ -1,23 +1,25 @@
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-const { decrypt } = require('./modules/crypto'); // Old crypto module
-const { hash } = require('../modules/crypto'); // New crypto module
+const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
+const { decrypt } = require("./modules/crypto"); // Old crypto module
+const { hash } = require("../modules/crypto"); // New crypto module
 
 // Get all migration files and sort them by filename
-const sqlMigrations = fs.readdirSync('./database/migrations')
-    .filter(file => file.endsWith('.sql'))
-    .map(file => ({
-        type: 'sql',
+const sqlMigrations = fs
+    .readdirSync("./database/migrations")
+    .filter((file) => file.endsWith(".sql"))
+    .map((file) => ({
+        type: "sql",
         filename: file,
-        path: `./database/migrations/${file}`
+        path: `./database/migrations/${file}`,
     }));
 
-const jsMigrations = fs.readdirSync('./database/migrations/JSMigrations')
-    .filter(file => file.endsWith('.js'))
-    .map(file => ({
-        type: 'js',
+const jsMigrations = fs
+    .readdirSync("./database/migrations/JSMigrations")
+    .filter((file) => file.endsWith(".js"))
+    .map((file) => ({
+        type: "js",
         filename: file,
-        path: `./migrations/JSMigrations/${file}`
+        path: `./migrations/JSMigrations/${file}`,
     }));
 
 // Combine and sort all migrations
@@ -25,18 +27,18 @@ const allMigrations = [...sqlMigrations, ...jsMigrations].sort((a, b) => a.filen
 
 // Backup the database if there's already a database, unless the SKIP_BACKUP flag is set
 // If there's already a backup, denote it with a number
-if (fs.existsSync('database/database.db') && !process.env.SKIP_BACKUP) {
+if (fs.existsSync("database/database.db") && !process.env.SKIP_BACKUP) {
     let backupNumber = fs.existsSync("database/database.bak") ? 1 : 0;
     while (fs.existsSync(`database/database-${backupNumber}.bak`)) {
         backupNumber++;
     }
 
-    const backupPath = backupNumber == 0 ? 'database/database.bak' : `database/database-${backupNumber}.bak`;
-    fs.copyFileSync('database/database.db', backupPath);
+    const backupPath = backupNumber == 0 ? "database/database.bak" : `database/database-${backupNumber}.bak`;
+    fs.copyFileSync("database/database.db", backupPath);
 }
 
 // Retrieve the database
-const database = new sqlite3.Database('./database/database.db');
+const database = new sqlite3.Database("./database/database.db");
 
 // Run migrations in sequence
 async function executeMigration(index) {
@@ -50,12 +52,12 @@ async function executeMigration(index) {
     console.log(`Running ${migration.type.toUpperCase()} migration: ${migration.filename}`);
 
     try {
-        if (migration.type === 'sql') {
+        if (migration.type === "sql") {
             await executeSQLMigration(migration);
         } else {
             await executeJSMigration(migration);
         }
-        
+
         console.log(`Completed ${migration.type.toUpperCase()} migration: ${migration.filename}`);
         await executeMigration(index + 1);
     } catch (err) {
@@ -67,31 +69,29 @@ async function executeMigration(index) {
 
 // Execute a single SQL migration
 async function executeSQLMigration(migration) {
-    const migrationSQL = fs.readFileSync(migration.path, 'utf8');
-    
+    const migrationSQL = fs.readFileSync(migration.path, "utf8");
+
     return new Promise((resolve, reject) => {
         database.serialize(() => {
-            database.run('BEGIN TRANSACTION');
+            database.run("BEGIN TRANSACTION");
 
             database.exec(migrationSQL, (err) => {
                 if (err) {
-                    database.run('ROLLBACK');
-                    if (err.message.includes("duplicate column name")) {
-                        console.log("Unable to complete migration as this migration has already been run. Continuing to next migration.");
-                        resolve();
-                    } else {
-                        reject(err);
-                    }
+                    database.run("ROLLBACK");
+                    console.log(
+                        "Unable to complete migration as this migration has already been run, or an error has occurred. Continuing to next migration."
+                    );
+                    resolve();
                 } else {
-                    database.run('COMMIT', (err) => {
+                    database.run("COMMIT", (err) => {
                         if (err) {
-                            database.run('ROLLBACK');
+                            database.run("ROLLBACK");
                             reject(err);
                         }
 
                         // Special handling for migration 01 (password conversion)
                         if (migration.filename.startsWith("01")) {
-                            database.all('SELECT * FROM users', async (err, users) => {
+                            database.all("SELECT * FROM users", async (err, users) => {
                                 if (err) {
                                     console.error(err);
                                     return;
@@ -101,11 +101,11 @@ async function executeSQLMigration(migration) {
                                     if (user.email !== undefined) continue;
                                     const decryptedPassword = decrypt(JSON.parse(user.password));
                                     const hashedPassword = await hash(decryptedPassword);
-                                    database.run('UPDATE users SET password=? WHERE id=?', [hashedPassword, user.id]);
+                                    database.run("UPDATE users SET password=? WHERE id=?", [hashedPassword, user.id]);
                                 }
                             });
                         }
-                        
+
                         resolve();
                     });
                 }
@@ -126,7 +126,7 @@ async function executeJSMigration(migration) {
         }
 
         // Rollback the transaction if there was an error
-        database.run('ROLLBACK');
+        database.run("ROLLBACK");
         console.error(`Error executing JS migration ${migration.filename}:`, err);
         throw err;
     }

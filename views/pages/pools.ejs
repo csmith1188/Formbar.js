@@ -55,12 +55,13 @@
                 }
 
                 /* Column width controls */
-                th:nth-child(1), td:nth-child(1) { width: 15%; } /* Name */
-                th:nth-child(2), td:nth-child(2) { width: 10%; } /* Owner */
-                th:nth-child(3), td:nth-child(3) { width: 15%; } /* Members */
-                th:nth-child(4), td:nth-child(4) { width: 30%; } /* Description */
-                th:nth-child(5), td:nth-child(5) { width: 10%; } /* Amount */
-                th:nth-child(6), td:nth-child(6) { width: 20%; } /* Options */
+                th:nth-child(1), td:nth-child(1) { width: 5%; } /* Name */
+                th:nth-child(2), td:nth-child(2) { width: 15%; } /* Name */
+                th:nth-child(3), td:nth-child(3) { width: 10%; } /* Owner */
+                th:nth-child(4), td:nth-child(4) { width: 15%; } /* Members */
+                th:nth-child(5), td:nth-child(5) { width: 30%; } /* Description */
+                th:nth-child(6), td:nth-child(6) { width: 10%; } /* Amount */
+                th:nth-child(7), td:nth-child(7) { width: 20%; } /* Options */
 
                 div.membersOptions {
                     position: absolute;
@@ -96,23 +97,25 @@
 
                 <table class="revampDiv">
                     <tr>
-                        <th>Name</th>
-                        <th>Owner</th>
-                        <th>Members</th>
-                        <th>Description</th>
+                        <th>ID</th>
+                        <th class="hideMobile">Name</th>
+                        <th class="hideMobile">Owner</th>
+                        <th class="hideMobile">Members</th>
+                        <th class="hideMobile">Description</th>
                         <th>Amount</th>
                         <th>Options</th>
                     </tr>
 
                     <% if(pools.length > 0 && JSON.parse(pools).length > 0) { JSON.parse(pools).forEach(function(pool) { %>
                         <tr id="pool-<%=pool.id%>">
-                            <td class="description"><%= pool.name %></td>
-                            <td><%= pool.owner.id == currentUser.id ? "You" : pool.owner.id %></td>
-                            <td><%= pool.members.length > 0 ? pool.members.map(e => e.id).join(', ') : "None" %></td>
-                            <td class="description" title="<%= pool.description %>"><%= pool.description %></td>
+                            <td><%= pool.id %></td>
+                            <td class="description hideMobile"><%= pool.name %></td>
+                            <td class="hideMobile"><%= pool.owner.id == currentUser.id ? "You" : pool.owner.id %></td>
+                            <td class="hideMobile"><%= pool.members.length > 0 ? pool.members.map(e => e.id).join(', ') : "None" %></td>
+                            <td class="hideMobile description" title="<%= pool.description %>"><%= pool.description %></td>
                             <td><%= pool.amount %></td>
                             <td>
-                                <div style="display: flex; gap: 5px; justify-content: center;">
+                                <div style="display: flex; gap: 5px; justify-content: center;" class="transactionButtons">
                                     <% if(pool.owner.id == currentUser.id) { %>
                                         <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pool.id %>)">
                                             <img src="/img/cash-outline.svg" title="Payout" alt="Payout" style="filter: invert(0) !important">
@@ -178,8 +181,6 @@
                 
         <script>
             
-            let pools = <%- pools !== '' ? pools : [] %>;
-
             socket.on('poolCreateResponse', (data) => {
                 location.reload();
             })

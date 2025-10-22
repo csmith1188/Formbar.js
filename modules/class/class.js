@@ -1,9 +1,9 @@
 const { logger } = require("../logger");
 const { userSocketUpdates } = require("../../sockets/init");
-const { advancedEmitToClass, emitToUser, userSockets} = require("../socketUpdates");
-const { getIdFromEmail, getEmailFromId} = require("../student");
+const { advancedEmitToClass, emitToUser, userSockets } = require("../socketUpdates");
+const { getIdFromEmail, getEmailFromId } = require("../student");
 const { database, dbGet, dbGetAll, dbRun } = require("../database");
-const { classInformation } = require('./classroom');
+const { classInformation } = require("./classroom");
 const { joinRoomByCode } = require("../joinRoom");
 const { CLASS_SOCKET_PERMISSIONS } = require("../permissions");
 const { clearPoll } = require("../polls");
@@ -16,16 +16,21 @@ const { classKickStudent } = require("./kick");
  */
 async function startClass(classId) {
     try {
-        logger.log('info', `[startClass] classId=(${classId})`);
-        await advancedEmitToClass('startClassSound', classId, { api: true });
+        logger.log("info", `[startClass] classId=(${classId})`);
+        await advancedEmitToClass("startClassSound", classId, { api: true });
 
         // Activate the class and send the class active event
         classInformation.classrooms[classId].isActive = true;
-        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
+        advancedEmitToClass(
+            "isClassActive",
+            classId,
+            { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
+            classInformation.classrooms[classId].isActive
+        );
 
-        logger.log('verbose', `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
+        logger.log("verbose", `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
-        logger.log('error', err.stack);
+        logger.log("error", err.stack);
     }
 }
 
@@ -37,17 +42,22 @@ async function startClass(classId) {
  */
 async function endClass(classId, userSession) {
     try {
-        logger.log('info', `[endClass] classId=(${classId})`);
-        await advancedEmitToClass('endClassSound', classId, { api: true });
+        logger.log("info", `[endClass] classId=(${classId})`);
+        await advancedEmitToClass("endClassSound", classId, { api: true });
 
         // Deactivate the class and send the class active event
         classInformation.classrooms[classId].isActive = false;
         await clearPoll(classId, userSession, true);
 
-        advancedEmitToClass('isClassActive', classId, { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive }, classInformation.classrooms[classId].isActive);
-        logger.log('verbose', `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
+        advancedEmitToClass(
+            "isClassActive",
+            classId,
+            { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
+            classInformation.classrooms[classId].isActive
+        );
+        logger.log("verbose", `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
-        logger.log('error', err.stack);
+        logger.log("error", err.stack);
     }
 }
 
@@ -68,8 +78,8 @@ async function checkUserClassPermission(userId, classId, permission) {
         return user.classPermissions >= classroom.permissions[permission];
     } else {
         // If the user or classroom isn't loaded, then check it from the database
-        const classData = await dbGet('SELECT * FROM classroom WHERE id = ?', [classId]);
-        const userData = (await dbGet('SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?', [classId, userId]));
+        const classData = await dbGet("SELECT * FROM classroom WHERE id = ?", [classId]);
+        const userData = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classId, userId]);
         if (!userData) {
             return classData.owner == userId;
         }
@@ -87,18 +97,18 @@ async function checkUserClassPermission(userId, classId, permission) {
  * @returns {Promise<boolean>} Returns true if joined successfully, otherwise emits an error to the user.
  */
 async function joinRoom(userSession, classCode) {
-	try {
-		logger.log('info', `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
+    try {
+        logger.log("info", `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
 
-		const response = await joinRoomByCode(classCode, userSession);
-		const email = userSession.email;
-        emitToUser(email, 'joinClass', response);
+        const response = await joinRoomByCode(classCode, userSession);
+        const email = userSession.email;
+        emitToUser(email, "joinClass", response);
         return true;
-	} catch (err) {
-		const email = userSession.email;
-		emitToUser(email, 'joinClass', 'There was a server error. Please try again');
-		logger.log('error', err.stack);
-	}
+    } catch (err) {
+        const email = userSession.email;
+        emitToUser(email, "joinClass", "There was a server error. Please try again");
+        logger.log("error", err.stack);
+    }
 }
 
 /**
@@ -113,29 +123,30 @@ async function leaveRoom(userSession) {
         const classId = userSession.classId;
         const email = userSession.email;
         const studentId = await getIdFromEmail(email);
-        const socketUpdates = userSocketUpdates[email];
 
         // Remove the user from the class
         delete classInformation.classrooms[classId].students[email];
         classInformation.users[email].activeClass = null;
         classInformation.users[email].classPermissions = null;
-        database.run('DELETE FROM classusers WHERE classId=? AND studentId=?', [classId, studentId]);
+        database.run("DELETE FROM classusers WHERE classId=? AND studentId=?", [classId, studentId]);
 
         // If the owner of the classroom leaves, then delete the classroom
-        const owner = (await dbGet('SELECT owner FROM classroom WHERE id=?', classId)).owner;
+        const owner = (await dbGet("SELECT owner FROM classroom WHERE id=?", classId)).owner;
         if (owner == studentId) {
-            await dbRun('DELETE FROM classroom WHERE id=?', classId);
+            await dbRun("DELETE FROM classroom WHERE id=?", classId);
         }
 
         // Update the class and play leave sound
-        socketUpdates.classUpdate(classId);
+        for (const socketUpdate of Object.values(userSocketUpdates[email])) {
+            socketUpdate.classUpdate(classId);
+        }
 
         // Play leave sound and reload the user's page
-        await advancedEmitToClass('leaveSound', classId, {});
-        await emitToUser(email, 'reload');
+        await advancedEmitToClass("leaveSound", classId, {});
+        await emitToUser(email, "reload");
         return true;
     } catch (err) {
-        logger.log('error', err.stack)
+        logger.log("error", err.stack);
     }
 }
 
@@ -148,13 +159,13 @@ async function leaveRoom(userSession) {
  */
 async function joinClass(userSession, classId) {
     try {
-        logger.log('info', `[joinClass] session=(${JSON.stringify(userSession)}) classId=${classId}`);
+        logger.log("info", `[joinClass] session=(${JSON.stringify(userSession)}) classId=${classId}`);
 
         // Get the user's email and convert class key to ID if necessary
         const email = userSession.email;
         const classroom = classInformation.classrooms[classId];
         if (!classroom) {
-            const dbClassroom = await dbGet('SELECT * FROM classroom WHERE key=?', classId);
+            const dbClassroom = await dbGet("SELECT * FROM classroom WHERE key=?", classId);
             if (dbClassroom) {
                 classId = dbClassroom.id;
             }
@@ -162,16 +173,16 @@ async function joinClass(userSession, classId) {
 
         // Check if the user is in the class to prevent people from joining classes just from the class ID
         if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
-            return 'You are not in that class.';
+            return "You are not in that class.";
         } else if (!classInformation.classrooms[classId]) {
             const studentId = await getIdFromEmail(email);
-            const classUsers = await dbGet('SELECT * FROM classusers WHERE studentId=? AND classId=?', [studentId, classId]);
+            const classUsers = await dbGet("SELECT * FROM classusers WHERE studentId=? AND classId=?", [studentId, classId]);
             if (!classUsers) {
                 // The owner of the class is not in classUsers, so we need to check if the user is the owner
                 // of the class.
-                const classroomOwner = await dbGet('SELECT owner FROM classroom WHERE id=?', classId);
+                const classroomOwner = await dbGet("SELECT owner FROM classroom WHERE id=?", classId);
                 if (classroomOwner && classroomOwner.owner !== studentId && userSockets[email]) {
-                    emitToUser(email, 'joinClass', 'You are not in that class.');
+                    emitToUser(email, "joinClass", "You are not in that class.");
                     return;
                 }
             }
@@ -182,7 +193,7 @@ async function joinClass(userSession, classId) {
         if (classInformation.classrooms[classId]) {
             classCode = classInformation.classrooms[classId].key;
         } else {
-            const classroom = await dbGet('SELECT key FROM classroom WHERE id=?', classId);
+            const classroom = await dbGet("SELECT key FROM classroom WHERE id=?", classId);
             if (classroom && classroom.key) {
                 classCode = classroom.key;
             }
@@ -194,14 +205,14 @@ async function joinClass(userSession, classId) {
             for (const userSocket of Object.values(userSockets[email])) {
                 userSocket.request.session.classId = classId;
                 userSocket.request.session.save();
-                userSocket.emit('joinClass', response);
+                userSocket.emit("joinClass", response);
             }
         }
 
         return true;
     } catch (err) {
-        logger.log('error', err.stack);
-        return 'There was a server error. Please try again';
+        logger.log("error", err.stack);
+        return "There was a server error. Please try again";
     }
 }
 
@@ -215,7 +226,7 @@ async function joinClass(userSession, classId) {
  */
 function leaveClass(userSession, classId) {
     try {
-        logger.log('info', `[leaveClass] session=(${userSession})`)
+        logger.log("info", `[leaveClass] session=(${userSession})`);
 
         const email = userSession.email;
         const user = classInformation.users[email];
@@ -227,15 +238,13 @@ function leaveClass(userSession, classId) {
 
         // Kick the user from the classroom entirely if they're a guest
         // If not, kick them from the session
-        advancedEmitToClass('leaveSound', userSession.classId, {});
+        advancedEmitToClass("leaveSound", userSession.classId, {});
         classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
     } catch (err) {
-        logger.log('error', err.stack)
+        logger.log("error", err.stack);
     }
 }
-
-
 
 /**
  * Checks if the class with the given classId is currently active.
@@ -253,24 +262,24 @@ function isClassActive(classId) {
  */
 async function deleteRooms(userId) {
     try {
-        const classrooms = await dbGetAll('SELECT * FROM classroom WHERE owner=?', userId)
-        if (classrooms.length == 0) return
+        const classrooms = await dbGetAll("SELECT * FROM classroom WHERE owner=?", userId);
+        if (classrooms.length == 0) return;
 
-        await dbRun('DELETE FROM classroom WHERE owner=?', classrooms[0].owner)
+        await dbRun("DELETE FROM classroom WHERE owner=?", classrooms[0].owner);
         for (const classroom of classrooms) {
             if (classInformation.classrooms[classroom.id]) {
-                await endClass(classroom.id)
+                await endClass(classroom.id);
             }
 
             await Promise.all([
-                dbRun('DELETE FROM classusers WHERE classId=?', classroom.id),
-                dbRun('DELETE FROM class_polls WHERE classId=?', classroom.id),
-                dbRun('DELETE FROM links WHERE classId=?', classroom.id),
-                dbRun('DELETE FROM lessons WHERE class=?', classroom.id)
-            ])
+                dbRun("DELETE FROM classusers WHERE classId=?", classroom.id),
+                dbRun("DELETE FROM class_polls WHERE classId=?", classroom.id),
+                dbRun("DELETE FROM links WHERE classId=?", classroom.id),
+                dbRun("DELETE FROM lessons WHERE class=?", classroom.id),
+            ]);
         }
     } catch (err) {
-        throw err
+        throw err;
     }
 }
 
@@ -283,5 +292,5 @@ module.exports = {
     joinClass,
     leaveClass,
     isClassActive,
-    checkUserClassPermission
-}
+    checkUserClassPermission,
+};
