@@ -6,6 +6,9 @@ const userBreak = [];
 // Stores the currently opened student elements
 let opendetails = [];
 
+// Stores the currently active tab for each student
+let activeStudentTabs = {};
+
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
@@ -39,8 +42,22 @@ function buildStudent(classroomData, studentData) {
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
                 if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-                let leftMostButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
-                doAccordionButton(leftMostButton, true);
+
+                // Check if there's a previously active tab for this student
+                const previousTabOption = activeStudentTabs[studentData.id];
+                let targetButton;
+
+                if (previousTabOption !== undefined) {
+                    // Try to find the button with the stored tab option
+                    targetButton = newStudent.querySelector(`button.accordionButton[data-option="${previousTabOption}"]:not(.accButtonDisabled)`);
+                }
+
+                // If no stored tab or that button is disabled, fall back to the first available button
+                if (!targetButton) {
+                    targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
+                }
+
+                doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
             }
@@ -684,6 +701,10 @@ function doAccordionButton(button, forceOpen = false) {
     });
     otherButtons.forEach((e) => e.classList.remove("active"));
     button.classList.add("active");
+
+    // Store the active tab option for this student
+    const studentId = studentElement.id.split("student-")[1];
+    activeStudentTabs[studentId] = button.dataset.option;
 
     const studentOptions = {
         0: {

@@ -2,8 +2,6 @@ const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
 
-// awardDigipogsResponse
-// transferResponse
 async function awardDigipogs(awardData) {
     try {
         const { from, to } = awardData;
