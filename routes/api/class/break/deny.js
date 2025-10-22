@@ -5,7 +5,7 @@ const { approveBreak } = require("../../../../modules/class/break");
 module.exports = {
     run(router) {
         // Approves a break in a class by class ID and user ID
-        router.post('/class/:id/students/:userId/break/deny', httpPermCheck("approveBreak"), async (req, res) => {
+        router.post("/class/:id/students/:userId/break/deny", httpPermCheck("approveBreak"), async (req, res) => {
             try {
                 const classId = req.params.id;
                 const classroom = classInformation.classrooms[classId];
@@ -21,9 +21,9 @@ module.exports = {
                     res.status(500).json({ error: result });
                 }
             } catch (err) {
-                logger.log('error', err.stack);
+                logger.log("error", err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });
             }
         });
-    }
-}
+    },
+};

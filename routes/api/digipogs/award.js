@@ -6,7 +6,7 @@ const { awardDigipogs } = require("../../../modules/digipogs");
 module.exports = {
     run(router) {
         // Awards digipogs to a user
-        router.post('/digipogs/award', hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+        router.post("/digipogs/award", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
                 const result = await awardDigipogs(req.body);
                 if (result.success) {
@@ -15,9 +15,9 @@ module.exports = {
                     res.status(400).json(result);
                 }
             } catch (err) {
-                logger.log('error', err.stack);
+                logger.log("error", err.stack);
                 res.status(500).json({ error: `There was an internal server error. Please try again.` });
             }
         });
-    }
-}
+    },
+};
