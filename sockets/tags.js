@@ -1,28 +1,28 @@
-const { logger } = require("../modules/logger")
+const { logger } = require("../modules/logger");
 const { setTags, saveTags } = require("../modules/class/tags");
 
 module.exports = {
-	run(socket, socketUpdates) {
+    run(socket, socketUpdates) {
         // Update class tag list
-        socket.on('setTags', async (tags) => {
+        socket.on("setTags", async (tags) => {
             try {
                 await setTags(tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log('error', err.stack);
-                socket.emit('message', 'There was a server error try again.');
+                logger.log("error", err.stack);
+                socket.emit("message", "There was a server error try again.");
             }
         });
 
         // Save tags for a specific student
-        socket.on('saveTags', async (studentId, tags) => {
+        socket.on("saveTags", async (studentId, tags) => {
             try {
                 await saveTags(studentId, tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log('error', err.stack);
-                socket.emit('message', 'There was a server error try again.');
+                logger.log("error", err.stack);
+                socket.emit("message", "There was a server error try again.");
             }
-        })
-    }
-}
+        });
+    },
+};

@@ -5,24 +5,24 @@ const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDEN
 const { getManagerData } = require("./manager");
 const { io } = require("./webServer");
 
-const runningTimers = {}
-const rateLimits = {}
-const userSockets = {}
+const runningTimers = {};
+const rateLimits = {};
+const userSockets = {};
 
 // These events will not display a permission error if the user does not have permission to use them
 const PASSIVE_SOCKETS = [
-    'classUpdate',
-    'managerUpdate',
-    'ipUpdate',
-    'customPollUpdate',
-    'classBannedUsersUpdate',
-    'isClassActive',
-    'setClassSetting'
+    "classUpdate",
+    "managerUpdate",
+    "ipUpdate",
+    "customPollUpdate",
+    "classBannedUsersUpdate",
+    "isClassActive",
+    "setClassSetting",
 ];
 
 async function emitToUser(email, event, ...data) {
     for (const socket of Object.values(userSockets[email])) {
-        socket.emit(event, ...data)
+        socket.emit(event, ...data);
     }
 }
 
@@ -34,15 +34,15 @@ async function emitToUser(email, event, ...data) {
  */
 async function userUpdateSocket(email, methodName, ...args) {
     // Dynamically load to prevent circular dependency error
-    const { userSocketUpdates } = require('../sockets/init');
+    const { userSocketUpdates } = require("../sockets/init");
 
     // If user has no socket connections yet, then return
     if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
         return;
     }
-    
+
     for (const socketUpdates of Object.values(userSocketUpdates[email])) {
-        if (socketUpdates && typeof socketUpdates[methodName] === 'function') {
+        if (socketUpdates && typeof socketUpdates[methodName] === "function") {
             socketUpdates[methodName](...args);
         }
     }
@@ -56,30 +56,30 @@ async function userUpdateSocket(email, methodName, ...args) {
  * @param  {...any} data - Additional data to emit with the event
  */
 async function advancedEmitToClass(event, classId, options, ...data) {
-    const classData = classInformation.classrooms[classId]
-    const sockets = await io.in(`class-${classId}`).fetchSockets()
+    const classData = classInformation.classrooms[classId];
+    const sockets = await io.in(`class-${classId}`).fetchSockets();
 
     for (const socket of sockets) {
-        const user = classData.students[socket.request.session.email]
-        let hasAPI = false
-        if (!user) continue
+        const user = classData.students[socket.request.session.email];
+        let hasAPI = false;
+        if (!user) continue;
 
-        if (options.permissions && user.permissions < options.permissions) continue
-        if (options.classPermissions && user.classPermissions < options.classPermissions) continue
-        if (options.maxClassPermissions && user.classPermissions > options.maxClassPermissions) continue
-        if (options.email && user.email != options.email) continue
+        if (options.permissions && user.permissions < options.permissions) continue;
+        if (options.classPermissions && user.classPermissions < options.classPermissions) continue;
+        if (options.maxClassPermissions && user.classPermissions > options.maxClassPermissions) continue;
+        if (options.email && user.email != options.email) continue;
 
         for (let room of socket.rooms) {
-            if (room.startsWith('api-')) {
-                hasAPI = true
-                break
+            if (room.startsWith("api-")) {
+                hasAPI = true;
+                break;
             }
         }
 
-        if (options.api == true && !hasAPI) continue
-        if (options.api == false && hasAPI) continue
+        if (options.api == true && !hasAPI) continue;
+        if (options.api == false && hasAPI) continue;
 
-        socket.emit(event, ...data)
+        socket.emit(event, ...data);
     }
 }
 
@@ -91,35 +91,35 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
-    logger.log('verbose', `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
+    logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
-    const sockets = await io.in(`api-${api}`).fetchSockets()
+    const sockets = await io.in(`api-${api}`).fetchSockets();
     for (let socket of sockets) {
-        socket.leave(`class-${socket.request.session.classId}`)
+        socket.leave(`class-${socket.request.session.classId}`);
 
-        socket.request.session.classId = classId
-        socket.request.session.save()
+        socket.request.session.classId = classId;
+        socket.request.session.save();
 
         // Emit the setClass event to the socket
-        socket.join(`class-${classId}`)
-        socket.emit('setClass', socket.request.session.classId)
+        socket.join(`class-${classId}`);
+        socket.emit("setClass", socket.request.session.classId);
     }
 }
 
 async function managerUpdate() {
     try {
-        const { users, classrooms } = await getManagerData()
+        const { users, classrooms } = await getManagerData();
 
         // Emit only to connected manager sockets
         for (const [email, sockets] of Object.entries(userSockets)) {
             if (classInformation.users[email].permissions >= MANAGER_PERMISSIONS) {
                 for (const socket of Object.values(sockets)) {
-                    socket.emit('managerUpdate', users, classrooms)
+                    socket.emit("managerUpdate", users, classrooms);
                 }
             }
         }
     } catch (err) {
-        logger.log('error', err.stack);
+        logger.log("error", err.stack);
     }
 }
 
@@ -153,7 +153,7 @@ function sortStudentsInPoll(classData) {
         }
 
         // Prevent students from being included if they are offline
-        if (student.tags && student.tags.includes('Offline') || student.classPermissions >= TEACHER_PERMISSIONS) {
+        if ((student.tags && student.tags.includes("Offline")) || student.classPermissions >= TEACHER_PERMISSIONS) {
             excluded = true;
             included = false;
         }
@@ -171,7 +171,7 @@ function sortStudentsInPoll(classData) {
     return {
         totalStudentsIncluded,
         totalStudentsExcluded,
-    }
+    };
 }
 
 function getPollResponseInformation(classData) {
@@ -184,8 +184,8 @@ function getPollResponseInformation(classData) {
         for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
             responses[resKey] = {
                 ...resValue,
-                responses: 0
-            }
+                responses: 0,
+            };
         }
 
         for (const studentData of Object.values(classData.students)) {
@@ -208,18 +208,26 @@ function getPollResponseInformation(classData) {
                         responses[response].responses++;
                     }
                 }
-            } else if (studentData && Object.keys(responses).includes(studentData.pollRes.buttonRes) && !totalStudentsExcluded.includes(studentData.email)) {
+            } else if (
+                studentData &&
+                Object.keys(responses).includes(studentData.pollRes.buttonRes) &&
+                !totalStudentsExcluded.includes(studentData.email)
+            ) {
                 responses[studentData.pollRes.buttonRes].responses++;
             }
         }
     }
 
     if (totalResponses === 0) {
-        totalStudentsIncluded = Object.keys(classData.students)
+        totalStudentsIncluded = Object.keys(classData.students);
         for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
             const studentName = totalStudentsIncluded[i];
             const student = classData.students[studentName];
-            if (student.classPermissions >= TEACHER_PERMISSIONS || student.classPermissions === GUEST_PERMISSIONS || student.tags && student.tags.includes('Offline')) {
+            if (
+                student.classPermissions >= TEACHER_PERMISSIONS ||
+                student.classPermissions === GUEST_PERMISSIONS ||
+                (student.tags && student.tags.includes("Offline"))
+            ) {
                 totalStudentsIncluded.splice(i, 1);
             }
         }
@@ -229,7 +237,7 @@ function getPollResponseInformation(classData) {
         totalResponses,
         totalResponders: totalStudentsIncluded.length,
         pollResponses: responses,
-    }
+    };
 }
 
 function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
@@ -243,25 +251,27 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         key: hasTeacherPermissions ? classData.key : undefined,
         tags: hasTeacherPermissions ? classData.tags : undefined,
         settings: hasTeacherPermissions ? classData.settings : undefined,
-        students: hasTeacherPermissions ? Object.fromEntries(
-            Object.entries(classData.students).map(([email, student]) => [
-                student.id,
-                {
-                    id: student.id,
-                    displayName: student.displayName,
-                    activeClass: student.activeClass,
-                    permissions: student.permissions,
-                    classPermissions: student.classPermissions,
-                    tags: student.tags,
-                    pollRes: student.pollRes,
-                    help: student.help,
-                    break: student.break,
-                    pogMeter: student.pogMeter,
-                    isGuest: student.isGuest,
-                }
-            ])
-        ) : undefined
-    }
+        students: hasTeacherPermissions
+            ? Object.fromEntries(
+                  Object.entries(classData.students).map(([email, student]) => [
+                      student.id,
+                      {
+                          id: student.id,
+                          displayName: student.displayName,
+                          activeClass: student.activeClass,
+                          permissions: student.permissions,
+                          classPermissions: student.classPermissions,
+                          tags: student.tags,
+                          pollRes: student.pollRes,
+                          help: student.help,
+                          break: student.break,
+                          pogMeter: student.pogMeter,
+                          isGuest: student.isGuest,
+                      },
+                  ])
+              )
+            : undefined,
+    };
 }
 
 class SocketUpdates {
@@ -281,7 +291,7 @@ class SocketUpdates {
                 classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
-            )
+            );
 
             let userData;
             let hasTeacherPermissions = false;
@@ -314,24 +324,29 @@ class SocketUpdates {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
                 const classReturnData = structuredClone(getClassUpdateData(classData, false));
 
-                advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, controlPanelData)
-                advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS }, classReturnData)
+                advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, controlPanelData);
+                advancedEmitToClass(
+                    "classUpdate",
+                    classId,
+                    { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS },
+                    classReturnData
+                );
                 this.customPollUpdate();
             } else {
                 const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                 if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
                     // If the user requesting class information is a student, then only send them the information
-                    this.socket.emit('classUpdate', classReturnData);
+                    this.socket.emit("classUpdate", classReturnData);
                 } else if (options.restrictToControlPanel || userData.classPermissions >= controlPanelPermissions) {
                     // If it's restricted to the control panel, then only send it to people with control panel access
-                    advancedEmitToClass('classUpdate', classId, { classPermissions: controlPanelPermissions }, classReturnData)
+                    advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, classReturnData);
                 } else {
-                    advancedEmitToClass('classUpdate', classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData)
+                    advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData);
                 }
                 this.customPollUpdate();
             }
         } catch (err) {
-            logger.log('error', err.stack);
+            logger.log("error", err.stack);
         }
     }
 
@@ -348,143 +363,148 @@ class SocketUpdates {
             const student = classInformation.classrooms[classId].students[email];
             if (!student) return; // If the student is not in the class, then do not update the custom polls
 
-            logger.log('info', `[customPollUpdate] email=(${email})`)
-            const userSharedPolls = student.sharedPolls
-            const userOwnedPolls = student.ownedPolls
-            const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)))
-            const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls)
-            const publicPolls = []
-            const customPollIds = userCustomPolls.concat(classroomPolls)
+            logger.log("info", `[customPollUpdate] email=(${email})`);
+            const userSharedPolls = student.sharedPolls;
+            const userOwnedPolls = student.ownedPolls;
+            const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)));
+            const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls);
+            const publicPolls = [];
+            const customPollIds = userCustomPolls.concat(classroomPolls);
 
-            logger.log('verbose', `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`)
+            logger.log(
+                "verbose",
+                `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`
+            );
 
             database.all(
-                `SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => '?').join(', ')}) OR public = 1 OR owner=?`,
-                [
-                    ...customPollIds,
-                    user.id
-                ],
+                `SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => "?").join(", ")}) OR public = 1 OR owner=?`,
+                [...customPollIds, user.id],
                 (err, customPollsData) => {
                     try {
-                        if (err) throw err
+                        if (err) throw err;
 
                         for (let customPoll of customPollsData) {
-                            customPoll.answers = JSON.parse(customPoll.answers)
+                            customPoll.answers = JSON.parse(customPoll.answers);
                         }
 
                         customPollsData = customPollsData.reduce((newObject, customPoll) => {
                             try {
-                                newObject[customPoll.id] = customPoll
-                                return newObject
+                                newObject[customPoll.id] = customPoll;
+                                return newObject;
                             } catch (err) {
-                                logger.log('error', err.stack);
+                                logger.log("error", err.stack);
                             }
-                        }, {})
+                        }, {});
 
                         for (let customPoll of Object.values(customPollsData)) {
                             if (customPoll.public) {
-                                publicPolls.push(customPoll.id)
+                                publicPolls.push(customPoll.id);
                             }
                         }
 
-                        logger.log('verbose', `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`)
+                        logger.log(
+                            "verbose",
+                            `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`
+                        );
 
-                        io.to(`user-${email}`).emit(
-                            'customPollUpdate',
-                            publicPolls,
-                            classroomPolls,
-                            userCustomPolls,
-                            customPollsData
-                        )
+                        io.to(`user-${email}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
                     } catch (err) {
-                        logger.log('error', err.stack);
+                        logger.log("error", err.stack);
                     }
                 }
-            )
+            );
         } catch (err) {
-            logger.log('error', err.stack);
+            logger.log("error", err.stack);
         }
     }
 
     classBannedUsersUpdate(classId = this.socket.request.session.classId) {
         try {
-            logger.log('info', `[classBannedUsersUpdate] ip=(${this.socket.handshake.address}) session=(${JSON.stringify(this.socket.request.session)})`);
-            logger.log('info', `[classBannedUsersUpdate] classId=(${classId})`);
+            logger.log(
+                "info",
+                `[classBannedUsersUpdate] ip=(${this.socket.handshake.address}) session=(${JSON.stringify(this.socket.request.session)})`
+            );
+            logger.log("info", `[classBannedUsersUpdate] classId=(${classId})`);
             if (!classId) return;
 
-            database.all('SELECT users.id FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?', classId, (err, bannedStudents) => {
-                try {
-                    if (err) throw err
-                    bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.id)
+            database.all(
+                "SELECT users.id FROM classroom JOIN classusers ON classusers.classId = classroom.id AND classusers.permissions = 0 JOIN users ON users.id = classusers.studentId WHERE classusers.classId=?",
+                classId,
+                (err, bannedStudents) => {
+                    try {
+                        if (err) throw err;
+                        bannedStudents = bannedStudents.map((bannedStudent) => bannedStudent.id);
 
-                    advancedEmitToClass(
-                        'classBannedUsersUpdate',
-                        classId,
-                        { classPermissions: classInformation.classrooms[classId].permissions.manageStudents },
-                        bannedStudents
-                    )
-                } catch (err) {
-                    logger.log('error', err.stack)
+                        advancedEmitToClass(
+                            "classBannedUsersUpdate",
+                            classId,
+                            { classPermissions: classInformation.classrooms[classId].permissions.manageStudents },
+                            bannedStudents
+                        );
+                    } catch (err) {
+                        logger.log("error", err.stack);
+                    }
                 }
-            })
+            );
         } catch (err) {
-            logger.log('error', err.stack)
+            logger.log("error", err.stack);
         }
     }
 
     getOwnedClasses(email) {
         try {
-            logger.log('info', `[getOwnedClasses] email=(${email})`)
+            logger.log("info", `[getOwnedClasses] email=(${email})`);
 
-            database.all('SELECT name, id FROM classroom WHERE owner=?',
-                [classInformation.users[email].id], (err, ownedClasses) => {
-                    try {
-                        if (err) throw err
+            database.all("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id], (err, ownedClasses) => {
+                try {
+                    if (err) throw err;
 
-                        logger.log('info', `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`)
+                    logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
 
-                        io.to(`user-${email}`).emit('getOwnedClasses', ownedClasses)
-                    } catch (err) {
-                        logger.log('error', err.stack);
-                    }
+                    io.to(`user-${email}`).emit("getOwnedClasses", ownedClasses);
+                } catch (err) {
+                    logger.log("error", err.stack);
                 }
-            )
+            });
         } catch (err) {
-            logger.log('error', err.stack);
+            logger.log("error", err.stack);
         }
     }
 
     getPollShareIds(pollId) {
         try {
-            logger.log('info', `[getPollShareIds] pollId=(${pollId})`)
+            logger.log("info", `[getPollShareIds] pollId=(${pollId})`);
 
             database.all(
-                'SELECT pollId, userId FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?',
+                "SELECT pollId, userId FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?",
                 pollId,
                 (err, userPollShares) => {
                     try {
-                        if (err) throw err
+                        if (err) throw err;
 
                         database.all(
-                            'SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId=?',
+                            "SELECT pollId, classId, name FROM class_polls LEFT JOIN classroom ON classroom.id = class_polls.classId WHERE pollId=?",
                             pollId,
                             (err, classPollShares) => {
                                 try {
-                                    if (err) throw err
+                                    if (err) throw err;
 
-                                    logger.log('info', `[getPollShareIds] userPollShares=(${JSON.stringify(userPollShares)}) classPollShares=(${JSON.stringify(classPollShares)})`)
+                                    logger.log(
+                                        "info",
+                                        `[getPollShareIds] userPollShares=(${JSON.stringify(userPollShares)}) classPollShares=(${JSON.stringify(classPollShares)})`
+                                    );
 
-                                    this.socket.emit('getPollShareIds', userPollShares, classPollShares)
+                                    this.socket.emit("getPollShareIds", userPollShares, classPollShares);
                                 } catch (err) {
-                                    logger.log('error', err.stack);
+                                    logger.log("error", err.stack);
                                 }
                             }
-                        )
-                    } catch (err) { }
+                        );
+                    } catch (err) {}
                 }
-            )
+            );
         } catch (err) {
-            logger.log('error', err.stack);
+            logger.log("error", err.stack);
         }
     }
 
@@ -498,14 +518,19 @@ class SocketUpdates {
 
             if (classData.timer.timeLeft > 0 && active) classData.timer.timeLeft--;
             if (classData.timer.timeLeft <= 0 && active && sound) {
-                advancedEmitToClass('timerSound', this.socket.request.session.classId, {});
+                advancedEmitToClass("timerSound", this.socket.request.session.classId, {});
             }
 
-            advancedEmitToClass('vbTimer', this.socket.request.session.classId, {
-                classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer
-            }, classData.timer);
+            advancedEmitToClass(
+                "vbTimer",
+                this.socket.request.session.classId,
+                {
+                    classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
+                },
+                classData.timer
+            );
         } catch (err) {
-            logger.log('error', err.stack);
+            logger.log("error", err.stack);
         }
     }
 }
@@ -523,5 +548,5 @@ module.exports = {
     setClassOfApiSockets,
     managerUpdate,
     userUpdateSocket,
-    SocketUpdates
+    SocketUpdates,
 };

@@ -5,7 +5,7 @@ const userSocketUpdates = {}; // Stores the socket update events for users (keye
 
 // Initializes all the websocket routes
 function initSocketRoutes() {
-    io.on('connection', async (socket) => {
+    io.on("connection", async (socket) => {
         const socketUpdates = new SocketUpdates(socket);
         if (socket.request.session.email) {
             const email = socket.request.session.email;
@@ -16,7 +16,7 @@ function initSocketRoutes() {
             userSocketUpdates[email][socket.id] = socketUpdates;
 
             // Cleanup on disconnect
-            socket.on('disconnect', () => {
+            socket.on("disconnect", () => {
                 if (userSocketUpdates[email] && userSocketUpdates[email][socket.id]) {
                     delete userSocketUpdates[email][socket.id];
                     if (Object.keys(userSocketUpdates[email]).length === 0) {
@@ -27,14 +27,14 @@ function initSocketRoutes() {
         }
 
         // Import middleware
-        const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter(file => file.endsWith(".js"));
-        const middlewares = socketMiddlewareFiles.map(file => require(`./middleware/${file}`));
+        const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter((file) => file.endsWith(".js"));
+        const middlewares = socketMiddlewareFiles.map((file) => require(`./middleware/${file}`));
         middlewares.sort((a, b) => a.order - b.order); // Sort the middleware functions by their order
         for (const middleware of middlewares) {
             middleware.run(socket, socketUpdates);
         }
 
-        const skippedFiles = ['init.js', 'middleware', 'tests'];
+        const skippedFiles = ["init.js", "middleware", "tests"];
         const loadSockets = (directory) => {
             // If the directory is marked to be skipped, skip it
             if (skippedFiles.includes(directory)) return;
@@ -50,19 +50,19 @@ function initSocketRoutes() {
                 const fullPath = `${directory}/${file}`;
                 if (fs.statSync(`./sockets/${fullPath}`).isDirectory()) {
                     loadSockets(fullPath);
-                } else if (file.endsWith('.js')) {
+                } else if (file.endsWith(".js")) {
                     const route = require(fullPath);
                     route.run(socket, socketUpdates);
                 }
             }
         };
-        
+
         // Import socket routes
-        loadSockets('.')
-    })
+        loadSockets(".");
+    });
 }
 
 module.exports = {
     initSocketRoutes,
-    userSocketUpdates
-}
+    userSocketUpdates,
+};
