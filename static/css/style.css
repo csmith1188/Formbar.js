@@ -1399,6 +1399,11 @@ div.break {
 	border-color: var(--dark-gray) !important;
 }
 
+#permissionsTable {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 20px;
+}
 
 #permissionsList {
 	display: flex;
@@ -1411,8 +1416,31 @@ div.break {
 	margin: auto;		
 }
 
-td.permissionCell {
-	padding: 5px;
+td.permissionCell,
+th.permissionHeader {
+	border: 3px solid var(--lightMode-menu-border);
+}
+
+th.permissionHeader {
+	padding: 10px 20px;
+}
+
+.permissionOff,
+.permissionOn {
+	text-align: center;
+	font-size: 1.2cqw;
+	font-weight: bold;
+	color: black;
+	cursor: pointer;
+	width: 100%;
+	height: 100%;
+	display: block;
+	padding: 10px 20px;
+}
+
+.permissionOn {
+	background-color: #4dca4d;
+	color: black !important;
 }
 
 input.permissionRadio {

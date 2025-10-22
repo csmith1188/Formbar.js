@@ -240,6 +240,7 @@ socket.on('classUpdate', (classroomData) => {
 
         let permissionsTable = document.createElement('table');
         permissionsTable.id = 'permissionsTable';
+        permissionsTable.className = 'revampDiv';
 
         let permTableHead = document.createElement('thead');
         permissionsTable.appendChild(permTableHead);
@@ -275,16 +276,58 @@ socket.on('classUpdate', (classroomData) => {
                 permissionCell.className = 'permissionCell';
                 
                 let permissionRadio = document.createElement('input');
-                permissionRadio.type = 'checkbox';
+                permissionRadio.type = 'radio';
                 permissionRadio.className = 'permissionRadio';
                 permissionRadio.name = permission;
+                permissionRadio.style.display = 'none';
+
+                let permissionOff = document.createElement('span');
+                permissionOff.innerText = 'X';
+                permissionOff.style.display = 'none';
+                permissionOff.className = 'permissionOff';
+                permissionOff.dataset.permissionLevel = option.permissionLevel;
+                permissionOff.onclick = () => { permissionRadio.click() }
+                permissionCell.appendChild(permissionOff);
+
+                let permissionOn = document.createElement('span');
+                permissionOn.innerText = '✓';
+                permissionOn.style.display = 'none';
+                permissionOn.className = 'permissionOn';
+                permissionOn.dataset.permissionLevel = option.permissionLevel;
+                permissionOn.onclick = () => { permissionRadio.click() }
+                permissionCell.appendChild(permissionOn);
 
                 permissionCell.appendChild(permissionRadio);
                 permissionRow.appendChild(permissionCell);
                 permTableBody.appendChild(permissionRow);
 
                 if (option.permissionLevel == permissionLevel) {
-                    permissionRadio.checked = true
+                    permissionRadio.checked = true;
+                    permissionOn.style.display = '';
+                    permissionOff.style.display = 'none';
+                } else {
+                    permissionOff.style.display = '';
+                    permissionOn.style.display = 'none';
+                }
+
+                permissionRadio.onchange = (event) => {
+                    let radio = event.target;
+                    if (radio.checked) {
+                        socket.emit('setClassPermissionSetting', permission, option.permissionLevel);
+                    }
+
+                    event.target.closest('tr').querySelectorAll('span').forEach(span => {
+                        if (Number(span.dataset.permissionLevel) === option.permissionLevel) {
+                            if (span.innerText === '✓') {
+                                span.style.display = '';
+                            } else {
+                                span.style.display = 'none';
+                            }
+                        } else {
+                            span.style.display = 'none';
+                        }
+                    });
+                    
                 }
             }
 
