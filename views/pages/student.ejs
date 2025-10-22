@@ -136,11 +136,7 @@
 
 		// Calculate voting rights based on poll data
 		function updateVotingRight() {
-			if (classroomData.allowedRespondants.length === 0) {
-				votingRight = true; // Everyone can vote
-			} else {
-				votingRight = classroomData.allowedRespondants.includes(currentUser.id);
-			}
+			votingRight = classroomData.allowedRespondants.includes(currentUser.id);
 		}
 
 			function unselectRemove(event) {
@@ -361,7 +357,7 @@
 						}
 
                         poll = newPoll;
-                        updateVotingRight();
+                        updateVotingRight(classroomData);
                         updatePage();
 					});
 
