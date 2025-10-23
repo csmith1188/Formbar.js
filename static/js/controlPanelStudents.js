@@ -78,11 +78,11 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id.toString());
+        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id);
 
         // Attach onclick handler for voting rights
         // Store student ID for closure to avoid capturing the entire studentData object
-        const studentId = studentData.id.toString();
+        const studentId = studentData.id;
         studentBox.onclick = () => {
             const canStudentVote = studentBox.checked;
 

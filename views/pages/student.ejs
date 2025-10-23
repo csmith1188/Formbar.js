@@ -142,7 +142,7 @@
 				}
 				// Check if current user's ID is in the studentsAllowedToVote array
 				votingRight = poll.studentsAllowedToVote && 
-					poll.studentsAllowedToVote.includes(currentUser.id.toString());
+					poll.studentsAllowedToVote.includes(currentUser.id);
 			}
 
 			function unselectRemove(event) {
