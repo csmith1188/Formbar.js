@@ -38,7 +38,7 @@ function createTagSelectButtons() {
 
             // If the student has any of the selected tags, check the checkbox and open their menu
             const selectedStudents = []; // Stores the selected students
-            let excludedRespondants = [];
+            let studentsAllowedToVote = [];
 
             for (const student of students) {
                 const studentTags = student.tags;
@@ -82,8 +82,8 @@ function createTagSelectButtons() {
                     }
                 }
 
-                if (studentSelected) {
-                    excludedRespondants.push(student.id);
+                if (studentSelected && !studentsAllowedToVote.includes(student.id)) {
+                    studentsAllowedToVote.push(student.id);
                 }
             }
 
@@ -100,7 +100,7 @@ function createTagSelectButtons() {
             }
 
             // Send the updated voting list to the server
-            socket.emit("updateexcludedRespondants", excludedRespondants);
+            socket.emit("updatePoll", { studentsAllowedToVote });
         };
 
         if (selectPollDiv.children[i]) {
@@ -238,7 +238,7 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
             }
         }
 
-        let excludedRespondants = [];
+        let studentsAllowedToVote = [];
         for (const student of Object.values(students)) {
             if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
@@ -247,15 +247,15 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
 
             if (studentCheckbox) {
                 studentCheckbox.checked = switchState;
-                if (switchState) {
-                    excludedRespondants.push(student.id.toString());
+                if (switchState && !studentsAllowedToVote.includes(student.id)) {
+                    studentsAllowedToVote.push(student.id);
                 }
                 studentElement.open = studentCheckbox.checked;
             }
         }
 
         // Send the updated voting list to the server
-        socket.emit("updateexcludedRespondants", excludedRespondants);
+        socket.emit("updatePoll", { studentsAllowedToVote });
     };
 
     if (selectPollDiv.children[0]) {

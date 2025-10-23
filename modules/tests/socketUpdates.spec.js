@@ -53,7 +53,7 @@ describe("Socket Updates", () => {
             // Active poll with one valid response
             classData.poll.status = true;
             classData.poll.responses = { A: { answer: "A", weight: 1, color: "#000" } };
-            classData.excludedRespondants = [student.id];
+            classData.poll.studentsAllowedToVote = [student.id];
 
             // Execute
             await socketUpdates.classUpdate(testData.code);

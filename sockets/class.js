@@ -412,25 +412,5 @@ module.exports = {
                 logger.log("error", err.stack);
             }
         });
-
-        socket.on("updateexcludedRespondants", (respondants) => {
-            try {
-                const classId = socket.request.session.classId;
-                const classroom = classInformation.classrooms[classId];
-                if (!Array.isArray(respondants)) return;
-                for (const id of respondants) {
-                    const student = classroom.students[id];
-                    // If the student doesn't exist, is offline/excluded, is on break, or doesn't have permission to vote, remove them from the respondants list
-                    if (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak || student.classPermissions !== classroom.permissions["votePoll"]) {
-                        respondants.splice(respondants.indexOf(id), 1);
-                        continue;
-                    }
-                }
-                classroom.excludedRespondants = respondants;
-                socketUpdates.classUpdate(classId);
-            } catch (err) {
-                logger.log("error", err.stack);
-            }
-        });
     },
 };

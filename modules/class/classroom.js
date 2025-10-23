@@ -15,7 +15,7 @@ class Classroom {
         this.owner = owner;
         this.students = {};
         this.sharedPolls = sharedPolls || [];
-        this.excludedRespondants = [];
+        this.studentsAllowedToVote = [];
         this.poll = {
             status: false,
             prompt: "",
@@ -24,6 +24,7 @@ class Classroom {
             allowMultipleResponses: false,
             blind: false,
             weight: 1,
+            studentsAllowedToVote: [],
         };
         this.key = key;
         // Ensure permissions is an object, not a JSON string
@@ -47,14 +48,9 @@ class Classroom {
             sound: false,
         };
 
-		// Ensure "Offline" and "Excluded" tags are present
         if (!this.tags.includes("Offline") && Array.isArray(this.tags)) {
             this.tags.push("Offline");
         }
-
-		if(!this.tags.includes("Excluded") && Array.isArray(this.tags)) {
-			this.tags.push("Excluded");
-		}
     }
 }
 
@@ -199,6 +195,7 @@ module.exports = {
     Classroom,
     getClassUsers,
     getClassIDFromCode,
+
     // classInformation stores all of the information on classes and students
     classInformation,
 };

@@ -51,6 +51,7 @@ module.exports = {
                         allowVoteChanges: !!pollData.allowVoteChanges,
                         weight: Number(pollData.weight ?? 1),
                         tags: Array.isArray(pollData.tags) ? pollData.tags : [],
+                        studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
                         indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
                         allowTextResponses: !!pollData.allowTextResponses,
                         allowMultipleResponses: !!pollData.allowMultipleResponses,

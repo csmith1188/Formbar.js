@@ -6,6 +6,9 @@ const userBreak = [];
 // Stores the currently opened student elements
 let opendetails = [];
 
+// Stores the currently active tab for each student
+let activeStudentTabs = {};
+
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
@@ -39,8 +42,22 @@ function buildStudent(classroomData, studentData) {
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
                 if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-                let leftMostButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
-                doAccordionButton(leftMostButton, true);
+
+                // Check if there's a previously active tab for this student
+                const previousTabOption = activeStudentTabs[studentData.id];
+                let targetButton;
+
+                if (previousTabOption !== undefined) {
+                    // Try to find the button with the stored tab option
+                    targetButton = newStudent.querySelector(`button.accordionButton[data-option="${previousTabOption}"]:not(.accButtonDisabled)`);
+                }
+
+                // If no stored tab or that button is disabled, fall back to the first available button
+                if (!targetButton) {
+                    targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
+                }
+
+                doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
             }
@@ -61,7 +78,7 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.excludedRespondants.includes(studentData.id);
+        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id);
 
         // Attach onclick handler for voting rights
         // Store student ID for closure to avoid capturing the entire studentData object
@@ -71,16 +88,16 @@ function buildStudent(classroomData, studentData) {
 
             // Get current voting list from the global classroom object
             // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let excludedRespondants = [...(classroomData.excludedRespondants || [])];
+            let studentsAllowedToVote = [...(classroomData.poll.studentsAllowedToVote || [])];
 
-            if (canStudentVote && !excludedRespondants.includes(studentId)) {
-                excludedRespondants.push(studentId);
+            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
+                studentsAllowedToVote.push(studentId);
             } else if (!canStudentVote) {
-                excludedRespondants = excludedRespondants.filter((id) => id !== studentId);
+                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
             }
 
             // Send the complete updated list to the server
-            socket.emit("updateexcludedRespondants", excludedRespondants);
+            socket.emit("updatePoll", { studentsAllowedToVote });
         };
 
         for (let eachResponse in classroomData.poll.responses) {
@@ -684,6 +701,10 @@ function doAccordionButton(button, forceOpen = false) {
     });
     otherButtons.forEach((e) => e.classList.remove("active"));
     button.classList.add("active");
+
+    // Store the active tab option for this student
+    const studentId = studentElement.id.split("student-")[1];
+    activeStudentTabs[studentId] = button.dataset.option;
 
     const studentOptions = {
         0: {

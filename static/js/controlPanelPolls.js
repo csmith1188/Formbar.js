@@ -460,11 +460,11 @@ function startPoll(customPollId) {
 
     for (let eachBox of allCheckboxes) {
         if (eachBox.checked && !eachBox.indeterminate) {
-            let boxId = eachBox.id.split("_")[1];
+            let boxId = Number(eachBox.id.split("_")[1]);
             userBoxesChecked.push(boxId);
         }
         if (eachBox.indeterminate) {
-            let boxId = eachBox.id.split("_")[1];
+            let boxId = Number(eachBox.id.split("_")[1]);
             userIndeterminate.push(boxId);
         }
     }

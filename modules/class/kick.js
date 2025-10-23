@@ -2,7 +2,7 @@ const { classInformation } = require("./classroom");
 const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
 const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socketUpdates");
-const { dbRun } = require("../database");
+const { dbRun, dbGet } = require("../database");
 const { TEACHER_PERMISSIONS, BANNED_PERMISSIONS } = require("../permissions");
 
 // Kicks a student from a class
@@ -46,11 +46,16 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         }
 
         // Update the control panel on all tabs
-        const userSocket = userSockets[email];
-        userUpdateSocket(email, "classUpdate", classId);
+        // @TODO: TEMPORARY FIX - please move update functions outside of a class, or refactor them into the classroom class.
+        const classOwner = await dbGet("SELECT owner FROM classroom WHERE id=?", [classId]);
+        if (classOwner) {
+            const ownerEmail = await getEmailFromId(classOwner.owner);
+            userUpdateSocket(ownerEmail, "classUpdate", classId);
+        }
 
         // If the user is logged in, then handle the user's session
-        if (userSocket) {
+        const usersSockets = userSockets[email];
+        if (usersSockets) {
             for (const userSocket of Object.values(userSockets[email])) {
                 userSocket.leave(`class-${classId}`);
                 userSocket.request.session.classId = null;

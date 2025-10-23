@@ -10,6 +10,7 @@ module.exports = {
          *
          * Examples:
          * socket.emit("updatePoll", {status: false}); // Ends poll
+         * socket.emit("updatePoll", {studentsAllowedToVote: [1, 2]}); // Changes who can vote
          * socket.emit("updatePoll", {blind: true}); // Makes poll blind
          * socket.emit("updatePoll", {}); // Clears the entire poll
          */
