@@ -46,11 +46,11 @@
 							<h3 style="margin-top: 0;">Take a break</h3>
 							<div id="breakInfo">
 								<div id="breakInputs" class="">
-									<label class="form-control" id="pollControl" for="bathroom">
+									<label class="form-control" for="bathroom">
 										<input type="radio" name="option" id="bathroom" value="Bathroom" required>
 										Bathroom
 									</label>
-									<label class="form-control" id="pollControl" for="other">
+									<label class="form-control" for="other">
 										<input type="radio" name="option" id="other" value="other">
 										Other
 									</label>
@@ -134,22 +134,16 @@
 			let quiz = {}
 			let votingRight = false
 
-		// Calculate voting rights based on poll data
-		function updateVotingRight() {
-			if (!poll || !poll.status) {
-				votingRight = false;
-				return;
+			// Calculate voting rights based on poll data
+			function updateVotingRight() {
+				if (!poll || !poll.status) {
+					votingRight = false;
+					return;
+				}
+				// Check if current user's ID is in the studentsAllowedToVote array
+				votingRight = poll.studentsAllowedToVote && 
+					poll.studentsAllowedToVote.includes(currentUser.id.toString());
 			}
-			// Check personal canVote flag (set by server for privacy)
-			// Fallback to checking studentsAllowedToVote array for backwards compatibility
-			if (poll.canVote !== undefined) {
-				votingRight = poll.canVote;
-			} else if (poll.studentsAllowedToVote) {
-				votingRight = poll.studentsAllowedToVote.includes(currentUser.id.toString());
-			} else {
-				votingRight = false;
-			}
-		}
 
 			function unselectRemove(event) {
 				event.preventDefault();
@@ -367,9 +361,9 @@
 							oldTextRes = '';
 						}
 
-                        poll = newPoll;
-                        updateVotingRight();
-                        updatePage();
+                    poll = newPoll;
+                    updateVotingRight();
+                    updatePage();
 					});
 
 					socket.on('pollResp', (voteData) => {
