@@ -413,7 +413,7 @@ module.exports = {
             }
         });
 
-        socket.on("updateAllowedRespondants", (respondants) => {
+        socket.on("updateexcludedRespondants", (respondants) => {
             try {
                 const classId = socket.request.session.classId;
                 const classroom = classInformation.classrooms[classId];
@@ -426,7 +426,7 @@ module.exports = {
                         continue;
                     }
                 }
-                classroom.allowedRespondants = respondants;
+                classroom.excludedRespondants = respondants;
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);

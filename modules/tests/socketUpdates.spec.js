@@ -53,7 +53,7 @@ describe("Socket Updates", () => {
             // Active poll with one valid response
             classData.poll.status = true;
             classData.poll.responses = { A: { answer: "A", weight: 1, color: "#000" } };
-            classData.allowedRespondants = [student.id];
+            classData.excludedRespondants = [student.id];
 
             // Execute
             await socketUpdates.classUpdate(testData.code);
@@ -67,7 +67,7 @@ describe("Socket Updates", () => {
             expect(payload.poll.totalResponses).toBe(1);
             expect(payload.poll.totalResponders).toBe(1);
             // Teachers should receive full poll data
-            expect(Array.isArray(payload.allowedRespondants)).toBe(true);
+            expect(Array.isArray(payload.excludedRespondants)).toBe(true);
         });
     });
 });

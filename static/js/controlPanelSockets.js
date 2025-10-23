@@ -38,7 +38,7 @@ function createTagSelectButtons() {
 
             // If the student has any of the selected tags, check the checkbox and open their menu
             const selectedStudents = []; // Stores the selected students
-            let allowedRespondants = [];
+            let excludedRespondants = [];
 
             for (const student of students) {
                 const studentTags = student.tags;
@@ -83,7 +83,7 @@ function createTagSelectButtons() {
                 }
 
                 if (studentSelected) {
-                    allowedRespondants.push(student.id);
+                    excludedRespondants.push(student.id);
                 }
             }
 
@@ -100,7 +100,7 @@ function createTagSelectButtons() {
             }
 
             // Send the updated voting list to the server
-            socket.emit("updateAllowedRespondants", allowedRespondants);
+            socket.emit("updateexcludedRespondants", excludedRespondants);
         };
 
         if (selectPollDiv.children[i]) {
@@ -238,7 +238,7 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
             }
         }
 
-        let allowedRespondants = [];
+        let excludedRespondants = [];
         for (const student of Object.values(students)) {
             if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
@@ -248,14 +248,14 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
             if (studentCheckbox) {
                 studentCheckbox.checked = switchState;
                 if (switchState) {
-                    allowedRespondants.push(student.id.toString());
+                    excludedRespondants.push(student.id.toString());
                 }
                 studentElement.open = studentCheckbox.checked;
             }
         }
 
         // Send the updated voting list to the server
-        socket.emit("updateAllowedRespondants", allowedRespondants);
+        socket.emit("updateexcludedRespondants", excludedRespondants);
     };
 
     if (selectPollDiv.children[0]) {

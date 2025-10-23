@@ -136,7 +136,7 @@
 
 		// Calculate voting rights based on poll data
 		function updateVotingRight() {
-			votingRight = classroomData.allowedRespondants.includes(currentUser.id);
+			votingRight = classroomData.excludedRespondants.includes(currentUser.id);
 		}
 
 			function unselectRemove(event) {
