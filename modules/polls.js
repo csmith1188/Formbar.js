@@ -53,9 +53,13 @@ async function createPoll(classId, pollData, userSession) {
         classInformation.classrooms[classId].poll.blind = blind;
         classInformation.classrooms[classId].poll.status = true;
 
-        if (studentsAllowedToVote) {
-            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote;
-        } else {
+        // If studentsAllowedToVote is provided and is a non-empty array, use it directly
+        // Otherwise, populate with all eligible students
+        if (studentsAllowedToVote && Array.isArray(studentsAllowedToVote) && studentsAllowedToVote.length > 0) {
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote.map(id => Number(id));
+        } else if (studentsAllowedToVote === null) {
+            // When no specific students are provided (undefined, null, or empty array),
+            // allow all eligible students to vote
             classInformation.classrooms[classId].poll.studentsAllowedToVote = [];
             for (const student of Object.values(classInformation.classrooms[classId].students)) {
                 // If the student has been excluded by permission, is on break, is offline, or has been manually excluded, do not allow them to vote
@@ -67,7 +71,8 @@ async function createPoll(classId, pollData, userSession) {
                 ) {
                     continue;
                 }
-                classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id.toString());
+
+                classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id);
             }
         }
 
@@ -158,11 +163,16 @@ async function updatePoll(classId, options, userSession) {
 
         // Update each poll property
         for (const option of Object.keys(options)) {
-            const value = options[option];
+            let value = options[option];
 
-            // Special handling: save to history when ending poll
+            // Save to history when ending poll
             if (option === "status" && value === false && classroom.poll.status === true) {
                 savePollToHistory(classId);
+            }
+
+            // If studentsAllowedToVote is being changed, then ensure it always contains numbers
+            if (option === "studentsAllowedToVote" && Array.isArray(value)) {
+                value = value.map(id => Number(id));
             }
 
             // Update the property if it exists in the poll object
@@ -328,7 +338,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const isRemoving = res === "remove" || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentsAllowedToVote.includes(user.id.toString()) && !isRemoving) {
+    if (!classroom.poll.studentsAllowedToVote.includes(user.id) && !isRemoving) {
         return;
     }
 

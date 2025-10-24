@@ -88,7 +88,7 @@ setInterval(() => {
             }
         }
     }
-}, INACTIVITY_CHECK_TIME);
+}, INACTIVITY_CHECK_TIME)
 
 // Check if an IP is banned
 app.use((req, res, next) => {

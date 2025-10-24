@@ -2,8 +2,6 @@ const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
 
-// awardDigipogsResponse
-// transferResponse
 async function awardDigipogs(awardData) {
     try {
         const { from, to } = awardData;
@@ -32,9 +30,10 @@ async function awardDigipogs(awardData) {
         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to]);
 
         try {
-            await dbRun("INSERT INTO transactions (from_user, to_user, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
                 from,
                 to,
+                null,
                 amount,
                 reason,
                 Date.now(),
@@ -125,14 +124,7 @@ async function transferDigipogs(transferData) {
             }
 
             try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
-                    from,
-                    to,
-                    null,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
+                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [from, to, null, amount, reason, Date.now()]);
             } catch (err) {
                 logger.log("error", err.stack || err);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
