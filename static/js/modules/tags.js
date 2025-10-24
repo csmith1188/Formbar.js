@@ -23,7 +23,7 @@ function addTagElement(tag) {
 
     let removeButton = document.createElement("button");
     removeButton.className = "squareButton warningButton";
-    removeButton.innerHTML = '<img src="/img/trash-outline.svg" alt="Remove tag">';
+    removeButton.innerHTML = '<img src="/img/icons/trash-outline.svg" alt="Remove tag">';
     removeButton.onclick = () => {
         tagsDiv.removeChild(tagOption);
         classroom.tags = classroom.tags.filter((t) => t !== tag);

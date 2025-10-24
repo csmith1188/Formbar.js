@@ -388,7 +388,7 @@ if (settings.filter) {
             if (filterElement) {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
                 if (filterType == "canVote") filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
@@ -597,7 +597,7 @@ for (let filterElement of document.getElementsByClassName("filter")) {
             } else {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
             }
         }
 
