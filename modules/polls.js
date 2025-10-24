@@ -342,7 +342,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const isRemoving = res === "remove" || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.excludedRespondants.includes(user.id) && !isRemoving) {
+    if (classroom.excludedRespondants.includes(user.id) && !isRemoving) {
         return;
     }
 

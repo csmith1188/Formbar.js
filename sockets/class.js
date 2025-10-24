@@ -8,6 +8,7 @@ const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, jo
 const { getEmailFromId, getIdFromEmail } = require("../modules/student");
 const { BANNED_PERMISSIONS } = require("../modules/permissions");
 const { classKickStudents, classKickStudent } = require("../modules/class/kick");
+const e = require("express");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -407,6 +408,33 @@ module.exports = {
                 dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
                     logger.log("error", err.stack);
                 });
+                socketUpdates.classUpdate(classId);
+            } catch (err) {
+                logger.log("error", err.stack);
+            }
+        });
+
+        socket.on("updateExcludedRespondants", (respondants) => {
+            try {
+                const classId = socket.request.session.classId;
+                const classroom = classInformation.classrooms[classId];
+                if (!Array.isArray(respondants)) return;
+                const excludedRespondants = [];
+                for (const studentEmail of Object.keys(classroom.students)) {
+                    const student = classroom.students[studentEmail];
+                    const studentId = student.id;
+                    // If the student doesn't exist, is offline/excluded, is on break, or doesn't have permission to vote, remove them from the respondants list
+                    if ((!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) && !excludedRespondants.includes(studentId)) {
+                        excludedRespondants.push(studentId);
+                        continue;
+                    } else if (!excludedRespondants.includes(studentId) && respondants.includes(studentId)) {
+                        excludedRespondants.push(studentId);
+                    }
+                }
+                console.log("Received Respondants:", respondants);
+                console.log("Excluded Respondants:", excludedRespondants);
+                console.log("-------------------------------------------------------");
+                classroom.excludedRespondants = excludedRespondants;
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);

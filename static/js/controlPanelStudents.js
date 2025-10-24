@@ -88,16 +88,14 @@ function buildStudent(classroomData, studentData) {
 
             // Get current voting list from the global classroom object
             // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let excludedRespondants = [...(classroomData.poll.excludedRespondants || [])];
+            let excludedRespondants = [...(classroom.excludedRespondants || [])];
 
-            if (canStudentVote && !excludedRespondants.includes(studentId)) {
-                excludedRespondants.push(studentId);
-            } else if (!canStudentVote) {
-                excludedRespondants = excludedRespondants.filter((id) => id !== studentId);
-            }
+
+            if (canStudentVote) excludedRespondants = excludedRespondants.filter((id) => id !== studentId);
+            else if (!canStudentVote && !excludedRespondants.includes(studentId)) excludedRespondants.push(studentId);
 
             // Send the complete updated list to the server
-            socket.emit("updatePoll", { excludedRespondants });
+            socket.emit("updateExcludedRespondants", excludedRespondants);
         };
 
         for (let eachResponse in classroomData.poll.responses) {
