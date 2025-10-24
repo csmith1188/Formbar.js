@@ -135,8 +135,8 @@ function sortStudentsInPoll(classData) {
         let included = false;
         let excluded = false;
 
-        // Check if the student's checkbox was checked (studentsAllowedToVote stores student ids)
-        if (classData.poll.studentsAllowedToVote.includes(student.id)) {
+        // Check if the student's checkbox was checked (excludedRespondants stores student ids)
+        if (classData.poll.excludedRespondants.includes(student.id)) {
             included = true;
         } else {
             excluded = true;

@@ -140,9 +140,9 @@
 					votingRight = false;
 					return;
 				}
-				// Check if current user's ID is in the studentsAllowedToVote array
-				votingRight = poll.studentsAllowedToVote && 
-					poll.studentsAllowedToVote.includes(currentUser.id);
+				// Check if current user's ID is in the excludedRespondants array
+				votingRight = poll.excludedRespondants && 
+					poll.excludedRespondants.includes(currentUser.id);
 			}
 
 			function unselectRemove(event) {

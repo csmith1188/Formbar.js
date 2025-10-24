@@ -78,7 +78,7 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id);
+        studentBox.checked = classroomData.poll.excludedRespondants.includes(studentData.id);
 
         // Attach onclick handler for voting rights
         // Store student ID for closure to avoid capturing the entire studentData object
@@ -88,16 +88,16 @@ function buildStudent(classroomData, studentData) {
 
             // Get current voting list from the global classroom object
             // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let studentsAllowedToVote = [...(classroomData.poll.studentsAllowedToVote || [])];
+            let excludedRespondants = [...(classroomData.poll.excludedRespondants || [])];
 
-            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
-                studentsAllowedToVote.push(studentId);
+            if (canStudentVote && !excludedRespondants.includes(studentId)) {
+                excludedRespondants.push(studentId);
             } else if (!canStudentVote) {
-                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
+                excludedRespondants = excludedRespondants.filter((id) => id !== studentId);
             }
 
             // Send the complete updated list to the server
-            socket.emit("updatePoll", { studentsAllowedToVote });
+            socket.emit("updatePoll", { excludedRespondants });
         };
 
         for (let eachResponse in classroomData.poll.responses) {

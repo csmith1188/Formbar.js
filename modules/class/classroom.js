@@ -15,7 +15,7 @@ class Classroom {
         this.owner = owner;
         this.students = {};
         this.sharedPolls = sharedPolls || [];
-        this.studentsAllowedToVote = [];
+        this.excludedRespondants = [];
         this.poll = {
             status: false,
             prompt: "",
@@ -24,7 +24,7 @@ class Classroom {
             allowMultipleResponses: false,
             blind: false,
             weight: 1,
-            studentsAllowedToVote: [],
+            excludedRespondants: [],
         };
         this.key = key;
         // Ensure permissions is an object, not a JSON string
