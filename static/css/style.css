@@ -2126,7 +2126,7 @@ div.sideBySide {
 	grid-auto-rows: min-content;
 	align-items: start;
 	position: relative;
-	padding-top: 70px;
+	padding-top: 80px;
 	padding-left: 20px;
 	padding-right: 20px;
 	overflow: auto;
