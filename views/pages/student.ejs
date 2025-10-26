@@ -154,7 +154,7 @@
 
 			function updatePage() {
 				pollForm = document.getElementById('pollForm');
-				const responseTextbox = document.getElementById('resTextBox') || null;
+				const responseTextbox = document.getElementById('resTextBox');
 
 				pollPromptDisplay = document.getElementById('pollPrompt');
 
@@ -185,7 +185,7 @@
 								wasFocused = document.activeElement === responseTextbox;
 							}
 
-							pollForm.innerHTML = ''
+							pollForm.innerHTML = '';
 
 							// Update the poll prompt
 							pollPromptDisplay.innerText = poll.prompt;

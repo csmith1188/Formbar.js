@@ -1481,7 +1481,7 @@ th.permissionHeader {
 
 input.permissionRadio {
 	margin: auto;
-	--theme-color: red
+	--theme-color: red;
 }
 
 #helpReason:empty, #breakReason:empty, #response:empty {
