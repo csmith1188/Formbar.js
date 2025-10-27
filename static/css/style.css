@@ -1417,8 +1417,7 @@ div.break {
 }
 
 #permissionsList {
-	display: flex;
-	justify-content: space-evenly;
+	display: grid;
 	border-radius: 10px;
 	margin: 1vh;
 	width: 60%;
