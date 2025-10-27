@@ -56,7 +56,7 @@ async function createPoll(classId, pollData, userSession) {
         // If studentsAllowedToVote is provided and is a non-empty array, use it directly
         // Otherwise, populate with all eligible students
         if (studentsAllowedToVote && Array.isArray(studentsAllowedToVote) && studentsAllowedToVote.length > 0) {
-            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote.map(id => Number(id));
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote.map((id) => Number(id));
         } else if (studentsAllowedToVote === null) {
             // When no specific students are provided (undefined, null, or empty array),
             // allow all eligible students to vote
@@ -172,7 +172,7 @@ async function updatePoll(classId, options, userSession) {
 
             // If studentsAllowedToVote is being changed, then ensure it always contains numbers
             if (option === "studentsAllowedToVote" && Array.isArray(value)) {
-                value = value.map(id => Number(id));
+                value = value.map((id) => Number(id));
             }
 
             // Update the property if it exists in the poll object
