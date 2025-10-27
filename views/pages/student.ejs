@@ -240,9 +240,9 @@
 									checkbox.checked = userSelectedCheckboxes.includes(response.answer);
 									checkbox.onclick = () => {
 										if (checkbox.checked) {
-											userSelectedCheckboxes.push(checkbox.id);
+											userSelectedCheckboxes.push(response.answer);
 										} else {
-											userSelectedCheckboxes = userSelectedCheckboxes.filter(id => id !== checkbox.id);
+											userSelectedCheckboxes = userSelectedCheckboxes.filter(id => id !== response.answer);
 										}
 									};
 								} else {
