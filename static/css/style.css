@@ -182,6 +182,10 @@ textarea#resTextBox {
 	width: 100%;
 }
 
+#resTextBox:focus {
+	outline: 2px solid var(--theme-color);
+}
+
 #backgroundDarken {
 	width: 100vw;
 	height: 100vh;
@@ -396,6 +400,13 @@ dialog {
 
 #headerLogo h1 {
 	margin: 0;
+	z-index: 3;
+}
+
+input.correctAnswer {
+	margin: 0;
+	width: 44px !important;
+	height: 44px !important;
 }
 
 #headerLogo,
@@ -1399,17 +1410,78 @@ div.break {
 	border-color: var(--dark-gray) !important;
 }
 
+#permissionsTable {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 20px;
+}
 
 #permissionsList {
-	display: grid;
+	display: flex;
 	justify-content: space-evenly;
 	border-radius: 10px;
 	margin: 1vh;
-	width: 80%;
-	font-size: 1.5cqw;
+	width: 60%;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 20px;
 	margin: auto;		
+}
+
+div.defaultPermSelect {
+	position: absolute;
+	bottom: 5px;
+	left: 5px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	gap: 20px;
+}
+
+td.permissionCell,
+th.permissionHeader {
+	border: 3px solid var(--lightMode-menu-border);
+}
+
+td.permissionCell {
+	height: 55px;
+	width: 55px;
+}
+
+th.permissionHeader {
+	padding: 10px 20px;
+}
+
+.permissionOff,
+.permissionOn {
+	text-align: center;
+	font-size: 1.2cqw;
+	font-weight: bold;
+	color: black;
+	cursor: pointer;
+	width: 100%;
+	height: 100%;
+	display: block;
+	padding: 10px 20px;
+}
+
+.permissionOn {
+	background-color: #4dca4d;
+	color: black !important;
+}
+
+.permissionOff img {
+	height: 100%;
+	filter: invert(1);
+}
+
+.permissionOn img {
+	height: 100%;
+}
+
+input.permissionRadio {
+	margin: auto;
+	--theme-color: red;
 }
 
 #helpReason:empty, #breakReason:empty, #response:empty {
@@ -2054,7 +2126,7 @@ div.sideBySide {
 	grid-auto-rows: min-content;
 	align-items: start;
 	position: relative;
-	padding-top: 70px;
+	padding-top: 80px;
 	padding-left: 20px;
 	padding-right: 20px;
 	overflow: auto;
@@ -2803,7 +2875,13 @@ div.mobileSpacer {
 	display: none;
 }
 
-
+.student-hat {
+	position: absolute;
+	left: -20px;
+	top: -20px;
+	width: 40px;
+	transform: rotate(-45deg);
+}
 
 *:not(details)[hidden] {
 	display: none !important;
@@ -3200,6 +3278,8 @@ div.accordionOptions.textOptions p#fullTextResponse {
     margin: 0;
     height: 100%;
     overflow: scroll;
+	word-wrap: anywhere;
+  	width: 100%;
 }
 
 div.accordionOptions.permsOptions select.permSwitch {

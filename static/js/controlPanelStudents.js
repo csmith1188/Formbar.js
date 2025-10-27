@@ -388,7 +388,7 @@ if (settings.filter) {
             if (filterElement) {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
                 if (filterType == "canVote") filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
@@ -411,15 +411,15 @@ if (settings.sort) {
 
                 switch (sort[sortType]) {
                     case 0:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 0;
                         break;
                     case 1:
-                        sortIcon.src = "/img/swap-vertical-down.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-down.svg";
                         sortIcon.style.opacity = 1;
                         break;
                     case 2:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 1;
                         break;
                 }
@@ -597,7 +597,7 @@ for (let filterElement of document.getElementsByClassName("filter")) {
             } else {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
             }
         }
 
@@ -621,7 +621,7 @@ for (let sortElement of document.getElementsByClassName("sort")) {
                 if (otherSortElement) {
                     otherSortElement.classList.remove("pressed");
                     let otherSortIcon = otherSortElement.querySelector("div").getElementsByClassName("currentSortIcon")[0];
-                    otherSortIcon.src = "/img/swap-vertical-up.svg";
+                    otherSortIcon.src = "/img/icons/swap-vertical-up.svg";
                     otherSortIcon.style.opacity = 0;
                 }
             }
@@ -631,15 +631,15 @@ for (let sortElement of document.getElementsByClassName("sort")) {
 
         switch (sort[sortElement.id]) {
             case 0:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 1:
-                sortIcon.src = "/img/swap-vertical-down.svg";
+                sortIcon.src = "/img/icons/swap-vertical-down.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 2:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 0;
                 break;
         }

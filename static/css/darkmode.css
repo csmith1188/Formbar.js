@@ -82,6 +82,19 @@ button.pressed.revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
+button.pressed {
+	background: var(--darkMode-button-pressed-bg) !important;
+}
+
+.permissionOff,
+.permissionOn {
+	color: white !important;
+}
+
+.permissionOn {
+	color: black !important;
+}
+
 .revampButton,
 #studentTags span.revampTag {
 	background-color: var(--darkMode-button-bg);
@@ -188,4 +201,10 @@ td, th {
 .newClassPage {
 	background-color: var(--darkMode-menu-bg);
 	border-color: var(--darkMode-menu-border);
+}
+
+
+td.permissionCell,
+th.permissionHeader {
+	border: 3px solid var(--darkMode-menu-border);
 }

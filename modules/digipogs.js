@@ -124,14 +124,7 @@ async function transferDigipogs(transferData) {
             }
 
             try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                    from,
-                    to,
-                    null,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
+                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [from, to, null, amount, reason, Date.now()]);
             } catch (err) {
                 logger.log("error", err.stack || err);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };

@@ -8,28 +8,28 @@
   <% if (locals.currentUser) { %>
     <ul>
       <% if (currentUser && currentUser.activeClass != null) { %>
-        <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton"><img src="/img/pie-chart-outline.svg" alt="Manager Icon">Panel</a></li>
+        <li><a href=<%- currentUser.classPermissions >= 4 ? "/controlPanel" : "/student" %> class="headerTab revampButton"><img src="/img/icons/pie-chart-outline.svg" alt="Manager Icon">Panel</a></li>
     	<% } %>
         <% if (currentUser.permissions>= MANAGER_PERMISSIONS) { %>
-          <li><a href="/managerPanel" class="headerTab revampButton"><img src="/img/briefcase-outline.svg" alt="Manager Icon">Manager</a></li>
+          <li><a href="/managerPanel" class="headerTab revampButton"><img src="/img/icons/briefcase-outline.svg" alt="Manager Icon">Manager</a></li>
           <% } %>
             <% if (!currentUser.classPermissions) { %>
               <li><a href="/selectClass" class="headerTab revampButton" title="Classes">
-                <img src="/img/easel-outline.svg" alt="Classes Icon">Classes</a></li>
+                <img src="/img/icons/easel-outline.svg" alt="Classes Icon">Classes</a></li>
                 <li>
                   <% } %>
                       <% if (currentUser.classPermissions) { %>
                         <li><button href="/" class="headerTab revampButton" title="Classes" onclick="leaveClass()">
-                          <img src="/img/easel-outline.svg" alt="Classes Icon">Classes</button></li>
+                          <img src="/img/icons/easel-outline.svg" alt="Classes Icon">Classes</button></li>
                           <li>
-                          <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()"><img src="/img/logout.svg" style="transform: scaleX(-1);" alt="Leave Classes Icon">Leave Room</button></li>
+                          <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()"><img src="/img/icons/logout.svg" style="transform: scaleX(-1);" alt="Leave Classes Icon">Leave Room</button></li>
                         <% } %></ul>
                         <div class="mobileNavSpacer"></div>
                           <a href="/profile" class="headerTab revampButton" title="Profile">
-                            <img src="/img/person.svg" alt="Profile Icon">Profile
+                            <img src="/img/icons/person.svg" alt="Profile Icon">Profile
                           </a>
                           <button href="/" id="logoutButton" class="revampButton" onclick="logout()">
-                            <img src="/img/logout.svg" alt="Logout Icon">Logout
+                            <img src="/img/icons/logout.svg" alt="Logout Icon">Logout
                           </button>
                           <% } %>
 </div>
@@ -41,7 +41,7 @@
         document.getElementById("backgroundDarken").className = ""
     }
 
-    const mobileDialogBackButton = `<button class='backButton quickButton revampButton dialogBack' onclick="closeModal(this)"><img src="/img/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>`;
+    const mobileDialogBackButton = `<button class='backButton quickButton revampButton dialogBack' onclick="closeModal(this)"><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"><p>Back</p></button>`;
 
 
     let orientation = 'landscape';
