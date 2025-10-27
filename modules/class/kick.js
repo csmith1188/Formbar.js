@@ -46,7 +46,7 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         }
 
         // Update the control panel on all tabs
-        userUpdateSocket(email, 'classUpdate', classId);
+        userUpdateSocket(email, "classUpdate", classId);
 
         // If the user is logged in, then handle the user's session
         const usersSockets = userSockets[email];

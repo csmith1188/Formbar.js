@@ -3,6 +3,7 @@ const { sendMail } = require("../modules/mail.js");
 const { database } = require("../modules/database.js");
 const { hash } = require("../modules/crypto.js");
 const { logNumbers } = require("../modules/config.js");
+const { dbRun, dbGet } = require("../modules/database");
 
 module.exports = {
     run(app) {
@@ -19,24 +20,10 @@ module.exports = {
                 }
 
                 // Set session email so that it can be used when changing the password
+                // After that, get their token from the database
                 req.session.email = req.query.email;
+                const token = await dbGet("SELECT secret FROM users WHERE email = ?", [req.session.email]);
 
-                // Create a promise for the user's secret
-                const token = await new Promise((resolve, reject) => {
-                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email}'`, (error, row) => {
-                        if (error) {
-                            logger.log("error", error.stack);
-                            // Render the message page with the error message
-                            res.render("pages/message", {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: "Error",
-                            });
-                            reject(error);
-                        } else {
-                            resolve(row.secret);
-                        }
-                    });
-                });
                 // If the token is valid, render the page to let the user reset their password
                 // If not, render an error message
                 if (code === token) {
@@ -57,21 +44,13 @@ module.exports = {
 
         app.post("/changepassword", async (req, res) => {
             try {
-                const token = await new Promise((resolve, reject) => {
-                    database.get(`SELECT secret FROM users WHERE email = '${req.session.email || req.body.email}'`, (error, row) => {
-                        if (error) {
-                            logger.log("error", error.stack);
-                            // Render the message page with the error message
-                            res.render("pages/message", {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: "Error",
-                            });
-                            reject(error);
-                        } else {
-                            resolve(row.secret);
-                        }
+                const token = await dbGet("SELECT secret FROM users WHERE email = ?", [req.session.email || req.body.email]);
+                if (!token) {
+                    return res.render("pages/message", {
+                        message: "No user found with that email.",
+                        title: "Error",
                     });
-                });
+                }
 
                 if (req.body.email) {
                     // Send an email to the user with the password change link
@@ -95,19 +74,15 @@ module.exports = {
                 } else if (req.session.email) {
                     // If the email is in the session, change the password
                     const hashedPassword = await hash(req.body.newPassword);
-                    database.run("UPDATE users SET password = ? WHERE email = ?", [hashedPassword, req.session.email], (err) => {
-                        if (err) {
-                            logger.log("error", err.stack);
-                            res.render("pages/message", {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: "Error",
-                            });
-                        }
-                        console.log(`[${req.session.email}]: Password changed`);
-                        res.redirect("/");
-                    });
+                    await dbRun("UPDATE users SET password = ? WHERE email = ?", [hashedPassword, req.session.email]);
+                    console.log(`[${req.session.email}]: Password changed`);
+                    res.redirect("/");
                 }
             } catch (err) {
+                res.render("pages/message", {
+                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                    title: "Error",
+                });
                 logger.log("error", err.stack);
             }
         });
