@@ -78,24 +78,27 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.excludedRespondants.includes(studentData.id);
+        studentBox.checked = !classroomData.excludedRespondants.includes(studentData.id);
 
         // Attach onclick handler for voting rights
         // Store student ID for closure to avoid capturing the entire studentData object
         const studentId = studentData.id;
         studentBox.onclick = () => {
-            const canStudentVote = studentBox.checked;
-
-            // Get current voting list from the global classroom object
-            // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let excludedRespondants = [...(classroom.excludedRespondants || [])];
-
-
-            if (canStudentVote) excludedRespondants = excludedRespondants.filter((id) => id !== studentId);
-            else if (!canStudentVote && !excludedRespondants.includes(studentId)) excludedRespondants.push(studentId);
-
-            // Send the complete updated list to the server
-            socket.emit("updateExcludedRespondants", excludedRespondants);
+            // Determine if the student can respond based on the checkbox state
+            const canRespond = studentBox.checked;
+            // Create a copy of the excludedRespondants array to modify
+            const updatedExcluded = [...classroom.excludedRespondants];
+            // Update the excludedRespondants array based on the checkbox state
+            if (!canRespond) {
+                updatedExcluded.push(studentId); // Add the student to excludedRespondants
+            } else {
+                const index = updatedExcluded.indexOf(studentId);
+                if (index > -1) {
+                    updatedExcluded.splice(index, 1); // Remove the student from excludedRespondants
+                }
+            }
+            // Emit the updated excludedRespondants array to the server
+            socket.emit("updateExcludedRespondants", updatedExcluded);
         };
 
         for (let eachResponse in classroomData.poll.responses) {
