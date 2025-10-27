@@ -89,12 +89,12 @@ async function joinRoomByCode(code, session) {
             // Get the student's session data ready to transport into new class
             let currentUser = classInformation.users[email];
 
-            // Set class permissions and clear any previous tags so they don't persist across classes
+            // Set class permissions and load tags from classusers table for this specific class
             currentUser.classPermissions = classUser.permissions;
             currentUser.activeClass = classroomDb.id;
-            currentUser.tags = [];
-            classInformation.users[email].tags = [];
-            database.run("UPDATE users SET tags = ? WHERE id = ?", ["", user.id], () => {});
+            // Load tags from classusers table
+            currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
+            classInformation.users[email].tags = currentUser.tags;
 
             // Add the student to the newly created class
             const classroom = classInformation.classrooms[classroomDb.id];
@@ -157,7 +157,7 @@ async function joinRoomByCode(code, session) {
                 classData.permissions.manageClass
             );
 
-            setClassOfApiSockets(studentAPIKey, classroomDb.id);
+            setClassOfApiSockets(currentUser.API, classroomDb.id);
 
             // Call classUpdate on all user's tabs
             userUpdateSocket(email, "classUpdate", classroomDb.id, { global: false, restrictToControlPanel: true });
