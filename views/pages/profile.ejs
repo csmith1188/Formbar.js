@@ -47,13 +47,13 @@
                     <p id='apiKey'><strong>API Key:</strong> █</p>
                     <div id='apiKeyButton'>
                         <button onclick="copyApiKey()" class="squareButton hideMobile">
-                            <img src="/img/clipboard-outline.svg" alt="Refresh API Key">
+                            <img src="/img/icons/clipboard-outline.svg" alt="Refresh API Key">
                         </button>
                         <button id="showHideApi" onclick="revealApiKey()" class="squareButton" title="Reveal API Key">
-                            <img src="/img/eye-outline.svg" alt="Reveal API Key">
+                            <img src="/img/icons/eye-outline.svg" alt="Reveal API Key">
                         </button>
                         <button id='apiRefresh' onclick='refreshApiKey()' class="squareButton warningButton" title="Refresh API Key">
-                            <img src="/img/refresh-outline.svg" alt="Refresh API Key">
+                            <img src="/img/icons/refresh-outline.svg" alt="Refresh API Key">
                         </button>
                     </div>
                 </div>
@@ -61,10 +61,10 @@
                     <p id='pin'><strong>PIN:</strong> █</p>
                     <div id='apiKeyButton'>
                         <button id="showHidePin" onclick="revealPin()" class="squareButton" title="Reveal PIN">
-                            <img src="/img/eye-outline.svg" alt="Reveal PIN">
+                            <img src="/img/icons/eye-outline.svg" alt="Reveal PIN">
                         </button>
                         <button id='pinEdit' onclick='editPin()' class="squareButton warningButton" title="Edit PIN">
-                            <img src="/img/pencil-outline.svg" alt="Edit PIN">
+                            <img src="/img/icons/pencil-outline.svg" alt="Edit PIN">
                         </button>
                     </div>
                 </div>
@@ -115,7 +115,7 @@
                 if (!apiKey) return;
                 apiKey.innerHTML = '<strong>API Key:</strong> ' + apiKeyValue;
                 showHideApi.setAttribute("onclick", "hideApiKey()");
-                showHideApi.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide API Key">';
+                showHideApi.innerHTML = '<img src="/img/icons/eye-off-outline.svg" alt="Hide API Key">';
 
                 if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'none';
             }
@@ -125,7 +125,7 @@
                 if (!apiKey) return;
                 apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 3)}`;
                 showHideApi.setAttribute("onclick", "revealApiKey()");
-                showHideApi.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal API Key">';
+                showHideApi.innerHTML = '<img src="/img/icons/eye-outline.svg" alt="Reveal API Key">';
 
                 if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'block';
             }
@@ -135,7 +135,7 @@
                 if (!pin) return;
                 pin.innerHTML = '<strong>PIN:</strong> ' + pinValue;
                 showHidePin.setAttribute("onclick", "hidePin()");
-                showHidePin.innerHTML = '<img src="/img/eye-off-outline.svg" alt="Hide Pin">';
+                showHidePin.innerHTML = '<img src="/img/icons/eye-off-outline.svg" alt="Hide Pin">';
             }
 
             function hidePin() {
@@ -143,7 +143,7 @@
                 if (!pin) return;
                 pin.innerHTML = `<strong>PIN:</strong> ${'█'.repeat(pinValue.length)}`;
                 showHidePin.setAttribute("onclick", "revealPin()");
-                showHidePin.innerHTML = '<img src="/img/eye-outline.svg" alt="Reveal Pin">';
+                showHidePin.innerHTML = '<img src="/img/icons/eye-outline.svg" alt="Reveal Pin">';
             }
 
             if (apiKey) hideApiKey();

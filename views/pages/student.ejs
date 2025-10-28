@@ -46,11 +46,11 @@
 							<h3 style="margin-top: 0;">Take a break</h3>
 							<div id="breakInfo">
 								<div id="breakInputs" class="">
-									<label class="form-control" id="pollControl" for="bathroom">
+									<label class="form-control" for="bathroom">
 										<input type="radio" name="option" id="bathroom" value="Bathroom" required>
 										Bathroom
 									</label>
-									<label class="form-control" id="pollControl" for="other">
+									<label class="form-control" for="other">
 										<input type="radio" name="option" id="other" value="other">
 										Other
 									</label>
@@ -134,30 +134,28 @@
 			let quiz = {}
 			let votingRight = false
 
-		// Calculate voting rights based on poll data
-		function updateVotingRight() {
-			if (!poll || !poll.status) {
-				votingRight = false;
-				return;
+			// Calculate voting rights based on poll data
+			function updateVotingRight() {
+				if (!poll || !poll.status) {
+					votingRight = false;
+					return;
+				}
+				// Check if current user's ID is in the studentsAllowedToVote array
+				votingRight = poll.studentsAllowedToVote && 
+					poll.studentsAllowedToVote.includes(currentUser.id);
 			}
-			// Check personal canVote flag (set by server for privacy)
-			// Fallback to checking studentsAllowedToVote array for backwards compatibility
-			if (poll.canVote !== undefined) {
-				votingRight = poll.canVote;
-			} else if (poll.studentsAllowedToVote) {
-				votingRight = poll.studentsAllowedToVote.includes(currentUser.id.toString());
-			} else {
-				votingRight = false;
-			}
-		}
 
 			function unselectRemove(event) {
 				event.preventDefault();
 				document.getElementById('remove').checked = false;
 			}
 
+			let userSelectedCheckboxes = [];
+
 			function updatePage() {
 				pollForm = document.getElementById('pollForm');
+				const responseTextbox = document.getElementById('resTextBox');
+
 				pollPromptDisplay = document.getElementById('pollPrompt');
 
 				if (pollDiv.querySelector("#remove")) {
@@ -176,7 +174,6 @@
 							pollDiv.style.display = 'block';
 
 							// Grab the existing textarea if it exists
-							const responseTextbox = document.getElementById('resTextBox');
 							let currentTextRes = '';
 							let selectionStart = 0, selectionEnd = 0;
 							let wasFocused = false;
@@ -187,6 +184,8 @@
 								selectionEnd = responseTextbox.selectionEnd;
 								wasFocused = document.activeElement === responseTextbox;
 							}
+
+							pollForm.innerHTML = '';
 
 							// Update the poll prompt
 							pollPromptDisplay.innerText = poll.prompt;
@@ -200,10 +199,9 @@
 								mayNotAnswer.remove();
 							}
 
-
 							// Only create textarea if it doesn't exist
 							let textarea = responseTextbox;
-							if (poll.allowTextResponses && !responseTextbox) {
+							if (poll.allowTextResponses) {
 								textarea = document.createElement('textarea');
 								textarea.name = 'resText';
 								textarea.cols = 20;
@@ -216,6 +214,8 @@
 							// Set the value of the student's text response if it exists
 							if (poll.allowTextResponses && textarea) {
 								textarea.value = (currentTextRes || oldTextRes || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+								// Restore focus if it was focused before
 								if (wasFocused) {
 									textarea.focus();
 									textarea.setSelectionRange(selectionStart, selectionEnd);
@@ -237,6 +237,14 @@
 									checkbox.style.cssText = `--color: ${response.color}44;--theme-color: ${response.color};`;
 									pollForm.appendChild(checkbox);
 									pollForm.appendChild(document.createTextNode(response.answer));
+									checkbox.checked = userSelectedCheckboxes.includes(response.answer);
+									checkbox.onclick = () => {
+										if (checkbox.checked) {
+											userSelectedCheckboxes.push(response.answer);
+										} else {
+											userSelectedCheckboxes = userSelectedCheckboxes.filter(id => id !== response.answer);
+										}
+									};
 								} else {
 									const btn = document.createElement('button');
 									btn.name = 'poll';
@@ -275,6 +283,8 @@
 								const radios = pollForm.querySelectorAll('[name="poll"]');
 								radios.forEach(r => r.disabled = true);
 							}
+
+
 
 						} else {
 							noPoll.style.display = 'block';
@@ -363,13 +373,17 @@
 								textRes: '',
 								date: null
 							}
+							userSelectedCheckboxes = [];
+							document.querySelectorAll('input.pollButton').forEach((btn) => {
+								btn.checked = false;
+							});
 							oldLetterRes = '';
 							oldTextRes = '';
 						}
 
-                        poll = newPoll;
-                        updateVotingRight();
-                        updatePage();
+                    poll = newPoll;
+                    updateVotingRight();
+                    updatePage();
 					});
 
 					socket.on('pollResp', (voteData) => {
