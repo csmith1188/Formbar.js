@@ -118,18 +118,18 @@
                                 <div style="display: flex; gap: 5px; justify-content: center;" class="transactionButtons">
                                     <% if(pool.owner.id == currentUser.id) { %>
                                         <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pool.id %>)">
-                                            <img src="/img/cash-outline.svg" title="Payout" alt="Payout" style="filter: invert(0) !important">
+                                            <img src="/img/icons/cash-outline.svg" title="Payout" alt="Payout" style="filter: invert(0) !important">
                                         </button>
                                         <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pool.id %>;">
-                                            <img src="/img/person.svg" title="Add or Remove Members" alt="Add or Remove Members" style="filter: invert(0) !important">
+                                            <img src="/img/icons/person.svg" title="Add or Remove Members" alt="Add or Remove Members" style="filter: invert(0) !important">
                                         </button>
                                         <% if(pool.id !== 0) { %>
                                             <button class="revampButton warningButton squareButton" style="padding: 5px;" onclick="socket.emit('poolDelete', { poolId: <%= pool.id %> })">
-                                                <img src="/img/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
+                                                <img src="/img/icons/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
                                             </button>
                                         <% } else { %>
                                             <button class="revampButton warningButton squareButton" style="padding: 5px;" disabled>
-                                                <img src="/img/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
+                                                <img src="/img/icons/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
                                             </button>
                                         <% } %>
                                     <% } else { %>
@@ -163,7 +163,7 @@
 
             <div class="membersOptions" data-pool-id="-1">
                 <button class="backButton revampButton" style="margin-top: 70px;margin-left: 10px;" onclick="membersOptions.classList.remove('open');membersOptions.dataset.poolId = -1;">
-                    <img src="/img/close-outline.svg" alt="Close Member Options" style="filter: invert(1) !important;">
+                    <img src="/img/icons/close-outline.svg" alt="Close Member Options" style="filter: invert(1) !important;">
                 </button>
 
                 <div class="addMember">

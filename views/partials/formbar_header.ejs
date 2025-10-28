@@ -34,25 +34,25 @@
 		</ul>
 
 	<button onclick="toggleTheme()" id="lmdmBtn" class="circularButton" title="LM/DM">
-		<img id="lmdmIcon" src="/img/sun.svg" title="Light/Dark Mode Toggle">
+		<img id="lmdmIcon" src="/img/icons/sun.svg" title="Light/Dark Mode Toggle">
 	</button>
 
-	<button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/volume.svg" title="Sound On"></button>
-	<button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()"><img id="unmuteIcon" src="/img/mute.svg" title="Sound Off"></button>
+	<button id="muteButton" class="circularButton" onclick="toggleMuteSound()"><img id="muteIcon" src="/img/icons/volume.svg" title="Sound On"></button>
+	<button id="unmuteButton" class="circularButton" onclick="toggleMuteSound()"><img id="unmuteIcon" src="/img/icons/mute.svg" title="Sound Off"></button>
 
 	<script>if(!window.location.href.includes('controlPanel')){document.getElementById('muteButton').remove();document.getElementById('unmuteButton').remove()}</script>
 
 	<% if(locals.currentUser) { %>
 		<button class="mobileMenuButton circularButton" onclick="document.getElementById('mobileNavigation').classList.toggle('open');">
-			<img src="/img/menu.svg" alt="Menu Icon">
+			<img src="/img/icons/menu.svg" alt="Menu Icon">
 		</button>
         <% if (locals.currentUser.permissions !== GUEST_PERMISSIONS) { %>
             <a href="/profile" class="circularButton hideMobile" title="LM/DM">
-                <img src="/img/person.svg" title="Profile">
+                <img src="/img/icons/person.svg" title="Profile">
             </a>
         <% } %>
 		<button href="/" id="logoutButton" class="circularButton hideMobile" onclick="logout()">
-			<img id="logoutIcon" src="/img/logout.svg" title="Logout">
+			<img id="logoutIcon" src="/img/icons/logout.svg" title="Logout">
 		</button>
 	<% } %>
 </header>
@@ -63,10 +63,10 @@ let lmdmIcon = document.getElementById("lmdmIcon");
 //document.body.style.backgroundColor = getCookie("theme")
 if (getCookie("theme") == "white") {
 	document.getElementById('lmdm').href = '';
-	lmdmIcon.src = "/img/moon.svg"
+	lmdmIcon.src = "/img/icons/moon.svg"
 } else if (getCookie("theme") == "dark") {
 	document.getElementById('lmdm').href = '/css/darkmode.css';
-	lmdmIcon.src = "/img/sun.svg"
+	lmdmIcon.src = "/img/icons/sun.svg"
 }
 
 function getCookie(name) {
@@ -83,11 +83,11 @@ function toggleTheme() {
 	if (theme === "white") {
 	document.cookie = "theme=dark;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
 	document.getElementById('lmdm').href = '/css/darkmode.css';
-	lmdmIcon.src = "/img/sun.svg"
+	lmdmIcon.src = "/img/icons/sun.svg"
 	} else {
 	document.cookie = "theme=white;expires=Fri, 1 Jul " + nextYear + " 23:59:59 GMT; path=/";
 	document.getElementById('lmdm').href = '';
-	lmdmIcon.src = "/img/moon.svg";
+	lmdmIcon.src = "/img/icons/moon.svg";
 	}
 }
 
@@ -119,7 +119,7 @@ function logout() {
 </script>
 
 <div id="errorDialog">
-	<img src="/img/close-circle.svg" alt="Error Icon">
+	<img src="/img/icons/close-circle.svg" alt="Error Icon">
 	<div class="errorDetails">
 		<p id="errorMessage"></p>
 		<!-- <p id="errorCode">0x23</p> An idea, may not be needed but might help in future. --> 

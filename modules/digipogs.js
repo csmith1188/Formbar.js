@@ -1,10 +1,9 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
+const { Classroom, classInformation } = require("./class/classroom");
 
-// awardDigipogsResponse
-// transferResponse
-async function awardDigipogs(awardData) {
+async function awardDigipogs(awardData, session) {
     try {
         const { from, to } = awardData;
         const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
@@ -12,16 +11,34 @@ async function awardDigipogs(awardData) {
 
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
+        } else if(from !== session.userId) {
+            return { success: false, message: "Sender ID does not match session user." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
+    
+
+        // Check if the awarding user is a teacher in a class
+        let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
+
+        // Owners are not in the classusers table, so we need to check if they are the owner of the class
+        if(!classPermissions) {
+            const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
+            if(classOwnerId === from) {
+                classPermissions = TEACHER_PERMISSIONS;
+            }
+        }
+
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-        } else if (fromUser.permissions < TEACHER_PERMISSIONS) {
+        } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
+        
+        
+        
 
         const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
         if (!toUser) {
@@ -32,9 +49,10 @@ async function awardDigipogs(awardData) {
         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to]);
 
         try {
-            await dbRun("INSERT INTO transactions (from_user, to_user, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
                 from,
                 to,
+                null,
                 amount,
                 reason,
                 Date.now(),
@@ -125,7 +143,7 @@ async function transferDigipogs(transferData) {
             }
 
             try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?)", [
+                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
                     from,
                     to,
                     null,
