@@ -78,6 +78,7 @@ async function executeSQLMigration(migration) {
             database.exec(migrationSQL, (err) => {
                 if (err) {
                     database.run("ROLLBACK");
+                    console.error(err);
                     console.log(
                         "Unable to complete migration as this migration has already been run, or an error has occurred. Continuing to next migration."
                     );
