@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS "classusers"
     "classId"     INTEGER NOT NULL,
     "studentId"   INTEGER NOT NULL,
     "permissions" INTEGER,
-    "digiPogs"    INTEGER
+    "tags"        TEXT
 );
 
 CREATE TABLE IF NOT EXISTS "custom_polls"
