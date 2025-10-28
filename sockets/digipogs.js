@@ -4,7 +4,7 @@ module.exports = {
     run(socket) {
         // For those with teacher permissions or higher to add digipogs to a user's account
         socket.on("awardDigipogs", async (awardData) => {
-            const result = await awardDigipogs(awardData);
+            const result = await awardDigipogs(awardData, socket.request.session);
             socket.emit("awardDigipogsResponse", result);
         });
 

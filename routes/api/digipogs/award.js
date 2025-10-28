@@ -8,7 +8,7 @@ module.exports = {
         // Awards digipogs to a user
         router.post("/digipogs/award", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
-                const result = await awardDigipogs(req.body);
+                const result = await awardDigipogs(req.body, req.session);
                 if (result.success) {
                     res.status(200).json(result);
                 } else {
