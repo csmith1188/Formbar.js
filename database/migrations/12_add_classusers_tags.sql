@@ -34,3 +34,30 @@ SET tags = (
 -- Drop the old classusers table and rename the new one
 DROP TABLE classusers;
 ALTER TABLE classusers_temp RENAME TO classusers;
+
+CREATE TABLE IF NOT EXISTS "users_temp"
+(
+    "id"          INTEGER NOT NULL UNIQUE,
+    "email"       TEXT    NOT NULL,
+    "password"    TEXT,
+    "permissions" INTEGER,
+    "API"         TEXT    NOT NULL UNIQUE,
+    "secret"      TEXT    NOT NULL UNIQUE,
+    "digipogs"    INTEGER NOT NULL DEFAULT 0,
+    "pin"         INTEGER,
+    "displayName" TEXT,
+    "verified"    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY ("id" AUTOINCREMENT)
+);
+
+-- Remove tags column from users table by recreating it without the column
+INSERT INTO users_temp (
+    id, email, password, permissions, API, secret, digipogs, pin, displayName, verified
+)
+SELECT
+    id, email, password, permissions, API, secret, digipogs, pin, displayName, verified
+FROM users;
+
+-- Drop the old users table and rename the new one
+DROP TABLE users;
+ALTER TABLE users_temp RENAME TO users;
