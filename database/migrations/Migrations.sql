@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS "digipog_pool_users"
 (
     "pool"        INTEGER NOT NULL,
     "userId"      INTEGER NOT NULL,
-    "owner"       TEXT    NOT NULL DEFAULT "",
+    "owner"       TEXT    NOT NULL DEFAULT ""
 );
 
 CREATE TABLE IF NOT EXISTS "transactions_temp"

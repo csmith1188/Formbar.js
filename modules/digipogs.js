@@ -1,7 +1,7 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
-const { Classroom, classInformation } = require("./class/classroom");
+const { classInformation } = require("./class/classroom");
 
 async function awardDigipogs(awardData, session) {
     try {
@@ -11,7 +11,7 @@ async function awardDigipogs(awardData, session) {
 
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
-        } else if(from !== session.userId) {
+        } else if (from !== session.userId) {
             return { success: false, message: "Sender ID does not match session user." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
