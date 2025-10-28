@@ -56,9 +56,9 @@ async function createPoll(classId, pollData, userSession) {
 
         // If excludedRespondants is provided and is a non-empty array, use it directly
         // Otherwise, populate with all eligible students
-        if (excludedRespondants && Array.isArray(excludedRespondants) && excludedRespondants.length > 0) {
-            classInformation.classrooms[classId].poll.excludedRespondants = excludedRespondants.map(id => Number(id));
-        } else if (excludedRespondants === null) {
+        if (studentsAllowedToVote && Array.isArray(studentsAllowedToVote) && studentsAllowedToVote.length > 0) {
+            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote.map((id) => Number(id));
+        } else if (studentsAllowedToVote === null) {
             // When no specific students are provided (undefined, null, or empty array),
             // allow all eligible students to vote
             classInformation.classrooms[classId].poll.excludedRespondants = [];
@@ -170,9 +170,9 @@ async function updatePoll(classId, options, userSession) {
                 savePollToHistory(classId);
             }
 
-            // If excludedRespondants is being changed, then ensure it always contains numbers
-            if (option === "excludedRespondants" && Array.isArray(value)) {
-                value = value.map(id => Number(id));
+            // If studentsAllowedToVote is being changed, then ensure it always contains numbers
+            if (option === "studentsAllowedToVote" && Array.isArray(value)) {
+                value = value.map((id) => Number(id));
             }
 
             // Update the property if it exists in the poll object
@@ -387,7 +387,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
-        const resWeight = classroom.poll.responses[res].weight || 1;
+        const resWeight = classroom.poll.responses[res] ? classroom.poll.responses[res].weight : 1;
         // Increase pog meter by 100 times the weight of the response
         // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
         const pogMeterIncrease = Math.floor(100 * resWeight);

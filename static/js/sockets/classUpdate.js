@@ -201,6 +201,27 @@ socket.on("classUpdate", (classroomData) => {
         }
     }
 
+    // Sync checkboxes with server's studentsAllowedToVote
+    if (classroomData.poll && Array.isArray(classroomData.poll.studentsAllowedToVote)) {
+        const oldAllowedToVote = new Set(classroom?.poll?.studentsAllowedToVote || []);
+        const newAllowedToVote = new Set(classroomData.poll.studentsAllowedToVote);
+
+        // Find students who were added and removed
+        const added = [...newAllowedToVote].filter((id) => !oldAllowedToVote.has(id));
+        const removed = [...oldAllowedToVote].filter((id) => !newAllowedToVote.has(id));
+
+        // Update checkboxes which were changed
+        for (const userId of added) {
+            const checkbox = document.getElementById(`checkbox_${userId}`);
+            if (checkbox) checkbox.checked = true;
+        }
+
+        for (const userId of removed) {
+            const checkbox = document.getElementById(`checkbox_${userId}`);
+            if (checkbox) checkbox.checked = false;
+        }
+    }
+
     if (currentUser.classPermissions >= classroomData.permissions.controlPolls) {
         pollsTabButton.style.display = "";
     } else {

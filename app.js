@@ -90,7 +90,6 @@ setInterval(() => {
     }
 }, INACTIVITY_CHECK_TIME);
 
-// Clean up expired refresh tokens from the database
 const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60; // 1 hour
 authentication.cleanRefreshTokens();
 setInterval(async () => {

@@ -292,7 +292,7 @@ function responseAmountChange(responseAmount = null) {
 
         let removeAnswerButton = document.createElement("button");
         removeAnswerButton.className = "quickButton revampButton warningButton";
-        removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
+        removeAnswerButton.innerHTML = "<img src='/img/icons/close-outline.svg' alt='Remove Answer' />";
         removeAnswerButton.id = `removeAnswer`;
         removeAnswerButton.onclick = removeAnswer;
         responseDiv.appendChild(removeAnswerButton);

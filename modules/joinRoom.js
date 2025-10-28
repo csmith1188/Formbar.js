@@ -157,7 +157,6 @@ async function joinRoomByCode(code, session) {
                 classData.permissions.manageClass
             );
 
-            console.log(currentUser);
             setClassOfApiSockets(currentUser.API, classroomDb.id);
 
             // Call classUpdate on all user's tabs

@@ -80,25 +80,21 @@ function buildStudent(classroomData, studentData) {
         studentBox.id = "checkbox_" + studentData.id;
         studentBox.checked = !classroomData.excludedRespondants.includes(studentData.id);
 
-        // Attach onclick handler for voting rights
-        // Store student ID for closure to avoid capturing the entire studentData object
+        // Handle voting rights for student checkboxes
         const studentId = studentData.id;
         studentBox.onclick = () => {
-            // Determine if the student can respond based on the checkbox state
-            const canRespond = studentBox.checked;
-            // Create a copy of the excludedRespondants array to modify
-            const updatedExcluded = [...classroom.excludedRespondants];
-            // Update the excludedRespondants array based on the checkbox state
-            if (!canRespond) {
-                updatedExcluded.push(studentId); // Add the student to excludedRespondants
-            } else {
-                const index = updatedExcluded.indexOf(studentId);
-                if (index > -1) {
-                    updatedExcluded.splice(index, 1); // Remove the student from excludedRespondants
-                }
+            const canStudentVote = studentBox.checked;
+
+            // Get current voting list from the classroom
+            let studentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
+            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
+                studentsAllowedToVote.push(studentId);
+            } else if (!canStudentVote) {
+                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
             }
-            // Emit the updated excludedRespondants array to the server
-            socket.emit("updateExcludedRespondants", updatedExcluded);
+
+            // Send the updated list to the server
+            socket.emit("updatePoll", { studentsAllowedToVote });
         };
 
         for (let eachResponse in classroomData.poll.responses) {
@@ -389,7 +385,7 @@ if (settings.filter) {
             if (filterElement) {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
                 if (filterType == "canVote") filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
@@ -412,15 +408,15 @@ if (settings.sort) {
 
                 switch (sort[sortType]) {
                     case 0:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 0;
                         break;
                     case 1:
-                        sortIcon.src = "/img/swap-vertical-down.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-down.svg";
                         sortIcon.style.opacity = 1;
                         break;
                     case 2:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 1;
                         break;
                 }
@@ -598,7 +594,7 @@ for (let filterElement of document.getElementsByClassName("filter")) {
             } else {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
             }
         }
 
@@ -622,7 +618,7 @@ for (let sortElement of document.getElementsByClassName("sort")) {
                 if (otherSortElement) {
                     otherSortElement.classList.remove("pressed");
                     let otherSortIcon = otherSortElement.querySelector("div").getElementsByClassName("currentSortIcon")[0];
-                    otherSortIcon.src = "/img/swap-vertical-up.svg";
+                    otherSortIcon.src = "/img/icons/swap-vertical-up.svg";
                     otherSortIcon.style.opacity = 0;
                 }
             }
@@ -632,15 +628,15 @@ for (let sortElement of document.getElementsByClassName("sort")) {
 
         switch (sort[sortElement.id]) {
             case 0:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 1:
-                sortIcon.src = "/img/swap-vertical-down.svg";
+                sortIcon.src = "/img/icons/swap-vertical-down.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 2:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 0;
                 break;
         }
