@@ -24,7 +24,7 @@ async function awardDigipogs(awardData, session) {
         let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
 
         // Owners are not in the classusers table, so we need to check if they are the owner of the class
-        if(!classPermissions) {
+        if (!classPermissions) {
             const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
             if(classOwnerId === from) {
                 classPermissions = TEACHER_PERMISSIONS;
