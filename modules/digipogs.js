@@ -37,9 +37,6 @@ async function awardDigipogs(awardData, session) {
             return { success: false, message: "Insufficient permissions." };
         }
         
-        
-        
-
         const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
         if (!toUser) {
             return { success: false, message: "Recipient account not found." };
