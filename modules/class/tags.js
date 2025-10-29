@@ -35,7 +35,7 @@ async function setTags(tags, userSession) {
             student.tags = studentTags;
 
             try {
-                await dbRun("UPDATE users SET tags = ? WHERE email = ?", [studentTags.join(","), student.email]);
+                await dbRun("UPDATE classusers SET tags = ? WHERE classId = ? AND studentId = ?", [studentTags.join(","), classId, student.id]);
             } catch (err) {
                 logger.log("error", err.stack);
             }
@@ -73,9 +73,9 @@ async function saveTags(studentId, tags, userSession) {
             normalized.push("Offline");
         }
 
-        // Store in memory (as array) and in the database (as comma-separated string for legacy column)
+        // Store in memory (as array) and in the database (as comma-separated string in classusers table)
         classInformation.classrooms[userSession.classId].students[email].tags = normalized;
-        await dbRun("UPDATE users SET tags = ? WHERE id = ?", [normalized.join(","), studentId]);
+        await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [normalized.join(","), studentId, userSession.classId]);
     } catch (err) {
         logger.log("error", err.stack);
     }
