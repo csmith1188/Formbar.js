@@ -24,10 +24,10 @@ async function awardDigipogs(awardData, session) {
         if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
             return { success: false, message: "Sender is not currently active in any class." };
         }
-        let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
-
+        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
+        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
         // Owners are not in the classusers table, so we need to check if they are the owner of the class
-        if (!classPermissions) {
+        if (classPermissions === undefined) {
             const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
             if(classOwnerId && classOwnerId.owner === from) {
                 classPermissions = TEACHER_PERMISSIONS;
