@@ -39,7 +39,7 @@ class Student {
 async function getStudentsInClass(classId) {
     // Grab students associated with the class, including tags
     const studentIdsAndPermissions = await new Promise((resolve, reject) => {
-        database.all("SELECT studentId, permissions, tags FROM classusers WHERE classId = ?", [classId], (err, rows) => {
+        database.all("SELECT studentId, permissions FROM classusers WHERE classId = ?", [classId], (err, rows) => {
             if (err) {
                 logger.log("error", err.stack);
                 return reject(err);
