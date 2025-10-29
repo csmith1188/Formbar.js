@@ -36,6 +36,8 @@ async function awardDigipogs(awardData, session) {
 
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
+        } else if (classPermissions == null) {
+            return { success: false, message: "Insufficient permissions." };
         } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
