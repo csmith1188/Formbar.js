@@ -55,11 +55,14 @@ module.exports = {
                     }
 
                     try {
-                        await dbRun("INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)", [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1]);
+                        await dbRun(
+                            "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                            [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1]
+                        );
                         logger.log("verbose", "[get /login] Added user to database");
 
                         // Find the user in which was just created to get the id of the user
-                        const userData = await dbGet('SELECT * FROM users WHERE email=?', [user.email]);
+                        const userData = await dbGet("SELECT * FROM users WHERE email=?", [user.email]);
                         classInformation.users[userData.email] = new Student(
                             userData.email,
                             userData.id,
@@ -79,7 +82,7 @@ module.exports = {
                         req.session.verified = 1;
 
                         // Delete any temp user creation data with the same email to prevent multiple accounts with the same email
-                        const tempUsers = await dbGetAll('SELECT token FROM temp_user_creation_data');
+                        const tempUsers = await dbGetAll("SELECT token FROM temp_user_creation_data");
                         for (const tempUser of tempUsers) {
                             const decoded = jwt.decode(tempUser.token);
                             if (decoded.email === userData.email) {
@@ -296,7 +299,7 @@ module.exports = {
                     logger.log("verbose", "[post /login] Creating new user");
 
                     // Get all existing users and check for existing emails, APIs, and secrets
-                    const users = await dbGetAll('SELECT API, secret, email FROM users');
+                    const users = await dbGetAll("SELECT API, secret, email FROM users");
 
                     let existingAPIs = [];
                     let existingSecrets = [];
