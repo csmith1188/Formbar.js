@@ -13,7 +13,7 @@ const sqlMigrations = fs
         path: `./database/migrations/${file}`,
     }));
 
-if(!fs.existsSync("./database/migrations/JSMigrations")){
+if (!fs.existsSync("./database/migrations/JSMigrations")){
     fs.mkdirSync("./database/migrations/JSMigrations");
 }
 
