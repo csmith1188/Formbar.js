@@ -21,6 +21,9 @@ async function awardDigipogs(awardData, session) {
     
 
         // Check if the awarding user is a teacher in a class
+        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
+            return { success: false, message: "Sender is not currently active in any class." };
+        }
         let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
 
         // Owners are not in the classusers table, so we need to check if they are the owner of the class
