@@ -19,7 +19,7 @@ class Classroom {
         this.poll = {
             status: false,
             prompt: "",
-            responses: {},
+            responses: [],
             allowTextResponses: false,
             allowMultipleResponses: false,
             blind: false,

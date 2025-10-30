@@ -97,17 +97,17 @@ function buildStudent(classroomData, studentData) {
             socket.emit("updatePoll", { studentsAllowedToVote });
         };
 
-        for (let eachResponse in classroomData.poll.responses) {
+        for (let responseObj of classroomData.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
+                pollBox.style.color = responseObj.color;
                 pollBox.textContent = studentData.pollRes.textRes;
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
-                pollBox.textContent = eachResponse;
-            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (responseObj.answer == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
+                pollBox.style.color = responseObj.color;
+                pollBox.textContent = responseObj.answer;
+            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(responseObj.answer) != -1) {
                 let tempElem = document.createElement("span");
-                tempElem.textContent = eachResponse + " ";
-                tempElem.style.color = classroomData.poll.responses[eachResponse].color;
+                tempElem.textContent = responseObj.answer + " ";
+                tempElem.style.color = responseObj.color;
                 pollBox.appendChild(tempElem);
             }
         }
@@ -492,7 +492,7 @@ function filterSortChange(classroom) {
 
     // sort by response order
     if (sort.responseOrder == 1) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -503,7 +503,7 @@ function filterSortChange(classroom) {
             return aIndex - bIndex;
         });
     } else if (sort.responseOrder == 2) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);

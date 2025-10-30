@@ -149,8 +149,7 @@ function hoverShowPollDetails(poll, event, isDetails = false) {
             pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answer.color}44";>${answer.answer}</button>`;
         });
     } else {
-        Object.keys(poll.responses).forEach((answer, index) => {
-            let answerDetails = poll.responses[answer];
+        poll.responses.forEach((answerDetails, index) => {
             pollHoverDiv.innerHTML += `<button class="revampButton" style="background: ${answerDetails.color}44";>${answerDetails.answer}</button>`;
         });
     }
