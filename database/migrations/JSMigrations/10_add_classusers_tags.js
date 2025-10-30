@@ -11,7 +11,6 @@ module.exports = {
         // Create a new classusers table with the tags column
         await dbRun("CREATE TABLE IF NOT EXISTS classusers_temp (classId INTEGER NOT NULL, studentId INTEGER NOT NULL, permissions INTEGER NOT NULL, tags TEXT)", [], database);
 
-
         // Copy existing data from classusers to the new table
         await dbRun(
             `INSERT INTO classusers_temp (
