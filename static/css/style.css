@@ -3442,3 +3442,16 @@ p.accordionTitle {
 	right: 20px;
 	margin-right:0;
 }
+
+#settingsFunc .userIncludingButtons .userIncludingDiv {
+    gap: 0;
+}
+
+.userIncludingDiv {
+    border-radius: 10px;
+}
+
+.includingButton {
+    border: #000c15 solid 1px;
+    border-radius: 0;
+}
