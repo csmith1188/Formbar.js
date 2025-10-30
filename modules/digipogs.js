@@ -1,8 +1,9 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
+const { classInformation } = require("./class/classroom");
 
-async function awardDigipogs(awardData) {
+async function awardDigipogs(awardData, session) {
     try {
         const { from, to } = awardData;
         const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
@@ -10,14 +11,36 @@ async function awardDigipogs(awardData) {
 
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
+        } else if (from !== session.userId) {
+            return { success: false, message: "Sender ID does not match session user." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
+
+        // Check if the awarding user is a teacher in a class
+        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
+            return { success: false, message: "Sender is not currently active in any class." };
+        }
+        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [
+            classInformation.users[fromUser.email].activeClass,
+            from,
+        ]);
+        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
+        // Owners are not in the classusers table, so we need to check if they are the owner of the class
+        if (classPermissions === undefined) {
+            const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
+            if (classOwnerId && classOwnerId.owner === from) {
+                classPermissions = TEACHER_PERMISSIONS;
+            }
+        }
+
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-        } else if (fromUser.permissions < TEACHER_PERMISSIONS) {
+        } else if (classPermissions == null) {
+            return { success: false, message: "Insufficient permissions." };
+        } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
 
