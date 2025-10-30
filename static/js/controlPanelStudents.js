@@ -492,7 +492,7 @@ function filterSortChange(classroom) {
 
     // sort by response order
     if (sort.responseOrder == 1) {
-        let responsesIndexes = classroom.poll.responses.map(r => r.answer);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -503,7 +503,7 @@ function filterSortChange(classroom) {
             return aIndex - bIndex;
         });
     } else if (sort.responseOrder == 2) {
-        let responsesIndexes = classroom.poll.responses.map(r => r.answer);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);

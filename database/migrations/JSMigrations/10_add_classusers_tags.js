@@ -9,7 +9,11 @@ module.exports = {
         }
 
         // Create a new classusers table with the tags column
-        await dbRun("CREATE TABLE IF NOT EXISTS classusers_temp (classId INTEGER NOT NULL, studentId INTEGER NOT NULL, permissions INTEGER NOT NULL, tags TEXT)", [], database);
+        await dbRun(
+            "CREATE TABLE IF NOT EXISTS classusers_temp (classId INTEGER NOT NULL, studentId INTEGER NOT NULL, permissions INTEGER NOT NULL, tags TEXT)",
+            [],
+            database
+        );
 
         // Copy existing data from classusers to the new table
         await dbRun(
@@ -27,7 +31,7 @@ module.exports = {
         );
 
         // Drop the old classusers table and rename the new one
-        await dbRun('DROP TABLE classusers', [], database);
-        await dbRun('ALTER TABLE classusers_temp RENAME TO classusers', [], database);
+        await dbRun("DROP TABLE classusers", [], database);
+        await dbRun("ALTER TABLE classusers_temp RENAME TO classusers", [], database);
     },
 };

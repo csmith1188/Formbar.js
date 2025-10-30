@@ -102,7 +102,7 @@ async function createPoll(classId, pollData, userSession) {
                 weight: weight,
                 color: color,
                 correct: answers[i].correct,
-            })
+            });
         }
 
         // Set the poll's data in the classroom
@@ -343,7 +343,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!classroom.poll.allowMultipleResponses) {
-        if (res !== "remove" && !classroom.poll.responses.some(response => response.answer === res)) {
+        if (res !== "remove" && !classroom.poll.responses.some((response) => response.answer === res)) {
             return;
         }
     } else {
@@ -351,7 +351,7 @@ function pollResponse(classId, res, textRes, userSession) {
         } else if (!Array.isArray(res)) {
             return;
         } else {
-            const validResponses = classroom.poll.responses.map(r => r.answer);
+            const validResponses = classroom.poll.responses.map((r) => r.answer);
             const allValid = res.every((response) => validResponses.includes(response));
             if (!allValid) {
                 return;
@@ -383,7 +383,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
-        const responseObj = classroom.poll.responses.find(response => response.answer === res);
+        const responseObj = classroom.poll.responses.find((response) => response.answer === res);
         const resWeight = responseObj ? responseObj.weight : 1;
 
         // Increase pog meter by 100 times the weight of the response

@@ -26,7 +26,7 @@ module.exports = {
         );
 
         // Drop the old classusers table and rename the new one
-        await database.run('DROP TABLE classusers', []);
-        await database.run('ALTER TABLE temp_classusers RENAME TO classusers', []);
+        await database.run("DROP TABLE classusers", []);
+        await database.run("ALTER TABLE temp_classusers RENAME TO classusers", []);
     },
 };
