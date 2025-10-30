@@ -180,9 +180,9 @@ function getPollResponseInformation(classData) {
     let { totalStudentsIncluded, totalStudentsExcluded } = sortStudentsInPoll(classData);
 
     // Count the number of responses for each poll option
-    if (Object.keys(classData.poll.responses).length > 0) {
-        for (const [resKey, resValue] of Object.entries(classData.poll.responses)) {
-            responses[resKey] = {
+    if (classData.poll.responses.length > 0) {
+        for (const resValue of classData.poll.responses) {
+            responses[resValue.answer] = {
                 ...resValue,
                 responses: 0,
             };
@@ -318,7 +318,7 @@ class SocketUpdates {
             const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
             classData.poll.totalResponses = totalResponses;
             classData.poll.totalResponders = totalResponders;
-            classData.poll.responses = pollResponses;
+            classData.poll.responseCounts = pollResponses;
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));

@@ -22,7 +22,7 @@ module.exports = {
                 }
 
                 // Get the poll responses in the class
-                classData.poll.responses = getPollResponses(classData);
+                classData.poll.responseCounts = getPollResponses(classData);
 
                 // Get the user from the session, and if the user is not in the class, return an error
                 const user = req.session.user;

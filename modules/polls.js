@@ -97,12 +97,12 @@ async function createPoll(classId, pollData, userSession) {
                 color = answers[i].color;
             }
 
-            classInformation.classrooms[classId].poll.responses[answer] = {
+            classInformation.classrooms[classId].poll.responses.push({
                 answer: answer,
                 weight: weight,
                 color: color,
                 correct: answers[i].correct,
-            };
+            });
         }
 
         // Set the poll's data in the classroom
@@ -245,11 +245,11 @@ async function clearPoll(classId, userSession, updateClass = true) {
             await updatePoll(classId, { status: false }, userSession);
         }
 
-        classInformation.classrooms[classId].poll.responses = {};
+        classInformation.classrooms[classId].poll.responses = [];
         classInformation.classrooms[classId].poll.prompt = "";
         classInformation.classrooms[classId].poll = {
             status: false,
-            responses: {},
+            responses: [],
             allowTextResponses: false,
             prompt: "",
             weight: 1,
@@ -343,7 +343,7 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!classroom.poll.allowMultipleResponses) {
-        if (res !== "remove" && !Object.keys(classroom.poll.responses).includes(res)) {
+        if (res !== "remove" && !classroom.poll.responses.some((response) => response.answer === res)) {
             return;
         }
     } else {
@@ -351,7 +351,7 @@ function pollResponse(classId, res, textRes, userSession) {
         } else if (!Array.isArray(res)) {
             return;
         } else {
-            const validResponses = Object.keys(classroom.poll.responses);
+            const validResponses = classroom.poll.responses.map((r) => r.answer);
             const allValid = res.every((response) => validResponses.includes(response));
             if (!allValid) {
                 return;
@@ -383,7 +383,9 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
-        const resWeight = classroom.poll.responses[res] ? classroom.poll.responses[res].weight : 1;
+        const responseObj = classroom.poll.responses.find((response) => response.answer === res);
+        const resWeight = responseObj ? responseObj.weight : 1;
+
         // Increase pog meter by 100 times the weight of the response
         // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
         const pogMeterIncrease = Math.floor(100 * resWeight);
@@ -419,12 +421,12 @@ function getPollResponses(classData) {
     if (!classData.poll.status) return {};
 
     // If there are no responses to the poll, return an empty object
-    if (Object.keys(classData.poll.responses).length == 0) return {};
+    if (classData.poll.responses.length == 0) return {};
 
     // For each response in the poll responses
-    for (let [resKey, resValue] of Object.entries(classData.poll.responses)) {
+    for (let resValue of classData.poll.responses) {
         // Add the response to the tempPolls object and initialize the count of responses to 0
-        tempPolls[resKey] = {
+        tempPolls[resValue.answer] = {
             ...resValue,
             responses: 0,
         };

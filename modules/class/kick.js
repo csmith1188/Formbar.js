@@ -46,7 +46,12 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         }
 
         // Update the control panel on all tabs
-        userUpdateSocket(email, "classUpdate", classId);
+        // @TODO: TEMPORARY FIX - please move update functions outside of a class, or refactor them into the classroom class.
+        const classOwner = await dbGet("SELECT owner FROM classroom WHERE id=?", [classId]);
+        if (classOwner) {
+            const ownerEmail = await getEmailFromId(classOwner.owner);
+            userUpdateSocket(ownerEmail, "classUpdate", classId);
+        }
 
         // If the user is logged in, then handle the user's session
         const usersSockets = userSockets[email];

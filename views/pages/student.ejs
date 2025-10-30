@@ -222,12 +222,12 @@
 								}
 							}
 
-							// Clear old response buttons
-							const responseButtons = Array.from(pollForm.querySelectorAll('.pollButton'));
-							responseButtons.forEach(btn => btn.remove());
+						// Clear old response buttons
+						const responseButtons = Array.from(pollForm.querySelectorAll('.pollButton'));
+						responseButtons.forEach(btn => btn.remove());
 
-							// Add new response options
-							for (let response of Object.values(poll.responses)) {
+						// Add new response options
+						for (let response of poll.responses) {
                                 if (multiAnswer !== 'button') {
 									const checkbox = document.createElement('input');
 									checkbox.type = 'checkbox';
