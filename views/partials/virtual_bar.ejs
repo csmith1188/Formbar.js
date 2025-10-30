@@ -123,7 +123,7 @@
             if (newPollData.blind) {
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (const [poll, pollData] of Object.entries(newPollData.responseCounts || {})) {
+                for (const [, pollData] of Object.entries(newPollData.responseCounts || {})) {
                     doughnutChart.data.datasets[0].backgroundColor.push(pollData.color)
                 }
             }
