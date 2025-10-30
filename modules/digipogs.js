@@ -18,27 +18,31 @@ async function awardDigipogs(awardData, session) {
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
-    
 
         // Check if the awarding user is a teacher in a class
-        let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
-
+        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
+            return { success: false, message: "Sender is not currently active in any class." };
+        }
+        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [
+            classInformation.users[fromUser.email].activeClass,
+            from,
+        ]);
+        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
         // Owners are not in the classusers table, so we need to check if they are the owner of the class
-        if(!classPermissions) {
+        if (classPermissions === undefined) {
             const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
-            if(classOwnerId === from) {
+            if (classOwnerId && classOwnerId.owner === from) {
                 classPermissions = TEACHER_PERMISSIONS;
             }
         }
 
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
+        } else if (classPermissions == null) {
+            return { success: false, message: "Insufficient permissions." };
         } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
-        
-        
-        
 
         const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
         if (!toUser) {
