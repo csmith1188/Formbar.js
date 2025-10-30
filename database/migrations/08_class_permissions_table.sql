@@ -42,4 +42,3 @@ ALTER TABLE classroom_temp RENAME TO classroom;
 INSERT INTO class_permissions (classId)
 SELECT id FROM classroom
 WHERE id NOT IN (SELECT classId FROM class_permissions);
-
