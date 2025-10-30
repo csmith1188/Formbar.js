@@ -447,8 +447,8 @@ module.exports = {
                             title: "Verification",
                         });
                     }
-                } else if (user.loginType == "guest") {
-                    if (user.displayName.trim() == "") {
+                } else if (user.loginType === "guest") {
+                    if (user.displayName.trim() === "") {
                         logger.log("verbose", "[post /login] Invalid display name provided to create guest user");
                         res.render("pages/message", {
                             message: "Invalid display name. Please try again.",
