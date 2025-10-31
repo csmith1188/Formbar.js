@@ -78,11 +78,11 @@ canvas {
 	border: 2px solid var(--darkMode-menu-border);
 }
 
-button.pressed.revampButton:hover {
+button.pressed:not(.includingButton).revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
-button.pressed {
+button.pressed:not(.includingButton) {
 	background: var(--darkMode-button-pressed-bg) !important;
 }
 

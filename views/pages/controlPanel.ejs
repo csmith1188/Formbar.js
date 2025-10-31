@@ -387,8 +387,8 @@
                 Regenerate Code
             </button>
         </div>
-        <div class="userIncludingButtons">
-            <div class="userIncludingDiv">
+        <div>
+            <div id="userExclusionDiv">
                 <button id="noGuest" class="includingButton revampButton">No Guests</button>
                 <button id="noMod" class="includingButton revampButton">No Mods</button>
                 <button id="noTeacher" class="includingButton revampButton">No Teachers</button>
@@ -576,12 +576,15 @@
     let userSortSelections = document.getElementById('userSortSelections')
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
+    const userExclusionDiv = document.getElementById('userExclusionDiv');
 
-    // let vbOptionsLast = document.getElementById('vbOptionsLast');
-    // let vbOptionsNext = document.getElementById('vbOptionsNext');
+    for (const exclusionButton of userExclusionDiv.children) {
+        exclusionButton.onclick = () => {
+            exclusionButton.classList.toggle('pressed');
+        };
+    }
     
     let toolbarOptions = document.getElementById('toolbarOptions');
-
     let sidebarOptionsIDs = [
         {
             elementID: 'userFilterBoxes',
