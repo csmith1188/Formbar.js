@@ -8,6 +8,7 @@ const { dbGetAll, dbGet, dbRun } = require("./database");
     - getUsersForPool(poolId, database)
     - isUserInPool(userId, poolId, database)
     - isUserOwner(userId, poolId, database)
+    - isPoolOwnedByUser(poolId, userId, database)
     - addUserToPool(poolId, userId, ownerFlag, database)
     - removeUserFromPool(poolId, userId, database)
     - setUserOwnerFlag(poolId, userId, ownerFlag, database)
@@ -40,6 +41,11 @@ async function isUserOwner(userId, poolId, database) {
     return !!(row && row.owner);
 }
 
+async function isPoolOwnedByUser(poolId, userId, database) {
+    // Alias/wrapper for clarity: check if the given user is an owner of the pool
+    return isUserOwner(poolId, userId, database);
+}
+
 async function addUserToPool(poolId, userId, ownerFlag = 0, database) {
     // Insert or replace ensures the (pool_id, user_id) primary key constraint is respected and owner flag can be updated.
     // Using INSERT OR REPLACE will replace the row if it exists.
@@ -63,6 +69,7 @@ module.exports = {
     getUsersForPool,
     isUserInPool,
     isUserOwner,
+    isPoolOwnedByUser,
     addUserToPool,
     removeUserFromPool,
     setUserOwnerFlag

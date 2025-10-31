@@ -12,18 +12,14 @@ module.exports = {
 
                 // Get all pools for this user using the new schema helper
                 const userPools = await pools.getPoolsForUser(userId);
-                const ownedPools = userPools.filter(p => p.owner).map(p => String(p.poolId));
-                const memberPools = userPools.filter(p => !p.owner).map(p => String(p.poolId));
-                const allPoolIds = [...new Set([...ownedPools, ...memberPools])];
 
-                // Fetch all pool objects and attach members/owners using helper
+                const ownedPools = userPools.filter(p => p.owner).map(p => String(p.pool_id));
+                const memberPools = userPools.filter(p => !p.owner).map(p => String(p.pool_id));
                 const poolObjs = await Promise.all(
-                    allPoolIds.map(async (poolIdStr) => {
-                        const poolId = parseInt(poolIdStr, 10);
-                        if (Number.isNaN(poolId)) return null;
-                        const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [poolId]);
+                    userPools.map(async (p) => {
+                        const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [p.pool_id]);
                         if (pool) {
-                            const users = await pools.getUsersForPool(poolId);
+                            const users = await pools.getUsersForPool(p.pool_id);
                             pool.members = users.filter(u => !u.owner).map(u => u.userId);
                             pool.owners = users.filter(u => u.owner).map(u => u.userId);
                         }
