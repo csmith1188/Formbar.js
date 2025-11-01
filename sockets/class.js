@@ -8,7 +8,6 @@ const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, jo
 const { getEmailFromId, getIdFromEmail } = require("../modules/student");
 const { BANNED_PERMISSIONS } = require("../modules/permissions");
 const { classKickStudents, classKickStudent } = require("../modules/class/kick");
-const e = require("express");
 
 module.exports = {
     run(socket, socketUpdates) {
