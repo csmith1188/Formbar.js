@@ -135,8 +135,8 @@ function sortStudentsInPoll(classData) {
         let included = false;
         let excluded = false;
 
-        // Check if the student's checkbox was checked (excludedRespondants stores student ids)
-        if (classData.poll.excludedRespondants.includes(student.id)) {
+        // Check if the student's checkbox was checked (excludedRespondents stores student ids)
+        if (classData.poll.excludedRespondents.includes(student.id)) {
             excluded = true;
         } else {
             included = true;
@@ -247,7 +247,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         isActive: classData.isActive,
         timer: classData.timer,
         poll: classData.poll,
-        excludedRespondants: hasTeacherPermissions ? classData.excludedRespondants : undefined,
+        excludedRespondents: hasTeacherPermissions ? classData.excludedRespondents : undefined,
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,
         tags: hasTeacherPermissions ? classData.tags : undefined,
