@@ -137,9 +137,9 @@ function sortStudentsInPoll(classData) {
 
         // Check if the student's checkbox was checked (excludedRespondants stores student ids)
         if (classData.poll.excludedRespondants.includes(student.id)) {
-            included = true;
-        } else {
             excluded = true;
+        } else {
+            included = true;
         }
 
         // Check if they are a guest
