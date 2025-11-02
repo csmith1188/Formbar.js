@@ -87,21 +87,23 @@ function createTagSelectButtons() {
                         }
                     }
                 }
-
-                if (studentSelected && !excludedRespondents.includes(student.id)) {
-                    excludedRespondents.push(student.id);
-                }
             }
 
-            // If the student is not selected, then unselect them
+            // Build excludedRespondents list from students who are NOT selected
             for (const student of students) {
-                if (selectedStudents.indexOf(student.id) === -1) {
-                    const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
-                    const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-                    if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+                if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
+                const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+                const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
+                if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+
+                if (selectedStudents.indexOf(student.id) === -1) {
+                    // Student is not selected, so uncheck them and add to excluded list
                     studentElement.open = false;
                     studentCheckbox.checked = false;
+                    if (!excludedRespondents.includes(student.id)) {
+                        excludedRespondents.push(student.id);
+                    }
                 }
             }
 
@@ -252,7 +254,8 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
 
             if (studentCheckbox) {
                 studentCheckbox.checked = switchState;
-                if (switchState) {
+                if (!switchState) {
+                    // If checkbox is unchecked, add to excluded list
                     excludedRespondents.push(student.id);
                 }
                 studentElement.open = studentCheckbox.checked;

@@ -418,25 +418,32 @@ module.exports = {
                 const classId = socket.request.session.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!Array.isArray(respondants)) return;
-                const excludedRespondents = [];
+
+                // respondants parameter contains the list of student IDs who should be EXCLUDED
+                const excludedRespondents = [...respondants];
+
+                // Also automatically exclude students who are offline, on break, or have excluded tag
                 for (const studentEmail of Object.keys(classroom.students)) {
                     const student = classroom.students[studentEmail];
                     const studentId = student.id;
-                    // If the student doesn't exist, is offline/excluded, is on break, or doesn't have permission to vote, remove them from the respondants list
+
+                    // If the student doesn't exist, is offline/excluded, or is on break, add them to excluded list
                     if (
                         (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) &&
                         !excludedRespondents.includes(studentId)
                     ) {
                         excludedRespondents.push(studentId);
-                        continue;
-                    } else if (!excludedRespondents.includes(studentId) && respondants.includes(studentId)) {
-                        excludedRespondents.push(studentId);
                     }
                 }
-                console.log("Received Respondants:", respondants);
-                console.log("Excluded Respondants:", excludedRespondents);
+
+                console.log("Received Excluded Respondants:", respondants);
+                console.log("Final Excluded Respondants:", excludedRespondents);
                 console.log("-------------------------------------------------------");
+
+                // Update BOTH properties to keep them in sync
                 classroom.excludedRespondents = excludedRespondents;
+                classroom.poll.excludedRespondents = excludedRespondents;
+
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);

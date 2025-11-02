@@ -141,7 +141,12 @@
 					return;
 				}
 				// Check if current user's ID is in the excludedRespondents array
-				votingRight = poll.excludedRespondents && !poll.excludedRespondents.includes(currentUser.id);
+				// Student has voting rights if they are NOT in the excluded list
+				if (!poll.excludedRespondents || !Array.isArray(poll.excludedRespondents)) {
+					votingRight = true; // No exclusion list means everyone can vote
+				} else {
+					votingRight = !poll.excludedRespondents.includes(currentUser.id);
+				}
 			}
 
 			function unselectRemove(event) {
@@ -353,7 +358,7 @@
                         const letterChanged = (Array.isArray(lettRes) || Array.isArray(oldLetterRes))
 							? !deepObjectEqual(lettRes, oldLetterRes)
 							: lettRes !== oldLetterRes;
-						const textChanged = textRes !== oldTextRes;
+                        const textChanged = textRes !== oldTextRes;
 
 						if (letterChanged || textChanged) {
 							socket.emit('pollResp', lettRes, textRes);

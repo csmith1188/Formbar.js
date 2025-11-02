@@ -328,7 +328,9 @@ function pollResponse(classId, res, textRes, userSession) {
         return;
     }
 
-    if (classroom.excludedRespondents.includes(user.id)) {
+    // Check if user is excluded from voting using poll.excludedRespondents
+    if (classroom.poll.excludedRespondents && classroom.poll.excludedRespondents.includes(user.id)) {
+        logger.log("info", `[pollResp] User ${user.id} is excluded from voting`);
         return;
     }
 
@@ -341,9 +343,6 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const isRemoving = res === "remove" || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (classroom.excludedRespondents.includes(user.id) && !isRemoving) {
-        return;
-    }
 
     if (!classroom.poll.allowMultipleResponses) {
         if (res !== "remove" && !classroom.poll.responses.some((response) => response.answer === res)) {

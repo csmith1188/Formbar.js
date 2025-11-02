@@ -99,9 +99,8 @@ async function joinRoomByCode(code, session) {
             // Add the student to the newly created class
             const classroom = classInformation.classrooms[classroomDb.id];
             classroom.students[email] = currentUser;
-            if (!classroom.poll.excludedRespondents.includes(currentUser.id)) {
-                classroom.poll.excludedRespondents.push(currentUser.id);
-            }
+            // Don't add to excludedRespondents - students should be able to vote by default
+            // Only exclude them if they're offline, on break, or have been manually excluded
 
             // Set the active class of the user
             classInformation.users[email].activeClass = classroomDb.id;
@@ -147,9 +146,9 @@ async function joinRoomByCode(code, session) {
 
             // Add the student to the newly created class
             classData.students[email] = currentUser;
-            if (!classData.poll.excludedRespondents.includes(currentUser.id)) {
-                classData.poll.excludedRespondents.push(currentUser.id);
-            }
+            // Don't add to excludedRespondents - students should be able to vote by default
+            // Only exclude them if they're offline, on break, or have been manually excluded
+
             classInformation.users[email].activeClass = classroomDb.id;
             const controlPanelPermissions = Math.min(
                 classData.permissions.controlPolls,
