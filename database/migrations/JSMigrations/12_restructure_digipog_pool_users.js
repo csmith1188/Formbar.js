@@ -9,12 +9,16 @@ module.exports = {
             await dbRun("BEGIN TRANSACTION", [], database);
             try {
                 // Create a new temporary table with the restructured format
-                await dbRun(`CREATE TABLE IF NOT EXISTS digipog_pool_users_temp (
+                await dbRun(
+                    `CREATE TABLE IF NOT EXISTS digipog_pool_users_temp (
                     "pool_id"   INTEGER NOT NULL,
                     "user_id"   INTEGER NOT NULL,
                     "owner"     INTEGER NOT NULL DEFAULT 0,
                     PRIMARY KEY ("pool_id", "user_id")
-                );`, [] , database);
+                );`,
+                    [],
+                    database
+                );
 
                 const rows = await dbGetAll("SELECT id, owner, member FROM digipog_pool_users", [], database);
                 // Migrate the data from the old table to the new temporary table
@@ -31,7 +35,8 @@ module.exports = {
                             if (Number.isNaN(poolId)) continue;
                             await dbRun(
                                 "INSERT INTO digipog_pool_users_temp (pool_id, user_id, owner) VALUES (?, ?, ?)",
-                                [poolId, userId, ownerFlag], database
+                                [poolId, userId, ownerFlag],
+                                database
                             );
                         }
                     };
@@ -52,5 +57,5 @@ module.exports = {
                 throw err;
             }
         }
-    }
-}
+    },
+};

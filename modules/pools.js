@@ -72,5 +72,5 @@ module.exports = {
     isPoolOwnedByUser,
     addUserToPool,
     removeUserFromPool,
-    setUserOwnerFlag
+    setUserOwnerFlag,
 };

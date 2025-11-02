@@ -423,7 +423,10 @@ module.exports = {
                     const student = classroom.students[studentEmail];
                     const studentId = student.id;
                     // If the student doesn't exist, is offline/excluded, is on break, or doesn't have permission to vote, remove them from the respondants list
-                    if ((!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) && !excludedRespondants.includes(studentId)) {
+                    if (
+                        (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) &&
+                        !excludedRespondants.includes(studentId)
+                    ) {
                         excludedRespondants.push(studentId);
                         continue;
                     } else if (!excludedRespondants.includes(studentId) && respondants.includes(studentId)) {

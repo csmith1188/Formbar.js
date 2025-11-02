@@ -13,15 +13,15 @@ module.exports = {
                 // Get all pools for this user using the new schema helper
                 const userPools = await pools.getPoolsForUser(userId);
 
-                const ownedPools = userPools.filter(p => p.owner).map(p => String(p.pool_id));
-                const memberPools = userPools.filter(p => !p.owner).map(p => String(p.pool_id));
+                const ownedPools = userPools.filter((p) => p.owner).map((p) => String(p.pool_id));
+                const memberPools = userPools.filter((p) => !p.owner).map((p) => String(p.pool_id));
                 const poolObjs = await Promise.all(
                     userPools.map(async (p) => {
                         const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [p.pool_id]);
                         if (pool) {
                             const users = await pools.getUsersForPool(p.pool_id);
-                            pool.members = users.filter(u => !u.owner).map(u => u.userId);
-                            pool.owners = users.filter(u => u.owner).map(u => u.userId);
+                            pool.members = users.filter((u) => !u.owner).map((u) => u.userId);
+                            pool.owners = users.filter((u) => u.owner).map((u) => u.userId);
                         }
                         return pool;
                     })
@@ -29,7 +29,7 @@ module.exports = {
 
                 res.render("pages/pools", {
                     title: "Digipog Pools",
-                    pools: JSON.stringify(poolObjs.filter(p => p)), // Filter out null values
+                    pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
                     ownedPools: JSON.stringify(ownedPools),
                     memberPools: JSON.stringify(memberPools),
                     userId: userId,
