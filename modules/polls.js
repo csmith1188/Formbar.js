@@ -21,7 +21,8 @@ const pogMeterTracker = {
  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, answers, blind, tags, excludedRespondents, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } = pollData;
+        const { prompt, answers, blind, tags, excludedRespondents, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } =
+            pollData;
         let { weight } = pollData;
         const numberOfResponses = Object.keys(answers).length;
         pogMeterTracker.pogMeterIncreased = [];

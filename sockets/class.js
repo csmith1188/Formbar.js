@@ -419,7 +419,7 @@ module.exports = {
                 const classroom = classInformation.classrooms[classId];
                 if (!Array.isArray(respondants)) return;
 
-                // respondants parameter contains the list of student IDs who should be EXCLUDED
+                // Contains the list of student IDs who should be excluded from the poll
                 const excludedRespondents = [...respondants];
 
                 // Also automatically exclude students who are offline, on break, or have excluded tag

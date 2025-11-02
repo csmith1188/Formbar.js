@@ -134,7 +134,7 @@
                                 <%      } 
                                     } %>
                             </td>
-                            <td class="hideMobile"><%= Array.isArray(pool.members) && pool.members.length > 0 ? (pool.members.map(e => (typeof e === 'object' ? e.id : e)).join(', ')) : "None" %></td>
+                            <td class="hideMobile"><%= Array.isArray(pool.members) && pool.members.length > 0 ? pool.members.join(', ') : "None" %></td>
                             <td class="hideMobile description" title="<%= pool.description %>"><%= pool.description %></td>
                             <td><%= pool.amount %></td>
                             <td>

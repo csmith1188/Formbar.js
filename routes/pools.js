@@ -20,8 +20,9 @@ module.exports = {
                         const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [p.pool_id]);
                         if (pool) {
                             const users = await pools.getUsersForPool(p.pool_id);
-                            pool.members = users.filter((u) => !u.owner).map((u) => u.userId);
-                            pool.owners = users.filter((u) => u.owner).map((u) => u.userId);
+                            // Fix: use user_id instead of userId (correct property name from database)
+                            pool.members = users.filter((u) => !u.owner).map((u) => u.user_id);
+                            pool.owners = users.filter((u) => u.owner).map((u) => u.user_id);
                         }
                         return pool;
                     })
