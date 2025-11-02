@@ -88,7 +88,7 @@ function createTagSelectButtons() {
                     }
                 }
 
-                if (studentSelected && !excludedRespondants.includes(student.id)) {
+                if (!studentSelected && !excludedRespondants.includes(student.id)) {
                     excludedRespondants.push(student.id);
                 }
             }
