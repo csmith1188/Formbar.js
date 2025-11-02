@@ -42,8 +42,8 @@ async function isUserOwner(userId, poolId, database) {
 }
 
 async function isPoolOwnedByUser(poolId, userId, database) {
-    // Alias/wrapper for clarity: check if the given user is an owner of the pool
-    return isUserOwner(poolId, userId, database);
+    // Check if the given user is an owner of the pool
+    return isUserOwner(userId, poolId, database);
 }
 
 async function addUserToPool(poolId, userId, ownerFlag = 0, database) {
