@@ -67,7 +67,7 @@ describe("Socket Updates", () => {
             expect(payload.poll.totalResponses).toBe(1);
             expect(payload.poll.totalResponders).toBe(1);
             // Teachers should receive full poll data
-            expect(Array.isArray(payload.poll.studentsAllowedToVote)).toBe(true);
+            expect(Array.isArray(payload.excludedRespondents)).toBe(true);
         });
     });
 });

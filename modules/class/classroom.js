@@ -25,7 +25,7 @@ class Classroom {
         this.owner = owner;
         this.students = {};
         this.sharedPolls = sharedPolls || [];
-        this.studentsAllowedToVote = [];
+        this.excludedRespondents = [];
         this.poll = {
             status: false,
             prompt: "",
@@ -34,7 +34,7 @@ class Classroom {
             allowMultipleResponses: false,
             blind: false,
             weight: 1,
-            studentsAllowedToVote: [],
+            excludedRespondents: [],
         };
         this.key = key;
 

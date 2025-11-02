@@ -78,23 +78,26 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id);
+        studentBox.checked = !classroomData.poll.excludedRespondents.includes(studentData.id);
 
         // Handle voting rights for student checkboxes
         const studentId = studentData.id;
         studentBox.onclick = () => {
             const canStudentVote = studentBox.checked;
 
-            // Get current voting list from the classroom
-            let studentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
-            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
-                studentsAllowedToVote.push(studentId);
-            } else if (!canStudentVote) {
-                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
+            // Get current excluded respondents list from the classroom poll
+            let excludedRespondents = [...(classroom.poll.excludedRespondents || [])];
+
+            if (!canStudentVote && !excludedRespondents.includes(studentId)) {
+                // Checkbox is unchecked, so exclude this student
+                excludedRespondents.push(studentId);
+            } else if (canStudentVote) {
+                // Checkbox is checked, so remove from excluded list
+                excludedRespondents = excludedRespondents.filter((id) => id !== studentId);
             }
 
-            // Send the updated list to the server
-            socket.emit("updatePoll", { studentsAllowedToVote });
+            // Send the updated excluded list to the server
+            socket.emit("updateExcludedRespondents", excludedRespondents);
         };
 
         for (let responseObj of classroomData.poll.responses) {
