@@ -92,7 +92,7 @@ const CLASS_SOCKET_PERMISSIONS = {
     timerOn: TEACHER_PERMISSIONS,
     awardDigipogs: TEACHER_PERMISSIONS,
     getPreviousPolls: TEACHER_PERMISSIONS,
-    updateExcludedRespondants: TEACHER_PERMISSIONS,
+    updateExcludedRespondents: TEACHER_PERMISSIONS,
 };
 
 // This associates actions with the permissions of other actions

@@ -141,8 +141,7 @@
 					return;
 				}
 				// Check if current user's ID is in the excludedRespondents array
-				votingRight = poll.excludedRespondents && 
-					poll.excludedRespondents.includes(currentUser.id);
+				votingRight = poll.excludedRespondents && !poll.excludedRespondents.includes(currentUser.id);
 			}
 
 			function unselectRemove(event) {

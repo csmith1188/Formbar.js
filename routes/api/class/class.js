@@ -47,7 +47,7 @@ module.exports = {
                     delete classData.pollHistory;
                     delete classData.key;
                     delete classData.sharedPolls;
-                    classData.excludedRespondants = [];
+                    classData.excludedRespondents = [];
 
                     classData.students = { [req.session.email]: classUsers[req.session.email] };
                 } else {

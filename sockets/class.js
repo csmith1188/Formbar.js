@@ -413,30 +413,30 @@ module.exports = {
             }
         });
 
-        socket.on("updateExcludedRespondants", (respondants) => {
+        socket.on("updateExcludedRespondents", (respondants) => {
             try {
                 const classId = socket.request.session.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!Array.isArray(respondants)) return;
-                const excludedRespondants = [];
+                const excludedRespondents = [];
                 for (const studentEmail of Object.keys(classroom.students)) {
                     const student = classroom.students[studentEmail];
                     const studentId = student.id;
                     // If the student doesn't exist, is offline/excluded, is on break, or doesn't have permission to vote, remove them from the respondants list
                     if (
                         (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) &&
-                        !excludedRespondants.includes(studentId)
+                        !excludedRespondents.includes(studentId)
                     ) {
-                        excludedRespondants.push(studentId);
+                        excludedRespondents.push(studentId);
                         continue;
-                    } else if (!excludedRespondants.includes(studentId) && respondants.includes(studentId)) {
-                        excludedRespondants.push(studentId);
+                    } else if (!excludedRespondents.includes(studentId) && respondants.includes(studentId)) {
+                        excludedRespondents.push(studentId);
                     }
                 }
                 console.log("Received Respondants:", respondants);
-                console.log("Excluded Respondants:", excludedRespondants);
+                console.log("Excluded Respondants:", excludedRespondents);
                 console.log("-------------------------------------------------------");
-                classroom.excludedRespondants = excludedRespondants;
+                classroom.excludedRespondents = excludedRespondents;
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);

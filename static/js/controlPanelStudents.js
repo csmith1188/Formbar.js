@@ -78,7 +78,7 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = !classroomData.excludedRespondants.includes(studentData.id);
+        studentBox.checked = !classroomData.excludedRespondents.includes(studentData.id);
 
         // Handle voting rights for student checkboxes
         const studentId = studentData.id;
