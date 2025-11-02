@@ -21,16 +21,17 @@ const pogMeterTracker = {
  */
 async function createPoll(classId, pollData, userSession) {
     try {
-        const { prompt, answers, blind, tags, studentsAllowedToVote, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } =
+        const { prompt, answers, blind, tags, excludedRespondents, allowVoteChanges, indeterminate, allowTextResponses, allowMultipleResponses } =
             pollData;
         let { weight } = pollData;
         const numberOfResponses = Object.keys(answers).length;
         pogMeterTracker.pogMeterIncreased = [];
 
-        // Ensure weight is a number and limit it to a maximum of 5 and a minimum of above 0
-        weight = Math.floor((weight || 1) * 100) / 100; // Round to 2 decimal places
-        if (!weight || isNaN(weight) || weight <= 0) weight = 1;
-        weight = weight > 5 ? 5 : weight;
+        const classroom = classInformation.classrooms[classId];
+        if (!classroom) {
+            logger.log("info", `[startPoll] Classroom not found for classId ${classId}`);
+            return "Classroom not found.";
+        }
 
         // Check if the class is active before continuing
         if (!classInformation.classrooms[classId] || !classInformation.classrooms[classId].isActive) {
@@ -53,14 +54,14 @@ async function createPoll(classId, pollData, userSession) {
         classInformation.classrooms[classId].poll.blind = blind;
         classInformation.classrooms[classId].poll.status = true;
 
-        // If studentsAllowedToVote is provided and is a non-empty array, use it directly
+        // If excludedRespondents is provided and is a non-empty array, use it directly
         // Otherwise, populate with all eligible students
-        if (studentsAllowedToVote && Array.isArray(studentsAllowedToVote) && studentsAllowedToVote.length > 0) {
-            classInformation.classrooms[classId].poll.studentsAllowedToVote = studentsAllowedToVote.map((id) => Number(id));
-        } else if (studentsAllowedToVote === null) {
+        if (excludedRespondents && Array.isArray(excludedRespondents) && excludedRespondents.length > 0) {
+            classInformation.classrooms[classId].poll.excludedRespondents = excludedRespondents.map((id) => Number(id));
+        } else if (excludedRespondents === null) {
             // When no specific students are provided (undefined, null, or empty array),
             // allow all eligible students to vote
-            classInformation.classrooms[classId].poll.studentsAllowedToVote = [];
+            classInformation.classrooms[classId].poll.excludedRespondents = [];
             for (const student of Object.values(classInformation.classrooms[classId].students)) {
                 // If the student has been excluded by permission, is on break, is offline, or has been manually excluded, do not allow them to vote
                 if (
@@ -72,7 +73,7 @@ async function createPoll(classId, pollData, userSession) {
                     continue;
                 }
 
-                classInformation.classrooms[classId].poll.studentsAllowedToVote.push(student.id);
+                classInformation.classrooms[classId].poll.excludedRespondents.push(student.id);
             }
         }
 
@@ -134,7 +135,6 @@ async function createPoll(classId, pollData, userSession) {
  * Examples:
  * - updatePoll(classId, {status: false}, session) - Ends the poll
  * - updatePoll(classId, {status: true}, session) - Resumes the poll
- * - updatePoll(classId, {studentsAllowedToVote: ['1', '2']}, session) - Changes who can vote
  * - updatePoll(classId, {}, session) - Clears the poll (empty object)
  */
 async function updatePoll(classId, options, userSession) {
@@ -254,7 +254,7 @@ async function clearPoll(classId, userSession, updateClass = true) {
             prompt: "",
             weight: 1,
             blind: false,
-            studentsAllowedToVote: [],
+            excludedRespondents: [],
         };
 
         // Adds data to the previous poll answers table upon clearing the poll
@@ -329,6 +329,12 @@ function pollResponse(classId, res, textRes, userSession) {
         return;
     }
 
+    // Check if user is excluded from voting using poll.excludedRespondents
+    if (classroom.poll.excludedRespondents && classroom.poll.excludedRespondents.includes(user.id)) {
+        logger.log("info", `[pollResp] User ${user.id} is excluded from voting`);
+        return;
+    }
+
     // If the user's response has not changed, return
     const prevRes = classroom.students[email].pollRes.buttonRes;
     let hasChanged = classroom.poll.allowMultipleResponses ? JSON.stringify(prevRes) !== JSON.stringify(res) : prevRes !== res;
@@ -338,9 +344,6 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     const isRemoving = res === "remove" || (classroom.poll.allowMultipleResponses && Array.isArray(res) && res.length === 0);
-    if (!classroom.poll.studentsAllowedToVote.includes(user.id) && !isRemoving) {
-        return;
-    }
 
     if (!classroom.poll.allowMultipleResponses) {
         if (res !== "remove" && !classroom.poll.responses.some((response) => response.answer === res)) {

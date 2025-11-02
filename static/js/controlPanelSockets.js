@@ -38,11 +38,11 @@ function createTagSelectButtons() {
 
             // If the student has any of the selected tags, check the checkbox and open their menu
             const selectedStudents = []; // Stores the selected students
-            let studentsAllowedToVote = [];
+            let excludedRespondents = [];
 
             for (const student of students) {
                 const studentTags = student.tags;
-                if (selectedClassTags.length === 0) continue;
+                if (selectedClassTags.size === 0) continue; // FIXED: Use .size instead of .length for Set
                 if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
                 let studentSelected = false;
@@ -53,9 +53,11 @@ function createTagSelectButtons() {
                     for (const response of student.pollRes.buttonRes) {
                         if (selectedClassTags.has(response)) {
                             const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-                            studentCheckbox.checked = true;
-                            selectedStudents.push(student.id);
-                            studentSelected = true;
+                            if (studentCheckbox) {
+                                studentCheckbox.checked = true;
+                                selectedStudents.push(student.id);
+                                studentSelected = true;
+                            }
                             break;
                         }
                     }
@@ -63,9 +65,11 @@ function createTagSelectButtons() {
                     // Handle regular polls
                     if (selectedClassTags.has(student.pollRes.buttonRes)) {
                         const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-                        studentCheckbox.checked = true;
-                        selectedStudents.push(student.id);
-                        studentSelected = true;
+                        if (studentCheckbox) {
+                            studentCheckbox.checked = true;
+                            selectedStudents.push(student.id);
+                            studentSelected = true;
+                        }
                     }
                 }
 
@@ -74,33 +78,37 @@ function createTagSelectButtons() {
                     for (const studentTag of studentTags) {
                         if (selectedClassTags.has(studentTag)) {
                             const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-                            studentCheckbox.checked = true;
-                            selectedStudents.push(student.id);
-                            studentSelected = true;
+                            if (studentCheckbox) {
+                                studentCheckbox.checked = true;
+                                selectedStudents.push(student.id);
+                                studentSelected = true;
+                            }
                             break;
                         }
                     }
                 }
-
-                if (studentSelected && !studentsAllowedToVote.includes(student.id)) {
-                    studentsAllowedToVote.push(student.id);
-                }
             }
 
-            // If the student is not selected, then unselect them
+            // Build excludedRespondents list from students who are NOT selected
             for (const student of students) {
-                if (selectedStudents.indexOf(student.id) === -1) {
-                    const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
-                    const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
-                    if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+                if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
+                const studentElement = document.querySelector(`details[id="student-${student.id}"]`);
+                const studentCheckbox = document.querySelector(`input[id="checkbox_${student.id}"]`);
+                if (!studentCheckbox) continue; // If the student is offline or doesn't have a checkbox for some reason, ignore them
+
+                if (selectedStudents.indexOf(student.id) === -1) {
+                    // Student is not selected, so uncheck them and add to excluded list
                     studentElement.open = false;
                     studentCheckbox.checked = false;
+                    if (!excludedRespondents.includes(student.id)) {
+                        excludedRespondents.push(student.id);
+                    }
                 }
             }
 
             // Send the updated voting list to the server
-            socket.emit("updatePoll", { studentsAllowedToVote });
+            socket.emit("updateExcludedRespondents", excludedRespondents);
         };
 
         if (selectPollDiv.children[i]) {
@@ -226,18 +234,18 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
     // Set the switch state to whether the majority of students are checked or unchecked
     switchAll.onclick = () => {
         const { studentsChecked, studentsUnchecked } = getStudentVotingEligibility();
-        let switchState = studentsChecked > studentsUnchecked; // Check if the majority of student checkboxes are checked or unchecked
+        let switchState = studentsChecked > studentsUnchecked;
         switchState = !switchState;
 
         // Unselect all select tags
         selectedClassTags.clear();
         for (const tag of selectPollDiv.children) {
-            if (tag.className === "pressed") {
+            if (tag.className === "pressed revampButton") {
                 tag.className = "tagPoll revampButton";
             }
         }
 
-        let studentsAllowedToVote = [];
+        let excludedRespondents = [];
         for (const student of Object.values(students)) {
             if (student.permissions >= TEACHER_PERMISSIONS) continue;
 
@@ -246,15 +254,16 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
 
             if (studentCheckbox) {
                 studentCheckbox.checked = switchState;
-                if (switchState && !studentsAllowedToVote.includes(student.id)) {
-                    studentsAllowedToVote.push(student.id);
+                if (!switchState) {
+                    // If checkbox is unchecked, add to excluded list
+                    excludedRespondents.push(student.id);
                 }
                 studentElement.open = studentCheckbox.checked;
             }
         }
 
         // Send the updated voting list to the server
-        socket.emit("updatePoll", { studentsAllowedToVote });
+        socket.emit("updateExcludedRespondents", excludedRespondents);
     };
 
     if (selectPollDiv.children[0]) {

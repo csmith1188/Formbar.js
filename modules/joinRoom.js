@@ -99,9 +99,6 @@ async function joinRoomByCode(code, session) {
             // Add the student to the newly created class
             const classroom = classInformation.classrooms[classroomDb.id];
             classroom.students[email] = currentUser;
-            if (!classroom.poll.studentsAllowedToVote.includes(currentUser.id)) {
-                classroom.poll.studentsAllowedToVote.push(currentUser.id);
-            }
 
             // Set the active class of the user
             classInformation.users[email].activeClass = classroomDb.id;
@@ -147,9 +144,7 @@ async function joinRoomByCode(code, session) {
 
             // Add the student to the newly created class
             classData.students[email] = currentUser;
-            if (!classData.poll.studentsAllowedToVote.includes(currentUser.id)) {
-                classData.poll.studentsAllowedToVote.push(currentUser.id);
-            }
+
             classInformation.users[email].activeClass = classroomDb.id;
             const controlPanelPermissions = Math.min(
                 classData.permissions.controlPolls,
