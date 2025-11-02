@@ -252,7 +252,7 @@ socket.on("customPollUpdate", (newPublicCustomPolls, newClassroomCustomPolls, ne
 
             if (studentCheckbox) {
                 studentCheckbox.checked = switchState;
-                if (switchState) {
+                if (!switchState) {
                     excludedRespondants.push(student.id);
                 }
                 studentElement.open = studentCheckbox.checked;
