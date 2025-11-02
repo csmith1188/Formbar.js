@@ -86,7 +86,7 @@ function buildStudent(classroomData, studentData) {
             const canStudentVote = studentBox.checked;
 
             // Get current excluded respondents list from the classroom poll
-            let excludedRespondents = [...(classroomData.poll.excludedRespondents || [])];
+            let excludedRespondents = [...(classroom.poll.excludedRespondents || [])];
 
             if (!canStudentVote && !excludedRespondents.includes(studentId)) {
                 // Checkbox is unchecked, so exclude this student

@@ -436,11 +436,7 @@ module.exports = {
                     }
                 }
 
-                console.log("Received Excluded Respondants:", respondants);
-                console.log("Final Excluded Respondants:", excludedRespondents);
-                console.log("-------------------------------------------------------");
-
-                // Update BOTH properties to keep them in sync
+                // Update both excludedRespondent properties to keep them in sync
                 classroom.excludedRespondents = excludedRespondents;
                 classroom.poll.excludedRespondents = excludedRespondents;
 
