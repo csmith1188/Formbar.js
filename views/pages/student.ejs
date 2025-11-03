@@ -369,7 +369,7 @@
 			// If the poll is multi-res, split the response and check all of them
 			const splitLetterRes = currentUser.pollRes.buttonRes;
 			for (const splitLetter of splitLetterRes) {
-				const oldLetterElement = document.getElementById(splitLetter)
+				const oldLetterElement = document.getElementById(splitLetter);
 				if (oldLetterElement) {
 					oldLetterElement.checked = true;
 				}
