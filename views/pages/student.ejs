@@ -162,6 +162,7 @@
 	let poll = {}
 	let quiz = {}
 	let votingRight = false
+	let classroomData = {} // Store classroom data for students
 
 	// Calculate voting rights based on poll data
 	function updateVotingRight() {
@@ -169,6 +170,13 @@
 			votingRight = false;
 			return;
 		}
+		
+		// Check if student has the "Excluded" tag
+		if (classroomData && classroomData.myTags && Array.isArray(classroomData.myTags) && classroomData.myTags.includes("Excluded")) {
+			votingRight = false;
+			return;
+		}
+		
 		// Check if current user's ID is in the excludedRespondents array
 		// Student has voting rights if they are NOT in the excluded list
 		if (!poll.excludedRespondents || !Array.isArray(poll.excludedRespondents)) {
@@ -180,6 +188,11 @@
 
 	// Get the reason why a user cannot vote
 	function getNoVoteReason(classroomData) {
+		// Check if student has the "Excluded" tag
+		if (classroomData && classroomData.myTags && Array.isArray(classroomData.myTags) && classroomData.myTags.includes("Excluded")) {
+			return "You cannot vote due to being excluded";
+		}
+		
 		if (!classroomData || !classroomData.settings || !classroomData.settings.isExcluded) {
 			return "You may not answer currently";
 		}
@@ -420,9 +433,11 @@
 	socket.on('classUpdate', (newClassroomData) => {
 		classroomData = newClassroomData; // Update stored classroom data
 		const newPoll = newClassroomData.poll;
-		if (deepObjectEqual(poll, newPoll)) return;
+		
+		// Check if poll data changed (excluding myTags which can change independently)
+		const pollChanged = !deepObjectEqual(poll, newPoll);
 
-		if (poll.startTime !== undefined && poll.startTime !== newPoll.startTime) {
+		if (pollChanged && poll.startTime !== undefined && poll.startTime !== newPoll.startTime) {
 			currentUser.pollRes = {
 				buttonRes: '',
 				textRes: '',
@@ -436,9 +451,15 @@
 			oldTextRes = '';
 		}
 
+		// Always update voting right when classroomData changes (e.g., when tags change)
+		const oldVotingRight = votingRight;
 		poll = newPoll;
 		updateVotingRight();
-		updatePage();
+		
+		// If voting right changed or poll changed, update the page
+		if (oldVotingRight !== votingRight || pollChanged) {
+			updatePage();
+		}
 	});
 
 	socket.on('pollResp', (voteData) => {

@@ -317,6 +317,13 @@ function pollResponse(classId, res, textRes, userSession) {
         return;
     }
 
+    // Check if user has the "Excluded" tag
+    const student = classroom.students[email];
+    if (student && student.tags && Array.isArray(student.tags) && student.tags.includes("Excluded")) {
+        logger.log("info", `[pollResp] User ${user.id} is excluded from voting due to Excluded tag`);
+        return;
+    }
+
     // If the user's response has not changed, return
     const prevRes = classroom.students[email].pollRes.buttonRes;
     let hasChanged = classroom.poll.allowMultipleResponses ? JSON.stringify(prevRes) !== JSON.stringify(res) : prevRes !== res;

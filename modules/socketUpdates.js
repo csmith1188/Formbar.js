@@ -265,8 +265,8 @@ function getPollResponseInformation(classData) {
     };
 }
 
-function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
-    return {
+function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false, studentEmail: null }) {
+    const result = {
         id: classData.id,
         className: classData.className,
         isActive: classData.isActive,
@@ -298,6 +298,16 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
               )
             : undefined,
     };
+
+    // If studentEmail is provided, include personalized data for that student
+    // This allows students to see their own tags without exposing other students' tags
+    if (options.studentEmail && classData.students[options.studentEmail]) {
+        const student = classData.students[options.studentEmail];
+        result.myTags = student.tags || [];
+        result.myId = student.id;
+    }
+
+    return result;
 }
 
 class SocketUpdates {
@@ -348,21 +358,32 @@ class SocketUpdates {
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
-                const classReturnData = structuredClone(getClassUpdateData(classData, false));
-
+                
+                // Send personalized data to each student with their own tags
+                // This ensures students can see if they have the "Excluded" tag without exposing other students' data
+                for (const [email, student] of Object.entries(classData.students)) {
+                    if (student.classPermissions >= controlPanelPermissions) continue; // Skip teachers, they get controlPanelData
+                    
+                    const personalizedData = structuredClone(getClassUpdateData(classData, false, { studentEmail: email }));
+                    advancedEmitToClass("classUpdate", classId, { email: email }, personalizedData);
+                }
+                
                 advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, controlPanelData);
-                advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData);
                 this.customPollUpdate();
             } else {
-                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                 if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
-                    // If the user requesting class information is a student, then only send them the information
-                    this.socket.emit("classUpdate", classReturnData);
+                    // If the user requesting class information is a student, send them personalized data
+                    const personalizedData = getClassUpdateData(classData, hasTeacherPermissions, { studentEmail: userData.email });
+                    this.socket.emit("classUpdate", personalizedData);
                 } else if (options.restrictToControlPanel || userData.classPermissions >= controlPanelPermissions) {
                     // If it's restricted to the control panel, then only send it to people with control panel access
+                    const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                     advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, classReturnData);
                 } else {
-                    advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData);
+                    // For guests and other non-teachers, send personalized data
+                    const email = this.socket.request.session?.email;
+                    const personalizedData = getClassUpdateData(classData, hasTeacherPermissions, { studentEmail: email });
+                    advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, personalizedData);
                 }
                 this.customPollUpdate();
             }
