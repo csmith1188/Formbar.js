@@ -1,7 +1,13 @@
 const { classInformation } = require("./class/classroom");
 const { database } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("./permissions");
+const {
+    TEACHER_PERMISSIONS,
+    CLASS_SOCKET_PERMISSIONS,
+    GUEST_PERMISSIONS,
+    MANAGER_PERMISSIONS,
+    MOD_PERMISSIONS,
+} = require("./permissions");
 const { getManagerData } = require("./manager");
 const { io } = require("./webServer");
 
@@ -142,17 +148,35 @@ function sortStudentsInPoll(classData) {
             included = true;
         }
 
-        // Check if they are a guest
-        if (student.classPermissions == GUEST_PERMISSIONS) {
+        // Check if they have the Excluded tag
+        if (student.tags && student.tags.includes("Excluded")) {
             excluded = true;
+            included = false;
+        }
+
+        // Check exclusion based on class settings for permission levels
+        if (classData.settings && classData.settings.isExcluded) {
+            if (classData.settings.isExcluded.guests && student.permissions == GUEST_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
+            if (classData.settings.isExcluded.mods && student.classPermissions == MOD_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
+            if (classData.settings.isExcluded.teachers && student.classPermissions == TEACHER_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
         }
 
         // Check if they should be in the excluded array
-        if (student.break == true) {
+        if (student.break === true) {
             excluded = true;
+            included = false;
         }
 
-        // Prevent students from being included if they are offline
+        // Prevent students from being included if they are offline or teacher or higher
         if ((student.tags && student.tags.includes("Offline")) || student.classPermissions >= TEACHER_PERMISSIONS) {
             excluded = true;
             included = false;
@@ -240,8 +264,8 @@ function getPollResponseInformation(classData) {
     };
 }
 
-function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false }) {
-    return {
+function getClassUpdateData(classData, hasTeacherPermissions, options = { restrictToControlPanel: false, studentEmail: null }) {
+    const result = {
         id: classData.id,
         className: classData.className,
         isActive: classData.isActive,
@@ -251,7 +275,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,
         tags: hasTeacherPermissions ? classData.tags : undefined,
-        settings: hasTeacherPermissions ? classData.settings : undefined,
+        settings: classData.settings,
         students: hasTeacherPermissions
             ? Object.fromEntries(
                   Object.entries(classData.students).map(([email, student]) => [
@@ -273,6 +297,16 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
               )
             : undefined,
     };
+
+    // If studentEmail is provided, include personalized data for that student
+    // This allows students to see their own tags without exposing other students' tags
+    if (options.studentEmail && classData.students[options.studentEmail]) {
+        const student = classData.students[options.studentEmail];
+        result.myTags = student.tags || [];
+        result.myId = student.id;
+    }
+
+    return result;
 }
 
 class SocketUpdates {
@@ -323,26 +357,32 @@ class SocketUpdates {
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));
-                const classReturnData = structuredClone(getClassUpdateData(classData, false));
-
+                
+                // Send personalized data to each student with their own tags
+                // This ensures students can see if they have the "Excluded" tag without exposing other students' data
+                for (const [email, student] of Object.entries(classData.students)) {
+                    if (student.classPermissions >= controlPanelPermissions) continue; // Skip teachers, they get controlPanelData
+                    
+                    const personalizedData = structuredClone(getClassUpdateData(classData, false, { studentEmail: email }));
+                    advancedEmitToClass("classUpdate", classId, { email: email }, personalizedData);
+                }
+                
                 advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, controlPanelData);
-                advancedEmitToClass(
-                    "classUpdate",
-                    classId,
-                    { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS },
-                    classReturnData
-                );
                 this.customPollUpdate();
             } else {
-                const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                 if (userData && userData.classPermissions < TEACHER_PERMISSIONS && !options.restrictToControlPanel) {
-                    // If the user requesting class information is a student, then only send them the information
-                    this.socket.emit("classUpdate", classReturnData);
+                    // If the user requesting class information is a student, send them personalized data
+                    const personalizedData = getClassUpdateData(classData, hasTeacherPermissions, { studentEmail: userData.email });
+                    this.socket.emit("classUpdate", personalizedData);
                 } else if (options.restrictToControlPanel || userData.classPermissions >= controlPanelPermissions) {
                     // If it's restricted to the control panel, then only send it to people with control panel access
+                    const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);
                     advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, classReturnData);
                 } else {
-                    advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData);
+                    // For guests and other non-teachers, send personalized data
+                    const email = this.socket.request.session?.email;
+                    const personalizedData = getClassUpdateData(classData, hasTeacherPermissions, { studentEmail: email });
+                    advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, personalizedData);
                 }
                 this.customPollUpdate();
             }

@@ -4,7 +4,6 @@ const { generateColors } = require("./util");
 const { advancedEmitToClass, userUpdateSocket } = require("./socketUpdates");
 const { database, dbGetAll, dbRun } = require("./database");
 const { MANAGER_PERMISSIONS } = require("./permissions");
-const { getEmailFromId } = require("./student");
 const { userSocketUpdates } = require("../sockets/init");
 
 // Stores an object containing the pog meter increases for users in a poll
@@ -58,23 +57,6 @@ async function createPoll(classId, pollData, userSession) {
         // Otherwise, populate with all eligible students
         if (excludedRespondents && Array.isArray(excludedRespondents) && excludedRespondents.length > 0) {
             classInformation.classrooms[classId].poll.excludedRespondents = excludedRespondents.map((id) => Number(id));
-        } else if (excludedRespondents === null) {
-            // When no specific students are provided (undefined, null, or empty array),
-            // allow all eligible students to vote
-            classInformation.classrooms[classId].poll.excludedRespondents = [];
-            for (const student of Object.values(classInformation.classrooms[classId].students)) {
-                // If the student has been excluded by permission, is on break, is offline, or has been manually excluded, do not allow them to vote
-                if (
-                    (classInformation.classrooms[classId].excludedPermissions &&
-                        classInformation.classrooms[classId].excludedPermissions.includes(student.classPermissions)) ||
-                    student.break ||
-                    (student.tags && (student.tags.includes("Offline") || student.tags.includes("Excluded")))
-                ) {
-                    continue;
-                }
-
-                classInformation.classrooms[classId].poll.excludedRespondents.push(student.id);
-            }
         }
 
         // Creates an object for every answer possible the teacher is allowing
@@ -332,6 +314,13 @@ function pollResponse(classId, res, textRes, userSession) {
     // Check if user is excluded from voting using poll.excludedRespondents
     if (classroom.poll.excludedRespondents && classroom.poll.excludedRespondents.includes(user.id)) {
         logger.log("info", `[pollResp] User ${user.id} is excluded from voting`);
+        return;
+    }
+
+    // Check if user has the "Excluded" tag
+    const student = classroom.students[email];
+    if (student && student.tags && Array.isArray(student.tags) && student.tags.includes("Excluded")) {
+        logger.log("info", `[pollResp] User ${user.id} is excluded from voting due to Excluded tag`);
         return;
     }
 
