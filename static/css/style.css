@@ -173,8 +173,8 @@ button.pressed:not(includingButton),
 }
 
 button.pressed:not(.includingButton):hover,
-.quickButton.pressed:not(includingButton):hover,
-.revampButton.pressed:not(includingButton):hover {
+.quickButton.pressed:not(.includingButton):hover,
+.revampButton.pressed:not(.includingButton):hover {
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
