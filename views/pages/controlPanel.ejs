@@ -17,7 +17,7 @@
 <%- include('../partials/formbar_header') %>
 <header id='quickMenu' class="dividedThree" style="margin-bottom: 20px;">
     <div class="revampDiv upDown" id="pollDetails">
-        <!-- <img src="/img/cursor.webp" alt="Hover for poll info."> -->
+        <!-- <img src="/img/icons/cursor.webp" alt="Hover for poll info."> -->
         <div class="pollDetailsText">
         <p><b id='pollCounter'></b></p>
         <p id='responsesCounter'></p>
@@ -33,31 +33,31 @@
             <input type="number" aria-label="Timer Minutes" class="inputtedTime revampButton revampWithText" min="0" placeholder="Min" onkeydown="if(!isFinite(event.key) && event.key !== 'Tab' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Backspace' && event.key !== 'Enter') event.preventDefault();" oninput="if(this.value > 60) this.value = 60;">
             <p>:</p>
             <input type="number" aria-label="Timer Seconds" class="inputtedTime revampButton revampWithText" min="0" max="59" placeholder="Sec" onkeydown="if(!isFinite(event.key) && event.key !== 'Tab' && event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Backspace' && event.key !== 'Enter') event.preventDefault();" oninput="if(this.value > 59) this.value = 59;">
-            <button type='button'  id='timerButton' class="circularButton"><img src="/img/play-outline.svg" alt="Start Timer"></button>
-            <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/pause-outline.svg" alt="End Timer"></button>
+            <button type='button'  id='timerButton' class="circularButton"><img src="/img/icons/play-outline.svg" alt="Start Timer"></button>
+            <button type='button' id='timerStopButton' class="circularButton" hidden><img src="/img/icons/pause-outline.svg" alt="End Timer"></button>
         </div>
-        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/add-circle-outline.svg" alt="Custom Polls Icon"></button>
-        <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/timer-outline.svg" alt="Timer Icon"></button>
-        <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/grid-outline.svg" alt="Sorting & Filters Icon"></button>
-        <button id='bannedStudentsMenu' title="Banned Students" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/ban-outline.svg" alt="Banned Students Icon"></button>
-        <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
-        <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/pricetags-outline.svg" alt="Tags Icon"></button>
-        <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/cogwheel.svg" alt="Settings Icon"></button>
+        <button id='pollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/icons/add-circle-outline.svg" alt="Custom Polls Icon"></button>
+        <button id='timerMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/icons/timer-outline.svg" alt="Timer Icon"></button>
+        <button id='sortingFilterMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/icons/grid-outline.svg" alt="Sorting & Filters Icon"></button>
+        <button id='bannedStudentsMenu' title="Banned Students" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/icons/ban-outline.svg" alt="Banned Students Icon"></button>
+        <button id='permissions' title="Permissions" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/icons/lock-closed-outline.svg" id="Settings" alt="Permissions Icon"></button>
+        <button id='tags' title="Tags" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/icons/pricetags-outline.svg" alt="Tags Icon"></button>
+        <button id='settingsMenu' title="Settings" class='quickButton tab circularButton' data-tab-group='mainTabs'><img src="/img/icons/cogwheel.svg" alt="Settings Icon"></button>
     </div>
 </header>
 
 <div id="sortingFilterMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
 </div>
 
 <div id="timerMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Poll Timer</h1>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
 </div>
 
 <div id="bannedStudentsMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Banned Students</h1>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
     <div class="revampDiv" style="margin: auto">
         <table id="bannedStudentsTable">
             <thead>
@@ -73,54 +73,54 @@
 
 <div id="helpMenu" class="tabContent controlPanel" data-tab-group="mainTabs">
     <h1 class="mobileMenuHeader">Help</h1>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
     
     <div class="helpInfo">
         <p>Navigation</p>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/time-outline.svg" alt="Previous Polls">
+            <img src="/img/icons/time-outline.svg" alt="Previous Polls">
             <div class="helpInformation">
                 <p class="helpTitle">Previous Polls</p>
                 <p class="helpDesc">Load and check answers from previous polls.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/add-circle-outline.svg" alt="Custom Polls">
+            <img src="/img/icons/add-circle-outline.svg" alt="Custom Polls">
             <div class="helpInformation">
                 <p class="helpTitle">Custom Polls</p>
                 <p class="helpDesc">Create and edit your own custom polls.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/timer-outline.svg" alt="Poll Timer">
+            <img src="/img/icons/timer-outline.svg" alt="Poll Timer">
             <div class="helpInformation">
                 <p class="helpTitle">Poll Timer</p>
                 <p class="helpDesc">Set a fixed time for the current poll.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/grid-outline.svg" alt="Extras">
+            <img src="/img/icons/grid-outline.svg" alt="Extras">
             <div class="helpInformation">
                 <p class="helpTitle">Extras</p>
                 <p class="helpDesc">Sort / Filter members, Poll Presets, and member selection.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/lock-closed-outline.svg" alt="Permissions">
+            <img src="/img/icons/lock-closed-outline.svg" alt="Permissions">
             <div class="helpInformation">
                 <p class="helpTitle">Permissions</p>
                 <p class="helpDesc">Change who can do what in your classes premissions.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/pricetags-outline.svg" alt="Tags">
+            <img src="/img/icons/pricetags-outline.svg" alt="Tags">
             <div class="helpInformation">
                 <p class="helpTitle">Tags</p>
                 <p class="helpDesc">Set custom tags to create groups of members.</p>
             </div>
         </div>
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/cogwheel.svg" alt="Settings">
+            <img src="/img/icons/cogwheel.svg" alt="Settings">
             <div class="helpInformation">
                 <p class="helpTitle">Settings</p>
                 <p class="helpDesc">Edit preferences about this class.</p>
@@ -131,14 +131,14 @@
         <p>Poll Buttons</p>
         
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/refresh-circle-outline.svg" alt="Settings">
+            <img src="/img/icons/refresh-circle-outline.svg" alt="Settings">
             <div class="helpInformation">
                 <p class="helpTitle">Clear Poll</p>
             </div>
         </div>
         
         <div class="helpIconInformation revampDivAlt">
-            <img src="/img/stop-circle-outline.svg" alt="Settings">
+            <img src="/img/icons/stop-circle-outline.svg" alt="Settings">
             <div class="helpInformation">
                 <p class="helpTitle">End Poll</p>
             </div>
@@ -148,14 +148,14 @@
         <p>Starting & Ending</p>
 
         <div class="helpIconInformation revampDivAlt startClass">
-            <img src="/img/play.svg" alt="Settings">
+            <img src="/img/icons/play.svg" alt="Settings">
             <div class="helpInformation">
                 <p class="helpTitle">Start Class</p>
             </div>
         </div>
         
         <div class="helpIconInformation revampDivAlt endClass">
-            <img src="/img/stop.svg" alt="Settings">
+            <img src="/img/icons/stop.svg" alt="Settings">
             <div class="helpInformation">
                 <p class="helpTitle">End Class</p>
             </div>
@@ -174,12 +174,12 @@
                 <h1>Members</h1>
                 <input type="text" placeholder="Search Users" id="searchUsers" class="revampButton revampWithText" oninput="searchUsers()" autocomplete="off">
                 <button class="squareButton" id="searchUsersBtn" onclick="document.getElementById('searchUsers').classList.toggle('shown');this.parentElement.children[0].classList.toggle('hideMobile')">
-                    <img src="/img/search-outline.svg" alt="Open Search">
+                    <img src="/img/icons/search-outline.svg" alt="Open Search">
                 </button>
             </div>
             <div id='VBOptions' class="revampDiv">
-                <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/chevron-up-outline.svg" alt="Last Menu"></button> -->
-                <!-- <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/chevron-down-outline.svg" alt="Next Menu"></button> -->
+                <!-- <button id="vbOptionsLast" class="revampButton"><p>Fast Poll</p><img src="/img/icons/chevron-up-outline.svg" alt="Last Menu"></button> -->
+                <!-- <button id="vbOptionsNext" class="revampButton"><p>Sort by:</p><img src="/img/icons/chevron-down-outline.svg" alt="Next Menu"></button> -->
                 <select name="toolbarOptions" id="toolbarOptions" class="revampButton">
                 </select>
                 <div id='userFilterBoxes' class='options activeControlTab'>
@@ -213,7 +213,7 @@
         
         <div id="controlFooter" class="revampDiv">
             <div class="ongoingButtons">
-                <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/time-outline.svg" alt="Previous Polls Icon"></button>
+                <button id='previousPollsMenu' class='quickButton tab revampButton mobileHasIcon mobileCircular showMobile' data-tab-group='mainTabs'><img src="/img/icons/time-outline.svg" alt="Previous Polls Icon"></button>
                 <button id='previousPollsMenu' class='quickButton tab revampButton hideMobile' data-tab-group='mainTabs'>
                     <p>Previous Polls</p>
                 </button>
@@ -223,26 +223,26 @@
                 </button>
                 <button id='clearPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='clearPollFunc()'>
                     <p>Clear Poll</p>
-                    <img src="/img/refresh-circle-outline.svg" alt="Clear Poll Icon">
+                    <img src="/img/icons/refresh-circle-outline.svg" alt="Clear Poll Icon">
 
                 </button>
                 <button id='endPoll' class="revampButton mobileHasIcon mobileCircular"  onclick='endPollFunc()'>
                     <p>End Poll</p>
-                    <img src="/img/stop-circle-outline.svg" alt="End Poll Icon">
+                    <img src="/img/icons/stop-circle-outline.svg" alt="End Poll Icon">
                 </button>
                 <div class="mobileSpacer"></div>
                 <button id='endClass' onclick='endClass()' class="revampButton mobileHasIcon mobileCircular">
                     <p>End Class</p>
-                    <img src="/img/stop.svg" alt="End Class">
+                    <img src="/img/icons/stop.svg" alt="End Class">
                 </button>
-                <button id='helpMenu' class="revampButton mobileHasIcon mobileCircular showMobile tab" data-tab-group='mainTabs'><img src="/img/help-circle-outline.svg" alt="End Class"></button>
+                <button id='helpMenu' class="revampButton mobileHasIcon mobileCircular showMobile tab" data-tab-group='mainTabs'><img src="/img/icons/help-circle-outline.svg" alt="End Class"></button>
             </div>
         </div>
     </div>
 </div>
 
     <div id='pollsMenu' class='tabContent' data-tab-group='mainTabs' style="position: relative;">
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
             <h1 class="mobileMenuHeader">Custom Polls</h1>
             <div id='pollOptions' class='options customOptions'>
             <button id='publicPolls' class='quickButton tab revampButton default' data-tab-group='polls'>Public
@@ -271,25 +271,25 @@
                     <div class="pollChangers">
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Multiple Answer Poll</h2>
-                            <img class="showMobile pollOptionIcon" src="/img/checkmark-done-outline.svg" alt="Multi-answer Poll">
+                            <img class="showMobile pollOptionIcon" src="/img/icons/checkmark-done-outline.svg" alt="Multi-answer Poll">
                             <input type='checkbox' id='multiRes'>
                         </div>
                         
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Text Responses</h2>
-                            <img class="showMobile pollOptionIcon" src="/img/text-outline.svg" alt="Text Responses">
+                            <img class="showMobile pollOptionIcon" src="/img/icons/text-outline.svg" alt="Text Responses">
                             <input type='checkbox' id='resTextBox' onclick='resTextChange()'>
                         </div>
                         
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Blind Poll</h2>
-                            <img class="showMobile pollOptionIcon" src="/img/eye-off-outline.svg" alt="Blind Poll">
+                            <img class="showMobile pollOptionIcon" src="/img/icons/eye-off-outline.svg" alt="Blind Poll">
                             <input type='checkbox' id='blind'>
                         </div>
                         
                         <div class="pollOptionsEditorOption">
                             <h2 class="hideMobile">Allow Vote Changes</h2>
-                            <img class="showMobile pollOptionIcon" src="/img/ban-outline.svg" alt="Allow Vote Changes">
+                            <img class="showMobile pollOptionIcon" src="/img/icons/ban-outline.svg" alt="Allow Vote Changes">
                             <input type='checkbox' id='allowVoteChanges' checked>
                         </div>
                     </div>
@@ -325,7 +325,7 @@
 
     <div id='previousPollsMenu' class='tabContent' data-tab-group='mainTabs'>
         <h1 class="mobileMenuHeader">Previous Polls</h1>
-        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+        <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
         <div id='pollOptions' class='options'>
             <details id="previousPoll-template" style="order: 9997; margin: 20px; display: none" class="revampDiv previousPoll" hidden>
                 <summary style="height: fit-content; margin: 20px; cursor: pointer;">
@@ -336,27 +336,31 @@
                 <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
-            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/arrow-back.svg" alt="Newer Polls"></button>
-            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'><img src="/img/arrow-forward.svg" alt="Older Polls"></button>
+            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/icons/arrow-back.svg" alt="Newer Polls"></button>
+            <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollForward' onclick='scrollPreviousPolls("forward")'><img src="/img/icons/arrow-forward.svg" alt="Older Polls"></button>
         </div>
     </div>
 </div>
 
 <div id='permissions' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
     <h2 class="hideMobile">Permissions</h2>
     <h1 class="showMobile mobileMenuHeader">Permissions</h1>
+    <div class="revampDiv defaultPermSelect">
+        <label for="UserDefaultPerm">Default User Permissions:</label>
+        <select name="UserDefaultPerm" id="userDefaultPermSelect" class="revampButton"></select>
+    </div>
     <div id='permissionsList'></div>
 </div>
 <div id='tags' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
     <h2 class="hideMobile">Tags</h2>
     <h1 class="showMobile mobileMenuHeader">Tags</h1>
     <div class="tagsHolder">
         <div id="tagOptions" class="revampDiv">
             <div>
                 <textarea class="revampButton revampWithText" id="tagInput" placeholder="Add Tag (tag1, tag2, ...)" style="height: 5.5vh;"></textarea>
-                <button class="circularButton" id="addTagButton"><img src="/img/checkmark-outline.svg"></button>
+                <button class="circularButton" id="addTagButton"><img src="/img/icons/checkmark-outline.svg"></button>
             </div>
         </div>
         <div id='tagsList' class="revampDiv"></div>
@@ -366,7 +370,7 @@
 <div id="pollPreview" class="revampDiv"></div>
 
 <div id='settingsMenu' class='tabContent' data-tab-group='mainTabs'>
-    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/chevron-back-outline.svg" alt="Back Icon"></button>
+    <button id='usersMenu' class='backButton quickButton tab revampButton' data-tab-group='mainTabs'><img src="/img/icons/chevron-back-outline.svg" alt="Back Icon"></button>
     <h2 class="hideMobile">Settings</h2>
     <h1 class="showMobile mobileMenuHeader">Settings</h1>
     
@@ -382,6 +386,13 @@
             <button class="revampButton warningButton" onclick="regenerateAccessCode()">
                 Regenerate Code
             </button>
+        </div>
+        <div>
+            <div id="userExclusionDiv">
+                <button id="noGuest" class="includingButton revampButton">No Guests</button>
+                <button id="noMod" class="includingButton revampButton">No Mods</button>
+                <button id="noTeacher" class="includingButton revampButton">No Teachers</button>
+            </div>
         </div>
 		<div class="revampDiv" id="classLinks" style="margin-top: 20px; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
             <h2>Class Links</h2>
@@ -447,13 +458,13 @@
     <p id="userTextResponse">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
 
     <div class="accordionButtons">
-        <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this)" data-option="0"><img src="/img/hand-right-outline.svg" alt="Help Ticket"></button>
-        <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this)" data-option="1"><img src="/img/umbrella-outline.svg" alt="Break"></button>
-        <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this)" data-option="2"><img src="/img/text-outline.svg" alt="Text Response"></button>
-        <button class="accordionButton circularButton"       onclick="doAccordionButton(this)" data-option="3"><img src="/img/lock-closed-outline.svg" alt="Permissions"></button>
-        <button class="accordionButton circularButton"    onclick="doAccordionButton(this)" data-option="4"><img src="/img/digipog.svg" alt="Digipogs"></button>
-        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="5"><img src="/img/pricetags-outline.svg" alt="Text Response"></button>
-        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="6"><img src="/img/ban-outline.svg" alt="Kick and Ban"></button>
+        <button class="accordionButton circularButton helpAccButton"        onclick="doAccordionButton(this)" data-option="0"><img src="/img/icons/hand-right-outline.svg" alt="Help Ticket"></button>
+        <button class="accordionButton circularButton breakAccButton"       onclick="doAccordionButton(this)" data-option="1"><img src="/img/icons/umbrella-outline.svg" alt="Break"></button>
+        <button class="accordionButton circularButton textAccButton"        onclick="doAccordionButton(this)" data-option="2"><img src="/img/icons/text-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"       onclick="doAccordionButton(this)" data-option="3"><img src="/img/icons/lock-closed-outline.svg" alt="Permissions"></button>
+        <button class="accordionButton circularButton"    onclick="doAccordionButton(this)" data-option="4"><img src="/img/icons/digipog.svg" alt="Digipogs"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="5"><img src="/img/icons/pricetags-outline.svg" alt="Text Response"></button>
+        <button class="accordionButton circularButton"        onclick="doAccordionButton(this)" data-option="6"><img src="/img/icons/ban-outline.svg" alt="Kick and Ban"></button>
     </div>
 
     <div class="accordionPopup revampDiv">
@@ -565,12 +576,25 @@
     let userSortSelections = document.getElementById('userSortSelections')
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
+    const userExclusionDiv = document.getElementById('userExclusionDiv');
 
-    // let vbOptionsLast = document.getElementById('vbOptionsLast');
-    // let vbOptionsNext = document.getElementById('vbOptionsNext');
+    for (const exclusionButton of userExclusionDiv.children) {
+        exclusionButton.onclick = () => {
+            // Determine which exclusion type based on button id
+            const exclusionType = exclusionButton.id === 'noGuest' ? 'guests' :
+                                 exclusionButton.id === 'noMod' ? 'mods' : 'teachers';
+
+            const currentState = classroom.settings.isExcluded[exclusionType] || false;
+            socket.emit('setClassSetting', 'isExcluded', {
+                ...classroom.settings.isExcluded,
+                [exclusionType]: !currentState
+            });
+            classroom.settings.isExcluded[exclusionType] = !currentState;
+            exclusionButton.classList.toggle('pressed');
+        };
+    }
     
     let toolbarOptions = document.getElementById('toolbarOptions');
-
     let sidebarOptionsIDs = [
         {
             elementID: 'userFilterBoxes',
@@ -643,13 +667,13 @@
 
         if (isActive) {
             if (startClassButton) {
-                startClassButton.innerHTML = '<p>End Class</p><img src="/img/stop.svg" alt="End Class">';
+                startClassButton.innerHTML = '<p>End Class</p><img src="/img/icons/stop.svg" alt="End Class">';
                 startClassButton.onclick = endClass;
                 startClassButton.id = 'endClass';
             }
         } else {
             if (endClassButton) {
-                endClassButton.innerHTML = '<p>Start Class</p><img src="/img/play.svg" alt="Start Class">';
+                endClassButton.innerHTML = '<p>Start Class</p><img src="/img/icons/play.svg" alt="Start Class">';
                 endClassButton.onclick = startClass;
                 endClassButton.id = 'startClass';
             }
@@ -1053,7 +1077,7 @@
         sortButton.type = 'button';
         sortButton.id = key;
         sortButton.className = 'sort revampButton';
-        sortButton.innerHTML = value + '<div><img src="/img/swap-vertical.svg" class="sortAscendDescendBG" alt="Ascend / Descend"><img src="/img/swap-vertical-down.svg" class="currentSortIcon"></div>';
+        sortButton.innerHTML = value + '<div><img src="/img/icons/swap-vertical.svg" class="sortAscendDescendBG" alt="Ascend / Descend"><img src="/img/icons/swap-vertical-down.svg" class="currentSortIcon"></div>';
 
         userSortSelections.appendChild(sortButton);
     }
@@ -1081,9 +1105,25 @@
         const moreOptions = document.querySelector('.pollOptionsEditor');
         const moreOptionsArrow = document.getElementById('moreOptionsArrow');
         moreOptions.classList.toggle('open');
-        moreOptions.classList.contains('open') ? moreOptionsArrow.src = '/img/chevron-down-outline.svg' : moreOptionsArrow.src = '/img/chevron-up-outline.svg';
+        moreOptions.classList.contains('open') ? moreOptionsArrow.src = '/img/icons/chevron-down-outline.svg' : moreOptionsArrow.src = '/img/icons/chevron-up-outline.svg';
     }
 
+    function updateExclusionButtonStates() {
+        if (classroom && classroom.settings && classroom.settings.isExcluded) {
+            const noGuestBtn = document.getElementById('noGuest');
+            const noModBtn = document.getElementById('noMod');
+            const noTeacherBtn = document.getElementById('noTeacher');
+            noGuestBtn.classList.toggle('pressed', classroom.settings.isExcluded.guests);
+            noModBtn.classList.toggle('pressed', classroom.settings.isExcluded.mods);
+            noTeacherBtn.classList.toggle('pressed', classroom.settings.isExcluded.teachers);
+        }
+    }
+
+
+    // Update button states when classroom data changes
+    socket.on('classUpdate', (classroomData) => {
+        updateExclusionButtonStates();
+    });
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>

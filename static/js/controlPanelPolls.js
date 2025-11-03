@@ -292,7 +292,7 @@ function responseAmountChange(responseAmount = null) {
 
         let removeAnswerButton = document.createElement("button");
         removeAnswerButton.className = "quickButton revampButton warningButton";
-        removeAnswerButton.innerHTML = "<img src='/img/close-outline.svg' alt='Remove Answer' />";
+        removeAnswerButton.innerHTML = "<img src='/img/icons/close-outline.svg' alt='Remove Answer' />";
         removeAnswerButton.id = `removeAnswer`;
         removeAnswerButton.onclick = removeAnswer;
         responseDiv.appendChild(removeAnswerButton);
@@ -460,11 +460,11 @@ function startPoll(customPollId) {
 
     for (let eachBox of allCheckboxes) {
         if (eachBox.checked && !eachBox.indeterminate) {
-            let boxId = eachBox.id.split("_")[1];
+            let boxId = Number(eachBox.id.split("_")[1]);
             userBoxesChecked.push(boxId);
         }
         if (eachBox.indeterminate) {
-            let boxId = eachBox.id.split("_")[1];
+            let boxId = Number(eachBox.id.split("_")[1]);
             userIndeterminate.push(boxId);
         }
     }
@@ -502,7 +502,6 @@ function startPoll(customPollId) {
             weight: customPoll.weight,
             tags: userTags,
             indeterminate: customPoll.indeterminate,
-            studentsAllowedToVote: userBoxesChecked,
         });
     } else {
         socket.emit("startPoll", {
@@ -515,7 +514,6 @@ function startPoll(customPollId) {
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,
-            studentsAllowedToVote: userBoxesChecked,
         });
     }
     clearPoll.style.display = "block";

@@ -6,6 +6,9 @@ const userBreak = [];
 // Stores the currently opened student elements
 let opendetails = [];
 
+// Stores the currently active tab for each student
+let activeStudentTabs = {};
+
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
@@ -39,8 +42,22 @@ function buildStudent(classroomData, studentData) {
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
                 if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-                let leftMostButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
-                doAccordionButton(leftMostButton, true);
+
+                // Check if there's a previously active tab for this student
+                const previousTabOption = activeStudentTabs[studentData.id];
+                let targetButton;
+
+                if (previousTabOption !== undefined) {
+                    // Try to find the button with the stored tab option
+                    targetButton = newStudent.querySelector(`button.accordionButton[data-option="${previousTabOption}"]:not(.accButtonDisabled)`);
+                }
+
+                // If no stored tab or that button is disabled, fall back to the first available button
+                if (!targetButton) {
+                    targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
+                }
+
+                doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
             }
@@ -61,39 +78,39 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id.toString());
+        studentBox.checked = !classroomData.poll.excludedRespondents.includes(studentData.id);
 
-        // Attach onclick handler for voting rights
-        // Store student ID for closure to avoid capturing the entire studentData object
-        const studentId = studentData.id.toString();
+        // Handle voting rights for student checkboxes
+        const studentId = studentData.id;
         studentBox.onclick = () => {
             const canStudentVote = studentBox.checked;
 
-            // Get current voting list from the global classroom object
-            // Now that the parameter is named classroomData, 'classroom' refers to the global
-            let studentsAllowedToVote = [...(classroomData.poll.studentsAllowedToVote || [])];
+            // Get current excluded respondents list from the classroom poll
+            let excludedRespondents = [...(classroom.poll.excludedRespondents || [])];
 
-            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
-                studentsAllowedToVote.push(studentId);
-            } else if (!canStudentVote) {
-                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
+            if (!canStudentVote && !excludedRespondents.includes(studentId)) {
+                // Checkbox is unchecked, so exclude this student
+                excludedRespondents.push(studentId);
+            } else if (canStudentVote) {
+                // Checkbox is checked, so remove from excluded list
+                excludedRespondents = excludedRespondents.filter((id) => id !== studentId);
             }
 
-            // Send the complete updated list to the server
-            socket.emit("updatePoll", { studentsAllowedToVote });
+            // Send the updated excluded list to the server
+            socket.emit("updateExcludedRespondents", excludedRespondents);
         };
 
-        for (let eachResponse in classroomData.poll.responses) {
+        for (let responseObj of classroomData.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
+                pollBox.style.color = responseObj.color;
                 pollBox.textContent = studentData.pollRes.textRes;
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
-                pollBox.textContent = eachResponse;
-            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (responseObj.answer == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
+                pollBox.style.color = responseObj.color;
+                pollBox.textContent = responseObj.answer;
+            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(responseObj.answer) != -1) {
                 let tempElem = document.createElement("span");
-                tempElem.textContent = eachResponse + " ";
-                tempElem.style.color = classroomData.poll.responses[eachResponse].color;
+                tempElem.textContent = responseObj.answer + " ";
+                tempElem.style.color = responseObj.color;
                 pollBox.appendChild(tempElem);
             }
         }
@@ -371,7 +388,7 @@ if (settings.filter) {
             if (filterElement) {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
                 if (filterType == "canVote") filterElement.innerHTML = FilterState[filterElement.id][filter[filterType]];
             }
         }
@@ -394,15 +411,15 @@ if (settings.sort) {
 
                 switch (sort[sortType]) {
                     case 0:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 0;
                         break;
                     case 1:
-                        sortIcon.src = "/img/swap-vertical-down.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-down.svg";
                         sortIcon.style.opacity = 1;
                         break;
                     case 2:
-                        sortIcon.src = "/img/swap-vertical-up.svg";
+                        sortIcon.src = "/img/icons/swap-vertical-up.svg";
                         sortIcon.style.opacity = 1;
                         break;
                 }
@@ -478,7 +495,7 @@ function filterSortChange(classroom) {
 
     // sort by response order
     if (sort.responseOrder == 1) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -489,7 +506,7 @@ function filterSortChange(classroom) {
             return aIndex - bIndex;
         });
     } else if (sort.responseOrder == 2) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -580,7 +597,7 @@ for (let filterElement of document.getElementsByClassName("filter")) {
             } else {
                 filterElement.classList.add("pressed");
                 filterElement.innerHTML =
-                    FilterState[filterElement.id] + `<img src="/img/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
+                    FilterState[filterElement.id] + `<img src="/img/icons/checkmark-outline.svg" alt=${FilterState[filterElement.id]}>`;
             }
         }
 
@@ -604,7 +621,7 @@ for (let sortElement of document.getElementsByClassName("sort")) {
                 if (otherSortElement) {
                     otherSortElement.classList.remove("pressed");
                     let otherSortIcon = otherSortElement.querySelector("div").getElementsByClassName("currentSortIcon")[0];
-                    otherSortIcon.src = "/img/swap-vertical-up.svg";
+                    otherSortIcon.src = "/img/icons/swap-vertical-up.svg";
                     otherSortIcon.style.opacity = 0;
                 }
             }
@@ -614,15 +631,15 @@ for (let sortElement of document.getElementsByClassName("sort")) {
 
         switch (sort[sortElement.id]) {
             case 0:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 1:
-                sortIcon.src = "/img/swap-vertical-down.svg";
+                sortIcon.src = "/img/icons/swap-vertical-down.svg";
                 sortIcon.style.opacity = 1;
                 break;
             case 2:
-                sortIcon.src = "/img/swap-vertical-up.svg";
+                sortIcon.src = "/img/icons/swap-vertical-up.svg";
                 sortIcon.style.opacity = 0;
                 break;
         }
@@ -684,6 +701,10 @@ function doAccordionButton(button, forceOpen = false) {
     });
     otherButtons.forEach((e) => e.classList.remove("active"));
     button.classList.add("active");
+
+    // Store the active tab option for this student
+    const studentId = studentElement.id.split("student-")[1];
+    activeStudentTabs[studentId] = button.dataset.option;
 
     const studentOptions = {
         0: {

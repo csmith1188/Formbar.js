@@ -21,6 +21,26 @@
         width: 100%;
     }
 
+    #permissionsTable {
+        table-layout: fixed;
+    }
+
+    div.defaultPermSelect {
+        left: 20px !important;
+        right: 20px !important;
+        bottom: 20px !important;
+    }
+
+    th.permissionHeader {
+        padding: 10px 0 !important;
+    }
+
+    .permissionOff,
+    .permissionOn {
+        padding: 0 !important;
+        font-size: 4cqw !important;
+    }
+
     a#headerLogo h1 {
         font-size: 3vh;
     }

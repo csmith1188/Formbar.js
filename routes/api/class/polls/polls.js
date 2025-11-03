@@ -32,7 +32,7 @@ module.exports = {
 
                 // Get a clone of the class data and the poll responses in the class
                 let classData = structuredClone(classInformation.classrooms[classId]);
-                classData.poll.responses = getPollResponses(classData);
+                classData.poll.responseCounts = getPollResponses(classData);
 
                 // If the class does not exist, return an error
                 if (!classData) {

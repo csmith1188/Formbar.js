@@ -110,7 +110,7 @@
                 labelsArray.push('Responses')
                 studentResponses.responses = 0
             } else {
-                for (const [poll, pollData] of Object.entries(newPollData.responses)) {
+                for (const [poll, pollData] of Object.entries(newPollData.responseCounts || {})) {
                     labelsArray.push(pollData.answer)
                     studentResponses[poll] = 0
                 }
@@ -123,15 +123,15 @@
             if (newPollData.blind) {
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (let poll of Object.values(newPollData.responses)) {
-                    doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+                for (const [, pollData] of Object.entries(newPollData.responseCounts || {})) {
+                    doughnutChart.data.datasets[0].backgroundColor.push(pollData.color)
                 }
             }
             doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
             // Loops through all student answers and adds them to a total tally
             // Student response corresponds with a property name in studResponses
             studentResponses.noResponse += newPollData.totalResponders - newPollData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollData.responses)) {
+            for (const [poll, pollData] of Object.entries(newPollData.responseCounts || {})) {
                 if (newPollData.blind)
                     studentResponses.responses += pollData.responses
                 else studentResponses[poll] += pollData.responses

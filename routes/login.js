@@ -54,74 +54,65 @@ module.exports = {
                         return;
                     }
 
-                    database.run(
-                        "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                        [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1],
-                        (err) => {
-                            try {
-                                if (err) throw err;
-                                logger.log("verbose", "[get /login] Added user to database");
-                                // Find the user in which was just created to get the id of the user
-                                database.get("SELECT * FROM users WHERE email=?", [user.email], (err, userData) => {
-                                    try {
-                                        if (err) throw err;
+                    try {
+                        await dbRun(
+                            "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                            [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1]
+                        );
+                        logger.log("verbose", "[get /login] Added user to database");
 
-                                        classInformation.users[userData.email] = new Student(
-                                            userData.email,
-                                            userData.id,
-                                            userData.permissions,
-                                            userData.API,
-                                            [],
-                                            [],
-                                            userData.tags ? userData.tags.split(",") : [],
-                                            userData.displayName,
-                                            false
-                                        );
-                                        // Add the user to the session in order to transfer data between each page
-                                        req.session.userId = userData.id;
-                                        req.session.email = userData.email;
-                                        req.session.classId = null;
-                                        req.session.displayName = userData.displayName;
-                                        req.session.verified = 1;
+                        // Find the user in which was just created to get the id of the user
+                        const userData = await dbGet("SELECT * FROM users WHERE email=?", [user.email]);
+                        classInformation.users[userData.email] = new Student(
+                            userData.email,
+                            userData.id,
+                            userData.permissions,
+                            userData.API,
+                            [],
+                            [],
+                            userData.tags ? userData.tags.split(",") : [],
+                            userData.displayName,
+                            false
+                        );
+                        // Add the user to the session in order to transfer data between each page
+                        req.session.userId = userData.id;
+                        req.session.email = userData.email;
+                        req.session.classId = null;
+                        req.session.displayName = userData.displayName;
+                        req.session.verified = 1;
 
-                                        // Remove the account creation data from the database
-                                        dbRun("DELETE FROM temp_user_creation_data WHERE secret=?", [user.newSecret]);
-
-                                        logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
-                                        logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
-
-                                        managerUpdate();
-
-                                        res.redirect("/");
-                                    } catch (err) {
-                                        logger.log("error", err.stack);
-                                        res.render("pages/message", {
-                                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                            title: "Error",
-                                        });
-                                    }
-                                });
-                            } catch (err) {
-                                // Handle the same email being used for multiple accounts
-                                if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
-                                    logger.log("verbose", "[post /login] Email already exists");
-                                    res.render("pages/message", {
-                                        message: "A user with that email already exists.",
-                                        title: "Login",
-                                    });
-                                    return;
-                                }
-
-                                // Handle other errors
-                                logger.log("error", err.stack);
-                                res.render("pages/message", {
-                                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                    title: "Error",
-                                });
-                                return;
+                        // Delete any temp user creation data with the same email to prevent multiple accounts with the same email
+                        const tempUsers = await dbGetAll("SELECT token FROM temp_user_creation_data");
+                        for (const tempUser of tempUsers) {
+                            const decoded = jwt.decode(tempUser.token);
+                            if (decoded.email === userData.email) {
+                                await dbRun("DELETE FROM temp_user_creation_data WHERE token=?", [tempUser.token]);
                             }
                         }
-                    );
+
+                        logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
+                        logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
+
+                        managerUpdate();
+                        res.redirect("/");
+                    } catch (err) {
+                        // Handle the same email being used for multiple accounts
+                        if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
+                            logger.log("verbose", "[post /login] Email already exists");
+                            res.render("pages/message", {
+                                message: "A user with that email already exists.",
+                                title: "Login",
+                            });
+                            return;
+                        }
+
+                        // Handle other errors
+                        logger.log("error", err.stack);
+                        res.render("pages/message", {
+                            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                            title: "Error",
+                        });
+                    }
                 }
             } catch (err) {
                 logger.log("error", err.stack);
@@ -136,7 +127,7 @@ module.exports = {
         // This lets users actually log in instead of not being able to log in at all
         // It uses the emails, passwords, etc. to verify that it is the user that wants to log in logging in
         // This also hashes passwords to make sure people's accounts don't get hacked
-        app.post("/login", (req, res) => {
+        app.post("/login", async (req, res) => {
             try {
                 const user = {
                     password: req.body.password,
@@ -153,7 +144,7 @@ module.exports = {
                 );
 
                 // Check whether user is logging in or signing up
-                if (user.loginType == "login") {
+                if (user.loginType === "login") {
                     logger.log("verbose", "[post /login] User is logging in");
 
                     // Get the users login in data to verify password
@@ -289,7 +280,7 @@ module.exports = {
                             }
                         }
                     );
-                } else if (user.loginType == "new") {
+                } else if (user.loginType === "new") {
                     // Check if the password and display name are valid
                     if (!passwordRegex.test(user.password) || !displayRegex.test(user.displayName)) {
                         logger.log("verbose", "[post /login] Invalid data provided to create new user");
@@ -300,167 +291,164 @@ module.exports = {
                         return;
                     }
 
-                    // Trim whitespace from email
-                    user.email = user.email.trim();
+                    // Trim whitespace from email and set lowercase
+                    // After that, set the default user permissions to student
+                    user.email = user.email.trim().toLowerCase();
+                    let userPermission = STUDENT_PERMISSIONS;
 
                     logger.log("verbose", "[post /login] Creating new user");
-                    let permissions = STUDENT_PERMISSIONS;
-                    database.all("SELECT API, secret, email FROM users", async (err, users) => {
-                        try {
-                            if (err) throw err;
 
-                            let existingAPIs = [];
-                            let existingSecrets = [];
-                            let newAPI;
-                            let newSecret;
+                    // Get all existing users and check for existing emails, APIs, and secrets
+                    const users = await dbGetAll("SELECT API, secret, email FROM users");
 
-                            // If there are no users in the database, the first user is a manager
-                            if (users.length == 0) {
-                                permissions = MANAGER_PERMISSIONS;
-                            }
+                    let existingAPIs = [];
+                    let existingSecrets = [];
+                    let newAPI;
+                    let newSecret;
 
-                            for (let dbUser of users) {
-                                existingAPIs.push(dbUser.API);
-                                existingSecrets.push(dbUser.secret);
-                                if (dbUser.email == user.email) {
-                                    logger.log("verbose", "[post /login] User already exists");
-                                    res.render("pages/message", {
-                                        message: "A user with that email already exists.",
-                                        title: "Login",
-                                    });
-                                    return;
-                                }
-                            }
+                    // If there are no users in the database, the first user is a manager
+                    if (users.length === 0) {
+                        userPermission = MANAGER_PERMISSIONS;
+                    }
 
-                            do {
-                                newAPI = crypto.randomBytes(32).toString("hex");
-                            } while (existingAPIs.includes(newAPI));
+                    // Check if the email already exists and store existing APIs and secrets
+                    for (const dbUser of users) {
+                        existingAPIs.push(dbUser.API);
+                        existingSecrets.push(dbUser.secret);
+                        if (dbUser.email === user.email) {
+                            logger.log("verbose", "[post /login] User already exists");
+                            res.render("pages/message", {
+                                message: "A user with that email already exists.",
+                                title: "Login",
+                            });
+                            return;
+                        }
+                    }
 
-                            do {
-                                newSecret = crypto.randomBytes(256).toString("hex");
-                            } while (existingSecrets.includes(newSecret));
+                    // Generate unique API key
+                    do {
+                        newAPI = crypto.randomBytes(32).toString("hex");
+                    } while (existingAPIs.includes(newAPI));
 
-                            // Hash the provided password
-                            const hashedPassword = await hash(user.password);
+                    // Generate unique secret key
+                    do {
+                        newSecret = crypto.randomBytes(256).toString("hex");
+                    } while (existingSecrets.includes(newSecret));
 
-                            if (!settings.emailEnabled) {
-                                user.newAPI = newAPI;
-                                user.newSecret = newSecret;
-                                user.hashedPassword = hashedPassword;
-                                user.permissions = permissions;
-                                database.run(
-                                    "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                                    [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1],
-                                    (err) => {
+                    // Hash the provided password
+                    const hashedPassword = await hash(user.password);
+
+                    // If email is not enabled in the settings, create the user immediately without email verification
+                    if (!settings.emailEnabled) {
+                        user.newAPI = newAPI;
+                        user.newSecret = newSecret;
+                        user.hashedPassword = hashedPassword;
+                        user.permissions = userPermission;
+                        database.run(
+                            "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                            [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1],
+                            (err) => {
+                                try {
+                                    if (err) throw err;
+                                    logger.log("verbose", "[get /login] Added user to database");
+                                    // Find the user in which was just created to get the id of the user
+                                    database.get("SELECT * FROM users WHERE email=?", [user.email], (err, userData) => {
                                         try {
                                             if (err) throw err;
-                                            logger.log("verbose", "[get /login] Added user to database");
-                                            // Find the user in which was just created to get the id of the user
-                                            database.get("SELECT * FROM users WHERE email=?", [user.email], (err, userData) => {
-                                                try {
-                                                    if (err) throw err;
-                                                    classInformation.users[userData.email] = new Student(
-                                                        userData.email,
-                                                        userData.id,
-                                                        userData.permissions,
-                                                        userData.API,
-                                                        [],
-                                                        [],
-                                                        userData.tags ? userData.tags.split(",") : [],
-                                                        userData.displayName,
-                                                        false
-                                                    );
-                                                    // Add the user to the session in order to transfer data between each page
-                                                    req.session.userId = userData.id;
-                                                    req.session.email = userData.email;
-                                                    req.session.classId = null;
-                                                    req.session.displayName = userData.displayName;
-                                                    req.session.verified = 1;
+                                            classInformation.users[userData.email] = new Student(
+                                                userData.email,
+                                                userData.id,
+                                                userData.permissions,
+                                                userData.API,
+                                                [],
+                                                [],
+                                                userData.tags ? userData.tags.split(",") : [],
+                                                userData.displayName,
+                                                false
+                                            );
+                                            // Add the user to the session in order to transfer data between each page
+                                            req.session.userId = userData.id;
+                                            req.session.email = userData.email;
+                                            req.session.classId = null;
+                                            req.session.displayName = userData.displayName;
+                                            req.session.verified = 1;
 
-                                                    logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
-                                                    logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
+                                            logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
+                                            logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
 
-                                                    managerUpdate();
+                                            managerUpdate();
 
-                                                    res.redirect("/");
-                                                } catch (err) {
-                                                    logger.log("error", err.stack);
-                                                    res.render("pages/message", {
-                                                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                                        title: "Error",
-                                                    });
-                                                }
-                                            });
+                                            res.redirect("/");
                                         } catch (err) {
-                                            // Handle the same email being used for multiple accounts
-                                            if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
-                                                logger.log("verbose", "[post /login] Email already exists");
-                                                res.render("pages/message", {
-                                                    message: "A user with that email already exists.",
-                                                    title: "Login",
-                                                });
-                                                return;
-                                            }
-
-                                            // Handle other errors
                                             logger.log("error", err.stack);
                                             res.render("pages/message", {
                                                 message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                                 title: "Error",
                                             });
-                                            return;
                                         }
+                                    });
+                                } catch (err) {
+                                    // Handle the same email being used for multiple accounts
+                                    if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
+                                        logger.log("verbose", "[post /login] Email already exists");
+                                        res.render("pages/message", {
+                                            message: "A user with that email already exists.",
+                                            title: "Login",
+                                        });
+                                        return;
                                     }
-                                );
-                                return;
+
+                                    // Handle other errors
+                                    logger.log("error", err.stack);
+                                    res.render("pages/message", {
+                                        message: `Error Number ${logNumbers.error}: There was a server error try again.`,
+                                        title: "Error",
+                                    });
+                                    return;
+                                }
                             }
+                        );
+                        return;
+                    }
 
-                            // Set the creation data for the user
-                            const accountCreationData = user;
-                            accountCreationData.newAPI = newAPI;
-                            accountCreationData.newSecret = newSecret;
-                            accountCreationData.hashedPassword = hashedPassword;
-                            accountCreationData.permissions = permissions;
-                            accountCreationData.password = undefined;
+                    // Set the creation data for the user
+                    const accountCreationData = user;
+                    accountCreationData.newAPI = newAPI;
+                    accountCreationData.newSecret = newSecret;
+                    accountCreationData.hashedPassword = hashedPassword;
+                    accountCreationData.permissions = userPermission;
+                    accountCreationData.password = undefined;
 
-                            // Create JWT token with this information then store it in the temp_user_creation_data in the database
-                            // This will be used to finish creating the account once the email is verified
-                            const token = jwt.sign(accountCreationData, newSecret, { expiresIn: "1h" });
-                            await dbRun("INSERT INTO temp_user_creation_data(token, secret) VALUES(?, ?)", [token, newSecret]);
+                    // Create JWT token with this information then store it in the temp_user_creation_data in the database
+                    // This will be used to finish creating the account once the email is verified
+                    const token = jwt.sign(accountCreationData, newSecret, { expiresIn: "1h" });
+                    await dbRun("INSERT INTO temp_user_creation_data(token, secret) VALUES(?, ?)", [token, newSecret]);
 
-                            // Get the web address for Formbar to send in the email
-                            const location = `${req.protocol}://${req.get("host")}`;
+                    // Get the web address for Formbar to send in the email
+                    const location = `${req.protocol}://${req.get("host")}`;
 
-                            // Create the HTML content for the email
-                            const html = `
+                    // Create the HTML content for the email
+                    const html = `
                             <h1>Verify your email</h1>
                             <p>Click the link below to verify your email address with Formbar</p>
                                 <a href='${location}/login?code=${newSecret}'>Verify Email</a>
                             `;
 
-                            // Send the email
-                            sendMail(user.email, "Formbar Verification", html);
-                            if (limitStore.has(user.email) && Date.now() - limitStore.get(user.email) < RATE_LIMIT) {
-                                res.render("pages/message", {
-                                    message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now()) / 1000)} seconds.`,
-                                    title: "Verification",
-                                });
-                            } else {
-                                res.render("pages/message", {
-                                    message: "Verification email sent. Please check your email.",
-                                    title: "Verification",
-                                });
-                            }
-                        } catch (err) {
-                            logger.log("error", err.stack);
-                            res.render("pages/message", {
-                                message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                                title: "Error",
-                            });
-                        }
-                    });
-                } else if (user.loginType == "guest") {
-                    if (user.displayName.trim() == "") {
+                    // Send the email
+                    sendMail(user.email, "Formbar Verification", html);
+                    if (limitStore.has(user.email) && Date.now() - limitStore.get(user.email) < RATE_LIMIT) {
+                        res.render("pages/message", {
+                            message: `Email has been rate limited. Please wait ${Math.ceil((limitStore.get(user.email) + RATE_LIMIT - Date.now()) / 1000)} seconds.`,
+                            title: "Verification",
+                        });
+                    } else {
+                        res.render("pages/message", {
+                            message: "Verification email sent. Please check your email.",
+                            title: "Verification",
+                        });
+                    }
+                } else if (user.loginType === "guest") {
+                    if (user.displayName.trim() === "") {
                         logger.log("verbose", "[post /login] Invalid display name provided to create guest user");
                         res.render("pages/message", {
                             message: "Invalid display name. Please try again.",

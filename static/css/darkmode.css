@@ -78,8 +78,21 @@ canvas {
 	border: 2px solid var(--darkMode-menu-border);
 }
 
-button.pressed.revampButton:hover {
+button.pressed:not(.includingButton).revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
+}
+
+button.pressed:not(.includingButton) {
+	background: var(--darkMode-button-pressed-bg) !important;
+}
+
+.permissionOff,
+.permissionOn {
+	color: white !important;
+}
+
+.permissionOn {
+	color: black !important;
 }
 
 .revampButton,
@@ -188,4 +201,10 @@ td, th {
 .newClassPage {
 	background-color: var(--darkMode-menu-bg);
 	border-color: var(--darkMode-menu-border);
+}
+
+
+td.permissionCell,
+th.permissionHeader {
+	border: 3px solid var(--darkMode-menu-border);
 }
