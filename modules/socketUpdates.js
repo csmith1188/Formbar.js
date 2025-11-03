@@ -1,7 +1,14 @@
 const { classInformation } = require("./class/classroom");
 const { database } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
+const {
+    TEACHER_PERMISSIONS,
+    CLASS_SOCKET_PERMISSIONS,
+    GUEST_PERMISSIONS,
+    STUDENT_PERMISSIONS,
+    MANAGER_PERMISSIONS,
+    MOD_PERMISSIONS,
+} = require("./permissions");
 const { getManagerData } = require("./manager");
 const { io } = require("./webServer");
 
@@ -344,12 +351,7 @@ class SocketUpdates {
                 const classReturnData = structuredClone(getClassUpdateData(classData, false));
 
                 advancedEmitToClass("classUpdate", classId, { classPermissions: controlPanelPermissions }, controlPanelData);
-                advancedEmitToClass(
-                    "classUpdate",
-                    classId,
-                    { classPermissions: GUEST_PERMISSIONS },
-                    classReturnData
-                );
+                advancedEmitToClass("classUpdate", classId, { classPermissions: GUEST_PERMISSIONS }, classReturnData);
                 this.customPollUpdate();
             } else {
                 const classReturnData = getClassUpdateData(classData, hasTeacherPermissions);

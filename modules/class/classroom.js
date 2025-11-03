@@ -10,9 +10,9 @@ const DEFAULT_CLASS_SETTINGS = {
     isExcluded: {
         guests: false,
         mods: true,
-        teachers: true
-    }
-}
+        teachers: true,
+    },
+};
 
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
