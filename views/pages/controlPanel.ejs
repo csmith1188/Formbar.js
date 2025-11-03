@@ -580,6 +580,16 @@
 
     for (const exclusionButton of userExclusionDiv.children) {
         exclusionButton.onclick = () => {
+            // Determine which exclusion type based on button id
+            const exclusionType = exclusionButton.id === 'noGuest' ? 'guests' :
+                                 exclusionButton.id === 'noMod' ? 'mods' : 'teachers';
+
+            const currentState = classroom.settings.isExcluded[exclusionType] || false;
+            socket.emit('setClassSetting', 'isExcluded', {
+                ...classroom.settings.isExcluded,
+                [exclusionType]: !currentState
+            });
+            classroom.settings.isExcluded[exclusionType] = !currentState;
             exclusionButton.classList.toggle('pressed');
         };
     }
@@ -1098,6 +1108,22 @@
         moreOptions.classList.contains('open') ? moreOptionsArrow.src = '/img/icons/chevron-down-outline.svg' : moreOptionsArrow.src = '/img/icons/chevron-up-outline.svg';
     }
 
+    function updateExclusionButtonStates() {
+        if (classroom && classroom.settings && classroom.settings.isExcluded) {
+            const noGuestBtn = document.getElementById('noGuest');
+            const noModBtn = document.getElementById('noMod');
+            const noTeacherBtn = document.getElementById('noTeacher');
+            noGuestBtn.classList.toggle('pressed', classroom.settings.isExcluded.guests);
+            noModBtn.classList.toggle('pressed', classroom.settings.isExcluded.mods);
+            noTeacherBtn.classList.toggle('pressed', classroom.settings.isExcluded.teachers);
+        }
+    }
+
+
+    // Update button states when classroom data changes
+    socket.on('classUpdate', (classroomData) => {
+        updateExclusionButtonStates();
+    });
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>

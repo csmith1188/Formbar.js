@@ -58,7 +58,7 @@ class Classroom {
 
         // Ensure all default settings are present
         for (const settingKey of Object.keys(DEFAULT_CLASS_SETTINGS)) {
-            if (!this.settings.includes(settingKey)) {
+            if (!this.settings[settingKey]) {
                 this.settings[settingKey] = DEFAULT_CLASS_SETTINGS[settingKey];
             }
         }

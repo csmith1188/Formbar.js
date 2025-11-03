@@ -1,7 +1,7 @@
 const { classInformation } = require("./class/classroom");
 const { database } = require("./database");
 const { logger } = require("./logger");
-const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS } = require("./permissions");
+const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("./manager");
 const { io } = require("./webServer");
 
@@ -142,18 +142,36 @@ function sortStudentsInPoll(classData) {
             included = true;
         }
 
-        // Check if they are a guest
-        if (student.classPermissions == GUEST_PERMISSIONS) {
+        // Check if they have the Excluded tag
+        if (student.tags && student.tags.includes("Excluded")) {
             excluded = true;
+            included = false;
+        }
+
+        // Check exclusion based on class settings for permission levels
+        if (classData.settings && classData.settings.isExcluded) {
+            if (classData.settings.isExcluded.guests && student.permissions == GUEST_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
+            if (classData.settings.isExcluded.mods && student.classPermissions == MOD_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
+            if (classData.settings.isExcluded.teachers && student.classPermissions == TEACHER_PERMISSIONS) {
+                excluded = true;
+                included = false;
+            }
         }
 
         // Check if they should be in the excluded array
-        if (student.break == true) {
+        if (student.break === true) {
             excluded = true;
+            included = false;
         }
 
-        // Prevent students from being included if they are offline
-        if ((student.tags && student.tags.includes("Offline")) || student.classPermissions >= TEACHER_PERMISSIONS) {
+        // Prevent students from being included if they are offline or higher than teacher
+        if ((student.tags && student.tags.includes("Offline")) || student.classPermissions > TEACHER_PERMISSIONS) {
             excluded = true;
             included = false;
         }
@@ -251,7 +269,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,
         tags: hasTeacherPermissions ? classData.tags : undefined,
-        settings: hasTeacherPermissions ? classData.settings : undefined,
+        settings: classData.settings,
         students: hasTeacherPermissions
             ? Object.fromEntries(
                   Object.entries(classData.students).map(([email, student]) => [
@@ -329,7 +347,7 @@ class SocketUpdates {
                 advancedEmitToClass(
                     "classUpdate",
                     classId,
-                    { classPermissions: GUEST_PERMISSIONS, maxClassPermissions: STUDENT_PERMISSIONS },
+                    { classPermissions: GUEST_PERMISSIONS },
                     classReturnData
                 );
                 this.customPollUpdate();

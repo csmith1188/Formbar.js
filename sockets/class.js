@@ -93,6 +93,9 @@ module.exports = {
                 // Update the setting in the classInformation and in the database
                 classInformation.classrooms[classId].settings[setting] = value;
                 dbRun("UPDATE classroom SET settings=? WHERE id=?", [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
+
+                // Trigger a class update to sync all clients
+                socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);
             }
