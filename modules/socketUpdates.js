@@ -177,8 +177,8 @@ function sortStudentsInPoll(classData) {
             included = false;
         }
 
-        // Prevent students from being included if they are offline or higher than teacher
-        if ((student.tags && student.tags.includes("Offline")) || student.classPermissions > TEACHER_PERMISSIONS) {
+        // Prevent students from being included if they are offline or teacher or higher
+        if ((student.tags && student.tags.includes("Offline")) || student.classPermissions >= TEACHER_PERMISSIONS) {
             excluded = true;
             included = false;
         }
