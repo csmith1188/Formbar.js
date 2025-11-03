@@ -42,7 +42,7 @@
 	<dialog id="requestBreakDialog" class="contentBox revampDiv">
 		<script>document.getElementById("requestBreakDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
 		<form
-			onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
+			onsubmit="submitBreak();document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
 			<h3 style="margin-top: 0;">Take a break</h3>
 			<div id="breakInfo">
 				<div id="breakInputs" class="">
@@ -227,7 +227,7 @@
 		pollPromptDisplay = document.getElementById('pollPrompt');
 
 		if (pollDiv.querySelector("#remove")) {
-			pollDiv.querySelector("#remove").remove()
+			pollDiv.querySelector("#remove").remove();
 		}
 
 		if (poll.allowMultipleResponses) {
@@ -236,7 +236,7 @@
 			multiAnswer = "button";
 		}
 
-		pollContent.style.display = 'block'
+		pollContent.style.display = 'block';
 		if (poll.status) {
 			noPoll.style.display = 'none';
 			pollDiv.style.display = 'block';
@@ -371,7 +371,7 @@
 			for (const splitLetter of splitLetterRes) {
 				const oldLetterElement = document.getElementById(splitLetter)
 				if (oldLetterElement) {
-					oldLetterElement.checked = true
+					oldLetterElement.checked = true;
 				}
 			}
 		}
@@ -442,7 +442,7 @@
 				buttonRes: '',
 				textRes: '',
 				date: null
-			}
+			};
 			userSelectedCheckboxes = [];
 			document.querySelectorAll('input.pollButton').forEach((btn) => {
 				btn.checked = false;
