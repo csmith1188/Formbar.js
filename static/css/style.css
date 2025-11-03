@@ -165,9 +165,9 @@ button#remove {
 }
 
 /*Shows that the button is currently active*/
-button.pressed:not(includingButton),
-.quickButton.pressed:not(includingButton),
-.revampButton.pressed:not(includingButton) {
+button.pressed:not(.includingButton),
+.quickButton.pressed:not(.includingButton),
+.revampButton.pressed:not(.includingButton) {
 	background: var(--lightMode-button-pressed-bg);
 	color: white;
 }
