@@ -98,8 +98,9 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Insufficient funds." };
         }
 
-        // Calculate taxed amount
+        // Calculate taxed amount for all transfers
         const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
+
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
@@ -126,8 +127,8 @@ async function transferDigipogs(transferData) {
                 logger.log("error", err.stack || err);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
-            // Normal user-to-user transfer
         } else {
+            // Normal user-to-user transfer
             const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
             if (!toUser) {
                 return { success: false, message: "Recipient account not found." };
@@ -160,6 +161,7 @@ async function transferDigipogs(transferData) {
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
         }
+
         // Add the tax to the dev pool (id 0) if it exists
         const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
         if (devPool) {
