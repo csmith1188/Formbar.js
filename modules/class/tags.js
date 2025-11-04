@@ -73,8 +73,12 @@ async function saveTags(studentId, tags, userSession) {
             normalized.push("Offline");
         }
 
-        // Store in memory (as array) and in the database (as comma-separated string in classusers table)
+        // Remove offline tag from normalized tags
+        // The offline tag should not be stored in the database
+        // After that, store tags in the student's session
+        normalized = normalized.filter((tag => tag !== "Offline"));
         classInformation.classrooms[userSession.classId].students[email].tags = normalized;
+
         await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [normalized.join(","), studentId, userSession.classId]);
     } catch (err) {
         logger.log("error", err.stack);
