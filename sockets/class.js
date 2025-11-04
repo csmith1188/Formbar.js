@@ -93,6 +93,9 @@ module.exports = {
                 // Update the setting in the classInformation and in the database
                 classInformation.classrooms[classId].settings[setting] = value;
                 dbRun("UPDATE classroom SET settings=? WHERE id=?", [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
+
+                // Trigger a class update to sync all clients
+                socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);
             }
@@ -407,6 +410,39 @@ module.exports = {
                 dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
                     logger.log("error", err.stack);
                 });
+                socketUpdates.classUpdate(classId);
+            } catch (err) {
+                logger.log("error", err.stack);
+            }
+        });
+
+        socket.on("updateExcludedRespondents", (respondants) => {
+            try {
+                const classId = socket.request.session.classId;
+                const classroom = classInformation.classrooms[classId];
+                if (!Array.isArray(respondants)) return;
+
+                // Contains the list of student IDs who should be excluded from the poll
+                const excludedRespondents = [...respondants];
+
+                // Also automatically exclude students who are offline, on break, or have excluded tag
+                for (const studentEmail of Object.keys(classroom.students)) {
+                    const student = classroom.students[studentEmail];
+                    const studentId = student.id;
+
+                    // If the student doesn't exist, is offline/excluded, or is on break, add them to excluded list
+                    if (
+                        (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) &&
+                        !excludedRespondents.includes(studentId)
+                    ) {
+                        excludedRespondents.push(studentId);
+                    }
+                }
+
+                // Update both excludedRespondent properties to keep them in sync
+                classroom.excludedRespondents = excludedRespondents;
+                classroom.poll.excludedRespondents = excludedRespondents;
+
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 logger.log("error", err.stack);

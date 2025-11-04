@@ -13,7 +13,7 @@ const sqlMigrations = fs
         path: `./database/migrations/${file}`,
     }));
 
-if(!fs.existsSync("./database/migrations/JSMigrations")){
+if (!fs.existsSync("./database/migrations/JSMigrations")) {
     fs.mkdirSync("./database/migrations/JSMigrations");
 }
 
@@ -82,7 +82,12 @@ async function executeSQLMigration(migration) {
             database.exec(migrationSQL, (err) => {
                 if (err) {
                     database.run("ROLLBACK");
-                    console.error(err);
+
+                    // If --verbose flag is set, log the error
+                    if (process.argv.includes("verbose")) {
+                        console.error(err);
+                    }
+
                     console.log(
                         "Unable to complete migration as this migration has already been run, or an error has occurred. Continuing to next migration."
                     );

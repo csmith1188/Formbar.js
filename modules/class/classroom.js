@@ -3,6 +3,16 @@ const { logger } = require("../logger");
 const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();
+const DEFAULT_CLASS_SETTINGS = {
+    mute: false,
+    filter: "",
+    sort: "",
+    isExcluded: {
+        guests: false,
+        mods: true,
+        teachers: true,
+    },
+};
 
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
@@ -15,18 +25,19 @@ class Classroom {
         this.owner = owner;
         this.students = {};
         this.sharedPolls = sharedPolls || [];
-        this.studentsAllowedToVote = [];
+        this.excludedRespondents = [];
         this.poll = {
             status: false,
             prompt: "",
-            responses: {},
+            responses: [],
             allowTextResponses: false,
             allowMultipleResponses: false,
             blind: false,
             weight: 1,
-            studentsAllowedToVote: [],
+            excludedRespondents: [],
         };
         this.key = key;
+
         // Ensure permissions is an object, not a JSON string
         try {
             this.permissions = typeof permissions === "string" ? JSON.parse(permissions) : permissions || DEFAULT_CLASS_PERMISSIONS;
@@ -34,19 +45,23 @@ class Classroom {
             // Fallback to defaults if parsing fails
             this.permissions = DEFAULT_CLASS_PERMISSIONS;
         }
+
         this.pollHistory = pollHistory || [];
         this.tags = tags || ["Offline", "Excluded"];
-        this.settings = settings || {
-            mute: false,
-            filter: "",
-            sort: "",
-        };
+        this.settings = settings || DEFAULT_CLASS_SETTINGS;
         this.timer = {
             startTime: 0,
             timeLeft: 0,
             active: false,
             sound: false,
         };
+
+        // Ensure all default settings are present
+        for (const settingKey of Object.keys(DEFAULT_CLASS_SETTINGS)) {
+            if (!this.settings[settingKey]) {
+                this.settings[settingKey] = DEFAULT_CLASS_SETTINGS[settingKey];
+            }
+        }
 
         if (!this.tags.includes("Offline") && Array.isArray(this.tags)) {
             this.tags.push("Offline");

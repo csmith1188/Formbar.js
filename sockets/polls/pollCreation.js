@@ -36,8 +36,8 @@ module.exports = {
                         allowVoteChanges: !!allowVoteChanges,
                         weight: Number(weight ?? 1),
                         tags: Array.isArray(tags) ? tags : [],
-                        studentsAllowedToVote: Array.isArray(boxes) ? boxes : undefined,
                         indeterminate: Array.isArray(indeterminate) ? indeterminate : [],
+                        excludedRespondents: Array.isArray(boxes) ? boxes : [],
                         allowTextResponses: !!responseTextBox,
                         allowMultipleResponses: !!multiRes,
                     };
@@ -52,7 +52,7 @@ module.exports = {
                         allowVoteChanges: !!pollData.allowVoteChanges,
                         weight: Number(pollData.weight ?? 1),
                         tags: Array.isArray(pollData.tags) ? pollData.tags : [],
-                        studentsAllowedToVote: Array.isArray(pollData.studentsAllowedToVote) ? pollData.studentsAllowedToVote : [],
+                        excludedRespondents: Array.isArray(pollData.excludedRespondents) ? pollData.excludedRespondents : [],
                         indeterminate: Array.isArray(pollData.indeterminate) ? pollData.indeterminate : [],
                         allowTextResponses: !!pollData.allowTextResponses,
                         allowMultipleResponses: !!pollData.allowMultipleResponses,

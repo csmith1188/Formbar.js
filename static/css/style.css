@@ -165,16 +165,16 @@ button#remove {
 }
 
 /*Shows that the button is currently active*/
-button.pressed,
-.quickButton.pressed,
-.revampButton.pressed {
+button.pressed:not(.includingButton),
+.quickButton.pressed:not(.includingButton),
+.revampButton.pressed:not(.includingButton) {
 	background: var(--lightMode-button-pressed-bg);
 	color: white;
 }
 
-button.pressed:hover,
-.quickButton.pressed:hover,
-.revampButton.pressed:hover {
+button.pressed:not(.includingButton):hover,
+.quickButton.pressed:not(.includingButton):hover,
+.revampButton.pressed:not(.includingButton):hover {
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
@@ -3441,4 +3441,47 @@ p.accordionTitle {
 	top: 20px;
 	right: 20px;
 	margin-right:0;
+}
+
+#settingsFunc div #userExclusionDiv {
+    gap: 0;
+}
+
+#userExclusionDiv {
+    border-radius: 10px;
+}
+
+button.includingButton {
+    border: #000c15 solid 1px;
+    border-radius: 0;
+    margin-left: -1px;
+}
+
+button.includingButton:first-child {
+    margin-left: 0;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+button.includingButton:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+button.includingButton:hover:not(.pressed) {
+    background-color: var(--lightMode-button-bg) !important;
+    transform: none !important;
+}
+
+button.includingButton.pressed {
+    background-color: hsl(120, 94%, 74%) !important;
+    border-color: var(--color-green) !important;
+    color: black !important;
+    z-index: 1;
+    position: relative;
+}
+
+button.includingButton.pressed:hover {
+    background-color: hsl(120, 94%, 74%) !important;
+    transform: none !important;
 }

@@ -387,6 +387,13 @@
                 Regenerate Code
             </button>
         </div>
+        <div>
+            <div id="userExclusionDiv">
+                <button id="noGuest" class="includingButton revampButton">No Guests</button>
+                <button id="noMod" class="includingButton revampButton">No Mods</button>
+                <button id="noTeacher" class="includingButton revampButton">No Teachers</button>
+            </div>
+        </div>
 		<div class="revampDiv" id="classLinks" style="margin-top: 20px; display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
             <h2>Class Links</h2>
 			<div id="classLinksInputs" style="margin-top: 10px;">
@@ -569,12 +576,25 @@
     let userSortSelections = document.getElementById('userSortSelections')
     let totalUsers = document.getElementById('totalUsers')
     let responseDivs = document.getElementsByClassName('response');
+    const userExclusionDiv = document.getElementById('userExclusionDiv');
 
-    // let vbOptionsLast = document.getElementById('vbOptionsLast');
-    // let vbOptionsNext = document.getElementById('vbOptionsNext');
+    for (const exclusionButton of userExclusionDiv.children) {
+        exclusionButton.onclick = () => {
+            // Determine which exclusion type based on button id
+            const exclusionType = exclusionButton.id === 'noGuest' ? 'guests' :
+                                 exclusionButton.id === 'noMod' ? 'mods' : 'teachers';
+
+            const currentState = classroom.settings.isExcluded[exclusionType] || false;
+            socket.emit('setClassSetting', 'isExcluded', {
+                ...classroom.settings.isExcluded,
+                [exclusionType]: !currentState
+            });
+            classroom.settings.isExcluded[exclusionType] = !currentState;
+            exclusionButton.classList.toggle('pressed');
+        };
+    }
     
     let toolbarOptions = document.getElementById('toolbarOptions');
-
     let sidebarOptionsIDs = [
         {
             elementID: 'userFilterBoxes',
@@ -1088,6 +1108,22 @@
         moreOptions.classList.contains('open') ? moreOptionsArrow.src = '/img/icons/chevron-down-outline.svg' : moreOptionsArrow.src = '/img/icons/chevron-up-outline.svg';
     }
 
+    function updateExclusionButtonStates() {
+        if (classroom && classroom.settings && classroom.settings.isExcluded) {
+            const noGuestBtn = document.getElementById('noGuest');
+            const noModBtn = document.getElementById('noMod');
+            const noTeacherBtn = document.getElementById('noTeacher');
+            noGuestBtn.classList.toggle('pressed', classroom.settings.isExcluded.guests);
+            noModBtn.classList.toggle('pressed', classroom.settings.isExcluded.mods);
+            noTeacherBtn.classList.toggle('pressed', classroom.settings.isExcluded.teachers);
+        }
+    }
+
+
+    // Update button states when classroom data changes
+    socket.on('classUpdate', (classroomData) => {
+        updateExclusionButtonStates();
+    });
 </script>
 <script src='/js/controlPanelStudents.js'></script>
 <script src='/js/controlPanelPolls.js'></script>

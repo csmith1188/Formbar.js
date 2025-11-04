@@ -18,27 +18,31 @@ async function awardDigipogs(awardData, session) {
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
-    
 
         // Check if the awarding user is a teacher in a class
-        let classPermissions = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [classInformation.users[fromUser.email].activeClass, from]);
-
+        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
+            return { success: false, message: "Sender is not currently active in any class." };
+        }
+        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [
+            classInformation.users[fromUser.email].activeClass,
+            from,
+        ]);
+        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
         // Owners are not in the classusers table, so we need to check if they are the owner of the class
-        if(!classPermissions) {
+        if (classPermissions === undefined) {
             const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
-            if(classOwnerId === from) {
+            if (classOwnerId && classOwnerId.owner === from) {
                 classPermissions = TEACHER_PERMISSIONS;
             }
         }
 
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
+        } else if (classPermissions == null) {
+            return { success: false, message: "Insufficient permissions." };
         } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
-        
-        
-        
 
         const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
         if (!toUser) {
@@ -94,8 +98,9 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Insufficient funds." };
         }
 
-        // Calculate taxed amount
+        // Calculate taxed amount for all transfers
         const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
+
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
@@ -122,8 +127,8 @@ async function transferDigipogs(transferData) {
                 logger.log("error", err.stack || err);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
-            // Normal user-to-user transfer
         } else {
+            // Normal user-to-user transfer
             const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
             if (!toUser) {
                 return { success: false, message: "Recipient account not found." };
@@ -156,6 +161,7 @@ async function transferDigipogs(transferData) {
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
         }
+
         // Add the tax to the dev pool (id 0) if it exists
         const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
         if (devPool) {

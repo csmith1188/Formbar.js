@@ -106,25 +106,48 @@
                         <th>Options</th>
                     </tr>
 
-                    <% if(pools.length > 0 && JSON.parse(pools).length > 0) { JSON.parse(pools).forEach(function(pool) { %>
-                        <tr id="pool-<%=pool.id%>">
-                            <td><%= pool.id %></td>
+                    <% 
+                        // parse incoming JSON strings once and use ownedPools for ownership checks
+                        const poolsArr = (typeof pools === "string" && pools.length) ? JSON.parse(pools) : (Array.isArray(pools) ? pools : []);
+                        const owned = (typeof ownedPools === "string" && ownedPools.length) ? JSON.parse(ownedPools) : (Array.isArray(ownedPools) ? ownedPools : []);
+                        if(poolsArr.length > 0) { 
+                            poolsArr.forEach(function(pool) { 
+                                // normalize id access: pool.pool_id || pool.id
+                                const pid = pool.pool_id !== undefined ? pool.pool_id : pool.id;
+                                const isOwned = owned.includes(String(pid));
+                    %>
+                        <tr id="pool-<%= pid %>">
+                            <td><%= pid %></td>
                             <td class="description hideMobile"><%= pool.name %></td>
-                            <td class="hideMobile"><%= pool.owner.id == currentUser.id ? "You" : pool.owner.id %></td>
-                            <td class="hideMobile"><%= pool.members.length > 0 ? pool.members.map(e => e.id).join(', ') : "None" %></td>
+                            <td class="hideMobile">
+                                <% 
+                                    // Show "You" if this pool is in the user's owned pools; otherwise try pool.owners or legacy pool.owner
+                                    if (isOwned) { %>
+                                        You
+                                <% } else { 
+                                        if (Array.isArray(pool.owners) && pool.owners.length > 0) { %>
+                                            <%= pool.owners.join(', ') %>
+                                <%      } else if (pool.owner !== undefined) { %>
+                                            <%= pool.owner %>
+                                <%      } else { %>
+                                            None
+                                <%      } 
+                                    } %>
+                            </td>
+                            <td class="hideMobile"><%= Array.isArray(pool.members) && pool.members.length > 0 ? pool.members.join(', ') : "None" %></td>
                             <td class="hideMobile description" title="<%= pool.description %>"><%= pool.description %></td>
                             <td><%= pool.amount %></td>
                             <td>
                                 <div style="display: flex; gap: 5px; justify-content: center;" class="transactionButtons">
-                                    <% if(pool.owner.id == currentUser.id) { %>
-                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pool.id %>)">
+                                    <% if(isOwned) { %>
+                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pid %>)">
                                             <img src="/img/icons/cash-outline.svg" title="Payout" alt="Payout" style="filter: invert(0) !important">
                                         </button>
-                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pool.id %>;">
+                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pid %>;">
                                             <img src="/img/icons/person.svg" title="Add or Remove Members" alt="Add or Remove Members" style="filter: invert(0) !important">
                                         </button>
-                                        <% if(pool.id !== 0) { %>
-                                            <button class="revampButton warningButton squareButton" style="padding: 5px;" onclick="socket.emit('poolDelete', { poolId: <%= pool.id %> })">
+                                        <% if(pid !== 0) { %>
+                                            <button class="revampButton warningButton squareButton" style="padding: 5px;" onclick="socket.emit('poolDelete', { poolId: <%= pid %> })">
                                                 <img src="/img/icons/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
                                             </button>
                                         <% } else { %>
@@ -140,7 +163,8 @@
                                 </div>
                             </td>
                         </tr>
-                    <% }); } else { %>
+                    <%     }); 
+                        } else { %>
                         <tr>
                             <td></td>
                             <td></td>

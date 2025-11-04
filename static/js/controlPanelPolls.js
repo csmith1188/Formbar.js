@@ -502,7 +502,6 @@ function startPoll(customPollId) {
             weight: customPoll.weight,
             tags: userTags,
             indeterminate: customPoll.indeterminate,
-            studentsAllowedToVote: userBoxesChecked,
         });
     } else {
         socket.emit("startPoll", {
@@ -515,7 +514,6 @@ function startPoll(customPollId) {
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,
-            studentsAllowedToVote: userBoxesChecked,
         });
     }
     clearPoll.style.display = "block";
