@@ -95,7 +95,7 @@ async function joinRoomByCode(code, session) {
 
             // Load tags from classusers table
             currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
-            currentUser.tags = currentUser.tags.filter((tag => tag !== "Offline"));
+            currentUser.tags = currentUser.tags.filter((tag) => tag !== "Offline");
             classInformation.users[email].tags = currentUser.tags;
 
             // Add the student to the newly created class
