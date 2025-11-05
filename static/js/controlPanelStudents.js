@@ -316,14 +316,9 @@ function buildStudent(classroomData, studentData) {
             digipogAwardInput.className = "quickButton revampButton revampWithText digipogAward";
             digipogAwardInput.placeholder = "0";
             digipogAwardInput.type = "number";
-            digipogAwardInput.min = 0;
-            digipogAwardInput.value = "";
-            digipogAwardInput.max = 999;
             digipogAwardInput.oninput = (event) => {
-                if (digipogAwardInput.value > 999) digipogAwardInput.value = 999;
-                if (digipogAwardInput.value < 0) digipogAwardInput.value = 0;
-                if (digipogAwardInput.value == "") digipogAwardInput.value = 0;
-                digipogAwardInput.value = parseInt(digipogAwardInput.value);
+                // Allow only numbers and negative sign
+                if(!event.data == '-') digipogAwardInput.value = digipogAwardInput.value.replace(/[^0-9]/g, "");
             };
             digipogButtons.appendChild(digipogAwardInput);
 
@@ -671,7 +666,7 @@ function approveBreak(breakApproval, userId) {
 }
 
 function awardDigipogs(userId, amount) {
-    if (amount <= 0 || isNaN(amount)) return;
+    if (isNaN(amount)) return;
 
     socket.emit("awardDigipogs", { from: currentUser.id, to: userId, amount: Number(amount) });
     const awardButton = document.querySelector(`button.digipogSend[data-user="${userId}"]`);
