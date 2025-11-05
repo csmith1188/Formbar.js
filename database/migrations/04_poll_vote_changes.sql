@@ -1,3 +1,6 @@
+-- 04_poll_vote_changes.sql
+-- This migration adds the allowVoteChanges column to the custom_polls table.
+
 CREATE TABLE IF NOT EXISTS "custom_polls_temp"
 (
     "id"                INTEGER NOT NULL UNIQUE,
