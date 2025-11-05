@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "users_temp"
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
-ALTER TABLE users ADD COLUMN email DEFAULT NULL;
+ALTER TABLE users ADD COLUMN email DEFAULT "";
 ALTER TABLE users ADD COLUMN digipogs DEFAULT 0;
 ALTER TABLE users ADD COLUMN verified DEFAULT 0;
 ALTER TABLE users ADD COLUMN pin DEFAULT NULL;
@@ -37,7 +37,7 @@ INSERT INTO users_temp (
 )
 SELECT
     id, password, permissions, API, secret, tags, displayName,
-    COALESCE(email || '_' || id || '@placeholder.com') AS email,  -- keep existing email if present, otherwise use placeholder
+    COALESCE(email, id || '@placeholder.com') AS email,  -- keep existing email if present, otherwise use placeholder
     digipogs,
     verified,
     pin
