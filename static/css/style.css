@@ -165,6 +165,7 @@ button#remove {
 }
 
 /*Shows that the button is currently active*/
+input[type="checkbox"]:checked,
 button.pressed:not(.includingButton),
 .quickButton.pressed:not(.includingButton),
 .revampButton.pressed:not(.includingButton) {
@@ -172,6 +173,7 @@ button.pressed:not(.includingButton),
 	color: white;
 }
 
+input[type="checkbox"]:checked:hover,
 button.pressed:not(.includingButton):hover,
 .quickButton.pressed:not(.includingButton):hover,
 .revampButton.pressed:not(.includingButton):hover {
@@ -407,6 +409,22 @@ input.correctAnswer {
 	margin: 0;
 	width: 44px !important;
 	height: 44px !important;
+
+	border-radius: 10px;
+  	appearance: none;
+}
+
+input[type="checkbox"]::after {
+	content: '✓';
+	position: absolute;
+	font-size: 0.5em;
+	color: white;
+	opacity: 0.25;
+}
+
+input[type="checkbox"]:checked::after {
+	opacity: 1;
+	font-size: 1em;
 }
 
 #headerLogo,
@@ -1640,6 +1658,16 @@ button:disabled:hover {
 	transform: none !important;
 }
 
+input[type="checkbox"] {
+	appearance: none;
+	aspect-ratio: 1;
+	min-height: 0;
+	padding: 0 !important;
+	width: 44px !important;
+	height: 44px !important;
+}
+
+input[type="checkbox"],
 .revampButton {
     display: flex;
     justify-content: center;
@@ -2392,8 +2420,15 @@ div#errorDialog div.errorDetails p#errorCode {
 	opacity: 0.75;
 }
 
+div#errorDialog {
+	transition: 0.3s ease-in-out transform, 0.3s ease-in-out opacity;
+	transform: translateY(100%);
+	opacity: 0;
+}
+
 div#errorDialog.shown {
-	animation: showError 0.5s ease-in-out forwards;
+	transform: translateY(0);
+	opacity: 1;
 }
 
 @keyframes showError {

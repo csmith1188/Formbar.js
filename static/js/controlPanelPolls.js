@@ -253,8 +253,8 @@ function responseAmountChange(responseAmount = null) {
 
         let correctAnswer = document.createElement('input')
 		correctAnswer.type = 'checkbox'
-		correctAnswer.className = 'correctAnswer'
-		correctAnswer.name = 'correctAnswer'
+		correctAnswer.className = 'correctAnswer revampButton'
+		correctAnswer.name = 'correctAnswer revampButton'
 		correctAnswer.title = 'Mark as Correct Answer'
 
 		// Only one correct answer for non-multiple response polls
