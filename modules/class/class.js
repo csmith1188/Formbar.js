@@ -127,6 +127,8 @@ async function leaveRoom(userSession) {
         // Remove the user from the class
         delete classInformation.classrooms[classId].students[email];
         classInformation.users[email].activeClass = null;
+        classInformation.users[email].break = false;
+        classInformation.users[email].help = false;
         classInformation.users[email].classPermissions = null;
         database.run("DELETE FROM classusers WHERE classId=? AND studentId=?", [classId, studentId]);
 

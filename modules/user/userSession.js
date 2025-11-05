@@ -44,6 +44,8 @@ function logout(socket) {
                 const user = classInformation.users[email];
                 if (user) {
                     user.activeClass = null;
+                    user.break = false;
+                    user.help = false;
                     user.classPermissions = null;
                 }
 
@@ -64,6 +66,8 @@ function logout(socket) {
                             delete classroom.students[email];
                         } else {
                             student.activeClass = null;
+                            student.break = false;
+                            student.help = false;
 
                             // If the student's tags exist and do not include Offline, then add it
                             // Otherwise, if the student's tags do not exist, then set it to Offline
