@@ -1,4 +1,4 @@
-// 10_restructure_digipog_pool_users.js
+// 08_restructure_digipog_pool_users.js
 // This migration restructures the 'digipog_pool_users' table by removing the 'member' column
 // and splitting the 'owner' and 'member' columns into individual entries in a new format.
 
