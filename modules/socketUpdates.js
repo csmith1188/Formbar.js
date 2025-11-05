@@ -246,6 +246,7 @@ function getPollResponseInformation(classData) {
             if (
                 student.classPermissions >= TEACHER_PERMISSIONS ||
                 student.classPermissions === GUEST_PERMISSIONS ||
+                student.break === true ||
                 hasExcludedTag
             ) {
                 totalStudentsIncluded.splice(i, 1);
