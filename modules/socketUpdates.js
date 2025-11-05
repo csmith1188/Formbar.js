@@ -236,15 +236,17 @@ function getPollResponseInformation(classData) {
         }
     }
 
+    const excludedTags = ["Excluded", "Offline"];
     if (totalResponses === 0) {
         totalStudentsIncluded = Object.keys(classData.students);
         for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
             const studentName = totalStudentsIncluded[i];
             const student = classData.students[studentName];
+            const hasExcludedTag = student.tags && student.tags.some((tag) => excludedTags.includes(tag));
             if (
                 student.classPermissions >= TEACHER_PERMISSIONS ||
                 student.classPermissions === GUEST_PERMISSIONS ||
-                (student.tags && student.tags.includes("Offline"))
+                hasExcludedTag
             ) {
                 totalStudentsIncluded.splice(i, 1);
             }
