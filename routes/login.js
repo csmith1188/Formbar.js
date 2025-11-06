@@ -99,9 +99,12 @@ module.exports = {
                         // Handle the same email being used for multiple accounts
                         if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
                             logger.log("verbose", "[post /login] Email already exists");
-                            res.render("pages/message", {
-                                message: "A user with that email already exists.",
+                            res.render("pages/login", {
                                 title: "Login",
+                                redirectURL: undefined,
+                                googleOauthEnabled: settings.googleOauthEnabled,
+                                route: "login",
+                                errorMessage: "A user with that email already exists.",
                             });
                             return;
                         }
@@ -185,9 +188,12 @@ module.exports = {
                                     }
 
                                     logger.log("verbose", "[post /login] User does not exist");
-                                    res.render("pages/message", {
-                                        message: "No user found with that email.",
+                                    res.render("pages/login", {
                                         title: "Login",
+                                        redirectURL: undefined,
+                                        googleOauthEnabled: settings.googleOauthEnabled,
+                                        route: "login",
+                                        errorMessage: "No user found with that email.",
                                     });
                                     return;
                                 }
@@ -196,9 +202,12 @@ module.exports = {
                                 const passwordMatches = await compare(user.password, userData.password);
                                 if (!passwordMatches) {
                                     logger.log("verbose", "[post /login] Incorrect password");
-                                    res.render("pages/message", {
-                                        message: "Incorrect password",
+                                    res.render("pages/login", {
                                         title: "Login",
+                                        redirectURL: undefined,
+                                        googleOauthEnabled: settings.googleOauthEnabled,
+                                        route: "login",
+                                        errorMessage: "Incorrect Password. Try again.",
                                     });
                                     return;
                                 }
@@ -284,9 +293,12 @@ module.exports = {
                     // Check if the password and display name are valid
                     if (!passwordRegex.test(user.password) || !displayRegex.test(user.displayName)) {
                         logger.log("verbose", "[post /login] Invalid data provided to create new user");
-                        res.render("pages/message", {
-                            message: "Invalid password or display name. Please try again.",
+                        res.render("pages/login", {
                             title: "Login",
+                            redirectURL: undefined,
+                            googleOauthEnabled: settings.googleOauthEnabled,
+                            route: "login",
+                            errorMessage: "Invalid password or display name. Please try again.",
                         });
                         return;
                     }
@@ -317,9 +329,12 @@ module.exports = {
                         existingSecrets.push(dbUser.secret);
                         if (dbUser.email === user.email) {
                             logger.log("verbose", "[post /login] User already exists");
-                            res.render("pages/message", {
-                                message: "A user with that email already exists.",
+                            res.render("pages/login", {
                                 title: "Login",
+                                redirectURL: undefined,
+                                googleOauthEnabled: settings.googleOauthEnabled,
+                                route: "login",
+                                errorMessage: "A user with that email already exists.",
                             });
                             return;
                         }
@@ -391,9 +406,12 @@ module.exports = {
                                     // Handle the same email being used for multiple accounts
                                     if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
                                         logger.log("verbose", "[post /login] Email already exists");
-                                        res.render("pages/message", {
-                                            message: "A user with that email already exists.",
+                                        res.render("pages/login", {
                                             title: "Login",
+                                            redirectURL: undefined,
+                                            googleOauthEnabled: settings.googleOauthEnabled,
+                                            route: "login",
+                                            errorMessage: "A user with that email already exists.",
                                         });
                                         return;
                                     }
@@ -450,9 +468,12 @@ module.exports = {
                 } else if (user.loginType === "guest") {
                     if (user.displayName.trim() === "") {
                         logger.log("verbose", "[post /login] Invalid display name provided to create guest user");
-                        res.render("pages/message", {
-                            message: "Invalid display name. Please try again.",
+                        res.render("pages/login", {
                             title: "Login",
+                            redirectURL: undefined,
+                            googleOauthEnabled: settings.googleOauthEnabled,
+                            route: "login",
+                            errorMessage: "Invalid Display Name.",
                         });
                         return;
                     }

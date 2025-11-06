@@ -13,8 +13,6 @@ async function awardDigipogs(awardData, session) {
             return { success: false, message: "Missing required fields." };
         } else if (from !== session.userId) {
             return { success: false, message: "Sender ID does not match session user." };
-        } else if (amount <= 0) {
-            return { success: false, message: "Amount must be greater than zero." };
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);

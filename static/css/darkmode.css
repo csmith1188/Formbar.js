@@ -78,10 +78,16 @@ canvas {
 	border: 2px solid var(--darkMode-menu-border);
 }
 
+input[type="checkbox"]:checked:hover,
 button.pressed:not(.includingButton).revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
+.permissionOff img {
+	filter: invert(1) !important;
+}
+
+input[type="checkbox"]:checked,
 button.pressed:not(.includingButton) {
 	background: var(--darkMode-button-pressed-bg) !important;
 }
@@ -95,6 +101,7 @@ button.pressed:not(.includingButton) {
 	color: black !important;
 }
 
+input[type="checkbox"],
 .revampButton,
 #studentTags span.revampTag {
 	background-color: var(--darkMode-button-bg);

@@ -132,7 +132,11 @@ function logout() {
 		const errorMessage = document.getElementById('errorMessage');
 
 		errorMessage.innerText = "<%- errorMessage %>";
-		errorDialog.classList.add('shown');
+	
+		setTimeout(() => {
+			errorDialog.classList.add('shown');
+		}, 100);
+
 		setTimeout(() => {
 			errorDialog.classList.remove('shown');
 		}, 2000);
