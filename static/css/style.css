@@ -996,7 +996,7 @@ input[type='checkbox'] {
 	padding-top: 0;
 	position: relative;
 	max-height: 100%;
-	overflow: scroll;
+	overflow: auto;
 
 	display: flex;
 	flex-direction: column;
@@ -1819,7 +1819,7 @@ input[type="checkbox"],
 	margin: auto;
 	padding: 40px 15%;
 
-	overflow: scroll;
+	overflow: auto;
 	height: calc(100vh - 60px);
 	font-size: 24px;
 }
@@ -3335,7 +3335,7 @@ div.accordionOptions.active {
 div.accordionOptions.textOptions p#fullTextResponse {
     margin: 0;
     height: 100%;
-    overflow: scroll;
+    overflow: auto;
 	word-wrap: anywhere;
   	width: 100%;
 }
@@ -3488,11 +3488,13 @@ p.accordionTitle {
 	height: 48px;
 	opacity: 0;
 	transition: 0.2s ease-in-out width, 0.2s ease-in-out opacity;
+	pointer-events: none;
 }
 
 #searchUsers.shown {
 	width: 250px;
 	opacity: 1;
+	pointer-events: auto;
 }
 
 #searchUsersBtn {
