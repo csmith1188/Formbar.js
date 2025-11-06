@@ -299,7 +299,7 @@ module.exports = {
                     logger.log("verbose", "[post /login] Creating new user");
 
                     // Get all existing users and check for existing emails, APIs, and secrets
-                    const users = await dbGetAll("SELECT API, secret, email FROM users");
+                    const users = await dbGetAll("SELECT API, secret, email, displayName FROM users");
 
                     let existingAPIs = [];
                     let existingSecrets = [];
@@ -316,9 +316,19 @@ module.exports = {
                         existingAPIs.push(dbUser.API);
                         existingSecrets.push(dbUser.secret);
                         if (dbUser.email === user.email) {
-                            logger.log("verbose", "[post /login] User already exists");
+                            logger.log("verbose", "[post /login] User with that email already exists");
                             res.render("pages/message", {
                                 message: "A user with that email already exists.",
+                                title: "Login",
+                            });
+                            return;
+                        }
+
+                        // Check if the display name already exists in the database
+                        if (dbUser.displayName === user.displayName) {
+                            logger.log("verbose", "[post /login] User with that display name already exists");
+                            res.render("pages/message", {
+                                message: "A user with that display name already exists.",
                                 title: "Login",
                             });
                             return;
