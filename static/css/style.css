@@ -1437,7 +1437,6 @@ div.break {
 #permissionsList {
 	display: grid;
 	border-radius: 10px;
-	margin: 1vh;
 	width: 60%;
 	gap: 20px;
 	margin: auto;		
