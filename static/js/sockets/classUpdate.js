@@ -365,18 +365,20 @@ socket.on("classUpdate", (classroomData) => {
                         socket.emit('setClassPermissionSetting', permission, Number(radio.value));
                     }
 
-                    event.target.closest('tr').querySelectorAll('span').forEach(span => {
-                        if ((Number(span.dataset.permissionLevel) === radio.value) || (Number(span.dataset.permissionLevel) > radio.value)) {
-                            if (span.innerText === '✓') {
-                                span.style.display = '';
+                    event.target.closest('tr').querySelectorAll('.permissionOn, .permissionOff').forEach(el => {
+                        const elLevel = Number(el.dataset.permissionLevel);
+                        const selectedLevel = Number(radio.value);
+                        if (el.classList.contains('permissionOn')) {
+                            if (elLevel === selectedLevel || elLevel > selectedLevel) {
+                                el.style.display = '';
                             } else {
-                                span.style.display = 'none';
+                                el.style.display = 'none';
                             }
-                        } else if ((Number(span.dataset.permissionLevel) < radio.value)) {
-                            if (span.innerText === 'X') {
-                                span.style.display = '';
+                        } else if (el.classList.contains('permissionOff')) {
+                            if (elLevel < selectedLevel) {
+                                el.style.display = '';
                             } else {
-                                span.style.display = 'none';
+                                el.style.display = 'none';
                             }
                         }
                     });
