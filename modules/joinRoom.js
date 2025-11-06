@@ -92,8 +92,10 @@ async function joinRoomByCode(code, session) {
             // Set class permissions and load tags from classusers table for this specific class
             currentUser.classPermissions = classUser.permissions;
             currentUser.activeClass = classroomDb.id;
+
             // Load tags from classusers table
             currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
+            currentUser.tags = currentUser.tags.filter((tag) => tag !== "Offline");
             classInformation.users[email].tags = currentUser.tags;
 
             // Add the student to the newly created class
