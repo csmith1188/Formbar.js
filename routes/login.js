@@ -298,7 +298,7 @@ module.exports = {
                             redirectURL: undefined,
                             googleOauthEnabled: settings.googleOauthEnabled,
                             route: "login",
-                            errorMessage: "Invalid display name or password. Please try again.",
+                            errorMessage: "Invalid password or display name. Please try again.",
                         });
                         return;
                     }
