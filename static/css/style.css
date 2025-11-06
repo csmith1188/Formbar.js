@@ -1432,6 +1432,7 @@ div.break {
 	width: 100%;
 	border-collapse: collapse;
 	margin-top: 20px;
+	table-layout: fixed;
 }
 
 #permissionsList {
@@ -1463,6 +1464,11 @@ td.permissionCell {
 	width: 55px;
 }
 
+td.permissionCell img {
+	height: 30px;
+	object-fit: contain;
+}
+
 th.permissionHeader {
 	padding: 10px 20px;
 }
@@ -1478,6 +1484,10 @@ th.permissionHeader {
 	height: 100%;
 	display: block;
 	padding: 10px 20px;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .permissionOn {
@@ -1487,7 +1497,6 @@ th.permissionHeader {
 
 .permissionOff img {
 	height: 100%;
-	filter: invert(1);
 }
 
 .permissionOn img {

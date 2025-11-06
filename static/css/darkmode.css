@@ -83,6 +83,10 @@ button.pressed:not(.includingButton).revampButton:hover {
 	background: var(--darkMode-button-pressed-hover-bg) !important;
 }
 
+.permissionOff img {
+	filter: invert(1) !important;
+}
+
 input[type="checkbox"]:checked,
 button.pressed:not(.includingButton) {
 	background: var(--darkMode-button-pressed-bg) !important;
