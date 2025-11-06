@@ -624,7 +624,7 @@ input[type="radio"]:focus {
 	display: flex;
 	gap: 10px;
 	margin: auto;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: center;
 	flex-direction: row;
 	margin-bottom: 20px;
@@ -2198,6 +2198,7 @@ div.user {
 	cursor: pointer;
 }
 
+#pollForm input[type="checkbox"], 
 .controlStudent input[type="checkbox"] {
 	width: 24px !important;
 	height: 24px !important;
@@ -2205,8 +2206,13 @@ div.user {
 	border-radius: 5px;
 }
 
+#pollForm input[type="checkbox"]:checked::after, 
 .controlStudent input[type="checkbox"]:checked::after {
 	font-size: 0.75em;
+}
+
+#pollForm input[type="checkbox"]:checked {
+	background: var(--color) !important;
 }
 
 body:not(:has(header#formbarHeader[style="display: none;"])) {
