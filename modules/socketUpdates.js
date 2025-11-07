@@ -105,7 +105,7 @@ async function setClassOfApiSockets(api, classId) {
 
             // Emit the setClass event to the socket
             socket.join(`class-${classId}`);
-            socket.emit("setClass", socket.request.session.classId);
+            socket.emit("setClass", classId);
         }
     } catch (err) {
         logger.log("error", err.stack);
