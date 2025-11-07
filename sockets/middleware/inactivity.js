@@ -8,13 +8,26 @@ module.exports = {
         // Inactivity timeout middleware
         socket.use(([event, ...args], next) => {
             try {
-                // Update the time of the last activity before proceeding
-                const email = socket.request.session.email;
-                if (!lastActivities[email]) {
-                    lastActivities[email] = {};
+                // Check if this is an API socket as API sockets should not be tracked for inactivity
+                let isApiSocket = false;
+                for (const room of socket.rooms) {
+                    if (room.startsWith("api-")) {
+                        isApiSocket = true;
+                        break;
+                    }
                 }
 
-                lastActivities[email][socket.id] = { socket, time: Date.now() };
+                // Only track activity for non-API sockets
+                if (!isApiSocket) {
+                    const email = socket.request.session.email;
+                    if (email) {
+                        if (!lastActivities[email]) {
+                            lastActivities[email] = {};
+                        }
+                        lastActivities[email][socket.id] = { socket, time: Date.now() };
+                    }
+                }
+
                 next();
             } catch (err) {
                 logger.log("error", err.stack);

@@ -91,18 +91,24 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
-    logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
+    try {
+        logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
-    const sockets = await io.in(`api-${api}`).fetchSockets();
-    for (let socket of sockets) {
-        socket.leave(`class-${socket.request.session.classId}`);
+        const sockets = await io.in(`api-${api}`).fetchSockets();
+        for (let socket of sockets) {
+            // Ensure the socket has a session before continuing
+            if (!socket.request.session) continue;
 
-        socket.request.session.classId = classId;
-        socket.request.session.save();
+            socket.leave(`class-${socket.request.session.classId}`);
+            socket.request.session.classId = classId;
+            socket.request.session.save();
 
-        // Emit the setClass event to the socket
-        socket.join(`class-${classId}`);
-        socket.emit("setClass", socket.request.session.classId);
+            // Emit the setClass event to the socket
+            socket.join(`class-${classId}`);
+            socket.emit("setClass", classId);
+        }
+    } catch (err) {
+        logger.log("error", err.stack);
     }
 }
 
