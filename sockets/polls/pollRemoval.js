@@ -15,7 +15,7 @@ module.exports = {
                 const poll = await dbGet("SELECT * FROM custom_polls WHERE id=?", pollId);
                 if (!poll) return socket.emit("message", "Poll not found.");
 
-                if (poll.owner !== userId) {
+                if (+poll.owner !== userId) {
                     logger.info("[deletePoll] not owner");
                     return socket.emit("message", "You do not have permission to delete this poll.");
                 }
