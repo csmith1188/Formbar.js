@@ -325,7 +325,7 @@ module.exports = {
                         }
 
                         // Check if the display name already exists in the database
-                        if (dbUser.displayName === user.displayName) {
+                        if (dbUser.displayName.toLowerCase() === user.displayName.toLowerCase()) {
                             logger.log("verbose", "[post /login] User with that display name already exists");
                             res.render("pages/message", {
                                 message: "A user with that display name already exists.",
