@@ -194,16 +194,13 @@ function sortStudentsInPoll(classData) {
 
 function getPollResponseInformation(classData) {
     let totalResponses = 0;
-    let responses = {};
+    let responseCounts = {};
     let { totalStudentsIncluded, totalStudentsExcluded } = sortStudentsInPoll(classData);
 
     // Count the number of responses for each poll option
     if (classData.poll.responses.length > 0) {
         for (const resValue of classData.poll.responses) {
-            responses[resValue.answer] = {
-                ...resValue,
-                responses: 0,
-            };
+            responseCounts[resValue.answer] = 0;
         }
 
         for (const studentData of Object.values(classData.students)) {
@@ -222,16 +219,16 @@ function getPollResponseInformation(classData) {
 
             if (Array.isArray(studentData.pollRes.buttonRes)) {
                 for (let response of studentData.pollRes.buttonRes) {
-                    if (studentData && Object.keys(responses).includes(response)) {
-                        responses[response].responses++;
+                    if (studentData && Object.keys(responseCounts).includes(response)) {
+                        responseCounts[response]++;
                     }
                 }
             } else if (
                 studentData &&
-                Object.keys(responses).includes(studentData.pollRes.buttonRes) &&
+                Object.keys(responseCounts).includes(studentData.pollRes.buttonRes) &&
                 !totalStudentsExcluded.includes(studentData.email)
             ) {
-                responses[studentData.pollRes.buttonRes].responses++;
+                responseCounts[studentData.pollRes.buttonRes]++;
             }
         }
     }
@@ -257,7 +254,7 @@ function getPollResponseInformation(classData) {
     return {
         totalResponses,
         totalResponders: totalStudentsIncluded.length,
-        pollResponses: responses,
+        pollResponses: responseCounts,
     };
 }
 
@@ -351,6 +348,8 @@ class SocketUpdates {
             classData.poll.totalResponses = totalResponses;
             classData.poll.totalResponders = totalResponders;
             classData.poll.responseCounts = pollResponses;
+            classData.poll.responses
+            console.log(classData.poll);
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));

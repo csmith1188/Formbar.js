@@ -440,7 +440,6 @@ module.exports = {
                 }
 
                 // Update both excludedRespondent properties to keep them in sync
-                classroom.excludedRespondents = excludedRespondents;
                 classroom.poll.excludedRespondents = excludedRespondents;
 
                 socketUpdates.classUpdate(classId);
