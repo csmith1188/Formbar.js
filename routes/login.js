@@ -311,7 +311,7 @@ module.exports = {
                     logger.log("verbose", "[post /login] Creating new user");
 
                     // Get all existing users and check for existing emails, APIs, and secrets
-                    const users = await dbGetAll("SELECT API, secret, email FROM users");
+                    const users = await dbGetAll("SELECT API, secret, email, displayName FROM users");
 
                     let existingAPIs = [];
                     let existingSecrets = [];
