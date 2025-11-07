@@ -1,4 +1,4 @@
--- 11_remove_duplicate_refresh_tokens.sql
+-- 07_remove_duplicate_refresh_tokens.sql
 -- This migration removes all duplicate refresh tokens from the refresh_tokens table.
 -- It also enforces a UNIQUE constraint on the token column to prevent future duplicates.
 

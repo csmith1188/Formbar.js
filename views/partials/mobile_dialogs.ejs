@@ -25,9 +25,11 @@
                           <button href="/" class="headerTab revampButton" title="Leave Class" onclick="leaveRoom()"><img src="/img/icons/logout.svg" style="transform: scaleX(-1);" alt="Leave Classes Icon">Leave Room</button></li>
                         <% } %></ul>
                         <div class="mobileNavSpacer"></div>
+                          <% if (locals.currentUser.permissions !== GUEST_PERMISSIONS) { %>
                           <a href="/profile" class="headerTab revampButton" title="Profile">
                             <img src="/img/icons/person.svg" alt="Profile Icon">Profile
                           </a>
+                          <% } %>
                           <button href="/" id="logoutButton" class="revampButton" onclick="logout()">
                             <img src="/img/icons/logout.svg" alt="Logout Icon">Logout
                           </button>
