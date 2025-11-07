@@ -17,9 +17,14 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         if (classInformation.users[email]) {
             // Remove user from class session
             const user = classInformation.users[email];
-            user.classPermissions = options.ban ? BANNED_PERMISSIONS : null;
             user.activeClass = null;
-            user.activeClass = null;
+            user.break = false;
+            user.help = false;
+
+            // If the user is being banned, set their classPermissions to BANNED_PERMISSIONS
+            if (options.ban) {
+                user.classPermissions = BANNED_PERMISSIONS;
+            }
             setClassOfApiSockets(classInformation.users[email].API, null);
         }
 
