@@ -16,8 +16,10 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         // Check if user exists in classInformation.users before trying to modify
         if (classInformation.users[email]) {
             // Remove user from class session
-            classInformation.users[email].classPermissions = options.ban ? BANNED_PERMISSIONS : null;
-            classInformation.users[email].activeClass = null;
+            const user = classInformation.users[email];
+            user.classPermissions = options.ban ? BANNED_PERMISSIONS : null;
+            user.activeClass = null;
+            user.activeClass = null;
             setClassOfApiSockets(classInformation.users[email].API, null);
         }
 
@@ -25,6 +27,8 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[email]) {
             const student = classInformation.classrooms[classId].students[email];
             student.activeClass = null;
+            student.break = false;
+            student.help = false;
             student.tags = ["Offline"];
             if (classInformation.users[email]) {
                 classInformation.users[email] = student;
