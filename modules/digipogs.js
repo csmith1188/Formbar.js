@@ -1,8 +1,9 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
+const { classInformation } = require("./class/classroom");
 
-async function awardDigipogs(awardData) {
+async function awardDigipogs(awardData, session) {
     try {
         const { from, to } = awardData;
         const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
@@ -10,14 +11,34 @@ async function awardDigipogs(awardData) {
 
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
-        } else if (amount <= 0) {
-            return { success: false, message: "Amount must be greater than zero." };
+        } else if (from !== session.userId) {
+            return { success: false, message: "Sender ID does not match session user." };
         }
 
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
+
+        // Check if the awarding user is a teacher in a class
+        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
+            return { success: false, message: "Sender is not currently active in any class." };
+        }
+        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [
+            classInformation.users[fromUser.email].activeClass,
+            from,
+        ]);
+        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
+        // Owners are not in the classusers table, so we need to check if they are the owner of the class
+        if (classPermissions === undefined) {
+            const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
+            if (classOwnerId && classOwnerId.owner === from) {
+                classPermissions = TEACHER_PERMISSIONS;
+            }
+        }
+
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-        } else if (fromUser.permissions < TEACHER_PERMISSIONS) {
+        } else if (classPermissions == null) {
+            return { success: false, message: "Insufficient permissions." };
+        } else if (classPermissions < TEACHER_PERMISSIONS) {
             return { success: false, message: "Insufficient permissions." };
         }
 
@@ -75,8 +96,9 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Insufficient funds." };
         }
 
-        // Calculate taxed amount
+        // Calculate taxed amount for all transfers
         const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
+
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
@@ -103,8 +125,8 @@ async function transferDigipogs(transferData) {
                 logger.log("error", err.stack || err);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
-            // Normal user-to-user transfer
         } else {
+            // Normal user-to-user transfer
             const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
             if (!toUser) {
                 return { success: false, message: "Recipient account not found." };
@@ -137,6 +159,7 @@ async function transferDigipogs(transferData) {
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
         }
+
         // Add the tax to the dev pool (id 0) if it exists
         const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
         if (devPool) {

@@ -16,8 +16,10 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         // Check if user exists in classInformation.users before trying to modify
         if (classInformation.users[email]) {
             // Remove user from class session
-            classInformation.users[email].classPermissions = options.ban ? BANNED_PERMISSIONS : null;
-            classInformation.users[email].activeClass = null;
+            const user = classInformation.users[email];
+            user.classPermissions = options.ban ? BANNED_PERMISSIONS : null;
+            user.activeClass = null;
+            user.activeClass = null;
             setClassOfApiSockets(classInformation.users[email].API, null);
         }
 
@@ -25,6 +27,8 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         if (classInformation.classrooms[classId] && classInformation.classrooms[classId].students[email]) {
             const student = classInformation.classrooms[classId].students[email];
             student.activeClass = null;
+            student.break = false;
+            student.help = false;
             student.tags = ["Offline"];
             if (classInformation.users[email]) {
                 classInformation.users[email] = student;
@@ -46,7 +50,12 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         }
 
         // Update the control panel on all tabs
-        userUpdateSocket(email, "classUpdate", classId);
+        // @TODO: TEMPORARY FIX - please move update functions outside of a class, or refactor them into the classroom class.
+        const classOwner = await dbGet("SELECT owner FROM classroom WHERE id=?", [classId]);
+        if (classOwner) {
+            const ownerEmail = await getEmailFromId(classOwner.owner);
+            userUpdateSocket(ownerEmail, "classUpdate", classId);
+        }
 
         // If the user is logged in, then handle the user's session
         const usersSockets = userSockets[email];

@@ -1,4 +1,4 @@
--- 09_class_permissions_table.sql
+-- 05_class_permissions_table.sql
 -- This migration creates the class_permissions,
 -- removes the permissions and plugins columns from the classroom table,
 -- and migrates existing data to the new structure.
@@ -42,4 +42,3 @@ ALTER TABLE classroom_temp RENAME TO classroom;
 INSERT INTO class_permissions (classId)
 SELECT id FROM classroom
 WHERE id NOT IN (SELECT classId FROM class_permissions);
-

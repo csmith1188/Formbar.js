@@ -1,4 +1,8 @@
-CREATE TABLE IF NOT EXISTS "digipog_pools" 
+-- 03_digipog_pool_tables.sql
+-- This migration creates the digipog_pools and digipog_pool_users tables.
+-- It also modifies the transactions table to replace from_user and to_user with INTEGER types.
+
+CREATE TABLE IF NOT EXISTS "digipog_pools"
 (
     "id"          INTEGER NOT NULL UNIQUE,
     "name"        TEXT    NOT NULL,

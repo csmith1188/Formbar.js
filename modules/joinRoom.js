@@ -92,16 +92,15 @@ async function joinRoomByCode(code, session) {
             // Set class permissions and clear any previous tags so they don't persist across classes
             currentUser.classPermissions = classUser.permissions;
             currentUser.activeClass = classroomDb.id;
-            currentUser.tags = [];
-            classInformation.users[email].tags = [];
-            database.run("UPDATE users SET tags = ? WHERE id = ?", ["", user.id], () => {});
+
+            // Load tags from classusers table
+            currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
+            currentUser.tags = currentUser.tags.filter((tag) => tag !== "Offline");
+            classInformation.users[email].tags = currentUser.tags;
 
             // Add the student to the newly created class
             const classroom = classInformation.classrooms[classroomDb.id];
             classroom.students[email] = currentUser;
-            if (!classroom.poll.studentsAllowedToVote.includes(currentUser.id)) {
-                classroom.poll.studentsAllowedToVote.push(currentUser.id);
-            }
 
             // Set the active class of the user
             classInformation.users[email].activeClass = classroomDb.id;
@@ -147,9 +146,7 @@ async function joinRoomByCode(code, session) {
 
             // Add the student to the newly created class
             classData.students[email] = currentUser;
-            if (!classData.poll.studentsAllowedToVote.includes(currentUser.id)) {
-                classData.poll.studentsAllowedToVote.push(currentUser.id);
-            }
+
             classInformation.users[email].activeClass = classroomDb.id;
             const controlPanelPermissions = Math.min(
                 classData.permissions.controlPolls,

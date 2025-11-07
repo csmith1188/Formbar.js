@@ -165,16 +165,18 @@ button#remove {
 }
 
 /*Shows that the button is currently active*/
-button.pressed,
-.quickButton.pressed,
-.revampButton.pressed {
+input[type="checkbox"]:checked,
+button.pressed:not(.includingButton),
+.quickButton.pressed:not(.includingButton),
+.revampButton.pressed:not(.includingButton) {
 	background: var(--lightMode-button-pressed-bg);
 	color: white;
 }
 
-button.pressed:hover,
-.quickButton.pressed:hover,
-.revampButton.pressed:hover {
+input[type="checkbox"]:checked:hover,
+button.pressed:not(.includingButton):hover,
+.quickButton.pressed:not(.includingButton):hover,
+.revampButton.pressed:not(.includingButton):hover {
 	background: var(--lightMode-button-pressed-hover-bg) !important;
 }
 
@@ -407,6 +409,22 @@ input.correctAnswer {
 	margin: 0;
 	width: 44px !important;
 	height: 44px !important;
+
+	border-radius: 10px;
+  	appearance: none;
+}
+
+input[type="checkbox"]::after {
+	content: '✓';
+	position: absolute;
+	font-size: 0.5em;
+	color: white;
+	opacity: 0.25;
+}
+
+input[type="checkbox"]:checked::after {
+	opacity: 1;
+	font-size: 1em;
 }
 
 #headerLogo,
@@ -606,7 +624,7 @@ input[type="radio"]:focus {
 	display: flex;
 	gap: 10px;
 	margin: auto;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: center;
 	flex-direction: row;
 	margin-bottom: 20px;
@@ -1414,14 +1432,13 @@ div.break {
 	width: 100%;
 	border-collapse: collapse;
 	margin-top: 20px;
+	table-layout: fixed;
 }
 
 #permissionsList {
 	display: grid;
 	border-radius: 10px;
-	margin: 1vh;
 	width: 60%;
-	grid-template-columns: repeat(3, 1fr);
 	gap: 20px;
 	margin: auto;		
 }
@@ -1447,6 +1464,11 @@ td.permissionCell {
 	width: 55px;
 }
 
+td.permissionCell img {
+	height: 30px;
+	object-fit: contain;
+}
+
 th.permissionHeader {
 	padding: 10px 20px;
 }
@@ -1462,6 +1484,10 @@ th.permissionHeader {
 	height: 100%;
 	display: block;
 	padding: 10px 20px;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .permissionOn {
@@ -1471,7 +1497,6 @@ th.permissionHeader {
 
 .permissionOff img {
 	height: 100%;
-	filter: invert(1);
 }
 
 .permissionOn img {
@@ -1641,6 +1666,16 @@ button:disabled:hover {
 	transform: none !important;
 }
 
+input[type="checkbox"] {
+	appearance: none;
+	aspect-ratio: 1;
+	min-height: 0;
+	padding: 0 !important;
+	width: 44px !important;
+	height: 44px !important;
+}
+
+input[type="checkbox"],
 .revampButton {
     display: flex;
     justify-content: center;
@@ -2163,6 +2198,23 @@ div.user {
 	cursor: pointer;
 }
 
+#pollForm input[type="checkbox"], 
+.controlStudent input[type="checkbox"] {
+	width: 24px !important;
+	height: 24px !important;
+	margin: 0;
+	border-radius: 5px;
+}
+
+#pollForm input[type="checkbox"]:checked::after, 
+.controlStudent input[type="checkbox"]:checked::after {
+	font-size: 0.75em;
+}
+
+#pollForm input[type="checkbox"]:checked {
+	background: var(--color) !important;
+}
+
 body:not(:has(header#formbarHeader[style="display: none;"])) {
 	padding-top: 72px;
 }
@@ -2393,8 +2445,15 @@ div#errorDialog div.errorDetails p#errorCode {
 	opacity: 0.75;
 }
 
+div#errorDialog {
+	transition: 0.3s ease-in-out transform, 0.3s ease-in-out opacity;
+	transform: translateY(100%);
+	opacity: 0;
+}
+
 div#errorDialog.shown {
-	animation: showError 0.5s ease-in-out forwards;
+	transform: translateY(0);
+	opacity: 1;
 }
 
 @keyframes showError {
@@ -3441,4 +3500,47 @@ p.accordionTitle {
 	top: 20px;
 	right: 20px;
 	margin-right:0;
+}
+
+#settingsFunc div #userExclusionDiv {
+    gap: 0;
+}
+
+#userExclusionDiv {
+    border-radius: 10px;
+}
+
+button.includingButton {
+    border: #000c15 solid 1px;
+    border-radius: 0;
+    margin-left: -1px;
+}
+
+button.includingButton:first-child {
+    margin-left: 0;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+button.includingButton:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+button.includingButton:hover:not(.pressed) {
+    background-color: var(--lightMode-button-bg) !important;
+    transform: none !important;
+}
+
+button.includingButton.pressed {
+    background-color: hsl(120, 94%, 74%) !important;
+    border-color: var(--color-green) !important;
+    color: black !important;
+    z-index: 1;
+    position: relative;
+}
+
+button.includingButton.pressed:hover {
+    background-color: hsl(120, 94%, 74%) !important;
+    transform: none !important;
 }

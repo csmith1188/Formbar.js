@@ -78,36 +78,39 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.querySelector("#email").textContent = studentData.displayName;
         studentBox.id = "checkbox_" + studentData.id;
-        studentBox.checked = classroomData.poll.studentsAllowedToVote.includes(studentData.id);
+        studentBox.checked = !classroomData.poll.excludedRespondents.includes(studentData.id);
 
         // Handle voting rights for student checkboxes
         const studentId = studentData.id;
         studentBox.onclick = () => {
             const canStudentVote = studentBox.checked;
 
-            // Get current voting list from the classroom
-            let studentsAllowedToVote = [...(classroom.poll.studentsAllowedToVote || [])];
-            if (canStudentVote && !studentsAllowedToVote.includes(studentId)) {
-                studentsAllowedToVote.push(studentId);
-            } else if (!canStudentVote) {
-                studentsAllowedToVote = studentsAllowedToVote.filter((id) => id !== studentId);
+            // Get current excluded respondents list from the classroom poll
+            let excludedRespondents = [...(classroom.poll.excludedRespondents || [])];
+
+            if (!canStudentVote && !excludedRespondents.includes(studentId)) {
+                // Checkbox is unchecked, so exclude this student
+                excludedRespondents.push(studentId);
+            } else if (canStudentVote) {
+                // Checkbox is checked, so remove from excluded list
+                excludedRespondents = excludedRespondents.filter((id) => id !== studentId);
             }
 
-            // Send the updated list to the server
-            socket.emit("updatePoll", { studentsAllowedToVote });
+            // Send the updated excluded list to the server
+            socket.emit("updateExcludedRespondents", excludedRespondents);
         };
 
-        for (let eachResponse in classroomData.poll.responses) {
+        for (let responseObj of classroomData.poll.responses) {
             if (studentData.pollRes.allowTextResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
+                pollBox.style.color = responseObj.color;
                 pollBox.textContent = studentData.pollRes.textRes;
-            } else if (eachResponse == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
-                pollBox.style.color = classroomData.poll.responses[eachResponse].color;
-                pollBox.textContent = eachResponse;
-            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(eachResponse) != -1) {
+            } else if (responseObj.answer == studentData.pollRes.buttonRes && !classroomData.poll.allowMultipleResponses) {
+                pollBox.style.color = responseObj.color;
+                pollBox.textContent = responseObj.answer;
+            } else if (classroomData.poll.allowMultipleResponses && studentData.pollRes.buttonRes.indexOf(responseObj.answer) != -1) {
                 let tempElem = document.createElement("span");
-                tempElem.textContent = eachResponse + " ";
-                tempElem.style.color = classroomData.poll.responses[eachResponse].color;
+                tempElem.textContent = responseObj.answer + " ";
+                tempElem.style.color = responseObj.color;
                 pollBox.appendChild(tempElem);
             }
         }
@@ -313,14 +316,9 @@ function buildStudent(classroomData, studentData) {
             digipogAwardInput.className = "quickButton revampButton revampWithText digipogAward";
             digipogAwardInput.placeholder = "0";
             digipogAwardInput.type = "number";
-            digipogAwardInput.min = 0;
-            digipogAwardInput.value = "";
-            digipogAwardInput.max = 999;
             digipogAwardInput.oninput = (event) => {
-                if (digipogAwardInput.value > 999) digipogAwardInput.value = 999;
-                if (digipogAwardInput.value < 0) digipogAwardInput.value = 0;
-                if (digipogAwardInput.value == "") digipogAwardInput.value = 0;
-                digipogAwardInput.value = parseInt(digipogAwardInput.value);
+                // Allow only numbers and negative sign
+                if(event.data !== '-') digipogAwardInput.value = digipogAwardInput.value.replace(/[^0-9]/g, "");
             };
             digipogButtons.appendChild(digipogAwardInput);
 
@@ -492,7 +490,7 @@ function filterSortChange(classroom) {
 
     // sort by response order
     if (sort.responseOrder == 1) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -503,7 +501,7 @@ function filterSortChange(classroom) {
             return aIndex - bIndex;
         });
     } else if (sort.responseOrder == 2) {
-        let responsesIndexes = Object.keys(classroom.poll.responses);
+        let responsesIndexes = classroom.poll.responses.map((r) => r.answer);
         userOrder.sort((a, b) => {
             let aIndex = responsesIndexes.indexOf(classroom.students[a].pollRes.buttonRes);
             let bIndex = responsesIndexes.indexOf(classroom.students[b].pollRes.buttonRes);
@@ -668,7 +666,7 @@ function approveBreak(breakApproval, userId) {
 }
 
 function awardDigipogs(userId, amount) {
-    if (amount <= 0 || isNaN(amount)) return;
+    if (isNaN(amount)) return;
 
     socket.emit("awardDigipogs", { from: currentUser.id, to: userId, amount: Number(amount) });
     const awardButton = document.querySelector(`button.digipogSend[data-user="${userId}"]`);

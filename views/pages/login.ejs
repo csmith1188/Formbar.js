@@ -82,6 +82,8 @@
     </body>
 
     <script type="text/javascript">
+        const error = '<%= typeof error !== "undefined" ? error : "" %>';
+
         // Prevent submission if a field is blank
         const form = document.getElementById('login');
         const redirect = document.getElementById('redirect');
