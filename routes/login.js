@@ -328,8 +328,9 @@ module.exports = {
                         existingAPIs.push(dbUser.API);
                         existingSecrets.push(dbUser.secret);
                         if (dbUser.email === user.email) {
-                            logger.log("verbose", "[post /login] User already exists");
-                            res.render("pages/login", {
+                            logger.log("verbose", "[post /login] User with that email already exists");
+                            res.render("pages/message", {
+                                message: "A user with that email already exists.",
                                 title: "Login",
                                 redirectURL: undefined,
                                 googleOauthEnabled: settings.googleOauthEnabled,

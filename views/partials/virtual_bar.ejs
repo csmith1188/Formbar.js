@@ -103,43 +103,29 @@
             let labelsArray = []
             let pollArray = []
 
-            let studentResponses = {}
-            // Loops through object to get each label of the possible answers
-            // Also, create a new label for each possible answer
+            // Build labels and data from the responses array
             if (newPollData.blind) {
                 labelsArray.push('Responses')
-                studentResponses.responses = 0
-            } else {
-                for (const [poll, pollData] of Object.entries(newPollData.responseCounts || {})) {
-                    labelsArray.push(pollData.answer)
-                    studentResponses[poll] = 0
+                // Sum all response counts for blind mode
+                let totalResponseCount = 0;
+                for (const pollData of newPollData.responses || []) {
+                    totalResponseCount += pollData.responses || 0;
                 }
-            }
-            labelsArray.push('No Response')
-            studentResponses.noResponse = 0
-
-            // Loops through all possible answers and generates a new color letiant for each answer
-            // All possible answers should have a different color
-            if (newPollData.blind) {
+                pollArray.push(totalResponseCount);
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (const [, pollData] of Object.entries(newPollData.responseCounts || {})) {
+                // Normal mode - show each response option
+                for (const pollData of newPollData.responses || []) {
+                    labelsArray.push(pollData.answer)
+                    pollArray.push(pollData.responses || 0)
                     doughnutChart.data.datasets[0].backgroundColor.push(pollData.color)
                 }
             }
-            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-            // Loops through all student answers and adds them to a total tally
-            // Student response corresponds with a property name in studResponses
-            studentResponses.noResponse += newPollData.totalResponders - newPollData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollData.responseCounts || {})) {
-                if (newPollData.blind)
-                    studentResponses.responses += pollData.responses
-                else studentResponses[poll] += pollData.responses
-            }
 
-            for (const responses of Object.keys(studentResponses)) {
-                pollArray.push(studentResponses[responses])
-            }
+            // Add "No Response" option
+            labelsArray.push('No Response')
+            pollArray.push(newPollData.totalResponders - newPollData.totalResponses)
+            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
 
             doughnutChart.data.labels = labelsArray
             doughnutChart.data.datasets[0].data = pollArray

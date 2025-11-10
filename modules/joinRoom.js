@@ -89,7 +89,7 @@ async function joinRoomByCode(code, session) {
             // Get the student's session data ready to transport into new class
             let currentUser = classInformation.users[email];
 
-            // Set class permissions and load tags from classusers table for this specific class
+            // Set class permissions and clear any previous tags so they don't persist across classes
             currentUser.classPermissions = classUser.permissions;
             currentUser.activeClass = classroomDb.id;
 

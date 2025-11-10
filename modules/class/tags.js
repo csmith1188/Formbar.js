@@ -35,7 +35,7 @@ async function setTags(tags, userSession) {
             student.tags = studentTags;
 
             try {
-                await dbRun("UPDATE classusers SET tags = ? WHERE classId = ? AND studentId = ?", [studentTags.join(","), classId, student.id]);
+                await dbRun("UPDATE users SET tags = ? WHERE email = ?", [studentTags.join(","), student.email]);
             } catch (err) {
                 logger.log("error", err.stack);
             }

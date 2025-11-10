@@ -1,5 +1,4 @@
 const { classInformation } = require("../../../../modules/class/classroom");
-const { getPollResponses } = require("../../../../modules/polls");
 const { logger } = require("../../../../modules/logger");
 
 module.exports = {
@@ -32,7 +31,6 @@ module.exports = {
 
                 // Get a clone of the class data and the poll responses in the class
                 let classData = structuredClone(classInformation.classrooms[classId]);
-                classData.poll.responseCounts = getPollResponses(classData);
 
                 // If the class does not exist, return an error
                 if (!classData) {
