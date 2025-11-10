@@ -266,8 +266,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         isActive: classData.isActive,
         timer: classData.timer,
         poll: {
-            ...classData.poll,
-            excludedRespondents: hasTeacherPermissions ? classData.poll.excludedRespondents : undefined,
+            ...classData.poll
         },
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,

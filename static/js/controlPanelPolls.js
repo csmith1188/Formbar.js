@@ -451,6 +451,8 @@ function startPoll(customPollId) {
     let multiRes = document.getElementById("multiRes");
     let selectTagForm = document.getElementsByName("selectTagForm");
     let allCheckboxes = document.getElementsByName("studentCheckbox");
+    let userExcludedRespondents = [];
+
     for (let eachTagForm of selectTagForm[0]) {
         if (eachTagForm.checked) {
             //for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
@@ -462,6 +464,10 @@ function startPoll(customPollId) {
         if (eachBox.checked && !eachBox.indeterminate) {
             let boxId = Number(eachBox.id.split("_")[1]);
             userBoxesChecked.push(boxId);
+        } else if (!eachBox.indeterminate) {
+            // Checkbox is unchecked, so this student is excluded from the poll
+            let boxId = Number(eachBox.id.split("_")[1]);
+            userExcludedRespondents.push(boxId);
         }
         if (eachBox.indeterminate) {
             let boxId = Number(eachBox.id.split("_")[1]);
@@ -471,6 +477,7 @@ function startPoll(customPollId) {
 
     userTags.sort();
     userBoxesChecked.sort();
+    userExcludedRespondents.sort();
     userIndeterminate.sort();
     userBreak.sort();
 
@@ -502,6 +509,7 @@ function startPoll(customPollId) {
             weight: customPoll.weight,
             tags: userTags,
             indeterminate: customPoll.indeterminate,
+            excludedRespondents: userExcludedRespondents,
         });
     } else {
         socket.emit("startPoll", {
@@ -514,6 +522,7 @@ function startPoll(customPollId) {
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,
+            excludedRespondents: userExcludedRespondents,
         });
     }
     clearPoll.style.display = "block";
