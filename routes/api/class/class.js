@@ -1,5 +1,4 @@
 const { classInformation, getClassUsers } = require("../../../modules/class/classroom");
-const { getPollResponses } = require("../../../modules/polls");
 const { TEACHER_PERMISSIONS } = require("../../../modules/permissions");
 const { logger } = require("../../../modules/logger");
 
@@ -20,14 +19,6 @@ module.exports = {
                     res.status(404).json({ error: "Class not started" });
                     return;
                 }
-
-                // Get the poll responses in the class
-                classData.poll.responseCounts = getPollResponses(classData);
-
-                // // Add response counts to response object
-                // for (const response of classData.poll.responses) {
-                //
-                // }
 
                 // Get the user from the session, and if the user is not in the class, return an error
                 const user = req.session.user;
