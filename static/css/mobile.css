@@ -419,6 +419,20 @@
         transition: none !important;
     }
 
+    #links {
+        display: flex !important;
+        width: 100% !important;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #links .linkButton {
+        width: 100% !important;
+        font-size: 4cqw !important;
+        padding: 10px !important;
+    }
 
     div#mobileNavigation {
         display: flex;

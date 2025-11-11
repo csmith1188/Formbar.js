@@ -140,10 +140,10 @@
                             <td>
                                 <div style="display: flex; gap: 5px; justify-content: center;" class="transactionButtons">
                                     <% if(isOwned) { %>
-                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pid %>)">
+                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="poolPayout(<%= pid %>)" title="Payout Pool">
                                             <img src="/img/icons/cash-outline.svg" title="Payout" alt="Payout" style="filter: invert(0) !important">
                                         </button>
-                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pid %>;">
+                                        <button class="revampButton acceptButton squareButton" style="padding: 5px;" onclick="membersOptions.classList.add('open');membersOptions.dataset.poolId = <%= pid %>;" title="Add or Remove Members">
                                             <img src="/img/icons/person.svg" title="Add or Remove Members" alt="Add or Remove Members" style="filter: invert(0) !important">
                                         </button>
                                         <% if(pid !== 0) { %>
