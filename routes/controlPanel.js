@@ -17,7 +17,7 @@ module.exports = {
                 const classId = user && user.activeClass != null ? user.activeClass : req.session.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!classroom) {
-                    return res.redirect("/manageClass");
+                    return res.redirect("/selectClass");
                 }
 
                 /* 
