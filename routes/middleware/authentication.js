@@ -6,7 +6,7 @@ const { dbGetAll, dbRun } = require("../../modules/database");
 
 const whitelistedIps = {};
 const blacklistedIps = {};
-const loginOnlyRoutes = ["/createClass", "/selectClass", "/manageClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
+const loginOnlyRoutes = ["/createClass", "/selectClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
 
 // Removes expired refresh tokens from the database
 async function cleanRefreshTokens() {
