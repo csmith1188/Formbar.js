@@ -318,7 +318,7 @@ function buildStudent(classroomData, studentData) {
             digipogAwardInput.type = "number";
             digipogAwardInput.oninput = (event) => {
                 // Allow only numbers and negative sign
-                if(event.data !== '-') digipogAwardInput.value = digipogAwardInput.value.replace(/[^0-9]/g, "");
+                if (event.data !== "-") digipogAwardInput.value = digipogAwardInput.value.replace(/[^0-9]/g, "");
             };
             digipogButtons.appendChild(digipogAwardInput);
 
