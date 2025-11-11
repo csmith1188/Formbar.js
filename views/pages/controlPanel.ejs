@@ -263,7 +263,7 @@
         </div>
         <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
         </div>
-        <div id='newPoll' class='customPolls tabContent' style="padding-bottom:250px;" data-tab-group='polls'>
+        <div id='newPoll' class='customPolls tabContent' data-tab-group='polls'>
             <div id="pollResForm">
                 <div class="pollInfo revampDiv">
                     <h2>Poll Info</h2>
@@ -333,7 +333,7 @@
                     <span id="date"></span>
                 </summary>
                 <span class="previousPollResponse revampDiv" id="response-template" style="display: none"></span>
-                <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
+                <button id="loadPoll" class="revampButton pressed" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
             <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/icons/arrow-back.svg" alt="Newer Polls"></button>
@@ -844,6 +844,9 @@
         // If there are no previous polls, display a message
         if (previousPolls.length === 0) {
             previousPollsDiv.innerHTML = "<p style='text-align: center;'>No previous polls to display</p>";
+            previousPollsDiv.style.display = 'flex';
+            previousPollsDiv.style.justifyContent = 'center';
+            previousPollsDiv.style.alignItems = 'center';
         }
 
         // If currentPreviousPollIndex is zero, hide the back button

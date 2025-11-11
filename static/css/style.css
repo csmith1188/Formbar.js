@@ -933,7 +933,6 @@ hr {
 
 #userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
 	display: flex;
-	padding: 0;
 	flex-wrap: wrap;
 	justify-content: space-evenly;
 }
@@ -1089,6 +1088,11 @@ input::-webkit-inner-spin-button {
 
 div .tabContent {
 	padding-bottom: 5vh;
+}
+
+.tabContent {
+	overflow: auto;
+	padding: 5px;
 }
 
 #startClass,
@@ -1980,6 +1984,7 @@ a.link:visited {
 	height: 100%;
 	width: 100%;
 	padding: 0 !important;
+	overflow: visible;
 }
 
 #classesMenu > *:not(div.verticalLine) {
@@ -2832,7 +2837,9 @@ button img {
 }
 
 #loadPoll {
-	margin: auto;
+	width: fit-content !important;
+	margin: 10px auto;
+	margin-bottom: 0;
 }
 
 #users .user p {
@@ -2878,10 +2885,6 @@ button img {
     align-items: center;
     flex-direction: row;
     gap: 10px;
-}
-
-#newPoll.tabContent {
-    height: 100%;
 }
 
 #save-poll {

@@ -35,7 +35,7 @@
                     display: flex;
                     justify-content: start;
                     align-items: center;
-                    overflow: scroll;
+                    overflow: auto;
                     flex-direction: column;
                     padding: 5px 0 60px 0;
                 }
@@ -147,7 +147,7 @@
                                             <img src="/img/icons/person.svg" title="Add or Remove Members" alt="Add or Remove Members" style="filter: invert(0) !important">
                                         </button>
                                         <% if(pid !== 0) { %>
-                                            <button class="revampButton warningButton squareButton" style="padding: 5px;" onclick="socket.emit('poolDelete', { poolId: <%= pid %> })">
+                                            <button class="revampButton warningButton squareButton" style="padding: 5px;" onclick="if(confirm('Are you sure you would like to delete <%=pool.name%>?')) socket.emit('poolDelete', { poolId: <%= pid %> })">
                                                 <img src="/img/icons/trash-outline.svg" title="Delete Pool" alt="Delete Pool" style="filter: invert(0) !important">
                                             </button>
                                         <% } else { %>
