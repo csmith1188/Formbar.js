@@ -2,7 +2,7 @@
 // This migration removes the 'digipogs' column from the 'classusers' table
 // and adds a new 'tags' column to the same table.
 
-const { dbGetAll } = require("../../../modules/database");
+const { dbGetAll, dbRun } = require("../../../modules/database");
 module.exports = {
     async run(database) {
         const columns = await dbGetAll("PRAGMA table_info(classusers)", [], database);
