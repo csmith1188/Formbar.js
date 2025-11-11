@@ -227,13 +227,13 @@ function getPollResponseInformation(classData) {
             // Add to the count for each response option
             if (Array.isArray(studentData.pollRes.buttonRes)) {
                 for (let res of studentData.pollRes.buttonRes) {
-                    const responseObj = classData.poll.responses.find(r => r.answer === res);
+                    const responseObj = classData.poll.responses.find((r) => r.answer === res);
                     if (responseObj) {
                         responseObj.responses++;
                     }
                 }
             } else if (studentData.pollRes.buttonRes) {
-                const responseObj = classData.poll.responses.find(r => r.answer === studentData.pollRes.buttonRes);
+                const responseObj = classData.poll.responses.find((r) => r.answer === studentData.pollRes.buttonRes);
                 if (responseObj) {
                     responseObj.responses++;
                 }
@@ -272,7 +272,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         isActive: classData.isActive,
         timer: classData.timer,
         poll: {
-            ...classData.poll
+            ...classData.poll,
         },
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,

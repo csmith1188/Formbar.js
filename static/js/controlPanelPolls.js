@@ -251,29 +251,29 @@ function responseAmountChange(responseAmount = null) {
 
         responseDiv.appendChild(colorPickerDiv);
 
-        let correctAnswer = document.createElement('input')
-		correctAnswer.type = 'checkbox'
-		correctAnswer.className = 'correctAnswer revampButton'
-		correctAnswer.name = 'correctAnswer revampButton'
-		correctAnswer.title = 'Mark as Correct Answer'
+        let correctAnswer = document.createElement("input");
+        correctAnswer.type = "checkbox";
+        correctAnswer.className = "correctAnswer revampButton";
+        correctAnswer.name = "correctAnswer revampButton";
+        correctAnswer.title = "Mark as Correct Answer";
 
-		// Only one correct answer for non-multiple response polls
-		if (!document.getElementById('multiRes').checked) {
-			correctAnswer.onclick = () => {
-				let correctAnswers = document.getElementsByClassName('correctAnswer')
-				for (let j = 0; j < correctAnswers.length; j++) {
-					if (j != i) {
-						correctAnswers[j].checked = false
-						pollResponses[j].correct = false
-					}
-				}
-			}
-		}
+        // Only one correct answer for non-multiple response polls
+        if (!document.getElementById("multiRes").checked) {
+            correctAnswer.onclick = () => {
+                let correctAnswers = document.getElementsByClassName("correctAnswer");
+                for (let j = 0; j < correctAnswers.length; j++) {
+                    if (j != i) {
+                        correctAnswers[j].checked = false;
+                        pollResponses[j].correct = false;
+                    }
+                }
+            };
+        }
 
-		correctAnswer.onchange = (event) => {
-			pollResponses[i].correct = event.target.checked;
-		}
-		responseDiv.appendChild(correctAnswer)
+        correctAnswer.onchange = (event) => {
+            pollResponses[i].correct = event.target.checked;
+        };
+        responseDiv.appendChild(correctAnswer);
 
         let answerName = document.createElement("input");
         answerName.type = "text";
@@ -467,7 +467,7 @@ function startPoll(customPollId) {
             answer: pollResponse.answer ? pollResponse.answer : pollResponse.defaultAnswer,
             weight: pollResponse.weight,
             color: pollResponse.color ? pollResponse.color : pollResponse.defaultColor,
-            correct: pollResponse.correct || false
+            correct: pollResponse.correct || false,
         };
         pollAnswer.answer = pollAnswer.answer.replaceAll('"', "“");
         pollAnswer.answer = pollAnswer.answer.replaceAll(",", "‚");

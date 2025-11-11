@@ -8,11 +8,11 @@ function getDatabase() {
 }
 
 function dbGet(query, params, db = database) {
-    const callStack= new Error().stack;
+    const callStack = new Error().stack;
     return new Promise((resolve, reject) => {
         db.get(query, params, (err, row) => {
             if (err) {
-                console.error(callStack)
+                console.error(callStack);
                 return reject(err);
             }
             resolve(row);
@@ -21,11 +21,11 @@ function dbGet(query, params, db = database) {
 }
 
 function dbRun(query, params, db = database) {
-    const callStack= new Error().stack;
+    const callStack = new Error().stack;
     return new Promise((resolve, reject) => {
         db.run(query, params, function (err) {
             if (err) {
-                console.error(callStack)
+                console.error(callStack);
                 return reject(err);
             }
             resolve(this.lastID);
@@ -34,11 +34,11 @@ function dbRun(query, params, db = database) {
 }
 
 function dbGetAll(query, params, db = database) {
-    const callStack= new Error().stack;
+    const callStack = new Error().stack;
     return new Promise((resolve, reject) => {
         db.all(query, params, (err, rows) => {
             if (err) {
-                console.error(callStack)
+                console.error(callStack);
                 return reject(err);
             }
             resolve(rows);
