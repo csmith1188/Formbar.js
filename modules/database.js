@@ -1,4 +1,5 @@
 const sqlite3 = require("sqlite3");
+const { logger } = require("./logger");
 const database = getDatabase();
 
 function getDatabase() {
@@ -24,7 +25,7 @@ function dbRun(query, params, db = database) {
     return new Promise((resolve, reject) => {
         db.run(query, params, function (err) {
             if (err) {
-                console.error(`${err.stack}\n${callStack}`)
+                console.error(callStack)
                 return reject(err);
             }
             resolve(this.lastID);
