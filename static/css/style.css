@@ -5,7 +5,16 @@
 * {
 	scrollbar-width: thin;
 	scrollbar-color: black transparent;
-	color: black;
+}
+
+::-webkit-scrollbar {
+	background: transparent;
+	width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: white;
+	border-radius: 999px;
 }
 
 :root {
@@ -79,7 +88,18 @@
 	--darkMode-button-pressed-hover-bg: #286aee94;
 
 	--button-hover-scale: 1.025;
+	
+	--fullViewportWidth: 100vw;
+	--fullViewportHeight: 100vh;
 }
+
+@supports (width: 100dvw) and (height: 100dvh) {
+	:root {
+		--fullViewportWidth: 100dvw;
+		--fullViewportHeight: 100dvh;
+	}
+}
+
 
 body {
 	overflow: hidden;
@@ -88,8 +108,8 @@ body {
 	text-align: center;
 	--theme-color: var(--color-blue);
 	transition: background-color 0.5s, color 0.5s;
-	width: calc(100dvw - 16px);
-	height: calc(100dvh - 16px);
+	width: calc(var(--fullViewportWidth) - 16px);
+	height: calc(var(--fullViewportHeight) - 16px);
 	background: linear-gradient(135deg, #b8e1ff 30%, #699bbe 100%);
 	color: #000;
 }
@@ -630,13 +650,6 @@ input[type="radio"]:focus {
 	flex-direction: row;
 	margin-bottom: 20px;
 }
-
-
-body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
-	top: 20px;
-	margin: 0;
-}
-
 
 #pollPrompt {
 	font-size: 40px;
@@ -2221,14 +2234,8 @@ div.user {
 	background: var(--color) !important;
 }
 
-body:not(:has(header#formbarHeader[style="display: none;"])) {
+body:not(body > .header#formbarHeader[style="display: none;"]) {
 	padding-top: 72px;
-}
-
-
-
-#vbContainerOuter:has(#vbContainer[style="display: none;"]) {
-	display: none !important;
 }
 
 #quickMenu.dividedThree {
@@ -3346,6 +3353,11 @@ div.accordionOptions.textOptions p#fullTextResponse {
 
 div.accordionOptions.permsOptions select.permSwitch {
     width: 100%;
+	color: white !important;
+}
+
+div.accordionOptions.permsOptions select.permSwitch option {
+	color: white !important;
 }
 
 div.accordionOptions.kickBanOptions div#extraButtons {

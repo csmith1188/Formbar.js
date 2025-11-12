@@ -1,7 +1,19 @@
 @media screen and (orientation: portrait) {
+    :root {
+        --fullViewportWidth: 100vw;
+        --fullViewportHeight: 100vh;
+    }
+
+    @supports (width: 100dvw) and (height: 100dvh) {
+        :root {
+            --fullViewportWidth: 100dvw;
+            --fullViewportHeight: 100dvh;
+        }
+    }
+    
     body {
-        width: 100dvw;
-        height: 100dvh;
+        width: var(--fullViewportWidth);
+        height: var(--fullViewportHeight);
         overflow: hidden;
     }
 
@@ -440,8 +452,8 @@
         position: absolute;
         background: #000a;
         backdrop-filter: blur(10px);
-        height: 100dvh;
-        width: 100dvw;
+        height: var(--fullViewportWidth);
+        width: var(--fullViewportHeight);
         left: 0;
         top: 0;
         padding: 80px 10% 20px 10%;
@@ -528,8 +540,8 @@
         top: 0;
         left: 0;
         padding: 20px !important;
-        width: 100dvw;
-        height: 100dvh;
+        width: var(--fullViewportWidth);
+        height: var(--fullViewportHeight);
         display: flex;
         justify-content: center;
         align-items: center;
