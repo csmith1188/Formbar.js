@@ -170,7 +170,9 @@
 			votingRight = false;
 			return;
 		}
-		
+
+        console.log(classroomData);
+
 		// Check if student has the "Excluded" tag
 		if (classroomData && classroomData.myTags && Array.isArray(classroomData.myTags) && classroomData.myTags.includes("Excluded")) {
 			votingRight = false;
@@ -261,6 +263,7 @@
 			// If user cannot vote
 			const mayNotAnswer = document.getElementById('pollControl');
 			const noVoteReason = getNoVoteReason(classroomData);
+            console.log('VOTING RIGHTS:', votingRight, noVoteReason)
 			if (!votingRight || noVoteReason !== "You may not answer currently") {
 				pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">${noVoteReason}</label>`;
 				return;
