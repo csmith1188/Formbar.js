@@ -29,7 +29,8 @@ function buildStudent(classroomData, studentData) {
         return;
     }
 
-    if (studentData.classPermissions < currentUser.classPermissions) {
+    // Only build the student if they are not the current user
+    if (studentData.id != currentUser.id) {
         const newStudent = studentTemplateDiv.cloneNode(true);
         newStudent.hidden = false;
         newStudent.style.display = "flex";
