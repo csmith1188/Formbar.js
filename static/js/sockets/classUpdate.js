@@ -222,7 +222,7 @@ socket.on("classUpdate", (classroomData) => {
         }
     }
 
-    if (currentUser.classPermissions >= classroomData.permissions.controlPolls) {
+    if (currentUser.classPermissions >= classroomData.permissions.controlPoll) {
         pollsTabButton.style.display = "";
     } else {
         pollsTabButton.style.display = "none";
