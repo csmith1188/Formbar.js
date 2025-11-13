@@ -25,10 +25,10 @@ const PAGE_PERMISSIONS = {
 
 const CLASS_PERMISSIONS = {
     GAMES: "games",
-    CONTROL_POLLS: "controlPoll",
+    CONTROL_POLLS: "controlPolls",
     MANAGE_STUDENTS: "manageStudents",
     MANAGE_CLASS: "manageClass",
-    BREAK_AND_HELP: "breakHelp",
+    BREAK_AND_HELP: "breakAndHelp",
     AUXILIARY: "auxiliary",
     USER_DEFAULTS: "userDefaults",
 };
@@ -36,9 +36,9 @@ const CLASS_PERMISSIONS = {
 // Defines the default permissions for people in a class
 const DEFAULT_CLASS_PERMISSIONS = {
     links: MOD_PERMISSIONS, // Control the links page
-    controlPoll: MOD_PERMISSIONS,
+    controlPolls: MOD_PERMISSIONS,
     manageStudents: TEACHER_PERMISSIONS,
-    breakHelp: MOD_PERMISSIONS, // Approve break and help requests
+    breakAndHelp: MOD_PERMISSIONS, // Approve break and help requests
     manageClass: TEACHER_PERMISSIONS,
     auxiliary: MOD_PERMISSIONS, // Controls the FormPix lights and sounds
     userDefaults: GUEST_PERMISSIONS,
@@ -96,24 +96,24 @@ const CLASS_SOCKET_PERMISSIONS = {
 };
 
 // This associates actions with the permissions of other actions
-// Example: To start a poll, you first need the controlPoll permission
+// Example: To start a poll, you first need the controlPolls permission
 const CLASS_SOCKET_PERMISSION_MAPPER = {
-    startPoll: "controlPoll",
-    updatePoll: "controlPoll",
-    customPollUpdate: "controlPoll",
-    savePoll: "controlPoll",
-    deletePoll: "controlPoll",
-    setPublicPoll: "controlPoll",
-    sharePollToUser: "controlPoll",
-    removeUserPollShare: "controlPoll",
-    getPollShareIds: "controlPoll",
-    sharePollToClass: "controlPoll",
-    removeClassPollShare: "controlPoll",
+    startPoll: "controlPolls",
+    updatePoll: "controlPolls",
+    customPollUpdate: "controlPolls",
+    savePoll: "controlPolls",
+    deletePoll: "controlPolls",
+    setPublicPoll: "controlPolls",
+    sharePollToUser: "controlPolls",
+    removeUserPollShare: "controlPolls",
+    getPollShareIds: "controlPolls",
+    sharePollToClass: "controlPolls",
+    removeClassPollShare: "controlPolls",
     classPermChange: "manageStudents",
     classKickStudent: "manageStudents",
     classKickStudents: "manageStudents",
-    approveBreak: "breakHelp",
-    deleteTicket: "breakHelp",
+    approveBreak: "breakAndHelp",
+    deleteTicket: "breakAndHelp",
     startClass: "manageClass",
     endClass: "manageClass",
     isClassActive: "manageClass",

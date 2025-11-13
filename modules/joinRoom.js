@@ -149,7 +149,7 @@ async function joinRoomByCode(code, session) {
 
             classInformation.users[email].activeClass = classroomDb.id;
             const controlPanelPermissions = Math.min(
-                classData.permissions.controlPoll,
+                classData.permissions.controlPolls,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             );
