@@ -69,7 +69,7 @@ function getConfig() {
                 "Formbar Developer pog pool. Accumulates from the 10% tax on digipog transactions.",
                 0,
             ]);
-            await dbRun("INSERT INTO digipog_pool_users (id, owner) VALUES (?, ?)", [1, "0"]);
+            await dbRun("INSERT INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [0, 1, 0]);
         }
     });
 
