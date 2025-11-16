@@ -62,7 +62,7 @@ async function saveTags(studentId, tags, userSession) {
         let normalized = tags
             .filter((tag) => typeof tag === "string")
             .map((tag) => tag.trim())
-            .map((tag) => tag.replace(/[\r\n\t]/g, "")) // Remove newlines, carriage returns, and tabs
+            .map((tag) => tag.replace(/[\r\n\t]/g, "")) // Remove new lines, carriage returns, and tabs
             .filter((tag) => tag !== "");
 
         if (isActiveInClass) {
