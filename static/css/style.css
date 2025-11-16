@@ -2456,6 +2456,12 @@ div#errorDialog.shown {
 	opacity: 1;
 }
 
+/* Success variant for the notification dialog */
+div#errorDialog.success {
+	background-color: var(--color-green);
+	border: 2px solid var(--light-green);
+}
+
 @keyframes showError {
 	0% {
 		transform: translateY(100%);
@@ -3544,3 +3550,4 @@ button.includingButton.pressed:hover {
     background-color: hsl(120, 94%, 74%) !important;
     transform: none !important;
 }
+
