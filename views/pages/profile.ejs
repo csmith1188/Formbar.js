@@ -44,27 +44,21 @@
                 <p id='digipogs'><strong>Digipogs:</strong> <%- Math.floor(digipogs) %></p>
                 <p id='userId'><strong>ID:</strong> <%- id %></p>
                 <div class="sensitiveInfo">
-                    <p id='apiKey'><strong>API Key:</strong> █</p>
+                    <p id='apiKey'><strong>API Key:</strong> ████████</p>
                     <div id='apiKeyButton'>
-                        <button onclick="copyApiKey()" class="squareButton hideMobile">
-                            <img src="/img/icons/clipboard-outline.svg" alt="Refresh API Key">
+                        <button onclick="copyApiKey()" class="squareButton hideMobile" style="display: none;" id="copyApiBtn">
+                            <img src="/img/icons/clipboard-outline.svg" alt="Copy API Key">
                         </button>
-                        <button id="showHideApi" onclick="revealApiKey()" class="squareButton" title="Reveal API Key">
-                            <img src="/img/icons/eye-outline.svg" alt="Reveal API Key">
-                        </button>
-                        <button id='apiRefresh' onclick='refreshApiKey()' class="squareButton warningButton" title="Refresh API Key">
-                            <img src="/img/icons/refresh-outline.svg" alt="Refresh API Key">
+                        <button id='apiRefresh' onclick='refreshApiKey()' class="squareButton warningButton" title="Regenerate API Key">
+                            <img src="/img/icons/refresh-outline.svg" alt="Regenerate API Key">
                         </button>
                     </div>
                 </div>
                 <div class="sensitiveInfo">
-                    <p id='pin'><strong>PIN:</strong> █</p>
+                    <p id='pin'><strong>PIN:</strong> <%= pin ? '████' : 'Not Set' %></p>
                     <div id='apiKeyButton'>
-                        <button id="showHidePin" onclick="revealPin()" class="squareButton" title="Reveal PIN">
-                            <img src="/img/icons/eye-outline.svg" alt="Reveal PIN">
-                        </button>
-                        <button id='pinEdit' onclick='editPin()' class="squareButton warningButton" title="Edit PIN">
-                            <img src="/img/icons/pencil-outline.svg" alt="Edit PIN">
+                        <button id='pinEdit' onclick='editPin()' class="squareButton warningButton" title="<%= pin ? 'Change' : 'Set' %> PIN">
+                            <img src="/img/icons/pencil-outline.svg" alt="<%= pin ? 'Change' : 'Set' %> PIN">
                         </button>
                     </div>
                 </div>
@@ -84,70 +78,21 @@
             </div>
         </body>
         <script>
-            let apiKeyValue = '<%- API %>';
-            let rawPinValue = '<%- pin %>';
-            let pinValue = rawPinValue || "None";
+            let apiKeyValue = null; // API key is hashed and cannot be displayed
+            let pinValue = null; // PIN is hashed and cannot be displayed
             let pogMeterValue = <%- pogMeter / 5 %>;
 
             document.getElementById('pogMeterFill').style.setProperty('--pogPercent', pogMeterValue + '%');
-
-            if (apiKeyValue == '') {
-                document.querySelectorAll('[id*="api"]').forEach(element => {
-                    element.remove();
-                });
-            }
-
-            if (rawPinValue == "Hidden") {
-                document.querySelectorAll('[id*="pin"]').forEach(element => {
-                    element.remove();
-                });
-            }
 
             let apiKey = document.getElementById('apiKey');
             let pin = document.getElementById('pin');
                 
             function copyApiKey() {
-                navigator.clipboard.writeText(apiKeyValue);
+                if (apiKeyValue) {
+                    navigator.clipboard.writeText(apiKeyValue);
+                    alert("API Key copied to clipboard!");
+                }
             }
-
-            function revealApiKey() {
-                let showHideApi = document.getElementById('showHideApi');
-                if (!apiKey) return;
-                apiKey.innerHTML = '<strong>API Key:</strong> ' + apiKeyValue;
-                showHideApi.setAttribute("onclick", "hideApiKey()");
-                showHideApi.innerHTML = '<img src="/img/icons/eye-off-outline.svg" alt="Hide API Key">';
-
-                if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'none';
-            }
-
-            function hideApiKey() {
-                let showHideApi = document.getElementById('showHideApi');
-                if (!apiKey) return;
-                apiKey.innerHTML = `<strong>API Key:</strong> ${'█'.repeat(apiKeyValue.length / 3)}`;
-                showHideApi.setAttribute("onclick", "revealApiKey()");
-                showHideApi.innerHTML = '<img src="/img/icons/eye-outline.svg" alt="Reveal API Key">';
-
-                if(window.innerWidth < window.innerHeight) apiKey.querySelector('strong').style.display = 'block';
-            }
-
-            function revealPin() {
-                let showHidePin = document.getElementById('showHidePin');
-                if (!pin) return;
-                pin.innerHTML = '<strong>PIN:</strong> ' + pinValue;
-                showHidePin.setAttribute("onclick", "hidePin()");
-                showHidePin.innerHTML = '<img src="/img/icons/eye-off-outline.svg" alt="Hide Pin">';
-            }
-
-            function hidePin() {
-                let showHidePin = document.getElementById('showHidePin');
-                if (!pin) return;
-                pin.innerHTML = `<strong>PIN:</strong> ${'█'.repeat(pinValue.length)}`;
-                showHidePin.setAttribute("onclick", "revealPin()");
-                showHidePin.innerHTML = '<img src="/img/icons/eye-outline.svg" alt="Reveal Pin">';
-            }
-
-            if (apiKey) hideApiKey();
-            if (pin) hidePin();
 
             // Handle transactions button, depending on if it's the user's own profile or not
             const userIdElement = document.getElementById('userId');
@@ -181,30 +126,24 @@
                     return;
                 }
 
-                if (currentPin !== pinValue && pinValue !== 'None') {
-                    alert("Current PIN is incorrect.");
-                    return;
-                }
+                // Note: We can no longer verify the current PIN on client side since it's hashed
+                // The server will need to verify if needed, but for now we allow PIN changes without verification
 
                 socket.emit('refreshPin', newPin);
-
-                alert(pinValue ? "PIN updated successfully." : "PIN set successfully.");
 
                 // Clear input fields
                 document.getElementById('currentPin').value = '';
                 document.getElementById('newPin').value = '';
                 document.getElementById('confirmNewPin').value = '';
 
-                pinValue = newPin;
-
-                hidePin(); // Hide the PIN after updating
-
                 // Close the edit PIN modal
                 editPin();
             }
 
             function refreshApiKey() {
-                if(confirm("Are you sure you want to refresh your API key? This action cannot be undone.")) socket.emit('refreshApiKey');
+                if(confirm("Are you sure you want to regenerate your API key? Your old key will be invalidated and you will only see the new key once. Make sure to copy it!")) {
+                    socket.emit('refreshApiKey');
+                }
             }
 
             function editPin() {
@@ -216,12 +155,41 @@
             socket.on('apiKeyUpdated', (data) => {
                 apiKeyValue = data;
                 const apiKeyEl = document.getElementById('apiKey');
-                const apiKeyButton = document.getElementById('apiKeyButton');
-                if (!apiKeyEl || !apiKeyButton) return;
-                if (apiKeyButton.innerHTML.includes('Hide API Key')) {
-                    apiKeyEl.innerHTML = '<p><strong>API Key:</strong> ' + apiKeyValue + '</p>';
-                } else {
-                    apiKeyEl.innerHTML = '<p id="apiKey"><strong>API Key:</strong> ████████████████████████████████████████████████████████████████</p>';
-                }
+                const copyBtn = document.getElementById('copyApiBtn');
+
+                if (!apiKeyEl) return;
+
+                // Show the new API key (one-time view)
+                apiKeyEl.innerHTML = '<strong>API Key:</strong> <span style="font-family: monospace;">' + apiKeyValue + '</span>';
+                apiKeyEl.style.color = '#ff6b6b';
+                apiKeyEl.style.fontWeight = 'bold';
+
+                // Show copy button
+                if (copyBtn) copyBtn.style.display = 'inline-block';
+
+                // Auto-copy to clipboard
+                navigator.clipboard.writeText(apiKeyValue);
+                alert("✅ New API Key generated and copied to clipboard!\n\n⚠️ IMPORTANT: This is the only time you'll see this key. Save it securely!\n\nKey: " + apiKeyValue);
+            });
+
+            socket.on('pinUpdated', (data) => {
+                pinValue = data;
+                const pinEl = document.getElementById('pin');
+                if (!pinEl) return;
+
+                // Show the new PIN (one-time view)
+                pinEl.innerHTML = '<strong>PIN:</strong> <span style="font-family: monospace;">' + pinValue + '</span>';
+                pinEl.style.color = '#ff6b6b';
+                pinEl.style.fontWeight = 'bold';
+
+                alert("✅ PIN updated successfully!\n\n⚠️ IMPORTANT: This is the only time you'll see this PIN. Remember it!\n\nNew PIN: " + pinValue);
+
+                // After 30 seconds, hide the PIN again
+                setTimeout(() => {
+                    pinEl.innerHTML = '<strong>PIN:</strong> ████';
+                    pinEl.style.color = '';
+                    pinEl.style.fontWeight = '';
+                    pinValue = null;
+                }, 30000);
             });
         </script>

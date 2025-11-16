@@ -1,5 +1,6 @@
 const { database } = require("../../modules/database");
 const { logger } = require("../../modules/logger");
+const { compare } = require("../../modules/crypto");
 
 module.exports = {
     order: 20,
@@ -18,18 +19,29 @@ module.exports = {
                 if (socket.request.session.email) {
                     next();
                 } else if (api) {
-                    database.get("SELECT id, email FROM users WHERE API = ?", [api], (err, userData) => {
+                    // Get all users and compare the API key hash
+                    database.all("SELECT id, email, API FROM users", [], async (err, users) => {
                         try {
                             if (err) throw err;
-                            if (!userData) {
+
+                            // Compare the provided API key with each user's hashed API key
+                            let matchedUser = null;
+                            for (const user of users) {
+                                if (await compare(api, user.API)) {
+                                    matchedUser = user;
+                                    break;
+                                }
+                            }
+
+                            if (!matchedUser) {
                                 logger.log("verbose", "[socket authentication] not a valid API Key");
                                 next(new Error("Not a valid API key"));
                                 return;
                             }
 
                             socket.request.session.api = api;
-                            socket.request.session.userId = userData.id;
-                            socket.request.session.email = userData.email;
+                            socket.request.session.userId = matchedUser.id;
+                            socket.request.session.email = matchedUser.email;
                             socket.request.session.classId = null;
 
                             next();

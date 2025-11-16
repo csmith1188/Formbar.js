@@ -89,16 +89,18 @@ module.exports = {
 
                 // Determine if the email should be visible then render the page
                 const emailVisible = req.session.userId == id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
+                const isOwnProfile = req.session.userId === userId;
+
                 res.render("pages/profile", {
                     title: "Profile",
                     displayName: displayName,
                     email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
                     digipogs: digipogs,
                     id: userId,
-                    API: req.session.userId == req.params.userId || req.params.userId == undefined ? API : null,
+                    API: isOwnProfile ? "Exists" : null,
+                    pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
                     pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-                    pin: req.session.userId == req.params.userId || req.params.userId == undefined ? pin : "Hidden",
-                    isOwnProfile: req.session.userId === userId,
+                    isOwnProfile: isOwnProfile,
                 });
             } catch (err) {
                 logger.log("error", err.stack);

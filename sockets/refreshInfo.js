@@ -2,6 +2,7 @@ const { dbRun, database } = require("../modules/database");
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");
 const crypto = require("crypto");
+const { hash } = require("../modules/crypto");
 
 module.exports = {
     run(socket) {
@@ -17,14 +18,14 @@ module.exports = {
                     return socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
                 }
 
-                // Generate a new API key
+                // Generate a new API key and hash it before storing
                 let newAPI = crypto.randomBytes(32).toString("hex");
-                socket.request.session.API = newAPI;
+                const hashedAPI = await hash(newAPI);
 
-                // Generate a new API key and update the database
-                await dbRun("UPDATE users SET API = ? WHERE id = ?", [newAPI, id]);
+                // Update the database with the hashed API key
+                await dbRun("UPDATE users SET API = ? WHERE id = ?", [hashedAPI, id]);
 
-                // Log the successful API key update and emit the key update event
+                // Log the successful API key update and emit the plaintext key (one-time view)
                 logger.log("info", `[apiKeyUpdated] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
                 socket.emit("apiKeyUpdated", newAPI);
             } catch (err) {
@@ -49,10 +50,11 @@ module.exports = {
                     return socket.emit("error", `Error Number ${logNumbers.error}: Invalid PIN format. PIN must be 4-6 digits.`);
                 }
 
-                // Update the PIN in the database
-                await dbRun("UPDATE users SET pin = ? WHERE id = ?", [newPin, userId]);
+                // Hash the PIN then store it in the database
+                const hashedPin = await hash(newPin);
+                await dbRun("UPDATE users SET pin = ? WHERE id = ?", [hashedPin, userId]);
 
-                // Log the successful PIN update and emit the PIN update event
+                // Log the successful PIN update and emit the plaintext PIN (one-time view)
                 logger.log("info", `[pinUpdated] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
                 socket.emit("pinUpdated", newPin);
             } catch (err) {

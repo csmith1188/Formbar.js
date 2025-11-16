@@ -55,9 +55,13 @@ module.exports = {
                     }
 
                     try {
+                        // Hash the API key and secret before storing
+                        const hashedAPI = await hash(user.newAPI);
+                        const hashedSecret = await hash(user.newSecret);
+
                         await dbRun(
                             "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                            [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1]
+                            [user.email, user.hashedPassword, user.permissions, hashedAPI, hashedSecret, user.displayName, 1]
                         );
                         logger.log("verbose", "[get /login] Added user to database");
 
@@ -366,8 +370,12 @@ module.exports = {
 
                     // If email is not enabled in the settings, create the user immediately without email verification
                     if (!settings.emailEnabled) {
-                        user.newAPI = newAPI;
-                        user.newSecret = newSecret;
+                        // Hash the API key and secret before storing
+                        const hashedAPI = await hash(newAPI);
+                        const hashedSecret = await hash(newSecret);
+
+                        user.newAPI = hashedAPI;
+                        user.newSecret = hashedSecret;
                         user.hashedPassword = hashedPassword;
                         user.permissions = userPermission;
                         database.run(
