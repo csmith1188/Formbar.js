@@ -216,26 +216,42 @@ function buildStudent(classroomData, studentData) {
         permSwitch.setAttribute("class", "permSwitch revampButton");
         permSwitch.setAttribute("data-id", studentData.id);
 
-        for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
-            let strPerms = ["Guest", "Student", "Mod", "Teacher"];
-            strPerms = strPerms[permission - 1];
+        // Check if this student is the owner of the class
+        const isOwner = classroomData.owner === studentData.id;
+
+        // If the student is the owner, add the Owner option and disable the dropdown
+        if (isOwner) {
+            const ownerOption = document.createElement("option");
+            ownerOption.value = 5;
+            ownerOption.innerText = "Owner";
+            ownerOption.selected = true;
+            permSwitch.appendChild(ownerOption);
+            permSwitch.disabled = true;
+            permSwitch.style.opacity = "0.6";
+            permSwitch.style.cursor = "not-allowed";
+        } else {
+            // For non-owners, show the regular permission options
+            for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
+                let strPerms = ["Guest", "Student", "Mod", "Teacher"];
+                strPerms = strPerms[permission - 1];
+
+                const option = document.createElement("option");
+                option.value = permission;
+                option.innerText = strPerms;
+                permSwitch.appendChild(option);
+
+                if (studentData.classPermissions == permission) {
+                    permSwitch.value = permission;
+                }
+            }
 
             permSwitch.onchange = (event) => {
                 const newPerm = Number(event.target.value);
                 socket.emit("classPermChange", studentData.id, newPerm);
             };
-
-            const option = document.createElement("option");
-            option.value = permission;
-            option.innerText = strPerms;
-            permSwitch.appendChild(option);
-
-            if (studentData.classPermissions == permission) {
-                permSwitch.value = permission;
-            }
-
-            permDiv.appendChild(permSwitch);
         }
+
+        permDiv.appendChild(permSwitch);
 
         // Add each tag as a button to the tag form
         if (!Array.isArray(classroomData.tags)) classroomData.tags = [];

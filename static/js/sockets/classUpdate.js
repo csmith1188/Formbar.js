@@ -77,7 +77,9 @@ socket.on("classUpdate", (classroomData) => {
             continue;
         }
 
-        if (student.permissions >= 4) continue;
+        // Skip users with teacher permissions or higher, EXCEPT for the owner
+        // The owner should always be visible to other teachers in the panel
+        if (student.classPermissions >= TEACHER_PERMISSIONS && student.id !== classroomData.owner) continue;
         if (student.help.time) student.help.time = new Date(student.help.time);
         if (student.pollRes.time) student.pollRes.time = new Date(student.pollRes.time);
 

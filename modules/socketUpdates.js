@@ -270,6 +270,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         id: classData.id,
         className: classData.className,
         isActive: classData.isActive,
+        owner: classData.owner,
         timer: classData.timer,
         poll: {
             ...classData.poll,
