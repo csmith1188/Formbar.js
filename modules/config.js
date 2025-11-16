@@ -60,15 +60,16 @@ function getConfig() {
     // If there is no .env file, create one from the template
     if (!fs.existsSync(".env")) fs.copyFileSync(".env-template", ".env");
 
-    dbGet("SELECT * FROM digipog_pools WHERE id = 0").then((formbarDevPool) => {
+    // Ensure the Formbar Developer Pool exists in the database
+    dbGet("SELECT * FROM digipog_pools WHERE id = 0").then(async (formbarDevPool) => {
         if (!formbarDevPool) {
-            dbRun("INSERT INTO digipog_pools (id, name, description, amount) VALUES (?, ?, ?, ?)", [
+            await dbRun("INSERT INTO digipog_pools (id, name, description, amount) VALUES (?, ?, ?, ?)", [
                 0,
                 "Formbar Developer Pool",
                 "Formbar Developer pog pool. Accumulates from the 10% tax on digipog transactions.",
                 0,
             ]);
-            dbRun("INSERT INTO digipog_pool_users (id, owner) VALUES (?, ?)", [1, "0"]);
+            await dbRun("INSERT INTO digipog_pool_users (id, owner) VALUES (?, ?)", [1, "0"]);
         }
     });
 
