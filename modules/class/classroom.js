@@ -25,7 +25,6 @@ class Classroom {
         this.owner = owner;
         this.students = {};
         this.sharedPolls = sharedPolls || [];
-        this.excludedRespondents = [];
         this.poll = {
             status: false,
             prompt: "",
@@ -93,7 +92,7 @@ async function getClassUsers(user, key) {
         // Query the database for the users of the class
         let dbClassUsers = await new Promise((resolve, reject) => {
             database.all(
-                "SELECT DISTINCT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE classusers.permissions END AS classPermissions FROM users INNER JOIN classusers ON users.id = classusers.studentId OR users.id = classroom.owner INNER JOIN classroom ON classusers.classId = classroom.id WHERE classroom.key = ?",
+                "SELECT DISTINCT users.id, users.email, users.permissions, CASE WHEN users.id = classroom.owner THEN 5 ELSE COALESCE(classusers.permissions, 1) END AS classPermissions FROM users INNER JOIN classroom ON classroom.key = ? LEFT JOIN classusers ON users.id = classusers.studentId AND classusers.classId = classroom.id WHERE users.id = classroom.owner OR classusers.studentId IS NOT NULL",
                 [key],
                 (err, dbClassUsers) => {
                     try {

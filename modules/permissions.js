@@ -12,7 +12,6 @@ const PAGE_PERMISSIONS = {
     student: { permissions: GUEST_PERMISSIONS, classPage: true },
     virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
     links: { permissions: GUEST_PERMISSIONS, classPage: true },
-    manageclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
     createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
     selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
     managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
