@@ -14,50 +14,55 @@ module.exports = {
                     // Log the IP and session of the request
                     logger.log("info", `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`);
 
-                    // If no API key provided, allow if a session user already exists or it's a digipogs endpoint
-                    if (!req.headers.api) {
-                        if (req.session && req.session.user) {
-                            return next();
+                    // Allow digipogs endpoints without authentication
+                    if (req.path && req.path.startsWith("/digipogs/")) {
+                        return next();
+                    }
+
+                    // If API key is provided, look up the user from it
+                    if (req.headers.api) {
+                        // Get the current user from API key
+                        let user = await getUser({ api: req.headers.api });
+
+                        // If the user is an instance of Error
+                        if (user instanceof Error) {
+                            // Respond with a server error message
+                            res.status(500).json({ error: "There was a server error try again." });
+
+                            // Throw the error
+                            throw user;
                         }
-                        if (req.path && req.path.startsWith("/digipogs/")) {
-                            return next();
+
+                        // If the user has an error property
+                        if (user.error) {
+                            // Log the error
+                            logger.log("info", user);
+
+                            // Respond with the error
+                            res.status(401).json({ error: user.error });
+                            return;
                         }
+
+                        // If the user exists, set the user in the session
+                        if (user) {
+                            req.session.user = user;
+                            req.session.email = user.email;
+                        }
+
+                        // Log the authenticated user
+                        logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
+
+                        // Call the next middleware function
+                        return next();
                     }
 
-                    // Get the current user from API key if provided
-                    let user = await getUser({ api: req.headers.api, email: req.session.email });
-
-                    // If the user is an instance of Error
-                    if (user instanceof Error) {
-                        // Respond with a server error message
-                        res.status(500).json({ error: "There was a server error try again." });
-
-                        // Throw the error
-                        throw user;
+                    // If no API key is provided, then check if session user exists
+                    if (req.session && req.session.user) {
+                        return next();
                     }
 
-                    // If the user has an error property
-                    if (user.error) {
-                        // Log the error
-                        logger.log("info", user);
-
-                        // Respond with the error
-                        res.status(401).json({ error: user.error });
-                        return;
-                    }
-
-                    // If the user exists
-                    // Set the user in the session
-                    if (user) {
-                        req.session.user = user;
-                        req.session.email = user.email;
-                    }
-
-                    // Log the authenticated user
-                    logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
-
-                    // Call the next middleware function
-                    next();
+                    // No API key and no session - unauthorized
+                    res.status(401).json({ error: "Authentication required" });
                 } catch (err) {
                     // Log any errors
                     logger.log("error", err.stack);
@@ -144,7 +149,7 @@ module.exports = {
             loadRoutes("./api");
             app.use("/api", router);
 
-            // Ensure API returns JSON for unknown endpoints
+            // Ensure API returns JSON for unknown endpoints (must be before app.use)
             router.use((req, res) => {
                 res.status(404).json({ error: `The requested endpoint, ${req.originalUrl}, does not exist.` });
             });

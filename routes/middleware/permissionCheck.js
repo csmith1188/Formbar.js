@@ -53,11 +53,6 @@ function hasClassPermission(classPermission) {
 
             // If classroom is active in memory, check from memory
             if (classroom) {
-                // Check if user is the owner first
-                if (classroom.owner === req.session.user.id) {
-                    return next();
-                }
-
                 const user = classroom.students[req.session.user.email];
                 if (!user) {
                     return res.status(401).json({ error: "User not found in this class." });
@@ -74,38 +69,7 @@ function hasClassPermission(classPermission) {
                     res.status(403).json({ message: "Unauthorized" });
                 }
             } else {
-                // Classroom not active, check from database
-                const classData = await dbGet("SELECT * FROM classroom WHERE id = ?", [classId]);
-                if (!classData) {
-                    return res.status(404).json({ error: "Class not found." });
-                }
-
-                // Check if user is the owner
-                if (classData.owner === req.session.user.id) {
-                    return next();
-                }
-
-                // Check user's class permissions from database
-                const userClassPermissions = await dbGet(
-                    "SELECT permissions FROM classUsers WHERE classId = ? AND studentId = ?",
-                    [classId, req.session.user.id]
-                );
-
-                if (!userClassPermissions) {
-                    return res.status(401).json({ error: "User not found in this class." });
-                }
-
-                // Parse class permissions and check against required permission
-                const classPermissions = JSON.parse(classData.permissions);
-                const requiredPermissionLevel = typeof classPermission === 'string'
-                    ? classPermissions[classPermission]
-                    : classPermission;
-
-                if (userClassPermissions.permissions >= requiredPermissionLevel) {
-                    next();
-                } else {
-                    res.status(403).json({ message: "Unauthorized" });
-                }
+                res.status(403).json({ message: "This class is not currently active." });
             }
         } catch (err) {
             logger.log("error", err.stack);
