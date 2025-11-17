@@ -326,7 +326,7 @@ class SocketUpdates {
 
             // Retrieve the permissions that allows a user to access the control panel
             const controlPanelPermissions = Math.min(
-                classData.permissions.controlPolls,
+                classData.permissions.controlPoll,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             );
