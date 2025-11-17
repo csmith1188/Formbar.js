@@ -1761,6 +1761,20 @@ input[type="checkbox"],
 	justify-content: space-between;
 	align-items: center;
 	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.sensitiveInfo p {
+	flex: 1;
+	min-width: 0;
+	word-break: break-all;
+	margin: 0;
+}
+
+.sensitiveInfo > div {
+	display: flex;
+	gap: 10px;
+	flex-shrink: 0;
 }
 
 .revampButton#forgotPassword {

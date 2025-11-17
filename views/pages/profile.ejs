@@ -52,9 +52,9 @@
         <p id='digipogs'><strong>Digipogs:</strong> <%- Math.floor(digipogs) %></p>
         <p id='userId'><strong>ID:</strong> <%- id %></p>
 
+        <% if (isOwnProfile) { %>
         <div class="sensitiveInfo">
-            <p id='apiKey'><strong>API Key:</strong> <%= isOwnProfile ? '████████' : 'Hidden' %></p>
-            <% if (isOwnProfile) { %>
+            <p id='apiKey'><strong>API Key:</strong> ████████</p>
             <div id='apiKeyButtons'>
                 <button class="squareButton hideMobile" style="display: none;" id="copyApiBtn">
                     <img src="/img/icons/clipboard-outline.svg" alt="Copy API Key">
@@ -63,19 +63,17 @@
                     <img src="/img/icons/refresh-outline.svg" alt="Regenerate API Key">
                 </button>
             </div>
-            <% } %>
         </div>
 
         <div class="sensitiveInfo">
-            <p id='pin'><strong>PIN:</strong> <%= isOwnProfile ? (pin ? '████' : 'Not Set') : 'Hidden' %></p>
-            <% if (isOwnProfile) { %>
+            <p id='pin'><strong>PIN:</strong> <%= pin ? '████' : 'Not Set' %></p>
             <div id='pinButtons'>
                 <button id='pinEdit' class="squareButton warningButton" title="<%= pin ? 'Change' : 'Set' %> PIN">
                     <img src="/img/icons/pencil-outline.svg" alt="<%= pin ? 'Change' : 'Set' %> PIN">
                 </button>
             </div>
-            <% } %>
         </div>
+        <% } %>
 
         <div class="pogMeter">
             <p>Pog Meter</p>
@@ -271,7 +269,7 @@
 
         // Auto-copy to clipboard
         navigator.clipboard.writeText(apiKeyValue);
-        alert("✅ New API Key generated and copied to clipboard!\n\n⚠️ IMPORTANT: This is the only time you'll see this key. Save it securely!\n\nKey: " + apiKeyValue);
+        showNotification('API Key regenerated and copied to clipboard! This is the only time you\'ll see this key.', 'success');
     });
 
     socket.on('pinUpdated', (data) => {
