@@ -51,7 +51,18 @@ module.exports = {
             await dbRun(
                 `INSERT INTO users_temp (id, email, password, permissions, API, secret, digipogs, pin, displayName, verified, api_hashed)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-                [user.id, user.email, user.password, user.permissions, hashedAPI, user.secret, user.digipogs, hashedPin, user.displayName, user.verified]
+                [
+                    user.id,
+                    user.email,
+                    user.password,
+                    user.permissions,
+                    hashedAPI,
+                    user.secret,
+                    user.digipogs,
+                    hashedPin,
+                    user.displayName,
+                    user.verified,
+                ]
             );
         }
 
