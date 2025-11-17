@@ -268,8 +268,13 @@
         if (copyBtn) copyBtn.style.display = 'inline-block';
 
         // Auto-copy to clipboard
-        navigator.clipboard.writeText(apiKeyValue);
-        showNotification('API Key regenerated and copied to clipboard! This is the only time you\'ll see this key.', 'success');
+        navigator.clipboard.writeText(apiKeyValue)
+            .then(() => {
+                showNotification('API Key regenerated and copied to clipboard! This is the only time you\'ll see this key.', 'success');
+            })
+            .catch(() => {
+                showNotification('API Key regenerated, but could not be copied to clipboard. Please copy it manually. This is the only time you\'ll see this key.', 'warning');
+            });
     });
 
     socket.on('pinUpdated', (data) => {
