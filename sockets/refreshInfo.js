@@ -50,7 +50,6 @@ module.exports = {
                 }
 
                 // Get the user's current PIN from database
-                const { dbGet } = require("../modules/database");
                 const user = await dbGet("SELECT pin FROM users WHERE id = ?", [userId]);
 
                 // If user has an existing PIN, verify the current PIN

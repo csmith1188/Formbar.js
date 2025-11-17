@@ -30,7 +30,6 @@ module.exports = {
                 pin TEXT,
                 displayName TEXT,
                 verified INTEGER NOT NULL DEFAULT 0,
-                api_hashed INTEGER NOT NULL DEFAULT 1,
                 PRIMARY KEY (id AUTOINCREMENT)
             )`,
             []

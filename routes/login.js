@@ -350,6 +350,9 @@ module.exports = {
                         }
                     }
 
+                    const existingAPIs = (await dbGetAll("SELECT API FROM users")).map((row) => row.API);
+                    const existingSecrets = (await dbGetAll("SELECT secret FROM users")).map((row) => row.secret);
+
                     // Generate unique API key
                     do {
                         newAPI = crypto.randomBytes(32).toString("hex");
