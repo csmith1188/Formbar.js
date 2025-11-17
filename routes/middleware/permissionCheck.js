@@ -50,12 +50,20 @@ function hasClassPermission(classPermission) {
         try {
             const classId = req.params.id;
             const classroom = classInformation.classrooms[classId];
+
+            // If classroom is active in memory, check from memory
             if (classroom) {
                 const user = classroom.students[req.session.user.email];
                 if (!user) {
                     return res.status(401).json({ error: "User not found in this class." });
                 }
-                if (user.classPermissions >= classPermission) {
+
+                // Retrieve the permission level from the classroom's permissions
+                const requiredPermissionLevel = typeof classPermission === 'string'
+                    ? classroom.permissions[classPermission]
+                    : classPermission;
+
+                if (user.classPermissions >= requiredPermissionLevel) {
                     next();
                 } else {
                     res.status(403).json({ message: "Unauthorized" });
