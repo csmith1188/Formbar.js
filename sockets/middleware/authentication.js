@@ -39,7 +39,7 @@ module.exports = {
                                 return;
                             }
 
-                            socket.request.session.api = api;
+                            socket.request.session.api = matchedUser.API;
                             socket.request.session.userId = matchedUser.id;
                             socket.request.session.email = matchedUser.email;
                             socket.request.session.classId = null;

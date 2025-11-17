@@ -5,7 +5,7 @@ const { userSockets } = require("../../modules/socketUpdates");
 const { Student } = require("../../modules/student");
 const { getUserClass } = require("../../modules/user/user");
 const { classKickStudent } = require("../../modules/class/kick");
-const { compare } = require("../../modules/crypto");
+const { compare, hash } = require("../../modules/crypto");
 
 module.exports = {
     order: 10,
@@ -46,12 +46,13 @@ module.exports = {
                                     false
                                 );
                             }
-                            socket.request.session.api = api;
+
+                            socket.request.session.api = userData.API;
                             socket.request.session.userId = userData.id;
                             socket.request.session.email = userData.email;
                             socket.request.session.classId = getUserClass(userData.email);
 
-                            socket.join(`api-${socket.request.session.api}`);
+                            socket.join(`api-${userData.API}`);
                             socket.join(`class-${socket.request.session.classId}`);
                             socket.emit("setClass", socket.request.session.classId);
                             socket.on("disconnect", () => {

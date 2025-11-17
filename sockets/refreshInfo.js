@@ -1,4 +1,4 @@
-const { dbRun } = require("../modules/database");
+const { dbGet, dbRun } = require("../modules/database");
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");
 const { compare, hash } = require("../modules/crypto");
