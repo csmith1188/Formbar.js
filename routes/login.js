@@ -55,13 +55,12 @@ module.exports = {
                     }
 
                     try {
-                        // Hash the API key and secret before storing
+                        // Hash the API key before storing (but NOT the secret - it's needed for password resets)
                         const hashedAPI = await hash(user.newAPI);
-                        const hashedSecret = await hash(user.newSecret);
 
                         await dbRun(
                             "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                            [user.email, user.hashedPassword, user.permissions, hashedAPI, hashedSecret, user.displayName, 1]
+                            [user.email, user.hashedPassword, user.permissions, hashedAPI, user.newSecret, user.displayName, 1]
                         );
                         logger.log("verbose", "[get /login] Added user to database");
 
@@ -314,11 +313,9 @@ module.exports = {
 
                     logger.log("verbose", "[post /login] Creating new user");
 
-                    // Get all existing users and check for existing emails, APIs, and secrets
-                    const users = await dbGetAll("SELECT API, secret, email, displayName FROM users");
+                    // Get all existing users and check for existing emails
+                    const users = await dbGetAll("SELECT email, displayName FROM users");
 
-                    let existingAPIs = [];
-                    let existingSecrets = [];
                     let newAPI;
                     let newSecret;
 
@@ -327,10 +324,8 @@ module.exports = {
                         userPermission = MANAGER_PERMISSIONS;
                     }
 
-                    // Check if the email already exists and store existing APIs and secrets
+                    // Check if the email or display name already exists
                     for (const dbUser of users) {
-                        existingAPIs.push(dbUser.API);
-                        existingSecrets.push(dbUser.secret);
                         if (dbUser.email === user.email) {
                             logger.log("verbose", "[post /login] User with that email already exists");
                             res.render("pages/message", {
@@ -370,12 +365,11 @@ module.exports = {
 
                     // If email is not enabled in the settings, create the user immediately without email verification
                     if (!settings.emailEnabled) {
-                        // Hash the API key and secret before storing
+                        // Hash the API key before storing
                         const hashedAPI = await hash(newAPI);
-                        const hashedSecret = await hash(newSecret);
 
                         user.newAPI = hashedAPI;
-                        user.newSecret = hashedSecret;
+                        user.newSecret = newSecret;
                         user.hashedPassword = hashedPassword;
                         user.permissions = userPermission;
                         database.run(
