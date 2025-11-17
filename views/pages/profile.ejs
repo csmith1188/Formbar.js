@@ -124,7 +124,7 @@
             return;
         }
 
-        if (!isFinite(newPin)) {
+        if (!/^\d+$/.test(newPin)) {
             showNotification("PIN must only contain numbers.");
             return;
         }
