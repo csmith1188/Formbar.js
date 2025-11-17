@@ -1,5 +1,4 @@
 const sqlite3 = require("sqlite3");
-const { logger } = require("./logger");
 const database = getDatabase();
 
 function getDatabase() {

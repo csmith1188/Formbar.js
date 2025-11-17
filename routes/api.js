@@ -146,7 +146,7 @@ module.exports = {
 
             // Ensure API returns JSON for unknown endpoints
             router.use((req, res) => {
-                res.status(404).json({ error: "API not found." });
+                res.status(404).json({ error: `The requested endpoint, ${req.originalUrl}, does not exist.` });
             });
         } catch (err) {
             logger.log("error", err.stack);
