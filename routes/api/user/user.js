@@ -15,6 +15,11 @@ module.exports = {
                 let user = Object.values(classInformation.users).find((user) => user.id == userId);
                 if (!user) {
                     user = await dbGet("SELECT * FROM users WHERE id=?", userId);
+                } else {
+                    // Load missing digipogs and verified values from the database
+                    const {digipogs, verified} = await dbGet("SELECT digipogs, verified FROM users WHERE id=?", userId) || {};
+                    user.digipogs = digipogs;
+                    user.verified = verified;
                 }
 
                 // Only include the email if the requester is the user themselves or a manager
