@@ -16,6 +16,7 @@ async function setTags(tags, userSession) {
         tags = tags
             .filter((tag) => typeof tag === "string")
             .map((tag) => tag.trim())
+            .map((tag) => tag.replace(/[\r\n\t]/g, "")) // Remove new lines, carriage returns, and tabs
             .filter((tag) => tag !== "")
             .sort();
         if (!tags.includes("Offline")) tags.push("Offline");
@@ -35,18 +36,14 @@ async function setTags(tags, userSession) {
             student.tags = studentTags;
 
             try {
-                await dbRun("UPDATE classusers SET tags = ? WHERE classId = ? AND studentId = ?", [studentTags.join(","), classId, student.id]);
+                await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [studentTags.join(","), student.id, classId]);
             } catch (err) {
                 logger.log("error", err.stack);
             }
         }
 
         // Persist classroom tags by id
-        try {
-            await dbRun("UPDATE classroom SET tags = ? WHERE id = ?", [tags.toString(), classId]);
-        } catch (err) {
-            logger.log("error", err.stack);
-        }
+        await dbRun("UPDATE classroom SET tags = ? WHERE id = ?", [tags.toString(), classId]);
     } catch (err) {
         logger.log("error", err.stack);
     }
@@ -65,6 +62,7 @@ async function saveTags(studentId, tags, userSession) {
         let normalized = tags
             .filter((tag) => typeof tag === "string")
             .map((tag) => tag.trim())
+            .map((tag) => tag.replace(/[\r\n\t]/g, "")) // Remove new lines, carriage returns, and tabs
             .filter((tag) => tag !== "");
 
         if (isActiveInClass) {

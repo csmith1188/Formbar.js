@@ -37,9 +37,9 @@ class Student {
  * @returns {Promise|Object} A promise that resolves to the class users or an error object.
  */
 async function getStudentsInClass(classId) {
-    // Grab students associated with the class, including tags
+    // Grab students associated with the class
     const studentIdsAndPermissions = await new Promise((resolve, reject) => {
-        database.all("SELECT studentId, permissions, tags FROM classusers WHERE classId = ?", [classId], (err, rows) => {
+        database.all("SELECT studentId, permissions FROM classusers WHERE classId = ?", [classId], (err, rows) => {
             if (err) {
                 logger.log("error", err.stack);
                 return reject(err);
@@ -48,7 +48,6 @@ async function getStudentsInClass(classId) {
             const studentIdsAndPermissions = rows.map((row) => ({
                 id: row.studentId,
                 permissions: row.permissions,
-                tags: row.tags,
             }));
 
             resolve(studentIdsAndPermissions);
@@ -77,7 +76,7 @@ async function getStudentsInClass(classId) {
     const students = {};
     for (const email in studentsData) {
         const userData = studentsData[email];
-        const studentInfo = studentIdsAndPermissions.find((student) => student.id === userData.id);
+        const studentPermissions = studentIdsAndPermissions.find((student) => student.id === userData.id).permissions;
         students[email] = new Student(
             userData.email,
             userData.id,
@@ -85,12 +84,12 @@ async function getStudentsInClass(classId) {
             userData.API,
             [],
             [],
-            studentInfo.tags ? studentInfo.tags.split(",") : [],
+            userData.tags ? userData.tags.split(",") : [],
             (displayName = userData.displayName),
             false
         );
 
-        students[email].classPermissions = studentInfo.permissions;
+        students[email].classPermissions = studentPermissions;
     }
 
     return students;

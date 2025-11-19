@@ -251,29 +251,29 @@ function responseAmountChange(responseAmount = null) {
 
         responseDiv.appendChild(colorPickerDiv);
 
-        let correctAnswer = document.createElement('input')
-		correctAnswer.type = 'checkbox'
-		correctAnswer.className = 'correctAnswer revampButton'
-		correctAnswer.name = 'correctAnswer revampButton'
-		correctAnswer.title = 'Mark as Correct Answer'
+        let correctAnswer = document.createElement("input");
+        correctAnswer.type = "checkbox";
+        correctAnswer.className = "correctAnswer revampButton";
+        correctAnswer.name = "correctAnswer revampButton";
+        correctAnswer.title = "Mark as Correct Answer";
 
-		// Only one correct answer for non-multiple response polls
-		if (!document.getElementById('multiRes').checked) {
-			correctAnswer.onclick = () => {
-				let correctAnswers = document.getElementsByClassName('correctAnswer')
-				for (let j = 0; j < correctAnswers.length; j++) {
-					if (j != i) {
-						correctAnswers[j].checked = false
-						pollResponses[j].correct = false
-					}
-				}
-			}
-		}
+        // Only one correct answer for non-multiple response polls
+        if (!document.getElementById("multiRes").checked) {
+            correctAnswer.onclick = () => {
+                let correctAnswers = document.getElementsByClassName("correctAnswer");
+                for (let j = 0; j < correctAnswers.length; j++) {
+                    if (j != i) {
+                        correctAnswers[j].checked = false;
+                        pollResponses[j].correct = false;
+                    }
+                }
+            };
+        }
 
-		correctAnswer.onchange = (event) => {
-			pollResponses[i].correct = event.target.checked;
-		}
-		responseDiv.appendChild(correctAnswer)
+        correctAnswer.onchange = (event) => {
+            pollResponses[i].correct = event.target.checked;
+        };
+        responseDiv.appendChild(correctAnswer);
 
         let answerName = document.createElement("input");
         answerName.type = "text";
@@ -467,7 +467,7 @@ function startPoll(customPollId) {
             answer: pollResponse.answer ? pollResponse.answer : pollResponse.defaultAnswer,
             weight: pollResponse.weight,
             color: pollResponse.color ? pollResponse.color : pollResponse.defaultColor,
-            correct: pollResponse.correct || false
+            correct: pollResponse.correct || false,
         };
         pollAnswer.answer = pollAnswer.answer.replaceAll('"', "“");
         pollAnswer.answer = pollAnswer.answer.replaceAll(",", "‚");
@@ -476,6 +476,8 @@ function startPoll(customPollId) {
     let multiRes = document.getElementById("multiRes");
     let selectTagForm = document.getElementsByName("selectTagForm");
     let allCheckboxes = document.getElementsByName("studentCheckbox");
+    let userExcludedRespondents = [];
+
     for (let eachTagForm of selectTagForm[0]) {
         if (eachTagForm.checked) {
             //for each tag checked on the teacher's side to determine who can answer the poll, add it to the userTags array
@@ -487,6 +489,10 @@ function startPoll(customPollId) {
         if (eachBox.checked && !eachBox.indeterminate) {
             let boxId = Number(eachBox.id.split("_")[1]);
             userBoxesChecked.push(boxId);
+        } else if (!eachBox.indeterminate) {
+            // Checkbox is unchecked, so this student is excluded from the poll
+            let boxId = Number(eachBox.id.split("_")[1]);
+            userExcludedRespondents.push(boxId);
         }
         if (eachBox.indeterminate) {
             let boxId = Number(eachBox.id.split("_")[1]);
@@ -496,6 +502,7 @@ function startPoll(customPollId) {
 
     userTags.sort();
     userBoxesChecked.sort();
+    userExcludedRespondents.sort();
     userIndeterminate.sort();
     userBreak.sort();
 
@@ -527,6 +534,7 @@ function startPoll(customPollId) {
             weight: customPoll.weight,
             tags: userTags,
             indeterminate: customPoll.indeterminate,
+            excludedRespondents: userExcludedRespondents,
         });
     } else {
         socket.emit("startPoll", {
@@ -539,6 +547,7 @@ function startPoll(customPollId) {
             weight: 1,
             tags: userTags,
             indeterminate: userIndeterminate,
+            excludedRespondents: userExcludedRespondents,
         });
     }
     clearPoll.style.display = "block";

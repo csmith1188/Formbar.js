@@ -91,18 +91,24 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  * @param {string} [classId=null] - The class code to set.
  */
 async function setClassOfApiSockets(api, classId) {
-    logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
+    try {
+        logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
 
-    const sockets = await io.in(`api-${api}`).fetchSockets();
-    for (let socket of sockets) {
-        socket.leave(`class-${socket.request.session.classId}`);
+        const sockets = await io.in(`api-${api}`).fetchSockets();
+        for (let socket of sockets) {
+            // Ensure the socket has a session before continuing
+            if (!socket.request.session) continue;
 
-        socket.request.session.classId = classId;
-        socket.request.session.save();
+            socket.leave(`class-${socket.request.session.classId}`);
+            socket.request.session.classId = classId;
+            socket.request.session.save();
 
-        // Emit the setClass event to the socket
-        socket.join(`class-${classId}`);
-        socket.emit("setClass", socket.request.session.classId);
+            // Emit the setClass event to the socket
+            socket.join(`class-${classId}`);
+            socket.emit("setClass", classId);
+        }
+    } catch (err) {
+        logger.log("error", err.stack);
     }
 }
 
@@ -194,18 +200,16 @@ function sortStudentsInPoll(classData) {
 
 function getPollResponseInformation(classData) {
     let totalResponses = 0;
-    let responses = {};
     let { totalStudentsIncluded, totalStudentsExcluded } = sortStudentsInPoll(classData);
 
-    // Count the number of responses for each poll option
+    // Add response counts to each response object in the responses array
     if (classData.poll.responses.length > 0) {
-        for (const resValue of classData.poll.responses) {
-            responses[resValue.answer] = {
-                ...resValue,
-                responses: 0,
-            };
+        // Initialize response count to 0 for each response option
+        for (const response of classData.poll.responses) {
+            response.responses = 0;
         }
 
+        // Count responses from non-excluded students
         for (const studentData of Object.values(classData.students)) {
             if (studentData.break === true || totalStudentsExcluded.includes(studentData.email)) {
                 continue;
@@ -220,18 +224,19 @@ function getPollResponseInformation(classData) {
                 totalResponses++;
             }
 
+            // Add to the count for each response option
             if (Array.isArray(studentData.pollRes.buttonRes)) {
-                for (let response of studentData.pollRes.buttonRes) {
-                    if (studentData && Object.keys(responses).includes(response)) {
-                        responses[response].responses++;
+                for (let res of studentData.pollRes.buttonRes) {
+                    const responseObj = classData.poll.responses.find((r) => r.answer === res);
+                    if (responseObj) {
+                        responseObj.responses++;
                     }
                 }
-            } else if (
-                studentData &&
-                Object.keys(responses).includes(studentData.pollRes.buttonRes) &&
-                !totalStudentsExcluded.includes(studentData.email)
-            ) {
-                responses[studentData.pollRes.buttonRes].responses++;
+            } else if (studentData.pollRes.buttonRes) {
+                const responseObj = classData.poll.responses.find((r) => r.answer === studentData.pollRes.buttonRes);
+                if (responseObj) {
+                    responseObj.responses++;
+                }
             }
         }
     }
@@ -257,7 +262,6 @@ function getPollResponseInformation(classData) {
     return {
         totalResponses,
         totalResponders: totalStudentsIncluded.length,
-        pollResponses: responses,
     };
 }
 
@@ -266,9 +270,11 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         id: classData.id,
         className: classData.className,
         isActive: classData.isActive,
+        owner: classData.owner,
         timer: classData.timer,
-        poll: classData.poll,
-        excludedRespondents: hasTeacherPermissions ? classData.excludedRespondents : undefined,
+        poll: {
+            ...classData.poll,
+        },
         permissions: hasTeacherPermissions ? classData.permissions : undefined,
         key: hasTeacherPermissions ? classData.key : undefined,
         tags: hasTeacherPermissions ? classData.tags : undefined,
@@ -320,7 +326,7 @@ class SocketUpdates {
 
             // Retrieve the permissions that allows a user to access the control panel
             const controlPanelPermissions = Math.min(
-                classData.permissions.controlPolls,
+                classData.permissions.controlPoll,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             );
@@ -347,10 +353,9 @@ class SocketUpdates {
                 hasTeacherPermissions = false;
             }
 
-            const { totalResponses, totalResponders, pollResponses } = getPollResponseInformation(classData);
+            const { totalResponses, totalResponders } = getPollResponseInformation(classData);
             classData.poll.totalResponses = totalResponses;
             classData.poll.totalResponders = totalResponders;
-            classData.poll.responseCounts = pollResponses;
 
             if (options.global) {
                 const controlPanelData = structuredClone(getClassUpdateData(classData, true));

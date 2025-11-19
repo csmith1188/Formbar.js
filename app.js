@@ -83,8 +83,22 @@ setInterval(() => {
         const userSockets = lastActivities[email];
         for (const [socketId, activity] of Object.entries(userSockets)) {
             if (currentTime - activity.time > INACTIVITY_LIMIT) {
-                logout(activity.socket); // Log the user out
-                delete lastActivities[email]; // Remove the user from the inactivity check
+                // Check if this is an API socket - API sockets should not timeout
+                let isApiSocket = false;
+                if (activity.socket && activity.socket.rooms) {
+                    for (const room of activity.socket.rooms) {
+                        if (room.startsWith("api-")) {
+                            isApiSocket = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Only logout non-API sockets
+                if (!isApiSocket) {
+                    logout(activity.socket); // Log the user out
+                    delete lastActivities[email]; // Remove the user from the inactivity check
+                }
             }
         }
     }
