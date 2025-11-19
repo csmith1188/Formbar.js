@@ -1,7 +1,7 @@
-const { dbGet, dbRun } = require("../modules/database");
+const { dbRun } = require("../modules/database");
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");
-const { compare, hash } = require("../modules/crypto");
+const { hash } = require("../modules/crypto");
 const crypto = require("crypto");
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
             try {
                 // Log the request information
                 logger.log("info", `[refreshPin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                const { currentPin, newPin } = data;
+                const { newPin } = data;
 
                 // Check if userId is null or undefined
                 const userId = socket.request.session.userId;
@@ -47,24 +47,6 @@ module.exports = {
                     // Validate the new PIN. Must be 4-6 digits, numeric only
                     logger.log("error", "Invalid PIN format");
                     return socket.emit("error", `Error Number ${logNumbers.error}: Invalid PIN format. PIN must be 4-6 digits.`);
-                }
-
-                // Get the user's current PIN from database
-                const user = await dbGet("SELECT pin FROM users WHERE id = ?", [userId]);
-
-                // If user has an existing PIN, verify the current PIN
-                if (user.pin) {
-                    if (!currentPin) {
-                        logger.log("error", "Current PIN required but not provided");
-                        return socket.emit("error", `Current PIN is required.`);
-                    }
-
-                    // Compare the provided current PIN with the hashed PIN in database
-                    const isValid = await compare(currentPin, user.pin);
-                    if (!isValid) {
-                        logger.log("error", "Invalid current PIN provided");
-                        return socket.emit("error", `Current PIN is incorrect.`);
-                    }
                 }
 
                 // Hash the new PIN then store it in the database

@@ -16,13 +16,6 @@
         <div class="revampDiv">
             <h1 id="pinDialogTitle"><%= pin ? 'Change PIN' : 'Set PIN' %></h1>
             <div id="editPinForm">
-                <% if (pin) { %>
-                <div class="editPinInputs" id="currentPinField">
-                    <label for="currentPin">Current PIN:</label>
-                    <input type="password" id="currentPin" name="currentPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required autocomplete="off">
-                </div>
-                <% } %>
-
                 <div class="editPinInputs">
                     <label for="newPin">New PIN:</label>
                     <input type="password" id="newPin" name="newPin" class="revampButton revampWithText" pattern="\d{6}" maxlength="6" minlength="4" required autocomplete="off">
@@ -108,16 +101,8 @@
     }
 
     function updatePin() {
-        const currentPinField = document.getElementById('currentPin');
-        const currentPin = currentPinField ? currentPinField.value : null;
         const newPin = document.getElementById('newPin').value;
         const confirmNewPin = document.getElementById('confirmNewPin').value;
-
-        // Check if current PIN field exists but is empty
-        if (currentPinField && !currentPin) {
-            showNotification("Current PIN is required.");
-            return;
-        }
 
         if (newPin !== confirmNewPin) {
             showNotification("New PIN and Confirm New PIN do not match.");
@@ -134,11 +119,10 @@
             return;
         }
 
-        // Send both currentPin and newPin to server for verification
-        socket.emit('refreshPin', { currentPin, newPin });
+        // Send newPin to server for verification
+        socket.emit('refreshPin', { newPin });
 
         // Clear input fields
-        if (currentPinField) currentPinField.value = '';
         document.getElementById('newPin').value = '';
         document.getElementById('confirmNewPin').value = '';
 
@@ -291,20 +275,6 @@
             const pinDialogTitle = document.getElementById('pinDialogTitle');
             if (pinDialogTitle) {
                 pinDialogTitle.textContent = 'Change PIN';
-            }
-
-            // If current PIN field doesn't exist, we need to add it for next time
-            const currentPinField = document.getElementById('currentPinField');
-            if (!currentPinField) {
-                const editPinForm = document.getElementById('editPinForm');
-                const newPinField = editPinForm.querySelector('div:first-child');
-                const currentPinHTML = `
-                    <div class="editPinInputs" id="currentPinField">
-                        <label for="currentPin">Current PIN:</label>
-                        <input type="password" id="currentPin" name="currentPin" class="revampButton revampWithText" pattern="\\d{6}" maxlength="6" minlength="4" required autocomplete="off">
-                    </div>
-                `;
-                newPinField.insertAdjacentHTML('beforebegin', currentPinHTML);
             }
         }
     });
