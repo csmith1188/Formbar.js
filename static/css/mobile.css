@@ -750,8 +750,8 @@
         min-height: 30px;
     }
 
-    div.tabContent .headerText {
-        color: white;
+    div#responses div.response * {
+        height: 44px !important;
     }
 
     div.helpInfo > p {

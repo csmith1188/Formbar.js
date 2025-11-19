@@ -89,15 +89,13 @@
 
 	--button-hover-scale: 1.025;
 	
-	--fullViewportWidth: 100vw;
-	--fullViewportHeight: 100vh;
+	--fullViewportWidth: 100%;
+	--fullViewportHeight: 100%;
 }
 
-@supports (width: 100dvw) and (height: 100dvh) {
-	:root {
-		--fullViewportWidth: 100dvw;
-		--fullViewportHeight: 100dvh;
-	}
+html {
+	height: 100%;
+	width: 100%;
 }
 
 body {
@@ -119,6 +117,10 @@ h1, h2, h3, h4, h5, h6 {
 
 p {
 	color: var(--color-black);
+}
+
+input.inputtedTime::placeholder {
+	color: white;
 }
 
 .messageBody {
@@ -2639,7 +2641,6 @@ button.start-custom-poll {
 
 #bannedStudentsMenu .revampDiv {
 	margin: 90px 12px;
-	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
 	padding-bottom: 16px;
