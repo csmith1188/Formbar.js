@@ -27,7 +27,7 @@ module.exports = {
                             // Compare the provided API key with each user's hashed API key
                             let matchedUser = null;
                             for (const user of users) {
-                                if (user.API && await compare(api, user.API)) {
+                                if (user.API && (await compare(api, user.API))) {
                                     matchedUser = user;
                                     break;
                                 }

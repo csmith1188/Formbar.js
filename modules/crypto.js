@@ -15,14 +15,14 @@ const saltRounds = parseInt(process.env.SALT_ROUNDS, 10) || 10;
 const hash = (text) => {
     return new Promise((resolve, reject) => {
         // Validate that text is a string
-        if (typeof text !== 'string') {
-            reject(new Error('Text to hash must be a string'));
+        if (typeof text !== "string") {
+            reject(new Error("Text to hash must be a string"));
             return;
         }
 
         // Validate that text is not empty
         if (!text) {
-            reject(new Error('Text to hash must be provided'));
+            reject(new Error("Text to hash must be provided"));
             return;
         }
 
@@ -51,14 +51,14 @@ const hash = (text) => {
 const compare = (text, hash) => {
     return new Promise((resolve, reject) => {
         // Validate that both text and hash are strings
-        if (typeof text !== 'string' || typeof hash !== 'string') {
-            reject(new Error('Both text and hash must be strings'));
+        if (typeof text !== "string" || typeof hash !== "string") {
+            reject(new Error("Both text and hash must be strings"));
             return;
         }
 
         // Validate that neither text nor hash is null or undefined
         if (!text || !hash) {
-            reject(new Error('Both text and hash must be provided'));
+            reject(new Error("Both text and hash must be provided"));
             return;
         }
 

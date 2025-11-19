@@ -91,7 +91,7 @@ async function transferDigipogs(transferData) {
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
         }
-        
+
         // Check if user has a PIN set
         if (!fromUser.pin) {
             return { success: false, message: "User does not have a PIN set." };
