@@ -452,8 +452,8 @@
         position: absolute;
         background: #000a;
         backdrop-filter: blur(10px);
-        height: var(--fullViewportWidth);
-        width: var(--fullViewportHeight);
+        height: var(--fullViewportHeight);
+        width: var(--fullViewportWidth);
         left: 0;
         top: 0;
         padding: 80px 10% 20px 10%;
