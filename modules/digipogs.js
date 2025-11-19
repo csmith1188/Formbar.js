@@ -2,6 +2,7 @@ const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
 const { classInformation } = require("./class/classroom");
+const { compare } = require("./crypto");
 
 async function awardDigipogs(awardData, session) {
     try {
@@ -89,8 +90,16 @@ async function transferDigipogs(transferData) {
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
         if (!fromUser) {
             return { success: false, message: "Sender account not found." };
-            // Validate PIN and funds
-        } else if (fromUser.pin != pin) {
+        }
+
+        // Check if user has a PIN set
+        if (!fromUser.pin) {
+            return { success: false, message: "User does not have a PIN set." };
+        }
+
+        // Validate PIN and funds
+        const isPinValid = await compare(String(pin), fromUser.pin);
+        if (!isPinValid) {
             return { success: false, message: "Invalid PIN." };
         } else if (fromUser.digipogs < amount) {
             return { success: false, message: "Insufficient funds." };

@@ -55,9 +55,12 @@ module.exports = {
                     }
 
                     try {
+                        // Hash the API key before storing (but NOT the secret - it's needed for password resets)
+                        const hashedAPI = await hash(user.newAPI);
+
                         await dbRun(
                             "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                            [user.email, user.hashedPassword, user.permissions, user.newAPI, user.newSecret, user.displayName, 1]
+                            [user.email, user.hashedPassword, user.permissions, hashedAPI, user.newSecret, user.displayName, 1]
                         );
                         logger.log("verbose", "[get /login] Added user to database");
 
@@ -164,7 +167,7 @@ module.exports = {
 
                                     for (const temp of tempUsers) {
                                         const decoded = jwt.decode(temp.token);
-                                        if (decoded && decoded.email === user.email) {
+                                        if (decoded && decoded.email === user.email && decoded.hashedPassword) {
                                             // Verify password matches
                                             const passwordMatches = await compare(user.password, decoded.hashedPassword);
                                             if (passwordMatches) {
@@ -194,6 +197,19 @@ module.exports = {
                                         googleOauthEnabled: settings.googleOauthEnabled,
                                         route: "login",
                                         errorMessage: "No user found with that email.",
+                                    });
+                                    return;
+                                }
+
+                                // Check if the user has a password set
+                                if (!userData.password) {
+                                    logger.log("verbose", "[post /login] User does not have a password set");
+                                    res.render("pages/login", {
+                                        title: "Login",
+                                        redirectURL: undefined,
+                                        googleOauthEnabled: settings.googleOauthEnabled,
+                                        route: "login",
+                                        errorMessage: "This account does not have a password set.",
                                     });
                                     return;
                                 }
@@ -310,11 +326,9 @@ module.exports = {
 
                     logger.log("verbose", "[post /login] Creating new user");
 
-                    // Get all existing users and check for existing emails, APIs, and secrets
-                    const users = await dbGetAll("SELECT API, secret, email, displayName FROM users");
+                    // Get all existing users and check for existing emails
+                    const users = await dbGetAll("SELECT email, displayName FROM users");
 
-                    let existingAPIs = [];
-                    let existingSecrets = [];
                     let newAPI;
                     let newSecret;
 
@@ -323,10 +337,8 @@ module.exports = {
                         userPermission = MANAGER_PERMISSIONS;
                     }
 
-                    // Check if the email already exists and store existing APIs and secrets
+                    // Check if the email or display name already exists
                     for (const dbUser of users) {
-                        existingAPIs.push(dbUser.API);
-                        existingSecrets.push(dbUser.secret);
                         if (dbUser.email === user.email) {
                             logger.log("verbose", "[post /login] User with that email already exists");
                             res.render("pages/message", {
@@ -339,7 +351,7 @@ module.exports = {
                             });
                             return;
                         }
-                        
+
                         // Check if the display name already exists in the database
                         if (dbUser.displayName.toLowerCase() === user.displayName.toLowerCase()) {
                             logger.log("verbose", "[post /login] User with that display name already exists");
@@ -350,6 +362,9 @@ module.exports = {
                             return;
                         }
                     }
+
+                    const existingAPIs = (await dbGetAll("SELECT API FROM users")).map((row) => row.API);
+                    const existingSecrets = (await dbGetAll("SELECT secret FROM users")).map((row) => row.secret);
 
                     // Generate unique API key
                     do {
@@ -366,7 +381,10 @@ module.exports = {
 
                     // If email is not enabled in the settings, create the user immediately without email verification
                     if (!settings.emailEnabled) {
-                        user.newAPI = newAPI;
+                        // Hash the API key before storing
+                        const hashedAPI = await hash(newAPI);
+
+                        user.newAPI = hashedAPI;
                         user.newSecret = newSecret;
                         user.hashedPassword = hashedPassword;
                         user.permissions = userPermission;

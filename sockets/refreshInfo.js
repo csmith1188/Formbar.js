@@ -1,6 +1,7 @@
-const { dbRun, database } = require("../modules/database");
+const { dbRun } = require("../modules/database");
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");
+const { hash } = require("../modules/crypto");
 const crypto = require("crypto");
 
 module.exports = {
@@ -17,14 +18,12 @@ module.exports = {
                     return socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
                 }
 
-                // Generate a new API key
+                // Generate a new API key and hash it before storing it in the database
                 let newAPI = crypto.randomBytes(32).toString("hex");
-                socket.request.session.API = newAPI;
+                const hashedAPI = await hash(newAPI);
+                await dbRun("UPDATE users SET API = ? WHERE id = ?", [hashedAPI, id]);
 
-                // Generate a new API key and update the database
-                await dbRun("UPDATE users SET API = ? WHERE id = ?", [newAPI, id]);
-
-                // Log the successful API key update and emit the key update event
+                // Log the successful API key update and emit the plaintext key (one-time view)
                 logger.log("info", `[apiKeyUpdated] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
                 socket.emit("apiKeyUpdated", newAPI);
             } catch (err) {
@@ -33,10 +32,11 @@ module.exports = {
             }
         });
 
-        socket.on("refreshPin", async (newPin) => {
+        socket.on("refreshPin", async (data) => {
             try {
                 // Log the request information
                 logger.log("info", `[refreshPin] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                const { newPin } = data;
 
                 // Check if userId is null or undefined
                 const userId = socket.request.session.userId;
@@ -49,12 +49,13 @@ module.exports = {
                     return socket.emit("error", `Error Number ${logNumbers.error}: Invalid PIN format. PIN must be 4-6 digits.`);
                 }
 
-                // Update the PIN in the database
-                await dbRun("UPDATE users SET pin = ? WHERE id = ?", [newPin, userId]);
+                // Hash the new PIN then store it in the database
+                const hashedPin = await hash(String(newPin));
+                await dbRun("UPDATE users SET pin = ? WHERE id = ?", [hashedPin, userId]);
 
-                // Log the successful PIN update and emit the PIN update event
+                // Log the successful PIN update and emit success
                 logger.log("info", `[pinUpdated] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                socket.emit("pinUpdated", newPin);
+                socket.emit("pinUpdated", { success: true });
             } catch (err) {
                 logger.log("error", err.stack);
                 socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
