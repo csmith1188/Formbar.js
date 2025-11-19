@@ -50,7 +50,7 @@ module.exports = {
                 }
 
                 // Hash the new PIN then store it in the database
-                const hashedPin = await hash(newPin);
+                const hashedPin = await hash(String(newPin));
                 await dbRun("UPDATE users SET pin = ? WHERE id = ?", [hashedPin, userId]);
 
                 // Log the successful PIN update and emit success

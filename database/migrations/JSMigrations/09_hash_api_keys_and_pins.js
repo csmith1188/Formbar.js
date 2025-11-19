@@ -40,7 +40,7 @@ module.exports = {
             // Hash the API key
             const hashedAPI = await hash(user.API);
 
-            // Hash the PIN if it exists (convert to string first)
+            // Hash the PIN if it exists
             let hashedPin = null;
             if (user.pin) {
                 hashedPin = await hash(user.pin.toString());
@@ -48,8 +48,8 @@ module.exports = {
 
             // Insert the user into the new table with hashed values
             await dbRun(
-                `INSERT INTO users_temp (id, email, password, permissions, API, secret, digipogs, pin, displayName, verified, api_hashed)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                `INSERT INTO users_temp (id, email, password, permissions, API, secret, digipogs, pin, displayName, verified)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     user.id,
                     user.email,

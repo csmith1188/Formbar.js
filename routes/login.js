@@ -167,7 +167,7 @@ module.exports = {
 
                                     for (const temp of tempUsers) {
                                         const decoded = jwt.decode(temp.token);
-                                        if (decoded && decoded.email === user.email) {
+                                        if (decoded && decoded.email === user.email && decoded.hashedPassword) {
                                             // Verify password matches
                                             const passwordMatches = await compare(user.password, decoded.hashedPassword);
                                             if (passwordMatches) {
@@ -197,6 +197,19 @@ module.exports = {
                                         googleOauthEnabled: settings.googleOauthEnabled,
                                         route: "login",
                                         errorMessage: "No user found with that email.",
+                                    });
+                                    return;
+                                }
+
+                                // Check if the user has a password set
+                                if (!userData.password) {
+                                    logger.log("verbose", "[post /login] User does not have a password set");
+                                    res.render("pages/login", {
+                                        title: "Login",
+                                        redirectURL: undefined,
+                                        googleOauthEnabled: settings.googleOauthEnabled,
+                                        route: "login",
+                                        errorMessage: "This account does not have a password set.",
                                     });
                                     return;
                                 }
