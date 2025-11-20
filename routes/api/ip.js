@@ -15,7 +15,8 @@ module.exports = {
                 const ipMode = req.params.type;
                 if (ipMode !== "whitelist" && ipMode !== "blacklist") return res.status(400).json({ error: "Invalid type" });
 
-                const rows = await dbGetAll(`SELECT id, ip FROM ip_${ipMode}`);
+                const isWhitelist = ipMode === "whitelist" ? 1 : 0;
+                const rows = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
                 res.status(200).json({ active: settings[`${ipMode}Active`], ips: rows || [] });
             } catch (err) {
                 logger.log("error", err.stack);
@@ -31,12 +32,14 @@ module.exports = {
                 if (type !== "whitelist" && type !== "blacklist") return res.status(400).json({ error: "Invalid type" });
                 if (!ip) return res.status(400).json({ error: "Missing ip" });
 
+                const isWhitelist = type === "whitelist" ? 1 : 0;
+
                 // Check if the IP already exists
-                const exists = await dbGet(`SELECT 1 AS one FROM ip_${type} WHERE ip=?`, [ip]);
+                const exists = await dbGet(`SELECT 1 AS one FROM ip_access_list WHERE ip=? AND is_whitelist=?`, [ip, isWhitelist]);
                 if (exists && exists.one) return res.status(409).json({ error: "IP already exists" });
 
                 // Insert the IP into the database
-                await dbRun(`INSERT INTO ip_${type} (ip) VALUES(?)`, [ip]);
+                await dbRun(`INSERT INTO ip_access_list (ip, is_whitelist) VALUES(?, ?)`, [ip, isWhitelist]);
                 const cache = await getIpAccess(type);
                 if (type === "whitelist") {
                     Object.keys(authentication.whitelistedIps).forEach((k) => delete authentication.whitelistedIps[k]);
@@ -61,7 +64,8 @@ module.exports = {
                 if (!ip) return res.status(400).json({ error: "Missing ip" });
                 if (type !== "whitelist" && type !== "blacklist") return res.status(400).json({ error: "Invalid type" });
 
-                await dbRun(`UPDATE ip_${type} SET ip=? WHERE id=?`, [ip, id]);
+                const isWhitelist = type === "whitelist" ? 1 : 0;
+                await dbRun(`UPDATE ip_access_list SET ip=? WHERE id=? AND is_whitelist=?`, [ip, id, isWhitelist]);
                 const cache = await getIpAccess(type);
                 if (type === "whitelist") {
                     Object.keys(authentication.whitelistedIps).forEach((key) => delete authentication.whitelistedIps[key]);
@@ -84,7 +88,8 @@ module.exports = {
                 const id = req.params.id;
                 if (type !== "whitelist" && type !== "blacklist") return res.status(400).json({ error: "Invalid type" });
 
-                await dbRun(`DELETE FROM ip_${type} WHERE id=?`, [id]);
+                const isWhitelist = type === "whitelist" ? 1 : 0;
+                await dbRun(`DELETE FROM ip_access_list WHERE id=? AND is_whitelist=?`, [id, isWhitelist]);
                 const cache = await getIpAccess(type);
                 if (type === "whitelist") {
                     Object.keys(authentication.whitelistedIps).forEach((k) => delete authentication.whitelistedIps[k]);
