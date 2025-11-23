@@ -73,7 +73,23 @@ async function saveTags(studentId, tags, userSession) {
         // The offline tag should not be stored in the database
         // After that, store tags in the student's session
         normalized = normalized.filter((tag) => tag !== "Offline");
+
+        // Get student's current tags
+        const student = classInformation.classrooms[userSession.classId].students[email];
+        const oldTags = student.tags || [];
+
+        // Update tags
         classInformation.classrooms[userSession.classId].students[email].tags = normalized;
+
+        // If the "Excluded" tag was added, clear their poll response
+        const wasExcluded = oldTags.includes("Excluded");
+        const isNowExcluded = normalized.includes("Excluded");
+
+        if (!wasExcluded && isNowExcluded && student.pollRes) {
+            student.pollRes.buttonRes = "";
+            student.pollRes.textRes = "";
+            student.pollRes.date = null;
+        }
 
         await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [normalized.join(","), studentId, userSession.classId]);
     } catch (err) {
