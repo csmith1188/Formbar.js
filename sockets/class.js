@@ -108,13 +108,13 @@ module.exports = {
 
                 // Check exclusion based on class settings for permission levels
                 if (classData.settings && classData.settings.isExcluded) {
-                    if (classData.settings.isExcluded.guests && student.permissions === GUEST_PERMISSIONS) {
+                    if (classData.settings.isExcluded.guests && student.permissions == GUEST_PERMISSIONS) {
                         shouldExclude = true;
                     }
-                    if (classData.settings.isExcluded.mods && student.classPermissions === MOD_PERMISSIONS) {
+                    if (classData.settings.isExcluded.mods && student.classPermissions == MOD_PERMISSIONS) {
                         shouldExclude = true;
                     }
-                    if (classData.settings.isExcluded.teachers && student.classPermissions === TEACHER_PERMISSIONS) {
+                    if (classData.settings.isExcluded.teachers && student.classPermissions == TEACHER_PERMISSIONS) {
                         shouldExclude = true;
                     }
                 }
