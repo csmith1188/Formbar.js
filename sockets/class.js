@@ -396,7 +396,7 @@ module.exports = {
                                     classKickStudent(userId, classId, { exitRoom: true, ban: false });
                                     socketUpdates.classUpdate();
                                 })
-                                .catch(() => { });
+                                .catch(() => {});
 
                             socketUpdates.classBannedUsersUpdate();
                             socket.emit("message", `Unbanned ${email}`);
