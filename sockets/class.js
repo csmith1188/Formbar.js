@@ -82,17 +82,86 @@ module.exports = {
         });
 
         /**
+         * Helper function to clear poll votes from excluded students
+         * @param {string} classId - The class ID
+         */
+        function clearVotesFromExcludedStudents(classId) {
+            const { GUEST_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS } = require("../modules/permissions");
+            const classData = classInformation.classrooms[classId];
+            if (!classData) return;
+
+            // Get the list of excluded students using the same logic as sortStudentsInPoll
+            const excludedEmails = [];
+
+            for (const student of Object.values(classData.students)) {
+                let shouldExclude = false;
+
+                // Check if excluded by checkbox (excludedRespondents stores student IDs)
+                if (classData.poll.excludedRespondents && classData.poll.excludedRespondents.includes(student.id)) {
+                    shouldExclude = true;
+                }
+
+                // Check if they have the Excluded tag
+                if (student.tags && student.tags.includes("Excluded")) {
+                    shouldExclude = true;
+                }
+
+                // Check exclusion based on class settings for permission levels
+                if (classData.settings && classData.settings.isExcluded) {
+                    if (classData.settings.isExcluded.guests && student.permissions === GUEST_PERMISSIONS) {
+                        shouldExclude = true;
+                    }
+                    if (classData.settings.isExcluded.mods && student.classPermissions === MOD_PERMISSIONS) {
+                        shouldExclude = true;
+                    }
+                    if (classData.settings.isExcluded.teachers && student.classPermissions === TEACHER_PERMISSIONS) {
+                        shouldExclude = true;
+                    }
+                }
+
+                // Check if on break
+                if (student.break === true) {
+                    shouldExclude = true;
+                }
+
+                // Check if offline or is a teacher
+                if ((student.tags && student.tags.includes("Offline")) || student.classPermissions >= TEACHER_PERMISSIONS) {
+                    shouldExclude = true;
+                }
+
+                if (shouldExclude) {
+                    excludedEmails.push(student.email);
+                }
+            }
+
+            // Clear votes for all excluded students
+            for (const email of excludedEmails) {
+                const student = classData.students[email];
+                if (student && student.pollRes) {
+                    student.pollRes.buttonRes = "";
+                    student.pollRes.textRes = "";
+                    student.pollRes.date = null;
+                }
+            }
+        }
+
+        /**
          * Sets a setting for the classroom
          * @param {string} setting - A string representing the setting to change.
          * @param {string} value - The value to set the setting to.
          */
-        socket.on("setClassSetting", (setting, value) => {
+        socket.on("setClassSetting", async (setting, value) => {
             try {
                 const classId = socket.request.session.classId;
 
                 // Update the setting in the classInformation and in the database
                 classInformation.classrooms[classId].settings[setting] = value;
-                dbRun("UPDATE classroom SET settings=? WHERE id=?", [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
+                await dbRun("UPDATE classroom SET settings=? WHERE id=?", [JSON.stringify(classInformation.classrooms[classId].settings), classId]);
+
+                // If the isExcluded setting changed, clear votes from newly excluded students
+                if (setting === "isExcluded") {
+                    clearVotesFromExcludedStudents(classId);
+                }
 
                 // Trigger a class update to sync all clients
                 socketUpdates.classUpdate(classId);
@@ -327,7 +396,7 @@ module.exports = {
                                     classKickStudent(userId, classId, { exitRoom: true, ban: false });
                                     socketUpdates.classUpdate();
                                 })
-                                .catch(() => {});
+                                .catch(() => { });
 
                             socketUpdates.classBannedUsersUpdate();
                             socket.emit("message", `Unbanned ${email}`);
@@ -441,6 +510,9 @@ module.exports = {
 
                 // Update both excludedRespondent properties to keep them in sync
                 classroom.poll.excludedRespondents = excludedRespondents;
+
+                // Clear votes from newly excluded students
+                clearVotesFromExcludedStudents(classId);
 
                 socketUpdates.classUpdate(classId);
             } catch (err) {

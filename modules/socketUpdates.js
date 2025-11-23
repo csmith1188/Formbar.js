@@ -241,24 +241,6 @@ function getPollResponseInformation(classData) {
         }
     }
 
-    const excludedTags = ["Excluded", "Offline"];
-    if (totalResponses === 0) {
-        totalStudentsIncluded = Object.keys(classData.students);
-        for (let i = totalStudentsIncluded.length - 1; i >= 0; i--) {
-            const studentName = totalStudentsIncluded[i];
-            const student = classData.students[studentName];
-            const hasExcludedTag = student.tags && student.tags.some((tag) => excludedTags.includes(tag));
-            if (
-                student.classPermissions >= TEACHER_PERMISSIONS ||
-                student.classPermissions === GUEST_PERMISSIONS ||
-                student.break === true ||
-                hasExcludedTag
-            ) {
-                totalStudentsIncluded.splice(i, 1);
-            }
-        }
-    }
-
     return {
         totalResponses,
         totalResponders: totalStudentsIncluded.length,
@@ -280,23 +262,23 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         settings: classData.settings,
         students: hasTeacherPermissions
             ? Object.fromEntries(
-                  Object.entries(classData.students).map(([email, student]) => [
-                      student.id,
-                      {
-                          id: student.id,
-                          displayName: student.displayName,
-                          activeClass: student.activeClass,
-                          permissions: student.permissions,
-                          classPermissions: student.classPermissions,
-                          tags: student.tags,
-                          pollRes: student.pollRes,
-                          help: student.help,
-                          break: student.break,
-                          pogMeter: student.pogMeter,
-                          isGuest: student.isGuest,
-                      },
-                  ])
-              )
+                Object.entries(classData.students).map(([email, student]) => [
+                    student.id,
+                    {
+                        id: student.id,
+                        displayName: student.displayName,
+                        activeClass: student.activeClass,
+                        permissions: student.permissions,
+                        classPermissions: student.classPermissions,
+                        tags: student.tags,
+                        pollRes: student.pollRes,
+                        help: student.help,
+                        break: student.break,
+                        pogMeter: student.pogMeter,
+                        isGuest: student.isGuest,
+                    },
+                ])
+            )
             : undefined,
     };
 
@@ -542,7 +524,7 @@ class SocketUpdates {
                                 }
                             }
                         );
-                    } catch (err) {}
+                    } catch (err) { }
                 }
             );
         } catch (err) {
