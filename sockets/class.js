@@ -97,7 +97,7 @@ module.exports = {
                 let shouldExclude = false;
 
                 // Check if excluded by checkbox (excludedRespondents stores student IDs)
-                if (classData.poll.excludedRespondents && classData.poll.excludedRespondents.includes(student.id)) {
+                if (classData.poll && classData.poll.excludedRespondents && classData.poll.excludedRespondents.includes(student.id)) {
                     shouldExclude = true;
                 }
 
