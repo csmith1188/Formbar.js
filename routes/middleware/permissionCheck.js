@@ -59,9 +59,7 @@ function hasClassPermission(classPermission) {
                 }
 
                 // Retrieve the permission level from the classroom's permissions
-                const requiredPermissionLevel = typeof classPermission === 'string'
-                    ? classroom.permissions[classPermission]
-                    : classPermission;
+                const requiredPermissionLevel = typeof classPermission === "string" ? classroom.permissions[classPermission] : classPermission;
 
                 if (user.classPermissions >= requiredPermissionLevel) {
                     next();

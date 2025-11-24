@@ -84,6 +84,12 @@ function getConfig() {
         },
         publicKey: publicKey,
         privateKey: privateKey,
+        rateLimit: {
+            maxAttempts: 5,
+            lockoutDuration: 15 * 60 * 1000, // 15 minutes in milliseconds
+            attemptWindow: 5 * 60 * 1000, // 5 minute sliding window
+            minDelayBetweenAttempts: 500, // 500ms minimum delay
+        },
     };
 }
 

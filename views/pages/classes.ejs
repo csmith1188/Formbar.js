@@ -89,7 +89,7 @@
 
             if (currentUser && currentUser.permissions >= TEACHER_PERMISSIONS) {
                 socket.emit('getOwnedClasses', currentUser.email)
-                socket.on('getOwnedClasses', (ownedClasses) => {
+                socket.once('getOwnedClasses', (ownedClasses) => {
                     if (ownedClasses.length > 0) {
                         //startClassForm.style.opacity = "1"
                         //startClassForm.style.pointerEvents = "all";

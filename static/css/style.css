@@ -1780,6 +1780,20 @@ input[type="checkbox"],
 	justify-content: space-between;
 	align-items: center;
 	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.sensitiveInfo p {
+	flex: 1;
+	min-width: 0;
+	word-break: break-all;
+	margin: 0;
+}
+
+.sensitiveInfo > div {
+	display: flex;
+	gap: 10px;
+	flex-shrink: 0;
 }
 
 .revampButton#forgotPassword {
@@ -2468,6 +2482,12 @@ div#errorDialog {
 div#errorDialog.shown {
 	transform: translateY(0);
 	opacity: 1;
+}
+
+/* Success variant for the notification dialog */
+div#errorDialog.success {
+	background-color: var(--color-green);
+	border: 2px solid var(--light-green);
 }
 
 @keyframes showError {
@@ -3562,3 +3582,4 @@ button.includingButton.pressed:hover {
     background-color: hsl(120, 94%, 74%) !important;
     transform: none !important;
 }
+

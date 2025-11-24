@@ -5,6 +5,7 @@ const { userSockets } = require("../../modules/socketUpdates");
 const { Student } = require("../../modules/student");
 const { getUserClass } = require("../../modules/user/user");
 const { classKickStudent } = require("../../modules/class/kick");
+const { compare, hash } = require("../../modules/crypto");
 
 module.exports = {
     order: 10,
@@ -13,9 +14,20 @@ module.exports = {
             const { api } = socket.request.headers;
             if (api) {
                 await new Promise((resolve, reject) => {
-                    database.get("SELECT * FROM users WHERE API=?", [api], async (err, userData) => {
+                    // Get all users and compare the API key hash
+                    database.all("SELECT * FROM users", [], async (err, users) => {
                         try {
                             if (err) throw err;
+
+                            // Compare the provided API key with each user's hashed API key
+                            let userData = null;
+                            for (const user of users) {
+                                if (user.API && (await compare(api, user.API))) {
+                                    userData = user;
+                                    break;
+                                }
+                            }
+
                             if (!userData) {
                                 logger.log("verbose", "[socket authentication] not a valid API Key");
                                 throw "Not a valid API key";
@@ -34,12 +46,13 @@ module.exports = {
                                     false
                                 );
                             }
-                            socket.request.session.api = api;
+
+                            socket.request.session.api = userData.API;
                             socket.request.session.userId = userData.id;
                             socket.request.session.email = userData.email;
                             socket.request.session.classId = getUserClass(userData.email);
 
-                            socket.join(`api-${socket.request.session.api}`);
+                            socket.join(`api-${userData.API}`);
                             socket.join(`class-${socket.request.session.classId}`);
                             socket.emit("setClass", socket.request.session.classId);
                             socket.on("disconnect", () => {

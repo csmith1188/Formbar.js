@@ -54,17 +54,11 @@ INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes
 INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (3, NULL, 'Done/Ready?', 'Done/Ready?', '[{"answer":"Yes","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1, 1);
 INSERT INTO "custom_polls" ("id", "owner", "name", "prompt", "answers", "textRes", "blind", "allowVoteChanges", "weight", "public") VALUES (4, NULL, 'Multiple Choice', 'Multiple Choice', '[{"answer":"A","weight":1,"color":"#FF0000"},{"answer":"B","weight":1,"color":"#0000FF"},{"answer":"C","weight":1,"color":"#FFFF00"},{"answer":"D","weight":1,"color":"#00FF00"}]', 0, 0, 1, 1, 1);
 
-CREATE TABLE IF NOT EXISTS "ip_blacklist"
+CREATE TABLE IF NOT EXISTS "ip_access_list"
 (
-    "id" INTEGER NOT NULL UNIQUE,
-    "ip" TEXT    NOT NULL,
-    PRIMARY KEY ("id" AUTOINCREMENT)
-);
-
-CREATE TABLE IF NOT EXISTS "ip_whitelist"
-(
-    "id" INTEGER NOT NULL UNIQUE,
-    "ip" TEXT    NOT NULL,
+    "id"           INTEGER NOT NULL UNIQUE,
+    "ip"           TEXT    NOT NULL,
+    "is_whitelist" INTEGER NOT NULL CHECK ("is_whitelist" IN (0, 1)),
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 

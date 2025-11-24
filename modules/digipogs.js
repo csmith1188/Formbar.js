@@ -2,6 +2,125 @@ const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
 const { logger } = require("./logger");
 const { classInformation } = require("./class/classroom");
+const { compare } = require("./crypto");
+
+// Import rate limiting configuration
+const { rateLimit } = require("./config");
+
+// Store failed transaction attempts
+const failedAttempts = new Map(); // Structure: userId -> { attempts: [{timestamp, success}], lockedUntil: timestamp }
+
+/**
+ * Clean up old attempt records to prevent memory leaks
+ */
+function cleanupOldAttempts() {
+    const now = Date.now();
+    for (const [userId, data] of failedAttempts.entries()) {
+        // Remove attempts outside the sliding window
+        if (data.attempts) {
+            data.attempts = data.attempts.filter((attempt) => now - attempt.timestamp < rateLimit.attemptWindow);
+        }
+
+        // Remove the user entry entirely if no recent attempts and not locked
+        if ((!data.attempts || data.attempts.length === 0) && (!data.lockedUntil || data.lockedUntil < now)) {
+            failedAttempts.delete(userId);
+        }
+    }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanupOldAttempts, 5 * 60 * 1000);
+
+/**
+ * Check if a user is rate limited
+ * @param {number} userId - The user ID attempting the transfer
+ * @returns {Object} - { allowed: boolean, message: string, waitTime: number }
+ */
+function checkRateLimit(userId) {
+    const now = Date.now();
+    const userAttempts = failedAttempts.get(userId);
+
+    if (!userAttempts) {
+        // First attempt, initialize tracking
+        failedAttempts.set(userId, { attempts: [], lockedUntil: null });
+        return { allowed: true };
+    }
+
+    // Check if user is currently locked out
+    if (userAttempts.lockedUntil && userAttempts.lockedUntil > now) {
+        const waitTime = Math.ceil((userAttempts.lockedUntil - now) / 1000);
+        return {
+            allowed: false,
+            message: `Account temporarily locked due to too many failed attempts. Try again in ${waitTime} seconds.`,
+            waitTime: waitTime,
+        };
+    }
+
+    // Clear lockout if it has expired
+    if (userAttempts.lockedUntil && userAttempts.lockedUntil <= now) {
+        userAttempts.lockedUntil = null;
+        userAttempts.attempts = [];
+    }
+
+    // Check for spam (attempts too close together)
+    if (userAttempts.attempts.length > 0) {
+        const lastAttempt = userAttempts.attempts[userAttempts.attempts.length - 1];
+        const timeSinceLastAttempt = now - lastAttempt.timestamp;
+
+        if (timeSinceLastAttempt < rateLimit.minDelayBetweenAttempts) {
+            return {
+                allowed: false,
+                message: "Please wait before attempting another transfer.",
+                waitTime: Math.ceil((rateLimit.minDelayBetweenAttempts - timeSinceLastAttempt) / 1000),
+            };
+        }
+    }
+
+    // Filter attempts within the sliding window
+    const recentAttempts = userAttempts.attempts.filter((attempt) => now - attempt.timestamp < rateLimit.attemptWindow);
+    userAttempts.attempts = recentAttempts;
+
+    // Count only failed attempts
+    const failedCount = recentAttempts.filter((attempt) => !attempt.success).length;
+
+    // Check if adding one more failed attempt would exceed the limit
+    if (failedCount > rateLimit.maxAttempts) {
+        // Lock the account
+        userAttempts.lockedUntil = now + rateLimit.lockoutDuration;
+        const waitTime = Math.ceil(rateLimit.lockoutDuration / 1000);
+
+        return {
+            allowed: false,
+            message: `Too many failed attempts. Account temporarily locked for ${Math.ceil(waitTime / 60)} minutes.`,
+            waitTime: waitTime,
+        };
+    }
+
+    // Log current failure count for debugging
+    logger.log("info", `User ${userId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
+
+    return { allowed: true };
+}
+
+/**
+ * Record a transfer attempt (success or failure)
+ * @param {number} userId - The user ID
+ * @param {boolean} success - Whether the attempt was successful
+ */
+function recordAttempt(userId, success) {
+    const now = Date.now();
+    const userAttempts = failedAttempts.get(userId) || { attempts: [], lockedUntil: null };
+
+    userAttempts.attempts.push({ timestamp: now, success: success });
+
+    // If successful, clear the failed attempts history
+    if (success) {
+        userAttempts.attempts = userAttempts.attempts.filter((attempt) => attempt.success);
+        userAttempts.lockedUntil = null;
+    }
+
+    failedAttempts.set(userId, userAttempts);
+}
 
 async function awardDigipogs(awardData, session) {
     try {
@@ -85,14 +204,40 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Cannot transfer to the same account." };
         }
 
+        // Check rate limiting
+        const rateLimitCheck = checkRateLimit(from);
+        if (!rateLimitCheck.allowed) {
+            return {
+                success: false,
+                message: rateLimitCheck.message,
+                rateLimited: true,
+                waitTime: rateLimitCheck.waitTime,
+            };
+        }
+
         // Fetch sender
         const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
         if (!fromUser) {
+            recordAttempt(from, false);
             return { success: false, message: "Sender account not found." };
-            // Validate PIN and funds
-        } else if (fromUser.pin != pin) {
+        }
+
+        // Validate stored PIN exists
+        if (!fromUser.pin) {
+            recordAttempt(from, false);
+            return { success: false, message: "Account PIN not configured." };
+        }
+
+        // Validate PIN and funds
+        const pinString = String(pin);
+        const isPinValid = await compare(pinString, fromUser.pin);
+        if (!isPinValid) {
+            // Record the failed attempt
+            recordAttempt(from, false);
             return { success: false, message: "Invalid PIN." };
         } else if (fromUser.digipogs < amount) {
+            // Even with correct PIN, record as failed if insufficient funds
+            recordAttempt(from, false);
             return { success: false, message: "Insufficient funds." };
         }
 
@@ -103,13 +248,17 @@ async function transferDigipogs(transferData) {
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
             const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to]);
-            if (!pool) return { success: false, message: "Recipient pool not found." };
-            dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
+            if (!pool) {
+                recordAttempt(from, false);
+                return { success: false, message: "Recipient pool not found." };
+            }
+            await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
 
             try {
                 await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]);
             } catch (err) {
                 logger.log("error", err.stack || err);
+                recordAttempt(from, false);
                 return { success: false, message: "Transfer failed due to database error." };
             }
             try {
@@ -123,12 +272,16 @@ async function transferDigipogs(transferData) {
                 ]);
             } catch (err) {
                 logger.log("error", err.stack || err);
+
+                // Record successful attempt
+                recordAttempt(from, true);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
         } else {
             // Normal user-to-user transfer
             const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
             if (!toUser) {
+                recordAttempt(from, false);
                 return { success: false, message: "Recipient account not found." };
             }
 
@@ -142,6 +295,7 @@ async function transferDigipogs(transferData) {
                 ]);
             } catch (err) {
                 logger.log("error", err.stack || err);
+                recordAttempt(from, false);
                 return { success: false, message: "Transfer failed due to database error." };
             }
 
@@ -156,6 +310,9 @@ async function transferDigipogs(transferData) {
                 ]);
             } catch (err) {
                 logger.log("error", err.stack || err);
+
+                // Record successful attempt
+                recordAttempt(from, true);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
             }
         }
@@ -167,6 +324,8 @@ async function transferDigipogs(transferData) {
             await dbRun("UPDATE digipog_pools SET amount = ? WHERE id = ?", [newDevPoolAmount, 0]);
         }
 
+        // Record successful attempt
+        recordAttempt(from, true);
         return { success: true, message: "Transfer successful." };
     } catch (err) {
         logger.log("error", err.stack);
