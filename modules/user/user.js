@@ -168,7 +168,7 @@ async function getEmailFromAPIKey(api) {
         if (!api) return { error: "Missing API key" };
 
         // Query the database for the email associated with the API key
-        let user = await new Promise(async (resolve, reject) => {
+        let user = await new Promise((resolve, reject) => {
             database.all("SELECT * FROM users", [], async (err, users) => {
                 try {
                     if (err) throw err;
@@ -184,7 +184,7 @@ async function getEmailFromAPIKey(api) {
 
                     if (!userData) {
                         logger.log("verbose", "[getEmailFromAPIKeyClass] not a valid API Key");
-                        resolve( {error: "Not a valid API key"} );
+                        resolve({error: "Not a valid API key"});
                         return;
                     }
                     resolve(userData);
