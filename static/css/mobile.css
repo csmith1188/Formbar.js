@@ -4,7 +4,7 @@
         --fullViewportHeight: 100vh;
     }
 
-    @supports (width: 100dvw) and (height: 100dvh) {
+    @supports (height: 100dvh) {
         :root {
             --fullViewportWidth: 100dvw;
             --fullViewportHeight: 100dvh;
