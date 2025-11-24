@@ -1,6 +1,7 @@
 const { classInformation } = require("../class/classroom");
 const { database, dbGetAll, dbGet } = require("../database");
 const { logger } = require("../logger");
+const { compare } = require("../crypto");
 
 /**
  * Asynchronous function to get the current user's data.
@@ -167,20 +168,26 @@ async function getEmailFromAPIKey(api) {
         if (!api) return { error: "Missing API key" };
 
         // Query the database for the email associated with the API key
-        let user = await new Promise((resolve, reject) => {
-            database.get("SELECT email FROM users WHERE api = ?", [api], (err, user) => {
+        let user = await new Promise(async (resolve, reject) => {
+            database.all("SELECT * FROM users", [], async (err, users) => {
                 try {
-                    // If an error occurs, throw the error
                     if (err) throw err;
 
-                    // If no user is found, resolve the promise with an error object
-                    if (!user) {
-                        resolve({ error: "User not found" });
-                        return;
+                    // Compare the provided API key with each user's hashed API key
+                    let userData = null;
+                    for (const user of users) {
+                        if (user.API && (await compare(api, user.API))) {
+                            userData = user;
+                            break;
+                        }
                     }
 
-                    // If a user is found, resolve the promise with the user object
-                    resolve(user);
+                    if (!userData) {
+                        logger.log("verbose", "[getEmailFromAPIKeyClass] not a valid API Key");
+                        resolve( {error: "Not a valid API key"} );
+                        return;
+                    }
+                    resolve(userData);
                 } catch (err) {
                     // If an error occurs, reject the promise with the error
                     reject(err);
