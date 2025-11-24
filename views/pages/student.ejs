@@ -177,6 +177,22 @@
 			votingRight = false;
 			return;
 		}
+
+		// Check if excluded by the "No guests/mods/teachers" settings
+		if (classroomData && classroomData.settings && classroomData.settings.isExcluded) {
+			if (classroomData.settings.isExcluded.guests && currentUser.permissions === GUEST_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+			if (classroomData.settings.isExcluded.mods && currentUser.classPermissions === MOD_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+			if (classroomData.settings.isExcluded.teachers && currentUser.classPermissions === TEACHER_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+		}
 		
 		// Check if current user's ID is in the excludedRespondents array
 		// Student has voting rights if they are NOT in the excluded list
@@ -456,6 +472,26 @@
 		const oldVotingRight = votingRight;
 		poll = newPoll;
 		updateVotingRight();
+
+		// If voting rights were lost (user got excluded), clear their local vote state
+		if (oldVotingRight && !votingRight) {
+			currentUser.pollRes = {
+				buttonRes: '',
+				textRes: '',
+				date: null
+			};
+			userSelectedCheckboxes = [];
+			// Clear all button highlights
+			document.querySelectorAll('button.pollButton').forEach((btn) => {
+				btn.classList.remove('activePollButton');
+			});
+			// Clear all checkbox states
+			document.querySelectorAll('input.pollButton').forEach((btn) => {
+				btn.checked = false;
+			});
+			oldLetterRes = '';
+			oldTextRes = '';
+		}
 		
 		// If voting right changed or poll changed, update the page
 		if (oldVotingRight !== votingRight || pollChanged) {
