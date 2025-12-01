@@ -50,7 +50,6 @@ module.exports = {
                     res.status(response.status).send("Error fetching image");
                 }
             } catch (error) {
-                console.error("Error fetching image:", error);
                 res.status(500).send("Error fetching image");
             }
         });

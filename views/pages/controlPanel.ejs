@@ -263,7 +263,7 @@
         </div>
         <div id='userPolls' class='customPolls tabContent' data-tab-group='polls'>
         </div>
-        <div id='newPoll' class='customPolls tabContent' style="padding-bottom:250px;" data-tab-group='polls'>
+        <div id='newPoll' class='customPolls tabContent' data-tab-group='polls'>
             <div id="pollResForm">
                 <div class="pollInfo revampDiv">
                     <h2>Poll Info</h2>
@@ -333,7 +333,7 @@
                     <span id="date"></span>
                 </summary>
                 <span class="previousPollResponse revampDiv" id="response-template" style="display: none"></span>
-                <button id="loadPoll" class="revampButton pressed" style="width: fit-content; margin: 10px;" onclick="loadPoll(this)">Load Poll</button>
+                <button id="loadPoll" class="revampButton pressed" onclick="loadPoll(this)">Load Poll</button>
             </details>
             <div id="previousPolls"></div>
             <button style='width: 60px' class="quickButton revampButton" data-tab-group="mainTabs" id='previousPollBackward' onclick='scrollPreviousPolls("backward")'><img src="/img/icons/arrow-back.svg" alt="Newer Polls"></button>
@@ -359,7 +359,7 @@
     <div class="tagsHolder">
         <div id="tagOptions" class="revampDiv">
             <div>
-                <input type="text" class="revampButton revampWithText" id="tagInput" placeholder="Add Tag (tag1, tag2, ...)" style="height: 5.5vh;">
+                <input type="text" class="revampButton revampWithText" id="tagInput" placeholder="Add Tag (tag1, tag2, ...)" style="min-width: 0;height: 5.5vh;">
                 <button class="circularButton" id="addTagButton"><img src="/img/icons/checkmark-outline.svg"></button>
             </div>
         </div>
@@ -519,6 +519,9 @@
     let timerMenu = document.querySelector('div#timerMenu.tabContent');
     let nonMobileTimerMenu = document.querySelector('div.revampDiv.leftRight.timeInfo');
     let sideBySide = document.querySelector('.sideBySide');
+
+    // Initialize virtual bar container as hidden since there's no poll on page load
+    vbContainerOuter.style.display = "none";
 
     function mobileMove() {
         if(orientation == 'portrait') {
@@ -844,6 +847,9 @@
         // If there are no previous polls, display a message
         if (previousPolls.length === 0) {
             previousPollsDiv.innerHTML = "<p style='text-align: center;'>No previous polls to display</p>";
+            previousPollsDiv.style.display = 'flex';
+            previousPollsDiv.style.justifyContent = 'center';
+            previousPollsDiv.style.alignItems = 'center';
         }
 
         // If currentPreviousPollIndex is zero, hide the back button

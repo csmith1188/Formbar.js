@@ -14,14 +14,12 @@
         }
         #links {
             display: grid;
-            width: 30%;
+            width: 780px;
             margin: auto;
             margin-top: 10px;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, 250px);
             align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
-            flex-direction: column;
             gap: 10px;
         }
         #links:empty::before {
@@ -32,10 +30,8 @@
         .linkButton {
             justify-content: left;
             padding: 5px 20px;
-        }
-
-        .linkButton img {
-            margin-right: auto;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         #noLinksMessage {
