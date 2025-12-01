@@ -520,6 +520,9 @@
     let nonMobileTimerMenu = document.querySelector('div.revampDiv.leftRight.timeInfo');
     let sideBySide = document.querySelector('.sideBySide');
 
+    // Initialize virtual bar container as hidden since there's no poll on page load
+    vbContainerOuter.style.display = "none";
+
     function mobileMove() {
         if(orientation == 'portrait') {
             timerMenu.appendChild(timeDiv);
