@@ -625,6 +625,7 @@ function savePollAs(pollType) {
         return;
     } else {
         customPoll.blind = blindCheck.checked;
+        customPoll.multiRes = multiRes.checked;
         customPoll.allowVoteChanges = allowVoteChanges.checked;
         customPoll.prompt = pollPrompt.value;
         customPoll.textRes = resTextBox.checked;
