@@ -184,7 +184,7 @@ async function getEmailFromAPIKey(api) {
 
                     if (!userData) {
                         logger.log("verbose", "[getEmailFromAPIKeyClass] not a valid API Key");
-                        resolve({error: "Not a valid API key"});
+                        resolve({ error: "Not a valid API key" });
                         return;
                     }
                     resolve(userData);
