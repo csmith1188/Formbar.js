@@ -25,7 +25,9 @@ module.exports = {
                 // Only include the email if the requester is the user themselves or a manager
                 const requesterEmail = req.session.email;
                 let userEmail = undefined;
-                if (user && (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS)) {
+                // Safer check for manager permissions
+                const isManager = requesterEmail && classInformation.users[requesterEmail]?.permissions === MANAGER_PERMISSIONS;
+                if (user && (requesterEmail === user.email || isManager)) {
                     userEmail = user.email;
                 }
 
