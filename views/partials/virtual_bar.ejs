@@ -6,6 +6,7 @@
 <script>
     let noPoll;
     let virtualBar = document.getElementById("virtualbar");
+    let vbContainerOuter = document.getElementById("vbContainerOuter");
     let mychart = virtualBar.getContext("2d");
     let pollsData = {}
     let timeData = {}
@@ -78,14 +79,14 @@
             if (!timeData.active) {
                 if (noPoll) noPoll.style.display = ''
 
-                virtualBar.parentElement.style.display = "none";
+                vbContainerOuter.style.display = "none";
             }
 
             doughnutChart.data.datasets[0].data = []
             doughnutChart.data.labels = []
         } else {
             if (noPoll) noPoll.style.display = 'none'
-            virtualBar.parentElement.style.display = "block";
+            vbContainerOuter.style.display = "block";
 
             // Reset virtual bar
             doughnutChart.data.datasets[0].backgroundColor = []
@@ -162,7 +163,7 @@
         let timeString = minutes + ":" + seconds
 
         if (active) {
-            virtualBar.parentElement.style.display = "block";
+            vbContainerOuter.style.display = "block";
             if (time > 0) {
                 pieChart.data = [time, timePassed]
                 doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
@@ -175,7 +176,7 @@
             }
         } else {
             if (!pollsData.status && Object.keys(pollsData.responses).length == 0) {
-                virtualBar.parentElement.style.display = "none";
+                vbContainerOuter.style.display = "none";
             }
             pieChart.data = []
         }
