@@ -43,7 +43,7 @@ function buildStudent(classroomData, studentData) {
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
                 if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-                targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
+                let targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
                 doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
