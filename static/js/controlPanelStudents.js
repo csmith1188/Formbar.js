@@ -6,9 +6,6 @@ const userBreak = [];
 // Stores the currently opened student elements
 let opendetails = [];
 
-// Stores the currently active tab for each student
-let activeStudentTabs = {};
-
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
@@ -701,7 +698,6 @@ function doAccordionButton(button, forceOpen = false) {
 
     // Store the active tab option for this student
     const studentId = studentElement.id.split("student-")[1];
-    activeStudentTabs[studentId] = button.dataset.option;
 
     const studentOptions = {
         0: {
