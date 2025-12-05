@@ -42,22 +42,7 @@ function buildStudent(classroomData, studentData) {
 
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
-                if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-
-                // Check if there's a previously active tab for this student
-                const previousTabOption = activeStudentTabs[studentData.id];
-                let targetButton;
-
-                if (previousTabOption !== undefined) {
-                    // Try to find the button with the stored tab option
-                    targetButton = newStudent.querySelector(`button.accordionButton[data-option="${previousTabOption}"]:not(.accButtonDisabled)`);
-                }
-
-                // If no stored tab or that button is disabled, fall back to the first available button
-                if (!targetButton) {
-                    targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
-                }
-
+                targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
                 doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
