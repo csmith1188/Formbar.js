@@ -15,7 +15,7 @@ module.exports = {
                     logger.log("info", `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`);
 
                     // Allow digipogs endpoints without authentication
-                    if ((req.path && req.path.startsWith("/digipogs/")) || req.path.startsWith("/digipogs")) {
+                    if ((req.path && req.path.startsWith("/digipogs/"))) {
                         return next();
                     }
 
