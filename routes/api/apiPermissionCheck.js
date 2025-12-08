@@ -3,7 +3,7 @@ const { getUser } = require("../../modules/user/user");
 const { logger } = require("../../modules/logger");
 
 module.exports = {
-    // Used for checking class permissions such as games, lights, and sounds
+    // Used for checking class permissions such as the ability to use games and auxiliary
     run(router) {
         router.get("/apiPermissionCheck", async (req, res) => {
             try {
@@ -34,7 +34,7 @@ module.exports = {
                     return;
                 }
 
-                const user = await getUser(api);
+                const user = await getUser({ api });
                 if (!user.loggedIn) {
                     res.status(403).json({ reason: "User is not logged in." });
                     return;
