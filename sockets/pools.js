@@ -173,7 +173,7 @@ module.exports = {
                             pool.id,
                             amountPerMember,
                             `Pool Payout`,
-                            new Date().toISOString(),
+                            new Date(),
                         ]);
                     }
                 }

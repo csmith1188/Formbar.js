@@ -64,8 +64,16 @@
                         <%
                             let transaction = transactions[i];
                             let page = Math.floor(i / 10);
-                            const date = new Date(Number(transaction.date));
-                            const valid = !isNaN(date);
+							let date = new Date(Number(transaction.date));
+
+							// Check if the date is invalid
+                            // If it's invalid, it might be because the way pool payouts were stored
+                            // In that case, try to parse it as a string date and set the validity flag again
+							let valid = !isNaN(date);
+							if (!valid) {
+								date = new Date(transaction.date);
+								valid = !isNaN(date);
+                            }
                         %>
                         <tr data-page="<%- page %>" style="display: none;">
                             <td class="hideMobile"><%= transaction.from_user ? transaction.from_user : 'Pool: ' + transaction.pool %></td>
