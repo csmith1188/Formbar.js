@@ -64,12 +64,12 @@ module.exports = {
                         classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS;
 
                         const classStudents = await getStudentsInClass(id);
-                        for (const studentId in classStudents) {
+                        for (const studentEmail in classStudents) {
                             // If the student is the teacher or already in the class, skip
-                            if (studentId == req.session.email) continue;
-                            if (classInformation.classrooms[id].students[studentId]) continue;
+                            if (studentEmail == req.session.email) continue;
+                            if (classInformation.classrooms[id].students[studentEmail]) continue;
 
-                            const student = classStudents[studentId];
+                            const student = classStudents[studentEmail];
 
                             // Normalize student.tags to an array of strings
                             if (!Array.isArray(student.tags)) {
@@ -85,13 +85,13 @@ module.exports = {
 
                             // Ensure 'Offline' is present exactly once at the front if the user
                             // is not the creator of the class.
-                            if (studentId !== req.session.userId && !student.tags.includes("Offline")) {
+                            if (studentEmail !== req.session.email && !student.tags.includes("Offline")) {
                                 student.tags.unshift("Offline");
                             }
 
                             student.displayName = student.displayName || student.email;
-                            classInformation.users[studentId] = student;
-                            classInformation.classrooms[id].students[studentId] = student;
+                            classInformation.users[studentEmail] = student;
+                            classInformation.classrooms[id].students[studentEmail] = student;
                         }
 
                         // Add class into the session data
