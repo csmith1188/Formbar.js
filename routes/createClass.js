@@ -64,12 +64,12 @@ module.exports = {
                         classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS;
 
                         const classStudents = await getStudentsInClass(id);
-                        for (const email in classStudents) {
+                        for (const studentId in classStudents) {
                             // If the student is the teacher or already in the class, skip
-                            if (email == req.session.email) continue;
-                            if (classInformation.classrooms[id].students[email]) continue;
+                            if (studentId == req.session.email) continue;
+                            if (classInformation.classrooms[id].students[studentId]) continue;
 
-                            const student = classStudents[email];
+                            const student = classStudents[studentId];
 
                             // Normalize student.tags to an array of strings
                             if (!Array.isArray(student.tags)) {
@@ -83,14 +83,15 @@ module.exports = {
                                 }
                             }
 
-                            // Ensure 'Offline' is present exactly once at the front
-                            if (!student.tags.includes("Offline")) {
+                            // Ensure 'Offline' is present exactly once at the front if the user
+                            // is not the creator of the class.
+                            if (studentId !== req.session.userId && !student.tags.includes("Offline")) {
                                 student.tags.unshift("Offline");
                             }
 
                             student.displayName = student.displayName || student.email;
-                            classInformation.users[email] = student;
-                            classInformation.classrooms[id].students[email] = student;
+                            classInformation.users[studentId] = student;
+                            classInformation.classrooms[id].students[studentId] = student;
                         }
 
                         // Add class into the session data
