@@ -29,7 +29,7 @@ module.exports = {
                     userId,
                 ]);
 
-				// Handle case where no transactions are found
+                // Handle case where no transactions are found
                 if (!transactions || transactions.length === 0) {
                     logger.log("info", "No transactions found for user");
                     // Still render the page, just with an empty array
