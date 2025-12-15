@@ -10,6 +10,8 @@ module.exports = {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
 
+				console.log(args)
+
                 // Support both passing a single object or multiple arguments for backward compatibility
                 let pollData;
                 if (args.length == 1) {
