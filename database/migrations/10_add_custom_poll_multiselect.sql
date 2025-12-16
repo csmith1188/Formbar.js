@@ -1,6 +1,10 @@
 -- 10_add_custom_poll_multiselect.sql
 -- This migration adds allowMultipleResponses flag to custom polls
 
+-- If this fails, then the column already exists
+-- Avoids overwriting
+ALTER TABLE "custom_polls" ADD COLUMN allowMultipleResponses INTEGER NOT NULL DEFAULT 0 CHECK (allowMultipleResponses IN (0, 1));
+
 CREATE TABLE IF NOT EXISTS "custom_polls_temp"
 (
     "id"                INTEGER NOT NULL UNIQUE,
