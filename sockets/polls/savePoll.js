@@ -107,7 +107,7 @@ module.exports = {
                             nextPollId = nextPollId.nextPollId + 1;
 
                             database.run(
-                                "INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                "INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                 [
                                     userId,
                                     poll.name,
