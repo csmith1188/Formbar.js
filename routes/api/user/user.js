@@ -17,7 +17,7 @@ module.exports = {
                     user = await dbGet("SELECT * FROM users WHERE id=?", userId);
                 } else {
                     // Load missing digipogs and verified values from the database
-                    const { digipogs, verified } = (await dbGet("SELECT digipogs, verified FROM users WHERE id=?", userId)) || {};
+                    const { digipogs = 0, verified = false } = (await dbGet("SELECT digipogs, verified FROM users WHERE id=?", userId)) || {};
                     user.digipogs = digipogs;
                     user.verified = verified;
                 }
