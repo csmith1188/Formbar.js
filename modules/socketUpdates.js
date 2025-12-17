@@ -480,6 +480,11 @@ class SocketUpdates {
         try {
             logger.log("info", `[getOwnedClasses] email=(${email})`);
 
+            // Check if the user exists before accessing .id
+            if (!classInformation.users[email] || !classInformation.users[email].id) {
+                logger.log("error", `[getOwnedClasses] User not found for email=(${email})`);
+                return;
+            }
             // Get the user's owned classes from the database
             const ownedClasses = await dbGetAll("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id]);
             logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
