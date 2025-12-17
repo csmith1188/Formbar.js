@@ -27,7 +27,7 @@ function buildStudent(classroomData, studentData) {
     }
 
     // Only build the student if they are not the current user
-    if (studentData.id != currentUser.id) {
+    if (studentData.id !== currentUser.id) {
         const newStudent = studentTemplateDiv.cloneNode(true);
         newStudent.hidden = false;
         newStudent.style.display = "flex";
