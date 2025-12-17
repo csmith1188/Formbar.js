@@ -238,8 +238,7 @@ module.exports = {
                                                 try {
                                                     if (err) throw err;
 
-                                                    socket.emit("message", `Shared ${name} with that class`);
-
+                                                    socket.emit("message", `Shared ${name} with the class`);
                                                     socketUpdates.getPollShareIds(pollId);
 
                                                     classInformation.classrooms[classroom.id].sharedPolls.push(pollId);

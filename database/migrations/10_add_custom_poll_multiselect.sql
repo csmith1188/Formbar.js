@@ -1,9 +1,9 @@
--- 04_poll_vote_changes.sql
--- This migration adds the allowVoteChanges column to the custom_polls table.
+-- 10_add_custom_poll_multiselect.sql
+-- This migration adds allowMultipleResponses flag to custom polls
 
 -- If this fails, then the column already exists
 -- Avoids overwriting
-ALTER TABLE custom_polls ADD COLUMN allowVoteChanges INTEGER NOT NULL DEFAULT 1 CHECK (allowVoteChanges IN (0, 1));
+ALTER TABLE "custom_polls" ADD COLUMN allowMultipleResponses INTEGER NOT NULL DEFAULT 0 CHECK (allowMultipleResponses IN (0, 1));
 
 CREATE TABLE IF NOT EXISTS "custom_polls_temp"
 (
@@ -15,16 +15,17 @@ CREATE TABLE IF NOT EXISTS "custom_polls_temp"
     "textRes"           INTEGER NOT NULL DEFAULT 0 CHECK ("textRes" IN (0, 1)),
     "blind"             INTEGER NOT NULL DEFAULT 0 CHECK ("blind" IN (0, 1)),
     "allowVoteChanges"  INTEGER NOT NULL DEFAULT 1 CHECK ("allowVoteChanges" IN (0, 1)),
+    "allowMultipleResponses"  INTEGER NOT NULL DEFAULT 0 CHECK ("allowMultipleResponses" IN (0, 1)),
     "weight"            INTEGER NOT NULL DEFAULT 1,
     "public"            INTEGER NOT NULL DEFAULT 0 CHECK ("public" IN (0, 1)),
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
 INSERT INTO custom_polls_temp (
-    id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, weight, public
+    id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public
 )
 SELECT
-    id, owner, name, prompt, answers, textRes, blind, 1, weight, public
+    id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, 0, weight, public
 FROM custom_polls;
 
 DROP TABLE custom_polls;
