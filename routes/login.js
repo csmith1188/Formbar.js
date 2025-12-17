@@ -167,7 +167,12 @@ module.exports = {
 
                                     for (const temp of tempUsers) {
                                         const decoded = jwt.decode(temp.token);
-                                        if (decoded && decoded.email === user.email && decoded.hashedPassword) {
+                                        if (
+                                            decoded &&
+                                            decoded.email === user.email &&
+                                            typeof decoded.hashedPassword === "string" &&
+                                            decoded.hashedPassword.length > 0
+                                        ) {
                                             // Verify password matches
                                             const passwordMatches = await compare(user.password, decoded.hashedPassword);
                                             if (passwordMatches) {
