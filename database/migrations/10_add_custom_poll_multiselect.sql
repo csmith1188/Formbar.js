@@ -25,7 +25,7 @@ INSERT INTO custom_polls_temp (
     id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public
 )
 SELECT
-    id, owner, name, prompt, answers, textRes, blind, 1, 0, weight, public
+    id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, 0, weight, public
 FROM custom_polls;
 
 DROP TABLE custom_polls;
