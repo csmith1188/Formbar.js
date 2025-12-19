@@ -12,7 +12,6 @@ async function getUser(userIdentifier) {
     try {
         // Log the request details and get the email
         const email = userIdentifier.email || (await getEmailFromAPIKey(userIdentifier.api));
-        console.log(email);
 
         // If an error happens, throw the error
         if (email instanceof Error) throw email;
