@@ -334,9 +334,6 @@ module.exports = {
                     // Get all existing users and check for existing emails
                     const users = await dbGetAll("SELECT email, displayName FROM users");
 
-                    let newAPI;
-                    let newSecret;
-
                     // If there are no users in the database, the first user is a manager
                     if (users.length === 0) {
                         userPermission = MANAGER_PERMISSIONS;
@@ -368,19 +365,9 @@ module.exports = {
                         }
                     }
 
-                    const apiAndSecrets = await dbGetAll("SELECT API, secret FROM users");
-                    const existingAPIs = apiAndSecrets.map((row) => row.API);
-                    const existingSecrets = apiAndSecrets.map((row) => row.secret);
-
-                    // Generate unique API key
-                    do {
-                        newAPI = crypto.randomBytes(32).toString("hex");
-                    } while (existingAPIs.includes(newAPI));
-
-                    // Generate unique secret key
-                    do {
-                        newSecret = crypto.randomBytes(256).toString("hex");
-                    } while (existingSecrets.includes(newSecret));
+                    // Generate API key and secret
+                    const newAPI = crypto.randomBytes(32).toString("hex");
+                    const newSecret = crypto.randomBytes(256).toString("hex");
 
                     // Hash the provided password
                     const hashedPassword = await hash(user.password);
