@@ -252,11 +252,21 @@ async function transferDigipogs(transferData) {
                 recordAttempt(from, false);
                 return { success: false, message: "Recipient pool not found." };
             }
-            await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
 
+            // Perform user deduction and pool update atomically
             try {
+                await dbRun("BEGIN TRANSACTION");
+                // Deduct full amount from user
                 await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]);
+                // Credit taxed amount to pool
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
+                await dbRun("COMMIT");
             } catch (err) {
+                try {
+                    await dbRun("ROLLBACK");
+                } catch (rollbackErr) {
+                    logger.log("error", rollbackErr.stack || rollbackErr);
+                }
                 logger.log("error", err.stack || err);
                 recordAttempt(from, false);
                 return { success: false, message: "Transfer failed due to database error." };
