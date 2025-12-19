@@ -22,6 +22,7 @@ module.exports = {
                 let newAPI = crypto.randomBytes(32).toString("hex");
                 const hashedAPI = await hash(newAPI);
                 await dbRun("UPDATE users SET API = ? WHERE id = ?", [hashedAPI, id]);
+                socket.request.session.API = hashedAPI;
 
                 // Log the successful API key update and emit the plaintext key (one-time view)
                 logger.log("info", `[apiKeyUpdated] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
