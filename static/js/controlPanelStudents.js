@@ -222,10 +222,12 @@ function buildStudent(classroomData, studentData) {
                 option.value = permission;
                 option.innerText = strPerms;
                 permSwitch.appendChild(option);
+            }
 
-                if (studentData.classPermissions == permission) {
-                    permSwitch.value = permission;
-                }
+            // Only set the select value if the corresponding option exists
+            const desiredValue = String(studentData.classPermissions);
+            if (permSwitch.querySelector(`option[value="${desiredValue}"]`)) {
+                permSwitch.value = desiredValue;
             }
 
             permSwitch.onchange = (event) => {
