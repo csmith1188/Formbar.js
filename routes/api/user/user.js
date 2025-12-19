@@ -27,7 +27,8 @@ module.exports = {
                 let userEmail = undefined;
                 // Safer check for manager permissions
                 const isManager = requesterEmail && classInformation.users[requesterEmail]?.permissions === MANAGER_PERMISSIONS;
-                if (user && (requesterEmail === user.email || isManager)) {
+                const isSelf = requesterEmail && requesterEmail === user.email;
+                if (user && (isSelf || isManager)) {
                     userEmail = user.email;
                 }
 
