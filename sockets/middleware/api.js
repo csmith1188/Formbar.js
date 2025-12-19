@@ -5,7 +5,7 @@ const { userSockets } = require("../../modules/socketUpdates");
 const { Student } = require("../../modules/student");
 const { getUserClass } = require("../../modules/user/user");
 const { classKickStudent } = require("../../modules/class/kick");
-const { compare, hash } = require("../../modules/crypto");
+const { compare } = require("../../modules/crypto");
 
 module.exports = {
     order: 10,
