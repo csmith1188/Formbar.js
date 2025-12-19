@@ -84,7 +84,7 @@ function checkRateLimit(userId) {
     const failedCount = recentAttempts.filter((attempt) => !attempt.success).length;
 
     // Check if adding one more failed attempt would exceed the limit
-    if (failedCount > rateLimit.maxAttempts) {
+    if (failedCount >= rateLimit.maxAttempts) {
         // Lock the account
         userAttempts.lockedUntil = now + rateLimit.lockoutDuration;
         const waitTime = Math.ceil(rateLimit.lockoutDuration / 1000);
