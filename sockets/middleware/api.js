@@ -14,10 +14,20 @@ module.exports = {
             const { api } = socket.request.headers;
             if (api) {
                 await new Promise((resolve, reject) => {
-                    // Look up the user by API key directly instead of scanning all users
-                    database.get("SELECT * FROM users WHERE API = ?", [api], (err, userData) => {
+                    // Look up the user by comparing API key hash
+                    database.all("SELECT * FROM users", [], async (err, users) => {
                         try {
                             if (err) throw err;
+
+                            // Compare the provided API key with each user's hashed API key
+                            let userData = null;
+                            for (const user of users) {
+                                if (user.API && (await compare(api, user.API))) {
+                                    userData = user;
+                                    break;
+                                }
+                            }
+
                             if (!userData) {
                                 logger.log("verbose", "[socket authentication] not a valid API Key");
                                 throw "Not a valid API key";
