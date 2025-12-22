@@ -7,6 +7,16 @@
 	scrollbar-color: black transparent;
 }
 
+::-webkit-scrollbar {
+	background: transparent;
+	width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: white;
+	border-radius: 999px;
+}
+
 :root {
 	/*All pages can use this set of colors*/
 
@@ -78,6 +88,14 @@
 	--darkMode-button-pressed-hover-bg: #286aee94;
 
 	--button-hover-scale: 1.025;
+	
+	--fullViewportWidth: 100%;
+	--fullViewportHeight: 100%;
+}
+
+html {
+	height: 100%;
+	width: 100%;
 }
 
 body {
@@ -87,8 +105,8 @@ body {
 	text-align: center;
 	--theme-color: var(--color-blue);
 	transition: background-color 0.5s, color 0.5s;
-	width: calc(100dvw - 16px);
-	height: calc(100dvh - 16px);
+	width: calc(var(--fullViewportWidth) - 16px);
+	height: calc(var(--fullViewportHeight) - 16px);
 	background: linear-gradient(135deg, #b8e1ff 30%, #699bbe 100%);
 	color: #000;
 }
@@ -99,6 +117,10 @@ h1, h2, h3, h4, h5, h6 {
 
 p {
 	color: var(--color-black);
+}
+
+input.inputtedTime::placeholder {
+	color: white;
 }
 
 .messageBody {
@@ -630,13 +652,6 @@ input[type="radio"]:focus {
 	margin-bottom: 20px;
 }
 
-
-body:has(header#formbarHeader[style="display: none;"]) #pollPrompt {
-	top: 20px;
-	margin: 0;
-}
-
-
 #pollPrompt {
 	font-size: 40px;
 	position: absolute;
@@ -933,7 +948,6 @@ hr {
 
 #userPolls:not(button), #classPolls:not(button), #publicPolls:not(button) {
 	display: flex;
-	padding: 0;
 	flex-wrap: wrap;
 	justify-content: space-evenly;
 }
@@ -996,7 +1010,7 @@ input[type='checkbox'] {
 	padding-top: 0;
 	position: relative;
 	max-height: 100%;
-	overflow: scroll;
+	overflow: auto;
 
 	display: flex;
 	flex-direction: column;
@@ -1089,6 +1103,11 @@ input::-webkit-inner-spin-button {
 
 div .tabContent {
 	padding-bottom: 5vh;
+}
+
+.tabContent {
+	overflow: auto;
+	padding: 5px;
 }
 
 #startClass,
@@ -1761,6 +1780,20 @@ input[type="checkbox"],
 	justify-content: space-between;
 	align-items: center;
 	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.sensitiveInfo p {
+	flex: 1;
+	min-width: 0;
+	word-break: break-all;
+	margin: 0;
+}
+
+.sensitiveInfo > div {
+	display: flex;
+	gap: 10px;
+	flex-shrink: 0;
 }
 
 .revampButton#forgotPassword {
@@ -1819,7 +1852,7 @@ input[type="checkbox"],
 	margin: auto;
 	padding: 40px 15%;
 
-	overflow: scroll;
+	overflow: auto;
 	height: calc(100vh - 60px);
 	font-size: 24px;
 }
@@ -1980,6 +2013,7 @@ a.link:visited {
 	height: 100%;
 	width: 100%;
 	padding: 0 !important;
+	overflow: visible;
 }
 
 #classesMenu > *:not(div.verticalLine) {
@@ -2215,14 +2249,8 @@ div.user {
 	background: var(--color) !important;
 }
 
-body:not(:has(header#formbarHeader[style="display: none;"])) {
+body:not(body > .header#formbarHeader[style="display: none;"]) {
 	padding-top: 72px;
-}
-
-
-
-#vbContainerOuter:has(#vbContainer[style="display: none;"]) {
-	display: none !important;
 }
 
 #quickMenu.dividedThree {
@@ -2456,6 +2484,12 @@ div#errorDialog.shown {
 	opacity: 1;
 }
 
+/* Success variant for the notification dialog */
+div#errorDialog.success {
+	background-color: var(--color-green);
+	border: 2px solid var(--light-green);
+}
+
 @keyframes showError {
 	0% {
 		transform: translateY(100%);
@@ -2627,7 +2661,6 @@ button.start-custom-poll {
 
 #bannedStudentsMenu .revampDiv {
 	margin: 90px 12px;
-	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
 	padding-bottom: 16px;
@@ -2832,7 +2865,9 @@ button img {
 }
 
 #loadPoll {
-	margin: auto;
+	width: fit-content !important;
+	margin: 10px auto;
+	margin-bottom: 0;
 }
 
 #users .user p {
@@ -2878,10 +2913,6 @@ button img {
     align-items: center;
     flex-direction: row;
     gap: 10px;
-}
-
-#newPoll.tabContent {
-    height: 100%;
 }
 
 #save-poll {
@@ -3335,13 +3366,18 @@ div.accordionOptions.active {
 div.accordionOptions.textOptions p#fullTextResponse {
     margin: 0;
     height: 100%;
-    overflow: scroll;
+    overflow: auto;
 	word-wrap: anywhere;
   	width: 100%;
 }
 
 div.accordionOptions.permsOptions select.permSwitch {
     width: 100%;
+	color: white !important;
+}
+
+div.accordionOptions.permsOptions select.permSwitch option {
+	color: white !important;
 }
 
 div.accordionOptions.kickBanOptions div#extraButtons {
@@ -3488,11 +3524,13 @@ p.accordionTitle {
 	height: 48px;
 	opacity: 0;
 	transition: 0.2s ease-in-out width, 0.2s ease-in-out opacity;
+	pointer-events: none;
 }
 
 #searchUsers.shown {
 	width: 250px;
 	opacity: 1;
+	pointer-events: auto;
 }
 
 #searchUsersBtn {
@@ -3544,3 +3582,4 @@ button.includingButton.pressed:hover {
     background-color: hsl(120, 94%, 74%) !important;
     transform: none !important;
 }
+

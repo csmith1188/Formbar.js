@@ -87,6 +87,14 @@ button.pressed:not(.includingButton).revampButton:hover {
 	filter: invert(1) !important;
 }
 
+div.accordionOptions.permsOptions select.permSwitch {
+	color: black !important;
+}
+
+div.accordionOptions.permsOptions select.permSwitch option {
+	color: black !important;
+}
+
 input[type="checkbox"]:checked,
 button.pressed:not(.includingButton) {
 	background: var(--darkMode-button-pressed-bg) !important;

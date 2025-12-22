@@ -205,6 +205,16 @@ module.exports = {
                             return;
                         }
 
+                        // Check if the user has a password set
+                        if (!userData.password) {
+                            logger.log("verbose", "[post /oauth] User does not have a password set");
+                            res.render("pages/message", {
+                                message: "This account does not have a password set.",
+                                title: "Login",
+                            });
+                            return;
+                        }
+
                         // Hashes users password
                         const passwordMatches = await compare(password, userData.password);
                         if (!passwordMatches) {

@@ -6,9 +6,6 @@ const userBreak = [];
 // Stores the currently opened student elements
 let opendetails = [];
 
-// Stores the currently active tab for each student
-let activeStudentTabs = {};
-
 // Checks if all the student boxes are of students currently in the classroom
 function validateStudents(students) {
     for (const student of usersDiv.children) {
@@ -29,7 +26,8 @@ function buildStudent(classroomData, studentData) {
         return;
     }
 
-    if (studentData.classPermissions < currentUser.classPermissions) {
+    // Only build the student if they are not the current user
+    if (studentData.id !== currentUser.id) {
         const newStudent = studentTemplateDiv.cloneNode(true);
         newStudent.hidden = false;
         newStudent.style.display = "flex";
@@ -42,21 +40,7 @@ function buildStudent(classroomData, studentData) {
         newStudent.addEventListener("toggle", () => {
             if (newStudent.open) {
                 if (opendetails.indexOf(studentData.id) == -1) opendetails.push(studentData.id);
-
-                // Check if there's a previously active tab for this student
-                const previousTabOption = activeStudentTabs[studentData.id];
-                let targetButton;
-
-                if (previousTabOption !== undefined) {
-                    // Try to find the button with the stored tab option
-                    targetButton = newStudent.querySelector(`button.accordionButton[data-option="${previousTabOption}"]:not(.accButtonDisabled)`);
-                }
-
-                // If no stored tab or that button is disabled, fall back to the first available button
-                if (!targetButton) {
-                    targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
-                }
-
+                let targetButton = newStudent.querySelector("button.accordionButton:not(.accButtonDisabled)");
                 doAccordionButton(targetButton, true);
             } else {
                 opendetails.splice(opendetails.indexOf(studentData.id), 1);
@@ -215,26 +199,44 @@ function buildStudent(classroomData, studentData) {
         permSwitch.setAttribute("class", "permSwitch revampButton");
         permSwitch.setAttribute("data-id", studentData.id);
 
-        for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
-            let strPerms = ["Guest", "Student", "Mod", "Teacher"];
-            strPerms = strPerms[permission - 1];
+        // Check if this student is the owner of the class
+        const isOwner = classroomData.owner === studentData.id;
+
+        // If the student is the owner, add the Owner option and disable the dropdown
+        if (isOwner) {
+            const ownerOption = document.createElement("option");
+            ownerOption.value = 5;
+            ownerOption.innerText = "Owner";
+            ownerOption.selected = true;
+            permSwitch.appendChild(ownerOption);
+            permSwitch.disabled = true;
+            permSwitch.style.opacity = "0.6";
+            permSwitch.style.cursor = "not-allowed";
+        } else {
+            // For non-owners, show the regular permission options
+            for (let permission of [GUEST_PERMISSIONS, STUDENT_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS]) {
+                let strPerms = ["Guest", "Student", "Mod", "Teacher"];
+                strPerms = strPerms[permission - 1];
+
+                const option = document.createElement("option");
+                option.value = permission;
+                option.innerText = strPerms;
+                permSwitch.appendChild(option);
+            }
+
+            // Only set the select value if the corresponding option exists
+            const desiredValue = String(studentData.classPermissions);
+            if (permSwitch.querySelector(`option[value="${desiredValue}"]`)) {
+                permSwitch.value = desiredValue;
+            }
 
             permSwitch.onchange = (event) => {
                 const newPerm = Number(event.target.value);
                 socket.emit("classPermChange", studentData.id, newPerm);
             };
-
-            const option = document.createElement("option");
-            option.value = permission;
-            option.innerText = strPerms;
-            permSwitch.appendChild(option);
-
-            if (studentData.classPermissions == permission) {
-                permSwitch.value = permission;
-            }
-
-            permDiv.appendChild(permSwitch);
         }
+
+        permDiv.appendChild(permSwitch);
 
         // Add each tag as a button to the tag form
         if (!Array.isArray(classroomData.tags)) classroomData.tags = [];
@@ -699,7 +701,6 @@ function doAccordionButton(button, forceOpen = false) {
 
     // Store the active tab option for this student
     const studentId = studentElement.id.split("student-")[1];
-    activeStudentTabs[studentId] = button.dataset.option;
 
     const studentOptions = {
         0: {

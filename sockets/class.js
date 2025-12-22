@@ -421,6 +421,14 @@ module.exports = {
             try {
                 const email = await getEmailFromId(userId);
                 const classId = socket.request.session.classId;
+
+                // Prevent changing the owner's permissions
+                const classroom = classInformation.classrooms[classId];
+                if (classroom.owner == userId) {
+                    socket.emit("message", "You cannot change the permissions of the class owner.");
+                    return;
+                }
+
                 const oldPerm = classInformation.classrooms[classId].students[email].classPermissions || BANNED_PERMISSIONS;
                 logger.log("info", `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
                 logger.log("info", `[classPermChange] user=(${email}) newPerm=(${newPerm})`);

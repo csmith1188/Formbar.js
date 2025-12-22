@@ -15,12 +15,20 @@ module.exports = {
                 let user = Object.values(classInformation.users).find((user) => user.id == userId);
                 if (!user) {
                     user = await dbGet("SELECT * FROM users WHERE id=?", userId);
+                } else {
+                    // Load missing digipogs and verified values from the database
+                    const { digipogs = 0, verified = false } = (await dbGet("SELECT digipogs, verified FROM users WHERE id=?", userId)) || {};
+                    user.digipogs = digipogs;
+                    user.verified = verified;
                 }
 
                 // Only include the email if the requester is the user themselves or a manager
                 const requesterEmail = req.session.email;
                 let userEmail = undefined;
-                if (user && (requesterEmail === user.email || classInformation.users[requesterEmail].permissions === MANAGER_PERMISSIONS)) {
+                // Safer check for manager permissions
+                const isManager = requesterEmail && classInformation.users[requesterEmail]?.permissions === MANAGER_PERMISSIONS;
+                const isSelf = requesterEmail && requesterEmail === user.email;
+                if (user && (isSelf || isManager)) {
                     userEmail = user.email;
                 }
 

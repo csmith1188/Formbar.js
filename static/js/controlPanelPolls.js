@@ -528,7 +528,7 @@ function startPoll(customPollId) {
             prompt: customPoll.prompt,
             answers: customPoll.answers,
             allowTextResponses: !!customPoll.textRes,
-            allowMultipleResponses: customPoll.multiRes,
+            allowMultipleResponses: customPoll.allowMultipleResponses,
             allowVoteChanges: !!customPoll.allowVoteChanges,
             blind: !!customPoll.blind,
             weight: customPoll.weight,
@@ -625,6 +625,7 @@ function savePollAs(pollType) {
         return;
     } else {
         customPoll.blind = blindCheck.checked;
+        customPoll.allowMultipleResponses = multiRes.checked;
         customPoll.allowVoteChanges = allowVoteChanges.checked;
         customPoll.prompt = pollPrompt.value;
         customPoll.textRes = resTextBox.checked;

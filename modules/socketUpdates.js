@@ -1,5 +1,5 @@
 const { classInformation } = require("./class/classroom");
-const { database } = require("./database");
+const { database, dbGetAll } = require("./database");
 const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("./manager");
@@ -252,6 +252,7 @@ function getClassUpdateData(classData, hasTeacherPermissions, options = { restri
         id: classData.id,
         className: classData.className,
         isActive: classData.isActive,
+        owner: classData.owner,
         timer: classData.timer,
         poll: {
             ...classData.poll,
@@ -307,7 +308,7 @@ class SocketUpdates {
 
             // Retrieve the permissions that allows a user to access the control panel
             const controlPanelPermissions = Math.min(
-                classData.permissions.controlPolls,
+                classData.permissions.controlPoll,
                 classData.permissions.manageStudents,
                 classData.permissions.manageClass
             );
@@ -475,21 +476,21 @@ class SocketUpdates {
         }
     }
 
-    getOwnedClasses(email) {
+    async getOwnedClasses(email) {
         try {
             logger.log("info", `[getOwnedClasses] email=(${email})`);
 
-            database.all("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id], (err, ownedClasses) => {
-                try {
-                    if (err) throw err;
+            // Check if the user exists before accessing .id
+            if (!classInformation.users[email] || !classInformation.users[email].id) {
+                logger.log("error", `[getOwnedClasses] User not found for email=(${email})`);
+                return;
+            }
+            // Get the user's owned classes from the database
+            const ownedClasses = await dbGetAll("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id]);
+            logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
 
-                    logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
-
-                    io.to(`user-${email}`).emit("getOwnedClasses", ownedClasses);
-                } catch (err) {
-                    logger.log("error", err.stack);
-                }
-            });
+            // Send the owned classes to the user's sockets
+            io.to(`user-${email}`).emit("getOwnedClasses", ownedClasses);
         } catch (err) {
             logger.log("error", err.stack);
         }
