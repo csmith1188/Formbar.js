@@ -1,4 +1,4 @@
-const { isAuthenticated, isVerified } = require("../routes/middleware/authentication");
+const { isAuthenticated, isVerified } = require("../api/v1/controllers/middleware/authentication");
 const { classInformation } = require("../modules/class/classroom");
 const { logNumbers } = require("../modules/config");
 const { logger } = require("../modules/logger");

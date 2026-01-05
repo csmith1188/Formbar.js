@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("../routes/middleware/authentication");
+const { isVerified, permCheck } = require("../api/v1/controllers/middleware/authentication");
 const { dbGet, dbGetAll } = require("../modules/database");
 const { logger } = require("../modules/logger");
 const { logNumbers } = require("../modules/config");

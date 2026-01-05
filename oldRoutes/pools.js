@@ -1,6 +1,6 @@
 const { dbGet } = require("../modules/database");
 const { logger } = require("../modules/logger");
-const { isVerified, permCheck } = require("../routes/middleware/authentication");
+const { isVerified, permCheck } = require("../api/v1/controllers/middleware/authentication");
 const pools = require("../modules/pools");
 
 module.exports = {

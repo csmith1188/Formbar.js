@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 require("dotenv").config(); // For environment variables
 
+// If the database does not exist, then prompt the user to initialize it and exit
 if (!fs.existsSync("database/database.db")) {
     console.log('The database file does not exist. Please run "npm run init-db" to initialize the database.');
     return;
@@ -13,21 +14,12 @@ if (!fs.existsSync("database/database.db")) {
 
 // Custom modules
 const { logger } = require("./modules/logger.js");
-const {
-    MANAGER_PERMISSIONS,
-    TEACHER_PERMISSIONS,
-    GUEST_PERMISSIONS,
-    STUDENT_PERMISSIONS,
-    MOD_PERMISSIONS,
-    BANNED_PERMISSIONS,
-} = require("./modules/permissions.js");
 const { classInformation } = require("./modules/class/classroom.js");
 const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http, getIpAccess } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
-const { logout } = require("@modules/user/userSession");
-const authentication = require("./routes/middleware/authentication.js");
+const { logout } = require("./modules/user/userSession");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -51,9 +43,11 @@ io.use((socket, next) => {
     try {
         let ip = socket.handshake.address;
         if (ip && ip.startsWith("::ffff:")) ip = ip.slice(7);
-        if (authentication.checkIPBanned(ip)) {
-            return next(new Error("IP banned"));
-        }
+
+        // @TODO fix
+        // if (authentication.checkIPBanned(ip)) {
+        //     return next(new Error("IP banned"));
+        // }
         next();
     } catch (err) {
         next(err);
@@ -102,11 +96,12 @@ setInterval(() => {
     }
 }, INACTIVITY_CHECK_TIME);
 
-const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60; // 1 hour
-authentication.cleanRefreshTokens();
-setInterval(async () => {
-    authentication.cleanRefreshTokens();
-}, REFRESH_TOKEN_CHECK_TIME);
+// @TODO fix
+// const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60; // 1 hour
+// authentication.cleanRefreshTokens();
+// setInterval(async () => {
+//     authentication.cleanRefreshTokens();
+// }, REFRESH_TOKEN_CHECK_TIME);
 
 // Check if an IP is banned
 app.use((req, res, next) => {
@@ -114,9 +109,10 @@ app.use((req, res, next) => {
     if (!ip) return next();
     if (ip.startsWith("::ffff:")) ip = ip.slice(7);
 
+    // @TODO: fix
     // Check if the user is ip banned
     // If the user is not ip banned and is on the ip-banned page, redirect them to the home page
-    const isIPBanned = authentication.checkIPBanned(ip);
+    // const isIPBanned = authentication.checkIPBanned(ip);
     if (req.path === "/ip-banned" && isIPBanned) {
         return next();
     } else if (req.path === "/ip-banned" && !isIPBanned) {
@@ -124,65 +120,69 @@ app.use((req, res, next) => {
     }
 
     // Redirect to the IP banned page if they are banned
-    if (isIPBanned) {
-        return res.redirect("/ip-banned");
-    }
+    // if (isIPBanned) {
+    //     return res.redirect("/ip-banned");
+    // }
 
     next();
 });
 
 // Add currentUser and permission constants to all pages
 app.use((req, res, next) => {
-    res.locals = {
-        ...res.locals,
-        MANAGER_PERMISSIONS,
-        TEACHER_PERMISSIONS,
-        MOD_PERMISSIONS,
-        STUDENT_PERMISSIONS,
-        GUEST_PERMISSIONS,
-        BANNED_PERMISSIONS,
-    };
-
     // If the user is in a class, then get the user from the class students list
     // This ensures that the user data is always up to date
     if (req.session.classId) {
         const user = classInformation.classrooms[req.session.classId].students[req.session.email];
         if (!user) {
-            res.locals.currentUser = classInformation.users[req.session.email];
             next();
             return;
         }
 
         classInformation.users[req.session.email] = user;
-        res.locals.currentUser = user;
-    } else {
-        res.locals.currentUser = classInformation.users[req.session.email];
     }
 
     next();
 });
 
-// Import HTTP routes
-const routeFiles = fs.readdirSync("./routes/").filter((file) => file.endsWith(".js"));
-for (const routeFile of routeFiles) {
-    // Skip for now as it will be handled later
-    if (routeFile == "404.js") {
-        continue;
+function getJSFiles(dir, base = dir) {
+    let results = [];
+    const entries = fs.readdirSync(dir, {withFileTypes: true});
+    for (const entry of entries) {
+        const full = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) {
+            results = results.concat(getJSFiles(full, base));
+        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+            results.push(full.slice(base.length + 1)); // relative path from base folder
+        }
     }
+    return results
+}
 
-    const route = require(`./routes/${routeFile}`);
-    route.run(app);
+// Import API routes
+const apiVersionFolders = fs.readdirSync('./api');
+for (const apiVersionFolder of apiVersionFolders) {
+    const controllerFolders = fs.readdirSync(`./api/${apiVersionFolder}`).filter((file) => file === "controllers");
+    for (const controllerFolder of controllerFolders) {
+        const router = express.Router();
+        const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
+        for (const routeFile of routeFiles) {
+            const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
+            if (typeof registerRoute === "function") {
+                registerRoute(router);
+                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute)
+            }
+        }
+
+        app.use(`/api/${apiVersionFolder}`, router);
+    }
 }
 
 // Initialize websocket routes
 initSocketRoutes();
 
-// Import 404 error page
-require("./oldRoutes/404.js").run(app);
-
 http.listen(settings.port, async () => {
-    Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));
-    Object.assign(authentication.blacklistedIps, await getIpAccess("blacklist"));
+    // Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));
+    // Object.assign(authentication.blacklistedIps, await getIpAccess("blacklist"));
     console.log(`Running on port: ${settings.port}`);
     if (!settings.emailEnabled) console.log("Email functionality is disabled.");
     if (!settings.googleOauthEnabled) console.log("Google Oauth functionality is disabled.");
