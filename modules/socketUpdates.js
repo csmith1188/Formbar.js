@@ -433,19 +433,9 @@ class SocketUpdates {
                         );
 
                         io.to(`user-${email}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
-                        const apiId =
-                            this.socket &&
-                            this.socket.request &&
-                            this.socket.request.session &&
-                            this.socket.request.session.api;
+                        const apiId = this.socket && this.socket.request && this.socket.request.session && this.socket.request.session.api;
                         if (apiId) {
-                            io.to(`api-${apiId}`).emit(
-                                "customPollUpdate",
-                                publicPolls,
-                                classroomPolls,
-                                userCustomPolls,
-                                customPollsData
-                            );
+                            io.to(`api-${apiId}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
                         }
                     } catch (err) {
                         logger.log("error", err.stack);
