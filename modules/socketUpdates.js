@@ -433,6 +433,10 @@ class SocketUpdates {
                         );
 
                         io.to(`user-${email}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
+                        const apiId = this.socket && this.socket.request && this.socket.request.session && this.socket.request.session.api;
+                        if (apiId) {
+                            io.to(`api-${apiId}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
+                        }
                     } catch (err) {
                         logger.log("error", err.stack);
                     }
@@ -485,12 +489,19 @@ class SocketUpdates {
                 logger.log("error", `[getOwnedClasses] User not found for email=(${email})`);
                 return;
             }
+
             // Get the user's owned classes from the database
             const ownedClasses = await dbGetAll("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id]);
             logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
 
             // Send the owned classes to the user's sockets
             io.to(`user-${email}`).emit("getOwnedClasses", ownedClasses);
+
+            // Only emit to API-specific room if the API session property exists
+            const session = this.socket.request && this.socket.request.session;
+            if (session && session.api) {
+                io.to(`api-${session.api}`).emit("getOwnedClasses", ownedClasses);
+            }
         } catch (err) {
             logger.log("error", err.stack);
         }
