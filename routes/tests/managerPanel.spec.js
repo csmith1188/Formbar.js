@@ -1,4 +1,4 @@
-const managerRoute = require("../managerPanel");
+const managerRoute = require("../../oldRoutes/managerPanel");
 const request = require("supertest");
 const { createExpressServer } = require("../../modules/tests/tests");
 const { classInformation } = require("../../modules/class/classroom");

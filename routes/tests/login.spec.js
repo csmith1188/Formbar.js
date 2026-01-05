@@ -1,7 +1,7 @@
 const request = require("supertest");
 const { createExpressServer, createTestUser } = require("../../modules/tests/tests");
 const { database } = require("../../modules/database");
-const loginRoute = require("../login");
+const loginRoute = require("../../oldRoutes/login");
 const crypto = require("crypto");
 
 // Mocks

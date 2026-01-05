@@ -1,4 +1,4 @@
-const notFoundRoute = require("../404");
+const notFoundRoute = require("../../oldRoutes/404");
 const request = require("supertest");
 const { createExpressServer } = require("../../modules/tests/tests");
 

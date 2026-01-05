@@ -1,4 +1,4 @@
-const studentRoute = require("../student");
+const studentRoute = require("../../oldRoutes/student");
 const request = require("supertest");
 const { createExpressServer } = require("../../modules/tests/tests");
 const { classInformation } = require("../../modules/class/classroom");

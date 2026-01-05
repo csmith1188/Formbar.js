@@ -1,4 +1,4 @@
-const changePasswordRoute = require("../changePassword");
+const changePasswordRoute = require("../../oldRoutes/changePassword");
 const request = require("supertest");
 const { createExpressServer } = require("../../modules/tests/tests");
 const { database } = require("../../modules/database");

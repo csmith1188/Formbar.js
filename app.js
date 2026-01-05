@@ -180,7 +180,7 @@ for (const routeFile of routeFiles) {
 initSocketRoutes();
 
 // Import 404 error page
-require("./routes/404.js").run(app);
+require("./oldRoutes/404.js").run(app);
 
 http.listen(settings.port, async () => {
     Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));

@@ -1,6 +1,6 @@
 const express = require("express");
 const fs = require("fs");
-const certsRoute = require("../certs");
+const certsRoute = require("../../oldRoutes/certs");
 const request = require("supertest");
 const { createExpressServer } = require("../../modules/tests/tests");
 
