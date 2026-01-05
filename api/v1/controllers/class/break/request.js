@@ -33,4 +33,4 @@ module.exports = (router) => {
     } catch (err) {
         logger.log("error", err.stack);
     }
-}
+};

@@ -14,17 +14,14 @@ function createServer() {
             info: {
                 title: "Formbar API",
                 version: "3.0.0",
-                description: "HTTP API documentation for Formbar.js."
-            }
+                description: "HTTP API documentation for Formbar.js.",
+            },
         },
-        apis: [
-            "./api/v1/**/*.js",
-            "./docs/components/**/*.yaml"
-        ],
-    }
+        apis: ["./api/v1/**/*.js", "./docs/components/**/*.yaml"],
+    };
 
     const specs = swaggerJsdoc(swaggerDocOptions);
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
+    app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
     return { app, io, http };
 }

@@ -13,7 +13,7 @@ module.exports = (router) => {
 
             const userInformation = {
                 email: req.body.email,
-                password: req.body.password
+                password: req.body.password,
             };
 
             if (!userInformation.email || !userInformation.password) {
@@ -27,11 +27,15 @@ module.exports = (router) => {
 
             const passwordMatches = await compare(userInformation.password, userData.password);
             if (passwordMatches) {
-                const accessToken = jwt.sign({
-                    id: userData.id,
-                    email: userData.email,
-                    displayName: userData.displayName
-                }, process.env.SECRET, { expiresIn: '1h' });
+                const accessToken = jwt.sign(
+                    {
+                        id: userData.id,
+                        email: userData.email,
+                        displayName: userData.displayName,
+                    },
+                    process.env.SECRET,
+                    { expiresIn: "1h" }
+                );
 
                 return res.status(200).json({ token: accessToken });
             } else {
@@ -42,4 +46,4 @@ module.exports = (router) => {
             res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });
-}
+};

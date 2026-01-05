@@ -5,46 +5,46 @@ const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
     try {
-		/**
-		 * @swagger
-		 * /api/v1/user/{id}:
-		 *   get:
-		 *     summary: Get user information by ID
-		 *     tags:
-		 *       - Users
-		 *     description: |
-		 *       Returns basic information about a user. The user's email address is only
-		 *       included when the requester is the user themself or a manager. Other
-		 *       fields (permissions, digipogs, displayName, verified) are always returned
-		 *       when the user exists.
-		 *     parameters:
-		 *       - in: path
-		 *         name: id
-		 *         required: true
-		 *         description: The ID of the user to retrieve
-		 *         schema:
-		 *           type: string
-		 *           example: "1"
-		 *     responses:
-		 *       200:
-		 *         description: User information returned successfully
-		 *         content:
-		 *           application/json:
-		 *             schema:
-		 *               $ref: '#/components/schemas/User'
-		 *       401:
-		 *         description: Unauthorized (no session or insufficient permissions to view email)
-		 *         content:
-		 *           application/json:
-		 *             schema:
-		 *               $ref: '#/components/schemas/UnauthorizedError'
-		 *       404:
-		 *         description: User not found
-		 *         content:
-		 *           application/json:
-		 *             schema:
-		 *               $ref: '#/components/schemas/NotFoundError'
-		 */
+        /**
+         * @swagger
+         * /api/v1/user/{id}:
+         *   get:
+         *     summary: Get user information by ID
+         *     tags:
+         *       - Users
+         *     description: |
+         *       Returns basic information about a user. The user's email address is only
+         *       included when the requester is the user themself or a manager. Other
+         *       fields (permissions, digipogs, displayName, verified) are always returned
+         *       when the user exists.
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: The ID of the user to retrieve
+         *         schema:
+         *           type: string
+         *           example: "1"
+         *     responses:
+         *       200:
+         *         description: User information returned successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/User'
+         *       401:
+         *         description: Unauthorized (no session or insufficient permissions to view email)
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/UnauthorizedError'
+         *       404:
+         *         description: User not found
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         */
         router.get("/user/:id", async (req, res) => {
             try {
                 const userId = req.params.id;
@@ -90,4 +90,4 @@ module.exports = (router) => {
     } catch (err) {
         logger.log("error", err.stack);
     }
-}
+};

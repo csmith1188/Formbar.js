@@ -5,7 +5,6 @@ const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require
 const { classInformation } = require("@modules/class/classroom");
 const { managerUpdate } = require("@modules/socketUpdates");
 
-
 module.exports = (router) => {
     try {
         // Globally ban a user (set permissions to 0)
@@ -50,4 +49,4 @@ module.exports = (router) => {
     } catch (err) {
         logger.log("error", err.stack);
     }
-}
+};

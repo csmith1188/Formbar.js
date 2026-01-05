@@ -1,5 +1,5 @@
 // Imported modules
-require('module-alias/register');
+require("module-alias/register");
 const express = require("express");
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
@@ -137,20 +137,20 @@ app.use((req, res, next) => {
 
 function getJSFiles(dir, base = dir) {
     let results = [];
-    const entries = fs.readdirSync(dir, {withFileTypes: true});
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
         const full = `${dir}/${entry.name}`;
         if (entry.isDirectory()) {
             results = results.concat(getJSFiles(full, base));
-        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+        } else if (entry.isFile() && entry.name.endsWith(".js")) {
             results.push(full.slice(base.length + 1)); // relative path from base folder
         }
     }
-    return results
+    return results;
 }
 
 // Import API routes
-const apiVersionFolders = fs.readdirSync('./api');
+const apiVersionFolders = fs.readdirSync("./api");
 for (const apiVersionFolder of apiVersionFolders) {
     const controllerFolders = fs.readdirSync(`./api/${apiVersionFolder}`).filter((file) => file === "controllers");
     for (const controllerFolder of controllerFolders) {
@@ -160,7 +160,7 @@ for (const apiVersionFolder of apiVersionFolders) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
             if (typeof registerRoute === "function") {
                 registerRoute(router);
-                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute)
+                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute);
             }
         }
 
