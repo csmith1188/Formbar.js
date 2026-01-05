@@ -1,5 +1,5 @@
-const { dbGet, dbGetAll } = require("../modules/database");
-const { logger } = require("../modules/logger");
+const { dbGet, dbGetAll } = require("@modules/database");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {

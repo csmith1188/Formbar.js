@@ -1,5 +1,5 @@
-const { dbRun } = require("../modules/database");
-const { logger } = require("../modules/logger");
+const { dbRun } = require("@modules/database");
+const { logger } = require("@modules/logger");
 const { logNumbers } = require("../modules/config");
 const { hash } = require("../modules/crypto");
 const crypto = require("crypto");

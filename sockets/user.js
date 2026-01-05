@@ -1,5 +1,5 @@
-const { logger } = require("../modules/logger");
-const { logout } = require("../modules/user/userSession");
+const { logger } = require("@modules/logger");
+const { logout } = require("@modules/user/userSession");
 
 module.exports = {
     run(socket, socketUpdates) {

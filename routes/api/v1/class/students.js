@@ -1,8 +1,8 @@
-const { logger } = require("../../../../modules/logger");
+const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("../../../middleware/permissionCheck");
-const { classInformation } = require("../../../../modules/class/classroom");
-const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("../../../../modules/permissions");
-const { dbGetAll } = require("../../../../modules/database");
+const { classInformation } = require("@modules/class/classroom");
+const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
+const { dbGetAll } = require("@modules/database");
 
 module.exports = {
     run(router) {

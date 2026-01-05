@@ -4,8 +4,8 @@ const { logger } = require("../../modules/logger");
 const { generateColors } = require("../../modules/util");
 const { createTestUser, createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
 const { userSocketUpdates } = require("../init");
-// jest.mock("../../modules/logger");
-jest.mock("../../modules/util");
+// jest.mock("@modules/logger");
+jest.mock("@modules/util");
 
 describe("startPoll", () => {
     let socket;
@@ -91,6 +91,6 @@ describe("startPoll", () => {
     });
 
     afterAll(() => {
-        jest.unmock("../../modules/socketUpdates");
+        jest.unmock("@modules/socketUpdates");
     });
 });

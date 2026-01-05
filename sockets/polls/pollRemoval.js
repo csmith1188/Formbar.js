@@ -1,6 +1,6 @@
-const { classInformation } = require("../../modules/class/classroom");
-const { dbRun, dbGet } = require("../../modules/database");
-const { logger } = require("../../modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { dbRun, dbGet } = require("@modules/database");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {

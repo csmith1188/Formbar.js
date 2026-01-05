@@ -12,6 +12,9 @@
 		"format": "prettier --write \"**/*.js\"",
 		"format:check": "prettier --check \"**/*.js\""
 	},
+	"_moduleAliases": {
+		"@modules": "modules"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/csmith1188/Formbar.js.git"
@@ -42,6 +45,7 @@
 		"google-auth-library": "^9.15.0",
 		"init": "^0.1.2",
 		"jsonwebtoken": "^9.0.2",
+		"module-alias": "^2.2.3",
 		"monaco-editor": "^0.52.2",
 		"node-fetch": "^3.3.2",
 		"nodemailer": "^7.0.12",

@@ -1,6 +1,6 @@
-const { logger } = require("../../../../modules/logger");
-const { dbGet } = require("../../../../modules/database");
-const { getUserOwnedClasses } = require("../../../../modules/user/user");
+const { logger } = require("@modules/logger");
+const { dbGet } = require("@modules/database");
+const { getUserOwnedClasses } = require("@modules/user/user");
 const { httpPermCheck } = require("../../../middleware/permissionCheck");
 
 module.exports = {

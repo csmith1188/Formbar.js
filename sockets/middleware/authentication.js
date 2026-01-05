@@ -1,6 +1,6 @@
-const { database } = require("../../modules/database");
-const { logger } = require("../../modules/logger");
-const { compare } = require("../../modules/crypto");
+const { database } = require("@modules/database");
+const { logger } = require("@modules/logger");
+const { compare } = require("@modules/crypto");
 
 module.exports = {
     order: 20,

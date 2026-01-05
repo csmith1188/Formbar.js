@@ -1,7 +1,7 @@
-const { logger } = require("../../../../modules/logger");
+const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("../../../middleware/permissionCheck");
-const { endClass } = require("../../../../modules/class/class");
-const { CLASS_PERMISSIONS } = require("../../../../modules/permissions");
+const { endClass } = require("@modules/class/class");
+const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = {
     run(router) {

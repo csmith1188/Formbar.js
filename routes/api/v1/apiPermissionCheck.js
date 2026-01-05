@@ -1,6 +1,6 @@
-const { classInformation } = require("../../../modules/class/classroom");
-const { getUser } = require("../../../modules/user/user");
-const { logger } = require("../../../modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { getUser } = require("@modules/user/user");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     // Used for checking class permissions such as the ability to use games and auxiliary

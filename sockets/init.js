@@ -1,5 +1,5 @@
-const { SocketUpdates } = require("../modules/socketUpdates");
-const { io } = require("../modules/webServer");
+const { SocketUpdates } = require("@modules/socketUpdates");
+const { io } = require("@modules/webServer");
 const fs = require("fs");
 const userSocketUpdates = {}; // Stores the socket update events for users (keyed by email, then socket.id)
 

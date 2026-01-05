@@ -1,7 +1,7 @@
-const { classInformation } = require("../../modules/class/classroom");
-const { database } = require("../../modules/database");
-const { logger } = require("../../modules/logger");
-const { getUserClass } = require("../../modules/user/user");
+const { classInformation } = require("@modules/class/classroom");
+const { database } = require("@modules/database");
+const { logger } = require("@modules/logger");
+const { getUserClass } = require("@modules/user/user");
 
 module.exports = {
     run(socket, socketUpdates) {

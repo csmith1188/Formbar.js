@@ -1,6 +1,6 @@
-const { logger } = require("../../modules/logger");
-const { rateLimits, PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
-const { TEACHER_PERMISSIONS } = require("../../modules/permissions");
+const { logger } = require("@modules/logger");
+const { rateLimits, PASSIVE_SOCKETS } = require("@modules/socketUpdates");
+const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = {
     order: 0,

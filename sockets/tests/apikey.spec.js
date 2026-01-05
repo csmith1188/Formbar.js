@@ -1,6 +1,6 @@
-const { createSocket, createTestUser, testData, createTestClass } = require("../../modules/tests/tests");
+const { createSocket, createTestUser, testData, createTestClass } = require("@modules/tests/tests");
 const { run: apiKeyRun } = require("../apikey");
-const { dbRun } = require("../../modules/database");
+const { dbRun } = require("@modules/database");
 
 describe("apikey", () => {
     let socket;

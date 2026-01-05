@@ -1,5 +1,5 @@
-const { logger } = require("../modules/logger");
-const { setTags, saveTags } = require("../modules/class/tags");
+const { logger } = require("@modules/logger");
+const { setTags, saveTags } = require("@modules/class/tags");
 
 module.exports = {
     run(socket, socketUpdates) {

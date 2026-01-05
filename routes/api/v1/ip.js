@@ -1,9 +1,9 @@
-const { logger } = require("../../../modules/logger");
-const { dbGet, dbRun, dbGetAll } = require("../../../modules/database");
-const { settings } = require("../../../modules/config");
+const { logger } = require("@modules/logger");
+const { dbGet, dbRun, dbGetAll } = require("@modules/database");
+const { settings } = require("@modules/config");
+const { MANAGER_PERMISSIONS } = require("@modules/permissions");
+const { getIpAccess } = require("@modules/webServer");
 const { hasPermission } = require("../../middleware/permissionCheck");
-const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
-const { getIpAccess } = require("../../../modules/webServer");
 const authentication = require("../../middleware/authentication");
 const fs = require("fs");
 

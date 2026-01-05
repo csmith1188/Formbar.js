@@ -1,8 +1,8 @@
-const { logger } = require("../../../../modules/logger");
-const { dbRun, dbGetAll } = require("../../../../modules/database");
+const { logger } = require("@modules/logger");
+const { dbRun, dbGetAll } = require("@modules/database");
 const jwt = require("jsonwebtoken");
 const { hasPermission } = require("../../../middleware/permissionCheck");
-const { MANAGER_PERMISSIONS } = require("../../../../modules/permissions");
+const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = {
     run(router) {

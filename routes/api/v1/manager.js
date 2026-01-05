@@ -1,6 +1,6 @@
-const { logger } = require("../../../modules/logger");
-const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
-const { getManagerData } = require("../../../modules/manager");
+const { logger } = require("@modules/logger");
+const { MANAGER_PERMISSIONS } = require("@modules/permissions");
+const { getManagerData } = require("@modules/manager");
 const { hasPermission } = require("../../middleware/permissionCheck");
 
 module.exports = {

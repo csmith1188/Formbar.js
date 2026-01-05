@@ -1,4 +1,5 @@
 // Imported modules
+require('module-alias/register');
 const express = require("express");
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
@@ -25,11 +26,8 @@ const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http, getIpAccess } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
-const { logout } = require("./modules/user/userSession");
+const { logout } = require("@modules/user/userSession");
 const authentication = require("./routes/middleware/authentication.js");
-
-// Set EJS as our view engine
-app.set("view engine", "ejs");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({

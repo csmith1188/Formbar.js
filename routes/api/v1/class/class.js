@@ -1,6 +1,6 @@
-const { classInformation, getClassUsers } = require("../../../../modules/class/classroom");
-const { TEACHER_PERMISSIONS } = require("../../../../modules/permissions");
-const { logger } = require("../../../../modules/logger");
+const { classInformation, getClassUsers } = require("@modules/class/classroom");
+const { TEACHER_PERMISSIONS } = require("@modules/permissions");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     run(router) {

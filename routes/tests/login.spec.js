@@ -1,16 +1,16 @@
 const request = require("supertest");
-const { createExpressServer, createTestUser } = require("../../modules/tests/tests");
-const { database } = require("../../modules/database");
+const { createExpressServer, createTestUser } = require("@modules/tests/tests");
+const { database } = require("@modules/database");
 const loginRoute = require("../../oldRoutes/login");
 const crypto = require("crypto");
 
 // Mocks
-jest.mock("../../modules/crypto", () => ({
+jest.mock("@modules/crypto", () => ({
     hash: jest.fn().mockResolvedValue("hashed_password"),
     compare: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock("../../modules/database", () => {
+jest.mock("@modules/database", () => {
     const dbMock = {
         get: jest.fn((query, params, callback = () => {}) => {
             // Handle the complex user query with polls
@@ -50,7 +50,7 @@ jest.mock("../../modules/database", () => {
     };
 });
 
-jest.mock("../../modules/student", () => ({
+jest.mock("@modules/student", () => ({
     Student: jest.fn().mockImplementation((email, id, permissions, api, ownedPolls, sharedPolls, tags, displayName, guest) => ({
         email,
         id,
@@ -65,7 +65,7 @@ jest.mock("../../modules/student", () => ({
 }));
 
 // Mock settings to disable email verification
-jest.mock("../../modules/config", () => ({
+jest.mock("@modules/config", () => ({
     settings: {
         emailEnabled: false,
     },
@@ -219,7 +219,7 @@ describe("Login Route", () => {
         });
 
         it("should handle incorrect password", async () => {
-            const { compare } = require("../../modules/crypto");
+            const { compare } = require("@modules/crypto");
             compare.mockResolvedValueOnce(false);
 
             database.get.mockImplementation((query, params, callback) => {

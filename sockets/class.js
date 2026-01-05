@@ -1,13 +1,13 @@
-const { classInformation } = require("../modules/class/classroom");
-const { database, dbRun } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const { advancedEmitToClass, setClassOfApiSockets, emitToUser } = require("../modules/socketUpdates");
-const { generateKey } = require("../modules/util");
-const { io } = require("../modules/webServer");
-const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("../modules/class/class");
-const { getEmailFromId, getIdFromEmail } = require("../modules/student");
-const { BANNED_PERMISSIONS } = require("../modules/permissions");
-const { classKickStudents, classKickStudent } = require("../modules/class/kick");
+const { classInformation } = require("@modules/class/classroom");
+const { database, dbRun } = require("@modules/database");
+const { logger } = require("@modules/logger");
+const { advancedEmitToClass, setClassOfApiSockets, emitToUser } = require("@modules/socketUpdates");
+const { generateKey } = require("@modules/util");
+const { io } = require("@modules/webServer");
+const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("@modules/class/class");
+const { getEmailFromId, getIdFromEmail } = require("@modules/student");
+const { BANNED_PERMISSIONS } = require("@modules/permissions");
+const { classKickStudents, classKickStudent } = require("@modules/class/kick");
 
 module.exports = {
     run(socket, socketUpdates) {

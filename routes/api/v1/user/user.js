@@ -1,7 +1,7 @@
-const { classInformation } = require("../../../../modules/class/classroom");
-const { logger } = require("../../../../modules/logger");
-const { dbGet } = require("../../../../modules/database");
-const { MANAGER_PERMISSIONS } = require("../../../../modules/permissions");
+const { classInformation } = require("@modules/class/classroom");
+const { logger } = require("@modules/logger");
+const { dbGet } = require("@modules/database");
+const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = {
     run(router) {

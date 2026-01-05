@@ -3,10 +3,10 @@ const { run: pollRemovalRun } = require("../polls/pollRemoval");
 const { createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
 const { userSocketUpdates } = require("../init");
 
-jest.mock("../../modules/class/classroom");
-// jest.mock("../../modules/logger");
-jest.mock("../../modules/socketUpdates");
-jest.mock("../../modules/util");
+jest.mock("@modules/class/classroom");
+// jest.mock("@modules/logger");
+jest.mock("@modules/socketUpdates");
+jest.mock("@modules/util");
 
 describe("endPoll", () => {
     let socket;

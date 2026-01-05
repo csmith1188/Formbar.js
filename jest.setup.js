@@ -6,7 +6,7 @@ jest.mock("./modules/logger.js", () => ({
 }));
 
 // Prevent tests from using the actual database
-jest.mock("./modules/database", () => ({
+jest.mock("@modules/database", () => ({
     database: {
         get: jest.fn(),
         run: jest.fn(),

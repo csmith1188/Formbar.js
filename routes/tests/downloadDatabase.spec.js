@@ -1,6 +1,6 @@
 const request = require("supertest");
 const downloadDatabaseRoute = require("../../oldRoutes/downloadDatabase");
-const { createExpressServer } = require("../../modules/tests/tests");
+const { createExpressServer } = require("@modules/tests/tests");
 
 // Mock the authentication module to simulate a user being logged in
 jest.mock("../middleware/authentication", () => ({

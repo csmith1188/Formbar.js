@@ -1,8 +1,8 @@
-const { logger } = require("../../modules/logger");
-const { classInformation } = require("../../modules/class/classroom");
-const { logNumbers, settings } = require("../../modules/config");
-const { TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("../../modules/permissions");
-const { dbGetAll, dbRun } = require("../../modules/database");
+const { logger } = require("@modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { logNumbers, settings } = require("@modules/config");
+const { TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
+const { dbGetAll, dbRun } = require("@modules/database");
 
 const whitelistedIps = {};
 const blacklistedIps = {};

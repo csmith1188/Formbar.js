@@ -1,5 +1,5 @@
-const { classInformation } = require("../../../../modules/class/classroom");
-const { logger } = require("../../../../modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     run(router) {

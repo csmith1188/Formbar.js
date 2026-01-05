@@ -1,6 +1,6 @@
-const { dbRun, dbGet, dbGetAll } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const pools = require("../modules/pools");
+const { dbRun, dbGet, dbGetAll } = require("@modules/database");
+const { logger } = require("@modules/logger");
+const pools = require("@modules/pools");
 
 module.exports = {
     run(socket) {

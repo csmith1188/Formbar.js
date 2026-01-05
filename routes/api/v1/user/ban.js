@@ -1,9 +1,9 @@
-const { logger } = require("../../../../modules/logger");
+const { logger } = require("@modules/logger");
 const { hasPermission } = require("../../../middleware/permissionCheck");
-const { dbGet, dbRun } = require("../../../../modules/database");
-const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("../../../../modules/permissions");
-const { classInformation } = require("../../../../modules/class/classroom");
-const { managerUpdate } = require("../../../../modules/socketUpdates");
+const { dbGet, dbRun } = require("@modules/database");
+const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
+const { classInformation } = require("@modules/class/classroom");
+const { managerUpdate } = require("@modules/socketUpdates");
 
 module.exports = {
     run(router) {

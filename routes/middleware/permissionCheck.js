@@ -1,14 +1,14 @@
-const { logger } = require("../../modules/logger");
+const { logger } = require("@modules/logger");
 const {
     CLASS_SOCKET_PERMISSION_MAPPER,
     GLOBAL_SOCKET_PERMISSIONS,
     CLASS_SOCKET_PERMISSIONS,
     CLASS_PERMISSIONS,
-} = require("../../modules/permissions");
-const { classInformation } = require("../../modules/class/classroom");
-const { dbGet } = require("../../modules/database");
-const { PASSIVE_SOCKETS } = require("../../modules/socketUpdates");
-const { camelCaseToNormal } = require("../../modules/util");
+} = require("@modules/permissions");
+const { classInformation } = require("@modules/class/classroom");
+const { dbGet } = require("@modules/database");
+const { PASSIVE_SOCKETS } = require("@modules/socketUpdates");
+const { camelCaseToNormal } = require("@modules/util");
 const { checkUserClassPermission } = require("../../modules/class/class");
 
 // For users who do not have teacher/manager permissions, then they can only access these endpoints when it's

@@ -1,6 +1,6 @@
 const consentRoute = require("../consent");
 const request = require("supertest");
-const { createExpressServer } = require("../../modules/tests/tests");
+const { createExpressServer } = require("@modules/tests/tests");
 const jwt = require("jsonwebtoken");
 
 describe("Consent Route", () => {

@@ -1,14 +1,14 @@
 const changePasswordRoute = require("../../oldRoutes/changePassword");
 const request = require("supertest");
-const { createExpressServer } = require("../../modules/tests/tests");
-const { database } = require("../../modules/database");
-const { sendMail } = require("../../modules/mail");
+const { createExpressServer } = require("@modules/tests/tests");
+const { database } = require("@modules/database");
+const { sendMail } = require("@modules/mail");
 
-jest.mock("../../modules/mail", () => ({
+jest.mock("@modules/mail", () => ({
     sendMail: jest.fn(),
 }));
 
-jest.mock("../../modules/crypto", () => ({
+jest.mock("@modules/crypto", () => ({
     hash: jest.fn().mockResolvedValue("hashed-password"),
 }));
 
@@ -70,7 +70,7 @@ describe("Change Password Route", () => {
 
         it("should handle database errors gracefully", async () => {
             // Mock database.get to throw an error
-            require("../../modules/database").database.get.mockImplementation((query, callback) => {
+            require("@modules/database").database.get.mockImplementation((query, callback) => {
                 callback(new Error("Database error"));
             });
 

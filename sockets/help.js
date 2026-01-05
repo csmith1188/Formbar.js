@@ -1,4 +1,4 @@
-const { sendHelpTicket, deleteHelpTicket } = require("../modules/class/help");
+const { sendHelpTicket, deleteHelpTicket } = require("@modules/class/help");
 
 module.exports = {
     run(socket, socketUpdates) {

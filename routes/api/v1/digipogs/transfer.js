@@ -1,6 +1,6 @@
-const { logger } = require("../../../../modules/logger");
+const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("../../../middleware/permissionCheck");
-const { transferDigipogs } = require("../../../../modules/digipogs");
+const { transferDigipogs } = require("@modules/digipogs");
 
 module.exports = {
     run(router) {

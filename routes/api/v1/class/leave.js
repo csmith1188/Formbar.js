@@ -1,6 +1,6 @@
-const { logger } = require("../../../../modules/logger");
+const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("../../../middleware/permissionCheck");
-const { leaveClass, leaveRoom } = require("../../../../modules/class/class");
+const { leaveClass, leaveRoom } = require("@modules/class/class");
 
 module.exports = {
     run(router) {

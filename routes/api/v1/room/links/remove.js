@@ -1,7 +1,7 @@
-const { logger } = require("../../../../../modules/logger");
-const { TEACHER_PERMISSIONS } = require("../../../../../modules/permissions");
+const { logger } = require("@modules/logger");
+const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { hasClassPermission } = require("../../../../middleware/permissionCheck");
-const { dbRun } = require("../../../../../modules/database");
+const { dbRun } = require("@modules/database");
 
 module.exports = {
     run(router) {
