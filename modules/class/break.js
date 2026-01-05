@@ -44,7 +44,9 @@ async function approveBreak(breakApproval, userId, userSession) {
         logger.log("verbose", `[approveBreak] user=(${JSON.stringify(classroom.students[email])})`);
 
         io.to(`user-${email}`).emit("break", breakApproval);
-        io.to(`api-${student.API}`).emit("break", breakApproval);
+        if (student && student.API) {
+            io.to(`api-${student.API}`).emit("break", breakApproval);
+        }
         userUpdateSocket(email, "classUpdate", classId);
         return true;
     } catch (err) {
