@@ -16,7 +16,7 @@ module.exports = {
 
                 // If the classId in the session is different from the user's active class, update it
                 const classId = userData && userData.activeClass != null ? userData.activeClass : socket.request.session.classId;
-                if (!socket.request.session.classId || socket.request.session.classid !== classId) {
+                if (!socket.request.session.classId || socket.request.session.classId !== classId) {
                     socket.request.session.classId = classId;
                     socket.request.session.save();
                 }
