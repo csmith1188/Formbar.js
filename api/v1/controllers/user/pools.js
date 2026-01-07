@@ -1,7 +1,7 @@
-const { dbGet } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const { isVerified, permCheck } = require("../api/v1/controllers/middleware/authentication");
-const pools = require("../modules/pools");
+const { dbGet } = require("../../../../modules/database");
+const { logger } = require("../../../../modules/logger");
+const { isVerified, permCheck } = require("../middleware/authentication");
+const pools = require("../../../../modules/pools");
 
 module.exports = {
     run(router) {
