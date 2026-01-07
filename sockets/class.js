@@ -509,7 +509,10 @@ module.exports = {
 
                     // If the student doesn't exist, is offline/excluded, or is on break, add them to excluded list
                     if (
-                        (!student || student.tags.includes("Offline") || student.tags.includes("Excluded") || student.onBreak) &&
+                        (!student ||
+                            (student.tags &&
+                                (student.tags.includes("Offline") || student.tags.includes("Excluded"))) ||
+                            student.onBreak) &&
                         !excludedRespondents.includes(studentId)
                     ) {
                         excludedRespondents.push(studentId);
