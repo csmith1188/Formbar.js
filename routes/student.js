@@ -40,7 +40,7 @@ module.exports = {
                 // Render the student page with the user's information
                 logger.log(
                     "verbose",
-                    `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${"classId"}].students[req.session.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${"classId"}].students[req.session.email].pollRes.textRes) lesson = (classInformation.classrooms[${"classId"}].lesson)`
+                    `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${classId}].students[req.session.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${classId}].students[req.session.email].pollRes.textRes) lesson = (classInformation.classrooms[${classId}].lesson)`
                 );
                 res.render("pages/student", {
                     title: "Student",
