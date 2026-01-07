@@ -1,12 +1,13 @@
-const { classInformation, Classroom} = require('../class');
-const { Student } = require('../student');
-const express = require('express');
+const { classInformation, Classroom } = require("../class/classroom");
+const { Student } = require("../student");
+const express = require("express");
+const { SocketUpdates } = require("../socketUpdates");
 
 // Common test data
 const testData = {
-    code: '123456',
-    email: 'user123'
-}
+    code: "123456",
+    email: "user123",
+};
 
 /**
  * Creates a test user with the given email
@@ -15,7 +16,7 @@ const testData = {
  * @param {number} [permissions=5] - The permissions level of the user
  */
 function createTestUser(email, classId, permissions = 5) {
-    const student = new Student(email, 1, permissions, 0, [], [], '', '', false);;
+    const student = new Student(email, 1, permissions, 0, [], [], [], "", false);
     classInformation.users[email] = student;
 
     // If a class id is provided, also create the student in the class
@@ -33,35 +34,27 @@ function createTestUser(email, classId, permissions = 5) {
  * @param {string} name - The name of the test class
  */
 function createTestClass(code, name) {
-    classInformation.classrooms[code] = new Classroom(
-        code,
-        name,
-        code,
-        1,
-        [],
-        [],
-        []
-    );
+    classInformation.classrooms[code] = new Classroom(code, name, code, 1, [], [], []);
     return classInformation.classrooms[code];
 }
 
 // Creates an express server for testing
 function createExpressServer() {
     const app = express();
-    app.set('view engine', 'ejs');
-    app.set('views', './views');
+    app.set("view engine", "ejs");
+    app.set("views", "./views");
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
     // Middleware to handle responses in tests
     app.use((req, res, next) => {
-        res.render = function(view, options) {
+        res.render = function (view, options) {
             res.status(res.statusCode || 200).json({ view, options });
         };
-        res.download = function(filePath, fileName) {
-            res.status(200).json({ filePath, fileName })
-        }
+        res.download = function (filePath, fileName) {
+            res.status(200).json({ filePath, fileName });
+        };
         next();
     });
 
@@ -70,21 +63,35 @@ function createExpressServer() {
 
 // Mock socket information for simulating socket.io
 function createSocket() {
-    socket = {
+    return {
         on: jest.fn(),
         emit: jest.fn(),
         request: {
             session: {
                 classId: testData.code,
-                email: testData.email
-            }
+                email: testData.email,
+            },
         },
         handshake: {
-            address: '127.0.0.1'
-        }
+            address: "127.0.0.1",
+        },
     };
+}
 
-    return socket;
+// Mock the socket updates
+// This is to minimize the number of moving parts that could cause a test to fail
+function createSocketUpdates(isMocked = true, socket) {
+    if (!socket && isMocked) {
+        socket = createSocket(socket);
+    }
+
+    return isMocked
+        ? {
+              endPoll: jest.fn(),
+              classUpdate: jest.fn(),
+              customPollUpdate: jest.fn(),
+          }
+        : new SocketUpdates(socket);
 }
 
 module.exports = {
@@ -92,5 +99,6 @@ module.exports = {
     createTestUser,
     createTestClass,
     createExpressServer,
-    createSocket
-}
+    createSocket,
+    createSocketUpdates,
+};

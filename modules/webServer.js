@@ -11,12 +11,18 @@ function createServer() {
 }
 
 async function getIpAccess(type) {
-	const ipList = await dbGetAll(`SELECT id, ip FROM ip_${type}`)
-	return ipList.reduce((ips, ip) => {
-		ips[ip.id] = ip
-		return ips
-	}, {})
+    const isWhitelist = type === "whitelist" ? 1 : 0;
+    const ipList = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
+    return ipList.reduce((ips, ip) => {
+        ips[ip.id] = ip;
+        return ips;
+    }, {});
 }
 
 const { app, io, http } = createServer();
-module.exports = { app, io, http, getIpAccess };
+module.exports = {
+    app,
+    io,
+    http,
+    getIpAccess,
+};

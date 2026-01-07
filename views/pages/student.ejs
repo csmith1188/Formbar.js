@@ -1,364 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <%- include('../partials/header_content') %>
-	<%- include('../partials/sockets') %>
-		<%- include('../partials/formbar_header') %>
+<%- include('../partials/sockets') %>
+<%- include('../partials/formbar_header') %>
 
-			<head>
-				<style>
-					#vbContainer {
-						top: 75px;
-						height: 85%;
-						justify-self: center;
-					}
-				</style>
-				<script src="/js/deepObjectEqual.js"></script>
-			</head>
+<head>
+	<style>
+		#vbContainer {
+			top: 75px;
+			height: 85%;
+			justify-self: center;
+		}
+	</style>
+	<script src="/js/deepObjectEqual.js"></script>
+</head>
 
-			<body>
-				<div id="studentVBar">
-					<%- include("../partials/virtual_bar.ejs") %>
-						<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+<body role="document" tabindex="0">
+	<div id="studentVBar">
+		<%- include("../partials/virtual_bar.ejs") %>
+		<h2 id="pollPrompt" class="revampDivAlt"></h2>
+		<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
 
-							<br>
-							<div id="helpBreak">
-								<div id="studHelp">
-									<h1>Need Help?</h1>
-									<button onclick="{document.getElementById('requestHelpDialog').showModal()}" class="quickButton helpButton">Send Ticket</button>
-									<br>
-								</div>
-								<div id="studBreak">
-									<h1>Need a Break?</h1>
-									<button class="breakButton"
-										onclick="{document.getElementById('requestBreakDialog').showModal()}">
-										Take Break
-									</button>
-								</div>
-								<div id="pollContent">
-									<h1 id="noPoll" class="textColorContent">No active poll</h1>
-									<div id="poll">
-										<u>
-											<h2 id="pollPrompt">
-
-											</h2>
-										</u>
-										<form id="pollForm"></form>
-										<br>
-									</div>
-								</div>
-							</div>
+		<div id="helpBreak">
+			<div id="pollContent">
+				<h1 id="noPoll" class="textColorContent">No active poll</h1>
+				<div id="poll">
+					<div id="pollForm"></div>
 				</div>
-				<%- include('../partials/body_content') %>
+			</div>
+			<div id="studHelpAandBreak">
+				<button onclick="{document.getElementById('requestHelpDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}" class="quickButton helpButton revampButton">Send Help Ticket</button>
+				<button class="breakButton revampButton"
+					onclick="{document.getElementById('requestBreakDialog').showModal();document.getElementById('backgroundDarken').classList.add('open')}">
+					Take a Break
+				</button>
+			</div>
+		</div>
+	</div>
+	<%- include('../partials/body_content') %>
 
-					<dialog id="requestBreakDialog" class="contentBox">
-						<form
-							onsubmit="submitBreak(event);document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;">
-							<h3 style="margin-top: 0;">Take a break</h3>
-							<div id="breakInputs" class="centered">
-								<label class="form-control" id="pollControl" for="bathroom">
-									<input type="radio" name="option" id="bathroom" value="Bathroom" required>
-									Bathroom
-								</label>
-								<label class="form-control" id="pollControl" for="other">
-									<input type="radio" name="option" id="other" value="other">
-									Other
-								</label>
-								<textarea class="hidden" id="otherText" cols="25" rows="3"
-									maxlength="150"></textarea>
-							</div>
-							<div id="takeBreak" class="hCentered">
-								<button class="quickButton" id="cancel" type="button"
-									onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();">Cancel</button>
-								<button class="quickButton" type="submit">Take Break</button>
-							</div>
-						</form>
-					</dialog>
-					<dialog id="requestHelpDialog" class="contentBox">
-						<form onsubmit="help()">
-							<h3 style="margin-top: 0;">Request Help</h3>
-							<div id="eventForm">
-								<textarea id="ticket" cols="30" rows="5" maxlength="150" class="helpBox"
-									placeholder="Reason (optional)"></textarea>
-								<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
-							</div>
-							
-							<div id="takeHelp" class="hCentered">
-								<button class="quickButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();">Cancel</button>
-								<button class="quickButton" type="submit">Request Help</button>
-							</div>
-						</form>
-					</dialog>
-					<% } %>
-			</body>
+	<dialog id="requestBreakDialog" class="contentBox revampDiv">
+		<script>document.getElementById("requestBreakDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
+		<form
+			onsubmit="submitBreak();document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('backgroundDarken').classList.remove('open')">
+			<h3 style="margin-top: 0;">Take a break</h3>
+			<div id="breakInfo">
+				<div id="breakInputs" class="">
+					<label class="form-control" for="bathroom">
+						<input type="radio" name="option" id="bathroom" value="Bathroom" required>
+						Bathroom
+					</label>
+					<label class="form-control" for="other">
+						<input type="radio" name="option" id="other" value="other">
+						Other
+					</label>
+				</div>
+				<textarea class="hidden revampButton revampWithText" id="otherText" cols="25" rows="3"
+					maxlength="150"></textarea>
+			</div>
+			<div id="takeBreak" class="hCentered" style="display: flex;flex-direction: row;justify-content: center;align-items: center;gap: 20px;">
+				<button class="quickButton revampButton" id="cancel" type="button"
+					onclick="document.getElementById('bathroom').checked = false;document.getElementById('other').checked = false;document.getElementById('requestBreakDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
+				<button class="quickButton revampButton" type="submit">Take Break</button>
+			</div>
+		</form>
+	</dialog>
+	<dialog id="requestHelpDialog" class="contentBox revampDiv">
+		<script>document.getElementById("requestHelpDialog").onclose = () => {document.getElementById('backgroundDarken').classList.remove('open')}</script>
+		<form onsubmit="help()">
+			<h3 style="margin-top: 0;">Request Help</h3>
+			<div id="eventForm">
+				<textarea id="ticket" class="revampButton revampWithText" cols="30" rows="5" maxlength="150" class="helpBox"
+					placeholder="Reason (optional)"></textarea>
+				<!-- <input type="text" id="ticket" class="quickButton" placeholder="Reason(optional)"> -->
+			</div>
 
-			<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
-				<script type="text/javascript">
-					//letiable creation
-					let resTextBox = document.getElementById('resTextBox')
-					let pollForm = document.getElementById('pollForm')
-					let pollContent = document.getElementById('pollContent')
-					let pollDiv = document.getElementById('poll')
-					let pollPromptDisplay = document.getElementById('pollPrompt')
-					noPoll = document.getElementById('noPoll')
+			<div id="takeHelp" class="hCentered" style="display: flex;flex-direction: row;justify-content: center;align-items: center;gap: 20px;">
+				<button class="quickButton revampButton" id="cancel" type="button" onclick="document.getElementById('requestHelpDialog').close();document.getElementById('backgroundDarken').classList.remove('open')">Cancel</button>
+				<button class="quickButton revampButton" type="submit">Request Help</button>
+			</div>
+		</form>
+	</dialog>
+	<div id="backgroundDarken"></div>
+	<% } %>
+</body>
 
-					//stores the answer type that will be used in the student form
-					//
-					let multiAnswer = ""
+<% if(currentUser.classPermissions <= GUEST_PERMISSIONS) { %>
+<script>
+	let pollPromptDisplayGuest = document.getElementById('pollPrompt');
+	let classroomData = {}; // Store classroom data for guests too
 
-					// For answering polls using only the keyboard
-					document.addEventListener('keydown', (event) => {
-						try {
-							const key = +event.key - 1;
-							const pollSelection = pollForm.children[key].children[0];
+	function updatePage(newPoll) {
+		pollPromptDisplayGuest.innerText = newPoll.prompt;
+	}
 
-							// If the response is not already selected, then select it
-							if (!pollSelection.checked) {
-								pollSelection.click();
-							}
-						} catch (err) {
-							// Do nothing, this is just to prevent errors when the user presses a key that does not correspond to a poll response
-						}
-					});
+	// Get the reason why a user cannot vote
+	function getNoVoteReason(classroomData) {
+		if (!classroomData || !classroomData.settings || !classroomData.settings.isExcluded) {
+			return "You may not answer currently";
+		}
 
-					let oldLetterRes = '<%- myRes %>'
-					let oldTextRes = '<%- myTextRes %>'
+		// Check if user is excluded due to their permission level
+		// For guests, check global permissions
+		if (currentUser.permissions === GUEST_PERMISSIONS && classroomData.settings.isExcluded.guests) {
+			return "Guests cannot vote in this poll";
+		}
 
-					let poll = {}
-					let mode = ''
-					let quiz = {}
-					let votingRight = false
+		// Default message for other exclusion reasons
+		return "You may not answer currently";
+	}
 
-					function unselectRemove(event) {
-						event.preventDefault();
-						document.getElementById('remove').checked = false;
-					}
+	socket.on('classUpdate', (newClassroomData) => {
+		classroomData = newClassroomData; // Store the classroom data
+		const newPoll = newClassroomData.poll;
 
-					function updatePageLoop() {
-						if (poll.multiRes) {
-							multiAnswer = "checkbox"
+		// Check if guest is excluded and show message
+		const noVoteReason = getNoVoteReason(classroomData);
+		if (noVoteReason !== "You may not answer currently") {
+			// Guest is excluded, show the message
+			const pollForm = document.getElementById('pollForm');
+			if (pollForm) {
+				pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">${noVoteReason}</label>`;
+			}
+		}
+
+		updatePage(newPoll);
+	})
+</script>
+<% } %>
+
+<% if (currentUser.classPermissions>= STUDENT_PERMISSIONS) { %>
+<script type="text/javascript">
+	// HTML elements for polls
+	let resTextBox = document.getElementById('resTextBox')
+	let pollForm = document.getElementById('pollForm')
+	let pollContent = document.getElementById('pollContent')
+	let pollDiv = document.getElementById('poll')
+	let pollPromptDisplay = document.getElementById('pollPrompt')
+	noPoll = document.getElementById('noPoll')
+
+	// Stores the answer type that will be used in the student form
+	let multiAnswer = ""
+
+	// For answering polls using only the keyboard
+	document.addEventListener('keydown', (event) => {
+		try {
+			const key = +event.key - 1;
+			const pollSelection = pollForm.children[key].children[0];
+
+			// If the response is not already selected, then select it
+			if (!pollSelection.checked) {
+				pollSelection.click();
+			}
+		} catch (err) {
+			// Do nothing, this is just to prevent errors when the user presses a key that does not correspond to a poll response
+		}
+	});
+
+	let oldLetterRes = '<%- myRes %>'
+	let oldTextRes = currentUser.pollRes.textRes
+	let poll = {}
+	let quiz = {}
+	let votingRight = false
+	let classroomData = {} // Store classroom data for students
+
+	// Calculate voting rights based on poll data
+	function updateVotingRight() {
+		if (!poll || !poll.status) {
+			votingRight = false;
+			return;
+		}
+
+
+		// Check if student has the "Excluded" tag
+		if (classroomData && classroomData.myTags && Array.isArray(classroomData.myTags) && classroomData.myTags.includes("Excluded")) {
+			votingRight = false;
+			return;
+		}
+
+		// Check if excluded by the "No guests/mods/teachers" settings
+		if (classroomData && classroomData.settings && classroomData.settings.isExcluded) {
+			if (classroomData.settings.isExcluded.guests && currentUser.permissions === GUEST_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+			if (classroomData.settings.isExcluded.mods && currentUser.classPermissions === MOD_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+			if (classroomData.settings.isExcluded.teachers && currentUser.classPermissions === TEACHER_PERMISSIONS) {
+				votingRight = false;
+				return;
+			}
+		}
+		
+		// Check if current user's ID is in the excludedRespondents array
+		// Student has voting rights if they are NOT in the excluded list
+		if (!poll.excludedRespondents || !Array.isArray(poll.excludedRespondents)) {
+			votingRight = true; // No exclusion list means everyone can vote
+		} else {
+			votingRight = !poll.excludedRespondents.includes(currentUser.id);
+		}
+	}
+
+	// Get the reason why a user cannot vote
+	function getNoVoteReason(classroomData) {
+		// Check if student has the "Excluded" tag
+		if (classroomData && classroomData.myTags && Array.isArray(classroomData.myTags) && classroomData.myTags.includes("Excluded")) {
+			return "You cannot vote due to being excluded";
+		}
+		
+		if (!classroomData || !classroomData.settings || !classroomData.settings.isExcluded) {
+			return "You may not answer currently";
+		}
+
+		// Check if user is excluded due to their permission level
+		// For guests, check global permissions; for others, check classPermissions
+		if (currentUser.permissions === GUEST_PERMISSIONS && classroomData.settings.isExcluded.guests) {
+			return "Guests cannot vote in this poll";
+		}
+		if (currentUser.classPermissions === MOD_PERMISSIONS && classroomData.settings.isExcluded.mods) {
+			return "Moderators cannot vote in this poll";
+		}
+		if (currentUser.classPermissions === TEACHER_PERMISSIONS && classroomData.settings.isExcluded.teachers) {
+			return "Teachers cannot vote in this poll";
+		}
+
+		// Default message for other exclusion reasons
+		return "You may not answer currently";
+	}
+
+	function unselectRemove(event) {
+		event.preventDefault();
+		document.getElementById('remove').checked = false;
+	}
+
+	let userSelectedCheckboxes = [];
+
+	function updatePage() {
+		pollForm = document.getElementById('pollForm');
+		const responseTextbox = document.getElementById('resTextBox');
+
+		pollPromptDisplay = document.getElementById('pollPrompt');
+
+		if (pollDiv.querySelector("#remove")) {
+			pollDiv.querySelector("#remove").remove();
+		}
+
+		if (poll.allowMultipleResponses) {
+			multiAnswer = "checkbox"
+		} else {
+			multiAnswer = "button";
+		}
+
+		pollContent.style.display = 'block';
+		if (poll.status) {
+			noPoll.style.display = 'none';
+			pollDiv.style.display = 'block';
+
+			// Grab the existing textarea if it exists
+			let currentTextRes = '';
+			let selectionStart = 0, selectionEnd = 0;
+			let wasFocused = false;
+
+			if (responseTextbox) {
+				currentTextRes = responseTextbox.value;
+				selectionStart = responseTextbox.selectionStart;
+				selectionEnd = responseTextbox.selectionEnd;
+				wasFocused = document.activeElement === responseTextbox;
+			}
+
+			pollForm.innerHTML = '';
+
+			// Update the poll prompt
+			pollPromptDisplay.innerText = poll.prompt;
+
+			// If user cannot vote
+			const mayNotAnswer = document.getElementById('pollControl');
+			const noVoteReason = getNoVoteReason(classroomData);
+			if (!votingRight || noVoteReason !== "You may not answer currently") {
+				pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">${noVoteReason}</label>`;
+				return;
+			} else if (votingRight && mayNotAnswer) {
+				mayNotAnswer.remove();
+			}
+
+			// Only create textarea if it doesn't exist
+			let textarea = responseTextbox;
+			if (poll.allowTextResponses) {
+				textarea = document.createElement('textarea');
+				textarea.name = 'resText';
+				textarea.cols = 20;
+				textarea.rows = 5;
+				textarea.id = 'resTextBox';
+				textarea.className = 'revampButton revampWithText';
+				pollForm.appendChild(textarea);
+			}
+
+			// Set the value of the student's text response if it exists
+			if (poll.allowTextResponses && textarea) {
+				textarea.value = (currentTextRes || oldTextRes || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+				// Restore focus if it was focused before
+				if (wasFocused) {
+					textarea.focus();
+					textarea.setSelectionRange(selectionStart, selectionEnd);
+				}
+			}
+
+			// Clear old response buttons
+			const responseButtons = Array.from(pollForm.querySelectorAll('.pollButton'));
+			responseButtons.forEach(btn => btn.remove());
+
+			// Add new response options
+			for (let response of poll.responses) {
+				if (multiAnswer !== 'button') {
+					const checkbox = document.createElement('input');
+					checkbox.type = 'checkbox';
+					checkbox.name = 'poll';
+					checkbox.className = 'revampButton pollButton';
+					checkbox.id = response.answer;
+					checkbox.style.cssText = `--color: ${response.color}44;--theme-color: ${response.color};`;
+					pollForm.appendChild(checkbox);
+					pollForm.appendChild(document.createTextNode(response.answer));
+					checkbox.checked = userSelectedCheckboxes.includes(response.answer);
+					checkbox.onclick = () => {
+						if (checkbox.checked) {
+							userSelectedCheckboxes.push(response.answer);
 						} else {
-							multiAnswer = "radio"
+							userSelectedCheckboxes = userSelectedCheckboxes.filter(id => id !== response.answer);
 						}
-						if (mode == 'poll' && votingRight) {
-							pollContent.style.display = 'block'
+					};
+				} else {
+					const btn = document.createElement('button');
+					btn.name = 'poll';
+					btn.className = `revampButton pollButton ${response.answer === currentUser.pollRes.buttonRes ? 'activePollButton' : ''}`;
+					btn.id = response.answer;
+					btn.style.cssText = `background: ${response.color}44;--color: ${response.color};--theme-color: black;`;
+					btn.textContent = response.answer;
+					btn.onclick = () => submitPoll(btn);
+					pollForm.appendChild(btn);
+				}
+			}
 
-							if (poll.status) {
-								noPoll.style.display = 'none'
-								pollDiv.style.display = 'block'
+			// Remove / Submit buttons
+			let removeBtn = pollDiv.querySelector('#remove');
+			if (removeBtn) removeBtn.remove(); // remove old
+			if (!poll.allowMultipleResponses && poll.allowVoteChanges) {
+				const btn = document.createElement('button');
+				btn.className = 'revampButton';
+				btn.name = 'poll';
+				btn.id = 'remove';
+				btn.value = 'remove';
+				btn.textContent = 'Remove Vote';
+				btn.onclick = () => submitPoll(btn);
+				pollDiv.appendChild(btn);
+			} else if (poll.allowMultipleResponses) {
+				const btn = document.createElement('button');
+				btn.className = 'revampButton';
+				btn.id = 'remove';
+				btn.textContent = 'Submit';
+				btn.onclick = () => submitPoll(btn);
+				pollDiv.appendChild(btn);
+			}
 
-								pollForm.innerHTML = ''
+			// Disable radios if needed
+			if (!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
+				const radios = pollForm.querySelectorAll('[name="poll"]');
+				radios.forEach(r => r.disabled = true);
+			}
 
-								pollPromptDisplay.innerText = poll.prompt
-								// Creates all selectable answers and displays them to the user
-								for (let response of Object.values(poll.responses)) {
-									response.answer = response.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Sanitize HTML inputs
-									pollForm.innerHTML += `
-											<label class="form-control" id="pollControl" style="color: ${response.color}; --theme-color: black;">
-												<input type="${multiAnswer}" name="poll" id="${response.answer}" value="${response.answer}" onclick="submitPoll()">
-												${response.answer}
-											</label>
-										`;
-								}
-								if (!poll.multiRes) {
-									pollForm.innerHTML += `
-												<label onContextMenu="unselectRemove(event)" class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">
-													<input type="radio" name="poll" id="remove" value="remove" onclick="submitPoll()">
-													remove
-												</label>
-											`
-								}
+		} else {
+			noPoll.style.display = 'block';
+			pollDiv.style.display = 'none';
+		}
 
-								if (poll.textRes) {
-									pollForm.innerHTML += `<br><textarea name="resText" cols="50" rows="15" id="resTextBox" value="${oldTextRes}"></textarea>`
-								}
-							} else {
-								noPoll.style.display = 'block'
-								pollDiv.style.display = 'none'
-							}
+		// If the user has responded before on this poll, put their previous responses in the form
+		if (!poll.allowMultipleResponses) {
+			// If the poll isn't multi-res, handle it normally
+			// const oldLetterElement = document.getElementById(oldLetterRes)
+			// if (oldLetterRes && oldLetterElement) {
+			// 	oldLetterElement.checked = true
+			// }
+		} else {
+			// If the poll is multi-res, split the response and check all of them
+			const splitLetterRes = currentUser.pollRes.buttonRes;
+			for (const splitLetter of splitLetterRes) {
+				const oldLetterElement = document.getElementById(splitLetter);
+				if (oldLetterElement) {
+					oldLetterElement.checked = true;
+				}
+			}
+		}
+	}
 
-							// If the user has responded before on this poll, put their previous responses in the form
-							const resTextBox = document.getElementById("resTextBox")
-							if (!poll.multiRes) {
-								// If the poll isn't multi-res, handle it normally
-								const oldLetterElement = document.getElementById(oldLetterRes)
-								if (oldLetterRes && oldLetterElement) {
-									oldLetterElement.checked = true
-								}
-							} else {
-								// If the poll is multi-res, split the response and check all of them
-								const splitLetterRes = oldLetterRes.split(',')
-								for (const splitLetter of splitLetterRes) {
-									const oldLetterElement = document.getElementById(splitLetter)
-									if (oldLetterElement) {
-										oldLetterElement.checked = true
-									}
-								}
-							}
+	// Submits the users answer to the poll
+	// Takes the pollResponses value which defines the number of possible answers
+	function submitPoll(button) {
+		let radios = document.getElementsByName('poll')
+		let textarea = document.getElementById("resTextBox")
+		let lettRes = []
+		let textRes = ''
 
+		//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
+		for (let i = 0; i < radios.length; i++) {
+			if (radios[i].type == "checkbox" && radios[i].checked) {
+				lettRes.push(radios[i].id)
+			} else if(radios[i].tagName == 'BUTTON' && radios[i] == button) {
+				lettRes.push(radios[i].id)
+			}
+		}
 
-							if (oldTextRes && resTextBox) {
-								resTextBox.value = oldTextRes
-							}
-						}
-					}
+		// If the poll isn't multi-res, extract the single response from the array
+		if (lettRes.length == 1 && !poll.allowMultipleResponses) {
+			lettRes = lettRes[0]
+		}
 
-					function updatePage() {
-						if (poll.allowedResponses.length > 0) {
-							for (let eachAllowedResponse of poll.allowedResponses) {
-								if (eachAllowedResponse == currentUser.email) {
-									updatePageLoop()
-									return
-								}
-							}
-							for (let eachUnallowedResponse of poll.unallowedResponses) {
-								if (eachUnallowedResponse == currentUser.email) {
-									pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
-								}
-							}
-						}
-						else if (poll.allowedResponses.length == 0) {
-							updatePageLoop()
-							return
-						}
-					}
+		if (textarea) {
+			textRes = textarea.value
+		}
 
-					// Submits the users answer to the poll
-					// Takes the pollResponses value which defines the number of possible answers
-					function submitPoll() {
-						let radios = document.getElementsByName('poll')
-						let textarea = document.getElementById("resTextBox")
-						let lettRes = []
-						let textRes = ''
+		if(!poll.allowVoteChanges && currentUser.pollRes.buttonRes !== '') {
+			radios.forEach((res => {
+				res.disabled = true;
+			}))
+			return;
+		}
 
-						//Subtract 2 from radios.length to make sure the bathroom break does not interfere with radio values and lettRes
-						for (let i = 0; i < radios.length; i++) {
-							if ((radios[i].type == 'radio' || radios[i].type == "checkbox") && radios[i].checked) {
-								// Defines the letter response of the user
-								if (radios[i].value == "remove") {
-									lettRes = radios[i].value
-									break;
-								}
-								lettRes.push(radios[i].value)
-							}
-						}
+		currentUser.pollRes = {buttonRes: lettRes, textRes: textRes, date: new Date()};
+		if (lettRes == "remove") {
+			currentUser.pollRes = {buttonRes: '', textRes: '', date: null};
+			if(textarea) textarea.value = ''
+		}
 
-						// If the poll isn't multi-res, extract the single response from the array
-						if (lettRes.length == 1 && !poll.multiRes) {
-							lettRes = lettRes[0]
-						}
+		// If the new input is not the same as the previous input, then send it to the server
+		// This prevents spamming the server with the same input
+		const letterChanged = (Array.isArray(lettRes) || Array.isArray(oldLetterRes))
+			? !deepObjectEqual(lettRes, oldLetterRes)
+			: lettRes !== oldLetterRes;
+		const textChanged = textRes !== oldTextRes;
 
-						if (textarea) {
-							textRes = textarea.value
-						}
+		if (letterChanged || textChanged) {
+			socket.emit('pollResp', lettRes, textRes);
+			oldLetterRes = lettRes;
+			oldTextRes = textRes;
+		}
+	}
 
-						// Sends user input to the server
-						socket.emit('pollResp', lettRes, textRes)
-					}
+	socket.on('classUpdate', (newClassroomData) => {
+		classroomData = newClassroomData; // Update stored classroom data
+		const newPoll = newClassroomData.poll;
+		
+		// Check if poll data changed (excluding myTags which can change independently)
+		const pollChanged = !deepObjectEqual(poll, newPoll);
 
+		if (pollChanged && poll.startTime !== undefined && poll.startTime !== newPoll.startTime) {
+			currentUser.pollRes = {
+				buttonRes: '',
+				textRes: '',
+				date: null
+			};
+			userSelectedCheckboxes = [];
+			document.querySelectorAll('input.pollButton').forEach((btn) => {
+				btn.checked = false;
+			});
+			oldLetterRes = '';
+			oldTextRes = '';
+		}
 
-					socket.emit('pollUpdate')
-					socket.on('pollUpdate', (newPoll) => {
-						if (deepObjectEqual(poll, newPoll)) return
+		// Always update voting right when classroomData changes (e.g., when tags change)
+		const oldVotingRight = votingRight;
+		poll = newPoll;
+		updateVotingRight();
 
-						poll = newPoll
-						if (poll.status) {
-							socket.emit('getCanVote', currentUser.email)
-						}
-						updatePage()
-					})
+		// If voting rights were lost (user got excluded), clear their local vote state
+		if (oldVotingRight && !votingRight) {
+			currentUser.pollRes = {
+				buttonRes: '',
+				textRes: '',
+				date: null
+			};
+			userSelectedCheckboxes = [];
+			// Clear all button highlights
+			document.querySelectorAll('button.pollButton').forEach((btn) => {
+				btn.classList.remove('activePollButton');
+			});
+			// Clear all checkbox states
+			document.querySelectorAll('input.pollButton').forEach((btn) => {
+				btn.checked = false;
+			});
+			oldLetterRes = '';
+			oldTextRes = '';
+		}
+		
+		// If voting right changed or poll changed, update the page
+		if (oldVotingRight !== votingRight || pollChanged) {
+			updatePage();
+		}
+	});
 
-					socket.on('pollResp', (voteData) => {
-						const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')
-						const oldLetterElement = document.querySelector(`#pollControl input[value="${voteData.res}"]`);
+	socket.on('pollResp', (voteData) => {
+		const allResponses = document.querySelectorAll('#pollControl input[name="poll"]')
+		const oldLetterElement = document.querySelector(`#pollControl input[value="${voteData.res}"]`);
 
-						// Set all responses to unchecked
-						allResponses.forEach((response) => {
-							if (response.type == 'radio' || response.type == 'checkbox') {
-								response.checked = false;
-							}
-						});
+		// Set all responses to unchecked
+		allResponses.forEach((response) => {
+			if (response.type == 'radio' || response.type == 'checkbox') {
+				response.checked = false;
+			}
+		});
 
-						// Set the correct response to checked
-						if (oldLetterElement && !oldLetterElement.checked) {
-							oldLetterElement.checked = true;
-						}
+		// Set the correct response to checked
+		if (oldLetterElement && !oldLetterElement.checked) {
+			oldLetterElement.checked = true;
+		}
 
-						if (voteData.textRes) {
-							const resTextBox = document.getElementById("resTextBox");
-							if (resTextBox) {
-								resTextBox.value = voteData.textRes;
-							}
-						}
-					});
+		if (voteData.textRes) {
+			const resTextBox = document.getElementById("resTextBox");
+			if (resTextBox) {
+				resTextBox.value = voteData.textRes;
+			}
+		}
+	});
 
-					if (poll.status) {
-						socket.emit('getCanVote', currentUser.email)
-					}
-					socket.on('getCanVote', (newVotingRight) => {
-						votingRight = newVotingRight
-						if (newVotingRight) {
-							updatePage()
-						} else {
-							pollForm.innerHTML = `<label class="form-control" id="pollControl" style="--theme-color: hsl(0, 0%, 70%);">You may not answer currently</label>`
-						}
-					})
+	// Calculate initial voting rights from poll data
+	updateVotingRight();
 
-					socket.emit('modeUpdate')
-					socket.on('modeUpdate', (newMode) => {
-						if (mode == newMode) return
+	//help ticket/break button
 
-						mode = newMode
-						updatePage()
-					})
+	socket.on("helpSuccess", () => {
+		alert("Help ticket sent")
+	})
 
-					socket.emit('quizUpdate')
-					socket.on('quizUpdate', (newQuiz) => {
-						if (deepObjectEqual(quiz, newQuiz)) return
+	function help() {
+		let reason = document.getElementById('ticket').value
+		socket.emit('help', reason)
+		document.getElementById('ticket').value = ''
+	}
 
-						quiz = newQuiz
-						updatePage()
-					})
-					//help ticket/break button
+	let options = document.getElementsByName('option')
+	for (let option of options) {
+		option.onchange = () => {
+			let otherRadio = document.getElementById('other')
+			let otherText = document.getElementById('otherText')
 
-					socket.on("helpSuccess", () => {
-						alert("Help ticket sent")
-					})
+			if (otherRadio.checked) {
+				otherText.required = true
+				otherText.classList.remove('hidden')
+			}
+			else {
+				otherText.required = false
+				otherText.classList.add('hidden')
+			}
+		}
+	}
 
-					function help() {
-						let reason = document.getElementById('ticket').value
-						socket.emit('help', reason)
-						document.getElementById('ticket').value = ''
-					}
+	function submitBreak() {
+		event.preventDefault()
+		document.getElementById('requestBreakDialog').close()
 
-					let options = document.getElementsByName('option')
-					for (let option of options) {
-						option.onchange = () => {
-							let otherRadio = document.getElementById('other')
-							let otherText = document.getElementById('otherText')
+		let reason = document.querySelector('input[name=option]:checked').value
+		if (reason == 'other')
+			reason = document.getElementById('otherText').value
 
-							if (otherRadio.checked) {
-								otherText.required = true
-								otherText.classList.remove('hidden')
-							}
-							else {
-								otherText.required = false
-								otherText.classList.add('hidden')
-							}
-						}
-					}
-
-					function submitBreak() {
-						event.preventDefault()
-						document.getElementById('requestBreakDialog').close()
-
-						let reason = document.querySelector('input[name=option]:checked').value
-						if (reason == 'other')
-							reason = document.getElementById('otherText').value
-
-						socket.emit('requestBreak', reason)
-					}
-				</script>
-				<% } %>
-
-				<%- include('../partials/footer_content') %>
+		socket.emit('requestBreak', reason)
+	}
+</script>
+<% } %>
 </html>

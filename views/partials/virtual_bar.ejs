@@ -7,10 +7,14 @@
     let noPoll;
     let virtualBar = document.getElementById("virtualbar");
     let mychart = virtualBar.getContext("2d");
+
+    // Get the container to hide/show - use vbContainerOuter if it exists (control panel), otherwise use parent element (student page)
+    let containerToToggle = typeof vbContainerOuter !== 'undefined' ? vbContainerOuter : virtualBar.parentElement;
+
     let pollsData = {}
     let timeData = {}
     let doughnutChart = new Chart(mychart, {
-        type: 'doughnut',
+        type: 'pie',
         data: {
             labels: [],
             datasets: [{
@@ -38,11 +42,12 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    display: false,
                     labels: {
                         font: {
                             size: (document.documentElement.clientWidth + document.documentElement.clientHeight) / 100
                         },
-                        color: 'grey'
+                        color: 'black'
                     }
                 },
                 tooltip: {
@@ -53,93 +58,97 @@
                     }
                 }
             },
+            elements: {
+                arc: {
+                    borderColor: "black"
+                }
+            },
             cutout: '0%',
         }
     })
 
     // Calls for data
-    socket.emit('vbUpdate')
+    let loaded = false
+    socket.emit('classUpdate')
 
     // Gets data from server
-    socket.on('vbUpdate', (newPollsData) => {
-        if (deepObjectEqual(newPollsData, pollsData)) return
+    socket.on('classUpdate', (classroomData) => {
+        loaded = true;
 
-        if (!newPollsData.status && Object.keys(newPollsData.polls).length == 0) {
+        const newPollData = classroomData.poll
+        if (deepObjectEqual(newPollData, pollsData)) return
+
+        if (!newPollData.status && Object.keys(newPollData.responses).length == 0) {
             if (!timeData.active) {
                 if (noPoll) noPoll.style.display = ''
 
-                virtualBar.parentElement.style.display = "none";
+                containerToToggle.style.display = "none";
             }
 
             doughnutChart.data.datasets[0].data = []
             doughnutChart.data.labels = []
         } else {
             if (noPoll) noPoll.style.display = 'none'
-            virtualBar.parentElement.style.display = "block";
+            containerToToggle.style.display = "block";
 
             // Reset virtual bar
             doughnutChart.data.datasets[0].backgroundColor = []
             doughnutChart.data.datasets[0].data = []
             doughnutChart.data.labels = []
 
-            let totalStudents = newPollsData.totalResponders
-            let totalResponses = newPollsData.totalResponses;
+            let totalStudents = newPollData.totalResponders
+            let totalResponses = newPollData.totalResponses;
 
             // make the polls blind unless all students answered
             if (totalStudents == totalResponses || currentUser.classPermissions >= TEACHER_PERMISSIONS) {
-                newPollsData.blind = false
+                newPollData.blind = false
             }
 
             let labelsArray = []
             let pollArray = []
 
-            let studentResponses = {}
-            // Loops through object to get each label of the possible answers
-            // Also, create a new label for each possible answer
-            if (newPollsData.blind) {
+            // Build labels and data from the responses array
+            if (newPollData.blind) {
                 labelsArray.push('Responses')
-                studentResponses.responses = 0
-            } else {
-                for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
-                    labelsArray.push(pollData.answer)
-                    studentResponses[poll] = 0
+                // Sum all response counts for blind mode
+                let totalResponseCount = 0;
+                for (const pollData of newPollData.responses || []) {
+                    totalResponseCount += pollData.responses || 0;
                 }
-            }
-            labelsArray.push('No Response')
-            studentResponses.noResponse = 0
-
-            // Loops through all possible answers and generates a new color letiant for each answer
-            // All possible answers should have a different color
-            if (newPollsData.blind) {
+                pollArray.push(totalResponseCount);
                 doughnutChart.data.datasets[0].backgroundColor.push('#FFAA00')
             } else {
-                for (let poll of Object.values(newPollsData.polls)) {
-                    doughnutChart.data.datasets[0].backgroundColor.push(poll.color)
+                // Normal mode - show each response option
+                for (const pollData of newPollData.responses || []) {
+                    labelsArray.push(pollData.answer)
+                    pollArray.push(pollData.responses || 0)
+                    doughnutChart.data.datasets[0].backgroundColor.push(pollData.color)
                 }
             }
-            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
-            // Loops through all student answers and adds them to a total tally
-            // Student response corresponds with a property name in studResponses
-            studentResponses.noResponse += newPollsData.totalResponders - newPollsData.totalResponses
-            for (const [poll, pollData] of Object.entries(newPollsData.polls)) {
-                if (newPollsData.blind)
-                    studentResponses.responses += pollData.responses
-                else studentResponses[poll] += pollData.responses
-            }
 
-            for (const responses of Object.keys(studentResponses)) {
-                pollArray.push(studentResponses[responses])
-            }
+            // Add "No Response" option
+            labelsArray.push('No Response')
+            pollArray.push(newPollData.totalResponders - newPollData.totalResponses)
+            doughnutChart.data.datasets[0].backgroundColor.push('#E1E1E1')
 
             doughnutChart.data.labels = labelsArray
             doughnutChart.data.datasets[0].data = pollArray
         }
 
-        pollsData = newPollsData
+        pollsData = newPollData
         doughnutChart.update()
     })
 
-    socket.emit('vbTimer')
+    // If the user is rate limited from sockets, then the data may not populate in the control panel immediately
+    // Therefore, we will keep emitting the classUpdate event until we get the data
+    const checkLoadedInterval = setInterval(() => {
+        if (loaded) {
+            clearInterval(checkLoadedInterval);
+        }
+        socket.emit('classUpdate');
+    }, 1000);
+
+    // socket.emit('vbTimer')
     socket.on('vbTimer', (newTimeData) => {
         if (deepObjectEqual(newTimeData, timeData)) return
 
@@ -157,7 +166,7 @@
         let timeString = minutes + ":" + seconds
 
         if (active) {
-            virtualBar.parentElement.style.display = "block";
+            containerToToggle.style.display = "block";
             if (time > 0) {
                 pieChart.data = [time, timePassed]
                 doughnutChart.data.datasets[1].label = `${minutes}:${seconds}`
@@ -169,8 +178,8 @@
                 pieChart.backgroundColor = ["red"]
             }
         } else {
-            if (!pollsData.status && Object.keys(pollsData.polls).length == 0) {
-                virtualBar.parentElement.style.display = "none";
+            if (!pollsData.status && Object.keys(pollsData.responses).length == 0) {
+                containerToToggle.style.display = "none";
             }
             pieChart.data = []
         }

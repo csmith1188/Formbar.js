@@ -1,9 +1,9 @@
-const managerRoute = require('../managerPanel');
-const request = require('supertest');
-const { createExpressServer } = require('../../modules/tests/tests');
-const { classInformation } = require('../../modules/class');
+const managerRoute = require("../managerPanel");
+const request = require("supertest");
+const { createExpressServer } = require("../../modules/tests/tests");
+const { classInformation } = require("../../modules/class/classroom");
 
-describe('Manager Route', () => {
+describe("Manager Route", () => {
     let app;
 
     beforeEach(() => {
@@ -13,41 +13,35 @@ describe('Manager Route', () => {
         // Add session mock
         app.use((req, res, next) => {
             req.session = {
-                email: 'admin'
+                email: "admin",
             };
             next();
         });
 
         classInformation.users = {
             admin: {
-                email: 'admin',
-                permissions: 0
-            }
-        }
+                email: "admin",
+                permissions: 0,
+            },
+        };
 
         // Apply the consent route
         managerRoute.run(app);
     });
 
-    describe('GET /managerPanel', () => {
-        it('should render manager panel if permissions are met', async () => {
-            classInformation.users['admin'].permissions = 5;
-            const response = await request(app)
-                .get(`/managerPanel`)
-                .expect(200);
+    describe("GET /managerPanel", () => {
+        it("should render manager panel if permissions are met", async () => {
+            classInformation.users["admin"].permissions = 5;
+            const response = await request(app).get(`/managerPanel`).expect(200);
 
-
-            expect(response.body.view).toBe('pages/managerPanel');
+            expect(response.body.view).toBe("pages/managerPanel");
             expect(response.body.options).toEqual({
-                title: 'Manager Panel'
+                title: "Manager Panel",
             });
         });
 
-        it ('should return 403 if user does not have permission', async () => {
-            const response = await request(app)
-                .get(`/managerPanel`);
-
-            expect(response.body.options.message).toContain("You don't have high enough permissions");
+        it("should redirect if user does not have permissions", async () => {
+            await request(app).get(`/managerPanel`).expect(302);
         });
     });
 });

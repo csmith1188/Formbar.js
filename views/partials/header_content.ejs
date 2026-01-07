@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -10,7 +11,7 @@
           Formbar
   </title>
   <link rel="stylesheet" href="/css/style.css">
-  <link id="lmdm" rel="stylesheet" href="/css/lightmode.css">
+  <link id="lmdm" rel="stylesheet" href="">
   <link rel="icon" href="/img/favicon.png">
   <script>
     let MANAGER_PERMISSIONS = Number('<%- MANAGER_PERMISSIONS %>')
@@ -18,6 +19,7 @@
     let MOD_PERMISSIONS = Number('<%- MOD_PERMISSIONS %>')
     let STUDENT_PERMISSIONS = Number('<%- STUDENT_PERMISSIONS %>')
     let GUEST_PERMISSIONS = Number('<%- GUEST_PERMISSIONS %>')
+    let BANNED_PERMISSIONS = Number('<%- BANNED_PERMISSIONS %>')
     let currentUser = null
     if ('<%- locals.currentUser %>' != '')
       currentUser = JSON.parse('<%- JSON.stringify(locals.currentUser) %>')

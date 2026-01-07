@@ -1,5 +1,6 @@
-const { database } = require("../../modules/database")
-const { logger } = require("../../modules/logger")
+const { database } = require("../../modules/database");
+const { logger } = require("../../modules/logger");
+const { compare } = require("../../modules/crypto");
 
 module.exports = {
     order: 20,
@@ -8,45 +9,55 @@ module.exports = {
         // The user must be logged in order to connect to websockets
         socket.use(([event, ...args], next) => {
             try {
-                let { api } = socket.request.headers
+                let { api } = socket.request.headers;
 
-                logger.log('info', `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`)
+                logger.log(
+                    "info",
+                    `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`
+                );
 
                 if (socket.request.session.email) {
-                    next()
+                    next();
                 } else if (api) {
-                    database.get(
-                        'SELECT id, email FROM users WHERE API = ?',
-                        [api],
-                        (err, userData) => {
-                            try {
-                                if (err) throw err
-                                if (!userData) {
-                                    logger.log('verbose', '[socket authentication] not a valid API Key')
-                                    next(new Error('Not a valid API key'))
-                                    return
+                    // Get all users and compare the API key hash
+                    database.all("SELECT id, email, API FROM users", [], async (err, users) => {
+                        try {
+                            if (err) throw err;
+
+                            // Compare the provided API key with each user's hashed API key
+                            let matchedUser = null;
+                            for (const user of users) {
+                                if (user.API && (await compare(api, user.API))) {
+                                    matchedUser = user;
+                                    break;
                                 }
-
-                                socket.request.session.api = api
-                                socket.request.session.userId = userData.id
-                                socket.request.session.email = userData.email
-                                socket.request.session.classId = null
-
-                                next()
-                            } catch (err) {
-                                logger.log('error', err.stack)
                             }
+
+                            if (!matchedUser) {
+                                logger.log("verbose", "[socket authentication] not a valid API Key");
+                                next(new Error("Not a valid API key"));
+                                return;
+                            }
+
+                            socket.request.session.api = matchedUser.API;
+                            socket.request.session.userId = matchedUser.id;
+                            socket.request.session.email = matchedUser.email;
+                            socket.request.session.classId = null;
+
+                            next();
+                        } catch (err) {
+                            logger.log("error", err.stack);
                         }
-                    )
-                } else if (event == 'reload') {
-                    next()
+                    });
+                } else if (event == "reload") {
+                    next();
                 } else {
-                    logger.log('info', '[socket authentication] Missing email or api')
-                    next(new Error('Missing API key'))
+                    logger.log("info", "[socket authentication] Missing email or api");
+                    next(new Error("Missing API key"));
                 }
             } catch (err) {
-                logger.log('error', err.stack)
+                logger.log("error", err.stack);
             }
-        })
-    }
-}
+        });
+    },
+};

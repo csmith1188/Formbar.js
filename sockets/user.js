@@ -1,70 +1,22 @@
-const { database } = require("../modules/database")
-const { logger } = require("../modules/logger")
-const { dbRun } = require("../modules/database")
-const { userSockets, managerUpdate } = require("../modules/socketUpdates")
+const { logger } = require("../modules/logger");
+const { logout } = require("../modules/user/userSession");
 
 module.exports = {
     run(socket, socketUpdates) {
-        socket.on('getOwnedClasses', (email) => {
-            logger.log('info', `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-            logger.log('info', `[getOwnedClasses] email=(${email})`)
+        socket.on("getOwnedClasses", (email) => {
+            logger.log("info", `[getOwnedClasses] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+            logger.log("info", `[getOwnedClasses] email=(${email})`);
 
-            socketUpdates.getOwnedClasses(email)
-        })
+            socketUpdates.getOwnedClasses(email);
+        });
 
-        socket.on('deleteUser', async (userId) => {
+        socket.on("logout", () => {
             try {
-                logger.log('info', `[deleteUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-                logger.log('info', `[deleteUser] userId=(${userId})`)
-
-                const user = await new Promise((resolve, reject) => {
-                    database.get('SELECT * FROM users WHERE id=?', userId, (err, user) => {
-                        if (err) reject(err)
-                        resolve(user)
-                    })
-                })
-                if (!user) {
-                    socket.emit('message', 'User not found')
-                    return
-                }
-
-                if (userSockets[user.email]) {
-                    socketUpdates.logout(userSockets[user.email])
-                }
-
-                try {
-                    await dbRun('BEGIN TRANSACTION')
-
-                    await Promise.all([
-                        dbRun('DELETE FROM users WHERE id=?', userId),
-                        dbRun('DELETE FROM classusers WHERE studentId=?', userId),
-                        dbRun('DELETE FROM shared_polls WHERE userId=?', userId),
-                    ])
-
-                    await socketUpdates.deleteCustomPolls(userId)
-                    await socketUpdates.deleteClassrooms(userId)
-
-                    await dbRun('COMMIT')
-                    await managerUpdate()
-                    socket.emit('message', 'User deleted successfully')
-                } catch (err) {
-                    await dbRun('ROLLBACK')
-                    throw err
-                }
+                logger.log("info", `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                logout(socket);
             } catch (err) {
-                logger.log('error', err.stack)
-                socket.emit('message', 'There was a server error try again.')
+                logger.log("error", err.stack);
             }
-        })
-
-        socket.on('logout', () => {
-            try {
-                logger.log('info', `[logout] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`)
-
-                socketUpdates.logout(socket)
-            } catch (err) {
-                logger.log('error', err.stack)
-            }
-        })
-    }
-}
+        });
+    },
+};
