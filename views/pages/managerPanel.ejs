@@ -288,8 +288,7 @@
                         fetch(`/api/user/${encodeURIComponent(userData.id)}/delete`, {
                             method: 'GET',
                             headers: {
-                                'Content-Type': 'application/json',
-                                'API': currentUser.API
+                                'Content-Type': 'application/json'
                             }
                         }).then(async (res) => {
                             if (!res.ok) {
@@ -430,8 +429,7 @@
         const managerData = fetch('/api/manager', {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'API': currentUser.API
+                'Content-Type': 'application/json'
             }
         }).then(async rawData => {
             const managerData = await rawData.json();
