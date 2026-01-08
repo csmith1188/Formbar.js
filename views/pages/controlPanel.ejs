@@ -963,8 +963,7 @@
         if (!classLinksBody || !currentUser?.activeClass) return;
         fetch(`/api/room/${currentUser.activeClass}/links`, {
             headers: {
-                'Content-Type': 'application/json',
-                'API': currentUser.API
+                'Content-Type': 'application/json'
             }
         }).then(r => r.json()).then(renderLinks).catch(() => {
             if (classLinksBody) {
@@ -987,8 +986,7 @@
         fetch(`/api/room/${currentUser.activeClass}/links/add`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'API': currentUser.API
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ name, url })
         }).then(response => {
@@ -1004,8 +1002,7 @@
         fetch(`/api/room/${currentUser.activeClass}/links/remove`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'API': currentUser.API
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ name })
         }).then(response => {
