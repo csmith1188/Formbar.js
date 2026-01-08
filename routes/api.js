@@ -57,7 +57,7 @@ module.exports = {
                     }
 
                     // If no API key is provided, then check if session user exists
-                    if (req.session && req.session.user) {
+                    if (req.session && req.session.email) {
                         return next();
                     }
 
@@ -77,8 +77,8 @@ module.exports = {
                     return next();
                 }
 
-                const permissions = req.session.user.permissions;
-                const classPermissions = req.session.user.classPermissions;
+                const permissions = req.session.permissions;
+                const classPermissions = req.session.classPermissions;
                 let urlPath = req.url;
 
                 // Log the request details

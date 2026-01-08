@@ -53,7 +53,7 @@ function hasClassPermission(classPermission) {
 
             // If classroom is active in memory, check from memory
             if (classroom) {
-                const user = classroom.students[req.session.user.email];
+                const user = classroom.students[req.session.email];
                 if (!user) {
                     return res.status(401).json({ error: "User not found in this class." });
                 }
