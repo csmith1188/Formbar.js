@@ -1,16 +1,16 @@
-const { isAuthenticated, permCheck } = require("../api/v1/controllers/middleware/authentication");
-const { classInformation } = require("../modules/class/classroom");
-const { logNumbers } = require("../modules/config");
-const { logger } = require("../modules/logger");
+const { isAuthenticated, permCheck } = require("../middleware/authentication");
+const { classInformation } = require("../../../../modules/class/classroom");
+const { logNumbers } = require("../../../../modules/config");
+const { logger } = require("../../../../modules/logger");
 
 module.exports = {
-    run(app) {
+    run(router) {
         /* 
         Student page, the layout is controlled by different "modes" to display different information.
         There is currently 1 working mode:
             Poll: For displaying a multiple choice or essay question
         */
-        app.get("/student", isAuthenticated, permCheck, (req, res) => {
+        router.get("/student", isAuthenticated, permCheck, (req, res) => {
             try {
                 // If the student is not currently in a class, redirect them back to the home page
                 const email = req.session.email;
@@ -18,7 +18,7 @@ module.exports = {
                 const classId = userData && userData.activeClass != null ? userData.activeClass : req.session.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!classroom || !classroom.students || !classroom.students[email]) {
-                    res.redirect("/");
+                    res.status(401).json({error: `You are not currently in a class.`});
                     return;
                 }
 
@@ -42,18 +42,14 @@ module.exports = {
                     "verbose",
                     `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${"classId"}].students[req.session.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${"classId"}].students[req.session.email].pollRes.textRes) lesson = (classInformation.classrooms[${"classId"}].lesson)`
                 );
-                res.render("pages/student", {
-                    title: "Student",
+                res.status(200).json({
                     user: JSON.stringify(user),
                     myRes: classInformation.classrooms[classId].students[req.session.email].pollRes.buttonRes,
                     myTextRes: classInformation.classrooms[classId].students[req.session.email].pollRes.textRes,
                 });
             } catch (err) {
                 logger.log("error", err.stack);
-                res.render("pages/message", {
-                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                    title: "Error",
-                });
+                res.status(500).json({error: `Error Number ${logNumbers.error}: There was a server error try again.`});
             }
         });
 
@@ -61,7 +57,7 @@ module.exports = {
         This is for when you send poll data via a post command
         It'll save your response to the student object and the database.
         */
-        app.post("/student", isAuthenticated, permCheck, (req, res) => {
+        router.post("/student", isAuthenticated, permCheck, (req, res) => {
             try {
                 logger.log("info", `[post /student] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 logger.log("verbose", `[post /student] poll=(${JSON.stringify(req.query.poll)}) question=(${JSON.stringify(req.body.question)})`);
@@ -74,14 +70,11 @@ module.exports = {
                     if (answer) {
                         classInformation.classrooms[classId].students[req.session.email].pollRes.buttonRes = answer;
                     }
-                    res.redirect("/poll");
+                    res.status(200)
                 }
             } catch (err) {
                 logger.log("error", err.stack);
-                res.render("pages/message", {
-                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                    title: "Error",
-                });
+                res.status(500).json({error: `Error Number ${logNumbers.error}: There was a server error try again.`});
             }
         });
     },

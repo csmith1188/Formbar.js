@@ -13,7 +13,9 @@
 		"format:check": "prettier --check \"**/*.js\""
 	},
 	"_moduleAliases": {
-		"@modules": "modules"
+		"@modules": "modules",
+		"@services": "api/v1/services",
+		"@controllers": "api/v1/controllers"
 	},
 	"repository": {
 		"type": "git",

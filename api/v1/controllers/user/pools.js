@@ -1,12 +1,12 @@
-const { dbGet } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const { isVerified, permCheck } = require("../api/v1/controllers/middleware/authentication");
-const pools = require("../modules/pools");
+const { dbGet } = require("../../../../modules/database");
+const { logger } = require("../../../../modules/logger");
+const { isVerified, permCheck } = require("../middleware/authentication");
+const pools = require("../../../../modules/pools");
 
 module.exports = {
-    run(app) {
+    run(router) {
         // Handle displaying the pools management page
-        app.get("/pools", isVerified, permCheck, async (req, res) => {
+        router.get("/pools", isVerified, permCheck, async (req, res) => {
             try {
                 const userId = req.session.userId;
 
@@ -28,8 +28,7 @@ module.exports = {
                     })
                 );
 
-                res.render("pages/pools", {
-                    title: "Digipog Pools",
+                res.status(200).json({
                     pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
                     ownedPools: JSON.stringify(ownedPools),
                     memberPools: JSON.stringify(memberPools),
@@ -37,10 +36,7 @@ module.exports = {
                 });
             } catch (err) {
                 logger.log("error", `Error fetching pools: ${err.message}`);
-                res.render("pages/message", {
-                    title: "Error",
-                    message: "An error occurred while fetching pools. Please try again later.",
-                });
+                res.status(500).json({error: "An error occurred while fetching pools. Please try again later."});
             }
         });
     },
