@@ -58,6 +58,27 @@ module.exports = {
 
                     // If no API key is provided, then check if session user exists
                     if (req.session && req.session.email) {
+                        // If session has email but not user object, fetch it
+                        if (!req.session.user) {
+                            let user = await getUser({ email: req.session.email });
+
+                            // If the user is an instance of Error
+                            if (user instanceof Error) {
+                                res.status(500).json({ error: "There was a server error try again." });
+                                throw user;
+                            }
+
+                            // If the user has an error property
+                            if (user.error) {
+                                logger.log("info", user);
+                                res.status(401).json({ error: user.error });
+                                return;
+                            }
+
+                            // Set the user in the session
+                            req.session.user = user;
+                            logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
+                        }
                         return next();
                     }
 
@@ -77,8 +98,8 @@ module.exports = {
                     return next();
                 }
 
-                const permissions = req.session.permissions;
-                const classPermissions = req.session.classPermissions;
+                const permissions = req.session.user.permissions;
+                const classPermissions = req.session.user.classPermissions;
                 let urlPath = req.url;
 
                 // Log the request details
