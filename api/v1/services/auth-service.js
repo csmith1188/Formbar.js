@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
  * @async
  * @param {string} email - The user's email address
  * @param {string} password - The user's plain text password
- * @returns {Promise<string|Error>} Returns an access token on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
+ * @returns {Promise<{accessToken: string, refreshToken: string}|Error>} Returns an object with accessToken and refreshToken on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
  * @throws {Error} Throws an error if private key is not available
  */
 async function login(email, password) {
@@ -31,7 +31,7 @@ async function login(email, password) {
             decodedRefreshToken.exp,
         ]);
 
-        return tokens.accessToken;
+        return tokens;
     } else {
         return invalidCredentials();
     }
@@ -41,7 +41,7 @@ async function login(email, password) {
  * Refreshes user authentication using a refresh token
  * @async
  * @param {string} refreshToken - The refresh token to validate and use for generating new tokens
- * @returns {Promise<string|Error>} Returns an access token on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
+ * @returns {Promise<{accessToken: string, refreshToken: string}|Error>} Returns an object with accessToken and refreshToken on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
  */
 async function refreshLogin(refreshToken) {
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
@@ -67,7 +67,7 @@ async function refreshLogin(refreshToken) {
         decodedRefreshToken.exp,
     ]);
 
-    return authTokens.accessToken;
+    return authTokens;
 }
 
 /**
@@ -85,7 +85,6 @@ function generateAuthTokens(userData) {
             id: userData.id,
             email: userData.email,
             displayName: userData.displayName,
-            refreshToken: refreshToken,
         },
         privateKey,
         { algorithm: "RS256", expiresIn: "15m" }
