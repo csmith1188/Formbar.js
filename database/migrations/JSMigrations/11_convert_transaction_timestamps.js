@@ -9,7 +9,12 @@ module.exports = {
             //check if timestamp is in ISO 8610 format
             if (typeof tx.date === 'string' && tx.date.includes('T')) {
                 const date = new Date(tx.date);
-                const unixTimestamp = Math.floor(date.getTime());
+                const time = date.getTime();
+                if (Number.isNaN(time)) {
+                    console.warn(`Skipping invalid ISO 8610 timestamp in transactions.date: ${tx.date}`);
+                    continue;
+                }
+                const unixTimestamp = Math.floor(time);
                 await dbRun('UPDATE transactions SET date = ? WHERE id = ?', [unixTimestamp, tx.id]);
                 console.log(`Converted ISO 8601 timestamp ${tx.date} to unix timestamp ${unixTimestamp}`);
             }
