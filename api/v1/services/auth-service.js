@@ -28,7 +28,7 @@ async function login(email, password) {
         await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
             userData.id,
             tokens.refreshToken,
-            decodedRefreshToken.iat,
+            decodedRefreshToken.exp,
         ]);
 
         return tokens.accessToken;
@@ -64,7 +64,7 @@ async function refreshLogin(refreshToken) {
     await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
         dbRefreshToken.user_id,
         authTokens.refreshToken,
-        decodedRefreshToken.iat,
+        decodedRefreshToken.exp,
     ]);
 
     return authTokens.accessToken;
