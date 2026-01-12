@@ -115,7 +115,6 @@ module.exports = (router) => {
             req.session.displayName = userData.displayName;
             req.session.verified = userData.verified;
             req.session.tags = userData.tags ? userData.tags.split(",") : [];
-            req.session.user = classInformation.users[userData.email];
 
             logger.log("verbose", `[post /auth/login] session=(${JSON.stringify(req.session)})`);
 
