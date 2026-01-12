@@ -2,19 +2,19 @@ const { logger } = require("@modules/logger");
 const authService = require("../../services/auth-service");
 
 module.exports = (router) => {
-    router.post("/auth/login", async (req, res) => {
+    router.post("/auth/refresh", async (req, res) => {
         try {
-            const { email, password } = req.body;
-            if (!email || !password) {
-                return res.status(400).json({ error: "Email and password are required." });
+            const { token } = req.body;
+            if (!token) {
+                return res.status(400).json({ error: "A refresh token is required." });
             }
 
-            const result = await authService.login(email, password)
+            const result = await authService.refreshLogin(token);
             if (result.code) {
                 return res.status(500).json({ error: result });
             }
 
-            res.json({ token: result });
+            res.status(200).json({ token: result });
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error. Please try again." });

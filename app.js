@@ -55,6 +55,8 @@ io.use((socket, next) => {
 });
 
 // Allows express to parse requests
+const cors = require("cors");
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -155,6 +157,13 @@ for (const apiVersionFolder of apiVersionFolders) {
     const controllerFolders = fs.readdirSync(`./api/${apiVersionFolder}`).filter((file) => file === "controllers");
     for (const controllerFolder of controllerFolders) {
         const router = express.Router();
+
+        // Apply JWT authentication middleware for v1 API
+        if (apiVersionFolder === "v1") {
+            const { jwtAuth } = require(`./api/${apiVersionFolder}/${controllerFolder}/middleware/jwtAuth`);
+            router.use(jwtAuth);
+        }
+
         const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
         for (const routeFile of routeFiles) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);

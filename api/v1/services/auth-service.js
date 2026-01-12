@@ -2,6 +2,14 @@ const { compare } = require("bcrypt");
 const { dbGet, dbRun } = require("../../../modules/database");
 const jwt = require("jsonwebtoken");
 
+/**
+ * Authenticates a user with email and password credentials
+ * @async
+ * @param {string} email - The user's email address
+ * @param {string} password - The user's plain text password
+ * @returns {Promise<string|Error>} Returns an access token on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
+ * @throws {Error} Throws an error if JWT secret is not defined in environment variables
+ */
 async function login(email, password) {
     if (!process.env.SECRET) {
         throw new Error("JWT secret is not defined in environment variables.");
@@ -16,7 +24,7 @@ async function login(email, password) {
     if (passwordMatches) {
         const tokens = generateAuthTokens(userData)
         const decodedRefreshToken = jwt.verify(tokens.refreshToken, process.env.SECRET);
-        await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [userData.id, tokens.refreshToken, decodedRefreshToken.iat]);
+        await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [userData.id, tokens.refreshToken, decodedRefreshToken.iat]);
 
         return tokens.accessToken;
     } else {
@@ -24,10 +32,32 @@ async function login(email, password) {
     }
 }
 
+/**
+ * Refreshes user authentication using a refresh token
+ * @async
+ * @param {string} refreshToken - The refresh token to validate and use for generating new tokens
+ * @returns {Promise<String|Error>} Returns void on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
+ */
 async function refreshLogin(refreshToken) {
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
+    if (!dbRefreshToken) {
+        return invalidCredentials()
+    }
+
+    const authTokens = generateAuthTokens({ id: dbRefreshToken.user_id });
+    const decodedRefreshToken = jwt.verify(authTokens.refreshToken, process.env.SECRET);
+    await dbRun("UPDATE refresh_tokens SET refresh_token = ?, exp = ? WHERE user_id = ?", [authTokens.refreshToken, decodedRefreshToken.iat, dbRefreshToken.user_id]);
+
+    return authTokens.accessToken;
 }
 
+/**
+ * Generates both access and refresh tokens for a user
+ * @param {Object} userData - The user data object
+ * @param {number} userData.id - The user's unique identifier
+ * @param {string} [userData.displayName] - The user's display name (optional, used in access token)
+ * @returns {{accessToken: string, refreshToken: string}} An object containing both access and refresh tokens
+ */
 function generateAuthTokens(userData) {
     const refreshToken = generateRefreshToken(userData)
     const accessToken = jwt.sign(
@@ -43,6 +73,12 @@ function generateAuthTokens(userData) {
     return { accessToken, refreshToken }
 }
 
+/**
+ * Generates a refresh token for a user
+ * @param {Object} userData - The user data object
+ * @param {number} userData.id - The user's unique identifier
+ * @returns {string} A JWT refresh token valid for 30 days
+ */
 function generateRefreshToken(userData) {
     return jwt.sign(
         { id: userData.id },
@@ -51,6 +87,10 @@ function generateRefreshToken(userData) {
     );
 }
 
+/**
+ * Creates a standardized error object for invalid credentials
+ * @returns {Error} An Error object with message "Invalid credentials" and code "INVALID_CREDENTIALS"
+ */
 function invalidCredentials() {
     const err = new Error("Invalid credentials");
     err.code = "INVALID_CREDENTIALS";
@@ -58,5 +98,6 @@ function invalidCredentials() {
 }
 
 module.exports = {
-    login
+    login,
+    refreshLogin
 }
