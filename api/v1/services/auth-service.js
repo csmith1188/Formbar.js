@@ -1,5 +1,6 @@
 const { compare } = require("bcrypt");
 const { dbGet, dbRun } = require("../../../modules/database");
+const { privateKey } = require("../../../modules/config");
 const jwt = require("jsonwebtoken");
 
 /**
@@ -8,11 +9,11 @@ const jwt = require("jsonwebtoken");
  * @param {string} email - The user's email address
  * @param {string} password - The user's plain text password
  * @returns {Promise<string|Error>} Returns an access token on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
- * @throws {Error} Throws an error if JWT secret is not defined in environment variables
+ * @throws {Error} Throws an error if private key is not available
  */
 async function login(email, password) {
-    if (!process.env.SECRET) {
-        throw new Error("JWT secret is not defined in environment variables.");
+    if (!privateKey) {
+        throw new Error("Private key is not available for JWT signing.");
     }
 
     const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
@@ -23,7 +24,7 @@ async function login(email, password) {
     const passwordMatches = await compare(password, userData.password);
     if (passwordMatches) {
         const tokens = generateAuthTokens(userData);
-        const decodedRefreshToken = jwt.verify(tokens.refreshToken, process.env.SECRET);
+        const decodedRefreshToken = jwt.decode(tokens.refreshToken);
         await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
             userData.id,
             tokens.refreshToken,
@@ -48,12 +49,22 @@ async function refreshLogin(refreshToken) {
         return invalidCredentials();
     }
 
-    const authTokens = generateAuthTokens({ id: dbRefreshToken.user_id });
-    const decodedRefreshToken = jwt.verify(authTokens.refreshToken, process.env.SECRET);
-    await dbRun("UPDATE refresh_tokens SET refresh_token = ?, exp = ? WHERE user_id = ?", [
+    // Load user data to include email and displayName in the new token
+    const userData = await dbGet("SELECT id, email, displayName FROM users WHERE id = ?", [dbRefreshToken.user_id]);
+    if (!userData) {
+        return invalidCredentials();
+    }
+
+    const authTokens = generateAuthTokens(userData);
+    const decodedRefreshToken = jwt.decode(authTokens.refreshToken);
+
+    // Delete the old refresh token and insert the new one to avoid UNIQUE constraint issues
+    // This handles cases where a user might have multiple refresh tokens in the database
+    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+        dbRefreshToken.user_id,
         authTokens.refreshToken,
         decodedRefreshToken.iat,
-        dbRefreshToken.user_id,
     ]);
 
     return authTokens.accessToken;
@@ -63,6 +74,7 @@ async function refreshLogin(refreshToken) {
  * Generates both access and refresh tokens for a user
  * @param {Object} userData - The user data object
  * @param {number} userData.id - The user's unique identifier
+ * @param {string} [userData.email] - The user's email address (used in access token)
  * @param {string} [userData.displayName] - The user's display name (optional, used in access token)
  * @returns {{accessToken: string, refreshToken: string}} An object containing both access and refresh tokens
  */
@@ -71,11 +83,12 @@ function generateAuthTokens(userData) {
     const accessToken = jwt.sign(
         {
             id: userData.id,
+            email: userData.email,
             displayName: userData.displayName,
             refreshToken: refreshToken,
         },
-        process.env.SECRET,
-        { expiresIn: "15m" }
+        privateKey,
+        { algorithm: "RS256", expiresIn: "15m" }
     );
 
     return { accessToken, refreshToken };
@@ -88,7 +101,20 @@ function generateAuthTokens(userData) {
  * @returns {string} A JWT refresh token valid for 30 days
  */
 function generateRefreshToken(userData) {
-    return jwt.sign({ id: userData.id }, process.env.SECRET, { expiresIn: "30d" });
+    return jwt.sign({ id: userData.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+}
+
+/**
+ * Verifies the validity of an access token and returns the decoded payload
+ * @param token
+ * @returns {Object}
+ */
+function verifyToken(token) {
+    try {
+        return jwt.verify(token, privateKey, { algorithms: ["RS256"] });
+    } catch (err) {
+        return { error: err.toString() };
+    }
 }
 
 /**
@@ -104,4 +130,5 @@ function invalidCredentials() {
 module.exports = {
     login,
     refreshLogin,
+    verifyToken,
 };

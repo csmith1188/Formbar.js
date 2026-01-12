@@ -158,12 +158,6 @@ for (const apiVersionFolder of apiVersionFolders) {
     for (const controllerFolder of controllerFolders) {
         const router = express.Router();
 
-        // Apply JWT authentication middleware for v1 API
-        if (apiVersionFolder === "v1") {
-            const { jwtAuth } = require(`./api/${apiVersionFolder}/${controllerFolder}/middleware/jwtAuth`);
-            router.use(jwtAuth);
-        }
-
         const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
         for (const routeFile of routeFiles) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
