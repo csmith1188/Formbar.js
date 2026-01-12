@@ -17,14 +17,18 @@ async function login(email, password) {
 
     const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
     if (!userData) {
-        return invalidCredentials()
+        return invalidCredentials();
     }
 
     const passwordMatches = await compare(password, userData.password);
     if (passwordMatches) {
-        const tokens = generateAuthTokens(userData)
+        const tokens = generateAuthTokens(userData);
         const decodedRefreshToken = jwt.verify(tokens.refreshToken, process.env.SECRET);
-        await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [userData.id, tokens.refreshToken, decodedRefreshToken.iat]);
+        await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+            userData.id,
+            tokens.refreshToken,
+            decodedRefreshToken.iat,
+        ]);
 
         return tokens.accessToken;
     } else {
@@ -41,12 +45,16 @@ async function login(email, password) {
 async function refreshLogin(refreshToken) {
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
     if (!dbRefreshToken) {
-        return invalidCredentials()
+        return invalidCredentials();
     }
 
     const authTokens = generateAuthTokens({ id: dbRefreshToken.user_id });
     const decodedRefreshToken = jwt.verify(authTokens.refreshToken, process.env.SECRET);
-    await dbRun("UPDATE refresh_tokens SET refresh_token = ?, exp = ? WHERE user_id = ?", [authTokens.refreshToken, decodedRefreshToken.iat, dbRefreshToken.user_id]);
+    await dbRun("UPDATE refresh_tokens SET refresh_token = ?, exp = ? WHERE user_id = ?", [
+        authTokens.refreshToken,
+        decodedRefreshToken.iat,
+        dbRefreshToken.user_id,
+    ]);
 
     return authTokens.accessToken;
 }
@@ -59,7 +67,7 @@ async function refreshLogin(refreshToken) {
  * @returns {{accessToken: string, refreshToken: string}} An object containing both access and refresh tokens
  */
 function generateAuthTokens(userData) {
-    const refreshToken = generateRefreshToken(userData)
+    const refreshToken = generateRefreshToken(userData);
     const accessToken = jwt.sign(
         {
             id: userData.id,
@@ -70,7 +78,7 @@ function generateAuthTokens(userData) {
         { expiresIn: "15m" }
     );
 
-    return { accessToken, refreshToken }
+    return { accessToken, refreshToken };
 }
 
 /**
@@ -80,11 +88,7 @@ function generateAuthTokens(userData) {
  * @returns {string} A JWT refresh token valid for 30 days
  */
 function generateRefreshToken(userData) {
-    return jwt.sign(
-        { id: userData.id },
-        process.env.SECRET,
-        { expiresIn: "30d" }
-    );
+    return jwt.sign({ id: userData.id }, process.env.SECRET, { expiresIn: "30d" });
 }
 
 /**
@@ -99,5 +103,5 @@ function invalidCredentials() {
 
 module.exports = {
     login,
-    refreshLogin
-}
+    refreshLogin,
+};

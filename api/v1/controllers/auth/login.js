@@ -9,7 +9,7 @@ module.exports = (router) => {
                 return res.status(400).json({ error: "Email and password are required." });
             }
 
-            const result = await authService.login(email, password)
+            const result = await authService.login(email, password);
             if (result.code) {
                 return res.status(500).json({ error: result });
             }
