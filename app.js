@@ -56,7 +56,28 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 const cors = require("cors");
-app.use(cors({ origin: true, credentials: true }));
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ? process.env.CORS_ALLOWED_ORIGINS.split(",").map(origin => origin.trim()).filter(Boolean)
+    : [];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no Origin header (e.g., mobile apps, curl)
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+    }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
