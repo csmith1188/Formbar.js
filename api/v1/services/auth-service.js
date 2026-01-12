@@ -41,7 +41,7 @@ async function login(email, password) {
  * Refreshes user authentication using a refresh token
  * @async
  * @param {string} refreshToken - The refresh token to validate and use for generating new tokens
- * @returns {Promise<String|Error>} Returns void on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
+ * @returns {Promise<string|Error>} Returns an access token on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
  */
 async function refreshLogin(refreshToken) {
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
@@ -106,8 +106,8 @@ function generateRefreshToken(userData) {
 
 /**
  * Verifies the validity of an access token and returns the decoded payload
- * @param token
- * @returns {Object}
+ * @param {string} token - The JWT access token to verify
+ * @returns {Object|{error: string}} Decoded token payload if verification succeeds, or an object with an error property if verification fails
  */
 function verifyToken(token) {
     try {

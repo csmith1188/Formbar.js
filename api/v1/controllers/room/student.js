@@ -70,7 +70,7 @@ module.exports = {
                     if (answer) {
                         classInformation.classrooms[classId].students[req.session.email].pollRes.buttonRes = answer;
                     }
-                    res.status(200);
+                    res.status(200).end();
                 }
             } catch (err) {
                 logger.log("error", err.stack);

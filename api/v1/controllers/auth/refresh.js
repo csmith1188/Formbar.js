@@ -11,7 +11,7 @@ module.exports = (router) => {
 
             const result = await authService.refreshLogin(token);
             if (result.code) {
-                return res.status(500).json({ error: result });
+                return res.status(401).json({ error: result });
             }
 
             res.status(200).json({ token: result });

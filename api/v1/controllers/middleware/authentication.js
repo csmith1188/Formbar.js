@@ -45,7 +45,7 @@ function isAuthenticated(req, res, next) {
         }
 
         const email = decodedToken.email;
-        if (!decodedToken.email) {
+        if (!email) {
             return res.status(401).json({ error: "Invalid access token provided. Missing 'email'." });
         }
 
