@@ -2,7 +2,6 @@ const { permCheck, isAuthenticated } = require("@controllers/middleware/authenti
 const {getAllLogs, getLog} = require('@services/log-service');
 const { logger } = require("@modules/logger");
 const fs = require("fs");
-const { text } = require("express");
 
 module.exports = (router) => {
     // Handle displaying all logs to the manager

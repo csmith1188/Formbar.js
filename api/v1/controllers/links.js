@@ -1,9 +1,9 @@
 const {getLinks, isUserInClass} = require("@services/class-service");
-const { isAuthenticated, isVerified } = require("@controllers/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@controllers/middleware/authentication");
 
 module.exports = (router) => {
 
-    router.get("/links", isAuthenticated, isVerified, async (req, res) => {
+    router.get("/links", isAuthenticated, permCheck, isVerified, async (req, res) => {
         try {
 
             if (!req.query.classId) throw new Error("Missing classId parameter");
