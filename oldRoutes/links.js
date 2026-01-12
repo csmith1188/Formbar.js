@@ -35,7 +35,7 @@ module.exports = {
                 parsedUrl.pathname !== "/s2/favicons" ||
                 !parsedUrl.searchParams.has("domain")
             ) {
-                return res.status(400).send("Error fetching image");
+                return res.status(400).send({error: "Error fetching image"});
             }
 
             try {
@@ -47,10 +47,10 @@ module.exports = {
                     res.set("Access-Control-Allow-Origin", "*");
                     res.send(buffer);
                 } else {
-                    res.status(response.status).send("Error fetching image");
+                    
                 }
             } catch (error) {
-                res.status(500).send("Error fetching image");
+                res.status(500).send({error: "Error fetching image"});
             }
         });
     },
