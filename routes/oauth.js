@@ -191,7 +191,7 @@ module.exports = {
                     return;
                 }
 
-                database.get("SELECT * FROM users WHERE email=?", [email], async (err, userData) => {
+                database.get("SELECT * FROM users WHERE email=?", [email.toLowerCase().trim()], async (err, userData) => {
                     try {
                         if (err) throw err;
 
