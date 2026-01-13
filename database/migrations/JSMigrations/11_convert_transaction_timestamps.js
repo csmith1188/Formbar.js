@@ -4,14 +4,24 @@
 const { dbGetAll, dbRun } = require('../../../modules/database');
 module.exports = {
     async run(database) {
-        const transactions = await dbGetAll('SELECT id, date FROM transactions', [], database);
-        for (const tx of transactions) {
-            if (typeof tx.date === 'string' && tx.date.includes('T')) { // Check if timestamp is in ISO 8601 format
-                const date = new Date(tx.date);
-                const unixTimestamp = Math.floor(date.getTime());
-                await dbRun('UPDATE transactions SET date = ? WHERE date = ?', [unixTimestamp, tx.date]);
-                console.log(`Converted ISO 8610 timestamp ${tx.date} to unix timestamp ${unixTimestamp}`);
+        const transactions = await dbGetAll('SELECT date FROM transactions', [], database);
+        await dbRun('BEGIN TRANSACTION', [], database);
+        try {
+            for (const tx of transactions) {
+                if (typeof tx.date === 'string' && tx.date.includes('T')) { // Check if timestamp is in ISO 8601 format
+                    const date = new Date(tx.date);
+                    const time = date.getTime();
+                    if (Number.isNaN(time)) {
+                        console.warn(`Skipping invalid ISO 8601 timestamp in transactions.date: ${tx.date}`);
+                        continue;
+                    }
+                    const unixTimestamp = Math.floor(time);
+                    await dbRun('UPDATE transactions SET date = ? WHERE date = ?', [unixTimestamp, tx.date]);
+                }
             }
+        } catch (err) {
+            await dbRun('ROLLBACK', [], database);
+            throw err;
         }
     }
 }
