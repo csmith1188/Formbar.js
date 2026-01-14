@@ -1,4 +1,5 @@
 const { logger } = require("@modules/logger");
+const { isAuthenticated } = require("./middleware/authentication");
 
 module.exports = (router) => {
     try {
@@ -25,14 +26,10 @@ module.exports = (router) => {
          *               $ref: '#/components/schemas/ServerError'
          */
         // Gets the current user's information
-        router.get("/me", async (req, res) => {
+        router.get("/me", isAuthenticated, async (req, res) => {
             try {
-                // Log the request details and get the user's session information
                 logger.log("info", `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-                const user = req.session.user;
-
-                // Send the user's data as a JSON response
-                res.status(200).json(user);
+                res.status(200).json(req.session.user);
             } catch (err) {
                 // If an error occurs, log the error and send an error message as a JSON response
                 logger.log("error", err.stack);

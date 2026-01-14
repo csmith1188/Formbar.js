@@ -36,7 +36,7 @@ module.exports = {
                 });
             } catch (err) {
                 logger.log("error", `Error fetching pools: ${err.message}`);
-                res.status(500).json({error: "An error occurred while fetching pools. Please try again later."});
+                res.status(500).json({ error: "An error occurred while fetching pools. Please try again later." });
             }
         });
     },

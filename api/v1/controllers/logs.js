@@ -1,5 +1,5 @@
 const { permCheck, isAuthenticated } = require("@controllers/middleware/authentication");
-const {getAllLogs, getLog} = require('@services/log-service');
+const { getAllLogs, getLog } = require("@services/log-service");
 const { logger } = require("@modules/logger");
 const fs = require("fs");
 
@@ -26,4 +26,4 @@ module.exports = (router) => {
             throw new Error(`Failed to retrieve log file ${logFileName}: ${err.message}`);
         }
     });
-}
+};
