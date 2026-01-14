@@ -156,9 +156,9 @@ async function register(email, password, displayName) {
     email = email.trim().toLowerCase();
 
     // Check if user already exists
-    const existingUser = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+    const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
     if (existingUser) {
-        return { error: "A user with that email already exists." };
+        return { error: "A user with that email or display name already exists." };
     }
 
     const hashedPassword = await hash(password, 10);
