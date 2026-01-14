@@ -1,8 +1,9 @@
-const { isAuthenticated, permCheck } = require("../middleware/authentication");
 const { logger } = require("@modules/logger");
+const { hasPermission } = require("@controllers/middleware/permissionCheck");
+const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
-    router.get("/manager/database/export", isAuthenticated, permCheck, (req, res) => {
+    router.get("/manager/database/export", hasPermission(MANAGER_PERMISSIONS), (req, res) => {
         try {
             // Log the request details
             logger.log("info", `[get /manager/database/export] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
