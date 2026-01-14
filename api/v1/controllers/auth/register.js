@@ -26,7 +26,7 @@ module.exports = (router) => {
 
             // Return the tokens and user data
             res.status(201).json({
-                token: result.tokens,
+                ...result.tokens,
                 user: {
                     id: result.user.id,
                     email: result.user.email,

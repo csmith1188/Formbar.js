@@ -26,22 +26,21 @@ module.exports = (router) => {
     );
 
     // Google OAuth callback
-    router.get(
-        "/auth/google/callback",
-        checkEnabled,
-        passport.authenticate("google", {
-            failureRedirect: "/login", // @todo cleanup later
-            session: false,
-        }),
-        async (req, res) => {
+    router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
+        passport.authenticate("google", { session: false }, async (err, user) => {
             try {
-                if (!req.user || !req.user.emails || req.user.emails.length === 0) {
+                if (err) {
+                    logger.log("error", `[auth/google/callback] Passport error: ${err.message || err}`);
+                    return res.status(400).json({ error: "Authentication failed." });
+                }
+
+                if (!user || !user.emails || user.emails.length === 0) {
                     logger.log("error", "[auth/google/callback] No email found in Google profile");
                     return res.status(400).json({ error: "Could not retrieve email from Google account." });
                 }
 
-                const email = req.user.emails[0].value;
-                const displayName = req.user.name ? `${req.user.name.givenName} ${req.user.name.familyName}` : email;
+                const email = user.emails[0].value;
+                const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
                 logger.log("info", `[get /auth/google/callback] ip=(${req.ip}) email=(${email})`);
 
@@ -78,11 +77,11 @@ module.exports = (router) => {
 
                 logger.log("verbose", `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
 
-                res.json({ token: tokens });
+                res.json(tokens);
             } catch (err) {
                 logger.log("error", err.stack);
                 res.status(500).json({ error: "There was a server error. Please try again." });
             }
-        }
-    );
+        })(req, res, next);
+    });
 };
