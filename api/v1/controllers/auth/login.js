@@ -1,9 +1,7 @@
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
-const { dbGet } = require("@modules/database");
 const authService = require("../../services/auth-service");
-const jwt = require("jsonwebtoken");
 
 module.exports = (router) => {
     router.post("/auth/login", async (req, res) => {
@@ -23,7 +21,7 @@ module.exports = (router) => {
             }
 
             // If not already logged in, create a new Student instance in classInformation
-            const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+            const { tokens, user: userData } = result;
             if (!classInformation.users[email]) {
                 classInformation.users[email] = new Student(
                     userData.email,
@@ -42,14 +40,13 @@ module.exports = (router) => {
             req.session.user = classInformation.users[userData.email];
             req.session.userId = userData.id;
             req.session.email = userData.email;
-            req.session.classId = classId;
             req.session.displayName = userData.displayName;
             req.session.verified = userData.verified;
             req.session.tags = userData.tags ? userData.tags.split(",") : [];
 
             logger.log("verbose", `[post /auth/login] session=(${JSON.stringify(req.session)})`);
 
-            res.json({ token: result });
+            res.json({ token: tokens });
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error. Please try again." });

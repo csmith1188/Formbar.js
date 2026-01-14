@@ -1,6 +1,6 @@
 const { compare } = require("bcrypt");
 const { dbGet, dbRun } = require("../../../modules/database");
-const { privateKey } = require("../../../modules/config");
+const { privateKey, publicKey } = require("../../../modules/config");
 const jwt = require("jsonwebtoken");
 
 /**
@@ -8,12 +8,12 @@ const jwt = require("jsonwebtoken");
  * @async
  * @param {string} email - The user's email address
  * @param {string} password - The user's plain text password
- * @returns {Promise<{accessToken: string, refreshToken: string}|Error>} Returns an object with accessToken and refreshToken on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
+ * @returns {Promise<{tokens: {accessToken: string, refreshToken: string}, user: Object}|Error>} Returns an object with tokens and user data on success, or an Error object with code 'INVALID_CREDENTIALS' on failure
  * @throws {Error} Throws an error if private key is not available
  */
 async function login(email, password) {
-    if (!privateKey) {
-        throw new Error("Private key is not available for JWT signing.");
+    if (!privateKey || !publicKey) {
+        throw new Error("Either the public key or private key is not available for JWT signing.");
     }
 
     const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
@@ -31,7 +31,7 @@ async function login(email, password) {
             decodedRefreshToken.exp,
         ]);
 
-        return tokens;
+        return { tokens, user: userData };
     } else {
         return invalidCredentials();
     }
@@ -44,6 +44,14 @@ async function login(email, password) {
  * @returns {Promise<{accessToken: string, refreshToken: string}|Error>} Returns an object with accessToken and refreshToken on success, or an Error object with code 'INVALID_CREDENTIALS' if the refresh token is invalid
  */
 async function refreshLogin(refreshToken) {
+    // Verify the refresh token's signature and expiration before proceeding
+    // This prevents the use of expired or tampered tokens
+    try {
+        jwt.verify(refreshToken, privateKey, { algorithms: ["RS256"] });
+    } catch (err) {
+        return invalidCredentials();
+    }
+
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
     if (!dbRefreshToken) {
         return invalidCredentials();
@@ -110,7 +118,7 @@ function generateRefreshToken(userData) {
  */
 function verifyToken(token) {
     try {
-        return jwt.verify(token, privateKey, { algorithms: ["RS256"] });
+        return jwt.verify(token, publicKey, { algorithms: ["RS256"] });
     } catch (err) {
         return { error: err.toString() };
     }

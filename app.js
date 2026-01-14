@@ -58,7 +58,9 @@ io.use((socket, next) => {
 const cors = require("cors");
 
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(",").map(origin => origin.trim()).filter(Boolean)
+    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
+          .map((origin) => origin.trim())
+          .filter(Boolean)
     : [];
 
 app.use(
@@ -76,7 +78,7 @@ app.use(
             return callback(new Error("Not allowed by CORS"));
         },
         credentials: true,
-    }),
+    })
 );
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
