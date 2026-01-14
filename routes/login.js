@@ -88,7 +88,7 @@ module.exports = {
                         const tempUsers = await dbGetAll("SELECT token FROM temp_user_creation_data");
                         for (const tempUser of tempUsers) {
                             const decoded = jwt.decode(tempUser.token);
-                            if (decoded.email === userData.email) {
+                            if (decoded && decoded.email && decoded.email.toLowerCase().trim() === userData.email) {
                                 await dbRun("DELETE FROM temp_user_creation_data WHERE token=?", [tempUser.token]);
                             }
                         }
@@ -143,6 +143,8 @@ module.exports = {
                     displayName: req.body.displayName,
                     classID: req.body.classID,
                 };
+                // Trim whitespace from email and set lowercase
+                user.email = user.email.trim().toLowerCase();
                 logger.log("info", `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`);
                 logger.log(
                     "verbose",
@@ -169,7 +171,7 @@ module.exports = {
                                         const decoded = jwt.decode(temp.token);
                                         if (
                                             decoded &&
-                                            decoded.email === user.email &&
+                                            decoded.email.toLowerCase().trim() === user.email &&
                                             typeof decoded.hashedPassword === "string" &&
                                             decoded.hashedPassword.length > 0
                                         ) {
