@@ -34,7 +34,7 @@ app.use(sessionMiddleware);
 
 // Initialize passport for Google OAuth
 app.use(passport.initialize());
-app.use(passport.session({}));
+app.use(passport.session());
 
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server

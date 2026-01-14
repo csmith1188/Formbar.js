@@ -30,8 +30,8 @@ module.exports = (router) => {
                 user: {
                     id: result.user.id,
                     email: result.user.email,
-                    displayName: result.user.displayName
-                }
+                    displayName: result.user.displayName,
+                },
             });
         } catch (err) {
             logger.log("error", err.stack);
@@ -39,4 +39,3 @@ module.exports = (router) => {
         }
     });
 };
-

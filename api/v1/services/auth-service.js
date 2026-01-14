@@ -2,6 +2,7 @@ const { compare, hash } = require("bcrypt");
 const { dbGet, dbRun, dbGetAll } = require("../../../modules/database");
 const { privateKey, publicKey } = require("../../../modules/config");
 const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 /**
@@ -16,6 +17,9 @@ async function login(email, password) {
     if (!privateKey || !publicKey) {
         throw new Error("Either the public key or private key is not available for JWT signing.");
     }
+
+    // Normalize email to lowercase to prevent login issues
+    email = email.trim().toLowerCase();
 
     const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
     if (!userData) {
@@ -148,6 +152,9 @@ async function register(email, password, displayName) {
         throw new Error("Either the public key or private key is not available for JWT signing.");
     }
 
+    // Normalize email to lowercase to prevent duplicate accounts
+    email = email.trim().toLowerCase();
+
     // Check if user already exists
     const existingUser = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
     if (existingUser) {
@@ -164,10 +171,15 @@ async function register(email, password, displayName) {
     const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
 
     // Create the new user in the database
-    const result = await dbRun(
-        `INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [email, hashedPassword, permissions, apiKey, secret, displayName, 0]
-    );
+    const result = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+        email,
+        hashedPassword,
+        permissions,
+        apiKey,
+        secret,
+        displayName,
+        0,
+    ]);
 
     // Get the new user's data
     const userData = await dbGet("SELECT * FROM users WHERE id = ?", [result.lastID]);
@@ -195,6 +207,9 @@ async function googleOAuth(email, displayName) {
     if (!privateKey || !publicKey) {
         throw new Error("Either the public key or private key is not available for JWT signing.");
     }
+
+    // Normalize email to lowercase to prevent duplicate accounts
+    email = email.trim().toLowerCase();
 
     let userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
     if (!userData) {
