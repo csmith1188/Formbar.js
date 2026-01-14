@@ -44,7 +44,7 @@ function storeRefreshToken(userId, refreshToken) {
     const decodedRefreshToken = jwt.verify(refreshToken, privateKey, { algorithms: ["RS256"] });
     database.run(
         "INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)",
-        [userId, refreshToken, decodedRefreshToken.iat],
+        [userId, refreshToken, decodedRefreshToken.exp],
         (err) => {
             if (err) throw err;
         }

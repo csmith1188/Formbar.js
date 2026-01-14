@@ -18,7 +18,7 @@ module.exports = {
                 const classId = userData && userData.activeClass != null ? userData.activeClass : req.session.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!classroom || !classroom.students || !classroom.students[email]) {
-                    res.status(401).json({error: `You are not currently in a class.`});
+                    res.status(401).json({ error: `You are not currently in a class.` });
                     return;
                 }
 
@@ -49,7 +49,7 @@ module.exports = {
                 });
             } catch (err) {
                 logger.log("error", err.stack);
-                res.status(500).json({error: `Error Number ${logNumbers.error}: There was a server error try again.`});
+                res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
             }
         });
 
@@ -70,11 +70,11 @@ module.exports = {
                     if (answer) {
                         classInformation.classrooms[classId].students[req.session.email].pollRes.buttonRes = answer;
                     }
-                    res.status(200)
+                    res.status(200).end();
                 }
             } catch (err) {
                 logger.log("error", err.stack);
-                res.status(500).json({error: `Error Number ${logNumbers.error}: There was a server error try again.`});
+                res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
             }
         });
     },
