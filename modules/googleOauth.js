@@ -5,7 +5,8 @@ const { settings } = require("./config");
 function setupGooglePassport() {
     // Check if google oauth is enabled
     if (!settings.googleOauthEnabled) return;
-    // Set up the google strategy using information from the .env file
+
+    // Set up the Google strategy using information from the .env file
     passport.use(
         new GoogleStrategy(
             {
