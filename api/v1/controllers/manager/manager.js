@@ -12,7 +12,7 @@ module.exports = (router) => {
             logger.log("info", `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
             logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);
 
-            // Grab manager data and send it back as a JSON responses
+            // Grab manager data and send it back as a JSON response
             const { users, classrooms } = await getManagerData();
             res.status(200).json({
                 users,
@@ -21,7 +21,7 @@ module.exports = (router) => {
         } catch (err) {
             // If an error occurs, log the error and send an error message as a JSON response
             logger.log("error", err.stack);
-            res.status(500).json({ error: "There was a server error try again." });
+            res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });
 };
