@@ -77,10 +77,7 @@ function isAuthenticated(req, res, next) {
         next();
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 
@@ -100,18 +97,17 @@ function isVerified(req, res, next) {
                 next();
             } else {
                 // Redirect to the login page
+                // @todo: no more redirect
                 res.redirect("/login");
             }
         } else {
             // If there is no session, redirect to the login page
+            // @todo: no more redirect
             res.redirect("/login");
         }
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 
@@ -151,10 +147,8 @@ function permCheck(req, res, next) {
             logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
             if (!PAGE_PERMISSIONS[urlPath]) {
                 logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
-                res.render("pages/message", {
-                    message: `Error: ${urlPath} is not in the page permissions`,
-                    title: "Error",
-                });
+                res.status(404).json({ error: `${urlPath} is not in the page permissions` });
+                return;
             }
 
             // Checks if users permissions are high enough
@@ -164,15 +158,12 @@ function permCheck(req, res, next) {
                 next();
             } else {
                 logger.log("info", "[permCheck] Not enough permissions");
-                res.redirect("/");
+                res.status(403).json({ error: "You do not have permissions to access this page." });
             }
         }
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 
