@@ -1,4 +1,4 @@
-const {getLinks, isUserInClass} = require("@services/class-service");
+const {getClassLinks, isUserInClass} = require("@services/class-service");
 const { isAuthenticated, isVerified, permCheck } = require("@controllers/middleware/authentication");
 
 module.exports = (router) => {
@@ -10,7 +10,7 @@ module.exports = (router) => {
             if (!await isUserInClass(req.session.userId, req.query.classId)) throw new Error("You are not a member of this class");
 
             const classId = req.query.classId;
-            const links = await getLinks(classId);
+            const links = await getClassLinks(classId);
 
             res.send({links});
             
