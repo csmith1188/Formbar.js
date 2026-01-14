@@ -88,7 +88,7 @@ module.exports = {
                         const tempUsers = await dbGetAll("SELECT token FROM temp_user_creation_data");
                         for (const tempUser of tempUsers) {
                             const decoded = jwt.decode(tempUser.token);
-                            if (decoded.email.toLowerCase().trim() === userData.email) {
+                            if (decoded && decoded.email && decoded.email.toLowerCase().trim() === userData.email) {
                                 await dbRun("DELETE FROM temp_user_creation_data WHERE token=?", [tempUser.token]);
                             }
                         }
