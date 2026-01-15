@@ -7,15 +7,16 @@ module.exports = (router) => {
         try {
 
             if (!req.query.classId) throw new Error("Missing classId parameter");
-            if (!await isUserInClass(req.session.userId, req.query.classId)) throw new Error("You are not a member of this class");
-
             const classId = req.query.classId;
+            if (!await isUserInClass(req.session.user.id, classId)) throw new Error("You are not a member of this class");
+
             const links = await getClassLinks(classId);
 
             res.send({links});
             
         } catch (err) {
-            res.status(500).json({ error: `Failed to retrieve links: ${err.message}` });
+            console.log(err);
+            res.status(500).json({ error: `Server error. Please try again` });
         }
     });
 

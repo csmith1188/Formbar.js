@@ -27,6 +27,7 @@ module.exports = (router) => {
         try {
             let classId = req.body.id;
             let classCode = req.body.key;
+
             if (!classCode) {
                 // Check if the user is in the class with the class id provided
                 const userInClass = await isUserInClass(req.session.user.id, classId);
@@ -39,7 +40,7 @@ module.exports = (router) => {
             }
 
             logger.log("info", `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`);
-            const classJoinStatus = await joinRoomByCode(req.session.user.id, classCode);
+            const classJoinStatus = await joinRoomByCode(classCode, req.session.user);
             if (typeof classJoinStatus === "string") {
                 throw new Error(classJoinStatus);
             }
@@ -57,7 +58,7 @@ module.exports = (router) => {
             if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
                 emitToUser(req.session.email, "reload");
             }
-            res.redirect("/");
+            res.json({ success: true });
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: `There was a server error. Try again.` });

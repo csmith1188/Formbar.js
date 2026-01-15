@@ -1,24 +1,17 @@
 const { logger } = require("./logger");
 const { Classroom, classInformation } = require("./class/classroom");
+const {dbGet, dbGetAll} = require("@modules/database");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("./socketUpdates");
 
-async function joinRoomByCode(code, session) {
+async function joinRoomByCode(code, sessionUser) {
     try {
-        const email = session.email;
+        const email = sessionUser.email;
         logger.log("info", `[joinClass] email=(${email}) classCode=(${code})`);
 
         // Find the id of the class from the database
-        const classroomDb = await new Promise((resolve, reject) => {
-            database.get("SELECT * FROM classroom WHERE key=?", [code], (err, classroom) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                resolve(classroom);
-            });
-        });
+        const classroomDb = await dbGet('SELECT * FROM classroom WHERE key=?', [code]);
 
         // Check to make sure there was a class with that code
         if (!classroomDb) {
@@ -107,7 +100,7 @@ async function joinRoomByCode(code, session) {
             advancedEmitToClass("joinSound", classroomDb.id, {});
 
             // Set session class and classId
-            session.classId = classroomDb.id;
+            sessionUser.classId = classroomDb.id;
 
             // Set the class of the API socket
             setClassOfApiSockets(currentUser.API, classroomDb.id);

@@ -1,8 +1,8 @@
-const { dbGetAll } = require("@modules/database");
+const { dbGetAll, dbGet } = require("@modules/database");
 
 async function isUserInClass(userId, classId) {
-    const result = await dbGetAll("SELECT 1 FROM classusers WHERE userId = ? AND classId = ?", [userId, classId]);
-    return result.length > 0;
+    const result = await dbGet("SELECT 1 FROM classusers WHERE studentId = ? AND classId = ?", [userId, classId]);
+    return !!result;
 }
 
 async function getUserJoinedClasses(userId) {
@@ -19,19 +19,13 @@ async function getClassLinks(classId) {
 }
 
 async function getClassCode(classId) {
-    const result = await dbGetAll("SELECT key FROM classroom WHERE id = ?", [classId]);
-    if (result.length > 0) {
-        return result[0].key;
-    }
-    return null;
+    const result = await dbGet("SELECT key FROM classroom WHERE id = ?", [classId]);
+    return result ? result.key : null;
 }
 
 async function getClassIdByCode(classCode) {
-    const result = await dbGetAll("SELECT id FROM classroom WHERE key = ?", [classCode]);
-    if (result.length > 0) {
-        return result[0].id;
-    }
-    return null;
+    const result = await dbGet("SELECT id FROM classroom WHERE key = ?", [classCode]);
+    return result ? result.id : null;
 }
 
 module.exports = {
