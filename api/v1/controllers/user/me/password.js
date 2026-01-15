@@ -20,7 +20,7 @@ module.exports = (router) => {
 
             const result = await userService.resetPassword(password, token);
             if (result instanceof Error) {
-                res.status(400).json({ error: result.error });
+                return res.status(400).json({ error: result.error });
             }
 
             res.status(200).json({ message: "Password has been reset successfully." });
@@ -45,6 +45,8 @@ module.exports = (router) => {
             if (result instanceof Error) {
                 return res.status(400).json({ error: result.error });
             }
+
+            res.status(200).json({ message: "Password reset email has been sent." });
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error try again." });

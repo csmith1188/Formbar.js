@@ -1,8 +1,11 @@
 const handlebars = require("handlebars");
+const fs = require("fs")
 const { sendMail } = require("@modules/mail");
 const { dbGet, dbRun } = require("@modules/database");
+const { frontendUrl } = require("@modules/config");
 
-const passwordResetTemplate = handlebars.compile("email-templates/password-reset.hbs");
+const resetEmailContent = fs.readFileSync("email-templates/password-reset.hbs", "utf8");
+const passwordResetTemplate = handlebars.compile(resetEmailContent);
 
 async function requestPasswordReset(email) {
     const { secret } = await dbGet("SELECT secret FROM users WHERE email = ?", [email]);
@@ -10,11 +13,7 @@ async function requestPasswordReset(email) {
         throw new Error("No user found with that email.");
     }
 
-    sendMail(
-        email,
-        "Formbar Password Change",
-        passwordResetTemplate({ resetUrl: `${location}/user/me/password?code=${secret}&email=${email}` })
-    );
+    sendMail(email, "Formbar Password Change", passwordResetTemplate({ resetUrl: `${frontendUrl}/user/me/password?code=${secret}&email=${email}` }));
 }
 
 async function resetPassword(password, token) {

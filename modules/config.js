@@ -84,6 +84,7 @@ function getConfig() {
         },
         publicKey: publicKey,
         privateKey: privateKey,
+        frontendUrl: process.env.FRONTEND_URL,
         rateLimit: {
             maxAttempts: 5,
             lockoutDuration: 15 * 60 * 1000, // 15 minutes in milliseconds
