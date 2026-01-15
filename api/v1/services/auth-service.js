@@ -1,6 +1,8 @@
-const { compare } = require("bcrypt");
-const { dbGet, dbRun } = require("../../../modules/database");
+const { compare, hash } = require("bcrypt");
+const { dbGet, dbRun, dbGetAll } = require("../../../modules/database");
 const { privateKey, publicKey } = require("../../../modules/config");
+const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 /**
@@ -15,6 +17,9 @@ async function login(email, password) {
     if (!privateKey || !publicKey) {
         throw new Error("Either the public key or private key is not available for JWT signing.");
     }
+
+    // Normalize email to lowercase to prevent login issues
+    email = email.trim().toLowerCase();
 
     const userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
     if (!userData) {
@@ -134,8 +139,119 @@ function invalidCredentials() {
     return err;
 }
 
+/**
+ * Registers a new user with email and password
+ * @async
+ * @param {string} email - The user's email address
+ * @param {string} password - The user's plain text password
+ * @param {string} displayName - The user's display name
+ * @returns {Promise<{tokens: {accessToken: string, refreshToken: string}, user: Object}|{error: string}>} Returns an object with tokens and user data on success, or an error object on failure
+ */
+async function register(email, password, displayName) {
+    if (!privateKey || !publicKey) {
+        throw new Error("Either the public key or private key is not available for JWT signing.");
+    }
+
+    // Normalize email to lowercase to prevent duplicate accounts
+    email = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
+    if (existingUser) {
+        return { error: "A user with that email or display name already exists." };
+    }
+
+    const hashedPassword = await hash(password, 10);
+    const apiKey = crypto.randomBytes(64).toString("hex");
+    const secret = crypto.randomBytes(256).toString("hex");
+
+    // Determine permissions
+    // The first user always gets manager permissions
+    const allUsers = await dbGetAll("SELECT * FROM users", []);
+    const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
+
+    // Create the new user in the database
+    const userId = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+        email,
+        hashedPassword,
+        permissions,
+        apiKey,
+        secret,
+        displayName,
+        0,
+    ]);
+
+    // Get the new user's data
+    const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
+
+    // Generate tokens
+    const tokens = generateAuthTokens(userData);
+    const decodedRefreshToken = jwt.decode(tokens.refreshToken);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+        userData.id,
+        tokens.refreshToken,
+        decodedRefreshToken.exp,
+    ]);
+
+    return { tokens, user: userData };
+}
+
+/**
+ * Authenticates or registers a user via Google OAuth
+ * @async
+ * @param {string} email - The user's email address from Google
+ * @param {string} displayName - The user's display name from Google
+ * @returns {Promise<{tokens: {accessToken: string, refreshToken: string}, user: Object}|{error: string}>} Returns an object with tokens and user data on success, or an error object on failure
+ */
+async function googleOAuth(email, displayName) {
+    if (!privateKey || !publicKey) {
+        throw new Error("Either the public key or private key is not available for JWT signing.");
+    }
+
+    // Normalize email to lowercase to prevent duplicate accounts
+    email = email.trim().toLowerCase();
+
+    let userData = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+    if (!userData) {
+        // User doesn't exist, create a new one
+        const apiKey = crypto.randomBytes(64).toString("hex");
+        const secret = crypto.randomBytes(256).toString("hex");
+
+        // Determine permissions
+        // The first user always gets manager permissions
+        const allUsers = await dbGetAll("SELECT * FROM users", []);
+        const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
+
+        // Insert the new user
+        // Users registered through google oauth will have no password
+        const result = await dbRun(
+            `INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [email, "", permissions, apiKey, secret, displayName, 1] // Automatically verified via Google
+        );
+
+        // Get the newly created user
+        userData = await dbGet("SELECT * FROM users WHERE id = ?", [result.lastID]);
+    }
+
+    // Generate tokens
+    const tokens = generateAuthTokens(userData);
+    const decodedRefreshToken = jwt.decode(tokens.refreshToken);
+
+    // Store refresh token (replace if exists)
+    await dbRun("DELETE FROM refresh_tokens WHERE user_id = ?", [userData.id]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+        userData.id,
+        tokens.refreshToken,
+        decodedRefreshToken.exp,
+    ]);
+
+    return { tokens, user: userData };
+}
+
 module.exports = {
     login,
     refreshLogin,
     verifyToken,
+    register,
+    googleOAuth,
 };
