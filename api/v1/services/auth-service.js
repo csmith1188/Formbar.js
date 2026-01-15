@@ -171,7 +171,7 @@ async function register(email, password, displayName) {
     const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
 
     // Create the new user in the database
-    const result = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+    const userId = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
         email,
         hashedPassword,
         permissions,
@@ -182,7 +182,7 @@ async function register(email, password, displayName) {
     ]);
 
     // Get the new user's data
-    const userData = await dbGet("SELECT * FROM users WHERE id = ?", [result.lastID]);
+    const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
 
     // Generate tokens
     const tokens = generateAuthTokens(userData);
