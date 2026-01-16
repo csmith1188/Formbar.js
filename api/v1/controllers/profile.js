@@ -15,11 +15,16 @@ module.exports = (router) => {
             // Check if the user has permission to view these transactions (either their own or they are a manager)
             const userId = req.params.userId || req.session.userId;
             if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-                throw new Error("You do not have permission to view these transactions.");
+                return res.status(403).json({ error: "You do not have permission to view these transactions." });
             }
 
             const userData = await getUserData(userId);
-            const userDisplayName = userData?.displayName || "Unknown User";
+            if (!userData) {
+                logger.log("warn", `User not found: userId=${userId}`);
+                return res.status(404).json({ error: "User not found." });
+            }
+
+            const userDisplayName = userData.displayName || "Unknown User";
             const transactions = await getUserTransactions(userId);
 
             // Handle case where no transactions are found
@@ -41,7 +46,7 @@ module.exports = (router) => {
             });
         } catch (err) {
             logger.log("error", err.stack);
-            res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
+            res.status(500).json({ error: `There was a server error. Please try again.` });
         }
     });
 
@@ -54,15 +59,15 @@ module.exports = (router) => {
             const userId = req.params.userId || req.session.userId;
             const userData = await getUserData(userId);
             if (!userData) {
-                logger.log("error", "User data not found in database");
-                throw new Error("User not found");
+                logger.log("warn", `User not found in database: userId=${userId}`);
+                return res.status(404).json({ error: "User not found." });
             }
 
             // Destructure userData and validate required fields
             const { id, displayName, email, digipogs, API, pin } = userData;
             if (!id || !displayName || !email || digipogs === undefined || !API) {
-                logger.log("error", "Incomplete user data retrieved from database");
-                throw new Error(`There was a server error try again.`);
+                logger.log("error", `Incomplete user data retrieved from database: userId=${userId}, fields missing`);
+                return res.status(500).json({ error: "Unable to retrieve profile information. Please try again." });
             }
 
             // Determine if the email should be visible then render the page
@@ -80,7 +85,8 @@ module.exports = (router) => {
                 isOwnProfile: isOwnProfile,
             });
         } catch (err) {
-            res.status(500).json({ error: `Failed to retrieve profile: ${err.message}` });
+            logger.log("error", err.stack);
+            res.status(500).json({ error: "Unable to retrieve profile information. Please try again." });
         }
     });
 };

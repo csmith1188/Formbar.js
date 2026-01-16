@@ -86,7 +86,7 @@ function isVerified(req, res, next) {
     try {
         const accessToken = req.headers.authorization;
         if (!accessToken) {
-            return res.status(401).json({ error: "User's email is not verified" });
+            return res.status(401).json({ error: "User is not authenticated." });
         }
 
         // Log that the function is being called with the ip and the session of the user

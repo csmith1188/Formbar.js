@@ -6,16 +6,14 @@ async function isUserInClass(userId, classId) {
 }
 
 async function getUserJoinedClasses(userId) {
-    const classes = await dbGetAll(
+    return await dbGetAll(
         "SELECT classroom.name, classroom.id, classusers.permissions FROM classroom JOIN classusers ON classroom.id = classusers.classId WHERE classusers.studentId = ?",
         [userId]
     );
-    return classes;
 }
 
 async function getClassLinks(classId) {
-    const links = await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
-    return links;
+    return await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 }
 
 async function getClassCode(classId) {
