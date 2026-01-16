@@ -66,7 +66,7 @@ module.exports = {
                         `
                         <h1>Change your password</h1>
                         <p>Click the link below to change your password</p>
-                        <a href='${location}/changepassword?code=${token}&email=${req.body.email}'>Change Password</a>
+                        <a href='${location}/changepassword?code=${token}'>Change Password</a>
                     `
                     );
                     res.redirect("/");
