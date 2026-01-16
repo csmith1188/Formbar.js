@@ -7,7 +7,6 @@ const { MANAGER_PERMISSIONS } = require("../modules/permissions");
 
 module.exports = {
     run(router) {
-        
         // Handle displaying people's transactions
         router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
             try {
@@ -49,7 +48,6 @@ module.exports = {
                     displayName: userDisplayName,
                     currentUserId: req.session.userId,
                 });
-
             } catch (err) {
                 logger.log("error", err.stack);
                 res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
@@ -91,7 +89,6 @@ module.exports = {
                     pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
                     isOwnProfile: isOwnProfile,
                 });
-
             } catch (err) {
                 logger.log("error", err.stack);
                 res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });

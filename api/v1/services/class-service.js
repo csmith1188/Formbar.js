@@ -33,5 +33,5 @@ module.exports = {
     getUserJoinedClasses,
     getClassCode,
     getClassLinks,
-    getClassIdByCode
-}
+    getClassIdByCode,
+};

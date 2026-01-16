@@ -1,6 +1,6 @@
 const { logger } = require("./logger");
 const { Classroom, classInformation } = require("./class/classroom");
-const {dbGet, dbGetAll} = require("@modules/database");
+const { dbGet, dbGetAll } = require("@modules/database");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("./permissions");
 const { database } = require("./database");
 const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("./socketUpdates");
@@ -11,7 +11,7 @@ async function joinRoomByCode(code, sessionUser) {
         logger.log("info", `[joinClass] email=(${email}) classCode=(${code})`);
 
         // Find the id of the class from the database
-        const classroomDb = await dbGet('SELECT * FROM classroom WHERE key=?', [code]);
+        const classroomDb = await dbGet("SELECT * FROM classroom WHERE key=?", [code]);
 
         // Check to make sure there was a class with that code
         if (!classroomDb) {

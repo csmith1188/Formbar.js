@@ -4,13 +4,12 @@ const { logger } = require("@modules/logger");
 const { logNumbers } = require("@modules/config");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const {getUserData} = require("@services/user-service");
-const {getUserTransactions} = require("@services/digipog-service");
+const { getUserData } = require("@services/user-service");
+const { getUserTransactions } = require("@services/digipog-service");
 
 module.exports = (router) => {
-
     router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
-        try { 
+        try {
             // Log the request information
             logger.log("info", `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
@@ -41,10 +40,9 @@ module.exports = (router) => {
                 displayName: userDisplayName,
                 currentUserId: req.session.userId,
             });
-
         } catch (err) {
             logger.log("error", err.stack);
-            res.status(500).json({error: `Error Number ${logNumbers.error}: There was a server error try again.`});
+            res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
         }
     });
 
@@ -82,10 +80,8 @@ module.exports = (router) => {
                 pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
                 isOwnProfile: isOwnProfile,
             });
-            
         } catch (err) {
             res.status(500).json({ error: `Failed to retrieve profile: ${err.message}` });
         }
     });
-
-}
+};

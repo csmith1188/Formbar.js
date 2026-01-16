@@ -6,5 +6,5 @@ async function getUserData(userId) {
 }
 
 module.exports = {
-    getUserData
-}
+    getUserData,
+};

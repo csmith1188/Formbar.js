@@ -16,10 +16,9 @@ module.exports = (router) => {
             joinedClasses.filter((classroom) => classroom.permissions !== 0);
 
             res.json({ joinedClasses: joinedClasses });
-
         } catch (err) {
             logger.log("error", err.stack);
-            res.status(500).json({ error: `There was a server error. Try again.`});
+            res.status(500).json({ error: `There was a server error. Try again.` });
         }
     });
 
@@ -51,7 +50,6 @@ module.exports = (router) => {
 
                 classId = await getClassIdByCode(classCode);
                 req.session.classId = classId;
-
             }
 
             setClassOfApiSockets(classInformation.users[req.session.email].API, classId);
@@ -64,4 +62,4 @@ module.exports = (router) => {
             res.status(500).json({ error: `There was a server error. Try again.` });
         }
     });
-}
+};
