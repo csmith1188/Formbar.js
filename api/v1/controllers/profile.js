@@ -48,7 +48,7 @@ module.exports = (router) => {
         }
     });
 
-    router.get("/profile/:userId", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
         try {
             // Log the request information
             logger.log("info", `[get /profile] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
