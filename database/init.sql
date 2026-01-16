@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS "transactions"
 CREATE TABLE IF NOT EXISTS "users"
 (
     "id"          INTEGER NOT NULL UNIQUE,
+    "username"    TEXT    NOT NULL,
     "email"       TEXT    NOT NULL UNIQUE,
     "password"    TEXT,
     "permissions" INTEGER,
