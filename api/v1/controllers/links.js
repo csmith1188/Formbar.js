@@ -9,7 +9,7 @@ module.exports = (router) => {
             if (!Number.isInteger(classId) || classId <= 0) {
                 throw new Error("Invalid classId parameter");
             }
-            if (!await isUserInClass(req.session.user.id, classId)) throw new Error("You are not a member of this class");
+            if (!(await isUserInClass(req.session.user.id, classId))) throw new Error("You are not a member of this class");
 
             const links = await getClassLinks(classId);
 
