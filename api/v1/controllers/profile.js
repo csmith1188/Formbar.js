@@ -1,5 +1,4 @@
 const { isAuthenticated, isVerified, permCheck } = require("@controllers/middleware/authentication");
-const { dbGet, dbGetAll } = require("@modules/database");
 const { logger } = require("@modules/logger");
 const { logNumbers } = require("@modules/config");
 const { classInformation } = require("@modules/class/classroom");
