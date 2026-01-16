@@ -51,5 +51,5 @@ async function resetPassword(password, token) {
 module.exports = {
     getUserData,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
 };
