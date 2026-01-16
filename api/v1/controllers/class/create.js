@@ -1,7 +1,7 @@
 const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@controllers/middleware/permissionCheck");
-const classService = require("@services/class-service-old");
+const classService = require("@services/class-service");
 
 module.exports = (router) => {
     /**
