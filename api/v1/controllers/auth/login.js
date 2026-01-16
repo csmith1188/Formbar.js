@@ -46,7 +46,7 @@ module.exports = (router) => {
 
             logger.log("verbose", `[post /auth/login] session=(${JSON.stringify(req.session)})`);
 
-            res.json({ token: tokens });
+            res.json(tokens);
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error. Please try again." });
