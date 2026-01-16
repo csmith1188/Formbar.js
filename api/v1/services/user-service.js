@@ -4,6 +4,7 @@ const { sendMail } = require("@modules/mail");
 const { dbGet, dbRun } = require("@modules/database");
 const { frontendUrl } = require("@modules/config");
 const { hash } = require("bcrypt");
+const crypto = require("crypto");
 
 let passwordResetTemplate;
 
@@ -24,23 +25,17 @@ function loadPasswordResetTemplate() {
 }
 
 async function requestPasswordReset(email) {
-    const { secret } = await dbGet("SELECT secret FROM users WHERE email = ?", [email]);
-    if (!secret) {
-        throw new Error("No user found with that email.");
-    }
-
     const template = loadPasswordResetTemplate();
-    sendMail(
-        email,
-        "Formbar Password Change",
-        template({ resetUrl: `${frontendUrl}/user/me/password?code=${secret}&email=${email}` })
-    );
+    const secret = crypto.randomBytes(256).toString("hex");
+    await dbRun("UPDATE users SET secret = ? WHERE email = ?", [secret, email]);
+
+    sendMail(email, "Formbar Password Change", template({ resetUrl: `${frontendUrl}/user/me/password?code=${secret}` }));
 }
 
 async function resetPassword(password, token) {
     const user = await dbGet("SELECT * FROM users WHERE secret = ?", [token]);
     if (!user) {
-        throw new Error("Invalid token.");
+        throw new Error("Password reset token is invalid or has expired.");
     }
 
     const hashedPassword = await hash(password, 10);

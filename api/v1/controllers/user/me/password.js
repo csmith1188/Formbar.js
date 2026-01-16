@@ -26,7 +26,7 @@ module.exports = (router) => {
             res.status(200).json({ message: "Password has been reset successfully." });
         } catch (err) {
             logger.log("error", err.stack);
-            res.status(500).json({ error: "There was a server error try again." });
+            res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });
 
@@ -49,7 +49,7 @@ module.exports = (router) => {
             res.status(200).json({ message: "Password reset email has been sent." });
         } catch (err) {
             logger.log("error", err.stack);
-            res.status(500).json({ error: "There was a server error try again." });
+            res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });
 };
