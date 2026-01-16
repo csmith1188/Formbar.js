@@ -66,7 +66,7 @@ module.exports = (router) => {
             }
 
             // Determine if the email should be visible then render the page
-            const emailVisible = req.session.userId == id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
+            const emailVisible = req.session.userId === id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
             const isOwnProfile = req.session.userId === userId;
 
             res.status(200).json({

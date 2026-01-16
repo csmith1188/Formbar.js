@@ -1,8 +1,7 @@
 const { isAuthenticated, permCheck } = require("@controllers/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
-const { logNumbers } = require("@modules/config");
-const { database, dbGetAll } = require("@modules/database");
+const { database } = require("@modules/database");
 const { joinRoomByCode } = require("@modules/joinRoom");
 const { logger } = require("@modules/logger");
 const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
