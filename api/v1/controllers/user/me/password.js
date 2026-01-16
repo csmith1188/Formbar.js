@@ -18,11 +18,7 @@ module.exports = (router) => {
                 return res.status(400).json({ error: "Passwords do not match." });
             }
 
-            const result = await userService.resetPassword(password, token);
-            if (result instanceof Error) {
-                return res.status(400).json({ error: result.error });
-            }
-
+            await userService.resetPassword(password, token);
             res.status(200).json({ message: "Password has been reset successfully." });
         } catch (err) {
             logger.log("error", err.stack);
@@ -41,10 +37,7 @@ module.exports = (router) => {
                 return res.status(503).json({ error: "Email service is not enabled. Password resets are not available at this time." });
             }
 
-            const result = await userService.requestPasswordReset(email);
-            if (result instanceof Error) {
-                return res.status(400).json({ error: result.error });
-            }
+            await userService.requestPasswordReset(email);
 
             res.status(200).json({ message: "Password reset email has been sent." });
         } catch (err) {

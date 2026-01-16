@@ -24,6 +24,11 @@ function loadPasswordResetTemplate() {
     }
 }
 
+async function getUserData(userId) {
+    const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
+    return user;
+}
+
 async function requestPasswordReset(email) {
     const template = loadPasswordResetTemplate();
     const secret = crypto.randomBytes(256).toString("hex");
@@ -44,6 +49,7 @@ async function resetPassword(password, token) {
 }
 
 module.exports = {
+    getUserData,
     requestPasswordReset,
     resetPassword,
 };
