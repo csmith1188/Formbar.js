@@ -1,8 +1,9 @@
 const handlebars = require("handlebars");
-const fs = require("fs")
+const fs = require("fs");
 const { sendMail } = require("@modules/mail");
 const { dbGet, dbRun } = require("@modules/database");
 const { frontendUrl } = require("@modules/config");
+const { hash } = require("bcrypt");
 
 const resetEmailContent = fs.readFileSync("email-templates/password-reset.hbs", "utf8");
 const passwordResetTemplate = handlebars.compile(resetEmailContent);
@@ -22,7 +23,8 @@ async function resetPassword(password, token) {
         throw new Error("Invalid token.");
     }
 
-    await dbRun("UPDATE users SET password = ? WHERE id = ?", [password, user.id]);
+    const hashedPassword = await hash(password, 10);
+    await dbRun("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, user.id]);
     return true;
 }
 
