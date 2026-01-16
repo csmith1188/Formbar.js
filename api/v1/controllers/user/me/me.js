@@ -1,11 +1,11 @@
 const { logger } = require("@modules/logger");
-const { isAuthenticated } = require("./middleware/authentication");
+const { isAuthenticated } = require("../../middleware/authentication");
 
 module.exports = (router) => {
     try {
         /**
          * @swagger
-         * /api/v1/me:
+         * /api/v1/user/me:
          *   get:
          *     summary: Get current user information
          *     tags:
@@ -26,7 +26,7 @@ module.exports = (router) => {
          *               $ref: '#/components/schemas/ServerError'
          */
         // Gets the current user's information
-        router.get("/me", isAuthenticated, async (req, res) => {
+        router.get("/user/me", isAuthenticated, async (req, res) => {
             try {
                 logger.log("info", `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 res.status(200).json(req.session.user);
