@@ -1,8 +1,9 @@
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { logNumbers, settings } = require("@modules/config");
-const { TEACHER_PERMISSIONS, PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
+const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
+const { verifyToken } = require("../../services/auth-service");
 
 const whitelistedIps = {};
 const blacklistedIps = {};
@@ -30,27 +31,35 @@ This also allows for the website to check for permissions
 */
 function isAuthenticated(req, res, next) {
     try {
-        logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
-        // Check if the user is logged in, if not redirect to login page
-        const user = classInformation.users[req.session.email];
-        if (!req.session.email || !user) {
-            return res.redirect("/login");
+        const accessToken = req.headers.authorization;
+        if (!accessToken) {
+            return res.status(401).json({ error: "User is not authenticated" });
         }
 
-        // If the user is already logged in and tries to access the login page, redirect them to the home page
-        if (req.url === "/login") {
-            res.redirect("/");
-            return;
+        // @todo: cleanup
+        // logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+
+        const decodedToken = verifyToken(accessToken);
+        if (decodedToken.error) {
+            return res.status(401).json({ error: "Invalid access token provided." });
         }
 
-        // If the user is already in a class and tries to access the select class page, redirect them to the appropriate page
-        const isTeacher = user.permissions >= TEACHER_PERMISSIONS;
-        const isInClass = user.activeClass != null;
-        if (req.url === "/selectClass" && isInClass) {
-            isTeacher ? res.redirect("/controlPanel") : res.redirect("/student");
-            return;
+        const email = decodedToken.email;
+        if (!email) {
+            return res.status(401).json({ error: "Invalid access token provided. Missing 'email'." });
         }
+
+        const user = classInformation.users[email];
+        if (!user) {
+            return res.status(401).json({ error: "User is not authenticated" });
+        }
+
+        req.session.email = email;
+        req.session.user = user;
+        req.session.userId = user.id;
+        req.session.displayName = user.displayName;
+        req.session.verified = user.verified;
+        req.session.tags = user.tags;
 
         // Allow access to certain routes without being in a class
         if (loginOnlyRoutes.includes(req.url)) {
@@ -59,33 +68,27 @@ function isAuthenticated(req, res, next) {
         }
 
         // If the user is not in a class, then continue
+        const isInClass = user.activeClass != null;
         if (isInClass) {
             next();
-            return;
-        }
-
-        // If the user is not in a class, redirect them to the select class page
-        if (isTeacher) {
-            next();
-            return;
-        } else if (req.url !== "/selectClass") {
-            res.redirect("/selectClass");
             return;
         }
 
         next();
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 
 // Create a function to check if the user's email is verified
 function isVerified(req, res, next) {
     try {
+        const accessToken = req.headers.authorization;
+        if (!accessToken) {
+            return res.status(401).json({ error: "User is not authenticated" });
+        }
+
         // Log that the function is being called with the ip and the session of the user
         logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
         if (req.session.email) {
@@ -94,18 +97,17 @@ function isVerified(req, res, next) {
                 next();
             } else {
                 // Redirect to the login page
+                // @todo: no more redirect
                 res.redirect("/login");
             }
         } else {
             // If there is no session, redirect to the login page
+            // @todo: no more redirect
             res.redirect("/login");
         }
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 
@@ -145,10 +147,8 @@ function permCheck(req, res, next) {
             logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
             if (!PAGE_PERMISSIONS[urlPath]) {
                 logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
-                res.render("pages/message", {
-                    message: `Error: ${urlPath} is not in the page permissions`,
-                    title: "Error",
-                });
+                res.status(404).json({ error: `${urlPath} is not in the page permissions` });
+                return;
             }
 
             // Checks if users permissions are high enough
@@ -158,15 +158,12 @@ function permCheck(req, res, next) {
                 next();
             } else {
                 logger.log("info", "[permCheck] Not enough permissions");
-                res.redirect("/");
+                res.status(403).json({ error: "You do not have permissions to access this page." });
             }
         }
     } catch (err) {
         logger.log("error", err.stack);
-        res.render("pages/message", {
-            message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-            title: "Error",
-        });
+        res.status(500).json({ error: "There was a server error. Please try again." });
     }
 }
 

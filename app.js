@@ -20,6 +20,7 @@ const { app, io, http, getIpAccess } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
 const { logout } = require("./modules/user/userSession");
+const { passport } = require("./modules/googleOauth.js");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -30,6 +31,10 @@ const sessionMiddleware = session({
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
+
+// Initialize passport for Google OAuth
+app.use(passport.initialize());
+app.use(passport.session());
 
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server
@@ -55,6 +60,30 @@ io.use((socket, next) => {
 });
 
 // Allows express to parse requests
+const cors = require("cors");
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
+          .map((origin) => origin.trim())
+          .filter(Boolean)
+    : [];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no Origin header (e.g., mobile apps, curl)
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+    })
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -155,6 +184,7 @@ for (const apiVersionFolder of apiVersionFolders) {
     const controllerFolders = fs.readdirSync(`./api/${apiVersionFolder}`).filter((file) => file === "controllers");
     for (const controllerFolder of controllerFolders) {
         const router = express.Router();
+
         const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
         for (const routeFile of routeFiles) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);

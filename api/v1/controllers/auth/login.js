@@ -1,46 +1,52 @@
-const { compare } = require("@modules/crypto");
-const { dbGet } = require("@modules/database");
-const { logger } = require("../../../../modules/logger");
-const jwt = require("jsonwebtoken");
+const { logger } = require("@modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { Student } = require("@modules/student");
+const authService = require("../../services/auth-service");
 
 module.exports = (router) => {
     router.post("/auth/login", async (req, res) => {
         try {
-            if (!process.env.SECRET) {
-                logger.log("error", "JWT secret is not defined in environment variables.");
-                return res.status(500).json({ error: "Server configuration error." });
-            }
-
-            const userInformation = {
-                email: req.body.email,
-                password: req.body.password,
-            };
-
-            if (!userInformation.email || !userInformation.password) {
+            const { email, password } = req.body;
+            if (!email || !password) {
                 return res.status(400).json({ error: "Email and password are required." });
             }
 
-            const userData = await dbGet("SELECT * FROM users WHERE email = ?", [userInformation.email]);
-            if (!userData) {
-                return res.status(401).json({ error: "Incorrect email or password." });
+            logger.log("info", `[post /auth/login] ip=(${req.ip}) email=(${email})`);
+
+            // Attempt login through auth service
+            const result = await authService.login(email, password);
+            if (result.code) {
+                logger.log("verbose", "[post /auth/login] Invalid credentials");
+                return res.status(401).json({ error: "Incorrect password. Try again." });
             }
 
-            const passwordMatches = await compare(userInformation.password, userData.password);
-            if (passwordMatches) {
-                const accessToken = jwt.sign(
-                    {
-                        id: userData.id,
-                        email: userData.email,
-                        displayName: userData.displayName,
-                    },
-                    process.env.SECRET,
-                    { expiresIn: "1h" }
+            // If not already logged in, create a new Student instance in classInformation
+            const { tokens, user: userData } = result;
+            if (!classInformation.users[email]) {
+                classInformation.users[email] = new Student(
+                    userData.email,
+                    userData.id,
+                    userData.permissions,
+                    userData.API,
+                    JSON.parse(userData.ownedPolls || "[]"),
+                    JSON.parse(userData.sharedPolls || "[]"),
+                    userData.tags ? userData.tags.split(",") : [],
+                    userData.displayName,
+                    false
                 );
-
-                return res.status(200).json({ token: accessToken });
-            } else {
-                res.status(401).json({ error: "Incorrect email or password." });
             }
+
+            // Set session data (for backwards compatibility with session-based endpoints)
+            req.session.user = classInformation.users[userData.email];
+            req.session.userId = userData.id;
+            req.session.email = userData.email;
+            req.session.displayName = userData.displayName;
+            req.session.verified = userData.verified;
+            req.session.tags = userData.tags ? userData.tags.split(",") : [];
+
+            logger.log("verbose", `[post /auth/login] session=(${JSON.stringify(req.session)})`);
+
+            res.json(tokens);
         } catch (err) {
             logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error. Please try again." });
