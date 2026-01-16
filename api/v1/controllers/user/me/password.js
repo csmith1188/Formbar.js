@@ -41,10 +41,7 @@ module.exports = (router) => {
                 return res.status(503).json({ error: "Email service is not enabled. Password resets are not available at this time." });
             }
 
-            const result = await userService.requestPasswordReset(email);
-            if (result instanceof Error) {
-                return res.status(400).json({ error: result.error });
-            }
+            await userService.requestPasswordReset(email);
 
             res.status(200).json({ message: "Password reset email has been sent." });
         } catch (err) {
