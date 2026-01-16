@@ -15,7 +15,6 @@ module.exports = (router) => {
 
             res.send({ links });
         } catch (err) {
-            console.log(err);
             res.status(500).json({ error: `Server error. Please try again` });
         }
     });
