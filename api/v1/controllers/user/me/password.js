@@ -18,11 +18,7 @@ module.exports = (router) => {
                 return res.status(400).json({ error: "Passwords do not match." });
             }
 
-            const result = await userService.resetPassword(password, token);
-            if (result instanceof Error) {
-                return res.status(400).json({ error: result.error });
-            }
-
+            await userService.resetPassword(password, token);
             res.status(200).json({ message: "Password has been reset successfully." });
         } catch (err) {
             logger.log("error", err.stack);
