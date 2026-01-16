@@ -5,8 +5,23 @@ const { dbGet, dbRun } = require("@modules/database");
 const { frontendUrl } = require("@modules/config");
 const { hash } = require("bcrypt");
 
-const resetEmailContent = fs.readFileSync("email-templates/password-reset.hbs", "utf8");
-const passwordResetTemplate = handlebars.compile(resetEmailContent);
+let passwordResetTemplate;
+
+function loadPasswordResetTemplate() {
+    if (passwordResetTemplate) {
+        return passwordResetTemplate;
+    }
+
+    try {
+        const resetEmailContent = fs.readFileSync("email-templates/password-reset.hbs", "utf8");
+        passwordResetTemplate = handlebars.compile(resetEmailContent);
+        return passwordResetTemplate;
+    } catch (err) {
+        // Log the underlying error for diagnostics, but throw a controlled error outward.
+        console.error("Failed to load password reset email template:", err);
+        throw new Error("Failed to load password reset email template.");
+    }
+}
 
 async function requestPasswordReset(email) {
     const { secret } = await dbGet("SELECT secret FROM users WHERE email = ?", [email]);
@@ -14,7 +29,12 @@ async function requestPasswordReset(email) {
         throw new Error("No user found with that email.");
     }
 
-    sendMail(email, "Formbar Password Change", passwordResetTemplate({ resetUrl: `${frontendUrl}/user/me/password?code=${secret}&email=${email}` }));
+    const template = loadPasswordResetTemplate();
+    sendMail(
+        email,
+        "Formbar Password Change",
+        template({ resetUrl: `${frontendUrl}/user/me/password?code=${secret}&email=${email}` })
+    );
 }
 
 async function resetPassword(password, token) {
