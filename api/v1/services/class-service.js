@@ -91,17 +91,22 @@ async function createClass(className, ownerId, ownerEmail) {
         const key = generateKey(4);
 
         // Add classroom to the database
-        await dbRun("INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)", [className, ownerId, key, null]);
+        const insertResult = await dbRun("INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)", [className, ownerId, key, null]);
 
         logger.log("verbose", "[createClass] Added classroom to database");
 
-        // Retrieve the newly created classroom
-        const classroom = await dbGet("SELECT id, name, key, tags FROM classroom WHERE name = ? AND owner = ?", [className, ownerId]);
-
-        if (!classroom || !classroom.id) {
+        // Use the ID of the newly created classroom returned by dbRun
+        const classId = insertResult && typeof insertResult.lastID !== "undefined" ? insertResult.lastID : null;
+        if (!classId) {
             throw new Error("Class was not created successfully");
         }
 
+        const classroom = {
+            id: classId,
+            name: className,
+            key: key,
+            tags: null,
+        };
         // Ensure class_permissions exists for the new class
         let permissions = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [classroom.id]);
         if (!permissions) {
