@@ -4,6 +4,32 @@ const fs = require("fs");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/certs:
+         *   get:
+         *     summary: Get public key certificate
+         *     tags:
+         *       - Authentication
+         *     description: Returns the server's public key in PEM format for JWT verification
+         *     responses:
+         *       200:
+         *         description: Public key retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 publicKey:
+         *                   type: string
+         *                   example: "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         router.get("/certs", (req, res) => {
             try {
                 const pem = fs.readFileSync("publicKey.pem", "utf8");

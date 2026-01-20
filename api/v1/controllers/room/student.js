@@ -53,7 +53,44 @@ module.exports = {
             }
         });
 
-        /* 
+        /**
+         * @swagger
+         * /api/v1/student:
+         *   post:
+         *     summary: Submit poll response
+         *     tags:
+         *       - Student
+         *     description: Submits a student's poll response for the current question
+         *     parameters:
+         *       - in: query
+         *         name: poll
+         *         required: false
+         *         description: Poll identifier
+         *         schema:
+         *           type: string
+         *     requestBody:
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               poll:
+         *                 type: string
+         *                 description: The poll answer
+         *               question:
+         *                 type: string
+         *                 description: Question data
+         *     responses:
+         *       200:
+         *         description: Poll response submitted successfully
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
+        /*
         This is for when you send poll data via a post command
         It'll save your response to the student object and the database.
         */

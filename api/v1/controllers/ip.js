@@ -3,12 +3,60 @@ const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 const { settings } = require("@modules/config");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getIpAccess } = require("@modules/webServer");
-const { hasPermission } = require("./middleware/permissionCheck");
+const { hasPermission } = require("./middleware/permission-check");
 const authentication = require("./middleware/authentication");
 const fs = require("fs");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/ip/{type}:
+         *   get:
+         *     summary: Get IP access list
+         *     tags:
+         *       - IP Management
+         *     description: Returns the whitelist or blacklist of IPs. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: type
+         *         required: true
+         *         description: Type of list (whitelist or blacklist)
+         *         schema:
+         *           type: string
+         *           enum: [whitelist, blacklist]
+         *     responses:
+         *       200:
+         *         description: IP list retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 active:
+         *                   type: boolean
+         *                 ips:
+         *                   type: array
+         *                   items:
+         *                     type: object
+         *                     properties:
+         *                       id:
+         *                         type: integer
+         *                       ip:
+         *                         type: string
+         *       400:
+         *         description: Invalid type parameter
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // List IPs
         router.get("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
@@ -24,6 +72,61 @@ module.exports = (router) => {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/ip/{type}:
+         *   post:
+         *     summary: Add IP to access list
+         *     tags:
+         *       - IP Management
+         *     description: Adds an IP address to the whitelist or blacklist. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: type
+         *         required: true
+         *         description: Type of list (whitelist or blacklist)
+         *         schema:
+         *           type: string
+         *           enum: [whitelist, blacklist]
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               ip:
+         *                 type: string
+         *                 example: "192.168.1.1"
+         *     responses:
+         *       201:
+         *         description: IP added successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *       400:
+         *         description: Invalid parameters
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       409:
+         *         description: IP already exists
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Add IP
         router.post("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
@@ -55,6 +158,61 @@ module.exports = (router) => {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/ip/{type}/{id}:
+         *   put:
+         *     summary: Update IP in access list
+         *     tags:
+         *       - IP Management
+         *     description: Updates an IP address in the whitelist or blacklist. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: type
+         *         required: true
+         *         description: Type of list (whitelist or blacklist)
+         *         schema:
+         *           type: string
+         *           enum: [whitelist, blacklist]
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: ID of the IP entry to update
+         *         schema:
+         *           type: integer
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               ip:
+         *                 type: string
+         *                 example: "192.168.1.2"
+         *     responses:
+         *       200:
+         *         description: IP updated successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *       400:
+         *         description: Invalid parameters
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Update IP
         router.put("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
@@ -81,6 +239,51 @@ module.exports = (router) => {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/ip/{type}/{id}:
+         *   delete:
+         *     summary: Remove IP from access list
+         *     tags:
+         *       - IP Management
+         *     description: Removes an IP address from the whitelist or blacklist. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: type
+         *         required: true
+         *         description: Type of list (whitelist or blacklist)
+         *         schema:
+         *           type: string
+         *           enum: [whitelist, blacklist]
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: ID of the IP entry to remove
+         *         schema:
+         *           type: integer
+         *     responses:
+         *       200:
+         *         description: IP removed successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *       400:
+         *         description: Invalid parameters
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Remove IP
         router.delete("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {
@@ -105,6 +308,49 @@ module.exports = (router) => {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/ip/{type}/toggle:
+         *   post:
+         *     summary: Toggle IP access list active state
+         *     tags:
+         *       - IP Management
+         *     description: Toggles the active state of the whitelist or blacklist. When one is enabled, the other is automatically disabled. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: type
+         *         required: true
+         *         description: Type of list (whitelist or blacklist)
+         *         schema:
+         *           type: string
+         *           enum: [whitelist, blacklist]
+         *     responses:
+         *       200:
+         *         description: Toggle successful
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *                 active:
+         *                   type: boolean
+         *                 otherDisabled:
+         *                   type: boolean
+         *       400:
+         *         description: Invalid parameters
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Toggle ip whitelist/blacklist
         router.post("/ip/:type/toggle", hasPermission(MANAGER_PERMISSIONS), (req, res) => {
             try {

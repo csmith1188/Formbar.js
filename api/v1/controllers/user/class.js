@@ -1,11 +1,58 @@
 const { logger } = require("@modules/logger");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { httpPermCheck } = require("../middleware/permission-check");
 const { dbGet } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/user/{id}/class:
+         *   get:
+         *     summary: Get user's current active class
+         *     tags:
+         *       - Users
+         *     description: Returns the current active class for a user. Users can view their own class, managers can view any user's class.
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: The ID of the user
+         *         schema:
+         *           type: string
+         *           example: "1"
+         *     responses:
+         *       200:
+         *         description: Active class retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 id:
+         *                   type: string
+         *                 name:
+         *                   type: string
+         *       403:
+         *         description: Forbidden - insufficient permissions
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       404:
+         *         description: User is not in a class or class not found
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Retrieves the current class the user is in
         router.get("/user/:id/class", httpPermCheck("getActiveClass"), async (req, res) => {
             try {

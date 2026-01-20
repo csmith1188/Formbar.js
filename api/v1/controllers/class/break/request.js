@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { httpPermCheck } = require("../../middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
 

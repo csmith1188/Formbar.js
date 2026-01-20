@@ -1,7 +1,7 @@
 const { createPoll } = require("@modules/polls");
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("../../middleware/permissionCheck");
-const { parseJson } = require("../../middleware/parseJson");
+const { hasClassPermission } = require("../../middleware/permission-check");
+const { parseJson } = require("../../middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {

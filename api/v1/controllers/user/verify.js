@@ -1,11 +1,49 @@
 const { logger } = require("@modules/logger");
 const { dbRun, dbGetAll } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("../middleware/permissionCheck");
+const { hasPermission } = require("../middleware/permission-check");
 const jwt = require("jsonwebtoken");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/user/{id}/verify:
+         *   post:
+         *     summary: Verify a pending user
+         *     tags:
+         *       - Users
+         *     description: Verifies a pending user and moves them from temp_user_creation_data to the users table. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: The ID (secret) of the pending user to verify
+         *         schema:
+         *           type: string
+         *     responses:
+         *       200:
+         *         description: User verified successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *       404:
+         *         description: Pending user not found
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Verify a pending user
         router.post("/user/:id/verify", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {

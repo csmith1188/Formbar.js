@@ -7,6 +7,57 @@ const { getUserData } = require("@services/user-service");
 const { getUserTransactions } = require("@services/digipog-service");
 
 module.exports = (router) => {
+    /**
+     * @swagger
+     * /api/v1/profile/transactions/{userId}:
+     *   get:
+     *     summary: Get user transaction history
+     *     tags:
+     *       - Profile
+     *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: false
+     *         description: The ID of the user to retrieve transactions for (defaults to current user)
+     *         schema:
+     *           type: string
+     *           example: "1"
+     *     responses:
+     *       200:
+     *         description: Transactions retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 transactions:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                 displayName:
+     *                   type: string
+     *                 currentUserId:
+     *                   type: string
+     *       403:
+     *         description: Forbidden - insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
         try {
             // Log the request information
@@ -50,6 +101,62 @@ module.exports = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/v1/profile/{userId}:
+     *   get:
+     *     summary: Get user profile information
+     *     tags:
+     *       - Profile
+     *     description: Returns detailed profile information for a user including digipogs, API status, and PIN status. Email visibility depends on permissions.
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: false
+     *         description: The ID of the user to retrieve (defaults to current user)
+     *         schema:
+     *           type: string
+     *           example: "1"
+     *     responses:
+     *       200:
+     *         description: Profile retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 displayName:
+     *                   type: string
+     *                 email:
+     *                   type: string
+     *                   description: Hidden if viewer lacks permissions
+     *                 digipogs:
+     *                   type: integer
+     *                 id:
+     *                   type: string
+     *                 API:
+     *                   type: string
+     *                   nullable: true
+     *                 pin:
+     *                   type: string
+     *                   nullable: true
+     *                 pogMeter:
+     *                   type: integer
+     *                 isOwnProfile:
+     *                   type: boolean
+     *       404:
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
         try {
             // Log the request information

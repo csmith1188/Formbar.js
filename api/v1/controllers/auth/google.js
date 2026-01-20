@@ -25,6 +25,45 @@ module.exports = (router) => {
         })
     );
 
+    /**
+     * @swagger
+     * /api/v1/auth/google/callback:
+     *   get:
+     *     summary: Google OAuth callback
+     *     tags:
+     *       - Authentication
+     *     description: Handles the callback from Google OAuth and returns authentication tokens
+     *     responses:
+     *       200:
+     *         description: Authentication successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                 refreshToken:
+     *                   type: string
+     *       400:
+     *         description: Authentication failed or email not available
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Google OAuth is not enabled
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     // Google OAuth callback
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {

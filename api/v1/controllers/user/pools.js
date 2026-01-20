@@ -5,6 +5,40 @@ const pools = require("../../../../modules/pools");
 
 module.exports = {
     run(router) {
+        /**
+         * @swagger
+         * /api/v1/pools:
+         *   get:
+         *     summary: Get user's digipog pools
+         *     tags:
+         *       - Pools
+         *     description: Returns all digipog pools that the user owns or is a member of
+         *     responses:
+         *       200:
+         *         description: Pools retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 pools:
+         *                   type: string
+         *                   description: JSON stringified array of pool objects
+         *                 ownedPools:
+         *                   type: string
+         *                   description: JSON stringified array of owned pool IDs
+         *                 memberPools:
+         *                   type: string
+         *                   description: JSON stringified array of member pool IDs
+         *                 userId:
+         *                   type: string
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Handle displaying the pools management page
         router.get("/pools", isVerified, permCheck, async (req, res) => {
             try {

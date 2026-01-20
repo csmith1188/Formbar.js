@@ -1,11 +1,56 @@
 const { dbGetAll } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("../middleware/permissionCheck");
+const { hasClassPermission } = require("../middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/class/{id}/banned:
+         *   get:
+         *     summary: Get banned users in a class
+         *     tags:
+         *       - Class
+         *     description: Returns a list of users who are banned from a specific class. Requires teacher permissions.
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: The ID of the class
+         *         schema:
+         *           type: string
+         *           example: "1"
+         *     responses:
+         *       200:
+         *         description: Banned users retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: array
+         *               items:
+         *                 type: object
+         *                 properties:
+         *                   id:
+         *                     type: string
+         *                   email:
+         *                     type: string
+         *                   displayName:
+         *                     type: string
+         *       404:
+         *         description: Class not started
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Get banned users for a class
         router.get("/class/:id/banned", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
             try {

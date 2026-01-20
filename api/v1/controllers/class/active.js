@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { httpPermCheck } = require("../middleware/permission-check");
 const { isClassActive } = require("@modules/class/class");
 const { classInformation } = require("@modules/class/classroom");
 

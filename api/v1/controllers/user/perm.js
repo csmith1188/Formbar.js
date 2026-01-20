@@ -2,10 +2,60 @@ const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const { dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("../middleware/permissionCheck");
+const { hasPermission } = require("../middleware/permission-check");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/user/{email}/perm:
+         *   post:
+         *     summary: Change user's global permissions
+         *     tags:
+         *       - Users
+         *     description: Updates a user's global permission level. Requires manager permissions.
+         *     parameters:
+         *       - in: path
+         *         name: email
+         *         required: true
+         *         description: The email of the user to update
+         *         schema:
+         *           type: string
+         *           example: "user@example.com"
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               perm:
+         *                 type: number
+         *                 description: The new permission level
+         *                 example: 2
+         *     responses:
+         *       200:
+         *         description: Permission updated successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 ok:
+         *                   type: boolean
+         *       400:
+         *         description: Invalid permission value
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Change a user's global permissions
         router.post("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
             try {

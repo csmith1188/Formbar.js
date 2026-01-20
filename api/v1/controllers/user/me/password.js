@@ -26,6 +26,55 @@ module.exports = (router) => {
         }
     });
 
+    /**
+     * @swagger
+     * /api/v1/user/me/password/reset:
+     *   post:
+     *     summary: Request password reset email
+     *     tags:
+     *       - Authentication
+     *     description: Sends a password reset email to the specified email address
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - email
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 format: email
+     *     responses:
+     *       200:
+     *         description: Password reset email sent
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *       400:
+     *         description: Email is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       503:
+     *         description: Email service not enabled
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.post("/user/me/password/reset", async (req, res) => {
         try {
             const email = req.body.email;

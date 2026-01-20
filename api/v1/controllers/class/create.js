@@ -1,6 +1,6 @@
 const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@controllers/middleware/permissionCheck");
+const { hasPermission } = require("@controllers/middleware/permission-check");
 const classService = require("@services/class-service");
 const { validateClassroomName } = require("@services/class-service");
 

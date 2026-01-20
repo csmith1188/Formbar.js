@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { httpPermCheck } = require("../middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { setTags } = require("@modules/class/tags");
 
@@ -21,6 +21,47 @@ module.exports = (router) => {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/room/tags:
+         *   post:
+         *     summary: Set class tags
+         *     tags:
+         *       - Room
+         *     description: Sets the tags for the current class
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               tags:
+         *                 type: array
+         *                 items:
+         *                   type: string
+         *     responses:
+         *       200:
+         *         description: Tags set successfully
+         *       400:
+         *         description: Tags must be an array
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/Error'
+         *       404:
+         *         description: Class not found or not loaded
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Set class tags
         router.post("/room/tags", httpPermCheck("setTags"), async (req, res) => {
             try {

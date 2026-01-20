@@ -1,11 +1,58 @@
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("../middleware/permissionCheck");
+const { hasClassPermission } = require("../middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll } = require("@modules/database");
 
 module.exports = (router) => {
     try {
+        /**
+         * @swagger
+         * /api/v1/class/{id}/students:
+         *   get:
+         *     summary: Get students in a class
+         *     tags:
+         *       - Class
+         *     description: Returns a list of all students in a class, including guest users. Requires class management permissions.
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         description: The ID of the class
+         *         schema:
+         *           type: string
+         *           example: "1"
+         *     responses:
+         *       200:
+         *         description: Students retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: array
+         *               items:
+         *                 type: object
+         *                 properties:
+         *                   id:
+         *                     type: string
+         *                   displayName:
+         *                     type: string
+         *                   digipogs:
+         *                     type: integer
+         *                   classPermissions:
+         *                     type: integer
+         *       404:
+         *         description: Class not found or error retrieving students
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/NotFoundError'
+         *       500:
+         *         description: Server error
+         *         content:
+         *           application/json:
+         *             schema:
+         *               $ref: '#/components/schemas/ServerError'
+         */
         // Gets the students of a class
         router.get("/class/:id/students", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
             try {
