@@ -5,6 +5,9 @@ const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissio
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
+const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
+const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
+
 /**
  * Authenticates a user with email and password credentials
  * @async
@@ -150,6 +153,14 @@ function invalidCredentials() {
 async function register(email, password, displayName) {
     if (!privateKey || !publicKey) {
         throw new Error("Either the public key or private key is not available for JWT signing.");
+    }
+
+    if (!passwordRegex.test(password)) {
+        return { error: "Password must be 5-20 characters long and can only contain letters, numbers, and special characters." };
+    }
+
+    if (!displayRegex.test(displayName)) {
+        return { error: "Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores." };
     }
 
     // Normalize email to lowercase to prevent duplicate accounts

@@ -9,9 +9,9 @@ module.exports = (router) => {
         try {
             logger.log("info", `[get /logs] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
             const logs = await getAllLogs();
-            res.json(logs);
+            res.json({ logs });
         } catch (err) {
-            throw new Error(`Failed to retrieve logs: ${err.message}`);
+            res.status(500).json({ error: `Failed to retrieve logs: ${err.message}` });
         }
     });
 
@@ -20,10 +20,10 @@ module.exports = (router) => {
         const logFileName = req.params.log;
         try {
             logger.log("info", `[get /logs/:log] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-            const content = await getLog(logFileName);
-            res.json(content);
+            const text = await getLog(logFileName);
+            res.json({ text });
         } catch (err) {
-            throw new Error(`Failed to retrieve log file ${logFileName}: ${err.message}`);
+            res.status(404).json({ error: `Log file not found: ${err.message}` });
         }
     });
 };

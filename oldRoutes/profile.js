@@ -1,9 +1,9 @@
-const { isVerified, permCheck } = require("../middleware/authentication");
-const { dbGet, dbGetAll } = require("../../../../modules/database");
-const { logger } = require("../../../../modules/logger");
-const { logNumbers } = require("../../../../modules/config");
-const { classInformation } = require("../../../../modules/class/classroom");
-const { MANAGER_PERMISSIONS } = require("../../../../modules/permissions");
+const { isVerified, permCheck } = require("../api/v1/controllers/middleware/authentication");
+const { dbGet, dbGetAll } = require("../modules/database");
+const { logger } = require("../modules/logger");
+const { logNumbers } = require("../modules/config");
+const { classInformation } = require("../modules/class/classroom");
+const { MANAGER_PERMISSIONS } = require("../modules/permissions");
 
 module.exports = {
     run(router) {
