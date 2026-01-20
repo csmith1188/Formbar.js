@@ -11,14 +11,14 @@ async function isUserInClass(userId, classId) {
     return !!result;
 }
 
-async function getUserJoinedClasses(userId) {
+function getUserJoinedClasses(userId) {
     return dbGetAll(
         "SELECT classroom.name, classroom.id, classusers.permissions FROM classroom JOIN classusers ON classroom.id = classusers.classId WHERE classusers.studentId = ?",
         [userId]
     );
 }
 
-async function getClassLinks(classId) {
+function getClassLinks(classId) {
     return dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 }
 
@@ -33,6 +33,40 @@ async function getClassIdByCode(classCode) {
 }
 
 /**
+ * Validates a classroom name
+ * @param {string} className - The classroom name to validate
+ * @returns {{valid: boolean, error?: string}} Returns validation result with error message if invalid
+ */
+function validateClassroomName(className) {
+    if (!className || typeof className !== "string") {
+        return { valid: false, error: "Classroom name is required" };
+    }
+
+    const trimmedName = className.trim();
+
+    // Regex validates: 3-30 chars, no consecutive spaces, allowed chars only
+    const validPattern = /^(?!.*\s{2})[a-zA-Z0-9\s\-_.'()&,]{3,30}$/;
+
+    if (!validPattern.test(trimmedName)) {
+        if (trimmedName.length === 0) {
+            return { valid: false, error: "Classroom name cannot be empty" };
+        }
+        if (trimmedName.length < 3) {
+            return { valid: false, error: "Classroom name must be at least 3 characters long" };
+        }
+        if (trimmedName.length > 100) {
+            return { valid: false, error: "Classroom name must be 100 characters or less" };
+        }
+        return {
+            valid: false,
+            error: "Classroom name contains invalid characters. Only letters, numbers, spaces, and common punctuation (- _ . ' ( ) & ,) are allowed",
+        };
+    }
+
+    return { valid: true };
+}
+
+/**
  * Parses and normalizes class permissions from database row
  * @private
  * @param {Object} permissionsRow - The permissions row from the database
@@ -41,7 +75,8 @@ async function getClassIdByCode(classCode) {
 function parseClassPermissions(permissionsRow) {
     const parsedPermissions = {};
     for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
-        parsedPermissions[permission] = permissionsRow[permission] || DEFAULT_CLASS_PERMISSIONS[permission];
+        parsedPermissions[permission] =
+            permissionsRow && permissionsRow[permission] != null ? permissionsRow[permission] : DEFAULT_CLASS_PERMISSIONS[permission];
     }
     return parsedPermissions;
 }
@@ -64,14 +99,16 @@ function normalizeClassroomData(classroom) {
         classroom.tags = [];
     }
 
-    // Parse poll data within poll history
-    for (let poll of classroom.pollHistory) {
-        poll.data = JSON.parse(poll.data);
-    }
+    if (Array.isArray(classroom.pollHistory)) {
+        // Parse poll data within poll history
+        for (let poll of classroom.pollHistory) {
+            poll.data = JSON.parse(poll.data);
+        }
 
-    // Handle empty poll history
-    if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
-        classroom.pollHistory = null;
+        // Handle empty poll history
+        if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
+            classroom.pollHistory = null;
+        }
     }
 
     return classroom;
@@ -88,6 +125,14 @@ function normalizeClassroomData(classroom) {
  */
 async function createClass(className, ownerId, ownerEmail) {
     try {
+        // Validate classroom name
+        const validation = validateClassroomName(className);
+        if (!validation.valid) {
+            const error = new Error(validation.error);
+            error.code = "INVALID_CLASSROOM_NAME";
+            throw error;
+        }
+
         const key = generateKey(4);
 
         // Add classroom to the database
@@ -297,6 +342,7 @@ module.exports = {
     getClassCode,
     getClassLinks,
     getClassIdByCode,
+    validateClassroomName,
     initializeClassroom,
     createClass,
     joinClassById,
