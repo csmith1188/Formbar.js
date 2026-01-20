@@ -68,22 +68,29 @@ const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
     : [];
 
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests with no Origin header (e.g., mobile apps, curl)
-            if (!origin) {
-                return callback(null, true);
-            }
+    cors((req, callback) => {
+        const origin = req.header("Origin");
 
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
+        // No Origin header → allow (curl, mobile apps)
+        if (!origin) {
+            return callback(null, { origin: true });
+        }
 
-            return callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
+        const requestOrigin = `${req.protocol}://${req.get("host")}`;
+
+        // Allow same-origin
+        if (origin === requestOrigin) {
+            return callback(null, { origin: true });
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, { origin: true });
+        }
+
+        return callback(new Error("Not allowed by CORS"));
     })
 );
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
