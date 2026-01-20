@@ -260,5 +260,5 @@ module.exports = {
     getClassIdByCode,
     initializeClassroom,
     createClass,
-    joinClassById
+    joinClassById,
 };
