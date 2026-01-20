@@ -18,16 +18,7 @@ module.exports = (router) => {
                 return res.status(400).json({ error: "Class name is required" });
             }
 
-            const user = req.session.user;
-            const userId = req.session.userId;
-            const userEmail = req.session.email;
-
-            // Validate user session
-            if (!user || !userId || !userEmail) {
-                logger.log("verbose", `[post /class/create] User not authenticated`);
-                return res.status(401).json({ error: "User not authenticated" });
-            }
-
+            const { userId, email: userEmail } = req.session;
             logger.log("info", `[post /class/create] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
             logger.log("verbose", `[post /class/create] className=(${name})`);
 
