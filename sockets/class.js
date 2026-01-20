@@ -86,7 +86,7 @@ module.exports = {
          * @param {string} classId - The class ID
          */
         function clearVotesFromExcludedStudents(classId) {
-            const { GUEST_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS } = require("../modules/permissions");
+            const { GUEST_PERMISSIONS, MOD_PERMISSIONS, TEACHER_PERMISSIONS } = require("@modules/permissions");
             const classData = classInformation.classrooms[classId];
             if (!classData) return;
 

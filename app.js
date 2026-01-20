@@ -19,6 +19,7 @@ const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http, getIpAccess } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+
 const { logout } = require("./modules/user/userSession");
 const { passport } = require("./modules/googleOauth.js");
 
@@ -28,6 +29,8 @@ const sessionMiddleware = session({
     resave: false, // Used to prevent resaving back to the session store, even if it wasn't modified
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
+
+const errorHandlerMiddleware = require("@modules/middleware/error-handler");
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
@@ -164,6 +167,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use()
+
 function getJSFiles(dir, base = dir) {
     let results = [];
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -200,6 +205,11 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
+
+// Error handling middleware
+app.use(errorHandlerMiddleware);
+
+// Start the server
 
 http.listen(settings.port, async () => {
     // Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));

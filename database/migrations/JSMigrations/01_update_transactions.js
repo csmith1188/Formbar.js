@@ -2,7 +2,7 @@
 // If the 'transactions' table contains the 'digipogs' column, this migration will drop the old table
 // and create a new 'transactions' table with the new layout.
 
-const { dbGetAll } = require("../../../modules/database");
+const { dbGetAll } = require("@modules/database");
 module.exports = {
     async run(database) {
         const columns = await dbGetAll("PRAGMA table_info(transactions)", [], database);

@@ -1,12 +1,12 @@
-const { permCheck, isAuthenticated } = require("../api/v1/controllers/middleware/authentication");
-const { classInformation, Classroom } = require("../modules/class/classroom");
-const { logNumbers } = require("../modules/config");
-const { database, dbRun, dbGet } = require("../modules/database");
-const { logger } = require("../modules/logger");
-const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS } = require("../modules/permissions");
-const { setClassOfApiSockets, userSockets, emitToUser } = require("../modules/socketUpdates");
-const { getStudentsInClass } = require("../modules/student");
-const { generateKey } = require("../modules/util");
+const { permCheck, isAuthenticated } = require("@modules/middleware/authentication");
+const { classInformation, Classroom } = require("@modules/class/classroom");
+const { logNumbers } = require("@modules/config");
+const { database, dbRun, dbGet } = require("@modules/database");
+const { logger } = require("@modules/logger");
+const { DEFAULT_CLASS_PERMISSIONS, MANAGER_PERMISSIONS, TEACHER_PERMISSIONS } = require("@modules/permissions");
+const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
+const { getStudentsInClass } = require("@modules/student");
+const { generateKey } = require("@modules/util");
 
 module.exports = {
     run(app) {

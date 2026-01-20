@@ -1,7 +1,7 @@
 const { isAuthenticated, permCheck } = require("../middleware/authentication");
-const { classInformation } = require("../../../../modules/class/classroom");
-const { logNumbers } = require("../../../../modules/config");
-const { logger } = require("../../../../modules/logger");
+const { classInformation } = require("@modules/class/classroom");
+const { logNumbers } = require("@modules/config");
+const { logger } = require("@modules/logger");
 
 module.exports = {
     run(router) {

@@ -1,5 +1,5 @@
 const { getClassLinks, isUserInClass } = require("@services/class-service");
-const { isAuthenticated, isVerified, permCheck } = require("@controllers/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     router.get("/links", isAuthenticated, permCheck, isVerified, async (req, res) => {

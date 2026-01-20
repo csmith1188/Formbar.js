@@ -1,6 +1,6 @@
 const { compare, hash } = require("bcrypt");
-const { dbGet, dbRun, dbGetAll } = require("../../../modules/database");
-const { privateKey, publicKey } = require("../../../modules/config");
+const { dbGet, dbRun, dbGetAll } = require("@modules/database");
+const { privateKey, publicKey } = require("@modules/config");
 const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
