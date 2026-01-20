@@ -33,6 +33,51 @@ async function getClassIdByCode(classCode) {
 }
 
 /**
+ * Parses and normalizes class permissions from database row
+ * @private
+ * @param {Object} permissionsRow - The permissions row from the database
+ * @returns {Object} Normalized permissions object with defaults applied
+ */
+function parseClassPermissions(permissionsRow) {
+    const parsedPermissions = {};
+    for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
+        parsedPermissions[permission] = permissionsRow[permission] || DEFAULT_CLASS_PERMISSIONS[permission];
+    }
+    return parsedPermissions;
+}
+
+/**
+ * Normalizes classroom data fetched from database
+ * Parses JSON fields and normalizes tags and poll history
+ * @param {Object} classroom - The classroom object from database
+ * @returns {Object} The normalized classroom object (mutates in place)
+ */
+function normalizeClassroomData(classroom) {
+    // Parse JSON fields
+    classroom.sharedPolls = JSON.parse(classroom.sharedPolls);
+    classroom.pollHistory = JSON.parse(classroom.pollHistory);
+
+    // Normalize tags to array
+    if (classroom.tags) {
+        classroom.tags = classroom.tags.split(",");
+    } else {
+        classroom.tags = [];
+    }
+
+    // Parse poll data within poll history
+    for (let poll of classroom.pollHistory) {
+        poll.data = JSON.parse(poll.data);
+    }
+
+    // Handle empty poll history
+    if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
+        classroom.pollHistory = null;
+    }
+
+    return classroom;
+}
+
+/**
  * Creates a new classroom with the given name and owner
  * @async
  * @param {string} className - The name of the class to create
@@ -61,16 +106,21 @@ async function createClass(className, ownerId, ownerEmail) {
         let permissions = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [classroom.id]);
         if (!permissions) {
             permissions = { ...DEFAULT_CLASS_PERMISSIONS };
-            await dbRun("INSERT INTO class_permissions (classId) VALUES (?)", [classroom.id]);
+            await dbRun("INSERT OR IGNORE INTO class_permissions (classId) VALUES (?)", [classroom.id]);
         }
 
-        const parsedPermissions = {};
-        for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
-            parsedPermissions[permission] = permissions[permission] || DEFAULT_CLASS_PERMISSIONS[permission];
-        }
-
-        classroom.permissions = parsedPermissions;
-        await initializeClassroom(classroom.id, classroom.name, classroom.key, ownerId, ownerEmail, classroom.permissions, [], [], classroom.tags);
+        classroom.permissions = parseClassPermissions(permissions);
+        await initializeClassroom({
+            id: classroom.id,
+            className: classroom.name,
+            key: classroom.key,
+            owner: ownerId,
+            userEmail: ownerEmail,
+            permissions: classroom.permissions,
+            sharedPolls: [],
+            pollHistory: [],
+            tags: classroom.tags,
+        });
 
         return {
             classId: classroom.id,
@@ -95,7 +145,7 @@ async function createClass(className, ownerId, ownerEmail) {
 async function joinClassById(classId, userId, userEmail) {
     try {
         const classroom = await dbGet(
-            "SELECT classroom.id, classroom.name, classroom.key, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
+            "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
             [classId]
         );
 
@@ -107,41 +157,24 @@ async function joinClassById(classId, userId, userEmail) {
 
         // Ensure class_permissions exists and normalize permissions to include defaults
         let permissionsRow = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [classroom.id]);
-        let parsedPermissions = {};
-        for (let permission of Object.keys(DEFAULT_CLASS_PERMISSIONS)) {
-            parsedPermissions[permission] = permissionsRow[permission] != null ? permissionsRow[permission] : DEFAULT_CLASS_PERMISSIONS[permission];
-        }
 
-        classroom.permissions = parsedPermissions;
-        classroom.sharedPolls = JSON.parse(classroom.sharedPolls);
-        classroom.pollHistory = JSON.parse(classroom.pollHistory);
+        classroom.permissions = parseClassPermissions(permissionsRow);
 
-        if (classroom.tags) {
-            classroom.tags = classroom.tags.split(",");
-        } else {
-            classroom.tags = [];
-        }
-
-        for (let poll of classroom.pollHistory) {
-            poll.data = JSON.parse(poll.data);
-        }
-
-        if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
-            classroom.pollHistory = null;
-        }
+        // Normalize classroom data (JSON parsing, tags, poll history)
+        normalizeClassroomData(classroom);
 
         // Initialize the classroom in memory
-        await initializeClassroom(
-            classroom.id,
-            classroom.name,
-            classroom.key,
-            classroom.owner,
-            userEmail,
-            classroom.permissions,
-            classroom.sharedPolls,
-            classroom.pollHistory,
-            classroom.tags
-        );
+        await initializeClassroom({
+            id: classroom.id,
+            className: classroom.name,
+            key: classroom.key,
+            owner: classroom.owner,
+            userEmail: userEmail,
+            permissions: classroom.permissions,
+            sharedPolls: classroom.sharedPolls,
+            pollHistory: classroom.pollHistory,
+            tags: classroom.tags,
+        });
 
         return {
             classId: classroom.id,
@@ -157,18 +190,19 @@ async function joinClassById(classId, userId, userEmail) {
 /**
  * Initializes a classroom in memory and adds the user to it
  * @private
- * @param {number} id - The class ID
- * @param {string} className - The class name
- * @param {string} key - The class key
- * @param {number} owner - The owner's user ID
- * @param {string} userEmail - The email of the user to add to the class
- * @param {Object} permissions - The class permissions object
- * @param {Array} sharedPolls - Array of shared poll IDs
- * @param {Array} pollHistory - Array of poll history objects
- * @param {Array|string} tags - Class tags
+ * @param {Object} params - The initialization parameters
+ * @param {number} params.id - The class ID
+ * @param {string} params.className - The class name
+ * @param {string} params.key - The class key
+ * @param {number} params.owner - The owner's user ID
+ * @param {string} params.userEmail - The email of the user to add to the class
+ * @param {Object} params.permissions - The class permissions object
+ * @param {Array} [params.sharedPolls=[]] - Array of shared poll IDs
+ * @param {Array} [params.pollHistory=[]] - Array of poll history objects
+ * @param {Array|string} params.tags - Class tags
  * @returns {Promise<void>}
  */
-async function initializeClassroom(id, className, key, owner, userEmail, permissions, sharedPolls = [], pollHistory = [], tags) {
+async function initializeClassroom({ id, className, key, owner, userEmail, permissions, sharedPolls = [], pollHistory = [], tags }) {
     try {
         // Get the user's session data
         const user = classInformation.users[userEmail];
@@ -190,7 +224,7 @@ async function initializeClassroom(id, className, key, owner, userEmail, permiss
                 if (typeof permissions[permission] != "number" || permissions[permission] < 1 || permissions[permission] > 5) {
                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission];
                 }
-                await dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [permissions[permission], id]);
+                await dbRun(`UPDATE class_permissions SET ? WHERE classId=?`, [permissions[permission], id]);
             }
         }
 
@@ -261,4 +295,5 @@ module.exports = {
     initializeClassroom,
     createClass,
     joinClassById,
+    normalizeClassroomData,
 };
