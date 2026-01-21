@@ -212,22 +212,9 @@ module.exports = {
                                 }
 
                                 classroom.permissions = parsedPermissions;
-                                classroom.sharedPolls = JSON.parse(classroom.sharedPolls);
-                                classroom.pollHistory = JSON.parse(classroom.pollHistory);
 
-                                if (classroom.tags) {
-                                    classroom.tags = classroom.tags.split(",");
-                                } else {
-                                    classroom.tags = [];
-                                }
-
-                                for (let poll of classroom.pollHistory) {
-                                    poll.data = JSON.parse(poll.data);
-                                }
-
-                                if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
-                                    classroom.pollHistory = null;
-                                }
+                                // Normalize classroom data (JSON parsing, tags, poll history)
+                                normalizeClassroomData(classroom);
 
                                 let makeClassStatus = await makeClass(
                                     classroom.id,
