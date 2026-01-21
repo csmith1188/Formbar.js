@@ -4,6 +4,7 @@ const { privateKey, publicKey } = require("@modules/config");
 const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const AppError = require("@errors/app-error");
 
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
 const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
@@ -18,7 +19,7 @@ const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
  */
 async function login(email, password) {
     if (!privateKey || !publicKey) {
-        throw new Error("Either the public key or private key is not available for JWT signing.");
+        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
     }
 
     // Normalize email to lowercase to prevent login issues
@@ -152,7 +153,7 @@ function invalidCredentials() {
  */
 async function register(email, password, displayName) {
     if (!privateKey || !publicKey) {
-        throw new Error("Either the public key or private key is not available for JWT signing.");
+        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
     }
 
     if (!passwordRegex.test(password)) {
@@ -216,7 +217,7 @@ async function register(email, password, displayName) {
  */
 async function googleOAuth(email, displayName) {
     if (!privateKey || !publicKey) {
-        throw new Error("Either the public key or private key is not available for JWT signing.");
+        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
     }
 
     // Normalize email to lowercase to prevent duplicate accounts

@@ -1,27 +1,19 @@
 const { logger } = require("@modules/logger");
 const { dbGet } = require("@modules/database");
 const { getUserOwnedClasses } = require("@modules/user/user");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
-    try {
-        // Gets a user's owned classes
-        router.get("/user/:id/ownedClasses", httpPermCheck("getOwnedClasses"), async (req, res) => {
-            try {
-                const userId = req.params.id;
-                const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
-                if (!user) {
-                    return res.json({ error: "User not found" });
-                }
+    // Gets a user's owned classes
+    router.get("/user/:id/ownedClasses", httpPermCheck("getOwnedClasses"), async (req, res) => {
+        const userId = req.params.id;
+        const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
+        if (!user) {
+            throw new NotFoundError("User not found");
+        }
 
-                const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);
-                res.status(200).json(ownedClasses);
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).send(`Error: ${err.message}`);
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);
+        res.status(200).json(ownedClasses);
+    });
 };

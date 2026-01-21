@@ -1,6 +1,7 @@
 // Imported modules
 require("module-alias/register");
 const express = require("express");
+require("express-async-errors"); // To handle async errors in express routes
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
 const fs = require("fs");
@@ -64,6 +65,7 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 const cors = require("cors");
+const { error } = require("console");
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
     ? process.env.CORS_ALLOWED_ORIGINS.split(",")
           .map((origin) => origin.trim())
@@ -166,8 +168,6 @@ app.use((req, res, next) => {
 
     next();
 });
-
-app.use()
 
 function getJSFiles(dir, base = dir) {
     let results = [];

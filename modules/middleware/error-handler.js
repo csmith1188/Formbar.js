@@ -1,7 +1,7 @@
-const AppError = require('@errors/app-error');
+const AppError = require("@errors/app-error");
+const { logger } = require("@modules/logger");
 
 module.exports = (err, req, res, next) => {
-
     let error = err;
     let statusCode = err.statusCode || 500;
 
@@ -10,16 +10,15 @@ module.exports = (err, req, res, next) => {
 
     if (!isAppError || !isOperationalError) {
         statusCode = 500;
-        error = new AppError('An unexpected error occurred.', statusCode);
+        error = new AppError("An unexpected error occurred.", statusCode);
+        logger.log("error", error.stack);
     }
 
     const response = {
         error: {
-            status: error.status,
-            message: error.message
-        }
-    }
+            message: error.message,
+        },
+    };
 
     res.status(statusCode).json(response);
-
-}
+};

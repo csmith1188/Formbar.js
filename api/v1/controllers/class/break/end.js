@@ -1,31 +1,23 @@
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { classInformation } = require("@modules/class/classroom");
 const { endBreak } = require("@modules/class/break");
+const ForbiddenError = require("@errors/forbidden-error");
+const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    try {
-        // End a break in a class by class ID and user ID
-        router.post("/class/:id/break/end", httpPermCheck("endBreak"), async (req, res) => {
-            try {
-                const classId = req.params.id;
-                const classroom = classInformation.classrooms[classId];
-                if (classroom && !classroom.students[req.session.email]) {
-                    res.status(403).json({ error: "You do not have permission to end this user's break." });
-                    return;
-                }
+    // End a break in a class by class ID and user ID
+    router.post("/class/:id/break/end", httpPermCheck("endBreak"), async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to end this user's break.");
+        }
 
-                const result = endBreak(req.session.user);
-                if (result === true) {
-                    res.status(200);
-                } else {
-                    res.status(500).json({ error: result });
-                }
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        const result = endBreak(req.session.user);
+        if (result === true) {
+            res.status(200);
+        } else {
+            throw new AppError(result, 500);
+        }
+    });
 };

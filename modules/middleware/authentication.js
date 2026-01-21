@@ -3,7 +3,11 @@ const { classInformation } = require("@modules/class/classroom");
 const { logNumbers, settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
-const { verifyToken } = require("../../services/auth-service");
+const { verifyToken } = require("@services/auth-service");
+const AuthError = require("@errors/auth-error");
+const NotFoundError = require("@errors/not-found-error");
+const ForbiddenError = require("@errors/forbidden-error");
+const AppError = require("@errors/app-error");
 
 const whitelistedIps = {};
 const blacklistedIps = {};
@@ -30,140 +34,124 @@ This allows websites to check on their own if the user is logged in
 This also allows for the website to check for permissions
 */
 function isAuthenticated(req, res, next) {
-    try {
-        const accessToken = req.headers.authorization;
-        if (!accessToken) {
-            return res.status(401).json({ error: "User is not authenticated" });
-        }
-
-        // @todo: cleanup
-        // logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
-        const decodedToken = verifyToken(accessToken);
-        if (decodedToken.error) {
-            return res.status(401).json({ error: "Invalid access token provided." });
-        }
-
-        const email = decodedToken.email;
-        if (!email) {
-            return res.status(401).json({ error: "Invalid access token provided. Missing 'email'." });
-        }
-
-        const user = classInformation.users[email];
-        if (!user) {
-            return res.status(401).json({ error: "User is not authenticated" });
-        }
-
-        req.session.email = email;
-        req.session.user = user;
-        req.session.userId = user.id;
-        req.session.displayName = user.displayName;
-        req.session.verified = user.verified;
-        req.session.tags = user.tags;
-
-        // Allow access to certain routes without being in a class
-        if (loginOnlyRoutes.includes(req.url)) {
-            next();
-            return;
-        }
-
-        // If the user is not in a class, then continue
-        const isInClass = user.activeClass != null;
-        if (isInClass) {
-            next();
-            return;
-        }
-
-        next();
-    } catch (err) {
-        logger.log("error", err.stack);
-        res.status(500).json({ error: "There was a server error. Please try again." });
+    const accessToken = req.headers.authorization;
+    if (!accessToken) {
+        throw new AuthError("User is not authenticated");
     }
+
+    // @todo: cleanup
+    // logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+
+    const decodedToken = verifyToken(accessToken);
+    if (decodedToken.error) {
+        throw new AuthError("Invalid access token provided.");
+    }
+
+    const email = decodedToken.email;
+    if (!email) {
+        throw new AuthError("Invalid access token provided. Missing 'email'.");
+    }
+
+    const user = classInformation.users[email];
+    if (!user) {
+        throw new AuthError("User is not authenticated");
+    }
+
+    req.session.email = email;
+    req.session.user = user;
+    req.session.userId = user.id;
+    req.session.displayName = user.displayName;
+    req.session.verified = user.verified;
+    req.session.tags = user.tags;
+
+    // Allow access to certain routes without being in a class
+    if (loginOnlyRoutes.includes(req.url)) {
+        next();
+        return;
+    }
+
+    // If the user is not in a class, then continue
+    const isInClass = user.activeClass != null;
+    if (isInClass) {
+        next();
+        return;
+    }
+
+    next();
 }
 
 // Create a function to check if the user's email is verified
 function isVerified(req, res, next) {
-    try {
-        const accessToken = req.headers.authorization;
-        if (!accessToken) {
-            return res.status(401).json({ error: "User is not authenticated." });
-        }
+    const accessToken = req.headers.authorization;
+    if (!accessToken) {
+        throw new AuthError("User is not authenticated.");
+    }
 
-        // Log that the function is being called with the ip and the session of the user
-        logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-        if (req.session.email) {
-            // If the user is verified or email functionality is disabled...
-            if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
-                next();
-            } else {
-                // Redirect to the login page
-                // @todo: no more redirect
-                res.redirect("/login");
-            }
+    // Log that the function is being called with the ip and the session of the user
+    logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+    if (req.session.email) {
+        // If the user is verified or email functionality is disabled...
+        if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
+            next();
         } else {
-            // If there is no session, redirect to the login page
+            // Redirect to the login page
             // @todo: no more redirect
             res.redirect("/login");
         }
-    } catch (err) {
-        logger.log("error", err.stack);
-        res.status(500).json({ error: "There was a server error. Please try again." });
+    } else {
+        // If there is no session, redirect to the login page
+        // @todo: no more redirect
+        res.redirect("/login");
     }
 }
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
-    try {
-        const email = req.session.email;
+    const email = req.session.email;
 
-        logger.log("info", `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`);
+    logger.log("info", `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`);
 
-        if (req.url) {
-            // Defines users desired endpoint
-            let urlPath = req.url;
+    if (req.url) {
+        // Defines users desired endpoint
+        let urlPath = req.url;
 
-            // Checks if url has a / in it and removes it from the string
-            if (urlPath.indexOf("/") != -1) {
-                urlPath = urlPath.slice(urlPath.indexOf("/") + 1);
-            }
-
-            // Check for ?(urlParams) and removes it from the string
-            if (urlPath.indexOf("?") != -1) {
-                urlPath = urlPath.slice(0, urlPath.indexOf("?"));
-            }
-
-            // Check for a second / in the url and remove it from the string
-            if (urlPath.indexOf("/") != -1) {
-                urlPath = urlPath.slice(0, urlPath.indexOf("/"));
-            }
-
-            if (!classInformation.users[email]) {
-                req.session.classId = null;
-            }
-
-            // Ensure the url path is all lowercase
-            urlPath = urlPath.toLowerCase();
-
-            logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
-            if (!PAGE_PERMISSIONS[urlPath]) {
-                logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
-                res.status(404).json({ error: `${urlPath} is not in the page permissions` });
-                return;
-            }
-
-            // Checks if users permissions are high enough
-            if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
-                next();
-            } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
-                next();
-            } else {
-                logger.log("info", "[permCheck] Not enough permissions");
-                res.status(403).json({ error: "You do not have permissions to access this page." });
-            }
+        // Checks if url has a / in it and removes it from the string
+        if (urlPath.indexOf("/") != -1) {
+            urlPath = urlPath.slice(urlPath.indexOf("/") + 1);
         }
-    } catch (err) {
-        logger.log("error", err.stack);
-        res.status(500).json({ error: "There was a server error. Please try again." });
+
+        // Check for ?(urlParams) and removes it from the string
+        if (urlPath.indexOf("?") != -1) {
+            urlPath = urlPath.slice(0, urlPath.indexOf("?"));
+        }
+
+        // Check for a second / in the url and remove it from the string
+        if (urlPath.indexOf("/") != -1) {
+            urlPath = urlPath.slice(0, urlPath.indexOf("/"));
+        }
+
+        if (!classInformation.users[email]) {
+            req.session.classId = null;
+        }
+
+        // Ensure the url path is all lowercase
+        urlPath = urlPath.toLowerCase();
+
+        logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
+        if (!PAGE_PERMISSIONS[urlPath]) {
+            logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
+            throw new NotFoundError(`${urlPath} is not in the page permissions`);
+        }
+
+        // Checks if users permissions are high enough
+        if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+            next();
+        } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+            next();
+        } else {
+            logger.log("info", "[permCheck] Not enough permissions");
+            throw new ForbiddenError("You do not have permissions to access this page.");
+        }
     }
 }
 
