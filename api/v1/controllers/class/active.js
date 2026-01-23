@@ -3,7 +3,6 @@ const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { isClassActive } = require("@modules/class/class");
 const { classInformation } = require("@modules/class/classroom");
 const ForbiddenError = require("@errors/forbidden-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     try {

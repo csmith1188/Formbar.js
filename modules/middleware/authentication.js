@@ -1,13 +1,12 @@
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
-const { logNumbers, settings } = require("@modules/config");
+const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
 const { verifyToken } = require("@services/auth-service");
 const AuthError = require("@errors/auth-error");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
-const AppError = require("@errors/app-error");
 
 const whitelistedIps = {};
 const blacklistedIps = {};

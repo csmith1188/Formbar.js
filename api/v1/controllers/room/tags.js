@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { classInformation } = require("@modules/class/classroom");
 const { setTags } = require("@modules/class/tags");

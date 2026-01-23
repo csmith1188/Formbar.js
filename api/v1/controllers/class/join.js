@@ -1,7 +1,6 @@
 const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { joinClass } = require("@modules/class/class");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     try {

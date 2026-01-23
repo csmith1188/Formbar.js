@@ -6,7 +6,6 @@ const { passport } = require("@modules/googleOauth");
 const authService = require("@services/auth-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
-const AppError = require("@errors/app-error");
 
 // Middleware to check if Google OAuth is enabled
 function checkEnabled(req, res, next) {

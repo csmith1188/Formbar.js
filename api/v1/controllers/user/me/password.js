@@ -1,9 +1,7 @@
-const { logger } = require("@modules/logger");
 const { settings } = require("@modules/config");
 const userService = require("@services/user-service");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
-const RateLimitError = require("@errors/rate-limit-error");
 
 module.exports = (router) => {
     router.patch("/user/me/password", async (req, res) => {

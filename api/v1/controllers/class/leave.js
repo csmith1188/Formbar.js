@@ -1,8 +1,6 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
-const { leaveClass, leaveRoom } = require("@modules/class/class");
+const { leaveClass } = require("@modules/class/class");
 const ForbiddenError = require("@errors/forbidden-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Leaves the current class session

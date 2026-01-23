@@ -1,8 +1,6 @@
 const { clearPoll } = require("@modules/polls");
-const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Clears the current poll for the class

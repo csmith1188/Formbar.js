@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { leaveRoom } = require("@modules/class/class");
 

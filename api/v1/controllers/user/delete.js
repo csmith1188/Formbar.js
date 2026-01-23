@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { deleteUser } = require("@modules/user/userSession");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permissionCheck");

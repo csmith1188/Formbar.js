@@ -3,8 +3,6 @@ const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
-const AuthError = require("@errors/auth-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     router.post("/auth/login", async (req, res) => {

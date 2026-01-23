@@ -1,7 +1,6 @@
 const { logger } = require("@modules/logger");
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     router.post("/auth/register", async (req, res) => {

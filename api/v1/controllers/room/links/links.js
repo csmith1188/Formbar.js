@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { GUEST_PERMISSIONS } = require("@modules/permissions");
 const { hasClassPermission } = require("@modules/middleware/permissionCheck");
 const { dbGetAll } = require("@modules/database");

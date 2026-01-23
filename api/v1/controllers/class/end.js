@@ -2,7 +2,6 @@ const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permissionCheck");
 const { endClass } = require("@modules/class/class");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     try {

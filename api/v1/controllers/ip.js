@@ -8,7 +8,6 @@ const authentication = require("@modules/middleware/authentication");
 const fs = require("fs");
 const ValidationError = require("@errors/validation-error");
 const ConflictError = require("@errors/conflict-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // List IPs

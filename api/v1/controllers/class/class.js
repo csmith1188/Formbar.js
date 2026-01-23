@@ -3,7 +3,6 @@ const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Gets a class by id
