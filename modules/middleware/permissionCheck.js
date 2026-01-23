@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS} = require("@modules/permissions");
+const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
 const { PASSIVE_SOCKETS } = require("@modules/socketUpdates");
