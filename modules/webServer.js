@@ -51,9 +51,36 @@ function createServer() {
     };
 
     const specs = swaggerJsdoc(swaggerDocOptions);
-    app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
-    // Custom CSS for better dark mode readability
+    // Sort paths by length (shorter first) before passing to Swagger UI
+    if (specs.paths) {
+        const sortedPaths = {};
+        Object.keys(specs.paths)
+            .sort((a, b) => {
+                // Count path segments
+                const segmentsA = a.split('/').length;
+                const segmentsB = b.split('/').length;
+
+                // If different number of segments, shorter path comes first
+                if (segmentsA !== segmentsB) {
+                    return segmentsA - segmentsB;
+                }
+
+                // If same number of segments, sort alphabetically
+                return a.localeCompare(b);
+            })
+            .forEach(key => {
+                sortedPaths[key] = specs.paths[key];
+            });
+        specs.paths = sortedPaths;
+    }
+
+    app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs, {
+        swaggerOptions: {
+            operationsSorter: "method", // Group by HTTP method (GET, POST, etc.)
+        }
+    }));
+
     return { app, io, http };
 }
 
