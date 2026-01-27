@@ -87,7 +87,6 @@ module.exports = {
 
                         const email = decodedToken.email;
                         const userId = decodedToken.id;
-                        const displayName = decodedToken.displayName;
 
                         if (!email || !userId) {
                             logger.log("verbose", "[socket authentication] access token missing required fields");
