@@ -15,7 +15,7 @@ module.exports = (router) => {
 
         const result = await sendHelpTicket(true, req.params.userId, req.session.user);
         if (result === true) {
-            res.status(200).json({ message: "Success" });
+            res.status(200).json({ success: true });
         } else {
             throw new AppError(result, 500);
         }

@@ -29,7 +29,7 @@ module.exports = (router) => {
         }
 
         if (!settings.emailEnabled) {
-            throw new AppError("Email service is not enabled. Password resets are not available at this time.");
+            throw new AppError("Email service is not enabled. Password resets are not available at this time.", 503);
         }
 
         await userService.requestPasswordReset(email);

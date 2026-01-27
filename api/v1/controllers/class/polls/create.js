@@ -32,6 +32,6 @@ module.exports = (router) => {
             : body;
 
         await createPoll(classId, pollData, req.session.user);
-        res.status(200).json({ message: "Success" });
+        res.status(200).json({ success: true });
     });
 };

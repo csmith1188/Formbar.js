@@ -8,7 +8,7 @@ module.exports = (router) => {
     router.get("/class/:id/students/:userId/help/delete", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
         const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
         if (result === true) {
-            res.status(200).json({ message: "Success" });
+            res.status(200).json({ success: true });
         } else {
             throw new AppError(result, 500);
         }

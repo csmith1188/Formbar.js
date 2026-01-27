@@ -7,6 +7,6 @@ module.exports = (router) => {
     router.post("/class/:id/polls/clear", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
         const classId = req.params.id;
         await clearPoll(classId, req.session.user);
-        res.status(200).json({ message: "Success" });
+        res.status(200).json({ success: true });
     });
 };

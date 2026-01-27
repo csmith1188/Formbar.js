@@ -20,7 +20,7 @@ module.exports = (router) => {
 
         const result = requestBreak(req.body.reason, req.session.user);
         if (result === true) {
-            res.status(200);
+            res.status(200).json({ success: true });
         } else {
             throw new AppError(result, 500);
         }
