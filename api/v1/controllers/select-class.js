@@ -10,6 +10,33 @@ const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    /**
+     * @swagger
+     * /api/v1/selectClass:
+     *   get:
+     *     summary: Get user's joined classes
+     *     tags:
+     *       - Class
+     *     description: Returns a list of classes the authenticated user has joined (excluding guest permissions)
+     *     responses:
+     *       200:
+     *         description: List of joined classes retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 joinedClasses:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/selectClass", isAuthenticated, permCheck, async (req, res) => {
         logger.log("info", `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
@@ -19,6 +46,62 @@ module.exports = (router) => {
         res.json({ joinedClasses: joinedClasses });
     });
 
+    /**
+     * @swagger
+     * /api/v1/selectClass:
+     *   post:
+     *     summary: Select and join a class
+     *     tags:
+     *       - Class
+     *     description: Allows a user to select and join a class by providing either a class ID or class code
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               id:
+     *                 type: string
+     *                 description: Class ID to join
+     *               key:
+     *                 type: string
+     *                 description: Class code to join
+     *     responses:
+     *       200:
+     *         description: Successfully joined the class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *       400:
+     *         description: Bad request - invalid parameters or join error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Forbidden - no permission to access class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.post("/selectClass", isAuthenticated, permCheck, async (req, res) => {
         let classId = req.body.id;
         let classCode = req.body.key;

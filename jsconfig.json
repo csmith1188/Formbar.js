@@ -3,7 +3,7 @@
         "baseUrl": ".",
         "paths": {
             "@modules/*": ["modules/*"],
-            "@services/*": ["api/v1/services/*"],
+            "@services/*": ["services/*"],
             "@controllers/*": ["api/v1/controllers/*"],
             "@errors/*": ["errors/*"]
         }

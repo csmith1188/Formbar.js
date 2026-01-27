@@ -1,11 +1,62 @@
 const { classInformation } = require("@modules/class/classroom");
 const { dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
-    // Change a user's global permissions
+    /**
+     * @swagger
+     * /api/v1/user/{email}/perm:
+     *   post:
+     *     summary: Change user's global permissions
+     *     tags:
+     *       - Users
+     *     description: Updates a user's global permission level (requires manager permissions)
+     *     parameters:
+     *       - in: path
+     *         name: email
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: User email
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - perm
+     *             properties:
+     *               perm:
+     *                 type: integer
+     *                 example: 3
+     *                 description: New permission level
+     *     responses:
+     *       200:
+     *         description: Permissions updated successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ok:
+     *                   type: boolean
+     *                   example: true
+     *       400:
+     *         description: Invalid permission value
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     router.post("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const email = req.params.email;
         let { perm } = req.body || {};

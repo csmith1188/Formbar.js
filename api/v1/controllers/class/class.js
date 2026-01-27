@@ -5,7 +5,41 @@ const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
-    // Gets a class by id
+    /**
+     * @swagger
+     * /api/v1/class/{id}:
+     *   get:
+     *     summary: Get class information
+     *     tags:
+     *       - Class
+     *     description: Returns detailed information about a class session, including students and polls
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Class information retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Class'
+     *       403:
+     *         description: User is not logged into the selected class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not started or not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.get("/class/:id", async (req, res) => {
         let classId = req.params.id;
 

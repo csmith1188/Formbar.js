@@ -1,15 +1,80 @@
 const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@controllers/middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
 const classService = require("@services/class-service");
 
 module.exports = (router) => {
     /**
-     * POST /api/class/create
-     * Creates a new class
-     * Body: {
-     *   name: string (required)
-     * }
+     * @swagger
+     * /api/v1/class/create:
+     *   post:
+     *     summary: Create a new class
+     *     tags:
+     *       - Class
+     *     description: |
+     *       Creates a new class.
+     *
+     *       **Required Permission:** Global Teacher permission (level 4)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - name
+     *             properties:
+     *               name:
+     *                 type: string
+     *                 example: "Math 101"
+     *     responses:
+     *       200:
+     *         description: Class created successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: "Class created successfully"
+     *                 classId:
+     *                   type: string
+     *                   example: "abc123"
+     *       400:
+     *         description: Invalid class name or missing name
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/class/create", hasPermission(TEACHER_PERMISSIONS), async (req, res) => {
         try {

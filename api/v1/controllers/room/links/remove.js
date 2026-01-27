@@ -1,10 +1,60 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { dbRun } = require("@modules/database");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@modules/middleware/permission-check");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
-    // Removes a link to a class by id
+    /**
+     * @swagger
+     * /api/v1/room/{id}/links/remove:
+     *   post:
+     *     summary: Remove a link from a room
+     *     tags:
+     *       - Room - Links
+     *     description: Removes a link from a classroom (requires teacher permissions)
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - name
+     *             properties:
+     *               name:
+     *                 type: string
+     *                 example: "Course Website"
+     *     responses:
+     *       200:
+     *         description: Link removed successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: "Link removed successfully."
+     *       400:
+     *         description: Name is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     router.post("/room/:id/links/remove", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
         const { name } = req.body;

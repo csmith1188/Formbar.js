@@ -1,6 +1,7 @@
-// Imported modules
+// Support module aliases for importing
 require("module-alias/register");
 
+// Imported modules
 const express = require("express");
 require("express-async-errors"); // To handle async errors in express routes
 
@@ -65,31 +66,10 @@ io.use((socket, next) => {
     }
 });
 
-// Allows express to parse requests
+// Handle cors
 const cors = require("cors");
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
-          .map((origin) => origin.trim())
-          .filter(Boolean)
-    : [];
+app.use(cors({ origin: true }));
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests with no Origin header (e.g., mobile apps, curl)
-            if (!origin) {
-                return callback(null, true);
-            }
-
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-
-            return callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-    })
-);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 

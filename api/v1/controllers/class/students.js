@@ -1,12 +1,67 @@
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll } = require("@modules/database");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
-    // Gets the students of a class
+    /**
+     * @swagger
+     * /api/v1/class/{id}/students:
+     *   get:
+     *     summary: Get students in a class
+     *     tags:
+     *       - Class
+     *     description: |
+     *       Returns a list of students enrolled in a class.
+     *
+     *       **Required Permission:** Class-specific `manageClass` permission (default: Teacher)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Students retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Student'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.get("/class/:id/students", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         // Get the class key from the request parameters and log the request details
         const classId = req.params.id;
