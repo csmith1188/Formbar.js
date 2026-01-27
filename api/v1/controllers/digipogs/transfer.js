@@ -33,6 +33,7 @@ module.exports = (router) => {
      *             required:
      *               - to
      *               - amount
+     *               - pin
      *             properties:
      *               to:
      *                 type: string
@@ -42,6 +43,14 @@ module.exports = (router) => {
      *                 type: integer
      *                 example: 5
      *                 description: Number of digipogs to transfer
+     *               pin:
+     *                 type: string
+     *                 example: "1234"
+     *                 description: User's PIN for authentication
+     *               reason:
+     *                 type: string
+     *                 example: "Payment for services"
+     *                 description: Optional reason for the transfer
      *     responses:
      *       200:
      *         description: Digipogs transferred successfully
@@ -73,13 +82,10 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/digipogs/transfer", httpPermCheck("transferDigipogs"), async (req, res) => {
-        const { to, amount, ...rest } = req.body || {};
+        const { to, amount, pin, reason } = req.body || {};
 
         // Derive the authenticated user ID from the server-side context, not from client input
-        const from =
-            (req.user && (req.user.id || req.user.userId)) ||
-            req.userId ||
-            (req.session && (req.session.userId || req.session.id));
+        const from = (req.user && (req.user.id || req.user.userId)) || req.userId || (req.session && (req.session.userId || req.session.id));
 
         if (!from) {
             throw new AppError({
@@ -89,10 +95,11 @@ module.exports = (router) => {
         }
 
         const transferPayload = {
-            ...rest,
+            from,
             to,
             amount,
-            from,
+            pin,
+            ...(reason !== undefined && { reason }),
         };
 
         const result = await transferDigipogs(transferPayload);
