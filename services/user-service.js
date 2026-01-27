@@ -5,6 +5,8 @@ const { dbGet, dbRun } = require("@modules/database");
 const { frontendUrl } = require("@modules/config");
 const { hash } = require("bcrypt");
 const crypto = require("crypto");
+const AppError = require("@errors/app-error");
+const NotFoundError = require("@errors/not-found-error");
 
 let passwordResetTemplate;
 
@@ -20,7 +22,7 @@ function loadPasswordResetTemplate() {
     } catch (err) {
         // Log the underlying error for diagnostics, but throw a controlled error outward.
         console.error("Failed to load password reset email template:", err);
-        throw new Error("Failed to load password reset email template.");
+        throw new AppError("Failed to load password reset email template.", 500);
     }
 }
 
@@ -40,7 +42,7 @@ async function requestPasswordReset(email) {
 async function resetPassword(password, token) {
     const user = await dbGet("SELECT * FROM users WHERE secret = ?", [token]);
     if (!user) {
-        throw new Error("Password reset token is invalid or has expired.");
+        throw new NotFoundError("Password reset token is invalid or has expired.");
     }
 
     const hashedPassword = await hash(password, 10);

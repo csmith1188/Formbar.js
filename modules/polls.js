@@ -116,7 +116,7 @@ async function createPoll(classId, pollData, userSession) {
  *
  * Examples:
  * - updatePoll(classId, {status: false}, session) - Ends the poll
- * - updatePoll(classId, {status: true}, session) - Resumes the poll
+ * - updatePoll(classId, {success: true}, session) - Resumes the poll
  * - updatePoll(classId, {}, session) - Clears the poll (empty object)
  */
 async function updatePoll(classId, options, userSession) {

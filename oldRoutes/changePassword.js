@@ -1,9 +1,9 @@
-const { logger } = require("../modules/logger");
-const { sendMail } = require("../modules/mail.js");
-const { database } = require("../modules/database.js");
-const { hash } = require("../modules/crypto.js");
-const { logNumbers } = require("../modules/config.js");
-const { dbRun, dbGet } = require("../modules/database");
+const { logger } = require("@modules/logger");
+const { sendMail } = require("@modules/mail.js");
+const { database } = require("@modules/database.js");
+const { hash } = require("@modules/crypto.js");
+const { logNumbers } = require("@modules/config.js");
+const { dbRun, dbGet } = require("@modules/database");
 
 module.exports = {
     run(app) {

@@ -1,8 +1,8 @@
-const { isAuthenticated, isVerified } = require("../api/v1/controllers/middleware/authentication");
-const { classInformation } = require("../modules/class/classroom");
-const { logNumbers } = require("../modules/config");
-const { logger } = require("../modules/logger");
-const { TEACHER_PERMISSIONS } = require("../modules/permissions");
+const { isAuthenticated, isVerified } = require("@modules/middleware/authentication");
+const { classInformation } = require("@modules/class/classroom");
+const { logNumbers } = require("@modules/config");
+const { logger } = require("@modules/logger");
+const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = {
     run(app) {

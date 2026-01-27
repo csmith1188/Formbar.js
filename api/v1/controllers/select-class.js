@@ -1,10 +1,13 @@
-const { isAuthenticated, permCheck } = require("@controllers/middleware/authentication");
+const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
-const { database } = require("@modules/database");
 const { joinRoomByCode } = require("@modules/joinRoom");
 const { logger } = require("@modules/logger");
 const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
+const ValidationError = require("@errors/validation-error");
+const ForbiddenError = require("@errors/forbidden-error");
+const NotFoundError = require("@errors/not-found-error");
+const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     /**
@@ -35,17 +38,12 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.get("/selectClass", isAuthenticated, permCheck, async (req, res) => {
-        try {
-            logger.log("info", `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
-            let joinedClasses = await getUserJoinedClasses(req.session.user.id);
-            joinedClasses = joinedClasses.filter((classroom) => classroom.permissions !== 0);
+        let joinedClasses = await getUserJoinedClasses(req.session.user.id);
+        joinedClasses = joinedClasses.filter((classroom) => classroom.permissions !== 0);
 
-            res.json({ joinedClasses: joinedClasses });
-        } catch (err) {
-            logger.log("error", err.stack);
-            res.status(500).json({ error: `There was a server error. Try again.` });
-        }
+        res.json({ joinedClasses: joinedClasses });
     });
 
     /**
@@ -105,57 +103,50 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/selectClass", isAuthenticated, permCheck, async (req, res) => {
-        try {
-            let classId = req.body.id;
-            let classCode = req.body.key;
+        let classId = req.body.id;
+        let classCode = req.body.key;
 
-            // Validate that either classId or classCode is provided
-            if (!classCode && !classId) {
-                return res.status(400).json({ error: "Either class ID or class code must be provided." });
+        // Validate that either classId or classCode is provided
+        if (!classCode && !classId) {
+            throw new ValidationError("Either class ID or class code must be provided.");
+        }
+
+        if (!classCode) {
+            // Check if the user is in the class with the class id provided
+            const userInClass = await isUserInClass(req.session.user.id, classId);
+
+            if (!userInClass) {
+                throw new ForbiddenError("You do not have permission to access this class.");
             }
+
+            classCode = await getClassCode(classId);
 
             if (!classCode) {
-                // Check if the user is in the class with the class id provided
-                const userInClass = await isUserInClass(req.session.user.id, classId);
-
-                if (!userInClass) {
-                    return res.status(403).json({ error: "You do not have permission to access this class." });
-                }
-
-                classCode = await getClassCode(classId);
-
-                if (!classCode) {
-                    return res.status(404).json({ error: "Class not found." });
-                }
+                throw new NotFoundError("Class not found.");
             }
-
-            logger.log("info", `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`);
-            const classJoinStatus = await joinRoomByCode(classCode, req.session.user);
-            if (typeof classJoinStatus === "string") {
-                // joinRoomByCode returned an error message
-                return res.status(400).json({ error: classJoinStatus });
-            }
-
-            // If class code is provided, get classId
-            if (classCode) {
-                classCode = classCode.toLowerCase();
-
-                classId = await getClassIdByCode(classCode);
-                if (!classId) {
-                    return res.status(404).json({ error: "Class not found." });
-                }
-
-                req.session.classId = classId;
-            }
-
-            await setClassOfApiSockets(classInformation.users[req.session.email].API, classId);
-            if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
-                await emitToUser(req.session.email, "reload");
-            }
-            res.json({ success: true });
-        } catch (err) {
-            logger.log("error", err.stack);
-            res.status(500).json({ error: `There was a server error. Try again.` });
         }
+
+        logger.log("info", `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`);
+        const classJoinStatus = await joinRoomByCode(classCode, req.session.user);
+        if (typeof classJoinStatus === "string") {
+            // joinRoomByCode returned an error message
+            throw new AppError(classJoinStatus);
+        }
+
+        // If class code is provided, get classId
+        classCode = classCode.toLowerCase();
+
+        classId = await getClassIdByCode(classCode);
+        if (!classId) {
+            throw new NotFoundError("Class not found.");
+        }
+
+        req.session.classId = classId;
+
+        await setClassOfApiSockets(classInformation.users[req.session.email].API, classId);
+        if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
+            await emitToUser(req.session.email, "reload");
+        }
+        res.json({ success: true });
     });
 };

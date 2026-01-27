@@ -1,5 +1,5 @@
-const { logger } = require("../modules/logger");
-const { logNumbers } = require("../modules/config");
+const { logger } = require("@modules/logger");
+const { logNumbers } = require("@modules/config");
 const fs = require("fs");
 
 module.exports = {

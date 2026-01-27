@@ -1,25 +1,24 @@
-const { logger } = require("@modules/logger");
-const { httpPermCheck } = require("../middleware/permission-check");
-const { leaveClass, leaveRoom } = require("@modules/class/class");
+const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { leaveClass } = require("@modules/class/class");
+const ForbiddenError = require("@errors/forbidden-error");
+const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
-    try {
-        // Leaves the current class session
-        // The user is still attached to the classroom
-        router.post("/class/:id/leave", httpPermCheck("leaveClass"), async (req, res) => {
-            try {
-                const result = leaveClass(socket);
-                if (!result) {
-                    return res.status(403).json({ message: "Unauthorized" });
-                }
+    // Leaves the current class session
+    // The user is still attached to the classroom
+    router.post("/class/:id/leave", httpPermCheck("leaveClass"), async (req, res) => {
+        const classId = req.params.id;
 
-                res.status(200).json({ message: "Success" });
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        // Validate that classId is provided
+        if (!classId) {
+            throw new ValidationError("Class ID is required.");
+        }
+
+        const result = leaveClass(req.session, req.params.id);
+        if (!result) {
+            throw new ForbiddenError("Unauthorized");
+        }
+
+        res.status(200).json({ success: true });
+    });
 };

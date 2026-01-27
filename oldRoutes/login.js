@@ -1,12 +1,12 @@
-const { hash, compare } = require("../modules/crypto");
-const { database, dbRun, dbGet, dbGetAll } = require("../modules/database");
-const { classInformation } = require("../modules/class/classroom");
-const { settings, logNumbers } = require("../modules/config");
-const { logger } = require("../modules/logger");
-const { Student } = require("../modules/student");
-const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions");
-const { managerUpdate } = require("../modules/socketUpdates");
-const { sendMail, limitStore, RATE_LIMIT } = require("../modules/mail.js");
+const { hash, compare } = require("@modules/crypto");
+const { database, dbRun, dbGet, dbGetAll } = require("@modules/database");
+const { classInformation } = require("@modules/class/classroom");
+const { settings, logNumbers } = require("@modules/config");
+const { logger } = require("@modules/logger");
+const { Student } = require("@modules/student");
+const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
+const { managerUpdate } = require("@modules/socketUpdates");
+const { sendMail, limitStore, RATE_LIMIT } = require("@modules/mail.js");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 

@@ -1,5 +1,6 @@
-const { logger } = require("@modules/logger");
-const authService = require("../../services/auth-service");
+const authService = require("@services/auth-service");
+const ValidationError = require("@errors/validation-error");
+const AuthError = require("@errors/auth-error");
 
 module.exports = (router) => {
     /**
@@ -52,21 +53,16 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/auth/refresh", async (req, res) => {
-        try {
-            const { token } = req.body;
-            if (!token) {
-                return res.status(400).json({ error: "A refresh token is required." });
-            }
-
-            const result = await authService.refreshLogin(token);
-            if (result.code) {
-                return res.status(401).json({ error: result });
-            }
-
-            res.status(200).json({ token: result });
-        } catch (err) {
-            logger.log("error", err.stack);
-            res.status(500).json({ error: "There was a server error. Please try again." });
+        const { token } = req.body;
+        if (!token) {
+            throw new ValidationError("A refresh token is required.");
         }
+
+        const result = await authService.refreshLogin(token);
+        if (result.code) {
+            throw new AuthError(result);
+        }
+
+        res.status(200).json({ token: result });
     });
 };
