@@ -14,9 +14,9 @@ module.exports = (router) => {
      *     description: |
      *       Awards digipogs to a user.
      *
-     *       **Required Permission:** Class-specific `userDefaults` permission (default: Guest) OR Global Teacher permission (level 4)
+     *       **Required Permission:** Class-specific `MANAGE_CLASS` permission (typically Teacher or Manager) OR global permission level >= 4 (Teacher or above)
      *
-     *       **Permission Levels:**
+     *       **Permission Levels (global):**
      *       - 1: Guest
      *       - 2: Student
      *       - 3: Moderator
