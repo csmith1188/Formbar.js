@@ -10,7 +10,20 @@ module.exports = (router) => {
      *     summary: Transfer digipogs to another user
      *     tags:
      *       - Digipogs
-     *     description: Transfers digipogs from your account to another user
+     *     description: |
+     *       Transfers digipogs from your account to another user.
+     *
+     *       **Required Permission:** Global Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     requestBody:
      *       required: true
      *       content:
@@ -46,6 +59,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       500:
      *         description: Transfer failed
      *         content:

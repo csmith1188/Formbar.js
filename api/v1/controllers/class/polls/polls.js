@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Get current poll in a class
      *     tags:
      *       - Class - Polls
-     *     description: Returns the current poll data for a class, including status and responses
+     *     description: |
+     *       Returns the current poll data for a class, including status and responses.
+     *
+     *       **Required Permission:** Must be a member of the class (Class-specific `seePoll` permission, default: Guest)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -26,6 +39,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Poll'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: User is not logged into the selected class
      *         content:

@@ -12,7 +12,10 @@ module.exports = (router) => {
      *     summary: Login with email and password
      *     tags:
      *       - Authentication
-     *     description: Authenticates a user and returns access and refresh tokens
+     *     description: |
+     *       Authenticates a user and returns access and refresh tokens.
+     *
+     *       **Required Permission:** None (public endpoint)
      *     requestBody:
      *       required: true
      *       content:

@@ -9,7 +9,20 @@ module.exports = (router) => {
      *     summary: Join a class session
      *     tags:
      *       - Class
-     *     description: Joins the current class session as a participant
+     *     description: |
+     *       Joins the current class session as a participant.
+     *
+     *       **Required Permission:** Global Guest permission (level 1)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -24,6 +37,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Unauthorized to join this class
      *         content:

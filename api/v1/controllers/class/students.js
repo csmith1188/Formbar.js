@@ -13,7 +13,20 @@ module.exports = (router) => {
      *     summary: Get students in a class
      *     tags:
      *       - Class
-     *     description: Returns a list of students enrolled in a class (requires class management permissions)
+     *     description: |
+     *       Returns a list of students enrolled in a class.
+     *
+     *       **Required Permission:** Class-specific `manageClass` permission (default: Teacher)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -30,6 +43,12 @@ module.exports = (router) => {
      *               type: array
      *               items:
      *                 $ref: '#/components/schemas/Student'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

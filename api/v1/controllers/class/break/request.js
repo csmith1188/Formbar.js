@@ -13,7 +13,20 @@ module.exports = (router) => {
      *     summary: Request a break
      *     tags:
      *       - Class - Breaks
-     *     description: Submits a break request for a class
+     *     description: |
+     *       Submits a break request for a class.
+     *
+     *       **Required Permission:** Class-specific Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -46,6 +59,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Not authorized to request a break in this class
      *         content:

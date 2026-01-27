@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Get class permissions
      *     tags:
      *       - Class
-     *     description: Returns the permissions configuration for a class
+     *     description: |
+     *       Returns the permissions configuration for a class.
+     *
+     *       **Required Permission:** Must be a member of the class (any permission level)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -25,8 +38,13 @@ module.exports = (router) => {
      *         content:
      *           application/json:
      *             schema:
-     *               type: object
-     *               description: Class permissions configuration
+     *               $ref: '#/components/schemas/ClassPermission'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: User is not logged into the selected class
      *         content:

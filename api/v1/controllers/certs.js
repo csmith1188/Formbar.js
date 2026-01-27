@@ -8,7 +8,10 @@ module.exports = (router) => {
      *     summary: Get public key certificate
      *     tags:
      *       - System
-     *     description: Returns the public key certificate in PEM format
+     *     description: |
+     *       Returns the public key certificate in PEM format.
+     *
+     *       **Required Permission:** None (public endpoint)
      *     responses:
      *       200:
      *         description: Public key returned successfully

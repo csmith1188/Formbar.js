@@ -12,7 +12,20 @@ module.exports = (router) => {
      *     summary: End your own break
      *     tags:
      *       - Class - Breaks
-     *     description: Ends the current user's break in a class
+     *     description: |
+     *       Ends the current user's break in a class.
+     *
+     *       **Required Permission:** Class-specific Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -27,6 +40,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Not authorized to end breaks in this class
      *         content:

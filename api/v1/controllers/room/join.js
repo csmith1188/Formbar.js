@@ -9,7 +9,20 @@ module.exports = (router) => {
      *     summary: Join a room with a code
      *     tags:
      *       - Room
-     *     description: Joins a classroom using a room code
+     *     description: |
+     *       Joins a classroom using a room code.
+     *
+     *       **Required Permission:** Global Guest permission (level 1)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: code
@@ -26,6 +39,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      */
     router.post("/room/:code/join", httpPermCheck("joinRoom"), async (req, res) => {
         await joinRoom(req.session, req.params.code);

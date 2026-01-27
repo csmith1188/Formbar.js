@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Create a new class
      *     tags:
      *       - Class
-     *     description: Creates a new class (requires teacher permissions)
+     *     description: |
+     *       Creates a new class.
+     *
+     *       **Required Permission:** Global Teacher permission (level 4)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     requestBody:
      *       required: true
      *       content:
@@ -44,6 +57,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

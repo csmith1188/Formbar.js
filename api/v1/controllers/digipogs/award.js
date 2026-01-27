@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Award digipogs to a user
      *     tags:
      *       - Digipogs
-     *     description: Awards digipogs to a user (requires class management permissions)
+     *     description: |
+     *       Awards digipogs to a user.
+     *
+     *       **Required Permission:** Class-specific `userDefaults` permission (default: Guest) OR Global Teacher permission (level 4)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     requestBody:
      *       required: true
      *       content:
@@ -36,6 +49,12 @@ module.exports = (router) => {
      *                 success:
      *                   type: boolean
      *                   example: true
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

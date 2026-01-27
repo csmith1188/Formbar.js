@@ -10,7 +10,20 @@ module.exports = (router) => {
      *     summary: Clear the current poll
      *     tags:
      *       - Class - Polls
-     *     description: Clears the current poll for a class (requires poll control permissions)
+     *     description: |
+     *       Clears the current poll for a class.
+     *
+     *       **Required Permission:** Class-specific `controlPoll` permission (default: Moderator)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -25,6 +38,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

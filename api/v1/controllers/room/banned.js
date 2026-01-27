@@ -13,7 +13,20 @@ module.exports = (router) => {
      *     summary: Get banned users in a class
      *     tags:
      *       - Class
-     *     description: Returns a list of users banned from a classroom (requires teacher permissions)
+     *     description: |
+     *       Returns a list of users banned from a classroom.
+     *
+     *       **Required Permission:** Global Teacher permission (level 4)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -37,6 +50,12 @@ module.exports = (router) => {
      *                     type: string
      *                   displayName:
      *                     type: string
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

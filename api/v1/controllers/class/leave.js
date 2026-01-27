@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Leave a class session
      *     tags:
      *       - Class
-     *     description: Leaves the current class session. The user is still attached to the classroom.
+     *     description: |
+     *       Leaves the current class session. The user is still attached to the classroom.
+     *
+     *       **Required Permission:** Global Guest permission (level 1)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -32,6 +45,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Unauthorized
      *         content:

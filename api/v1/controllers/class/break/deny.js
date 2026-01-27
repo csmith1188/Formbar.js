@@ -12,7 +12,20 @@ module.exports = (router) => {
      *     summary: Deny a student's break request
      *     tags:
      *       - Class - Breaks
-     *     description: Denies a break request for a student in a class
+     *     description: |
+     *       Denies a break request for a student in a class.
+     *
+     *       **Required Permission:** Class-specific `breakHelp` permission (default: Moderator)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -29,6 +42,12 @@ module.exports = (router) => {
      *     responses:
      *       200:
      *         description: Break request denied successfully
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Not authorized to deny breaks in this class
      *         content:

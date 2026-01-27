@@ -11,7 +11,20 @@ module.exports = (router) => {
      *     summary: Get manager data
      *     tags:
      *       - Manager
-     *     description: Retrieves all users and classrooms for manager view (requires manager permissions)
+     *     description: |
+     *       Retrieves all users and classrooms for manager view.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     responses:
      *       200:
      *         description: Manager data retrieved successfully
@@ -19,6 +32,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/ManagerData'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Insufficient permissions
      *         content:

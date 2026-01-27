@@ -12,7 +12,20 @@ module.exports = (router) => {
      *     summary: Request help in a class
      *     tags:
      *       - Class - Help
-     *     description: Submits a help request in a class session
+     *     description: |
+     *       Submits a help request in a class session.
+     *
+     *       **Required Permission:** Class-specific Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -27,6 +40,12 @@ module.exports = (router) => {
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
      *       403:
      *         description: Not authorized to request help in this class
      *         content:
