@@ -58,8 +58,8 @@ function createServer() {
         Object.keys(specs.paths)
             .sort((a, b) => {
                 // Count path segments
-                const segmentsA = a.split('/').length;
-                const segmentsB = b.split('/').length;
+                const segmentsA = a.split("/").length;
+                const segmentsB = b.split("/").length;
 
                 // If different number of segments, shorter path comes first
                 if (segmentsA !== segmentsB) {
@@ -69,17 +69,21 @@ function createServer() {
                 // If same number of segments, sort alphabetically
                 return a.localeCompare(b);
             })
-            .forEach(key => {
+            .forEach((key) => {
                 sortedPaths[key] = specs.paths[key];
             });
         specs.paths = sortedPaths;
     }
 
-    app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs, {
-        swaggerOptions: {
-            operationsSorter: "method", // Group by HTTP method (GET, POST, etc.)
-        }
-    }));
+    app.use(
+        "/docs",
+        swaggerUi.serve,
+        swaggerUi.setup(specs, {
+            swaggerOptions: {
+                operationsSorter: "method", // Group by HTTP method (GET, POST, etc.)
+            },
+        })
+    );
 
     return { app, io, http };
 }
