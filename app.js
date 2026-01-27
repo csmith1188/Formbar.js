@@ -66,37 +66,9 @@ io.use((socket, next) => {
     }
 });
 
-// Allows express to parse requests
+// Handle cors
 const cors = require("cors");
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
-          .map((origin) => origin.trim())
-          .filter(Boolean)
-    : [];
-
-app.use(
-    cors((req, callback) => {
-        const origin = req.header("Origin");
-
-        // No Origin header → allow (curl, mobile apps)
-        if (!origin) {
-            return callback(null, { origin: true });
-        }
-
-        const requestOrigin = `${req.protocol}://${req.get("host")}`;
-
-        // Allow same-origin
-        if (origin === requestOrigin) {
-            return callback(null, { origin: true });
-        }
-
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, { origin: true });
-        }
-
-        return callback(new Error("Not allowed by CORS"));
-    })
-);
+app.use(cors({ origin: true }));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
