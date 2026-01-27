@@ -28,7 +28,7 @@ function initSocketRoutes() {
 
         // Import middleware
         const socketMiddlewareFiles = fs.readdirSync("./sockets/middleware").filter((file) => file.endsWith(".js"));
-        const middlewares = socketMiddlewareFiles.map((file) => require(`./sockets/middleware/${file}`));
+        const middlewares = socketMiddlewareFiles.map((file) => require(`./middleware/${file}`));
         middlewares.sort((a, b) => a.order - b.order); // Sort the middleware functions by their order
         for (const middleware of middlewares) {
             middleware.run(socket, socketUpdates);
