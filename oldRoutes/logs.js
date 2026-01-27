@@ -1,7 +1,7 @@
-const { permCheck, isAuthenticated } = require("../api/v1/controllers/middleware/authentication");
-const { logger } = require("../modules/logger");
+const { permCheck, isAuthenticated } = require("@modules/middleware/authentication");
+const { logger } = require("@modules/logger");
 const fs = require("fs");
-const { logNumbers } = require("../modules/config");
+const { logNumbers } = require("@modules/config");
 
 module.exports = {
     run(app) {

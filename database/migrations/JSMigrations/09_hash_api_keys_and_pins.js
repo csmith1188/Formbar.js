@@ -1,8 +1,8 @@
 // 09_hash_api_keys_and_pins.js
 // This migration hashes all existing API keys and PINs in the users table
 
-const { hash } = require("../../../modules/crypto");
-const { dbGet, dbRun, dbGetAll } = require("../../../modules/database");
+const { hash } = require("@modules/crypto");
+const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 
 module.exports = {
     async run(database) {

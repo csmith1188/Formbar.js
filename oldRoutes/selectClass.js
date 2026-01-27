@@ -1,10 +1,10 @@
-const { isAuthenticated, permCheck } = require("../api/v1/controllers/middleware/authentication");
-const { classInformation } = require("../modules/class/classroom");
-const { logNumbers } = require("../modules/config");
-const { database, dbGetAll } = require("../modules/database");
-const { joinRoomByCode } = require("../modules/joinRoom");
-const { logger } = require("../modules/logger");
-const { setClassOfApiSockets, userSockets, emitToUser } = require("../modules/socketUpdates");
+const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
+const { classInformation } = require("@modules/class/classroom");
+const { logNumbers } = require("@modules/config");
+const { database, dbGetAll } = require("@modules/database");
+const { joinRoomByCode } = require("@modules/joinRoom");
+const { logger } = require("@modules/logger");
+const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
 
 module.exports = {
     run(app) {

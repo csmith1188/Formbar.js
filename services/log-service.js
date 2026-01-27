@@ -1,5 +1,6 @@
 const fs = require("fs").promises;
 const logDir = "logs/";
+const AppError = require("@errors/app-error");
 
 async function getAllLogs() {
     try {
@@ -18,7 +19,7 @@ async function getAllLogs() {
         );
         return logs.filter(Boolean); // Remove null values
     } catch (err) {
-        throw new Error(`Failed to retrieve logs: ${err.message}`);
+        throw new AppError(`Failed to retrieve logs: ${err.message}`, 500);
     }
 }
 
@@ -27,7 +28,7 @@ async function getLog(logFileName) {
         const content = await fs.readFile(`${logDir}${logFileName}`, "utf8");
         return content;
     } catch (err) {
-        throw new Error(`Failed to read log file ${logFileName}: ${err.message}`);
+        throw new AppError(`Failed to read log file ${logFileName}: ${err.message}`, 500);
     }
 }
 
