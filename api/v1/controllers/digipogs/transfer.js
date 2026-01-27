@@ -72,8 +72,30 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/digipogs/transfer", httpPermCheck("transfer"), async (req, res) => {
-        const result = await transferDigipogs(req.body);
+    router.post("/digipogs/transfer", httpPermCheck("transferDigipogs"), async (req, res) => {
+        const { to, amount, ...rest } = req.body || {};
+
+        // Derive the authenticated user ID from the server-side context, not from client input
+        const from =
+            (req.user && (req.user.id || req.user.userId)) ||
+            req.userId ||
+            (req.session && (req.session.userId || req.session.id));
+
+        if (!from) {
+            throw new AppError({
+                statusCode: 401,
+                message: "Unable to determine authenticated user for digipogs transfer.",
+            });
+        }
+
+        const transferPayload = {
+            ...rest,
+            to,
+            amount,
+            from,
+        };
+
+        const result = await transferDigipogs(transferPayload);
         if (!result.success) {
             throw new AppError(result);
         }
