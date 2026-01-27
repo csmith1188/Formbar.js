@@ -1,7 +1,7 @@
 const { logger } = require("@modules/logger");
 const { dbGet } = require("@modules/database");
 const { getUserOwnedClasses } = require("@modules/user/user");
-const { httpPermCheck } = require("../middleware/permission-check");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 
 module.exports = (router) => {
     try {

@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { setTags } = require("@modules/class/tags");
 const NotFoundError = require("@errors/not-found-error");
@@ -16,7 +16,44 @@ module.exports = (router) => {
         return res.status(200).json({ tags });
     });
 
-    // Set class tags
+    /**
+     * @swagger
+     * /api/v1/room/tags:
+     *   post:
+     *     summary: Set class tags
+     *     tags:
+     *       - Room
+     *     description: Sets the tags for the current classroom
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - tags
+     *             properties:
+     *               tags:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *                 example: ["math", "science"]
+     *     responses:
+     *       200:
+     *         description: Tags set successfully
+     *       400:
+     *         description: Tags must be an array of strings
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not found or not loaded
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.post("/room/tags", httpPermCheck("setTags"), async (req, res) => {
         const classId = req.session.user.classId;
         if (!classId || !classInformation.classrooms[classId]) {

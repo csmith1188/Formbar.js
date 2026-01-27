@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
 const ForbiddenError = require("@errors/forbidden-error");
@@ -6,7 +6,59 @@ const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    // Request a break in a class by class ID and user ID
+    /**
+     * @swagger
+     * /api/v1/class/{id}/break/request:
+     *   post:
+     *     summary: Request a break
+     *     tags:
+     *       - Class - Breaks
+     *     description: Submits a break request for a class
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - reason
+     *             properties:
+     *               reason:
+     *                 type: string
+     *                 example: "Need to use the restroom"
+     *     responses:
+     *       200:
+     *         description: Break request submitted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       400:
+     *         description: Reason is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Not authorized to request a break in this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.post("/class/:id/break/request", httpPermCheck("requestBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];

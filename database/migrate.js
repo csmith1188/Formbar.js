@@ -1,3 +1,6 @@
+// Support module aliases for importing
+require("module-alias/register");
+
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
 const { decrypt } = require("./modules/crypto"); // Old crypto module

@@ -1,9 +1,8 @@
-const { logger } = require("@modules/logger");
 const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 const { settings } = require("@modules/config");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getIpAccess } = require("@modules/webServer");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
 const authentication = require("@modules/middleware/authentication");
 const fs = require("fs");
 const ValidationError = require("@errors/validation-error");
@@ -79,7 +78,46 @@ module.exports = (router) => {
         res.status(200).json({ ok: true });
     });
 
-    // Remove IP
+    /**
+     * @swagger
+     * /api/v1/ip/{type}/{id}:
+     *   delete:
+     *     summary: Remove IP from access list
+     *     tags:
+     *       - IP Management
+     *     description: Removes an IP address from whitelist or blacklist (requires manager permissions)
+     *     parameters:
+     *       - in: path
+     *         name: type
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum: [whitelist, blacklist]
+     *         description: Type of IP list
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: IP entry ID
+     *     responses:
+     *       200:
+     *         description: IP removed successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ok:
+     *                   type: boolean
+     *                   example: true
+     *       400:
+     *         description: Invalid type
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     router.delete("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;

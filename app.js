@@ -1,6 +1,7 @@
-// Imported modules
+// Support module aliases for importing
 require("module-alias/register");
 
+// Imported modules
 const express = require("express");
 require("express-async-errors"); // To handle async errors in express routes
 

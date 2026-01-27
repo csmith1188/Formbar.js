@@ -1,6 +1,6 @@
 const { getAllLogs, getLog } = require("@services/log-service");
 const { logger } = require("@modules/logger");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {

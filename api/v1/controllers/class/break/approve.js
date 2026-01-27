@@ -1,11 +1,51 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    // Approves a break in a class by class ID and user ID
+    /**
+     * @swagger
+     * /api/v1/class/{id}/students/{userId}/break/approve:
+     *   get:
+     *     summary: Approve a student's break request
+     *     tags:
+     *       - Class - Breaks
+     *     description: Approves a break request for a student in a class
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Student user ID
+     *     responses:
+     *       200:
+     *         description: Break request approved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       403:
+     *         description: Not authorized to approve breaks in this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];

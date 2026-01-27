@@ -1,11 +1,45 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { endBreak } = require("@modules/class/break");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    // End a break in a class by class ID and user ID
+    /**
+     * @swagger
+     * /api/v1/class/{id}/break/end:
+     *   post:
+     *     summary: End your own break
+     *     tags:
+     *       - Class - Breaks
+     *     description: Ends the current user's break in a class
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Break ended successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       403:
+     *         description: Not authorized to end breaks in this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.post("/class/:id/break/end", httpPermCheck("endBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];

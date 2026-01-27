@@ -4,7 +4,42 @@ const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
-    // Gets the permissions of a class
+    /**
+     * @swagger
+     * /api/v1/class/{id}/permissions:
+     *   get:
+     *     summary: Get class permissions
+     *     tags:
+     *       - Class
+     *     description: Returns the permissions configuration for a class
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Permissions retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               description: Class permissions configuration
+     *       403:
+     *         description: User is not logged into the selected class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not started
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.get("/class/:id/permissions", async (req, res) => {
         // Get the class key from the request parameters and log the request details
         let classId = req.params.id;

@@ -4,7 +4,41 @@ const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
-    // Gets the polls of a class
+    /**
+     * @swagger
+     * /api/v1/class/{id}/polls:
+     *   get:
+     *     summary: Get current poll in a class
+     *     tags:
+     *       - Class - Polls
+     *     description: Returns the current poll data for a class, including status and responses
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Poll data retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Poll'
+     *       403:
+     *         description: User is not logged into the selected class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: Class not started
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.get("/class/:id/polls", (req, res) => {
         // Get the class key from the request parameters
         let classId = req.params.id;

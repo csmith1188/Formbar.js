@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { dbGet } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
@@ -6,7 +6,48 @@ const ForbiddenError = require("@errors/forbidden-error");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
-    // Retrieves the current class the user is in
+    /**
+     * @swagger
+     * /api/v1/user/{id}/class:
+     *   get:
+     *     summary: Get user's active class
+     *     tags:
+     *       - Users
+     *     description: Retrieves the current class the user is in
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: User ID
+     *     responses:
+     *       200:
+     *         description: Active class retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 id:
+     *                   type: string
+     *                   example: "abc123"
+     *                 name:
+     *                   type: string
+     *                   example: "Math 101"
+     *       403:
+     *         description: Not authorized to view this user's active class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: User is not in a class or class not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     */
     router.get("/user/:id/class", httpPermCheck("getActiveClass"), async (req, res) => {
         const userId = req.params.id;
 
