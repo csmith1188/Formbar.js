@@ -1,8 +1,6 @@
 const { dbGet } = require("@modules/database");
-const { logger } = require("@modules/logger");
 const { isVerified, permCheck } = require("@modules/middleware/authentication");
 const pools = require("@modules/pools");
-const AppError = require("@errors/app-error");
 
 module.exports = {
     run(router) {

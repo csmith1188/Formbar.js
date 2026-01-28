@@ -1,7 +1,9 @@
 // Imported modules
 require("module-alias/register");
+
 const express = require("express");
 require("express-async-errors"); // To handle async errors in express routes
+
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
 const fs = require("fs");
@@ -17,7 +19,7 @@ if (!fs.existsSync("database/database.db")) {
 const { logger } = require("./modules/logger.js");
 const { classInformation } = require("./modules/class/classroom.js");
 const { initSocketRoutes } = require("./sockets/init.js");
-const { app, io, http, getIpAccess } = require("./modules/webServer.js");
+const { app, io, http } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
 
@@ -66,7 +68,6 @@ io.use((socket, next) => {
 
 // Allows express to parse requests
 const cors = require("cors");
-const { error } = require("console");
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
     ? process.env.CORS_ALLOWED_ORIGINS.split(",")
           .map((origin) => origin.trim())

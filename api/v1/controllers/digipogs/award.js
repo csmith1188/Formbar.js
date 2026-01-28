@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { awardDigipogs } = require("@modules/digipogs");

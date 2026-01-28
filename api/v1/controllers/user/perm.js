@@ -1,5 +1,4 @@
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
 const { dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permissionCheck");

@@ -4,7 +4,6 @@ const { classInformation } = require("@modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll } = require("@modules/database");
 const NotFoundError = require("@errors/not-found-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Gets the students of a class

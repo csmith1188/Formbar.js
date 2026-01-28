@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { transferDigipogs } = require("@modules/digipogs");
 const AppError = require("@errors/app-error");

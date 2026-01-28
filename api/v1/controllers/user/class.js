@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { dbGet } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");

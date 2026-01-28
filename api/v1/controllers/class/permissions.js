@@ -2,7 +2,6 @@ const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Gets the permissions of a class

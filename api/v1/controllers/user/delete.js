@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { deleteUser } = require("@modules/user/userSession");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permissionCheck");
@@ -10,7 +9,7 @@ module.exports = (router) => {
         const userId = req.params.id;
         const result = await deleteUser(userId);
         if (result === true) {
-            res.status(200);
+            res.status(200).json({ success: true });
         } else {
             throw new AppError(result);
         }

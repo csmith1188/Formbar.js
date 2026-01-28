@@ -1,9 +1,7 @@
 const { createPoll } = require("@modules/polls");
-const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permissionCheck");
 const { parseJson } = require("@modules/middleware/parseJson");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     // Creates a poll from the data provided
@@ -34,6 +32,6 @@ module.exports = (router) => {
             : body;
 
         await createPoll(classId, pollData, req.session.user);
-        res.status(200).json({ message: "Success" });
+        res.status(200).json({ success: true });
     });
 };

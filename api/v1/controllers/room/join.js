@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permissionCheck");
 const { joinRoom } = require("@modules/class/class");
 

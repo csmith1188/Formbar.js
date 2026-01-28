@@ -25,6 +25,7 @@ module.exports = (err, req, res, next) => {
     }
 
     const response = {
+        success: false,
         error: {
             message: error.message,
         },

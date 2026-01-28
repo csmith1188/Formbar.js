@@ -1,9 +1,7 @@
-const { logger } = require("@modules/logger");
 const { settings } = require("@modules/config");
 const userService = require("@services/user-service");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
-const RateLimitError = require("@errors/rate-limit-error");
 
 module.exports = (router) => {
     router.patch("/user/me/password", async (req, res) => {
@@ -31,7 +29,7 @@ module.exports = (router) => {
         }
 
         if (!settings.emailEnabled) {
-            throw new AppError("Email service is not enabled. Password resets are not available at this time.");
+            throw new AppError("Email service is not enabled. Password resets are not available at this time.", 503);
         }
 
         await userService.requestPasswordReset(email);

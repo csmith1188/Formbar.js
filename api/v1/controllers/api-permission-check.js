@@ -1,6 +1,5 @@
 const { classInformation } = require("@modules/class/classroom");
 const { getUser } = require("@modules/user/user");
-const { logger } = require("@modules/logger");
 const ValidationError = require("@errors/validation-error");
 const ForbiddenError = require("@errors/forbidden-error");
 

@@ -1,6 +1,5 @@
 const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
-const { logNumbers } = require("@modules/config");
 const { logger } = require("@modules/logger");
 const AuthError = require("@errors/auth-error");
 

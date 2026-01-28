@@ -2,7 +2,6 @@ const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@controllers/middleware/permissionCheck");
 const classService = require("@services/class-service");
-const { validateClassroomName } = require("@services/class-service");
 
 module.exports = (router) => {
     /**
@@ -19,7 +18,7 @@ module.exports = (router) => {
                 return res.status(400).json({ error: "Class name is required" });
             }
 
-            const { valid, error } = validateClassroomName(name);
+            const { valid, error } = classService.validateClassroomName(name);
             if (!valid) {
                 return res.status(400).json({ error });
             }

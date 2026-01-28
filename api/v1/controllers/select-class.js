@@ -1,7 +1,6 @@
 const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
-const { database } = require("@modules/database");
 const { joinRoomByCode } = require("@modules/joinRoom");
 const { logger } = require("@modules/logger");
 const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
@@ -52,16 +51,14 @@ module.exports = (router) => {
         }
 
         // If class code is provided, get classId
-        if (classCode) {
-            classCode = classCode.toLowerCase();
+        classCode = classCode.toLowerCase();
 
-            classId = await getClassIdByCode(classCode);
-            if (!classId) {
-                throw new NotFoundError("Class not found.");
-            }
-
-            req.session.classId = classId;
+        classId = await getClassIdByCode(classCode);
+        if (!classId) {
+            throw new NotFoundError("Class not found.");
         }
+
+        req.session.classId = classId;
 
         await setClassOfApiSockets(classInformation.users[req.session.email].API, classId);
         if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
