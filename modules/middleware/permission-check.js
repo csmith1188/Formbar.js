@@ -4,6 +4,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
 const { PASSIVE_SOCKETS } = require("@modules/socketUpdates");
 const { camelCaseToNormal } = require("@modules/util");
+const { verifyToken } = require("@services/auth-service");
 const AuthError = require("@errors/auth-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
@@ -12,13 +13,45 @@ const ForbiddenError = require("@errors/forbidden-error");
 const endpointWhitelistMap = ["getOwnedClasses", "getActiveClass"];
 
 /**
+ * Helper function to extract user email from request.
+ * Checks session first (for backwards compatibility), then a JWT token in the Authorization header.
+ * If no email is present in the session, the Authorization header is missing, or JWT verification
+ * fails / does not yield an email (e.g. {@link verifyToken} returns an object with an `error`),
+ * this function returns {@code null} and the caller should treat the user as unauthenticated.
+ * @param {Object} req - Express request object
+ * @returns {string|null} User email, or null if it cannot be determined or the token is invalid.
+ */
+function getUserEmailFromRequest(req) {
+    // First check if session is already populated (backwards compatibility)
+    if (req.session && req.session.email) {
+        return req.session.email;
+    }
+
+    // Try to extract from JWT token in Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const decoded = verifyToken(authHeader);
+        if (!decoded.error && decoded.email) {
+            return decoded.email;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Middleware to check if a user has the required global permission.
  * @param {string|number} permission - The required permission level for the user.
  * @returns {Function} Express middleware function.
  */
 function hasPermission(permission) {
     return function (req, res, next) {
-        const user = classInformation.users[req.session.email];
+        const email = getUserEmailFromRequest(req);
+        if (!email) {
+            throw new AuthError("User not authenticated");
+        }
+
+        const user = classInformation.users[email];
         if (!user) {
             throw new AuthError("User not found");
         }
@@ -41,9 +74,14 @@ function hasClassPermission(classPermission) {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
 
+        const email = getUserEmailFromRequest(req);
+        if (!email) {
+            throw new AuthError("User not authenticated");
+        }
+
         // If classroom is active in memory, check from memory
         if (classroom) {
-            const user = classroom.students[req.session.user.email];
+            const user = classroom.students[email];
             if (!user) {
                 throw new AuthError("User not found in this class.");
             }
@@ -76,8 +114,12 @@ function httpPermCheck(event) {
             return next();
         }
 
-        const email = req.session.user.email;
-        const classId = req.session.user.classId;
+        const email = getUserEmailFromRequest(req);
+        if (!email) {
+            throw new AuthError("User not authenticated");
+        }
+
+        const classId = req.session?.user?.classId ?? classInformation.users[email]?.classId ?? null;
 
         if (!classInformation.classrooms[classId] && classId != null) {
             logger.log("info", [`[http permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`]);
@@ -93,6 +135,9 @@ function httpPermCheck(event) {
         if (!userData) {
             // Get the user data from the database
             userData = await dbGet("SELECT * FROM users WHERE email=?", [email]);
+            if (!userData) {
+                throw new AuthError("User not found");
+            }
             userData.classPermissions = await dbGet("SELECT permissions FROM classUsers WHERE studentId=? AND classId=?", [userData.id, classId]);
         }
 
@@ -104,7 +149,7 @@ function httpPermCheck(event) {
             return next();
         } else if (
             CLASS_SOCKET_PERMISSION_MAPPER[event] &&
-            classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
+            classInformation.classrooms[classId]?.permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
             userData.classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
         ) {
             logger.log("info", "[http permission check] Class socket permission settings check passed");
@@ -113,7 +158,7 @@ function httpPermCheck(event) {
             if (endpointWhitelistMap.includes(event)) {
                 const id = req.params.id;
                 const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
-                if (user.id == id) {
+                if (user && user.id == id) {
                     logger.log("info", `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
                     return next();
                 }
