@@ -13,10 +13,13 @@ const ForbiddenError = require("@errors/forbidden-error");
 const endpointWhitelistMap = ["getOwnedClasses", "getActiveClass"];
 
 /**
- * Helper function to extract user email from request
- * Checks session first (for backwards compatibility), then JWT token
+ * Helper function to extract user email from request.
+ * Checks session first (for backwards compatibility), then a JWT token in the Authorization header.
+ * If no email is present in the session, the Authorization header is missing, or JWT verification
+ * fails / does not yield an email (e.g. {@link verifyToken} returns an object with an `error`),
+ * this function returns {@code null} and the caller should treat the user as unauthenticated.
  * @param {Object} req - Express request object
- * @returns {string|null} User email or null if not found
+ * @returns {string|null} User email, or null if it cannot be determined or the token is invalid.
  */
 function getUserEmailFromRequest(req) {
     // First check if session is already populated (backwards compatibility)
@@ -116,7 +119,7 @@ function httpPermCheck(event) {
             throw new AuthError("User not authenticated");
         }
 
-        const classId = req.session?.user?.classId || null;
+        const classId = req.session?.user?.classId ?? classInformation.users[email]?.classId ?? null;
 
         if (!classInformation.classrooms[classId] && classId != null) {
             logger.log("info", [`[http permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`]);
