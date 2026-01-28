@@ -1,6 +1,6 @@
 const { dbGet } = require("@modules/database");
 const { getUserOwnedClasses } = require("@modules/user/user");
-const { hasClassPermission, hasPermission } = require("@modules/middleware/permission-check");
+const { hasPermission } = require("@modules/middleware/permission-check");
 const NotFoundError = require("@errors/not-found-error");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 
