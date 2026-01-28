@@ -8,10 +8,20 @@ module.exports = (err, req, res, next) => {
     const isAppError = err instanceof AppError;
     const isOperationalError = isAppError && err.isOperational;
 
+    // Handle unexpected errors
     if (!isAppError || !isOperationalError) {
+        
         statusCode = 500;
         error = new AppError("An unexpected error occurred.", statusCode);
-        logger.log("error", error.stack);
+        req.logger.error("request.crash", {
+            message: err.message,
+            stack: err.stack,
+        });
+
+    } else {
+        req.logger.warn("request.error", {
+            message: err.message,
+        });
     }
 
     const response = {

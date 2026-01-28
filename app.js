@@ -32,6 +32,7 @@ const sessionMiddleware = session({
 });
 
 const errorHandlerMiddleware = require("@modules/middleware/error-handler");
+const requestLoggerMiddleware = require("@modules/middleware/request-logger");
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
@@ -205,6 +206,9 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
+
+// Request Logging Middleware
+app.use(requestLoggerMiddleware);
 
 // Error handling middleware
 app.use(errorHandlerMiddleware);
