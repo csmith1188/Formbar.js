@@ -1,7 +1,8 @@
 const { dbGet } = require("@modules/database");
 const { getUserOwnedClasses } = require("@modules/user/user");
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { hasClassPermission, hasPermission } = require("@modules/middleware/permission-check");
 const NotFoundError = require("@errors/not-found-error");
+const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
     /**
@@ -35,7 +36,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/user/:id/ownedClasses", httpPermCheck("getOwnedClasses"), async (req, res) => {
+    router.get("/user/:id/ownedClasses", hasPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const userId = req.params.id;
         const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
         if (!user) {
