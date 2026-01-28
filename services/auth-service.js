@@ -56,7 +56,7 @@ async function refreshLogin(refreshToken) {
     // Verify the refresh token's signature and expiration before proceeding
     // This prevents the use of expired or tampered tokens
     try {
-        jwt.verify(refreshToken, privateKey, { algorithms: ["RS256"] });
+        jwt.verify(refreshToken, publicKey, { algorithms: ["RS256"] });
     } catch (err) {
         return invalidCredentials();
     }
