@@ -119,7 +119,7 @@ function httpPermCheck(event) {
             throw new AuthError("User not authenticated");
         }
 
-        const classId = req.session?.user?.classId || null;
+        const classId = req.session?.user?.classId ?? classInformation.users[email]?.classId ?? null;
 
         if (!classInformation.classrooms[classId] && classId != null) {
             logger.log("info", [`[http permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`]);
