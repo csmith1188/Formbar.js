@@ -4,10 +4,19 @@ const { deleteHelpTicket } = require("@modules/class/help");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    const deleteHelpHandler = async (req, res) => {
+        const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    };
+
     /**
      * @swagger
-     * /api/v1/class/{id}/students/{userId}/help/delete:
-     *   get:
+     * /api/v1/class/{id}/students/{userId}/help:
+     *   delete:
      *     summary: Delete a help request
      *     tags:
      *       - Class - Help
@@ -64,12 +73,74 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
+    router.delete("/class/:id/students/:userId/help", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), deleteHelpHandler);
+
+    /**
+     * @swagger
+     * /api/v1/class/{id}/students/{userId}/help/delete:
+     *   get:
+     *     summary: Delete a help request (DEPRECATED)
+     *     deprecated: true
+     *     tags:
+     *       - Class - Help
+     *     description: |
+     *       **DEPRECATED**: Use `DELETE /api/v1/class/{id}/students/{userId}/help` instead.
+     *
+     *       This endpoint will be removed in a future version. Deletes a help request from a class.
+     *
+     *       **Required Permission:** Class-specific `controlPoll` permission (default: Moderator)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID of the user whose help request to delete
+     *     responses:
+     *       200:
+     *         description: Help request deleted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/class/:id/students/:userId/help/delete", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
-        const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
-        if (result === true) {
-            res.status(200).json({ success: true });
-        } else {
-            throw new AppError(result, 500);
-        }
+        res.setHeader("X-Deprecated", "Use DELETE /api/v1/class/:id/students/:userId/help instead");
+        res.setHeader("Warning", '299 - "Deprecated API: Use DELETE /api/v1/class/:id/students/:userId/help instead. This endpoint will be removed in a future version."');
+        await deleteHelpHandler(req, res);
     });
 };

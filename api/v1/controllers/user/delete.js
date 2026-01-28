@@ -4,10 +4,20 @@ const { hasPermission } = require("@modules/middleware/permission-check");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    const deleteUserHandler = async (req, res) => {
+        const userId = req.params.id;
+        const result = await deleteUser(userId);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result);
+        }
+    };
+
     /**
      * @swagger
-     * /api/v1/user/{id}/delete:
-     *   get:
+     * /api/v1/user/{id}:
+     *   delete:
      *     summary: Delete a user
      *     tags:
      *       - Users
@@ -39,13 +49,50 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
+    router.delete("/user/:id", hasPermission(MANAGER_PERMISSIONS), deleteUserHandler);
+
+    /**
+     * @swagger
+     * /api/v1/user/{id}/delete:
+     *   get:
+     *     summary: Delete a user (DEPRECATED)
+     *     deprecated: true
+     *     tags:
+     *       - Users
+     *     description: |
+     *       **DEPRECATED**: Use `DELETE /api/v1/user/{id}` instead.
+     *
+     *       This endpoint will be removed in a future version. Deletes a user from Formbar (requires manager permissions)
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: User ID
+     *     responses:
+     *       200:
+     *         description: User deleted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Delete operation failed
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     router.get("/user/:id/delete", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        const userId = req.params.id;
-        const result = await deleteUser(userId);
-        if (result === true) {
-            res.status(200).json({ success: true });
-        } else {
-            throw new AppError(result);
-        }
+        res.setHeader("X-Deprecated", "Use DELETE /api/v1/user/:id instead");
+        res.setHeader("Warning", '299 - "Deprecated API: Use DELETE /api/v1/user/:id instead. This endpoint will be removed in a future version."');
+        await deleteUserHandler(req, res);
     });
 };
