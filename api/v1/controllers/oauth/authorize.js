@@ -1,13 +1,12 @@
-const { logger } = require("@modules/logger");
-const { classInformation } = require("@modules/class/classroom");
-const { Student } = require("@modules/student");
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
 const { requireQueryParam } = require("@modules/error-wrapper");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
-    router.get("/oauth/authorize", async (req, res) => {
+    router.get("/oauth/authorize", isAuthenticated, async (req, res) => {
         const { response_type, client_id, redirect_uri, scope, state } = req.query;
+        const { authorization } = req.headers;
 
         // If response_type is provided, validate it
         // If not, we can assume default behavior
@@ -21,9 +20,14 @@ module.exports = (router) => {
         requireQueryParam(scope, "scope");
         requireQueryParam(state, "state");
 
-        // Log the authorization request
-        logger.log("info", `[get /oauth/authorize] ip=(${req.ip}) client_id=(${client_id}) redirect_uri=(${redirect_uri}) scope=(${scope}) state=(${state})`);
+        // Create an authorization token for the client
+        const authorizationCode = authService.generateAuthorizationCode({ client_id, redirect_uri, scope, state, authorization });
 
+        // Build redirect URL
+        const url = new URL(redirect_uri);
+        url.searchParams.append("code", authorizationCode);
+        url.searchParams.append("state", state);
 
+        res.status(302).redirect(url.toString());
     });
 };

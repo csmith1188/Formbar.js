@@ -266,26 +266,75 @@ async function googleOAuth(email, displayName) {
  * Creates an authorization code for OAuth 2.0 authorization flow
  * @returns {string} A newly generated authorization code
  */
-function createAuthorizationCode(options = {}) {
-    const { client_id, redirect_uri, user_id, scope, state } = options;
-
+function generateAuthorizationCode({ client_id, redirect_uri, scope, state, authorization }) {
     requireInternalParam(client_id, "client_id");
     requireInternalParam(redirect_uri, "redirect_uri");
-    requireInternalParam(user_id, "user_id");
     requireInternalParam(scope, "scope");
     requireInternalParam(state, "state");
+    requireInternalParam(authorization, "authorization");
 
-    const authorizationCode = JWT.sign(
+    const userData = verifyToken(authorization);
+    if (userData.error) {
+        throw new AppError("Invalid authorization token provided.", 400);
+    }
+
+    return jwt.sign(
         {
-
-        }
+            sub: userData.id,
+            aud: client_id,
+            redirect_uri: redirect_uri,
+            scope: scope
+        },
+        privateKey,
+        { algorithm: "RS256", expiresIn: "5m" }
     )
 }
 
+function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
+    requireInternalParam(code, "code");
+    requireInternalParam(redirect_uri, "redirect_uri");
+    requireInternalParam(client_id, "client_id");
+
+    const authorizationCodeData = verifyToken(code);
+    if (authorizationCodeData.error) {
+        throw new AppError("Invalid authorization code provided.", 400);
+    }
+
+    const accessToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+
+    return {
+        success: true,
+        access_token: accessToken,
+        refresh_token: refreshToken
+    }
+}
+
+function exchangeRefreshTokenForAccessToken({ refresh_token }) {
+    requireInternalParam(refresh_token, "refresh_token");
+
+    const refreshTokenData = verifyToken(refresh_token);
+    if (refreshTokenData.error) {
+        throw new AppError("Invalid refresh token provided.", 400);
+    }
+
+    const accessToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+
+    return {
+        success: true,
+        access_token: accessToken,
+        refresh_token: refreshToken
+    }
+}
+
 module.exports = {
+    register,
     login,
     refreshLogin,
     verifyToken,
-    register,
     googleOAuth,
+    generateAuthorizationCode,
+    exchangeAuthorizationCodeForToken,
+    exchangeRefreshTokenForAccessToken,
 };

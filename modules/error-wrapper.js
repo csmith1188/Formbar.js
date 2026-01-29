@@ -16,4 +16,4 @@ function requireInternalParam(param, name) {
 module.exports = {
     requireQueryParam,
     requireInternalParam,
-}
+};

@@ -5,7 +5,5 @@ const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
-    router.post("/oauth/revoke", async (req, res) => {
-        // @TODO
-    });
+    router.post("/oauth/revoke", async (req, res) => {});
 };
