@@ -88,9 +88,21 @@ function isVerified(req, res, next) {
 
     // Log that the function is being called with the ip and the session of the user
     logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-    if (req.session.email) {
+
+    // Get email from session or extract from JWT token
+    let email = req.session.email;
+    if (!email) {
+        const decodedToken = verifyToken(accessToken);
+        if (!decodedToken.error && decodedToken.email) {
+            email = decodedToken.email;
+            req.session.email = email;
+        }
+    }
+
+    if (email) {
+        const user = classInformation.users[email];
         // If the user is verified or email functionality is disabled...
-        if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
+        if (req.session.verified || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
             next();
         } else {
             // Redirect to the login page
