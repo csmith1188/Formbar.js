@@ -10,8 +10,6 @@ module.exports = {
         // On render it will send all students in that class to the page
         app.get("/controlPanel", isAuthenticated, permCheck, isVerified, (req, res) => {
             try {
-                logger.log("info", `[get /controlPanel] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
                 const email = req.session.email;
                 const user = classInformation.users[email];
                 const classId = user && user.activeClass != null ? user.activeClass : req.session.classId;
@@ -32,7 +30,6 @@ module.exports = {
                     settings: JSON.stringify(classroom.settings),
                 });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",

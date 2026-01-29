@@ -9,7 +9,6 @@ module.exports = {
                 await setTags(tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });
@@ -20,7 +19,6 @@ module.exports = {
                 await saveTags(studentId, tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });

@@ -8,14 +8,12 @@ const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require(
 async function joinRoomByCode(code, sessionUser) {
     try {
         const email = sessionUser.email;
-        logger.log("info", `[joinClass] email=(${email}) classCode=(${code})`);
 
         // Find the id of the class from the database
         const classroomDb = await dbGet("SELECT * FROM classroom WHERE key=?", [code]);
 
         // Check to make sure there was a class with that code
         if (!classroomDb) {
-            logger.log("info", "[joinClass] No class with that code");
             return "No class with that code";
         }
 
@@ -51,7 +49,6 @@ async function joinRoomByCode(code, sessionUser) {
         });
 
         if (!user && !classInformation.users[email]) {
-            logger.log("critical", "[joinClass] User is not in database");
             return "user is not in database";
         } else if (classInformation.users[email] && classInformation.users[email].isGuest) {
             user = classInformation.users[email];
@@ -75,7 +72,6 @@ async function joinRoomByCode(code, sessionUser) {
         if (classUser) {
             // If the user is banned, then don't let them join
             if (classUser.permissions <= BANNED_PERMISSIONS) {
-                logger.log("info", "[joinClass] User is banned");
                 return "You are banned from that class.";
             }
 
@@ -108,7 +104,6 @@ async function joinRoomByCode(code, sessionUser) {
             // Call classUpdate on all user's tabs
             userUpdateSocket(email, "classUpdate", classroomDb.id, { global: false, restrictToControlPanel: true });
 
-            logger.log("verbose", `[joinClass] classInformation=(${classInformation})`);
             return true;
         } else {
             // If the user is not a guest, then insert them into the database
@@ -127,7 +122,6 @@ async function joinRoomByCode(code, sessionUser) {
                     );
                 });
 
-                logger.log("info", "[joinClass] Added user to classusers");
             }
 
             // Grab the user from the users list
@@ -152,7 +146,6 @@ async function joinRoomByCode(code, sessionUser) {
             // Call classUpdate on all user's tabs
             userUpdateSocket(email, "classUpdate", classroomDb.id, { global: false, restrictToControlPanel: true });
 
-            logger.log("verbose", `[joinClass] classInformation=(${classInformation})`);
             return true;
         }
     } catch (err) {

@@ -42,7 +42,6 @@ module.exports = {
                     });
                 }
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -88,7 +87,6 @@ module.exports = {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",
                 });
-                logger.log("error", err.stack);
             }
         });
     },

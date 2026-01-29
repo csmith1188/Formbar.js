@@ -31,24 +31,19 @@ module.exports = (router) => {
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {
             if (err) {
-                logger.log("error", `[auth/google/callback] Passport error: ${err.message || err}`);
                 throw new ValidationError("Authentication failed.");
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                logger.log("error", "[auth/google/callback] No email found in Google profile");
                 throw new ValidationError("Could not retrieve email from Google account.");
             }
 
             const email = user.emails[0].value;
             const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
-            logger.log("info", `[get /auth/google/callback] ip=(${req.ip}) email=(${email})`);
-
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);
             if (result.error) {
-                logger.log("error", `[auth/google/callback] ${result.error}`);
                 throw new ValidationError(result.error);
             }
 
@@ -75,8 +70,6 @@ module.exports = (router) => {
             req.session.displayName = userData.displayName;
             req.session.verified = userData.verified;
             req.session.tags = userData.tags ? userData.tags.split(",") : [];
-
-            logger.log("verbose", `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
 
             res.json(tokens);
         })(req, res, next);

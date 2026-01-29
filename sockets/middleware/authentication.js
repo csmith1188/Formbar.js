@@ -11,11 +11,6 @@ module.exports = {
             try {
                 let { api } = socket.request.headers;
 
-                logger.log(
-                    "info",
-                    `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) event=(${event})`
-                );
-
                 if (socket.request.session.email) {
                     next();
                 } else if (api) {
@@ -34,7 +29,6 @@ module.exports = {
                             }
 
                             if (!matchedUser) {
-                                logger.log("verbose", "[socket authentication] not a valid API Key");
                                 next(new Error("Not a valid API key"));
                                 return;
                             }
@@ -46,17 +40,14 @@ module.exports = {
 
                             next();
                         } catch (err) {
-                            logger.log("error", err.stack);
                         }
                     });
                 } else if (event == "reload") {
                     next();
                 } else {
-                    logger.log("info", "[socket authentication] Missing email or api");
                     next(new Error("Missing API key"));
                 }
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

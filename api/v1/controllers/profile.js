@@ -11,7 +11,6 @@ const AppError = require("@errors/app-error");
 module.exports = (router) => {
     router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
         const userId = req.params.userId || req.session.userId;
@@ -21,7 +20,6 @@ module.exports = (router) => {
 
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found: userId=${userId}`);
             throw new NotFoundError("User not found.");
         }
 
@@ -30,7 +28,6 @@ module.exports = (router) => {
 
         // Handle case where no transactions are found
         if (!transactions || transactions.length === 0) {
-            logger.log("info", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
                 transactions: [],
@@ -49,20 +46,17 @@ module.exports = (router) => {
 
     router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
         // Check if userData is null or undefined
         const userId = req.params.userId || req.session.userId;
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found in database: userId=${userId}`);
             throw new NotFoundError("User not found.");
         }
 
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            logger.log("error", `Incomplete user data retrieved from database: userId=${userId}, fields missing`);
             throw new AppError("Unable to retrieve profile information. Please try again.");
         }
 

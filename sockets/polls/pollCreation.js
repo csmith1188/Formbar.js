@@ -61,7 +61,6 @@ module.exports = {
                 );
                 socket.emit("startPoll");
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

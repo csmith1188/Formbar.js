@@ -11,8 +11,6 @@ const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     router.get("/selectClass", isAuthenticated, permCheck, async (req, res) => {
-        logger.log("info", `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
         let joinedClasses = await getUserJoinedClasses(req.session.user.id);
         joinedClasses = joinedClasses.filter((classroom) => classroom.permissions !== 0);
 
@@ -43,7 +41,6 @@ module.exports = (router) => {
             }
         }
 
-        logger.log("info", `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classCode})`);
         const classJoinStatus = await joinRoomByCode(classCode, req.session.user);
         if (typeof classJoinStatus === "string") {
             // joinRoomByCode returned an error message

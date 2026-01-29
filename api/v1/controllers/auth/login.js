@@ -11,12 +11,9 @@ module.exports = (router) => {
             throw new ValidationError("Email and password are required.");
         }
 
-        logger.log("info", `[post /auth/login] ip=(${req.ip}) email=(${email})`);
-
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            logger.log("verbose", "[post /auth/login] Invalid credentials");
             throw new ValidationError("Incorrect password. Try again.");
         }
 
@@ -43,8 +40,6 @@ module.exports = (router) => {
         req.session.displayName = userData.displayName;
         req.session.verified = userData.verified;
         req.session.tags = userData.tags ? userData.tags.split(",") : [];
-
-        logger.log("verbose", `[post /auth/login] session=(${JSON.stringify(req.session)})`);
 
         res.json(tokens);
     });

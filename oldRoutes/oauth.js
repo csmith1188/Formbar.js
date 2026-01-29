@@ -83,9 +83,6 @@ module.exports = {
                     return;
                 }
 
-                logger.log("info", `[get /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-                logger.log("verbose", `[get /oauth] redirectURL=(${redirectURL}) refreshToken=(${refreshToken})`);
-
                 if (refreshToken) {
                     database.get("SELECT * FROM refresh_tokens WHERE refresh_token=?", [refreshToken], (err, refreshTokenData) => {
                         if (err) throw err;
@@ -158,7 +155,6 @@ module.exports = {
                     });
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",
@@ -171,9 +167,6 @@ module.exports = {
             try {
                 // It saves the email, password, and the redirectURL that is submitted.
                 const { email, password, redirectURL } = req.body;
-
-                logger.log("info", `[post /oauth] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-                logger.log("verbose", `[post /oauth] email=(${email}) redirectURL=(${redirectURL})`);
 
                 if (!email) {
                     res.render("pages/message", {
@@ -197,7 +190,6 @@ module.exports = {
 
                         // Check if the user exists
                         if (!userData) {
-                            logger.log("verbose", "[post /oauth] User does not exist");
                             res.render("pages/message", {
                                 message: "No user found with that email.",
                                 title: "Login",
@@ -207,7 +199,6 @@ module.exports = {
 
                         // Check if the user has a password set
                         if (!userData.password) {
-                            logger.log("verbose", "[post /oauth] User does not have a password set");
                             res.render("pages/message", {
                                 message: "This account does not have a password set.",
                                 title: "Login",
@@ -218,7 +209,6 @@ module.exports = {
                         // Hashes users password
                         const passwordMatches = await compare(password, userData.password);
                         if (!passwordMatches) {
-                            logger.log("verbose", "[post /oauth] Incorrect password");
                             res.render("pages/message", {
                                 message: "Incorrect password",
                                 title: "Login",
@@ -252,12 +242,10 @@ module.exports = {
                             // Generate access token
                             const accessToken = generateAccessToken(userData, refreshToken);
 
-                            logger.log("verbose", "[post /oauth] Successfully Logged in with oauth");
                             const querySeparator = redirectURL.includes("?") ? "&" : "?"; // In case the redirectURL already has a query string
                             res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                         });
                     } catch (err) {
-                        logger.log("error", err.stack);
                         res.render("pages/message", {
                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                             title: "Error",
@@ -265,7 +253,6 @@ module.exports = {
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",

@@ -18,7 +18,6 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 startClass(classId);
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("startClass", "There was a server error. Please try again");
             }
         });
@@ -30,7 +29,6 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 endClass(classId, socket.request.session);
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("startClass", "There was a server error. Please try again");
             }
         });
@@ -64,7 +62,6 @@ module.exports = {
         socket.on("getActiveClass", () => {
             try {
                 const api = socket.request.session.api;
-                logger.log("info", `[getActiveClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
 
                 for (const email in classInformation.users) {
                     const user = classInformation.users[email];
@@ -77,7 +74,6 @@ module.exports = {
                 // If no class is found, set the class to null
                 setClassOfApiSockets(api, null);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -166,7 +162,6 @@ module.exports = {
                 // Trigger a class update to sync all clients
                 socketUpdates.classUpdate(classId);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -176,12 +171,9 @@ module.exports = {
          */
         socket.on("isClassActive", () => {
             try {
-                logger.log("info", `[isClassActive] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-
                 const isActive = isClassActive(socket.request.session.classId);
                 socket.emit("isClassActive", isActive);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -200,11 +192,9 @@ module.exports = {
                         classInformation.classrooms[socket.request.session.classId].key = accessCode;
                         socket.emit("reload");
                     } catch (err) {
-                        logger.log("error", err.stack);
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -214,7 +204,6 @@ module.exports = {
          */
         socket.on("changeClassName", (name) => {
             try {
-                logger.log("info", `[changeClassName] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
                 if (!name) {
                     socket.emit("message", "Class name cannot be empty.");
                     return;
@@ -230,12 +219,10 @@ module.exports = {
                         socket.emit("changeClassName", name);
                         socket.emit("message", "Class name updated.");
                     } catch (err) {
-                        logger.log("error", err.stack);
                         socket.emit("message", "There was a server error try again.");
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -245,9 +232,6 @@ module.exports = {
          */
         socket.on("deleteClass", (classId) => {
             try {
-                logger.log("info", `[deleteClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[deleteClass] classId=(${classId})`);
-
                 database.get("SELECT * FROM classroom WHERE id=?", classId, (err, classroom) => {
                     try {
                         if (err) throw err;
@@ -264,11 +248,9 @@ module.exports = {
 
                         socketUpdates.getOwnedClasses(socket.request.session.email);
                     } catch (err) {
-                        logger.log("error", err.stack);
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -278,29 +260,22 @@ module.exports = {
          */
         socket.on("classKickStudent", (email) => {
             try {
-                logger.log("info", `[classKickUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[classKickUser] email=(${email})`);
-
                 const classId = socket.request.session.classId;
                 classKickStudent(email, classId);
                 advancedEmitToClass("leaveSound", classId, {});
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
         // Removes all students from the class
         socket.on("classKickStudents", () => {
             try {
-                logger.log("info", `[classKickStudents] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-
                 const classId = socket.request.session.classId;
                 classKickStudents(classId);
 
                 socketUpdates.classUpdate(classId);
                 advancedEmitToClass("kickStudentsSound", classId, { api: true });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -310,20 +285,14 @@ module.exports = {
          */
         socket.on("classBanUser", (email) => {
             try {
-                logger.log("info", `[ban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[ban] user=(${email})`);
-
                 let classId = socket.request.session.classId;
-                logger.log("info", `[ban] classId=(${classId})`);
 
                 if (!classId) {
-                    logger.log("info", "[ban] The user is not in a class.");
                     socket.emit("message", "You are not in a class");
                     return;
                 }
 
                 if (!email) {
-                    logger.log("critical", "[ban] No email provided.");
                     socket.emit("message", "No email provided. (Please contact the programmer)");
                     return;
                 }
@@ -344,13 +313,11 @@ module.exports = {
                             socketUpdates.classUpdate();
                             socket.emit("message", `Banned ${email}`);
                         } catch (err) {
-                            logger.log("error", err.stack);
                             socket.emit("message", "There was a server error try again.");
                         }
                     }
                 );
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });
@@ -361,20 +328,14 @@ module.exports = {
          */
         socket.on("classUnbanUser", (email) => {
             try {
-                logger.log("info", `[unban] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[unban] user=(${email})`);
-
                 let classId = socket.request.session.classId;
-                logger.log("info", `[unban] classId=(${classId})`);
 
                 if (!classId) {
-                    logger.log("info", "[unban] The user is not in a class.");
                     socket.emit("message", "You are not in a class");
                     return;
                 }
 
                 if (!email) {
-                    logger.log("critical", "[unban] no email provided.");
                     socket.emit("message", "No email provided. (Please contact the programmer)");
                     return;
                 }
@@ -401,13 +362,11 @@ module.exports = {
                             socketUpdates.classBannedUsersUpdate();
                             socket.emit("message", `Unbanned ${email}`);
                         } catch (err) {
-                            logger.log("error", err.stack);
                             socket.emit("message", "There was a server error try again.");
                         }
                     }
                 );
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });
@@ -430,8 +389,6 @@ module.exports = {
                 }
 
                 const oldPerm = classInformation.classrooms[classId].students[email].classPermissions || BANNED_PERMISSIONS;
-                logger.log("info", `[classPermChange] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[classPermChange] user=(${email}) newPerm=(${newPerm})`);
 
                 // Update the permission in the classInformation and in the database
                 classInformation.classrooms[classId].students[email].classPermissions = newPerm;
@@ -458,13 +415,10 @@ module.exports = {
                     return;
                 }
 
-                logger.log("verbose", `[classPermChange] user=(${JSON.stringify(classInformation.classrooms[classId].students[email])})`);
-
                 // Reload the user's page and update the class
                 io.to(`user-${email}`).emit("reload");
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -476,20 +430,12 @@ module.exports = {
          */
         socket.on("setClassPermissionSetting", async (permission, level) => {
             try {
-                logger.log(
-                    "info",
-                    `[setClassPermissionSetting] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`
-                );
-                logger.log("info", `[setClassPermissionSetting] permission=(${permission}) level=(${level})`);
-
                 const classId = socket.request.session.classId;
                 classInformation.classrooms[classId].permissions[permission] = level;
                 dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
-                    logger.log("error", err.stack);
                 });
                 socketUpdates.classUpdate(classId);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
@@ -524,7 +470,6 @@ module.exports = {
 
                 socketUpdates.classUpdate(classId);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

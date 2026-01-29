@@ -28,7 +28,6 @@ async function createPoll(classId, pollData, userSession) {
 
         const classroom = classInformation.classrooms[classId];
         if (!classroom) {
-            logger.log("info", `[startPoll] Classroom not found for classId ${classId}`);
             return "Classroom not found.";
         }
 
@@ -37,16 +36,8 @@ async function createPoll(classId, pollData, userSession) {
             return "This class is not currently active.";
         }
 
-        // Log poll information
-        logger.log("info", `[startPoll] session=(${JSON.stringify(userSession)})`);
-        logger.log(
-            "info",
-            `[startPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) answers=(${JSON.stringify(answers)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`
-        );
-
         await clearPoll(classId, userSession, false);
         let generatedColors = generateColors(Object.keys(answers).length);
-        logger.log("verbose", `[pollResp] user=(${classInformation.classrooms[classId].students[userSession.email]})`);
         if (generatedColors instanceof Error) throw generatedColors;
 
         classInformation.classrooms[classId].poll.allowVoteChanges = allowVoteChanges;
@@ -99,11 +90,9 @@ async function createPoll(classId, pollData, userSession) {
             classInformation.classrooms[classId].students[key].pollRes.textRes = "";
         }
 
-        // Log data about the class then call the appropriate update functions
-        logger.log("verbose", `[startPoll] classData=(${JSON.stringify(classInformation.classrooms[classId])})`);
+        // Call the appropriate update functions
         userUpdateSocket(userSession.email, "classUpdate", classId, { global: true });
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -123,18 +112,14 @@ async function updatePoll(classId, options, userSession) {
     try {
         // If no classId or options provided, return false
         if (!classId || !options) {
-            logger.log("info", "[updatePoll] Missing classId or options");
             return false;
         }
 
         // If the classroom does not exist, return false
         const classroom = classInformation.classrooms[classId];
         if (!classroom) {
-            logger.log("info", "[updatePoll] Classroom not found");
             return false;
         }
-
-        logger.log("info", `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
 
         // If an empty object is sent, clear the current poll
         const optionsKeys = Object.keys(options);
@@ -172,7 +157,6 @@ async function updatePoll(classId, options, userSession) {
         }
         return true;
     } catch (err) {
-        logger.log("error", err.stack);
         return false;
     }
 }
@@ -207,9 +191,7 @@ async function savePollToHistory(classId) {
 
         dbRun("INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)", [classId, JSON.stringify(data), formattedDate]);
 
-        logger.log("verbose", "[endPoll] saved poll to history");
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -256,7 +238,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
                         [currentPollId, studentId, studentRes],
                         (err) => {
                             if (err) {
-                                logger.log("error", err.stack);
                             }
                         }
                     );
@@ -269,7 +250,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
                     [currentPollId, studentId, studentTextRes],
                     (err) => {
                         if (err) {
-                            logger.log("error", err.stack);
                         }
                     }
                 );
@@ -280,7 +260,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
             userUpdateSocket(userSession.email, "classUpdate", classId, { global: true });
         }
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -293,8 +272,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
  */
 function pollResponse(classId, res, textRes, userSession) {
     const resLength = textRes != null ? textRes.length : 0;
-    logger.log("info", `[pollResp] session=(${JSON.stringify(userSession)})`);
-    logger.log("info", `[pollResp] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`);
 
     const email = userSession.email;
     const user = classInformation.users[email];
@@ -302,7 +279,6 @@ function pollResponse(classId, res, textRes, userSession) {
 
     // If the classroom does not exist, return
     if (!classroom) {
-        logger.log("warning", `[pollResp WARNING] session=(${JSON.stringify(userSession)}) - Classroom not found for classId ${classId}`);
         return;
     }
 
@@ -313,14 +289,12 @@ function pollResponse(classId, res, textRes, userSession) {
 
     // Check if user is excluded from voting using poll.excludedRespondents
     if (classroom.poll.excludedRespondents && classroom.poll.excludedRespondents.includes(user.id)) {
-        logger.log("info", `[pollResp] User ${user.id} is excluded from voting`);
         return;
     }
 
     // Check if user has the "Excluded" tag
     const student = classroom.students[email];
     if (student && student.tags && Array.isArray(student.tags) && student.tags.includes("Excluded")) {
-        logger.log("info", `[pollResp] User ${user.id} is excluded from voting due to Excluded tag`);
         return;
     }
 
@@ -387,15 +361,12 @@ function pollResponse(classId, res, textRes, userSession) {
             let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 3 digipogs
             database.run("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [addPogs, user.id], (err) => {
                 if (err) {
-                    logger.log("error", err.stack);
                 } else {
-                    logger.log("info", `[pollResp] User ${user.email} earned a Digipog`);
                 }
             });
         }
         pogMeterTracker.pogMeterIncreased[email] = true;
     }
-    logger.log("verbose", `[pollResp] user=(${classroom.students[userSession.email]})`);
 
     userUpdateSocket(email, "classUpdate", classId, { global: true });
 }

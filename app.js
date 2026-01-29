@@ -226,5 +226,4 @@ http.listen(settings.port, async () => {
         console.log(
             'To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki'
         );
-    logger.log("info", "Start");
 });

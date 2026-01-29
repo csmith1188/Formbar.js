@@ -11,9 +11,6 @@ module.exports = {
             // Checks to see if the user is authenticated
             router.use(async (req, res, next) => {
                 try {
-                    // Log the IP and session of the request
-                    logger.log("info", `[isAuthenticated] ip=(${req.ip}) session=(${JSON.stringify(res.session)})`);
-
                     // Allow digipogs endpoints without authentication
                     if (req.path && req.path.startsWith("/digipogs/")) {
                         return next();
@@ -35,9 +32,6 @@ module.exports = {
 
                         // If the user has an error property
                         if (user.error) {
-                            // Log the error
-                            logger.log("info", user);
-
                             // Respond with the error
                             res.status(401).json({ error: user.error });
                             return;
@@ -48,9 +42,6 @@ module.exports = {
                             req.session.user = user;
                             req.session.email = user.email;
                         }
-
-                        // Log the authenticated user
-                        logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
 
                         // Call the next middleware function
                         return next();
@@ -64,8 +55,6 @@ module.exports = {
                     // No API key and no session - unauthorized
                     res.status(401).json({ error: "Authentication required" });
                 } catch (err) {
-                    // Log any errors
-                    logger.log("error", err.stack);
                 }
             });
 
@@ -80,9 +69,6 @@ module.exports = {
                 const permissions = req.session.user.permissions;
                 const classPermissions = req.session.user.classPermissions;
                 let urlPath = req.url;
-
-                // Log the request details
-                logger.log("info", `[apiPermCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`);
 
                 // If no URL is provided, return
                 if (!urlPath) return;
@@ -154,7 +140,6 @@ module.exports = {
                 res.status(404).json({ error: `The requested endpoint, ${req.originalUrl}, does not exist.` });
             });
         } catch (err) {
-            logger.log("error", err.stack);
         }
     },
 };

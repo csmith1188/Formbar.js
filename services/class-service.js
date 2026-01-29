@@ -138,8 +138,6 @@ async function createClass(className, ownerId, ownerEmail) {
         // Add classroom to the database
         const insertResult = await dbRun("INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)", [className, ownerId, key, null]);
 
-        logger.log("verbose", "[createClass] Added classroom to database");
-
         // Use the ID of the newly created classroom returned by dbRun
         const classId = insertResult && typeof insertResult.lastID !== "undefined" ? insertResult.lastID : null;
         if (!classId) {
@@ -178,7 +176,6 @@ async function createClass(className, ownerId, ownerEmail) {
             className: classroom.name,
         };
     } catch (err) {
-        logger.log("error", `[createClass] ${err.stack}`);
         throw err;
     }
 }
@@ -232,7 +229,6 @@ async function joinClassById(classId, userId, userEmail) {
             className: classroom.name,
         };
     } catch (err) {
-        logger.log("error", `[joinClassById] ${err.stack}`);
         throw err;
     }
 }
@@ -259,8 +255,6 @@ async function initializeClassroom({ id, className, key, owner, userEmail, permi
         if (!user) {
             throw new Error(`User ${userEmail} not found in classInformation`);
         }
-
-        logger.log("verbose", `[initializeClassroom] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`);
 
         // Validate and normalize permissions
         if (Object.keys(permissions).sort().toString() !== Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
@@ -328,10 +322,7 @@ async function initializeClassroom({ id, className, key, owner, userEmail, permi
 
         // Set the class for all API sockets
         await setClassOfApiSockets(user.API, id);
-
-        logger.log("verbose", `[initializeClassroom] Successfully initialized class ${id} for user ${userEmail}`);
     } catch (err) {
-        logger.log("error", `[initializeClassroom] ${err.stack}`);
         throw err;
     }
 }

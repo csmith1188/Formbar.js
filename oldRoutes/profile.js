@@ -10,8 +10,6 @@ module.exports = {
         // Handle displaying people's transactions
         router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
             try {
-                // Log the request information
-                logger.log("info", `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
                 // Check if the user has permission to view these transactions (either their own or they are a manager)
                 const userId = req.params.userId || req.session.userId;
@@ -28,7 +26,6 @@ module.exports = {
 
                 // Handle case where no transactions are found
                 if (!transactions || transactions.length === 0) {
-                    logger.log("info", "No transactions found for user");
                     // Still render the page, just with an empty array
                     const userDisplayName = (await dbGet("SELECT displayName FROM users WHERE id = ?", [userId]))?.displayName || "Unknown User";
                     res.status(200).json({
@@ -49,7 +46,6 @@ module.exports = {
                     currentUserId: req.session.userId,
                 });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
             }
         });
@@ -57,21 +53,17 @@ module.exports = {
         // Handle displaying the profile page
         router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
             try {
-                // Log the request information
-                logger.log("info", `[get /profile] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
                 // Check if userData is null or undefined
                 const userId = req.params.userId || req.session.userId;
                 const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
                 if (!userData) {
-                    logger.log("error", "User data not found in database");
                     return res.status(404).json({ error: "Please enter a valid user ID." });
                 }
 
                 // Destructure userData and validate required fields
                 const { id, displayName, email, digipogs, API, pin } = userData;
                 if (!id || !displayName || !email || digipogs === undefined || !API) {
-                    logger.log("error", "Incomplete user data retrieved from database");
                     return res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
                 }
 
@@ -90,7 +82,6 @@ module.exports = {
                     isOwnProfile: isOwnProfile,
                 });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
             }
         });

@@ -22,7 +22,7 @@ async function cleanRefreshTokens() {
             }
         }
     } catch (err) {
-        logger.log("error", err.stack);
+        // Error cleaning refresh tokens
     }
 }
 
@@ -87,7 +87,6 @@ function isVerified(req, res, next) {
     }
 
     // Log that the function is being called with the ip and the session of the user
-    logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
     if (req.session.email) {
         // If the user is verified or email functionality is disabled...
         if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
@@ -107,8 +106,6 @@ function isVerified(req, res, next) {
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
     const email = req.session.email;
-
-    logger.log("info", `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`);
 
     if (req.url) {
         // Defines users desired endpoint
@@ -136,9 +133,7 @@ function permCheck(req, res, next) {
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
 
-        logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
         if (!PAGE_PERMISSIONS[urlPath]) {
-            logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
             throw new NotFoundError(`${urlPath} is not in the page permissions`);
         }
 
@@ -148,7 +143,6 @@ function permCheck(req, res, next) {
         } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
-            logger.log("info", "[permCheck] Not enough permissions");
             throw new ForbiddenError("You do not have permissions to access this page.");
         }
     }

@@ -41,7 +41,6 @@ async function getStudentsInClass(classId) {
     const studentIdsAndPermissions = await new Promise((resolve, reject) => {
         database.all("SELECT studentId, permissions FROM classusers WHERE classId = ?", [classId], (err, rows) => {
             if (err) {
-                logger.log("error", err.stack);
                 return reject(err);
             }
 
@@ -59,7 +58,6 @@ async function getStudentsInClass(classId) {
     const studentsData = await new Promise((resolve, reject) => {
         database.all("SELECT * FROM users WHERE id IN (" + studentIds.map(() => "?").join(",") + ")", studentIds, (err, rows) => {
             if (err) {
-                logger.log("error", err.stack);
                 return reject(err);
             }
 
@@ -115,7 +113,7 @@ function getIdFromEmail(email) {
             });
         });
     } catch (err) {
-        logger.log("error", err.stack);
+        // Error handled by caller
     }
 }
 

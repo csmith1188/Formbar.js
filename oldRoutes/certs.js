@@ -10,7 +10,6 @@ module.exports = {
                     const pem = fs.readFileSync("publicKey.pem", "utf8");
                     res.json({ publicKey: pem });
                 } catch (err) {
-                    logger.log("error", err.stack);
                     res.render("pages/message", {
                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                         title: "Error",
@@ -18,7 +17,6 @@ module.exports = {
                 }
             });
         } catch (err) {
-            logger.log("error", err.stack);
         }
     },
 };

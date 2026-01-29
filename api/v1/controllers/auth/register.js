@@ -13,16 +13,11 @@ module.exports = (router) => {
             throw new ValidationError("Display name is required.");
         }
 
-        logger.log("info", `[post /auth/register] ip=(${req.ip}) email=(${email})`);
-
         // Attempt to register the user
         const result = await authService.register(email, password, displayName);
         if (result.error) {
-            logger.log("verbose", `[post /auth/register] Registration failed: ${result.error}`);
             throw new ValidationError(result.error);
         }
-
-        logger.log("verbose", `[post /auth/register] User registered successfully: ${email}`);
 
         // Return the tokens and user data
         res.status(201).json({

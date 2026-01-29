@@ -8,8 +8,6 @@ module.exports = (router) => {
     router.get("/manager", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         // Grab the user from the session
         const user = req.session.user;
-        logger.log("info", `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-        logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);
 
         // Grab manager data and send it back as a JSON response
         const { users, classrooms } = await getManagerData();

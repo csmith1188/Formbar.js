@@ -9,12 +9,8 @@ module.exports = (router) => {
         // Get the class key from the request parameters
         let classId = req.params.id;
 
-        // Log the request details
-        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
         // If the class does not exist, return an error
         if (!classInformation.classrooms[classId]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
             throw new NotFoundError("Class not started");
         }
 
@@ -23,7 +19,6 @@ module.exports = (router) => {
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] user is not logged in`);
             throw new ForbiddenError("User is not logged into the selected class");
         }
 
@@ -32,7 +27,6 @@ module.exports = (router) => {
 
         // If the class does not exist, return an error
         if (!classData) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
             throw new NotFoundError("Class not started");
         }
 
@@ -42,9 +36,6 @@ module.exports = (router) => {
             totalStudents: Object.keys(classData.students).length,
             ...classData.poll,
         };
-
-        // Log the poll data
-        logger.log("verbose", `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
 
         // Send the poll data as a JSON response
         res.status(200).json(classData.poll);

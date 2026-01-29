@@ -20,14 +20,10 @@ module.exports = {
                 let className = req.body.name;
                 let classId = req.body.id;
 
-                logger.log("info", `[post /createClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-                logger.log("verbose", `[post /createClass] submittionType=(${submittionType}) className=(${className}) classId=(${classId})`);
-
                 async function makeClass(id, className, key, owner, permissions, sharedPolls = [], pollHistory = [], tags) {
                     try {
                         // Get the teachers session data ready to transport into new class
                         const user = classInformation.users[req.session.email];
-                        logger.log("verbose", `[makeClass] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`);
 
                         if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
                             for (let permission of Object.keys(permissions)) {
@@ -41,7 +37,6 @@ module.exports = {
                                     permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission];
                                 }
                                 dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [permissions[permission], id]).catch((err) => {
-                                    logger.log("error", err.stack);
                                 });
                             }
                         }
@@ -118,8 +113,6 @@ module.exports = {
                             try {
                                 if (err) throw err;
 
-                                logger.log("verbose", "[post /createClass] Added classroom to database");
-
                                 database.get(
                                     "SELECT id, name, key, tags FROM classroom WHERE name = ? AND owner = ?",
                                     [className, req.session.userId],
@@ -128,7 +121,6 @@ module.exports = {
                                             if (err) throw err;
 
                                             if (!classroom.id) {
-                                                logger.log("critical", "Class does not exist");
                                                 res.render("pages/message", {
                                                     message: "Class does not exist (Please contact the programmer)",
                                                     title: "Login",
@@ -169,7 +161,6 @@ module.exports = {
                                                 res.redirect("/controlPanel");
                                             }
                                         } catch (err) {
-                                            logger.log("error", err.stack);
                                             res.render("pages/message", {
                                                 message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                                 title: "Error",
@@ -178,7 +169,6 @@ module.exports = {
                                     }
                                 );
                             } catch (err) {
-                                logger.log("error", err.stack);
                                 res.render("pages/message", {
                                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                     title: "Error",
@@ -195,7 +185,6 @@ module.exports = {
                                 if (err) throw err;
 
                                 if (!classroom) {
-                                    logger.log("critical", "Class does not exist");
                                     res.render("pages/message", {
                                         message: "Class does not exist (Please contact support)",
                                         title: "Login",
@@ -239,7 +228,6 @@ module.exports = {
                                     res.redirect("/controlPanel");
                                 }
                             } catch (err) {
-                                logger.log("error", err.stack);
                                 res.render("pages/message", {
                                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                     title: "Error",
@@ -249,7 +237,6 @@ module.exports = {
                     );
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",

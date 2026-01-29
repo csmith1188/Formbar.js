@@ -12,7 +12,6 @@ module.exports = {
         // It also allows for redirection to any other page if needed
         app.get("/", isAuthenticated, isVerified, (req, res) => {
             try {
-                logger.log("info", `[get /] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                 if (
                     classInformation.users[req.session.email].classPermissions >= TEACHER_PERMISSIONS ||
                     classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS
@@ -22,7 +21,6 @@ module.exports = {
                     res.redirect("/student");
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",

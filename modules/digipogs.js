@@ -96,9 +96,6 @@ function checkRateLimit(userId) {
         };
     }
 
-    // Log current failure count for debugging
-    logger.log("info", `User ${userId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
-
     return { allowed: true };
 }
 
@@ -179,13 +176,11 @@ async function awardDigipogs(awardData, session) {
                 Date.now(),
             ]);
         } catch (err) {
-            logger.log("error", err.stack || err);
             return { success: true, message: "Award succeeded, but failed to log transaction." };
         }
 
         return { success: true, message: "Digipogs awarded successfully." };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }
@@ -265,9 +260,7 @@ async function transferDigipogs(transferData) {
                 try {
                     await dbRun("ROLLBACK");
                 } catch (rollbackErr) {
-                    logger.log("error", rollbackErr.stack || rollbackErr);
                 }
-                logger.log("error", err.stack || err);
                 recordAttempt(from, false);
                 return { success: false, message: "Transfer failed due to database error." };
             }
@@ -281,8 +274,6 @@ async function transferDigipogs(transferData) {
                     Date.now(),
                 ]);
             } catch (err) {
-                logger.log("error", err.stack || err);
-
                 // Record successful attempt
                 recordAttempt(from, true);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
@@ -304,7 +295,6 @@ async function transferDigipogs(transferData) {
                     dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]),
                 ]);
             } catch (err) {
-                logger.log("error", err.stack || err);
                 recordAttempt(from, false);
                 return { success: false, message: "Transfer failed due to database error." };
             }
@@ -319,8 +309,6 @@ async function transferDigipogs(transferData) {
                     Date.now(),
                 ]);
             } catch (err) {
-                logger.log("error", err.stack || err);
-
                 // Record successful attempt
                 recordAttempt(from, true);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
@@ -338,7 +326,6 @@ async function transferDigipogs(transferData) {
         recordAttempt(from, true);
         return { success: true, message: "Transfer successful." };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }

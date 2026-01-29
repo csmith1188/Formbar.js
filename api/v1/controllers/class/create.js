@@ -24,8 +24,6 @@ module.exports = (router) => {
             }
 
             const { userId, email: userEmail } = req.session;
-            logger.log("info", `[post /class/create] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-            logger.log("verbose", `[post /class/create] className=(${name})`);
 
             const result = await classService.createClass(name, userId, userEmail);
             req.session.classId = result.classId;
@@ -35,7 +33,6 @@ module.exports = (router) => {
                 ...result,
             });
         } catch (err) {
-            logger.log("error", err.stack);
             res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });

@@ -29,7 +29,6 @@ module.exports = {
                             }
 
                             if (!userData) {
-                                logger.log("verbose", "[socket authentication] not a valid API Key");
                                 throw "Not a valid API key";
                             }
 
@@ -98,7 +97,6 @@ module.exports = {
                 });
             }
         } catch (err) {
-            logger.log("error", err.stack);
         }
     },
 };

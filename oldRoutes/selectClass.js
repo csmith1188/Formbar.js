@@ -10,7 +10,6 @@ module.exports = {
     run(app) {
         app.get("/selectClass", isAuthenticated, permCheck, async (req, res) => {
             try {
-                logger.log("info", `[get /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
                 // Get all classes the user is in then render the select class page
                 let joinedClasses = await dbGetAll(
@@ -23,7 +22,6 @@ module.exports = {
                     joinedClasses: joinedClasses,
                 });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",
@@ -94,8 +92,6 @@ module.exports = {
                     });
                 }
 
-                logger.log("info", `[post /selectClass] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) classCode=(${classId})`);
-
                 const classJoinStatus = await joinRoomByCode(classCode, req.session);
                 if (typeof classJoinStatus == "string") {
                     res.render("pages/message", {
@@ -138,7 +134,6 @@ module.exports = {
                 }
                 res.redirect("/");
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",

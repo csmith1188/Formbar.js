@@ -16,7 +16,6 @@ const { classKickStudent } = require("./kick");
  */
 async function startClass(classId) {
     try {
-        logger.log("info", `[startClass] classId=(${classId})`);
         await advancedEmitToClass("startClassSound", classId, { api: true });
 
         // Activate the class and send the class active event
@@ -27,10 +26,7 @@ async function startClass(classId) {
             { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
             classInformation.classrooms[classId].isActive
         );
-
-        logger.log("verbose", `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -42,7 +38,6 @@ async function startClass(classId) {
  */
 async function endClass(classId, userSession) {
     try {
-        logger.log("info", `[endClass] classId=(${classId})`);
         await advancedEmitToClass("endClassSound", classId, { api: true });
 
         // Deactivate the class and send the class active event
@@ -55,9 +50,7 @@ async function endClass(classId, userSession) {
             { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
             classInformation.classrooms[classId].isActive
         );
-        logger.log("verbose", `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -98,8 +91,6 @@ async function checkUserClassPermission(userId, classId, permission) {
  */
 async function joinRoom(userSession, classCode) {
     try {
-        logger.log("info", `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
-
         const response = await joinRoomByCode(classCode, userSession);
         const email = userSession.email;
         emitToUser(email, "joinClass", response);
@@ -107,7 +98,6 @@ async function joinRoom(userSession, classCode) {
     } catch (err) {
         const email = userSession.email;
         emitToUser(email, "joinClass", "There was a server error. Please try again");
-        logger.log("error", err.stack);
     }
 }
 
@@ -148,7 +138,6 @@ async function leaveRoom(userSession) {
         await emitToUser(email, "reload");
         return true;
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -161,8 +150,6 @@ async function leaveRoom(userSession) {
  */
 async function joinClass(userSession, classId) {
     try {
-        logger.log("info", `[joinClass] session=(${JSON.stringify(userSession)}) classId=${classId}`);
-
         // Get the user's email and convert class key to ID if necessary
         const email = userSession.email;
         const classroom = classInformation.classrooms[classId];
@@ -213,7 +200,6 @@ async function joinClass(userSession, classId) {
 
         return true;
     } catch (err) {
-        logger.log("error", err.stack);
         return "There was a server error. Please try again";
     }
 }
@@ -228,8 +214,6 @@ async function joinClass(userSession, classId) {
  */
 function leaveClass(userSession, classId) {
     try {
-        logger.log("info", `[leaveClass] session=(${userSession})`);
-
         const email = userSession.email;
         const user = classInformation.users[email];
         const socketUpdates = userSocketUpdates[email];
@@ -244,7 +228,6 @@ function leaveClass(userSession, classId) {
         classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
