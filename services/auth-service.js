@@ -5,9 +5,76 @@ const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissio
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const AppError = require("@errors/app-error");
+const { requireInternalParam } = require("@modules/error-wrapper");
+const { JWT } = require("google-auth-library");
 
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
 const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
+
+/**
+ * Registers a new user with email and password
+ * @async
+ * @param {string} email - The user's email address
+ * @param {string} password - The user's plain text password
+ * @param {string} displayName - The user's display name
+ * @returns {Promise<{tokens: {accessToken: string, refreshToken: string}, user: Object}|{error: string}>} Returns an object with tokens and user data on success, or an error object on failure
+ */
+async function register(email, password, displayName) {
+    if (!privateKey || !publicKey) {
+        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
+    }
+
+    if (!passwordRegex.test(password)) {
+        return { error: "Password must be 5-20 characters long and can only contain letters, numbers, and special characters." };
+    }
+
+    if (!displayRegex.test(displayName)) {
+        return { error: "Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores." };
+    }
+
+    // Normalize email to lowercase to prevent duplicate accounts
+    email = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
+    if (existingUser) {
+        return { error: "A user with that email or display name already exists." };
+    }
+
+    const hashedPassword = await hash(password, 10);
+    const apiKey = crypto.randomBytes(64).toString("hex");
+    const secret = crypto.randomBytes(256).toString("hex");
+
+    // Determine permissions
+    // The first user always gets manager permissions
+    const allUsers = await dbGetAll("SELECT * FROM users", []);
+    const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
+
+    // Create the new user in the database
+    const userId = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+        email,
+        hashedPassword,
+        permissions,
+        apiKey,
+        secret,
+        displayName,
+        0,
+    ]);
+
+    // Get the new user's data
+    const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
+
+    // Generate tokens
+    const tokens = generateAuthTokens(userData);
+    const decodedRefreshToken = jwt.decode(tokens.refreshToken);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+        userData.id,
+        tokens.refreshToken,
+        decodedRefreshToken.exp,
+    ]);
+
+    return { tokens, user: userData };
+}
 
 /**
  * Authenticates a user with email and password credentials
@@ -144,71 +211,6 @@ function invalidCredentials() {
 }
 
 /**
- * Registers a new user with email and password
- * @async
- * @param {string} email - The user's email address
- * @param {string} password - The user's plain text password
- * @param {string} displayName - The user's display name
- * @returns {Promise<{tokens: {accessToken: string, refreshToken: string}, user: Object}|{error: string}>} Returns an object with tokens and user data on success, or an error object on failure
- */
-async function register(email, password, displayName) {
-    if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
-    }
-
-    if (!passwordRegex.test(password)) {
-        return { error: "Password must be 5-20 characters long and can only contain letters, numbers, and special characters." };
-    }
-
-    if (!displayRegex.test(displayName)) {
-        return { error: "Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores." };
-    }
-
-    // Normalize email to lowercase to prevent duplicate accounts
-    email = email.trim().toLowerCase();
-
-    // Check if user already exists
-    const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
-    if (existingUser) {
-        return { error: "A user with that email or display name already exists." };
-    }
-
-    const hashedPassword = await hash(password, 10);
-    const apiKey = crypto.randomBytes(64).toString("hex");
-    const secret = crypto.randomBytes(256).toString("hex");
-
-    // Determine permissions
-    // The first user always gets manager permissions
-    const allUsers = await dbGetAll("SELECT * FROM users", []);
-    const permissions = allUsers.length === 0 ? MANAGER_PERMISSIONS : STUDENT_PERMISSIONS;
-
-    // Create the new user in the database
-    const userId = await dbRun(`INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-        email,
-        hashedPassword,
-        permissions,
-        apiKey,
-        secret,
-        displayName,
-        0,
-    ]);
-
-    // Get the new user's data
-    const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
-
-    // Generate tokens
-    const tokens = generateAuthTokens(userData);
-    const decodedRefreshToken = jwt.decode(tokens.refreshToken);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
-        userData.id,
-        tokens.refreshToken,
-        decodedRefreshToken.exp,
-    ]);
-
-    return { tokens, user: userData };
-}
-
-/**
  * Authenticates or registers a user via Google OAuth
  * @async
  * @param {string} email - The user's email address from Google
@@ -258,6 +260,26 @@ async function googleOAuth(email, displayName) {
     ]);
 
     return { tokens, user: userData };
+}
+
+/**
+ * Creates an authorization code for OAuth 2.0 authorization flow
+ * @returns {string} A newly generated authorization code
+ */
+function createAuthorizationCode(options = {}) {
+    const { client_id, redirect_uri, user_id, scope, state } = options;
+
+    requireInternalParam(client_id, "client_id");
+    requireInternalParam(redirect_uri, "redirect_uri");
+    requireInternalParam(user_id, "user_id");
+    requireInternalParam(scope, "scope");
+    requireInternalParam(state, "state");
+
+    const authorizationCode = JWT.sign(
+        {
+
+        }
+    )
 }
 
 module.exports = {
