@@ -51,7 +51,7 @@ function isAuthenticated(req, res, next) {
 
         const user = classInformation.users[email];
         if (!user) {
-            return res.status(401).json({ error: "User is not authenticated" });
+            return res.status(401).json({ error: "Invalid access token or api key provided." });
         }
 
         req.session.email = email;
