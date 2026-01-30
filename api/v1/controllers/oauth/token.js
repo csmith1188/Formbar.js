@@ -1,6 +1,3 @@
-const { logger } = require("@modules/logger");
-const { classInformation } = require("@modules/class/classroom");
-const { Student } = require("@modules/student");
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
 const { requireQueryParam } = require("@modules/error-wrapper");
@@ -12,7 +9,6 @@ module.exports = (router) => {
         requireQueryParam(grant_type, "grant_type");
 
         let tokenResponse;
-
         if (grant_type === "authorization_code") {
             requireQueryParam(code, "code");
             requireQueryParam(redirect_uri, "redirect_uri");

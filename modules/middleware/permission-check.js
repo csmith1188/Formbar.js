@@ -118,7 +118,7 @@ function httpPermCheck(event) {
         if (!email) {
             throw new AuthError("User not authenticated");
         }
-        
+
         if (req.session && !req.session.email) {
             req.session.email = email;
         }

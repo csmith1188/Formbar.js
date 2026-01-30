@@ -283,11 +283,11 @@ function generateAuthorizationCode({ client_id, redirect_uri, scope, state, auth
             sub: userData.id,
             aud: client_id,
             redirect_uri: redirect_uri,
-            scope: scope
+            scope: scope,
         },
         privateKey,
         { algorithm: "RS256", expiresIn: "5m" }
-    )
+    );
 }
 
 function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
@@ -306,8 +306,8 @@ function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
     return {
         success: true,
         access_token: accessToken,
-        refresh_token: refreshToken
-    }
+        refresh_token: refreshToken,
+    };
 }
 
 function exchangeRefreshTokenForAccessToken({ refresh_token }) {
@@ -324,8 +324,8 @@ function exchangeRefreshTokenForAccessToken({ refresh_token }) {
     return {
         success: true,
         access_token: accessToken,
-        refresh_token: refreshToken
-    }
+        refresh_token: refreshToken,
+    };
 }
 
 module.exports = {
