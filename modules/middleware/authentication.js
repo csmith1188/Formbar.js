@@ -3,7 +3,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
-const { verifyToken } = require("@services/auth-service");
+const { verifyToken, cleanupExpiredAuthorizationCodes } = require("@services/auth-service");
 const AuthError = require("@errors/auth-error");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
@@ -12,15 +12,17 @@ const whitelistedIps = {};
 const blacklistedIps = {};
 const loginOnlyRoutes = ["/createClass", "/selectClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
 
-// Removes expired refresh tokens from the database
+// Removes expired refresh tokens and authorization codes from the database
 async function cleanRefreshTokens() {
     try {
         const refreshTokens = await dbGetAll("SELECT * FROM refresh_tokens");
         for (const refreshToken of refreshTokens) {
             if (Date.now() >= refreshToken.exp) {
-                await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken.refresh_token]);
+                await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ?", [refreshToken.token_hash]);
             }
         }
+        // Also clean up expired authorization codes
+        await cleanupExpiredAuthorizationCodes();
     } catch (err) {
         logger.log("error", err.stack);
     }
@@ -88,9 +90,21 @@ function isVerified(req, res, next) {
 
     // Log that the function is being called with the ip and the session of the user
     logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-    if (req.session.email) {
+
+    // Get email from session or extract from JWT token
+    let email = req.session.email;
+    if (!email) {
+        const decodedToken = verifyToken(accessToken);
+        if (!decodedToken.error && decodedToken.email) {
+            email = decodedToken.email;
+            req.session.email = email;
+        }
+    }
+
+    if (email) {
+        const user = classInformation.users[email];
         // If the user is verified or email functionality is disabled...
-        if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
+        if (req.session.verified || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
             next();
         } else {
             // Redirect to the login page
