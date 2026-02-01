@@ -367,8 +367,20 @@ async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
         throw new AppError("Refresh token not found or has been revoked.", 401);
     }
 
-    const accessToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
-    const newRefreshToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+    // Load user details so the OAuth access token includes the same claims as regular access tokens
+    const user = await dbGet("SELECT id, email, display_name AS displayName FROM users WHERE id = ?", [refreshTokenData.id]);
+    if (!user) {
+        throw new AppError("User associated with the refresh token was not found.", 404);
+    }
+
+    const tokenPayload = {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, privateKey, { algorithm: "RS256", expiresIn: "15m" });
+    const newRefreshToken = jwt.sign(tokenPayload, privateKey, { algorithm: "RS256", expiresIn: "30d" });
     const decodedRefreshToken = jwt.decode(newRefreshToken);
 
     // Rotate the refresh token: delete old, insert new
