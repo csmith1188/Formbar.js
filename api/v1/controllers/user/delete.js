@@ -51,45 +51,7 @@ module.exports = (router) => {
      */
     router.delete("/user/:id", hasPermission(MANAGER_PERMISSIONS), deleteUserHandler);
 
-    /**
-     * @swagger
-     * /api/v1/user/{id}/delete:
-     *   get:
-     *     summary: Delete a user (DEPRECATED)
-     *     deprecated: true
-     *     tags:
-     *       - Users
-     *     description: |
-     *       **DEPRECATED**: Use `DELETE /api/v1/user/{id}` instead.
-     *
-     *       This endpoint will be removed in a future version. Deletes a user from Formbar (requires manager permissions)
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: User ID
-     *     responses:
-     *       200:
-     *         description: User deleted successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/SuccessResponse'
-     *       403:
-     *         description: Insufficient permissions
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Error'
-     *       500:
-     *         description: Delete operation failed
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/ServerError'
-     */
+    // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/user/:id instead
     router.get("/user/:id/delete", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use DELETE /api/v1/user/:id instead");
         res.setHeader("Warning", '299 - "Deprecated API: Use DELETE /api/v1/user/:id instead. This endpoint will be removed in a future version."');

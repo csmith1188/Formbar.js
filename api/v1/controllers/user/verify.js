@@ -75,52 +75,13 @@ module.exports = (router) => {
      */
     router.patch("/user/:id/verify", hasPermission(MANAGER_PERMISSIONS), verifyUserHandler);
 
-    /**
-     * @swagger
-     * /api/v1/user/{id}/verify:
-     *   post:
-     *     summary: Verify a pending user (DEPRECATED)
-     *     deprecated: true
-     *     tags:
-     *       - Users
-     *     description: |
-     *       **DEPRECATED**: Use `PATCH /api/v1/user/{id}/verify` instead.
-     *
-     *       This endpoint will be removed in a future version. Verifies and activates a pending user account (requires manager permissions)
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: Pending user's temporary ID
-     *     responses:
-     *       200:
-     *         description: User verified successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 ok:
-     *                   type: boolean
-     *                   example: true
-     *       403:
-     *         description: Insufficient permissions
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Error'
-     *       404:
-     *         description: Pending user not found
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/NotFoundError'
-     */
+    // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:id/verify instead
     router.post("/user/:id/verify", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:id/verify instead");
-        res.setHeader("Warning", '299 - "Deprecated API: Use PATCH /api/v1/user/:id/verify instead. This endpoint will be removed in a future version."');
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use PATCH /api/v1/user/:id/verify instead. This endpoint will be removed in a future version."'
+        );
         await verifyUserHandler(req, res);
     });
 };

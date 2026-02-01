@@ -75,65 +75,13 @@ module.exports = (router) => {
      */
     router.patch("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), updatePermissionsHandler);
 
-    /**
-     * @swagger
-     * /api/v1/user/{email}/perm:
-     *   post:
-     *     summary: Change user's global permissions (DEPRECATED)
-     *     deprecated: true
-     *     tags:
-     *       - Users
-     *     description: |
-     *       **DEPRECATED**: Use `PATCH /api/v1/user/{email}/perm` instead.
-     *
-     *       This endpoint will be removed in a future version. Updates a user's global permission level (requires manager permissions)
-     *     parameters:
-     *       - in: path
-     *         name: email
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: User email
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             required:
-     *               - perm
-     *             properties:
-     *               perm:
-     *                 type: integer
-     *                 example: 3
-     *                 description: New permission level
-     *     responses:
-     *       200:
-     *         description: Permissions updated successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 ok:
-     *                   type: boolean
-     *                   example: true
-     *       400:
-     *         description: Invalid permission value
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Error'
-     *       403:
-     *         description: Insufficient permissions
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Error'
-     */
+    // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:email/perm instead
     router.post("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:email/perm instead");
-        res.setHeader("Warning", '299 - "Deprecated API: Use PATCH /api/v1/user/:email/perm instead. This endpoint will be removed in a future version."');
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use PATCH /api/v1/user/:email/perm instead. This endpoint will be removed in a future version."'
+        );
         await updatePermissionsHandler(req, res);
     });
 };
