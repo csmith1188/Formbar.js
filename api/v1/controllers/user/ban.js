@@ -3,6 +3,7 @@ const { dbGet, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 const { managerUpdate } = require("@modules/socketUpdates");
+const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
     const banUserHandler = async (req, res) => {
@@ -17,7 +18,7 @@ module.exports = (router) => {
             classInformation.users[user.email].permissions = BANNED_PERMISSIONS;
         }
 
-        managerUpdate();
+        await managerUpdate();
         res.status(200).json({ ok: true });
     };
 
@@ -33,7 +34,7 @@ module.exports = (router) => {
             classInformation.users[user.email].permissions = STUDENT_PERMISSIONS;
         }
 
-        managerUpdate();
+        await managerUpdate();
         res.status(200).json({ ok: true });
     };
 
