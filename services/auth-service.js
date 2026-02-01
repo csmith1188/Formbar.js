@@ -319,6 +319,13 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
         throw new AppError("Invalid authorization code provided.", 400);
     }
 
+    // Ensure the redirect_uri and client_id match those embedded in the authorization code
+    if (authorizationCodeData.redirect_uri !== redirect_uri) {
+        throw new AppError("redirect_uri does not match the original authorization request.", 400);
+    }
+    if (authorizationCodeData.aud !== client_id) {
+        throw new AppError("client_id does not match the original authorization request.", 400);
+    }
     const accessToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
     const decodedRefreshToken = jwt.decode(refreshToken);
