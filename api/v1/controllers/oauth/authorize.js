@@ -83,15 +83,13 @@ module.exports = (router) => {
         requireQueryParam(state, "state");
 
         // Create an authorization token for the client
-        const authorizationCode = authService.generateAuthorizationCode({ client_id, redirect_uri, scope, state, authorization });
+        const authorizationCode = authService.generateAuthorizationCode({ client_id, redirect_uri, scope, authorization });
 
         // Build redirect URL
         let url;
         try {
             url = new URL(redirect_uri);
         } catch (err) {
-            // Per RFC 6749 Section 4.1.2.1, do not redirect if redirect_uri is invalid;
-            // instead, inform the resource owner of the error.
             throw new ValidationError("Invalid redirect_uri. It must be a valid absolute URL.");
         }
         url.searchParams.append("code", authorizationCode);

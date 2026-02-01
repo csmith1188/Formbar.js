@@ -272,15 +272,13 @@ async function googleOAuth(email, displayName) {
  * @param {string} params.client_id - The client application's ID
  * @param {string} params.redirect_uri - The redirect URI
  * @param {string} params.scope - The requested scopes
- * @param {string} params.state - The CSRF state token
  * @param {string} params.authorization - The user's authorization token
  * @returns {string} A newly generated authorization code
  */
-function generateAuthorizationCode({ client_id, redirect_uri, scope, state, authorization }) {
+function generateAuthorizationCode({ client_id, redirect_uri, scope, authorization }) {
     requireInternalParam(client_id, "client_id");
     requireInternalParam(redirect_uri, "redirect_uri");
     requireInternalParam(scope, "scope");
-    requireInternalParam(state, "state");
     requireInternalParam(authorization, "authorization");
 
     const userData = verifyToken(authorization);
@@ -326,8 +324,21 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
     if (authorizationCodeData.aud !== client_id) {
         throw new AppError("client_id does not match the original authorization request.", 400);
     }
-    const accessToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
-    const refreshToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+
+    // Load user details so the OAuth access token includes the same claims as regular access tokens
+    const user = await dbGet("SELECT id, email, displayName FROM users WHERE id = ?", [authorizationCodeData.sub]);
+    if (!user) {
+        throw new AppError("User associated with the authorization code was not found.", 404);
+    }
+
+    const tokenPayload = {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+    };
+
+    const accessToken = jwt.sign(tokenPayload, privateKey, { algorithm: "RS256", expiresIn: "15m" });
+    const refreshToken = jwt.sign({ id: user.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
     const decodedRefreshToken = jwt.decode(refreshToken);
 
     // Persist the OAuth refresh token to the database

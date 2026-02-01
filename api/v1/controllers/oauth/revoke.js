@@ -32,7 +32,10 @@ module.exports = (router) => {
      *                 description: Optional hint about the token type (currently only refresh_token is supported)
      *     responses:
      *       200:
-     *         description: Token revoked successfully (or token was already invalid/revoked)
+     *         description: |
+     *           Token revocation request processed. This endpoint always returns 200 OK
+     *           regardless of whether: the token was valid, the token was already revoked,
+     *           or no token was provided. This behavior prevents token enumeration attacks.
      *         content:
      *           application/json:
      *             schema:
@@ -41,12 +44,6 @@ module.exports = (router) => {
      *                 success:
      *                   type: boolean
      *                   example: true
-     *       400:
-     *         description: Missing token parameter
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Error'
      */
     router.post("/oauth/revoke", async (req, res) => {
         const { token, token_type_hint } = req.body;
