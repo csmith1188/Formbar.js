@@ -7,6 +7,12 @@ function requireQueryParam(param, name) {
     }
 }
 
+function requireBodyParam(param, name) {
+    if (!param) {
+        throw new ValidationError(`Required body parameter '${name}' is missing.`);
+    }
+}
+
 function requireInternalParam(param, name) {
     if (!param) {
         throw new AppError(`Internal Error: Missing required parameter '${name}'.`, 500);
@@ -15,5 +21,6 @@ function requireInternalParam(param, name) {
 
 module.exports = {
     requireQueryParam,
+    requireBodyParam,
     requireInternalParam,
 };

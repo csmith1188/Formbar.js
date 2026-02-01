@@ -67,10 +67,11 @@ async function register(email, password, displayName) {
     // Generate tokens
     const tokens = generateAuthTokens(userData);
     const decodedRefreshToken = jwt.decode(tokens.refreshToken);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
         userData.id,
         tokens.refreshToken,
         decodedRefreshToken.exp,
+        "auth",
     ]);
 
     return { tokens, user: userData };
@@ -101,10 +102,11 @@ async function login(email, password) {
     if (passwordMatches) {
         const tokens = generateAuthTokens(userData);
         const decodedRefreshToken = jwt.decode(tokens.refreshToken);
-        await dbRun("INSERT OR REPLACE INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+        await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
             userData.id,
             tokens.refreshToken,
             decodedRefreshToken.exp,
+            "auth",
         ]);
 
         return { tokens, user: userData };
@@ -128,7 +130,7 @@ async function refreshLogin(refreshToken) {
         return invalidCredentials();
     }
 
-    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
+    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'auth'", [refreshToken]);
     if (!dbRefreshToken) {
         return invalidCredentials();
     }
@@ -145,10 +147,11 @@ async function refreshLogin(refreshToken) {
     // Delete the old refresh token and insert the new one to avoid UNIQUE constraint issues
     // This handles cases where a user might have multiple refresh tokens in the database
     await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
         dbRefreshToken.user_id,
         authTokens.refreshToken,
         decodedRefreshToken.exp,
+        "auth",
     ]);
 
     return authTokens;
@@ -251,12 +254,13 @@ async function googleOAuth(email, displayName) {
     const tokens = generateAuthTokens(userData);
     const decodedRefreshToken = jwt.decode(tokens.refreshToken);
 
-    // Store refresh token (replace if exists)
-    await dbRun("DELETE FROM refresh_tokens WHERE user_id = ?", [userData.id]);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp) VALUES (?, ?, ?)", [
+    // Store refresh token (replace if exists for this user's auth tokens only)
+    await dbRun("DELETE FROM refresh_tokens WHERE user_id = ? AND token_type = 'auth'", [userData.id]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
         userData.id,
         tokens.refreshToken,
         decodedRefreshToken.exp,
+        "auth",
     ]);
 
     return { tokens, user: userData };
@@ -264,6 +268,12 @@ async function googleOAuth(email, displayName) {
 
 /**
  * Creates an authorization code for OAuth 2.0 authorization flow
+ * @param {Object} params - The authorization parameters
+ * @param {string} params.client_id - The client application's ID
+ * @param {string} params.redirect_uri - The redirect URI
+ * @param {string} params.scope - The requested scopes
+ * @param {string} params.state - The CSRF state token
+ * @param {string} params.authorization - The user's authorization token
  * @returns {string} A newly generated authorization code
  */
 function generateAuthorizationCode({ client_id, redirect_uri, scope, state, authorization }) {
@@ -290,7 +300,16 @@ function generateAuthorizationCode({ client_id, redirect_uri, scope, state, auth
     );
 }
 
-function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
+/**
+ * Exchanges an authorization code for access and refresh tokens
+ * @async
+ * @param {Object} params - The token exchange parameters
+ * @param {string} params.code - The authorization code
+ * @param {string} params.redirect_uri - The redirect URI (must match original)
+ * @param {string} params.client_id - The client application's ID
+ * @returns {Promise<Object>} Token response with access_token, token_type, expires_in, and refresh_token
+ */
+async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
     requireInternalParam(code, "code");
     requireInternalParam(redirect_uri, "redirect_uri");
     requireInternalParam(client_id, "client_id");
@@ -302,15 +321,32 @@ function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id }) {
 
     const accessToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: authorizationCodeData.sub }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+    const decodedRefreshToken = jwt.decode(refreshToken);
+
+    // Persist the OAuth refresh token to the database
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+        authorizationCodeData.sub,
+        refreshToken,
+        decodedRefreshToken.exp,
+        "oauth",
+    ]);
 
     return {
-        success: true,
         access_token: accessToken,
+        token_type: "Bearer",
+        expires_in: 900,
         refresh_token: refreshToken,
     };
 }
 
-function exchangeRefreshTokenForAccessToken({ refresh_token }) {
+/**
+ * Exchanges a refresh token for a new access token and refresh token
+ * @async
+ * @param {Object} params - The token refresh parameters
+ * @param {string} params.refresh_token - The refresh token to exchange
+ * @returns {Promise<Object>} Token response with access_token, token_type, expires_in, and refresh_token
+ */
+async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
     requireInternalParam(refresh_token, "refresh_token");
 
     const refreshTokenData = verifyToken(refresh_token);
@@ -318,14 +354,45 @@ function exchangeRefreshTokenForAccessToken({ refresh_token }) {
         throw new AppError("Invalid refresh token provided.", 400);
     }
 
+    // Verify the refresh token exists in the database as an OAuth token
+    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'oauth'", [refresh_token]);
+    if (!dbRefreshToken) {
+        throw new AppError("Refresh token not found or has been revoked.", 401);
+    }
+
     const accessToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "15m" });
-    const refreshToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+    const newRefreshToken = jwt.sign({ id: refreshTokenData.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
+    const decodedRefreshToken = jwt.decode(newRefreshToken);
+
+    // Rotate the refresh token: delete old, insert new
+    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refresh_token]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+        refreshTokenData.id,
+        newRefreshToken,
+        decodedRefreshToken.exp,
+        "oauth",
+    ]);
 
     return {
-        success: true,
         access_token: accessToken,
-        refresh_token: refreshToken,
+        token_type: "Bearer",
+        expires_in: 900,
+        refresh_token: newRefreshToken,
     };
+}
+
+/**
+ * Revokes an OAuth refresh token
+ * @async
+ * @param {string} token - The refresh token to revoke
+ * @returns {Promise<boolean>} Returns true if revocation was successful
+ */
+async function revokeOAuthToken(token) {
+    requireInternalParam(token, "token");
+
+    // Delete the token from the database (only OAuth tokens)
+    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'oauth'", [token]);
+    return true;
 }
 
 module.exports = {
@@ -337,4 +404,5 @@ module.exports = {
     generateAuthorizationCode,
     exchangeAuthorizationCodeForToken,
     exchangeRefreshTokenForAccessToken,
+    revokeOAuthToken,
 };
