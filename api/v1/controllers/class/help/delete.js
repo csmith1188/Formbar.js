@@ -5,7 +5,7 @@ const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const deleteHelpHandler = async (req, res) => {
-        const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
+        const result = await deleteHelpTicket(req.params.userId, req.session);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

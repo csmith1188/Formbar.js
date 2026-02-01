@@ -12,7 +12,8 @@ module.exports = (router) => {
             throw new ForbiddenError("You do not have permission to request help in this class.");
         }
 
-        const result = await sendHelpTicket(true, req.params.userId, req.session.user);
+        const reason = req.body.reason || "General help request";
+        const result = await sendHelpTicket(reason, req.session);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
