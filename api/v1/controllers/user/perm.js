@@ -5,10 +5,26 @@ const { hasPermission } = require("@modules/middleware/permission-check");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
+    const updatePermissionsHandler = async (req, res) => {
+        const email = req.params.email;
+        let { perm } = req.body || {};
+        perm = Number(perm);
+        if (!Number.isFinite(perm)) {
+            throw new ValidationError("Invalid permission value");
+        }
+
+        await dbRun("UPDATE users SET permissions=? WHERE email=?", [perm, email]);
+        if (classInformation.users[email]) {
+            classInformation.users[email].permissions = perm;
+        }
+
+        res.status(200).json({ ok: true });
+    };
+
     /**
      * @swagger
      * /api/v1/user/{email}/perm:
-     *   post:
+     *   patch:
      *     summary: Change user's global permissions
      *     tags:
      *       - Users
@@ -57,19 +73,15 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
+    router.patch("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), updatePermissionsHandler);
+
+    // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:email/perm instead
     router.post("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        const email = req.params.email;
-        let { perm } = req.body || {};
-        perm = Number(perm);
-        if (!Number.isFinite(perm)) {
-            throw new ValidationError("Invalid permission value");
-        }
-
-        await dbRun("UPDATE users SET permissions=? WHERE email=?", [perm, email]);
-        if (classInformation.users[email]) {
-            classInformation.users[email].permissions = perm;
-        }
-
-        res.status(200).json({ ok: true });
+        res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:email/perm instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use PATCH /api/v1/user/:email/perm instead. This endpoint will be removed in a future version."'
+        );
+        await updatePermissionsHandler(req, res);
     });
 };

@@ -5,10 +5,26 @@ const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    const requestHelpHandler = async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to request help in this class.");
+        }
+
+        const reason = req.body.reason || "General help request";
+        const result = await sendHelpTicket(reason, req.session);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    };
+
     /**
      * @swagger
      * /api/v1/class/{id}/help/request:
-     *   get:
+     *   post:
      *     summary: Request help in a class
      *     tags:
      *       - Class - Help
@@ -59,18 +75,15 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
-        const classId = req.params.id;
-        const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
-            throw new ForbiddenError("You do not have permission to request help in this class.");
-        }
+    router.post("/class/:id/help/request", httpPermCheck("help"), requestHelpHandler);
 
-        const result = await sendHelpTicket(true, req.params.userId, req.session.user);
-        if (result === true) {
-            res.status(200).json({ success: true });
-        } else {
-            throw new AppError(result, 500);
-        }
+    // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/help/request instead
+    router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
+        res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/help/request instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use POST /api/v1/class/:id/help/request instead. This endpoint will be removed in a future version."'
+        );
+        await requestHelpHandler(req, res);
     });
 };

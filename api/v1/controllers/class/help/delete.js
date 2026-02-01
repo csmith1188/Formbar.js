@@ -4,10 +4,19 @@ const { deleteHelpTicket } = require("@modules/class/help");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    const deleteHelpHandler = async (req, res) => {
+        const result = await deleteHelpTicket(req.params.userId, req.session);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    };
+
     /**
      * @swagger
-     * /api/v1/class/{id}/students/{userId}/help/delete:
-     *   get:
+     * /api/v1/class/{id}/students/{userId}/help:
+     *   delete:
      *     summary: Delete a help request
      *     tags:
      *       - Class - Help
@@ -64,12 +73,15 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
+    router.delete("/class/:id/students/:userId/help", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), deleteHelpHandler);
+
+    // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/class/:id/students/:userId/help instead
     router.get("/class/:id/students/:userId/help/delete", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
-        const result = await deleteHelpTicket(true, req.params.userId, req.session.user);
-        if (result === true) {
-            res.status(200).json({ success: true });
-        } else {
-            throw new AppError(result, 500);
-        }
+        res.setHeader("X-Deprecated", "Use DELETE /api/v1/class/:id/students/:userId/help instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use DELETE /api/v1/class/:id/students/:userId/help instead. This endpoint will be removed in a future version."'
+        );
+        await deleteHelpHandler(req, res);
     });
 };

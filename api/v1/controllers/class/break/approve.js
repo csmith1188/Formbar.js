@@ -5,10 +5,25 @@ const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
+    const approveBreakHandler = async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to approve this user's break.");
+        }
+
+        const result = await approveBreak(true, req.params.userId, req.session.user);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    };
+
     /**
      * @swagger
      * /api/v1/class/{id}/students/{userId}/break/approve:
-     *   get:
+     *   post:
      *     summary: Approve a student's break request
      *     tags:
      *       - Class - Breaks
@@ -65,18 +80,15 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), async (req, res) => {
-        const classId = req.params.id;
-        const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
-            throw new ForbiddenError("You do not have permission to approve this user's break.");
-        }
+    router.post("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), approveBreakHandler);
 
-        const result = await approveBreak(true, req.params.userId, req.session.user);
-        if (result === true) {
-            res.status(200).json({ success: true });
-        } else {
-            throw new AppError(result, 500);
-        }
+    // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/students/:userId/break/approve instead
+    router.get("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), async (req, res) => {
+        res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/students/:userId/break/approve instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use POST /api/v1/class/:id/students/:userId/break/approve instead. This endpoint will be removed in a future version."'
+        );
+        await approveBreakHandler(req, res);
     });
 };

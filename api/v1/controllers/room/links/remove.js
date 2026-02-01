@@ -4,10 +4,22 @@ const { hasClassPermission } = require("@modules/middleware/permission-check");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
+    const removeLinkHandler = async (req, res) => {
+        const classId = req.params.id;
+        const { name } = req.body;
+        if (!name) {
+            throw new ValidationError("Name is required.");
+        }
+
+        // Remove the link from the database
+        await dbRun("DELETE FROM links WHERE classId = ? AND name = ?", [classId, name]);
+        res.status(200).json({ message: "Link removed successfully." });
+    };
+
     /**
      * @swagger
-     * /api/v1/room/{id}/links/remove:
-     *   post:
+     * /api/v1/room/{id}/links:
+     *   delete:
      *     summary: Remove a link from a room
      *     tags:
      *       - Room - Links
@@ -55,15 +67,15 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/room/:id/links/remove", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
-        const classId = req.params.id;
-        const { name } = req.body;
-        if (!name) {
-            throw new ValidationError("Name is required.");
-        }
+    router.delete("/room/:id/links", hasClassPermission(TEACHER_PERMISSIONS), removeLinkHandler);
 
-        // Remove the link from the database
-        await dbRun("DELETE FROM links WHERE classId = ? AND name = ?", [classId, name]);
-        res.status(200).json({ message: "Link removed successfully." });
+    // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/room/:id/links instead
+    router.post("/room/:id/links/remove", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        res.setHeader("X-Deprecated", "Use DELETE /api/v1/room/:id/links instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use DELETE /api/v1/room/:id/links instead. This endpoint will be removed in a future version."'
+        );
+        await removeLinkHandler(req, res);
     });
 };
