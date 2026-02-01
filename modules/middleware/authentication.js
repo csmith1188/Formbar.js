@@ -3,7 +3,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
-const { verifyToken } = require("@services/auth-service");
+const { verifyToken, cleanupExpiredAuthorizationCodes } = require("@services/auth-service");
 const AuthError = require("@errors/auth-error");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
@@ -12,15 +12,17 @@ const whitelistedIps = {};
 const blacklistedIps = {};
 const loginOnlyRoutes = ["/createClass", "/selectClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
 
-// Removes expired refresh tokens from the database
+// Removes expired refresh tokens and authorization codes from the database
 async function cleanRefreshTokens() {
     try {
         const refreshTokens = await dbGetAll("SELECT * FROM refresh_tokens");
         for (const refreshToken of refreshTokens) {
             if (Date.now() >= refreshToken.exp) {
-                await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken.refresh_token]);
+                await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ?", [refreshToken.token_hash]);
             }
         }
+        // Also clean up expired authorization codes
+        await cleanupExpiredAuthorizationCodes();
     } catch (err) {
         logger.log("error", err.stack);
     }

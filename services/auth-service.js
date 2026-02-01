@@ -2,14 +2,23 @@ const { compare, hash } = require("bcrypt");
 const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 const { privateKey, publicKey } = require("@modules/config");
 const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
+const { requireInternalParam } = require("@modules/error-wrapper");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const AppError = require("@errors/app-error");
-const { requireInternalParam } = require("@modules/error-wrapper");
-const { JWT } = require("google-auth-library");
 
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
 const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
+
+/**
+ * Generates a SHA-256 hash of the given token.
+ * This is used to store tokens securely without storing the actual token value.
+ * @param {string} token - The token to hash
+ * @returns {string} The SHA-256 hash in hex format
+ */
+function hashToken(token) {
+    return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 /**
  * Registers a new user with email and password
@@ -67,9 +76,10 @@ async function register(email, password, displayName) {
     // Generate tokens
     const tokens = generateAuthTokens(userData);
     const decodedRefreshToken = jwt.decode(tokens.refreshToken);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+    const tokenHash = hashToken(tokens.refreshToken);
+    await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
         userData.id,
-        tokens.refreshToken,
+        tokenHash,
         decodedRefreshToken.exp,
         "auth",
     ]);
@@ -102,9 +112,10 @@ async function login(email, password) {
     if (passwordMatches) {
         const tokens = generateAuthTokens(userData);
         const decodedRefreshToken = jwt.decode(tokens.refreshToken);
-        await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+        const tokenHash = hashToken(tokens.refreshToken);
+        await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
             userData.id,
-            tokens.refreshToken,
+            tokenHash,
             decodedRefreshToken.exp,
             "auth",
         ]);
@@ -130,7 +141,8 @@ async function refreshLogin(refreshToken) {
         return invalidCredentials();
     }
 
-    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'auth'", [refreshToken]);
+    const tokenHash = hashToken(refreshToken);
+    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE token_hash = ? AND token_type = 'auth'", [tokenHash]);
     if (!dbRefreshToken) {
         return invalidCredentials();
     }
@@ -146,10 +158,11 @@ async function refreshLogin(refreshToken) {
 
     // Delete the old refresh token and insert the new one to avoid UNIQUE constraint issues
     // This handles cases where a user might have multiple refresh tokens in the database
-    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken]);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+    const newTokenHash = hashToken(authTokens.refreshToken);
+    await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ?", [tokenHash]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
         dbRefreshToken.user_id,
-        authTokens.refreshToken,
+        newTokenHash,
         decodedRefreshToken.exp,
         "auth",
     ]);
@@ -255,10 +268,11 @@ async function googleOAuth(email, displayName) {
     const decodedRefreshToken = jwt.decode(tokens.refreshToken);
 
     // Store refresh token (replace if exists for this user's auth tokens only)
+    const tokenHash = hashToken(tokens.refreshToken);
     await dbRun("DELETE FROM refresh_tokens WHERE user_id = ? AND token_type = 'auth'", [userData.id]);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+    await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
         userData.id,
-        tokens.refreshToken,
+        tokenHash,
         decodedRefreshToken.exp,
         "auth",
     ]);
@@ -317,6 +331,20 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
         throw new AppError("Invalid authorization code provided.", 400);
     }
 
+    // Check if the authorization code has already been used (single-use per RFC 6749 Section 10.5)
+    const codeHash = hashToken(code);
+    const usedCode = await dbGet("SELECT * FROM used_authorization_codes WHERE code_hash = ?", [codeHash]);
+    if (usedCode) {
+        throw new AppError("Authorization code has already been used.", 400);
+    }
+
+    // Mark the authorization code as used
+    await dbRun("INSERT INTO used_authorization_codes (code_hash, used_at, expires_at) VALUES (?, ?, ?)", [
+        codeHash,
+        Math.floor(Date.now() / 1000),
+        authorizationCodeData.exp,
+    ]);
+
     // Ensure the redirect_uri and client_id match those embedded in the authorization code
     if (authorizationCodeData.redirect_uri !== redirect_uri) {
         throw new AppError("redirect_uri does not match the original authorization request.", 400);
@@ -341,10 +369,11 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
     const refreshToken = jwt.sign({ id: user.id }, privateKey, { algorithm: "RS256", expiresIn: "30d" });
     const decodedRefreshToken = jwt.decode(refreshToken);
 
-    // Persist the OAuth refresh token to the database
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+    // Persist the OAuth refresh token to the database (store hash, not cleartext)
+    const refreshTokenHash = hashToken(refreshToken);
+    await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
         authorizationCodeData.sub,
-        refreshToken,
+        refreshTokenHash,
         decodedRefreshToken.exp,
         "oauth",
     ]);
@@ -372,8 +401,9 @@ async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
         throw new AppError("Invalid refresh token provided.", 400);
     }
 
-    // Verify the refresh token exists in the database as an OAuth token
-    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'oauth'", [refresh_token]);
+    // Verify the refresh token exists in the database as an OAuth token (compare hashes)
+    const tokenHash = hashToken(refresh_token);
+    const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE token_hash = ? AND token_type = 'oauth'", [tokenHash]);
     if (!dbRefreshToken) {
         throw new AppError("Refresh token not found or has been revoked.", 401);
     }
@@ -394,11 +424,12 @@ async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
     const newRefreshToken = jwt.sign(tokenPayload, privateKey, { algorithm: "RS256", expiresIn: "30d" });
     const decodedRefreshToken = jwt.decode(newRefreshToken);
 
-    // Rotate the refresh token: delete old, insert new
-    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refresh_token]);
-    await dbRun("INSERT INTO refresh_tokens (user_id, refresh_token, exp, token_type) VALUES (?, ?, ?, ?)", [
+    // Rotate the refresh token: delete old, insert new (store hash, not cleartext)
+    const newTokenHash = hashToken(newRefreshToken);
+    await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ?", [tokenHash]);
+    await dbRun("INSERT INTO refresh_tokens (user_id, token_hash, exp, token_type) VALUES (?, ?, ?, ?)", [
         refreshTokenData.id,
-        newRefreshToken,
+        newTokenHash,
         decodedRefreshToken.exp,
         "oauth",
     ]);
@@ -420,9 +451,21 @@ async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
 async function revokeOAuthToken(token) {
     requireInternalParam(token, "token");
 
-    // Delete the token from the database (only OAuth tokens)
-    await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ? AND token_type = 'oauth'", [token]);
+    // Delete the token from the database (only OAuth tokens, compare by hash)
+    const tokenHash = hashToken(token);
+    await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ? AND token_type = 'oauth'", [tokenHash]);
     return true;
+}
+
+/**
+ * Cleans up expired authorization codes from the database.
+ * Should be called periodically to prevent table bloat.
+ * @async
+ * @returns {Promise<void>}
+ */
+async function cleanupExpiredAuthorizationCodes() {
+    const now = Math.floor(Date.now() / 1000);
+    await dbRun("DELETE FROM used_authorization_codes WHERE expires_at < ?", [now]);
 }
 
 module.exports = {
@@ -435,4 +478,6 @@ module.exports = {
     exchangeAuthorizationCodeForToken,
     exchangeRefreshTokenForAccessToken,
     revokeOAuthToken,
+    cleanupExpiredAuthorizationCodes,
+    hashToken,
 };
