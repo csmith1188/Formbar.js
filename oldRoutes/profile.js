@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isVerified, permCheck } = require("@middleware/authentication");
 const { dbGet, dbGetAll } = require("@modules/database");
 const { logger } = require("@modules/logger");
 const { logNumbers } = require("@modules/config");

@@ -1,6 +1,6 @@
 const { deleteUser } = require("@modules/user/userSession");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@middleware/permissionCheck");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {

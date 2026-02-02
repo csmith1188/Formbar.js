@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@middleware/permissionCheck");
 const { joinRoom } = require("@modules/class/class");
 
 module.exports = (router) => {

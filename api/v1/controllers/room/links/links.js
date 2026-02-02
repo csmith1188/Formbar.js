@@ -1,5 +1,5 @@
 const { GUEST_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { dbGetAll } = require("@modules/database");
 
 module.exports = (router) => {

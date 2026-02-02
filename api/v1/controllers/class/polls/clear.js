@@ -1,5 +1,5 @@
 const { clearPoll } = require("@modules/polls");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {

@@ -11,17 +11,13 @@ module.exports = (err, req, res, next) => {
     // Handle unexpected errors
     if (!isAppError || !isOperationalError) {
         
+        req.logger.error(error);
         statusCode = 500;
         error = new AppError("An unexpected error occurred.", statusCode);
-        req.logger.error("request.crash", {
-            message: err.message,
-            stack: err.stack,
-        });
 
     } else {
-        req.logger.warn("request.error", {
-            message: err.message,
-        });
+        const event = err.event || "request.error";
+        req.logger.warn(err);
     }
 
     const response = {

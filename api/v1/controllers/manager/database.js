@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@middleware/permissionCheck");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {

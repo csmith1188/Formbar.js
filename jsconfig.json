@@ -4,6 +4,7 @@
         "paths": {
             "@modules/*": ["modules/*"],
             "@services/*": ["api/v1/services/*"],
+            "@middleware/*": ["middleware/*"],
             "@controllers/*": ["api/v1/controllers/*"],
             "@errors/*": ["errors/*"]
         }

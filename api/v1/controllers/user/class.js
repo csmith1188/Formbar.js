@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@middleware/permissionCheck");
 const { dbGet } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");

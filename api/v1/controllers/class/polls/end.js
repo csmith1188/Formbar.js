@@ -1,5 +1,5 @@
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
-const { parseJson } = require("@modules/middleware/parseJson");
+const { hasClassPermission } = require("@middleware/permissionCheck");
+const { parseJson } = require("@middleware/parseJson");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { updatePoll } = require("@modules/polls");
 

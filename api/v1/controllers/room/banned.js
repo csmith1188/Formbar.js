@@ -1,6 +1,6 @@
 const { dbGetAll } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { classInformation } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const NotFoundError = require("@errors/not-found-error");

@@ -1,6 +1,6 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { dbRun } = require("@modules/database");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {

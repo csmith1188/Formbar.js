@@ -1,5 +1,5 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { dbRun } = require("@modules/database");
 const ValidationError = require("@errors/validation-error");
 

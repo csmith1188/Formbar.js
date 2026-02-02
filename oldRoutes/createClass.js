@@ -1,4 +1,4 @@
-const { permCheck, isAuthenticated } = require("@modules/middleware/authentication");
+const { permCheck, isAuthenticated } = require("@middleware/authentication");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const { logNumbers } = require("@modules/config");
 const { database, dbRun, dbGet } = require("@modules/database");

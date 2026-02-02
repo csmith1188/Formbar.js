@@ -1,7 +1,7 @@
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
 const { getManagerData } = require("@modules/manager");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@middleware/permissionCheck");
 
 module.exports = (router) => {
     // Retrieves manager data

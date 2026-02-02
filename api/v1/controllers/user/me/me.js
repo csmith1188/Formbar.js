@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**

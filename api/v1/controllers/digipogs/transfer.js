@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@middleware/permissionCheck");
 const { transferDigipogs } = require("@modules/digipogs");
 const AppError = require("@errors/app-error");
 

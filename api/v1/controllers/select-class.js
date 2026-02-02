@@ -1,4 +1,4 @@
-const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, permCheck } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
 const { joinRoomByCode } = require("@modules/joinRoom");

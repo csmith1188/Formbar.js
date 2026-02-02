@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isVerified, permCheck } = require("@middleware/authentication");
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");

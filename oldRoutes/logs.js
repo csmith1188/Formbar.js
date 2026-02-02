@@ -1,4 +1,4 @@
-const { permCheck, isAuthenticated } = require("@modules/middleware/authentication");
+const { permCheck, isAuthenticated } = require("@middleware/authentication");
 const { logger } = require("@modules/logger");
 const fs = require("fs");
 const { logNumbers } = require("@modules/config");

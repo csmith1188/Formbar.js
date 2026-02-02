@@ -1,4 +1,4 @@
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { endClass } = require("@modules/class/class");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 

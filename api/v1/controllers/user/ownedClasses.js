@@ -1,6 +1,6 @@
 const { dbGet } = require("@modules/database");
 const { getUserOwnedClasses } = require("@modules/user/user");
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@middleware/permissionCheck");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {

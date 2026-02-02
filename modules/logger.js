@@ -1,18 +1,8 @@
 const fs = require("fs");
 const winston = require("winston");
-const { logNumbers } = require("./config");
-require("winston-daily-rotate-file");
+const path = require("path");
 
-// These are the levels that will be logged to the console
-const loggingLevels = ["critical", "error", "warning"];
-
-/**
- * Creates a new logger transport with a daily rotation.
- * This function creates a new daily rotating file transport for a given log level.
- *
- * @param {string} level - The level of logs to record.
- * @returns {winston.transports.DailyRotateFile} The created transport.
- */
+const logsDir = 'logs';
 
 // Delete empty log files to avoid clutter
 function deleteEmptyLogFiles() {
@@ -33,21 +23,32 @@ function createLogger() {
     return winston.createLogger({
 
         // This sets the format of the log messages.
-        format: format.combine(
-            format.timestamp(),
-            format.errors({ stack: true }), // include stack traces in errors
-            format.json()
+        format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.errors({ stack: true }), // include stack traces in errors
+            winston.format.json()
         ),
 
         // This sets up the transports, which are the storage mechanisms for the logs
         transports: [
-            new winston.transports.Console()
+            new winston.transports.File({
+                filename: path.join(logsDir, "app.log"),
+            })
         ],
     });
 }
 
 // Create a new logger instance using the winston library
 const logger = createLogger();
+
+function logEvent(logger, level, event, message, meta = {}) {
+    logger.log({
+        level: level,
+        event: event,
+        message: message,
+        ...meta
+    });
+}
 
 /**
  * Gracefully exit after flushing logs.
@@ -76,5 +77,5 @@ process.on("unhandledRejection", async (reason) => {
 });
 
 module.exports = {
-    logger,
+    logger
 };

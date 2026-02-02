@@ -1,4 +1,4 @@
-const { httpPermCheck } = require("@modules/middleware/permissionCheck");
+const { httpPermCheck } = require("@middleware/permissionCheck");
 const { classInformation } = require("@modules/class/classroom");
 const { setTags } = require("@modules/class/tags");
 const NotFoundError = require("@errors/not-found-error");

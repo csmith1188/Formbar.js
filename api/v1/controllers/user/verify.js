@@ -1,6 +1,6 @@
 const { dbRun, dbGetAll } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permissionCheck");
+const { hasPermission } = require("@middleware/permissionCheck");
 const jwt = require("jsonwebtoken");
 const NotFoundError = require("@errors/not-found-error");
 

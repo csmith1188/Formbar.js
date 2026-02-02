@@ -33,11 +33,14 @@ const sessionMiddleware = session({
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
 
-const errorHandlerMiddleware = require("@modules/middleware/error-handler");
-const requestLoggerMiddleware = require("@modules/middleware/request-logger");
+const errorHandlerMiddleware = require("@middleware/error-handler.js");
+const requestLoggerMiddleware = require("@middleware/request-logger.js");
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
+
+// Request Logging Middleware
+app.use(requestLoggerMiddleware);
 
 // Initialize passport for Google OAuth
 app.use(passport.initialize());
@@ -207,9 +210,6 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
-
-// Request Logging Middleware
-app.use(requestLoggerMiddleware);
 
 // Error handling middleware
 app.use(errorHandlerMiddleware);

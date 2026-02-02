@@ -1,4 +1,4 @@
-const { hasClassPermission } = require("@modules/middleware/permissionCheck");
+const { hasClassPermission } = require("@middleware/permissionCheck");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { deleteHelpTicket } = require("@modules/class/help");
 const AppError = require("@errors/app-error");
