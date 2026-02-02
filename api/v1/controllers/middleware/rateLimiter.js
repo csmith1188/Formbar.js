@@ -8,10 +8,6 @@ const rateLimits = {};
 module.exports = (router) => {
     router.use(async (req, res, next) => {
         try {
-            if (req.path.startsWith("/auth/")) {
-                console.log("Bypassing rate limiter for /auth/ route");
-                return next();
-            }
             let user = null;
             if (req.headers.api) {
                 user = await getUser(req.headers.api);
@@ -22,7 +18,6 @@ module.exports = (router) => {
             } else { // If no auth provided, use ip as identifier with guest permissions
                 user = { email: req.ip, permissions: GUEST_PERMISSIONS };
             }
-
 
             if (!user.email || !user.permissions) return res.status(401).json({ error: "User is not authenticated" });
             const email = user.email;
