@@ -23,15 +23,15 @@ module.exports = (router) => {
             }
 
             if (!user.email || !user.permissions) return res.status(401).json({ error: "User is not authenticated" });
-            const email = user.email;
+            const identifier = user.email;
             const currentTime = Date.now();
             const timeFrame = 1000; // 1 Second
             const limit = user.permissions >= TEACHER_PERMISSIONS ? 100 : 30;
-            if (!rateLimits[email]) {
-                rateLimits[email] = {};
+            if (!rateLimits[identifier]) {
+                rateLimits[identifier] = {};
             }
 
-            const userRequests = rateLimits[email];
+            const userRequests = rateLimits[identifier];
             const path = req.path;
             if (!userRequests[path]) {
                 userRequests[path] = [];
