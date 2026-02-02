@@ -10,7 +10,7 @@ module.exports = (router) => {
         try {
             let user = null;
             if (req.headers.api) {
-                user = await getUser(req.headers.api);
+                user = await getUser({ api: req.headers.api });
             } else if (req.headers.authorization) {
                 const decodedToken = verifyToken(req.headers.authorization);
                 if (!decodedToken || decodedToken.error || !decodedToken.email) {
