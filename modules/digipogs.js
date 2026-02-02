@@ -196,8 +196,8 @@ async function transferDigipogs(transferData) {
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
         // Ensure that the user is not transferring to themselves
-        if (from == to) {
-            return { success: false, message: "You cannot transfer digipogs to the same account." };
+        if (from == to && !pool) {
+            return { success: false, message: "Cannot transfer to the same account." };
         }
 
         // Validate input
@@ -205,8 +205,6 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
-        } else if (from === to && !pool) {
-            return { success: false, message: "Cannot transfer to the same account." };
         }
 
         // Check rate limiting
@@ -261,10 +259,8 @@ async function transferDigipogs(transferData) {
             // Perform user deduction and pool update atomically
             try {
                 await dbRun("BEGIN TRANSACTION");
-                // Deduct full amount from user
-                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]);
-                // Credit taxed amount to pool
-                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
+                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]); // Deduct full amount from user
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]); // Credit taxed amount to pool
                 await dbRun("COMMIT");
             } catch (err) {
                 try {
