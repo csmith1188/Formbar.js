@@ -47,7 +47,7 @@ module.exports = (router) => {
         if (!Number.isInteger(classId) || classId <= 0) {
             throw new ValidationError("Invalid classId parameter");
         }
-        if (!(await isUserInClass(req.session.user.id, classId))) {
+        if (!(await isUserInClass(req.user.id, classId))) {
             throw new ForbiddenError("You are not a member of this class");
         }
 

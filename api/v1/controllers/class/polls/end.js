@@ -54,7 +54,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/polls/end", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
         const classId = req.params.id;
-        await updatePoll(classId, { status: false }, req.session);
+        await updatePoll(classId, { status: false }, req.user);
         res.status(200).json({ success: true });
     });
 };

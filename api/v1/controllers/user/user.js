@@ -60,7 +60,7 @@ module.exports = (router) => {
         }
 
         // Only include the email if the requester is the user themselves or a manager
-        const requesterEmail = req.session.email;
+        const requesterEmail = req.user?.email;
         let userEmail = undefined;
         // Safer check for manager permissions
         const isManager = requesterEmail && classInformation.users[requesterEmail]?.permissions === MANAGER_PERMISSIONS;

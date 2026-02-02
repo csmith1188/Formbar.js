@@ -40,7 +40,7 @@ module.exports = {
          */
         // Handle displaying the pools management page
         router.get("/pools", isVerified, permCheck, async (req, res) => {
-            const userId = req.session.userId;
+            const userId = req.user.userId;
 
             // Get all pools for this user using the new schema helper
             const userPools = await pools.getPoolsForUser(userId);

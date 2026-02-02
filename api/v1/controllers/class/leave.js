@@ -66,7 +66,7 @@ module.exports = (router) => {
             throw new ValidationError("Class ID is required.");
         }
 
-        const result = leaveClass(req.session, req.params.id);
+        const result = leaveClass(req.user, req.params.id);
         if (!result) {
             throw new ForbiddenError("Unauthorized");
         }

@@ -40,9 +40,6 @@ function isAuthenticated(req, res, next) {
         throw new AuthError("User is not authenticated");
     }
 
-    // @todo: cleanup
-    // logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
     const decodedToken = verifyToken(accessToken);
     if (decodedToken.error) {
         throw new AuthError("Invalid access token provided.");
@@ -58,71 +55,52 @@ function isAuthenticated(req, res, next) {
         throw new AuthError("User is not authenticated");
     }
 
-    req.session.email = email;
-    req.session.user = user;
-    req.session.userId = user.id;
-    req.session.displayName = user.displayName;
-    req.session.verified = user.verified;
-    req.session.tags = user.tags;
-
-    // Allow access to certain routes without being in a class
-    if (loginOnlyRoutes.includes(req.url)) {
-        next();
-        return;
-    }
-
-    // If the user is not in a class, then continue
-    const isInClass = user.activeClass != null;
-    if (isInClass) {
-        next();
-        return;
-    }
+    // Attach user data to req.user for stateless API authentication
+    req.user = {
+        email: email,
+        ...user,
+        userId: user.id,
+    };
 
     next();
 }
 
 // Create a function to check if the user's email is verified
 function isVerified(req, res, next) {
-    const accessToken = req.headers.authorization;
-    if (!accessToken) {
-        throw new AuthError("User is not authenticated.");
-    }
-
-    // Log that the function is being called with the ip and the session of the user
-    logger.log("info", `[isVerified] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-
-    // Get email from session or extract from JWT token
-    let email = req.session.email;
+    // Use req.user if available (set by isAuthenticated), otherwise decode from token
+    let email = req.user?.email;
     if (!email) {
+        const accessToken = req.headers.authorization;
+        if (!accessToken) {
+            throw new AuthError("User is not authenticated.");
+        }
         const decodedToken = verifyToken(accessToken);
         if (!decodedToken.error && decodedToken.email) {
             email = decodedToken.email;
-            req.session.email = email;
         }
     }
 
-    if (email) {
-        const user = classInformation.users[email];
-        // If the user is verified or email functionality is disabled...
-        if (req.session.verified || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
-            next();
-        } else {
-            // Redirect to the login page
-            // @todo: no more redirect
-            res.redirect("/login");
-        }
+    if (!email) {
+        throw new AuthError("User is not authenticated.");
+    }
+
+    const user = classInformation.users[email];
+    // If the user is verified or email functionality is disabled...
+    if ((user && user.verified) || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
+        next();
     } else {
-        // If there is no session, redirect to the login page
-        // @todo: no more redirect
-        res.redirect("/login");
+        throw new AuthError("User email is not verified.");
     }
 }
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
-    const email = req.session.email;
+    const email = req.user?.email;
+    if (!email) {
+        throw new AuthError("User is not authenticated");
+    }
 
-    logger.log("info", `[permCheck] ip=(${req.ip}) session=(${JSON.stringify(req.session)}) url=(${req.url})`);
+    logger.log("info", `[permCheck] ip=(${req.ip}) user=(${email}) url=(${req.url})`);
 
     if (req.url) {
         // Defines users desired endpoint
@@ -143,10 +121,6 @@ function permCheck(req, res, next) {
             urlPath = urlPath.slice(0, urlPath.indexOf("/"));
         }
 
-        if (!classInformation.users[email]) {
-            req.session.classId = null;
-        }
-
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
 
@@ -156,10 +130,15 @@ function permCheck(req, res, next) {
             throw new NotFoundError(`${urlPath} is not in the page permissions`);
         }
 
+        const user = classInformation.users[email];
+        if (!user) {
+            throw new AuthError("User not found");
+        }
+
         // Checks if users permissions are high enough
-        if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+        if (PAGE_PERMISSIONS[urlPath].classPage && user.classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
-        } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+        } else if (!PAGE_PERMISSIONS[urlPath].classPage && user.permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
             logger.log("info", "[permCheck] Not enough permissions");

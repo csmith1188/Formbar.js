@@ -51,7 +51,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     router.post("/class/:id/join", httpPermCheck("joinClass"), async (req, res) => {
-        await joinClass(req.session, req.params.id);
+        await joinClass(req.user, req.params.id);
         res.status(200).json({ success: true });
     });
 };

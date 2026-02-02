@@ -43,7 +43,7 @@ module.exports = (router) => {
             throw new NotFoundError("User not found");
         }
 
-        const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);
+        const ownedClasses = await getUserOwnedClasses(user.email, req.user);
         res.status(200).json(ownedClasses);
     });
 };

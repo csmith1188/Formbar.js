@@ -70,7 +70,7 @@ module.exports = (router) => {
     router.post("/class/:id/polls/response", httpPermCheck("pollResp"), parseJson, async (req, res) => {
         const { response, textRes } = req.body;
         const classId = req.params.id;
-        await pollResponse(classId, response, textRes, req.session.user);
+        await pollResponse(classId, response, textRes, req.user);
         res.status(200).json({ success: true });
     });
 };

@@ -133,23 +133,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Add currentUser and permission constants to all pages
-app.use((req, res, next) => {
-    // If the user is in a class, then get the user from the class students list
-    // This ensures that the user data is always up to date
-    if (req.session.classId) {
-        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-        if (!user) {
-            next();
-            return;
-        }
-
-        classInformation.users[req.session.email] = user;
-    }
-
-    next();
-});
-
 function getJSFiles(dir, base = dir) {
     let results = [];
     const entries = fs.readdirSync(dir, { withFileTypes: true });

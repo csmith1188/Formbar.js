@@ -71,7 +71,7 @@ module.exports = (router) => {
      */
     router.get("/class/:id/banned", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
-        logger.log("info", `[get api/class/${classId}/banned] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get api/class/${classId}/banned] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Ensure class exists
         if (!classInformation.classrooms[classId]) {

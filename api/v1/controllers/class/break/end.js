@@ -62,11 +62,11 @@ module.exports = (router) => {
     router.post("/class/:id/break/end", httpPermCheck("endBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to end this user's break.");
         }
 
-        const result = endBreak(req.session.user);
+        const result = endBreak(req.user);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

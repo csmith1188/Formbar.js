@@ -47,6 +47,6 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/UnauthorizedError'
      */
     router.post("/room/:code/join", httpPermCheck("joinRoom"), async (req, res) => {
-        await joinRoom(req.session, req.params.code);
+        await joinRoom(req.user, req.params.code);
     });
 };

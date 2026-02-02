@@ -8,11 +8,11 @@ module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to approve this user's break.");
         }
 
-        const result = await approveBreak(true, req.params.userId, req.session.user);
+        const result = await approveBreak(true, req.params.userId, req.user);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

@@ -14,15 +14,18 @@ const endpointWhitelistMap = ["getOwnedClasses", "getActiveClass"];
 
 /**
  * Helper function to extract user email from request.
- * Checks session first (for backwards compatibility), then a JWT token in the Authorization header.
- * If no email is present in the session, the Authorization header is missing, or JWT verification
- * fails / does not yield an email (e.g. {@link verifyToken} returns an object with an `error`),
- * this function returns {@code null} and the caller should treat the user as unauthenticated.
+ * Checks req.user first (for stateless API auth), then session (for socket compatibility),
+ * then a JWT token in the Authorization header.
  * @param {Object} req - Express request object
  * @returns {string|null} User email, or null if it cannot be determined or the token is invalid.
  */
 function getUserEmailFromRequest(req) {
-    // First check if session is already populated (backwards compatibility)
+    // First check req.user (set by isAuthenticated middleware for stateless auth)
+    if (req.user && req.user.email) {
+        return req.user.email;
+    }
+
+    // Then check session (for backwards compatibility with sockets)
     if (req.session && req.session.email) {
         return req.session.email;
     }
@@ -119,11 +122,8 @@ function httpPermCheck(event) {
             throw new AuthError("User not authenticated");
         }
 
-        if (req.session && !req.session.email) {
-            req.session.email = email;
-        }
-
-        const classId = req.session?.user?.classId ?? classInformation.users[email]?.classId ?? null;
+        // Get classId from req.user (set by isAuthenticated middleware) or from classInformation
+        const classId = req.user?.classId ?? req.user?.activeClass ?? classInformation.users[email]?.classId ?? null;
 
         if (!classInformation.classrooms[classId] && classId != null) {
             logger.log("info", [`[http permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`]);

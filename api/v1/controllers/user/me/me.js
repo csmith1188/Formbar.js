@@ -26,7 +26,7 @@ module.exports = (router) => {
      */
     // Gets the current user's information
     router.get("/user/me", isAuthenticated, async (req, res) => {
-        logger.log("info", `[get api/me] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-        res.status(200).json(req.session.user);
+        logger.log("info", `[get api/me] ip=(${req.ip}) user=(${req.user?.email})`);
+        res.status(200).json(req.user);
     });
 };

@@ -85,7 +85,7 @@ module.exports = (router) => {
         const { to, amount, pin, reason } = req.body || {};
 
         // Derive the authenticated user ID from the server-side context, not from client input
-        const from = (req.user && (req.user.id || req.user.userId)) || req.userId || (req.session && (req.session.userId || req.session.id));
+        const from = req.user?.id || req.user?.userId;
 
         if (!from) {
             throw new AppError({

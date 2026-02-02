@@ -8,12 +8,12 @@ module.exports = (router) => {
     const requestHelpHandler = async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request help in this class.");
         }
 
         const reason = req.body.reason || "General help request";
-        const result = await sendHelpTicket(reason, req.session);
+        const result = await sendHelpTicket(reason, req.user);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

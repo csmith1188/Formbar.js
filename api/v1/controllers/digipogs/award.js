@@ -69,7 +69,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/digipogs/award", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
-        const result = await awardDigipogs(req.body, req.session);
+        const result = await awardDigipogs(req.body, req.user);
         if (!result.success) {
             throw new AppError(result);
         }

@@ -46,9 +46,9 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     router.get("/manager", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        // Grab the user from the session
-        const user = req.session.user;
-        logger.log("info", `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        // Grab the user from req.user (set by isAuthenticated middleware)
+        const user = req.user;
+        logger.log("info", `[get api/manager] ip=(${req.ip}) user=(${req.user?.email})`);
         logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);
 
         // Grab manager data and send it back as a JSON response

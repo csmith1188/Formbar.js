@@ -3,7 +3,7 @@ const { leaveRoom } = require("@modules/class/class");
 
 module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
-        await leaveRoom(req.session);
+        await leaveRoom(req.user);
         res.status(200).json({ success: true });
     };
 

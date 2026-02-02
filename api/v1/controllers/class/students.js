@@ -65,7 +65,7 @@ module.exports = (router) => {
     router.get("/class/:id/students", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         // Get the class key from the request parameters and log the request details
         const classId = req.params.id;
-        logger.log("info", `get api/class/${classId}/students ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `get api/class/${classId}/students ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Get the students of the class
         // If an error occurs, log the error and return the error

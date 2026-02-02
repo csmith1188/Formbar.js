@@ -6,7 +6,7 @@ const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
     const setTagsHandler = async (req, res) => {
-        const classId = req.session.user.classId;
+        const classId = req.user.classId || req.user.activeClass;
         if (!classId || !classInformation.classrooms[classId]) {
             throw new NotFoundError("Class not found or not loaded.");
         }
@@ -16,7 +16,7 @@ module.exports = (router) => {
             throw new ValidationError("tags must be an array of strings");
         }
 
-        setTags(tags, req.session.user);
+        setTags(tags, req.user);
         res.status(200).json({ success: true });
     };
 
@@ -55,7 +55,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/NotFoundError'
      */
     router.get("/room/tags", httpPermCheck("classUpdate"), async (req, res) => {
-        const classId = req.session.user.classId;
+        const classId = req.user.classId || req.user.activeClass;
         if (!classId || !classInformation.classrooms[classId]) {
             throw new NotFoundError("Class not found or not loaded.");
         }
