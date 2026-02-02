@@ -1,7 +1,7 @@
 const { pollResponse } = require("@modules/polls");
-const { logger } = require("@modules/logger");
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { parseJson } = require("@modules/middleware/parse-json");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -67,7 +67,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/polls/response", httpPermCheck("pollResp"), parseJson, async (req, res) => {
+    router.post("/class/:id/polls/response", isAuthenticated, httpPermCheck("pollResp"), parseJson, async (req, res) => {
         const { response, textRes } = req.body;
         const classId = req.params.id;
         await pollResponse(classId, response, textRes, req.user);

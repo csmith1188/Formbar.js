@@ -1,6 +1,7 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { setTags } = require("@modules/class/tags");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const NotFoundError = require("@errors/not-found-error");
 const ValidationError = require("@errors/validation-error");
 
@@ -54,7 +55,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/room/tags", httpPermCheck("classUpdate"), async (req, res) => {
+    router.get("/room/tags", isAuthenticated, httpPermCheck("classUpdate"), async (req, res) => {
         const classId = req.user.classId || req.user.activeClass;
         if (!classId || !classInformation.classrooms[classId]) {
             throw new NotFoundError("Class not found or not loaded.");
@@ -112,10 +113,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.put("/room/tags", httpPermCheck("setTags"), setTagsHandler);
+    router.put("/room/tags", isAuthenticated, httpPermCheck("setTags"), setTagsHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use PUT /api/v1/room/tags instead
-    router.post("/room/tags", httpPermCheck("setTags"), async (req, res) => {
+    router.post("/room/tags", isAuthenticated, httpPermCheck("setTags"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PUT /api/v1/room/tags instead");
         res.setHeader("Warning", '299 - "Deprecated API: Use PUT /api/v1/room/tags instead. This endpoint will be removed in a future version."');
         await setTagsHandler(req, res);

@@ -1,6 +1,7 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { sendHelpTicket } = require("@modules/class/help");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
@@ -75,10 +76,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/help/request", httpPermCheck("help"), requestHelpHandler);
+    router.post("/class/:id/help/request", isAuthenticated, httpPermCheck("help"), requestHelpHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/help/request instead
-    router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
+    router.get("/class/:id/help/request", isAuthenticated, httpPermCheck("help"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/help/request instead");
         res.setHeader(
             "Warning",

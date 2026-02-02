@@ -1,5 +1,6 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { joinClass } = require("@modules/class/class");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -50,7 +51,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/join", httpPermCheck("joinClass"), async (req, res) => {
+    router.post("/class/:id/join", isAuthenticated, httpPermCheck("joinClass"), async (req, res) => {
         await joinClass(req.user, req.params.id);
         res.status(200).json({ success: true });
     });

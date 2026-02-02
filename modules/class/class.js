@@ -222,25 +222,27 @@ async function joinClass(userSession, classId) {
  * Removes a user from a class session.
  * Kicks the user from the classroom if they are a guest, or from the session otherwise.
  * Emits leave sound and updates the class state.
- * @param {Object} userSession - The session object of the user leaving the class.
- * @param {string|number} [classId] - The ID of the class to leave. If not provided, uses the user's active class.
+ * @param {Object} userData - The session object of the user leaving the class.
+ * @param {number} [classId] - The ID of the class to leave. If not provided, uses the user's active class.
  * @returns {boolean} True if the user was removed successfully, false otherwise.
  */
-function leaveClass(userSession, classId) {
+function leaveClass(userData, classId) {
     try {
-        logger.log("info", `[leaveClass] session=(${userSession})`);
+        // If no classId is provided, use the user's active class
+        if (!classId) {
+            classId = userData.activeClass;
+        }
 
-        const email = userSession.email;
+        const email = userData.email;
         const user = classInformation.users[email];
-        const socketUpdates = userSocketUpdates[email];
-        if (!classId) classId = user.activeClass;
+        console.log(user.activeClass, classId);
         if (user.activeClass !== classId) {
             return false;
         }
 
         // Kick the user from the classroom entirely if they're a guest
         // If not, kick them from the session
-        advancedEmitToClass("leaveSound", userSession.classId, {});
+        advancedEmitToClass("leaveSound", userData.classId, {});
         classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
     } catch (err) {

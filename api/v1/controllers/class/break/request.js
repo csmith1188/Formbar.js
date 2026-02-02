@@ -1,6 +1,7 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
@@ -78,7 +79,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/break/request", httpPermCheck("requestBreak"), async (req, res) => {
+    router.post("/class/:id/break/request", isAuthenticated, httpPermCheck("requestBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {

@@ -10,7 +10,6 @@ const ForbiddenError = require("@errors/forbidden-error");
 
 const whitelistedIps = {};
 const blacklistedIps = {};
-const loginOnlyRoutes = ["/createClass", "/selectClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
 
 // Removes expired refresh tokens and authorization codes from the database
 async function cleanRefreshTokens() {
@@ -28,12 +27,20 @@ async function cleanRefreshTokens() {
     }
 }
 
-/*
-Check if user has logged in
-Place at the start of any page that needs to verify if a user is logged in or not
-This allows websites to check on their own if the user is logged in
-This also allows for the website to check for permissions
-*/
+/**
+ * Middleware to verify that a user is authenticated.
+ *
+ * Place at the start of any route that requires an authenticated user.
+ * Verifies the Authorization header, decodes the access token and attaches
+ * user information to `req.user` for downstream handlers.
+ *
+ * @param {import('express').Request} req - Express request object.
+ * @param {import('express').Response} res - Express response object.
+ * @param {import('express').NextFunction} next - Express next middleware function.
+ * @throws {AuthError} When no token is provided, the token is invalid,
+ *                     the token is missing an email, or the user is not found.
+ * @returns {void}
+ */
 function isAuthenticated(req, res, next) {
     const accessToken = req.headers.authorization;
     if (!accessToken) {

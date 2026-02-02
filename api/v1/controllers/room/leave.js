@@ -1,5 +1,6 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { leaveRoom } = require("@modules/class/class");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
@@ -49,10 +50,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/UnauthorizedError'
      */
-    router.delete("/room/:id/leave", httpPermCheck("leaveRoom"), leaveRoomHandler);
+    router.delete("/room/:id/leave", isAuthenticated, httpPermCheck("leaveRoom"), leaveRoomHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/room/:id/leave instead
-    router.post("/room/:id/leave", httpPermCheck("leaveRoom"), async (req, res) => {
+    router.post("/room/:id/leave", isAuthenticated, httpPermCheck("leaveRoom"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use DELETE /api/v1/room/:id/leave instead");
         res.setHeader(
             "Warning",

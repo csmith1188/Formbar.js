@@ -3,6 +3,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {
@@ -80,10 +81,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), approveBreakHandler);
+    router.post("/class/:id/students/:userId/break/approve", isAuthenticated, httpPermCheck("approveBreak"), approveBreakHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/students/:userId/break/approve instead
-    router.get("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), async (req, res) => {
+    router.get("/class/:id/students/:userId/break/approve", isAuthenticated, httpPermCheck("approveBreak"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/students/:userId/break/approve instead");
         res.setHeader(
             "Warning",
