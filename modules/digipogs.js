@@ -195,6 +195,11 @@ async function transferDigipogs(transferData) {
         const { from, to, pin, reason = "", pool = false } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
+        // Ensure that the user is not transferring to themselves
+        if (from == to) {
+            return { success: false, message: "You cannot transfer digipogs to the same account." };
+        }
+
         // Validate input
         if (!from || (!to && to !== 0) || !amount || !pin || reason === undefined) {
             return { success: false, message: "Missing required fields." };
@@ -299,10 +304,10 @@ async function transferDigipogs(transferData) {
             const newToBalance = Math.ceil(toUser.digipogs + taxedAmount);
 
             try {
-                await Promise.all([
-                    dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]),
-                    dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]),
-                ]);
+                await dbRun("BEGIN TRANSACTION");
+                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]);
+                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]);
+                await dbRun("COMMIT");
             } catch (err) {
                 logger.log("error", err.stack || err);
                 recordAttempt(from, false);
