@@ -13,8 +13,11 @@ module.exports = (router) => {
                 user = await getUser(req.headers.api);
             } else if (req.headers.authorization) {
                 const decodedToken = verifyToken(req.headers.authorization);
+                if (!decodedToken || decodedToken.error || !decodedToken.email) {
+                    return res.status(401).json({ error: "User is not authenticated" });
+                }
                 let email = decodedToken.email;
-                user = await getUser({email: email});
+                user = await getUser({ email: email });
             } else { // If no auth provided, use ip as identifier with guest permissions
                 user = { email: req.ip, permissions: GUEST_PERMISSIONS };
             }
@@ -33,7 +36,7 @@ module.exports = (router) => {
                 rateLimits[email] = {};
             }
 
-            const userRequests = rateLimits[email];
+            const userRequests = rateLimits[identifier];
             const path = req.path;
             if (!userRequests[path]) {
                 userRequests[path] = [];
