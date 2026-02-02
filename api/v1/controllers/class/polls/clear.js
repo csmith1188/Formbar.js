@@ -1,6 +1,7 @@
 const { clearPoll } = require("@modules/polls");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -51,7 +52,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/polls/clear", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
+    router.post("/class/:id/polls/clear", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
         const classId = req.params.id;
         await clearPoll(classId, req.user);
         res.status(200).json({ success: true });

@@ -1,6 +1,7 @@
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
 

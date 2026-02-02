@@ -1,6 +1,7 @@
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { awardDigipogs } = require("@modules/digipogs");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
@@ -68,7 +69,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/digipogs/award", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+    router.post("/digipogs/award", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const result = await awardDigipogs(req.body, req.user);
         if (!result.success) {
             throw new AppError(result);

@@ -1,3 +1,4 @@
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { classInformation, getClassUsers } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
@@ -40,7 +41,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/class/:id", async (req, res) => {
+    router.get("/class/:id", isAuthenticated, async (req, res) => {
         let classId = req.params.id;
 
         // Log the request details

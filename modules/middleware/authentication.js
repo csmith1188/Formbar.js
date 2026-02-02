@@ -42,7 +42,7 @@ async function cleanRefreshTokens() {
  * @returns {void}
  */
 function isAuthenticated(req, res, next) {
-    const accessToken = req.headers.authorization;
+    const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
     if (!accessToken) {
         throw new AuthError("User is not authenticated");
     }
@@ -77,10 +77,11 @@ function isVerified(req, res, next) {
     // Use req.user if available (set by isAuthenticated), otherwise decode from token
     let email = req.user?.email;
     if (!email) {
-        const accessToken = req.headers.authorization;
+        const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
         if (!accessToken) {
             throw new AuthError("User is not authenticated.");
         }
+
         const decodedToken = verifyToken(accessToken);
         if (!decodedToken.error && decodedToken.email) {
             email = decodedToken.email;

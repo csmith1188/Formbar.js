@@ -1,5 +1,6 @@
 const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll } = require("@modules/database");
@@ -62,7 +63,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/class/:id/students", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+    router.get("/class/:id/students", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         // Get the class key from the request parameters and log the request details
         const classId = req.params.id;
         logger.log("info", `get api/class/${classId}/students ip=(${req.ip}) user=(${req.user?.email})`);

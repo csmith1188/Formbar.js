@@ -1,5 +1,6 @@
 const { GUEST_PERMISSIONS } = require("@modules/permissions");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { dbGetAll } = require("@modules/database");
 
 module.exports = (router) => {
@@ -41,7 +42,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.get("/room/:id/links", hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
+    router.get("/room/:id/links", isAuthenticated, hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
         const links = await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 
