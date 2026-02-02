@@ -19,11 +19,16 @@ module.exports = (router) => {
                 user = { email: req.ip, permissions: GUEST_PERMISSIONS };
             }
 
-            if (!user.email || !user.permissions) return res.status(401).json({ error: "User is not authenticated" });
+            if (!user || user.error ||!user.email || !user.permissions) user = { email: req.ip, permissions: GUEST_PERMISSIONS };
             const email = user.email;
             const currentTime = Date.now();
             const timeFrame = 1000; // 1 Second
-            const limit = user.permissions >= TEACHER_PERMISSIONS ? 100 : 30;
+            let limit = 10; // Default limit for unauthenticated users
+            if (user.permissions >= TEACHER_PERMISSIONS) {
+                limit = 100; 
+            } else if (user.permissions > GUEST_PERMISSIONS) {
+                limit = req.path.startsWith("/auth/") ? 10 : 30;
+            }
             if (!rateLimits[email]) {
                 rateLimits[email] = {};
             }
@@ -43,6 +48,7 @@ module.exports = (router) => {
                     userRequests["hasBeenMessaged"] = true;
                     return res.status(429).json({ error: `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.` });
                 }
+                return;
             } else {
                 userRequests[path].push(currentTime);
                 next();
