@@ -26,6 +26,7 @@ const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inact
 
 const { logout } = require("./modules/user/userSession");
 const { passport } = require("./modules/googleOauth.js");
+const { rateLimiter } = require("@modules/middleware/rateLimiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -35,6 +36,9 @@ const sessionMiddleware = session({
 });
 
 const errorHandlerMiddleware = require("@modules/middleware/error-handler");
+
+// Connect rate limiter middleware
+app.use(rateLimiter);
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
@@ -172,7 +176,18 @@ for (const apiVersionFolder of apiVersionFolders) {
         const router = express.Router();
 
         const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
-        for (const routeFile of routeFiles) {
+        const middlewareFiles = routeFiles.filter((routeFile) => routeFile.startsWith("middleware/"));
+        const nonMiddlewareFiles = routeFiles.filter((routeFile) => !routeFile.startsWith("middleware/"));
+
+        for (const routeFile of middlewareFiles) {
+            const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
+            if (typeof registerRoute === "function") {
+                registerRoute(router);
+                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute);
+            }
+        }
+
+        for (const routeFile of nonMiddlewareFiles) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
             if (typeof registerRoute === "function") {
                 registerRoute(router);
