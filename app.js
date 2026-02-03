@@ -26,6 +26,7 @@ const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inact
 
 const { logout } = require("./modules/user/userSession");
 const { passport } = require("./modules/googleOauth.js");
+const { rateLimiter } = require("@modules/middleware/rateLimiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -35,6 +36,9 @@ const sessionMiddleware = session({
 });
 
 const errorHandlerMiddleware = require("@modules/middleware/error-handler");
+
+// Connect rate limiter middleware
+app.use(rateLimiter);
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
