@@ -1,6 +1,6 @@
 const { run: pollCreationRun } = require("../polls/pollCreation");
 const { run: pollRemovalRun } = require("../polls/pollRemoval");
-const { createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
+const { createTestClass, testData, createSocket, createSocketUpdates } = require("@modules/tests/tests");
 const { userSocketUpdates } = require("../init");
 
 jest.mock("@modules/class/classroom");

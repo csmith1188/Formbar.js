@@ -2,7 +2,7 @@
 // This migration restructures the 'digipog_pool_users' table by removing the 'member' column
 // and splitting the 'owner' and 'member' columns into individual entries in a new format.
 
-const { dbGetAll, dbRun } = require("../../../modules/database");
+const { dbGetAll, dbRun } = require("@modules/database");
 module.exports = {
     async run(database) {
         const columns = await dbGetAll("PRAGMA table_info(digipog_pool_users)", [], database);

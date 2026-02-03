@@ -3,8 +3,9 @@
         "baseUrl": ".",
         "paths": {
             "@modules/*": ["modules/*"],
-            "@services/*": ["api/v1/services/*"],
-            "@controllers/*": ["api/v1/controllers/*"]
+            "@services/*": ["services/*"],
+            "@controllers/*": ["api/v1/controllers/*"],
+            "@errors/*": ["errors/*"]
         }
     },
     "include": ["**/*.js"]

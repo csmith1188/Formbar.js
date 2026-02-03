@@ -1,6 +1,10 @@
-// Imported modules
+// Support module aliases for importing
 require("module-alias/register");
+
+// Imported modules
 const express = require("express");
+require("express-async-errors"); // To handle async errors in express routes
+
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
 const fs = require("fs");
@@ -16,9 +20,10 @@ if (!fs.existsSync("database/database.db")) {
 const { logger } = require("./modules/logger.js");
 const { classInformation } = require("./modules/class/classroom.js");
 const { initSocketRoutes } = require("./sockets/init.js");
-const { app, io, http, getIpAccess } = require("./modules/webServer.js");
+const { app, io, http } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+
 const { logout } = require("./modules/user/userSession");
 const { passport } = require("./modules/googleOauth.js");
 
@@ -28,6 +33,8 @@ const sessionMiddleware = session({
     resave: false, // Used to prevent resaving back to the session store, even if it wasn't modified
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
+
+const errorHandlerMiddleware = require("@modules/middleware/error-handler");
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
@@ -59,31 +66,10 @@ io.use((socket, next) => {
     }
 });
 
-// Allows express to parse requests
+// Handle cors
 const cors = require("cors");
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
-          .map((origin) => origin.trim())
-          .filter(Boolean)
-    : [];
+app.use(cors({ origin: true }));
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests with no Origin header (e.g., mobile apps, curl)
-            if (!origin) {
-                return callback(null, true);
-            }
-
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-
-            return callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-    })
-);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -211,6 +197,11 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
+
+// Error handling middleware
+app.use(errorHandlerMiddleware);
+
+// Start the server
 
 http.listen(settings.port, async () => {
     // Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));

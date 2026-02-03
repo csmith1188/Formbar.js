@@ -1,36 +1,99 @@
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
+const ForbiddenError = require("@errors/forbidden-error");
+const ValidationError = require("@errors/validation-error");
+const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    try {
-        // Request a break in a class by class ID and user ID
-        router.post("/class/:id/break/request", httpPermCheck("requestBreak"), async (req, res) => {
-            try {
-                const classId = req.params.id;
-                const classroom = classInformation.classrooms[classId];
-                if (classroom && !classroom.students[req.session.email]) {
-                    res.status(403).json({ error: "You do not have permission to request a break." });
-                    return;
-                }
+    /**
+     * @swagger
+     * /api/v1/class/{id}/break/request:
+     *   post:
+     *     summary: Request a break
+     *     tags:
+     *       - Class - Breaks
+     *     description: |
+     *       Submits a break request for a class.
+     *
+     *       **Required Permission:** Class-specific Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - reason
+     *             properties:
+     *               reason:
+     *                 type: string
+     *                 example: "Need to use the restroom"
+     *     responses:
+     *       200:
+     *         description: Break request submitted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       400:
+     *         description: Reason is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Not authorized to request a break in this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.post("/class/:id/break/request", httpPermCheck("requestBreak"), async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to request a break.");
+        }
 
-                if (!req.body.reason) {
-                    res.status(400).json({ error: "A reason for the break must be provided." });
-                    return;
-                }
+        if (!req.body.reason) {
+            throw new ValidationError("A reason for the break must be provided.");
+        }
 
-                const result = requestBreak(req.body.reason, req.session.user);
-                if (result === true) {
-                    res.status(200);
-                } else {
-                    res.status(500).json({ error: result });
-                }
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        const result = requestBreak(req.body.reason, req.session.user);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    });
 };
