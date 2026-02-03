@@ -5,6 +5,7 @@ const { MANAGER_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissio
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const AppError = require("@errors/app-error");
+const ValidationError = require("@errors/validation-error");
 
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
 const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
@@ -153,15 +154,15 @@ function invalidCredentials() {
  */
 async function register(email, password, displayName) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
+        throw new ValidationError("Either the public key or private key is not available for JWT signing.", {event: "auth.register.failed"});
     }
 
     if (!passwordRegex.test(password)) {
-        return { error: "Password must be 5-20 characters long and can only contain letters, numbers, and special characters." };
+        throw new ValidationError("Password must be 5-20 characters long and can only contain letters, numbers, and special characters.", {event: "auth.register.failed"});
     }
 
     if (!displayRegex.test(displayName)) {
-        return { error: "Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores." };
+        throw new ValidationError("Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores.", {event: "auth.register.failed"});
     }
 
     // Normalize email to lowercase to prevent duplicate accounts
@@ -170,7 +171,7 @@ async function register(email, password, displayName) {
     // Check if user already exists
     const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
     if (existingUser) {
-        return { error: "A user with that email or display name already exists." };
+        throw new ValidationError("A user with that email or display name already exists.", {event: "auth.register.failed", reason: "user_exists"});
     }
 
     const hashedPassword = await hash(password, 10);

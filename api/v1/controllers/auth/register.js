@@ -6,18 +6,17 @@ module.exports = (router) => {
     router.post("/auth/register", async (req, res) => {
         const { email, password, displayName } = req.body;
         if (!email || !password) {
-            throw new ValidationError("Email and password are required.");
+            throw new ValidationError("Email and password are required.", {event: "auth.register.failed", reason: "missing_fields" });
         }
 
         if (!displayName) {
-            throw new ValidationError("Display name is required.");
+            throw new ValidationError("Display name is required.", {event: "auth.register.failed", reason: "missing_fields" });
         }
 
         // Attempt to register the user
         const result = await authService.register(email, password, displayName);
-        if (result.error) {
-            throw new ValidationError(result.error);
-        }
+
+        req.infoEvent("auth.register.success", `User registered: ${email}`, { userId: result.user.id });
 
         // Return the tokens and user data
         res.status(201).json({

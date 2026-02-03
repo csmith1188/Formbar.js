@@ -41,7 +41,8 @@ function createLogger() {
 // Create a new logger instance using the winston library
 const logger = createLogger();
 
-function logEvent(logger, level, event, message, meta = {}) {
+// wrapper to log events
+function logEvent(logger, level, event, message = "", meta = {}) {
     logger.log({
         level: level,
         event: event,
@@ -77,5 +78,6 @@ process.on("unhandledRejection", async (reason) => {
 });
 
 module.exports = {
-    logger
+    logger,
+    logEvent
 };

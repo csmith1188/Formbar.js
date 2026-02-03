@@ -1,8 +1,8 @@
 const AppError = require("./app-error");
 
 class RateLimitError extends AppError {
-    constructor(message, statusCode = 429, event, options = {}) {
-        super(message, statusCode, event, options);
+    constructor(message, options = {}) {
+        super(message, { statusCode: 429, ...options });
     }
 }
 

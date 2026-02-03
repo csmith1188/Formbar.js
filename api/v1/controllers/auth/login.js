@@ -8,13 +8,13 @@ module.exports = (router) => {
     router.post("/auth/login", async (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) {
-            throw new ValidationError("Email and password are required.");
+            throw new ValidationError("Email and password are required.", {event: "auth.login.failed"});
         }
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            throw new ValidationError("Incorrect password. Try again.");
+            throw new ValidationError("Incorrect password. Try again.", {event: "auth.login.failed"});
         }
 
         // If not already logged in, create a new Student instance in classInformation
