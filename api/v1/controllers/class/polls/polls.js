@@ -63,7 +63,7 @@ module.exports = (router) => {
         let classId = req.params.id;
 
         // Log the request details
-        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // If the class does not exist, return an error
         if (!classInformation.classrooms[classId]) {
@@ -72,7 +72,7 @@ module.exports = (router) => {
         }
 
         // Get the user from the session
-        let user = req.session.user;
+        let user = req.user;
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {

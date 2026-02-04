@@ -2,6 +2,7 @@ const { createPoll } = require("@modules/polls");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { parseJson } = require("@modules/middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -88,7 +89,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/polls/create", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
+    router.post("/class/:id/polls/create", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
         const classId = req.params.id;
         const body = req.body || {};
         const isLegacy =
@@ -114,7 +115,7 @@ module.exports = (router) => {
               }
             : body;
 
-        await createPoll(classId, pollData, req.session.user);
+        await createPoll(classId, pollData, req.user);
         res.status(200).json({ success: true });
     });
 };

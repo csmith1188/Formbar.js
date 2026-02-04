@@ -1,6 +1,7 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { sendHelpTicket } = require("@modules/class/help");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
@@ -8,12 +9,13 @@ module.exports = (router) => {
     const requestHelpHandler = async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request help in this class.");
         }
 
         const reason = req.body.reason || "General help request";
-        const result = await sendHelpTicket(reason, req.session);
+        const userData = { ...req.user, classId };
+        const result = await sendHelpTicket(reason, userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
@@ -75,10 +77,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/help/request", httpPermCheck("help"), requestHelpHandler);
+    router.post("/class/:id/help/request", isAuthenticated, httpPermCheck("help"), requestHelpHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/help/request instead
-    router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
+    router.get("/class/:id/help/request", isAuthenticated, httpPermCheck("help"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/help/request instead");
         res.setHeader(
             "Warning",

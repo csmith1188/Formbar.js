@@ -1,3 +1,4 @@
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { classInformation, getClassUsers } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
@@ -40,11 +41,11 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/class/:id", async (req, res) => {
+    router.get("/class/:id", isAuthenticated, async (req, res) => {
         let classId = req.params.id;
 
         // Log the request details
-        logger.log("info", `[get api/class/${classId}] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get api/class/${classId}] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Get a clone of the class data
         // If the class does not exist, return an error
@@ -54,7 +55,7 @@ module.exports = (router) => {
         }
 
         // Get the user from the session, and if the user is not in the class, return an error
-        const user = req.session.user;
+        const user = req.user;
         if (!classData.students[user.email]) {
             logger.log("verbose", `[get api/class/${classId}] user is not logged in`);
             throw new ForbiddenError("User is not logged into the selected class");
@@ -75,7 +76,7 @@ module.exports = (router) => {
             delete classData.key;
             delete classData.sharedPolls;
 
-            classData.students = { [req.session.email]: classUsers[req.session.email] };
+            classData.students = { [req.user.email]: classUsers[req.user.email] };
         } else {
             classData.students = classUsers;
         }

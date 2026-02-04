@@ -18,7 +18,6 @@ if (!fs.existsSync("database/database.db")) {
 
 // Custom modules
 const { logger } = require("./modules/logger.js");
-const { classInformation } = require("./modules/class/classroom.js");
 const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http } = require("./modules/webServer.js");
 const { settings } = require("./modules/config.js");
@@ -133,23 +132,6 @@ app.use((req, res, next) => {
     // if (isIPBanned) {
     //     return res.redirect("/ip-banned");
     // }
-
-    next();
-});
-
-// Add currentUser and permission constants to all pages
-app.use((req, res, next) => {
-    // If the user is in a class, then get the user from the class students list
-    // This ensures that the user data is always up to date
-    if (req.session.classId) {
-        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-        if (!user) {
-            next();
-            return;
-        }
-
-        classInformation.users[req.session.email] = user;
-    }
 
     next();
 });
