@@ -8,7 +8,7 @@ module.exports = (router) => {
     router.post("/digipogs/award", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const result = await awardDigipogs(req.body, req.session);
         if (!result.success) {
-            throw new AppError(result);
+            throw new AppError(result, { statusCode: 500, event: "digipogs.award.failed", reason: "award_error" });
         }
         res.status(200).json(result);
     });

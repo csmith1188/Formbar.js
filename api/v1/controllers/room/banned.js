@@ -12,7 +12,7 @@ module.exports = (router) => {
 
         // Ensure class exists
         if (!classInformation.classrooms[classId]) {
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "room.banned.get.failed", reason: "class_not_started" });
         }
 
         const rows = await dbGetAll(

@@ -8,13 +8,14 @@ module.exports = (router) => {
     router.post("/auth/login", async (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) {
-            throw new ValidationError("Email and password are required.", {event: "auth.login.failed"});
+            throw new ValidationError("Email and password are required.", {event: "auth.login.failed", reason: "missing_fields"});
         }
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            throw new ValidationError("Incorrect password. Try again.", {event: "auth.login.failed"});
+            req.infoEvent("auth.login.failed", `Login failed for: ${email}`, { reason: "invalid_credentials" });
+            throw new ValidationError("Incorrect password. Try again.", {event: "auth.login.failed", reason: "invalid_credentials"});
         }
 
         // If not already logged in, create a new Student instance in classInformation
@@ -41,6 +42,7 @@ module.exports = (router) => {
         req.session.verified = userData.verified;
         req.session.tags = userData.tags ? userData.tags.split(",") : [];
 
+        req.infoEvent("auth.login.success", `User logged in: ${email}`, { userId: userData.id });
         res.json(tokens);
     });
 };

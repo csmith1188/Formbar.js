@@ -17,7 +17,7 @@ module.exports = {
             const classId = userData && userData.activeClass != null ? userData.activeClass : req.session.classId;
             const classroom = classInformation.classrooms[classId];
             if (!classroom || !classroom.students || !classroom.students[email]) {
-                throw new AuthError("You are not currently in a class.");
+                throw new AuthError("You are not currently in a class.", { event: "room.student.access.failed", reason: "not_in_class" });
             }
 
             // Poll Setup

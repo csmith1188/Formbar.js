@@ -78,7 +78,7 @@ module.exports = (router) => {
                 verified: user.verified,
             });
         } else {
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "user.get.failed", reason: "user_not_found" });
         }
     });
 };

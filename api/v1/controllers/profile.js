@@ -15,7 +15,7 @@ module.exports = (router) => {
         // Check if the user has permission to view these transactions (either their own or they are a manager)
         const userId = req.params.userId || req.session.userId;
         if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-            throw new ForbiddenError("You do not have permission to view these transactions.");
+            throw new ForbiddenError("You do not have permission to view these transactions.", { event: "profile.transactions.get.failed", reason: "insufficient_permissions" });
         }
 
         const userData = await getUserData(userId);
@@ -51,13 +51,13 @@ module.exports = (router) => {
         const userId = req.params.userId || req.session.userId;
         const userData = await getUserData(userId);
         if (!userData) {
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.get.failed", reason: "user_not_found" });
         }
 
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            throw new AppError("Unable to retrieve profile information. Please try again.");
+            throw new AppError("Unable to retrieve profile information. Please try again.", { statusCode: 500, event: "profile.get.failed", reason: "missing_data" });
         }
 
         // Determine if the email should be visible then render the page

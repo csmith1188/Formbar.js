@@ -9,7 +9,7 @@ module.exports = (router) => {
         const classId = req.params.id;
         const { name } = req.body;
         if (!name) {
-            throw new ValidationError("Name is required.");
+            throw new ValidationError("Name is required.", { event: "room.links.remove.failed", reason: "missing_name" });
         }
 
         // Remove the link from the database

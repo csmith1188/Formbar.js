@@ -10,14 +10,14 @@ module.exports = (router) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.session.email]) {
-            throw new ForbiddenError("You do not have permission to request help in this class.");
+            throw new ForbiddenError("You do not have permission to request help in this class.", { event: "class.help.request.failed", reason: "insufficient_permissions" });
         }
 
         const result = await sendHelpTicket(true, req.params.userId, req.session.user);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500, event: "class.help.request.failed", reason: "send_error" });
         }
     });
 };

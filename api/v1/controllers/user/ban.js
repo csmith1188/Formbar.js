@@ -11,7 +11,7 @@ module.exports = (router) => {
         const userId = req.params.id;
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new NotFoundError("User not found", { event: "user.ban.failed", reason: "user_not_found" });
         }
 
         await dbRun("UPDATE users SET permissions=? WHERE id=?", [BANNED_PERMISSIONS, userId]);
@@ -28,7 +28,7 @@ module.exports = (router) => {
         const userId = req.params.id;
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new NotFoundError("User not found", { event: "user.unban.failed", reason: "user_not_found" });
         }
 
         await dbRun("UPDATE users SET permissions=? WHERE id=?", [STUDENT_PERMISSIONS, userId]);

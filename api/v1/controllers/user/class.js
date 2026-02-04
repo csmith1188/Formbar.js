@@ -16,7 +16,7 @@ module.exports = (router) => {
         const requestedUser = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
 
         if (user.id !== requestedUser.id && user.permissionLevel < MANAGER_PERMISSIONS) {
-            throw new ForbiddenError("You do not have permission to view this user's active class.");
+            throw new ForbiddenError("You do not have permission to view this user's active class.", { event: "user.class.get.failed", reason: "insufficient_permissions" });
         }
 
         const userInformation = classInformation.users[user.email];
@@ -29,11 +29,11 @@ module.exports = (router) => {
                     name: classInfo.name,
                 });
             } else {
-                throw new NotFoundError("Class not found.");
+                throw new NotFoundError("Class not found.", { event: "user.class.get.failed", reason: "class_not_found" });
             }
             return;
         }
 
-        throw new NotFoundError("User is not in a class.");
+        throw new NotFoundError("User is not in a class.", { event: "user.class.get.failed", reason: "user_not_in_class" });
     });
 };

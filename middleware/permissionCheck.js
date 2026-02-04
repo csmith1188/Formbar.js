@@ -20,13 +20,13 @@ function hasPermission(permission) {
     return function (req, res, next) {
         const user = classInformation.users[req.session.email];
         if (!user) {
-            throw new AuthError("User not found");
+            throw new AuthError("User not found", { event: "permission.check.failed", reason: "user_not_found" });
         }
 
         if (user.permissions >= permission) {
             next();
         } else {
-            throw new ForbiddenError("You do not have permission to access this resource.");
+            throw new ForbiddenError("You do not have permission to access this resource.", { event: "permission.check.failed", reason: "insufficient_permissions" });
         }
     };
 }
@@ -45,7 +45,7 @@ function hasClassPermission(classPermission) {
         if (classroom) {
             const user = classroom.students[req.session.user.email];
             if (!user) {
-                throw new AuthError("User not found in this class.");
+                throw new AuthError("User not found in this class.", { event: "permission.check.failed", reason: "user_not_in_class" });
             }
 
             // Retrieve the permission level from the classroom's permissions
@@ -54,10 +54,10 @@ function hasClassPermission(classPermission) {
             if (user.classPermissions >= requiredPermissionLevel) {
                 next();
             } else {
-                throw new ForbiddenError("Unauthorized");
+                throw new ForbiddenError("Unauthorized", { event: "permission.check.failed", reason: "insufficient_class_permissions" });
             }
         } else {
-            throw new ForbiddenError("This class is not currently active.");
+            throw new ForbiddenError("This class is not currently active.", { event: "permission.check.failed", reason: "class_not_active" });
         }
     };
 }
@@ -79,11 +79,11 @@ function httpPermCheck(event) {
         const classId = req.session.user.classId;
 
         if (!classInformation.classrooms[classId] && classId != null) {
-            throw new AuthError("Class does not exist");
+            throw new AuthError("Class does not exist", { event: "permission.check.failed", reason: "class_not_exist" });
         }
 
         if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
-            throw new AuthError("Class is not loaded");
+            throw new AuthError("Class is not loaded", { event: "permission.check.failed", reason: "class_not_loaded" });
         }
 
         let userData = classInformation.users[email];
@@ -112,7 +112,7 @@ function httpPermCheck(event) {
                 }
             }
 
-            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`);
+            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`, { event: "permission.check.failed", reason: "insufficient_permissions" });
         }
 
         return next();

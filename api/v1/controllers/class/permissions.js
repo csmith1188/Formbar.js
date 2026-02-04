@@ -13,14 +13,14 @@ module.exports = (router) => {
         // If the class does not exist, return an error
         let classData = structuredClone(classInformation.classrooms[classId]);
         if (!classData) {
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "class.permissions.get.failed", reason: "class_not_started" });
         }
 
         // Get the user from the session
         // If the user is not in the class, return an error
         const user = req.session.user;
         if (!classData.students[user.email]) {
-            throw new ForbiddenError("User is not logged into the selected class");
+            throw new ForbiddenError("User is not logged into the selected class", { event: "class.permissions.get.failed", reason: "user_not_in_class" });
         }
 
         // Send the class permissions as a JSON response

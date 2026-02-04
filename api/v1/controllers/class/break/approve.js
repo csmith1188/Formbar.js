@@ -10,14 +10,14 @@ module.exports = (router) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.session.email]) {
-            throw new ForbiddenError("You do not have permission to approve this user's break.");
+            throw new ForbiddenError("You do not have permission to approve this user's break.", { event: "class.break.approve.failed", reason: "insufficient_permissions" });
         }
 
         const result = await approveBreak(true, req.params.userId, req.session.user);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500, event: "class.break.approve.failed", reason: "approve_error" });
         }
     });
 };

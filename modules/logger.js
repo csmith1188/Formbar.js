@@ -1,8 +1,18 @@
 const fs = require("fs");
 const winston = require("winston");
+const DailyRotateFile = require("winston-daily-rotate-file");
 const path = require("path");
 
 const logsDir = 'logs';
+
+const dailyRotateTransport = new winston.transports.DailyRotateFile({
+    filename: path.join(logsDir, "app-%DATE%.log"),   // logs/app-2026-02-04.log
+    datePattern: "YYYY-MM-DD",
+    zippedArchive: true,               // compress old logs
+    maxFiles: "14d",                   // keep logs for 14 days
+    level: "info",
+    format: winston.format.json(),     // NDJSON-friendly
+});
 
 // Delete empty log files to avoid clutter
 function deleteEmptyLogFiles() {
@@ -29,12 +39,9 @@ function createLogger() {
             winston.format.json()
         ),
 
-        // This sets up the transports, which are the storage mechanisms for the logs
         transports: [
-            new winston.transports.File({
-                filename: path.join(logsDir, "app.log"),
-            })
-        ],
+            dailyRotateTransport,
+        ]
     });
 }
 

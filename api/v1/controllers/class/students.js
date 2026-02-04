@@ -18,7 +18,7 @@ module.exports = (router) => {
             [classId]
         );
         if (classUsers.error) {
-            throw new NotFoundError(classUsers);
+            throw new NotFoundError(classUsers, { event: "class.students.get.failed", reason: "db_error" });
         }
 
         // Guest users cannot be found in the database, so if the classroom exists, then add them to the list

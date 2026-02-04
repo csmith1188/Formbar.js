@@ -23,7 +23,7 @@ module.exports = (router) => {
 
         // Validate that either classId or classCode is provided
         if (!classCode && !classId) {
-            throw new ValidationError("Either class ID or class code must be provided.");
+            throw new ValidationError("Either class ID or class code must be provided.", { event: "class.select.failed", reason: "missing_identifiers" });
         }
 
         if (!classCode) {
@@ -31,20 +31,20 @@ module.exports = (router) => {
             const userInClass = await isUserInClass(req.session.user.id, classId);
 
             if (!userInClass) {
-                throw new ForbiddenError("You do not have permission to access this class.");
+                throw new ForbiddenError("You do not have permission to access this class.", { event: "class.select.failed", reason: "insufficient_permissions" });
             }
 
             classCode = await getClassCode(classId);
 
             if (!classCode) {
-                throw new NotFoundError("Class not found.");
+                throw new NotFoundError("Class not found.", { event: "class.select.failed", reason: "class_not_found" });
             }
         }
 
         const classJoinStatus = await joinRoomByCode(classCode, req.session.user);
         if (typeof classJoinStatus === "string") {
             // joinRoomByCode returned an error message
-            throw new AppError(classJoinStatus);
+            throw new AppError(classJoinStatus, { statusCode: 500, event: "class.select.failed", reason: "join_error" });
         }
 
         // If class code is provided, get classId
@@ -52,7 +52,7 @@ module.exports = (router) => {
 
         classId = await getClassIdByCode(classCode);
         if (!classId) {
-            throw new NotFoundError("Class not found.");
+            throw new NotFoundError("Class not found.", { event: "class.select.failed", reason: "class_not_found" });
         }
 
         req.session.classId = classId;

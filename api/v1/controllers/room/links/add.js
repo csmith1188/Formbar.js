@@ -9,7 +9,7 @@ module.exports = (router) => {
         const classId = req.params.id;
         const { name, url } = req.body;
         if (!name || !url) {
-            throw new ValidationError("Name and URL are required.");
+            throw new ValidationError("Name and URL are required.", { event: "room.links.add.failed", reason: "missing_fields" });
         }
 
         // Add the link to the database

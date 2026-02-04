@@ -7,7 +7,6 @@ class AppError extends Error {
         super(message);
 
         this.statusCode = options.statusCode;
-        this.status = `${options.statusCode}`.startsWith("4") ? "fail" : "error";
         this.isOperational = true;
 
         Object.assign(this, options);

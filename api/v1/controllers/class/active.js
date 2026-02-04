@@ -9,7 +9,7 @@ module.exports = (router) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.session.email]) {
-            throw new ForbiddenError("You do not have permission to view the status of this class.");
+            throw new ForbiddenError("You do not have permission to view the status of this class.", { event: "class.active.get.failed", reason: "insufficient_permissions" });
         }
 
         const isActive = isClassActive(classId);

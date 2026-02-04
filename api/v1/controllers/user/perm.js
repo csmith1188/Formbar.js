@@ -11,7 +11,7 @@ module.exports = (router) => {
         let { perm } = req.body || {};
         perm = Number(perm);
         if (!Number.isFinite(perm)) {
-            throw new ValidationError("Invalid permission value");
+            throw new ValidationError("Invalid permission value", { event: "user.permission.update.failed", reason: "invalid_value" });
         }
 
         await dbRun("UPDATE users SET permissions=? WHERE email=?", [perm, email]);

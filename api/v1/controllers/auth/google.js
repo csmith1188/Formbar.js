@@ -12,7 +12,7 @@ function checkEnabled(req, res, next) {
     if (settings.googleOauthEnabled) {
         next();
     } else {
-        throw new ForbiddenError("Google OAuth is not enabled on this server.");
+        throw new ForbiddenError("Google OAuth is not enabled on this server.", { event: "auth.oauth.failed", reason: "oauth_disabled" });
     }
 }
 
@@ -31,11 +31,13 @@ module.exports = (router) => {
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {
             if (err) {
-                throw new ValidationError("Authentication failed.");
+                req.infoEvent("auth.oauth.failed", "Google authentication failed", { reason: "auth_error" });
+                throw new ValidationError("Authentication failed.", { event: "auth.oauth.failed", reason: "auth_error" });
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                throw new ValidationError("Could not retrieve email from Google account.");
+                req.infoEvent("auth.oauth.failed", "Could not retrieve email from Google", { reason: "missing_email" });
+                throw new ValidationError("Could not retrieve email from Google account.", { event: "auth.oauth.failed", reason: "missing_email" });
             }
 
             const email = user.emails[0].value;
@@ -44,7 +46,8 @@ module.exports = (router) => {
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);
             if (result.error) {
-                throw new ValidationError(result.error);
+                req.infoEvent("auth.oauth.failed", `OAuth failed for: ${email}`, { reason: "service_error" });
+                throw new ValidationError(result.error, { event: "auth.oauth.failed", reason: "service_error" });
             }
 
             // If not already logged in, create a new Student instance in classInformation
@@ -71,6 +74,7 @@ module.exports = (router) => {
             req.session.verified = userData.verified;
             req.session.tags = userData.tags ? userData.tags.split(",") : [];
 
+            req.infoEvent("auth.oauth.success", `User authenticated via Google: ${email}`, { userId: userData.id });
             res.json(tokens);
         })(req, res, next);
     });

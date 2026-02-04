@@ -19,7 +19,7 @@ module.exports = (router) => {
         }
 
         if (!tempUser) {
-            throw new NotFoundError("Pending user not found");
+            throw new NotFoundError("Pending user not found", { event: "user.verify.failed", reason: "user_not_found" });
         }
 
         await dbRun("INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)", [

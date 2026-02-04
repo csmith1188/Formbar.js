@@ -35,7 +35,7 @@ This also allows for the website to check for permissions
 function isAuthenticated(req, res, next) {
     const accessToken = req.headers.authorization;
     if (!accessToken) {
-        throw new AuthError("User is not authenticated");
+        throw new AuthError("User is not authenticated", { event: "auth.check.failed", reason: "no_token" });
     }
 
     // @todo: cleanup
@@ -43,17 +43,17 @@ function isAuthenticated(req, res, next) {
 
     const decodedToken = verifyToken(accessToken);
     if (decodedToken.error) {
-        throw new AuthError("Invalid access token provided.");
+        throw new AuthError("Invalid access token provided.", { event: "auth.check.failed", reason: "invalid_token" });
     }
 
     const email = decodedToken.email;
     if (!email) {
-        throw new AuthError("Invalid access token provided. Missing 'email'.");
+        throw new AuthError("Invalid access token provided. Missing 'email'.", { event: "auth.check.failed", reason: "missing_email" });
     }
 
     const user = classInformation.users[email];
     if (!user) {
-        throw new AuthError("User is not authenticated");
+        throw new AuthError("User is not authenticated", { event: "auth.check.failed", reason: "user_not_found" });
     }
 
     req.session.email = email;
@@ -83,7 +83,7 @@ function isAuthenticated(req, res, next) {
 function isVerified(req, res, next) {
     const accessToken = req.headers.authorization;
     if (!accessToken) {
-        throw new AuthError("User is not authenticated.");
+        throw new AuthError("User is not authenticated.", { event: "auth.check.failed", reason: "no_token" });
     }
 
     // Log that the function is being called with the ip and the session of the user
@@ -134,7 +134,7 @@ function permCheck(req, res, next) {
         urlPath = urlPath.toLowerCase();
 
         if (!PAGE_PERMISSIONS[urlPath]) {
-            throw new NotFoundError(`${urlPath} is not in the page permissions`);
+            throw new NotFoundError(`${urlPath} is not in the page permissions`, { event: "permission.check.failed", reason: "page_not_found" });
         }
 
         // Checks if users permissions are high enough
@@ -143,7 +143,7 @@ function permCheck(req, res, next) {
         } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
-            throw new ForbiddenError("You do not have permissions to access this page.");
+            throw new ForbiddenError("You do not have permissions to access this page.", { event: "permission.check.failed", reason: "insufficient_permissions" });
         }
     }
 }

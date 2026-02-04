@@ -1,5 +1,6 @@
 const AppError = require("@errors/app-error");
 const { logger } = require("@modules/logger");
+const process = require("process");
 
 module.exports = (err, req, res, next) => {
     let error = err;
@@ -12,13 +13,14 @@ module.exports = (err, req, res, next) => {
     if (!isAppError || !isOperationalError) {
         
         req.errorEvent("request.crash", error.message, error);
+
+        if (process.env.NODE_ENV !== "production") console.error(error);
         statusCode = 500;
         error = new AppError("An unexpected error occurred.", statusCode);
 
     // is error expected operational error
     } else {
         const event = err.event || "request.error";
-        console.log(err);
         req.warnEvent(event, err.message, err);
     }
 

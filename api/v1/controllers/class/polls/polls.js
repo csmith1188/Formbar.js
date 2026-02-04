@@ -11,7 +11,7 @@ module.exports = (router) => {
 
         // If the class does not exist, return an error
         if (!classInformation.classrooms[classId]) {
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "class.polls.get.failed", reason: "class_not_started" });
         }
 
         // Get the user from the session
@@ -19,7 +19,7 @@ module.exports = (router) => {
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {
-            throw new ForbiddenError("User is not logged into the selected class");
+            throw new ForbiddenError("User is not logged into the selected class", { event: "class.polls.get.failed", reason: "user_not_in_class" });
         }
 
         // Get a clone of the class data and the poll responses in the class
@@ -27,7 +27,7 @@ module.exports = (router) => {
 
         // If the class does not exist, return an error
         if (!classData) {
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "class.polls.get.failed", reason: "class_not_started" });
         }
 
         // Update the class data with the poll status, the total number of students, and the poll data

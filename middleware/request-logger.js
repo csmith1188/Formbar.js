@@ -8,6 +8,7 @@ function requestLogger(req, res, next) {
 
     // Attach a child logger to the request with relevant metadata
     const baseMeta = {
+        requestId: crypto.randomUUID(),
         method: req.method,
         path: req.originalUrl,
         ip: req.ip

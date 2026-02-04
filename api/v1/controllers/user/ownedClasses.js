@@ -9,7 +9,7 @@ module.exports = (router) => {
         const userId = req.params.id;
         const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new NotFoundError("User not found", { event: "user.ownedClasses.get.failed", reason: "user_not_found" });
         }
 
         const ownedClasses = await getUserOwnedClasses(user.email, req.session.user);

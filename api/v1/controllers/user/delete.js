@@ -11,7 +11,7 @@ module.exports = (router) => {
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
-            throw new AppError(result);
+            throw new AppError(result, { statusCode: 500, event: "user.delete.failed", reason: "delete_error" });
         }
     });
 };

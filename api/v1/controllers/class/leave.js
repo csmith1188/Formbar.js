@@ -11,12 +11,12 @@ module.exports = (router) => {
 
         // Validate that classId is provided
         if (!classId) {
-            throw new ValidationError("Class ID is required.");
+            throw new ValidationError("Class ID is required.", { event: "class.leave.failed", reason: "missing_class_id" });
         }
 
         const result = leaveClass(req.session, req.params.id);
         if (!result) {
-            throw new ForbiddenError("Unauthorized");
+            throw new ForbiddenError("Unauthorized", { event: "class.leave.failed", reason: "unauthorized" });
         }
 
         res.status(200).json({ success: true });

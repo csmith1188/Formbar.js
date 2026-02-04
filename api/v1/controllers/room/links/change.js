@@ -9,7 +9,7 @@ module.exports = (router) => {
         const classId = req.params.id;
         const { oldName, name, url } = req.body;
         if (!name || !url) {
-            throw new ValidationError("Name and URL are required.");
+            throw new ValidationError("Name and URL are required.", { event: "room.links.change.failed", reason: "missing_fields" });
         }
 
         // Update existing link; fallback to name match if oldName not provided

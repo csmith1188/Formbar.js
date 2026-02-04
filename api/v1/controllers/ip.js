@@ -14,7 +14,7 @@ module.exports = (router) => {
     router.get("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const ipMode = req.params.type;
         if (ipMode !== "whitelist" && ipMode !== "blacklist") {
-            throw new ValidationError("Invalid type");
+            throw new ValidationError("Invalid type", { event: "ip.list.get.failed", reason: "invalid_type" });
         }
 
         const isWhitelist = ipMode === "whitelist" ? 1 : 0;
@@ -27,7 +27,7 @@ module.exports = (router) => {
         const type = req.params.type;
         const { ip } = req.body || {};
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type");
+            throw new ValidationError("Invalid type", { event: "ip.add.failed", reason: "invalid_type" });
         }
         if (!ip) {
             throw new ValidationError("Missing ip");
@@ -38,7 +38,7 @@ module.exports = (router) => {
         // Check if the IP already exists
         const exists = await dbGet(`SELECT 1 AS one FROM ip_access_list WHERE ip=? AND is_whitelist=?`, [ip, isWhitelist]);
         if (exists && exists.one) {
-            throw new ConflictError("IP already exists");
+            throw new ConflictError("IP already exists", { event: "ip.add.failed", reason: "ip_exists" });
         }
 
         // Insert the IP into the database
@@ -60,10 +60,10 @@ module.exports = (router) => {
         const id = req.params.id;
         const { ip } = req.body || {};
         if (!ip) {
-            throw new ValidationError("Missing ip");
+            throw new ValidationError("Missing ip", { event: "ip.update.failed", reason: "missing_ip" });
         }
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type");
+            throw new ValidationError("Invalid type", { event: "ip.update.failed", reason: "invalid_type" });
         }
 
         const isWhitelist = type === "whitelist" ? 1 : 0;
@@ -84,7 +84,7 @@ module.exports = (router) => {
         const type = req.params.type;
         const id = req.params.id;
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type");
+            throw new ValidationError("Invalid type", { event: "ip.delete.failed", reason: "invalid_type" });
         }
 
         const isWhitelist = type === "whitelist" ? 1 : 0;
@@ -104,7 +104,7 @@ module.exports = (router) => {
     router.post("/ip/:type/toggle", hasPermission(MANAGER_PERMISSIONS), (req, res) => {
         const type = req.params.type;
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type");
+            throw new ValidationError("Invalid type", { event: "ip.toggle.failed", reason: "invalid_type" });
         }
 
         // Toggle the ip mode

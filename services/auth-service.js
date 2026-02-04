@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const AppError = require("@errors/app-error");
 const ValidationError = require("@errors/validation-error");
+const ConflictError = require("@errors/conflict-error");
 
 const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()\-_=+{}\[\]<>,.:;'"~?\/|\\]{5,20}$/;
 const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
@@ -20,7 +21,7 @@ const displayRegex = /^[a-zA-Z0-9_ ]{5,20}$/;
  */
 async function login(email, password) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
+        throw new AppError("Either the public key or private key is not available for JWT signing.", { statusCode: 500, event: "auth.login.failed", reason: "missing_keys" });
     }
 
     // Normalize email to lowercase to prevent login issues
@@ -154,15 +155,23 @@ function invalidCredentials() {
  */
 async function register(email, password, displayName) {
     if (!privateKey || !publicKey) {
-        throw new ValidationError("Either the public key or private key is not available for JWT signing.", {event: "auth.register.failed"});
+        throw new ValidationError("Either the public key or private key is not available for JWT signing.", { event: "auth.register.failed", reason: "missing_keys" });
+    }
+
+    if (!email || !password) {
+        throw new ValidationError("Email and password are required.", { event: "auth.register.failed", reason: "missing_fields" });
+    }
+
+    if (!displayName) {
+        throw new ValidationError("Display name is required.", { event: "auth.register.failed", reason: "missing_fields" });
     }
 
     if (!passwordRegex.test(password)) {
-        throw new ValidationError("Password must be 5-20 characters long and can only contain letters, numbers, and special characters.", {event: "auth.register.failed"});
+        throw new ValidationError("Password must be 5-20 characters long and can only contain letters, numbers, and special characters.", { event: "auth.register.failed", reason: "password_policy" });
     }
 
     if (!displayRegex.test(displayName)) {
-        throw new ValidationError("Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores.", {event: "auth.register.failed"});
+        throw new ValidationError("Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores.", { event: "auth.register.failed", reason: "displayname_policy"});
     }
 
     // Normalize email to lowercase to prevent duplicate accounts
@@ -171,7 +180,7 @@ async function register(email, password, displayName) {
     // Check if user already exists
     const existingUser = await dbGet("SELECT * FROM users WHERE email = ? OR displayName = ?", [email, displayName]);
     if (existingUser) {
-        throw new ValidationError("A user with that email or display name already exists.", {event: "auth.register.failed", reason: "user_exists"});
+        throw new ConflictError("A user with that email or display name already exists.", { event: "auth.register.failed", reason: "user_exists" });
     }
 
     const hashedPassword = await hash(password, 10);
@@ -218,7 +227,7 @@ async function register(email, password, displayName) {
  */
 async function googleOAuth(email, displayName) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", 500);
+        throw new AppError("Either the public key or private key is not available for JWT signing.", { statusCode: 500, event: "auth.oauth.failed", reason: "missing_keys" });
     }
 
     // Normalize email to lowercase to prevent duplicate accounts
