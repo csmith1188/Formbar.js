@@ -42,14 +42,14 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/NotFoundError'
      */
     router.get("/class/:id", isAuthenticated, async (req, res) => {
-        let classId = req.params.id;
+        const classId = req.params.id;
 
         // Log the request details
         logger.log("info", `[get api/class/${classId}] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Get a clone of the class data
         // If the class does not exist, return an error
-        const classData = structuredClone(classInformation.classrooms[classId]);
+        const classData = classInformation.classrooms[classId];
         if (!classData) {
             throw new NotFoundError("Class not started");
         }

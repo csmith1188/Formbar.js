@@ -1,5 +1,6 @@
 const { logger } = require("@modules/logger");
 const { isAuthenticated } = require("@modules/middleware/authentication");
+const { dbGet } = require("@modules/database");
 
 module.exports = (router) => {
     /**
@@ -27,6 +28,18 @@ module.exports = (router) => {
     // Gets the current user's information
     router.get("/user/me", isAuthenticated, async (req, res) => {
         logger.log("info", `[get api/me] ip=(${req.ip}) user=(${req.user?.email})`);
-        res.status(200).json(req.user);
+
+        const { digipogs } = await dbGet("SELECT digipogs FROM users WHERE id = ?", [req.user.id]);
+        res.status(200).json({
+            id: req.user.id,
+            email: req.user.email,
+            activeClass: req.user.activeClass,
+            digipogs: digipogs,
+            pogMeter: req.user.pogMeter,
+            displayName: req.user.displayName,
+            permissions: req.user.permissions,
+            classId: req.user.classId,
+            classPermissions: req.user.classPermissions,
+        });
     });
 };

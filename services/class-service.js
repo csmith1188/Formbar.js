@@ -444,14 +444,14 @@ async function leaveRoom(userData) {
 
 /**
  * Allows a user to join a class by classId or class key.
- * @param {Object} userSession - The session object of the user attempting to join.
+ * @param {Object} userData - The session object of the user attempting to join.
  * @param {string|number} classId - The ID or key of the class to join.
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
-async function joinClass(userSession, classId) {
-    logger.log("info", `[joinClass] session=(${JSON.stringify(userSession)}) classId=${classId}`);
+async function joinClass(userData, classId) {
+    logger.log("info", `[joinClass] session=(${JSON.stringify(userData)}) classId=${classId}`);
 
-    const email = userSession.email;
+    const email = userData.email;
     const studentId = await getIdFromEmail(email);
 
     // Convert class key to ID if necessary
@@ -460,20 +460,27 @@ async function joinClass(userSession, classId) {
         throw new NotFoundError("Class not found");
     }
 
+    // Use the class ID from the database
     classId = dbClassroom.id;
+
+    if (userData.activeClass === classId) {
+        throw new ValidationError("You are already in that class");
+    }
 
     // Check if the user is in the class to prevent people from joining classes just from the class ID
     if (!classInformation.classrooms[classId]) {
+        // If the class is not initialized in memory, check the database
         const classUsers = await dbGet("SELECT * FROM classusers WHERE studentId=? AND classId=?", [studentId, classId]);
         if (!classUsers && dbClassroom.owner !== studentId) {
             throw new ForbiddenError("You are not in that class");
         }
     } else if (!classInformation.classrooms[classId].students[email]) {
+        // If the user is in memory but not in the class students list, they are not in the class
         throw new ForbiddenError("You are not in that class");
     }
 
     // Join the class using the class code
-    const response = await joinRoomByCode(dbClassroom.key, userSession);
+    const response = await joinRoomByCode(dbClassroom.key, userData);
 
     // Update all user sockets with the new class
     if (response === true && userSockets[email]) {
@@ -504,7 +511,7 @@ function leaveClass(userData, classId) {
     const email = userData.email;
     const user = classInformation.users[email];
     if (!user || user.activeClass !== classId) {
-        return false;
+        throw new NotFoundError("User is not in the specified class");
     }
 
     // Kick the user from the classroom entirely if they're a guest
