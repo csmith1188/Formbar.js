@@ -4,17 +4,17 @@ const { advancedEmitToClass, userUpdateSocket } = require("../socketUpdates");
 const { getEmailFromId } = require("../student");
 const { io } = require("../webServer");
 
-function requestBreak(reason, userSession) {
+function requestBreak(reason, userData) {
     try {
         // Get the class id and email from the session
         // Check if the class is inactive before continuing
-        const classId = userSession.classId;
-        const email = userSession.email;
+        const classId = userData.classId;
+        const email = userData.email;
         if (!classInformation.classrooms[classId].isActive) {
             return "This class is not currently active.";
         }
 
-        logger.log("info", `[requestBreak] session=(${JSON.stringify(userSession)})`);
+        logger.log("info", `[requestBreak] session=(${JSON.stringify(userData)})`);
         logger.log("info", `[requestBreak] reason=(${reason})`);
 
         // Get the student, play the break sound, and set the break reason
@@ -31,13 +31,13 @@ function requestBreak(reason, userSession) {
     }
 }
 
-async function approveBreak(breakApproval, userId, userSession) {
+async function approveBreak(breakApproval, userId, userData) {
     try {
         const email = await getEmailFromId(userId);
-        logger.log("info", `[approveBreak] session=(${JSON.stringify(userSession)})`);
+        logger.log("info", `[approveBreak] session=(${JSON.stringify(userData)})`);
         logger.log("info", `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`);
 
-        const classId = userSession.classId;
+        const classId = userData.classId;
         const classroom = classInformation.classrooms[classId];
         const student = classroom.students[email];
         student.break = breakApproval;
@@ -54,16 +54,16 @@ async function approveBreak(breakApproval, userId, userSession) {
     }
 }
 
-function endBreak(userSession) {
+function endBreak(userData) {
     try {
-        logger.log("info", `[endBreak] session=(${JSON.stringify(userSession)})`);
+        logger.log("info", `[endBreak] session=(${JSON.stringify(userData)})`);
 
-        const classroom = classInformation.classrooms[userSession.classId];
-        const student = classInformation.users[userSession.email];
+        const classroom = classInformation.classrooms[userData.classId];
+        const student = classInformation.users[userData.email];
         student.break = false;
 
-        logger.log("verbose", `[endBreak] user=(${JSON.stringify(classroom.students[userSession.email])})`);
-        userUpdateSocket(userSession.email, "classUpdate", userSession.classId);
+        logger.log("verbose", `[endBreak] user=(${JSON.stringify(classroom.students[userData.email])})`);
+        userUpdateSocket(userData.email, "classUpdate", userData.classId);
         return true;
     } catch (err) {
         logger.log("error", err.stack);

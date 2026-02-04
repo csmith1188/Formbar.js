@@ -2,6 +2,7 @@ const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
 const { getManagerData } = require("@modules/manager");
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -45,7 +46,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.get("/manager", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.get("/manager", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         // Grab the user from req.user (set by isAuthenticated middleware)
         const user = req.user;
         logger.log("info", `[get api/manager] ip=(${req.ip}) user=(${req.user?.email})`);

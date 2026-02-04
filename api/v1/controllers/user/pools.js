@@ -1,12 +1,12 @@
 const { dbGet } = require("@modules/database");
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
 const pools = require("@modules/pools");
 
 module.exports = {
     run(router) {
         /**
          * @swagger
-         * /api/v1/pools:
+         * /api/v1/user/pools:
          *   get:
          *     summary: Get user's digipog pools
          *     tags:
@@ -39,7 +39,7 @@ module.exports = {
          *               $ref: '#/components/schemas/ServerError'
          */
         // Handle displaying the pools management page
-        router.get("/pools", isVerified, permCheck, async (req, res) => {
+        router.get("/user/pools", isAuthenticated, isVerified, permCheck, async (req, res) => {
             const userId = req.user.userId;
 
             // Get all pools for this user using the new schema helper
@@ -52,7 +52,6 @@ module.exports = {
                     const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [p.pool_id]);
                     if (pool) {
                         const users = await pools.getUsersForPool(p.pool_id);
-                        // Fix: use user_id instead of userId (correct property name from database)
                         pool.members = users.filter((u) => !u.owner).map((u) => u.user_id);
                         pool.owners = users.filter((u) => u.owner).map((u) => u.user_id);
                     }

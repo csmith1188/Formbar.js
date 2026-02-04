@@ -67,7 +67,8 @@ module.exports = (router) => {
             throw new ForbiddenError("You do not have permission to end this user's break.");
         }
 
-        const result = endBreak(req.user);
+        const userData = { ...req.user, classId };
+        const result = endBreak(userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

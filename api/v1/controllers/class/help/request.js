@@ -14,7 +14,8 @@ module.exports = (router) => {
         }
 
         const reason = req.body.reason || "General help request";
-        const result = await sendHelpTicket(reason, req.user);
+        const userData = { ...req.user, classId };
+        const result = await sendHelpTicket(reason, userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

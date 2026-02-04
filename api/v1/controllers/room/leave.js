@@ -4,7 +4,7 @@ const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
-        await leaveRoom(req.user);
+        await leaveRoom({ ...req.user, classId: req.params.id });
         res.status(200).json({ success: true });
     };
 

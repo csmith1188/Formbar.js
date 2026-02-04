@@ -13,7 +13,8 @@ module.exports = (router) => {
             throw new ForbiddenError("You do not have permission to approve this user's break.");
         }
 
-        const result = await approveBreak(true, req.params.userId, req.user);
+        const userData = { ...req.user, classId };
+        const result = await approveBreak(true, req.params.userId, userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

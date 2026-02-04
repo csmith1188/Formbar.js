@@ -1,6 +1,7 @@
 const { dbRun, dbGetAll } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const jwt = require("jsonwebtoken");
 const NotFoundError = require("@errors/not-found-error");
 
@@ -73,10 +74,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.patch("/user/:id/verify", hasPermission(MANAGER_PERMISSIONS), verifyUserHandler);
+    router.patch("/user/:id/verify", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), verifyUserHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:id/verify instead
-    router.post("/user/:id/verify", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.post("/user/:id/verify", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:id/verify instead");
         res.setHeader(
             "Warning",

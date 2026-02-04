@@ -115,13 +115,13 @@ async function joinRoom(userSession, classCode) {
  * Removes a user from a class room.
  * Deletes the user from the class in memory and the database, updates the user's session,
  * emits leave events, and reloads the user's page.
- * @param {Object} userSession - The session object of the user leaving the room.
+ * @param {Object} userData - The session object of the user leaving the room.
  * @returns {Promise<boolean|undefined>} Returns true if successful, otherwise undefined.
  */
-async function leaveRoom(userSession) {
+async function leaveRoom(userData) {
     try {
-        const classId = userSession.classId;
-        const email = userSession.email;
+        const classId = userData.classId;
+        const email = userData.email;
         const studentId = await getIdFromEmail(email);
 
         // Remove the user from the class
@@ -235,7 +235,6 @@ function leaveClass(userData, classId) {
 
         const email = userData.email;
         const user = classInformation.users[email];
-        console.log(user.activeClass, classId);
         if (user.activeClass !== classId) {
             return false;
         }

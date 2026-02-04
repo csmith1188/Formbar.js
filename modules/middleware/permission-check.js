@@ -18,12 +18,11 @@ const endpointWhitelistMap = ["getOwnedClasses", "getActiveClass"];
  */
 function hasPermission(permission) {
     return function (req, res, next) {
-        const email = req.user.email;
-        if (!email) {
+        if (!req.user || !req.user.email) {
             throw new AuthError("User not authenticated");
         }
 
-        const user = classInformation.users[email];
+        const user = classInformation.users[req.user.email];
         if (!user) {
             throw new AuthError("User not found");
         }
