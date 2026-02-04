@@ -2,10 +2,10 @@ const { userSockets, managerUpdate, userUpdateSocket } = require("../socketUpdat
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
 const { logger } = require("../logger");
-const { deleteCustomPolls } = require("../polls");
-const { deleteRooms, endClass } = require("../class/class");
+const { deleteRooms, endClass } = require("@services/class-service");
 const { lastActivities } = require("../../sockets/middleware/inactivity");
 const { GUEST_PERMISSIONS } = require("../permissions");
+const { deleteCustomPolls } = require("@services/poll-service");
 
 function logout(socket) {
     const email = socket.request.session.email;

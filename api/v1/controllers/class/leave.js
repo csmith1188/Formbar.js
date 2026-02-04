@@ -1,5 +1,5 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { leaveClass } = require("@modules/class/class");
+const { leaveClass } = require("@services/class-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
 const { isAuthenticated } = require("@modules/middleware/authentication");

@@ -1,5 +1,5 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { joinClass } = require("@modules/class/class");
+const { joinClass } = require("@services/class-service");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {

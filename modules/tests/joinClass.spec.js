@@ -1,7 +1,7 @@
-const { joinRoomByCode } = require("../joinRoom");
 const { database } = require("../database");
 const { testData, createTestUser, createSocketUpdates } = require("./tests");
 const { userSocketUpdates } = require("../../sockets/init");
+const { joinRoomByCode } = require("@services/room-service");
 
 describe("joinClass", () => {
     const session = { email: testData.email };

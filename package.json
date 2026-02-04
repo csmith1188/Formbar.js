@@ -16,7 +16,8 @@
 		"@modules": "modules",
 		"@services": "services",
 		"@controllers": "api/v1/controllers",
-		"@errors": "errors"
+		"@errors": "errors",
+        "@sockets": "sockets"
 	},
 	"repository": {
 		"type": "git",

@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { pollResponse } = require("@modules/polls");
+const { pollResponse } = require("@services/poll-service");
 const { classInformation } = require("@modules/class/classroom");
 
 module.exports = {

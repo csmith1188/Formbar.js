@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isVerified, permCheck, isAuthenticated } = require("@modules/middleware/authentication");
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
@@ -60,7 +60,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
         logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
 
@@ -154,7 +154,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
         logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
 

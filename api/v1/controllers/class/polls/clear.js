@@ -1,4 +1,4 @@
-const { clearPoll } = require("@modules/polls");
+const { clearPoll } = require("@services/poll-service");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { isAuthenticated } = require("@modules/middleware/authentication");

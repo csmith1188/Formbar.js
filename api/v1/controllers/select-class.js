@@ -1,7 +1,6 @@
 const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
-const { joinRoomByCode } = require("@modules/joinRoom");
 const { logger } = require("@modules/logger");
 const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socketUpdates");
 const ValidationError = require("@errors/validation-error");

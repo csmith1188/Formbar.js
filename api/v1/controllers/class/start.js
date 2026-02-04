@@ -1,6 +1,6 @@
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
-const { startClass } = require("@modules/class/class");
+const { startClass } = require("@services/class-service");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
