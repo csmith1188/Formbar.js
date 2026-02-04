@@ -1,7 +1,7 @@
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const { generateColors } = require("@modules/util");
-const { advancedEmitToClass, userUpdateSocket } = require("@modules/socketUpdates");
+const { advancedEmitToClass, userUpdateSocket } = require("@modules/socket-updates");
 const { database, dbGetAll, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { userSocketUpdates } = require("../sockets/init");

@@ -1,9 +1,9 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database, dbRun } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { advancedEmitToClass, setClassOfApiSockets } = require("@modules/socketUpdates");
+const { advancedEmitToClass, setClassOfApiSockets } = require("@modules/socket-updates");
 const { generateKey } = require("@modules/util");
-const { io } = require("@modules/webServer");
+const { io } = require("@modules/web-server");
 const { startClass, endClass, leaveClass, leaveRoom, isClassActive, joinRoom, joinClass } = require("@services/class-service");
 const { getEmailFromId, getIdFromEmail } = require("@modules/student");
 const { BANNED_PERMISSIONS } = require("@modules/permissions");

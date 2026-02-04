@@ -1,4 +1,4 @@
-const { userSockets, managerUpdate, userUpdateSocket } = require("../socketUpdates");
+const { userSockets, managerUpdate, userUpdateSocket } = require("../socket-updates");
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
 const { logger } = require("../logger");

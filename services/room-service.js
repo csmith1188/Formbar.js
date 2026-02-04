@@ -3,7 +3,7 @@ const { Classroom, classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { database } = require("@modules/database");
-const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("@modules/socketUpdates");
+const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 

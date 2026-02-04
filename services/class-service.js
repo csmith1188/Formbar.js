@@ -1,7 +1,7 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
 const { database } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { setClassOfApiSockets, advancedEmitToClass, emitToUser, userSockets } = require("@modules/socketUpdates");
+const { setClassOfApiSockets, advancedEmitToClass, emitToUser, userSockets } = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
 const { getStudentsInClass, getIdFromEmail, getEmailFromId } = require("@modules/student");

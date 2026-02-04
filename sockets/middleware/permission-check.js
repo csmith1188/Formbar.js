@@ -2,7 +2,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
 const { logger } = require("@modules/logger");
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("@modules/permissions");
-const { PASSIVE_SOCKETS } = require("@modules/socketUpdates");
+const { PASSIVE_SOCKETS } = require("@modules/socket-updates");
 const { camelCaseToNormal } = require("@modules/util");
 
 module.exports = {

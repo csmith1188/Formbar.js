@@ -1,7 +1,7 @@
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const { CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
-const { advancedEmitToClass, runningTimers } = require("@modules/socketUpdates");
+const { advancedEmitToClass, runningTimers } = require("@modules/socket-updates");
 
 module.exports = {
     run(socket, socketUpdates) {
