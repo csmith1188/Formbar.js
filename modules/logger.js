@@ -6,7 +6,7 @@ const path = require("path");
 const logsDir = 'logs';
 
 const dailyRotateTransport = new winston.transports.DailyRotateFile({
-    filename: path.join(logsDir, "app-%DATE%.log"),   // logs/app-2026-02-04.log
+    filename: path.join(logsDir, "app-%DATE%.ndjson"),   // logs/app-2026-02-04.log
     datePattern: "YYYY-MM-DD",
     zippedArchive: true,               // compress old logs
     maxFiles: "14d",                   // keep logs for 14 days
