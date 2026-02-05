@@ -1,28 +1,69 @@
-const { logger } = require("@modules/logger");
-const { httpPermCheck } = require("../middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { isClassActive } = require("@modules/class/class");
 const { classInformation } = require("@modules/class/classroom");
+const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
-    try {
-        // Retrieves whether a class is currently active or not from the class ID provided
-        router.get("/class/:id/active", httpPermCheck("isClassActive"), async (req, res) => {
-            try {
-                const classId = req.params.id;
-                const classroom = classInformation.classrooms[classId];
-                if (classroom && !classroom.students[req.session.email]) {
-                    res.status(403).json({ error: "You do not have permission to view the status of this class." });
-                    return;
-                }
+    /**
+     * @swagger
+     * /api/v1/class/{id}/active:
+     *   get:
+     *     summary: Check if class is active
+     *     tags:
+     *       - Class
+     *     description: |
+     *       Returns whether a class session is currently active.
+     *
+     *       **Required Permission:** Must be a member of the class (Class-specific `manageClass` permission for verification)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Class status retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 isActive:
+     *                   type: boolean
+     *                   example: true
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Unauthorized - not a member of this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
+    router.get("/class/:id/active", httpPermCheck("isClassActive"), async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to view the status of this class.");
+        }
 
-                const isActive = isClassActive(classId);
-                res.status(200).json({ isActive });
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        const isActive = isClassActive(classId);
+        res.status(200).json({ isActive });
+    });
 };

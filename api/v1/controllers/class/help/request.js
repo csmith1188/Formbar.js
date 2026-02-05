@@ -1,31 +1,89 @@
-const { httpPermCheck } = require("../../middleware/permissionCheck");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { sendHelpTicket } = require("@modules/class/help");
+const ForbiddenError = require("@errors/forbidden-error");
+const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    try {
-        // request help in a class by class ID
-        router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
-            try {
-                const classId = req.params.id;
-                const classroom = classInformation.classrooms[classId];
-                if (classroom && !classroom.students[req.session.email]) {
-                    res.status(403).json({ error: "You do not have permission to request help in this class." });
-                    return;
-                }
+    const requestHelpHandler = async (req, res) => {
+        const classId = req.params.id;
+        const classroom = classInformation.classrooms[classId];
+        if (classroom && !classroom.students[req.session.email]) {
+            throw new ForbiddenError("You do not have permission to request help in this class.");
+        }
 
-                const result = await sendHelpTicket(true, req.params.userId, req.session.user);
-                if (result === true) {
-                    res.status(200).json({ message: "Success" });
-                } else {
-                    res.status(500).json({ error: result });
-                }
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        const reason = req.body.reason || "General help request";
+        const result = await sendHelpTicket(reason, req.session);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result, 500);
+        }
+    };
+
+    /**
+     * @swagger
+     * /api/v1/class/{id}/help/request:
+     *   post:
+     *     summary: Request help in a class
+     *     tags:
+     *       - Class - Help
+     *     description: |
+     *       Submits a help request in a class session.
+     *
+     *       **Required Permission:** Class-specific Student permission (level 2)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Help request submitted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Not authorized to request help in this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.post("/class/:id/help/request", httpPermCheck("help"), requestHelpHandler);
+
+    // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/help/request instead
+    router.get("/class/:id/help/request", httpPermCheck("help"), async (req, res) => {
+        res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/help/request instead");
+        res.setHeader(
+            "Warning",
+            '299 - "Deprecated API: Use POST /api/v1/class/:id/help/request instead. This endpoint will be removed in a future version."'
+        );
+        await requestHelpHandler(req, res);
+    });
 };

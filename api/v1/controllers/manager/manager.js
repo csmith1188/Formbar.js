@@ -1,27 +1,61 @@
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
 const { getManagerData } = require("@modules/manager");
-const { hasPermission } = require("../middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
 
 module.exports = (router) => {
-    // Retrieves manager data
+    /**
+     * @swagger
+     * /api/v1/manager:
+     *   get:
+     *     summary: Get manager data
+     *     tags:
+     *       - Manager
+     *     description: |
+     *       Retrieves all users and classrooms for manager view.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - sessionAuth: []
+     *     responses:
+     *       200:
+     *         description: Manager data retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ManagerData'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     router.get("/manager", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        try {
-            // Grab the user from the session
-            const user = req.session.user;
-            logger.log("info", `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
-            logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);
+        // Grab the user from the session
+        const user = req.session.user;
+        logger.log("info", `[get api/manager] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);
 
-            // Grab manager data and send it back as a JSON response
-            const { users, classrooms } = await getManagerData();
-            res.status(200).json({
-                users,
-                classrooms,
-            });
-        } catch (err) {
-            // If an error occurs, log the error and send an error message as a JSON response
-            logger.log("error", err.stack);
-            res.status(500).json({ error: "There was a server error. Please try again." });
-        }
+        // Grab manager data and send it back as a JSON response
+        const { users, classrooms } = await getManagerData();
+        res.status(200).json({
+            users,
+            classrooms,
+        });
     });
 };

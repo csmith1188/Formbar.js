@@ -1,7 +1,10 @@
+// Support module aliases for importing
+require("module-alias/register");
+
 const sqlite3 = require("sqlite3").verbose();
 const fs = require("fs");
 const { decrypt } = require("./modules/crypto"); // Old crypto module
-const { hash } = require("../modules/crypto"); // New crypto module
+const { hash } = require("@modules/crypto"); // New crypto module
 
 // Get all migration files and sort them by filename
 const sqlMigrations = fs

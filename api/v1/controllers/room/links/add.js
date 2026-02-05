@@ -1,29 +1,73 @@
-const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("../../middleware/permissionCheck");
+const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { dbRun } = require("@modules/database");
+const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
-    try {
-        // Adds a link to a room by id
-        router.post("/room/:id/links/add", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
-            try {
-                const classId = req.params.id;
-                const { name, url } = req.body;
-                if (!name || !url) {
-                    res.status(400).json({ error: "Name and URL are required." });
-                    return;
-                }
+    /**
+     * @swagger
+     * /api/v1/room/{id}/links/add:
+     *   post:
+     *     summary: Add a link to a room
+     *     tags:
+     *       - Room - Links
+     *     description: Adds a new link to a classroom (requires teacher permissions)
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - name
+     *               - url
+     *             properties:
+     *               name:
+     *                 type: string
+     *                 example: "Course Website"
+     *               url:
+     *                 type: string
+     *                 example: "https://example.com"
+     *     responses:
+     *       200:
+     *         description: Link added successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: "Link added successfully."
+     *       400:
+     *         description: Name and URL are required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
+    router.post("/room/:id/links/add", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+        const classId = req.params.id;
+        const { name, url } = req.body;
+        if (!name || !url) {
+            throw new ValidationError("Name and URL are required.");
+        }
 
-                // Add the link to the database
-                await dbRun("INSERT INTO links (classId, name, url) VALUES (?, ?, ?)", [classId, name, url]);
-                res.status(200).json({ message: "Link added successfully." });
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+        // Add the link to the database
+        await dbRun("INSERT INTO links (classId, name, url) VALUES (?, ?, ?)", [classId, name, url]);
+        res.status(200).json({ message: "Link added successfully." });
+    });
 };

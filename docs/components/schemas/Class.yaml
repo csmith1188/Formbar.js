@@ -1,0 +1,121 @@
+components:
+  schemas:
+    Class:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "abc123"
+        name:
+          type: string
+          example: "Math 101"
+        key:
+          type: string
+          example: "class-key-123"
+        owner:
+          type: string
+          example: "teacher@example.com"
+        isActive:
+          type: boolean
+          example: true
+        students:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Student'
+
+    ClassInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "abc123"
+        name:
+          type: string
+          example: "Math 101"
+        isActive:
+          type: boolean
+          example: true
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        email:
+          type: string
+          example: "student@example.com"
+        displayName:
+          type: string
+          example: "John Doe"
+        permissions:
+          type: integer
+          example: 2
+        digipogs:
+          type: integer
+          example: 10
+        classPermissions:
+          type: integer
+          example: 1
+
+    Poll:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "poll123"
+        prompt:
+          type: string
+          example: "What is 2+2?"
+        answers:
+          type: array
+          items:
+            type: string
+          example: ["3", "4", "5"]
+        blind:
+          type: boolean
+          example: false
+        allowTextResponses:
+          type: boolean
+          example: true
+        allowMultipleResponses:
+          type: boolean
+          example: false
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    IPList:
+      type: object
+      properties:
+        active:
+          type: boolean
+          example: true
+        ips:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              ip:
+                type: string
+                example: "192.168.1.1"
+
+    ManagerData:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        classrooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassInfo'
+

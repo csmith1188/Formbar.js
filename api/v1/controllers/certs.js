@@ -1,22 +1,31 @@
-const { logger } = require("@modules/logger");
-const { logNumbers } = require("@modules/config");
 const fs = require("fs");
 
 module.exports = (router) => {
-    try {
-        router.get("/certs", (req, res) => {
-            try {
-                const pem = fs.readFileSync("publicKey.pem", "utf8");
-                res.json({ publicKey: pem });
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.render("pages/message", {
-                    message: `Error Number ${logNumbers.error}: There was a server error try again.`,
-                    title: "Error",
-                });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    /**
+     * @swagger
+     * /api/v1/certs:
+     *   get:
+     *     summary: Get public key certificate
+     *     tags:
+     *       - System
+     *     description: |
+     *       Returns the public key certificate in PEM format.
+     *
+     *       **Required Permission:** None (public endpoint)
+     *     responses:
+     *       200:
+     *         description: Public key returned successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 publicKey:
+     *                   type: string
+     *                   description: PEM formatted public key
+     */
+    router.get("/certs", (req, res) => {
+        const pem = fs.readFileSync("publicKey.pem", "utf8");
+        res.json({ publicKey: pem });
+    });
 };

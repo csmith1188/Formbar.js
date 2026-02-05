@@ -1,8 +1,8 @@
 const { run: pollCreationRun } = require("../polls/pollCreation");
-const { classInformation } = require("../../modules/class/classroom");
-const { logger } = require("../../modules/logger");
-const { generateColors } = require("../../modules/util");
-const { createTestUser, createTestClass, testData, createSocket, createSocketUpdates } = require("../../modules/tests/tests");
+const { classInformation } = require("@modules/class/classroom");
+const { logger } = require("@modules/logger");
+const { generateColors } = require("@modules/util");
+const { createTestUser, createTestClass, testData, createSocket, createSocketUpdates } = require("@modules/tests/tests");
 const { userSocketUpdates } = require("../init");
 // jest.mock("@modules/logger");
 jest.mock("@modules/util");

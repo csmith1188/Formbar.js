@@ -14,7 +14,7 @@ const { dbGetAll, dbGet, dbRun } = require("./database");
     - setUserOwnerFlag(poolId, userId, ownerFlag, database)
 
   Usage:
-    const pools = require("../modules/pools");
+    const pools = require("@modules/pools");
     await pools.addUserToPool(123, 456, 1, database);
     const users = await pools.getUsersForPool(123, database);
 

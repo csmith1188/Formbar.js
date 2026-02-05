@@ -1,26 +1,60 @@
-const { logger } = require("@modules/logger");
 const { deleteUser } = require("@modules/user/userSession");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("../middleware/permissionCheck");
+const { hasPermission } = require("@modules/middleware/permission-check");
+const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    try {
-        // Deletes a user from Formbar
-        router.get("/user/:id/delete", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-            try {
-                const userId = req.params.id;
-                const result = await deleteUser(userId);
-                if (result === true) {
-                    res.status(200);
-                } else {
-                    res.status(500).json({ error: result });
-                }
-            } catch (err) {
-                logger.log("error", err.stack);
-                res.status(500).json({ error: `There was an internal server error. Please try again.` });
-            }
-        });
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    const deleteUserHandler = async (req, res) => {
+        const userId = req.params.id;
+        const result = await deleteUser(userId);
+        if (result === true) {
+            res.status(200).json({ success: true });
+        } else {
+            throw new AppError(result);
+        }
+    };
+
+    /**
+     * @swagger
+     * /api/v1/user/{id}:
+     *   delete:
+     *     summary: Delete a user
+     *     tags:
+     *       - Users
+     *     description: Deletes a user from Formbar (requires manager permissions)
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: User ID
+     *     responses:
+     *       200:
+     *         description: User deleted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Delete operation failed
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.delete("/user/:id", hasPermission(MANAGER_PERMISSIONS), deleteUserHandler);
+
+    // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/user/:id instead
+    router.get("/user/:id/delete", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+        res.setHeader("X-Deprecated", "Use DELETE /api/v1/user/:id instead");
+        res.setHeader("Warning", '299 - "Deprecated API: Use DELETE /api/v1/user/:id instead. This endpoint will be removed in a future version."');
+        await deleteUserHandler(req, res);
+    });
 };
