@@ -43,12 +43,12 @@ function sendHelpTicket(reason, userSession) {
     }
 }
 
-async function deleteHelpTicket(studentId, userSession) {
+async function deleteHelpTicket(studentId, userData) {
     try {
-        const classId = userSession.classId;
-        const email = userSession.email;
+        const classId = userData.classId;
+        const email = userData.email;
         const studentEmail = await getEmailFromId(studentId);
-        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userSession)})`);
+        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
         logger.log("info", `[deleteTicket] student=(${studentEmail})`);
 
         // Set the student's help ticket to false, indicating that they are no longer requesting help

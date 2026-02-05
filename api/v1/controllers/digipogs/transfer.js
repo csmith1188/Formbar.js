@@ -1,5 +1,6 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { transferDigipogs } = require("@modules/digipogs");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
@@ -81,11 +82,11 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/digipogs/transfer", httpPermCheck("transferDigipogs"), async (req, res) => {
+    router.post("/digipogs/transfer", isAuthenticated, httpPermCheck("transferDigipogs"), async (req, res) => {
         const { to, amount, pin, reason } = req.body || {};
 
         // Derive the authenticated user ID from the server-side context, not from client input
-        const from = (req.user && (req.user.id || req.user.userId)) || req.userId || (req.session && (req.session.userId || req.session.id));
+        const from = req.user?.id || req.user?.userId;
 
         if (!from) {
             throw new AppError({

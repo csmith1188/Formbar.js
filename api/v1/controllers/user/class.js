@@ -2,6 +2,7 @@ const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { dbGet } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const NotFoundError = require("@errors/not-found-error");
 
@@ -48,7 +49,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/user/:id/class", httpPermCheck("getActiveClass"), async (req, res) => {
+    router.get("/user/:id/class", isAuthenticated, httpPermCheck("getActiveClass"), async (req, res) => {
         const userId = req.params.id;
 
         // Retrieve both users

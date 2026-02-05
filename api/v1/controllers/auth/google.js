@@ -107,16 +107,6 @@ module.exports = (router) => {
                 );
             }
 
-            // Set session data (for backwards compatibility with session-based endpoints)
-            req.session.user = classInformation.users[userData.email];
-            req.session.userId = userData.id;
-            req.session.email = userData.email;
-            req.session.displayName = userData.displayName;
-            req.session.verified = userData.verified;
-            req.session.tags = userData.tags ? userData.tags.split(",") : [];
-
-            logger.log("verbose", `[auth/google/callback] session=(${JSON.stringify(req.session)})`);
-
             res.json(tokens);
         })(req, res, next);
     });

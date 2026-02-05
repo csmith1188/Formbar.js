@@ -62,11 +62,11 @@ module.exports = (router) => {
      */
     router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
-        const userId = req.params.userId || req.session.userId;
-        if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
+        const userId = req.params.userId || req.user.userId;
+        if (req.user.userId !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
             throw new ForbiddenError("You do not have permission to view these transactions.");
         }
 
@@ -86,7 +86,7 @@ module.exports = (router) => {
             res.status(200).json({
                 transactions: [],
                 displayName: userDisplayName,
-                currentUserId: req.session.userId,
+                currentUserId: req.user.userId,
             });
             return;
         }
@@ -94,7 +94,7 @@ module.exports = (router) => {
         res.status(200).json({
             transactions: transactions,
             displayName: userDisplayName,
-            currentUserId: req.session.userId,
+            currentUserId: req.user.userId,
         });
     });
 
@@ -156,10 +156,10 @@ module.exports = (router) => {
      */
     router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Check if userData is null or undefined
-        const userId = req.params.userId || req.session.userId;
+        const userId = req.params.userId || req.user.userId;
         const userData = await getUserData(userId);
         if (!userData) {
             logger.log("warn", `User not found in database: userId=${userId}`);
@@ -174,8 +174,8 @@ module.exports = (router) => {
         }
 
         // Determine if the email should be visible then render the page
-        const emailVisible = req.session.userId === id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
-        const isOwnProfile = req.session.userId === userId;
+        const emailVisible = req.user.userId === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
+        const isOwnProfile = req.user.userId === userId;
 
         res.status(200).json({
             displayName: displayName,

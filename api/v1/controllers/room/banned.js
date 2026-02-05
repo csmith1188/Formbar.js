@@ -3,6 +3,7 @@ const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
@@ -69,9 +70,9 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/class/:id/banned", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+    router.get("/class/:id/banned", isAuthenticated, hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
-        logger.log("info", `[get api/class/${classId}/banned] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+        logger.log("info", `[get api/class/${classId}/banned] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Ensure class exists
         if (!classInformation.classrooms[classId]) {

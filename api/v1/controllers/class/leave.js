@@ -2,6 +2,7 @@ const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { leaveClass } = require("@modules/class/class");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -58,7 +59,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/leave", httpPermCheck("leaveClass"), async (req, res) => {
+    router.post("/class/:id/leave", isAuthenticated, httpPermCheck("leaveClass"), async (req, res) => {
         const classId = req.params.id;
 
         // Validate that classId is provided
@@ -66,7 +67,7 @@ module.exports = (router) => {
             throw new ValidationError("Class ID is required.");
         }
 
-        const result = leaveClass(req.session, req.params.id);
+        const result = leaveClass(req.user, Number(req.params.id));
         if (!result) {
             throw new ForbiddenError("Unauthorized");
         }

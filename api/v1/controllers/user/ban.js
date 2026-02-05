@@ -1,4 +1,5 @@
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { dbGet, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
@@ -77,10 +78,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.patch("/user/:id/ban", hasPermission(MANAGER_PERMISSIONS), banUserHandler);
+    router.patch("/user/:id/ban", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), banUserHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:id/ban instead
-    router.get("/user/:id/ban", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.get("/user/:id/ban", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:id/ban instead");
         res.setHeader(
             "Warning",
@@ -128,10 +129,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.patch("/user/:id/unban", hasPermission(MANAGER_PERMISSIONS), unbanUserHandler);
+    router.patch("/user/:id/unban", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), unbanUserHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:id/unban instead
-    router.get("/user/:id/unban", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.get("/user/:id/unban", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:id/unban instead");
         res.setHeader(
             "Warning",

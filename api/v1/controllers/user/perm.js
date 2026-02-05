@@ -2,6 +2,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
@@ -73,10 +74,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.patch("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), updatePermissionsHandler);
+    router.patch("/user/:email/perm", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), updatePermissionsHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use PATCH /api/v1/user/:email/perm instead
-    router.post("/user/:email/perm", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.post("/user/:email/perm", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use PATCH /api/v1/user/:email/perm instead");
         res.setHeader(
             "Warning",

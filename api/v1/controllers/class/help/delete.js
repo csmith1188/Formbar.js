@@ -1,11 +1,13 @@
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { deleteHelpTicket } = require("@modules/class/help");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const deleteHelpHandler = async (req, res) => {
-        const result = await deleteHelpTicket(req.params.userId, req.session);
+        const userData = { ...req.user, classId: req.params.id };
+        const result = await deleteHelpTicket(req.params.userId, userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
@@ -73,10 +75,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.delete("/class/:id/students/:userId/help", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), deleteHelpHandler);
+    router.delete("/class/:id/students/:userId/help", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), deleteHelpHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/class/:id/students/:userId/help instead
-    router.get("/class/:id/students/:userId/help/delete", hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
+    router.get("/class/:id/students/:userId/help/delete", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use DELETE /api/v1/class/:id/students/:userId/help instead");
         res.setHeader(
             "Warning",

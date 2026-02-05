@@ -3,16 +3,18 @@ const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to approve this user's break.");
         }
 
-        const result = await approveBreak(true, req.params.userId, req.session.user);
+        const userData = { ...req.user, classId };
+        const result = await approveBreak(true, req.params.userId, userData);
         if (result === true) {
             res.status(200).json({ success: true });
         } else {
@@ -80,10 +82,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), approveBreakHandler);
+    router.post("/class/:id/students/:userId/break/approve", isAuthenticated, httpPermCheck("approveBreak"), approveBreakHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use POST /api/v1/class/:id/students/:userId/break/approve instead
-    router.get("/class/:id/students/:userId/break/approve", httpPermCheck("approveBreak"), async (req, res) => {
+    router.get("/class/:id/students/:userId/break/approve", isAuthenticated, httpPermCheck("approveBreak"), async (req, res) => {
         res.setHeader("X-Deprecated", "Use POST /api/v1/class/:id/students/:userId/break/approve instead");
         res.setHeader(
             "Warning",
