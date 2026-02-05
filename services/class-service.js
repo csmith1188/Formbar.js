@@ -235,7 +235,7 @@ async function joinClassById(classId, userId, userEmail) {
 }
 
 /**
- * Initializes a classroom in memory and adds the user to it
+ * Initializes a classroom in memory
  * @private
  * @param {Object} params - The initialization parameters
  * @param {number} params.id - The class ID
@@ -249,12 +249,12 @@ async function joinClassById(classId, userId, userEmail) {
  * @param {Array|string} params.tags - Class tags
  * @returns {Promise<void>}
  */
-async function initializeClassroom({ id, className, key, owner, userEmail, permissions, sharedPolls = [], pollHistory = [], tags }) {
+async function initializeClassroom({ id, className, key, owner, permissions, sharedPolls = [], pollHistory = [], tags }) {
     // Get the user's session data
-    const user = classInformation.users[userEmail];
-    if (!user) {
-        throw new NotFoundError(`User ${userEmail} not found in classInformation`);
-    }
+    // const user = classInformation.users[userEmail];
+    // if (!user) {
+    //     throw new NotFoundError(`User ${userEmail} not found in classInformation`);
+    // }
 
     logger.log("verbose", `[initializeClassroom] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`);
 
@@ -285,10 +285,11 @@ async function initializeClassroom({ id, className, key, owner, userEmail, permi
     }
 
     // Add the user to the newly created/joined class
-    classInformation.classrooms[id].students[userEmail] = user;
-    classInformation.classrooms[id].students[userEmail].classPermissions = MANAGER_PERMISSIONS;
-    classInformation.users[userEmail].activeClass = id;
-    classInformation.users[userEmail].classPermissions = MANAGER_PERMISSIONS;
+    // @TODO finish
+    // classInformation.classrooms[id].students[userEmail] = user;
+    // classInformation.classrooms[id].students[userEmail].classPermissions = MANAGER_PERMISSIONS;
+    // classInformation.users[userEmail].activeClass = id;
+    // classInformation.users[userEmail].classPermissions = MANAGER_PERMISSIONS;
 
     // Get all students in the class and add them to the classroom
     const classStudents = await getStudentsInClass(id);
@@ -468,13 +469,13 @@ async function joinClass(userData, classId) {
     }
 
     // Check if the user is in the class to prevent people from joining classes just from the class ID
-    if (!classInformation.classrooms[classId]) {
+    if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
         // If the class is not initialized in memory, check the database
         const classUsers = await dbGet("SELECT * FROM classusers WHERE studentId=? AND classId=?", [studentId, classId]);
         if (!classUsers && dbClassroom.owner !== studentId) {
             throw new ForbiddenError("You are not in that class");
         }
-    } else if (!classInformation.classrooms[classId].students[email]) {
+    } else if (!classInformation.classrooms[classId]) {
         // If the user is in memory but not in the class students list, they are not in the class
         throw new ForbiddenError("You are not in that class");
     }
