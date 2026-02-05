@@ -20,9 +20,10 @@ module.exports = {
                     }
 
                     // If API key is provided, look up the user from it
-                    if (req.headers.api) {
+                    const apiKey = req.headers.api || req.body.api;
+                    if (apiKey) {
                         // Get the current user from API key
-                        let user = await getUser({ api: req.headers.api });
+                        let user = await getUser({ api: apiKey });
 
                         // If the user is an instance of Error
                         if (user instanceof Error) {

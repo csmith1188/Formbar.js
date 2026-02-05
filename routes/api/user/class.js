@@ -3,6 +3,7 @@ const { httpPermCheck } = require("../../middleware/permissionCheck");
 const { dbGet } = require("../../../modules/database");
 const { MANAGER_PERMISSIONS } = require("../../../modules/permissions");
 const { classInformation } = require("../../../modules/class/classroom");
+const { getUser } = require("../../../modules/user/user");
 
 module.exports = {
     run(router) {
@@ -12,8 +13,8 @@ module.exports = {
                 const userId = req.params.id;
 
                 // Retrieve both users
-                const apiKey = req.headers.api;
-                const user = await dbGet("SELECT * FROM users WHERE API = ?", [apiKey]);
+                const apiKey = req.headers.api || req.body.api;
+                const user = await getUser({ api: apiKey });
                 const requestedUser = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
 
                 if (user.id !== requestedUser.id && user.permissionLevel < MANAGER_PERMISSIONS) {

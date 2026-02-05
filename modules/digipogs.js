@@ -195,13 +195,16 @@ async function transferDigipogs(transferData) {
         const { from, to, pin, reason = "", pool = false } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
+        // Ensure that the user is not transferring to themselves
+        if (from == to && !pool) {
+            return { success: false, message: "Cannot transfer to the same account." };
+        }
+
         // Validate input
         if (!from || (!to && to !== 0) || !amount || !pin || reason === undefined) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
-        } else if (from === to && !pool) {
-            return { success: false, message: "Cannot transfer to the same account." };
         }
 
         // Check rate limiting
@@ -256,10 +259,8 @@ async function transferDigipogs(transferData) {
             // Perform user deduction and pool update atomically
             try {
                 await dbRun("BEGIN TRANSACTION");
-                // Deduct full amount from user
-                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]);
-                // Credit taxed amount to pool
-                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]);
+                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]); // Deduct full amount from user
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]); // Credit taxed amount to pool
                 await dbRun("COMMIT");
             } catch (err) {
                 try {
@@ -299,10 +300,10 @@ async function transferDigipogs(transferData) {
             const newToBalance = Math.ceil(toUser.digipogs + taxedAmount);
 
             try {
-                await Promise.all([
-                    dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]),
-                    dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]),
-                ]);
+                await dbRun("BEGIN TRANSACTION");
+                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]);
+                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]);
+                await dbRun("COMMIT");
             } catch (err) {
                 logger.log("error", err.stack || err);
                 recordAttempt(from, false);
