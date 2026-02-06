@@ -196,14 +196,8 @@ async function transferDigipogs(transferData) {
         const { from, to, pin, reason = "", pool } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
-        // Add compatibility for old transfer format where 'to' and 'from' were just IDs (assumed to be users)
+        // Backward compatibility
         let deprecatedFormatUsed = false;
-        if (!from.type) {
-            from.type = 'user';
-        }
-        if (!to.type) {
-            to.type = 'user';
-        }
         if (!from.id) {
             from.id = from;
             from.type = 'user'; 
@@ -211,18 +205,21 @@ async function transferDigipogs(transferData) {
             to.type = pool ? 'pool' : 'user';
             deprecatedFormatUsed = true;
         }
+        if (!from.type) {
+            from.type = 'user';
+        }
+        if (!to.type) {
+            to.type = 'user';
+        }
 
         // Validate input structure
-        if (!from|| !from.id ||!to || !to.id || !amount || reason === undefined) {
+        if (!from || !from.id || !to || !to.id || !amount || reason === undefined || !pin) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
         } else if (from.type === to.type && from.id === to.id) {
             return { success: false, message: "Cannot transfer to the same account." };
-        } else if (from.type === 'user' && !pin) {
-            return { success: false, message: "PIN required for user transfers." };
-        }
-        if (from.type !== 'user' && from.type !== 'pool') {
+        } else if ((from.type !== 'user' && from.type !== 'pool') || (to.type !== 'user' && to.type !== 'pool')) {
             return { success: false, message: "Invalid sender or recipient type." };
         }
 
@@ -248,11 +245,12 @@ async function transferDigipogs(transferData) {
             }
         } else {
             fromAccount = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [from.id]);
-            const poolOwner = await dbGet("SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [from.id]);
+            const poolUser = await dbGet("SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [from.id]);
             if (!fromAccount) {
                 return { success: false, message: "Sender pool not found." };
             }
-            fromAccount.pin = await dbGet("SELECT pin FROM users WHERE id = ?", [poolOwner.user_id]);
+            const poolOwner = await dbGet("SELECT pin FROM users WHERE id = ?", [poolUser.user_id]);
+            fromAccount.pin = poolOwner.pin; // Use the pool owner's PIN for validation
         }
 
         // PIN validation

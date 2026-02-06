@@ -7,9 +7,9 @@ module.exports = {
         const columns = await dbGetAll("PRAGMA table_info(transactions)", [], database);
         const fromUserColumn = columns.find((column) => column.name === "from_user");
         if (fromUserColumn) { // If the column exists, then this is a legacy transactions table
-            //transfer the data to a new table with the new layout
-            transactions = await dbGetAll("SELECT * FROM transactions", [], database);
-            //create new temporary table
+            // Transfer the data to a new table with the new layout
+            const transactions = await dbGetAll("SELECT * FROM transactions", [], database);
+            // Create new temporary table
             await dbRun(
                 `CREATE TABLE IF NOT EXISTS transactions_temp (
                     "from_id"   INTEGER NOT NULL,
@@ -17,25 +17,34 @@ module.exports = {
                     "from_type" TEXT NOT NULL,
                     "to_type"   TEXT NOT NULL,
                     "amount"    INTEGER NOT NULL,
-                    "reason"    TEXT NOT NULL DEFAULT "None",
+                    "reason"    TEXT NOT NULL DEFAULT 'None',
                     "date"      TEXT NOT NULL
                 );`,
                 [],
                 database
             );
-            //migrate data
+            // Migrate data
             for (const transaction of transactions) {
-                let fromId = transaction.from_user;
-                let fromType = "user";
-                let toId = transaction.to_user;
-                let toType = "user";
-                if (transaction.pool) {
-                    toId = transaction.pool;
-                    toType = "pool";
+                if (!transaction.from_user && transaction.pool) {
+                    var fromId = transaction.pool;
+                    var fromType = "pool";
+                    var toId = transaction.to_user;
+                    var toType = "user";
+                } else if (!transaction.to_user && transaction.pool) {
+                    var toId = transaction.pool;
+                    var toType = "pool";
+                    var fromId = transaction.from_user;
+                    var fromType = "user";
+                } else {
+                    var fromId = transaction.from_user;
+                    var fromType = "user";
+                    var toId = transaction.to_user;
+                    var toType = "user";
                 }
+
                 await dbRun(
-                    "INSERT INTO transactions_temp (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    [fromId, fromType, toId, toType, transaction.amount, transaction.reason, transaction.date],
+                    "INSERT INTO transactions_temp (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [fromId, toId, fromType, toType, transaction.amount, transaction.reason, transaction.date],
                     database
                 );
             }
