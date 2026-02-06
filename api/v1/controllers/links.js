@@ -53,6 +53,11 @@ module.exports = (router) => {
 
         const links = await getClassLinks(classId);
 
-        res.send({ links });
+        res.send({
+            success: true,
+            data: {
+                links,
+            },
+        });
     });
 };

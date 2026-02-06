@@ -36,7 +36,12 @@ module.exports = (router) => {
     router.get("/logs", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         logger.log("info", `[get /logs] ip=(${req.ip}) user=(${req.user?.email})`);
         const logs = await getAllLogs();
-        res.json({ logs });
+        res.json({
+            success: true,
+            data: {
+                logs,
+            },
+        });
     });
 
     /**
@@ -77,6 +82,11 @@ module.exports = (router) => {
         const logFileName = req.params.log;
         logger.log("info", `[get /logs/:log] ip=(${req.ip}) user=(${req.user?.email})`);
         const text = await getLog(logFileName);
-        res.json({ text });
+        res.json({
+            success: true,
+            data: {
+                text,
+            },
+        });
     });
 };

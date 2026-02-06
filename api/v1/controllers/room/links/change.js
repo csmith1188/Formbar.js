@@ -18,7 +18,12 @@ module.exports = (router) => {
         } else {
             await dbRun("UPDATE links SET url = ? WHERE classId = ? AND name = ?", [url, classId, name]);
         }
-        res.status(200).json({ message: "Link updated successfully." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link updated successfully.",
+            },
+        });
     };
 
     /**

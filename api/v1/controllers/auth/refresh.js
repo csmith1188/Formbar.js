@@ -63,6 +63,11 @@ module.exports = (router) => {
             throw new AuthError(result);
         }
 
-        res.status(200).json({ token: result });
+        res.status(200).json({
+            success: true,
+            data: {
+                token: result,
+            },
+        });
     });
 };

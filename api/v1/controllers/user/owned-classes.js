@@ -44,6 +44,9 @@ module.exports = (router) => {
         }
 
         const ownedClasses = await getUserOwnedClasses(user.email, req.user);
-        res.status(200).json(ownedClasses);
+        res.status(200).json({
+            success: true,
+            data: ownedClasses,
+        });
     });
 };

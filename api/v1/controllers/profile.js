@@ -84,17 +84,23 @@ module.exports = (router) => {
             logger.log("info", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
-                transactions: [],
-                displayName: userDisplayName,
-                currentUserId: req.user.userId,
+                success: true,
+                data: {
+                    transactions: [],
+                    displayName: userDisplayName,
+                    currentUserId: req.user.userId,
+                },
             });
             return;
         }
 
         res.status(200).json({
-            transactions: transactions,
-            displayName: userDisplayName,
-            currentUserId: req.user.userId,
+            success: true,
+            data: {
+                transactions: transactions,
+                displayName: userDisplayName,
+                currentUserId: req.user.userId,
+            },
         });
     });
 
@@ -178,14 +184,17 @@ module.exports = (router) => {
         const isOwnProfile = req.user.userId === userId;
 
         res.status(200).json({
-            displayName: displayName,
-            email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
-            digipogs: digipogs,
-            id: userId,
-            API: isOwnProfile ? "Exists" : null,
-            pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
-            pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-            isOwnProfile: isOwnProfile,
+            success: true,
+            data: {
+                displayName: displayName,
+                email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
+                digipogs: digipogs,
+                id: userId,
+                API: isOwnProfile ? "Exists" : null,
+                pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
+                pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
+                isOwnProfile: isOwnProfile,
+            },
         });
     });
 };

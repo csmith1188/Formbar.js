@@ -79,6 +79,9 @@ module.exports = (router) => {
         }
 
         // Send the class permissions as a JSON response
-        res.status(200).json(classData.permissions);
+        res.status(200).json({
+            success: true,
+            data: classData.permissions,
+        });
     });
 };

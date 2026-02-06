@@ -26,6 +26,11 @@ module.exports = (router) => {
      */
     router.get("/certs", (req, res) => {
         const pem = fs.readFileSync("public-key.pem", "utf8");
-        res.json({ publicKey: pem });
+        res.json({
+            success: true,
+            data: {
+                publicKey: pem,
+            },
+        });
     });
 };

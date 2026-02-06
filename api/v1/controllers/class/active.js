@@ -65,6 +65,11 @@ module.exports = (router) => {
         }
 
         const isActive = isClassActive(classId);
-        res.status(200).json({ isActive });
+        res.status(200).json({
+            success: true,
+            data: {
+                isActive,
+            },
+        });
     });
 };

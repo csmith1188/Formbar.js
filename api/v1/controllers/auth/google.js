@@ -107,7 +107,17 @@ module.exports = (router) => {
                 );
             }
 
-            res.json(tokens);
+            res.json({
+                success: true,
+                data: {
+                    ...result.tokens,
+                    user: {
+                        id: result.user.id,
+                        email: result.user.email,
+                        displayName: result.user.displayName,
+                    },
+                },
+            });
         })(req, res, next);
     });
 };

@@ -49,5 +49,9 @@ module.exports = (router) => {
      */
     router.post("/room/:code/join", isAuthenticated, httpPermCheck("joinRoom"), async (req, res) => {
         await joinRoom(req.user, req.params.code);
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

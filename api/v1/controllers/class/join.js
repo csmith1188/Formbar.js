@@ -53,6 +53,9 @@ module.exports = (router) => {
      */
     router.post("/class/:id/join", isAuthenticated, httpPermCheck("joinClass"), async (req, res) => {
         await joinClass(req.user, req.params.id);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

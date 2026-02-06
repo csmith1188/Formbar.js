@@ -83,6 +83,9 @@ module.exports = (router) => {
 
         // Log the class data and send the response
         logger.log("verbose", `[get api/class/${classId}] response=(${JSON.stringify(classData)})`);
-        res.status(200).json(classData);
+        res.status(200).json({
+            success: true,
+            data: classData,
+        });
     });
 };

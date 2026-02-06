@@ -74,7 +74,13 @@ module.exports = (router) => {
 
         const isWhitelist = ipMode === "whitelist" ? 1 : 0;
         const rows = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
-        res.status(200).json({ active: settings[`${ipMode}Active`], ips: rows || [] });
+        res.status(200).json({
+            success: true,
+            data: {
+                active: settings[`${ipMode}Active`],
+                ips: rows || [],
+            },
+        });
     });
 
     // Add IP
@@ -106,7 +112,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(201).json({ ok: true });
+        res.status(201).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -208,7 +219,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -293,7 +309,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -391,6 +412,13 @@ module.exports = (router) => {
         }
 
         fs.writeFileSync("./.env", updatedIpMode);
-        res.status(200).json({ ok: true, active: settings[`${type}Active`], otherDisabled: !settings[`${otherType}Active`] });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+                active: settings[`${type}Active`],
+                otherDisabled: !settings[`${otherType}Active`],
+            },
+        });
     });
 };

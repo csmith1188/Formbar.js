@@ -69,6 +69,11 @@ module.exports = (router) => {
 
         // Add the link to the database
         await dbRun("INSERT INTO links (classId, name, url) VALUES (?, ?, ?)", [classId, name, url]);
-        res.status(200).json({ message: "Link added successfully." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link added successfully.",
+            },
+        });
     });
 };

@@ -55,8 +55,11 @@ module.exports = (router) => {
         // Grab manager data and send it back as a JSON response
         const { users, classrooms } = await getManagerData();
         res.status(200).json({
-            users,
-            classrooms,
+            success: true,
+            data: {
+                users,
+                classrooms,
+            },
         });
     });
 };

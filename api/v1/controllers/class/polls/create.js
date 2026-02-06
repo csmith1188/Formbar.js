@@ -116,6 +116,9 @@ module.exports = (router) => {
             : body;
 
         await createPoll(classId, pollData, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

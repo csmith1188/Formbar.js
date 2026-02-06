@@ -92,7 +92,10 @@ module.exports = (router) => {
 
         const result = requestBreak(req.body.reason, { ...req.user, classId });
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result, 500);
         }

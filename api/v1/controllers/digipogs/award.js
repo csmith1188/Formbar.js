@@ -74,6 +74,9 @@ module.exports = (router) => {
         if (!result.success) {
             throw new AppError(result);
         }
-        res.status(200).json(result);
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
     });
 };

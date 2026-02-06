@@ -71,6 +71,9 @@ module.exports = (router) => {
         const { response, textRes } = req.body;
         const classId = req.params.id;
         await pollResponse(classId, response, textRes, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

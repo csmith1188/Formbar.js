@@ -94,6 +94,11 @@ module.exports = (router) => {
             );
         }
 
-        res.json(tokens);
+        res.json({
+            success: true,
+            data: {
+                ...tokens,
+            },
+        });
     });
 };

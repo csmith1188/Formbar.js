@@ -43,7 +43,12 @@ module.exports = (router) => {
         let joinedClasses = await getUserJoinedClasses(req.user.id);
         joinedClasses = joinedClasses.filter((classroom) => classroom.permissions !== 0);
 
-        res.json({ joinedClasses: joinedClasses });
+        res.json({
+            success: true,
+            data: {
+                joinedClasses: joinedClasses,
+            },
+        });
     });
 
     /**
@@ -159,6 +164,9 @@ module.exports = (router) => {
         if (userSockets[req.user.email] && Object.keys(userSockets[req.user.email]).length > 0) {
             await emitToUser(req.user.email, "reload");
         }
-        res.json({ success: true });
+        res.json({
+            success: true,
+            data: {},
+        });
     });
 };

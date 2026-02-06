@@ -41,9 +41,12 @@ module.exports = {
                 `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.textRes) lesson = (classInformation.classrooms[${"classId"}].lesson)`
             );
             res.status(200).json({
-                user: JSON.stringify(user),
-                myRes: classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes,
-                myTextRes: classInformation.classrooms[classId].students[req.user.email].pollRes.textRes,
+                success: true,
+                data: {
+                    user: JSON.stringify(user),
+                    myRes: classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes,
+                    myTextRes: classInformation.classrooms[classId].students[req.user.email].pollRes.textRes,
+                },
             });
         });
 

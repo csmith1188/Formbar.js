@@ -94,6 +94,9 @@ module.exports = (router) => {
         }
 
         // Send the students of the class as a JSON response
-        res.status(200).json(classUsers);
+        res.status(200).json({
+            success: true,
+            data: classUsers,
+        });
     });
 };

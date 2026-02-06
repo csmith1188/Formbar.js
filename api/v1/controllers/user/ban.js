@@ -20,7 +20,12 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     const unbanUserHandler = async (req, res) => {
@@ -36,7 +41,12 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**

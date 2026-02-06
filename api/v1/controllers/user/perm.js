@@ -19,7 +19,12 @@ module.exports = (router) => {
             classInformation.users[email].permissions = perm;
         }
 
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**

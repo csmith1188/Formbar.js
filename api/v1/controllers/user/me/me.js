@@ -31,15 +31,18 @@ module.exports = (router) => {
 
         const { digipogs } = await dbGet("SELECT digipogs FROM users WHERE id = ?", [req.user.id]);
         res.status(200).json({
-            id: req.user.id,
-            email: req.user.email,
-            activeClass: req.user.activeClass,
-            digipogs: digipogs,
-            pogMeter: req.user.pogMeter,
-            displayName: req.user.displayName,
-            permissions: req.user.permissions,
-            classId: req.user.classId,
-            classPermissions: req.user.classPermissions,
+            success: true,
+            data: {
+                id: req.user.id,
+                email: req.user.email,
+                activeClass: req.user.activeClass,
+                digipogs: digipogs,
+                pogMeter: req.user.pogMeter,
+                displayName: req.user.displayName,
+                permissions: req.user.permissions,
+                classId: req.user.classId,
+                classPermissions: req.user.classPermissions,
+            },
         });
     });
 };

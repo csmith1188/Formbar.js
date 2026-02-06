@@ -9,7 +9,10 @@ module.exports = (router) => {
         const userId = req.params.id;
         const result = await deleteUser(userId);
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result);
         }

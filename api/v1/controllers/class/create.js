@@ -96,8 +96,11 @@ module.exports = (router) => {
             const result = await classService.createClass(name, userId, userEmail);
 
             return res.status(200).json({
-                message: "Class created successfully",
-                ...result,
+                success: true,
+                data: {
+                    message: "Class created successfully",
+                    ...result,
+                },
             });
         } catch (err) {
             logger.log("error", err.stack);
