@@ -141,7 +141,7 @@ async function createClass(className, ownerId, ownerEmail) {
         logger.log("verbose", "[createClass] Added classroom to database");
 
         // Use the ID of the newly created classroom returned by dbRun
-        const classId = insertResult && typeof insertResult.lastID !== "undefined" ? insertResult.lastID : null;
+        const classId = insertResult;
         if (!classId) {
             throw new Error("Class was not created successfully");
         }

@@ -1,6 +1,7 @@
 const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const classService = require("@services/class-service");
 
 module.exports = (router) => {
@@ -76,7 +77,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/create", hasPermission(TEACHER_PERMISSIONS), async (req, res) => {
+    router.post("/class/create", isAuthenticated, hasPermission(TEACHER_PERMISSIONS), async (req, res) => {
         try {
             const { name } = req.body;
             if (!name) {
@@ -88,12 +89,11 @@ module.exports = (router) => {
                 return res.status(400).json({ error });
             }
 
-            const { userId, email: userEmail } = req.session;
-            logger.log("info", `[post /class/create] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
+            const { userId, email: userEmail } = req.user;
+            logger.log("info", `[post /class/create] ip=(${req.ip}) user=(${req.user?.email})`);
             logger.log("verbose", `[post /class/create] className=(${name})`);
 
             const result = await classService.createClass(name, userId, userEmail);
-            req.session.classId = result.classId;
 
             return res.status(200).json({
                 message: "Class created successfully",

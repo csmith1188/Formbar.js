@@ -2,6 +2,7 @@ const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { isClassActive } = require("@modules/class/class");
 const { classInformation } = require("@modules/class/classroom");
 const ForbiddenError = require("@errors/forbidden-error");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -56,10 +57,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.get("/class/:id/active", httpPermCheck("isClassActive"), async (req, res) => {
+    router.get("/class/:id/active", isAuthenticated, httpPermCheck("isClassActive"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to view the status of this class.");
         }
 

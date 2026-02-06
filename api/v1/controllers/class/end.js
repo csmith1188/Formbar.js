@@ -1,4 +1,5 @@
 const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const { endClass } = require("@modules/class/class");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
@@ -51,9 +52,9 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.post("/class/:id/end", hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+    router.post("/class/:id/end", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const classId = req.params.id;
-        await endClass(classId, req.session.user);
+        await endClass(classId, req.user);
         res.status(200).json({ success: true });
     });
 };

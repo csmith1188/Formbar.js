@@ -1,6 +1,7 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
@@ -78,10 +79,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/class/:id/break/request", httpPermCheck("requestBreak"), async (req, res) => {
+    router.post("/class/:id/break/request", isAuthenticated, httpPermCheck("requestBreak"), async (req, res) => {
         const classId = req.params.id;
         const classroom = classInformation.classrooms[classId];
-        if (classroom && !classroom.students[req.session.email]) {
+        if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request a break.");
         }
 
@@ -89,7 +90,7 @@ module.exports = (router) => {
             throw new ValidationError("A reason for the break must be provided.");
         }
 
-        const result = requestBreak(req.body.reason, req.session.user);
+        const result = requestBreak(req.body.reason, { ...req.user, classId });
         if (result === true) {
             res.status(200).json({ success: true });
         } else {

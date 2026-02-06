@@ -3,6 +3,7 @@ const { settings } = require("@modules/config");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getIpAccess } = require("@modules/webServer");
 const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const authentication = require("@modules/middleware/authentication");
 const fs = require("fs");
 const ValidationError = require("@errors/validation-error");
@@ -65,7 +66,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     // List IPs
-    router.get("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.get("/ip/:type", isAuthenticated, isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const ipMode = req.params.type;
         if (ipMode !== "whitelist" && ipMode !== "blacklist") {
             throw new ValidationError("Invalid type");
@@ -77,7 +78,7 @@ module.exports = (router) => {
     });
 
     // Add IP
-    router.post("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.post("/ip/:type", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const { ip } = req.body || {};
         if (type !== "whitelist" && type !== "blacklist") {
@@ -186,7 +187,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     // Update IP
-    router.put("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.put("/ip/:type/:id", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;
         const { ip } = req.body || {};
@@ -275,7 +276,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.delete("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.delete("/ip/:type/:id", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;
         if (type !== "whitelist" && type !== "blacklist") {
@@ -361,7 +362,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     // Toggle ip whitelist/blacklist
-    router.post("/ip/:type/toggle", hasPermission(MANAGER_PERMISSIONS), (req, res) => {
+    router.post("/ip/:type/toggle", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), (req, res) => {
         const type = req.params.type;
         if (type !== "whitelist" && type !== "blacklist") {
             throw new ValidationError("Invalid type");

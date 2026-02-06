@@ -1,6 +1,7 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { dbRun } = require("@modules/database");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
@@ -67,10 +68,10 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/Error'
      */
-    router.delete("/room/:id/links", hasClassPermission(TEACHER_PERMISSIONS), removeLinkHandler);
+    router.delete("/room/:id/links", isAuthenticated, hasClassPermission(TEACHER_PERMISSIONS), removeLinkHandler);
 
     // Deprecated endpoint - kept for backwards compatibility, use DELETE /api/v1/room/:id/links instead
-    router.post("/room/:id/links/remove", hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
+    router.post("/room/:id/links/remove", isAuthenticated, hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         res.setHeader("X-Deprecated", "Use DELETE /api/v1/room/:id/links instead");
         res.setHeader(
             "Warning",
