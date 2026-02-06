@@ -201,7 +201,7 @@ async function transferDigipogs(transferData) {
         if (!from.id) {
             from.id = from;
             from.type = 'user'; 
-            to.id = pool ? pool :to;
+            to.id = pool ? pool : to;
             to.type = pool ? 'pool' : 'user';
             deprecatedFormatUsed = true;
         }
