@@ -1,9 +1,9 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
-const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {

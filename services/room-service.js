@@ -1,14 +1,24 @@
 const { logger } = require("@modules/logger");
-const { Classroom, classInformation } = require("@modules/class/classroom");
-const { dbGet } = require("@modules/database");
-const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { database } = require("@modules/database");
-const { advancedEmitToClass, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
+const { classInformation } = require("@modules/class/classroom");
+const { dbGet, dbRun } = require("@modules/database");
+const { advancedEmitToClass, emitToUser } = require("@modules/socket-updates");
+const { getIdFromEmail } = require("@modules/student");
+const { userSocketUpdates } = require("../sockets/init");
 const NotFoundError = require("@errors/not-found-error");
-const ForbiddenError = require("@errors/forbidden-error");
+
+// Lazy-load class-service to avoid circular dependency
+let classService;
+function getClassService() {
+    if (!classService) {
+        classService = require("@services/class-service");
+    }
+    return classService;
+}
 
 /**
- * Allows a user to join a room using a room code.
+ * Allows a user to join a room using a room code for the FIRST TIME.
+ * This function should only be used when a user is joining with a code they received.
+ * For rejoining a class the user is already a member of, use joinClass from class-service.
  * Handles loading classroom data, validating user permissions, and updating session state.
  * @param {string} code - The room code to join
  * @param {Object} sessionUser - The user's session object containing email and other data
@@ -28,113 +38,72 @@ async function joinRoomByCode(code, sessionUser) {
         throw new NotFoundError("No class with that code");
     }
 
-    // Parse tags
-    classroomDb.tags = classroomDb.tags ? classroomDb.tags.split(",") : [];
-
-    // Load the classroom into memory if it's not already loaded
+    // Initialize classroom if not already loaded
     if (!classInformation.classrooms[classroomDb.id]) {
-        classInformation.classrooms[classroomDb.id] = new Classroom(
-            classroomDb.id,
-            classroomDb.name,
-            classroomDb.key,
-            classroomDb.owner,
-            classroomDb.permissions,
-            classroomDb.sharedPolls,
-            classroomDb.pollHistory,
-            classroomDb.tags
-        );
+        await getClassService().initializeClassroom(classroomDb.id);
     }
 
-    // Find the user who is trying to join the class
-    let user = await dbGet("SELECT id FROM users WHERE email=?", [email]);
+    // Delegate to class-service to handle the actual joining logic
+    // This avoids code duplication and keeps room-service focused on code validation
+    const result = await getClassService().addUserToClassroomSession(classroomDb.id, email, sessionUser);
 
-    if (!user && !classInformation.users[email]) {
-        throw new NotFoundError("User is not in database");
-    } else if (classInformation.users[email] && classInformation.users[email].isGuest) {
-        user = classInformation.users[email];
+    logger.log("verbose", `[joinRoomByCode] User joined successfully`);
+    return result;
+}
+
+/**
+ * Allows a user to join a room using a class code.
+ * Emits the joinClass event to the user with the result.
+ * @param {Object} userSession - The session object of the user attempting to join.
+ * @param {string} classCode - The code of the class to join.
+ * @returns {Promise<boolean>} Returns true if joined successfully.
+ */
+async function joinRoom(userSession, classCode) {
+    logger.log("info", `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
+
+    const response = await joinRoomByCode(classCode, userSession);
+    emitToUser(userSession.email, "joinClass", response);
+    return true;
+}
+
+/**
+ * Removes a user from a classroom.
+ * Deletes the user from the class in memory and the database, updates the user's session,
+ * emits leave events, and reloads the user's page.
+ * @param {Object} userData - The session object of the user leaving the room.
+ * @returns {Promise<void>}
+ */
+async function leaveRoom(userData) {
+    const classId = userData.classId;
+    const email = userData.email;
+    const studentId = await getIdFromEmail(email);
+
+    // Remove the user from the class
+    delete classInformation.classrooms[classId].students[email];
+    classInformation.users[email].activeClass = null;
+    classInformation.users[email].break = false;
+    classInformation.users[email].help = false;
+    classInformation.users[email].classPermissions = null;
+    await dbRun("DELETE FROM classusers WHERE classId=? AND studentId=?", [classId, studentId]);
+
+    // If the owner of the classroom leaves, then delete the classroom
+    const owner = (await dbGet("SELECT owner FROM classroom WHERE id=?", classId)).owner;
+    if (owner == studentId) {
+        await dbRun("DELETE FROM classroom WHERE id=?", classId);
     }
 
-    // Get the class-user relationship if the user is not a guest
-    let classUser;
-    if (!user.isGuest) {
-        classUser = await dbGet("SELECT * FROM classusers WHERE classId=? AND studentId=?", [classroomDb.id, user.id]);
+    // Update the class and play leave sound
+    for (const socketUpdate of Object.values(userSocketUpdates[email])) {
+        socketUpdate.classUpdate(classId);
     }
 
-    if (classUser) {
-        // If the user is banned, don't let them join
-        if (classUser.permissions <= BANNED_PERMISSIONS) {
-            throw new ForbiddenError("You are banned from that class");
-        }
-
-        // Get the student's session data
-        let currentUser = classInformation.users[email];
-
-        // Set class permissions and active class
-        currentUser.classPermissions = classUser.permissions;
-        currentUser.activeClass = classroomDb.id;
-
-        // Load tags from classusers table
-        currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
-        currentUser.tags = currentUser.tags.filter((tag) => tag !== "Offline");
-        classInformation.users[email].tags = currentUser.tags;
-
-        // Add the student to the class
-        const classroom = classInformation.classrooms[classroomDb.id];
-        classroom.students[email] = currentUser;
-
-        // Set the active class of the user
-        classInformation.users[email].activeClass = classroomDb.id;
-        advancedEmitToClass("joinSound", classroomDb.id, {});
-
-        // Set session class and classId
-        sessionUser.classId = classroomDb.id;
-
-        // Set the class of the API socket
-        setClassOfApiSockets(currentUser.API, classroomDb.id);
-
-        // Call classUpdate on all user's tabs
-        userUpdateSocket(email, "classUpdate", classroomDb.id, { global: false, restrictToControlPanel: true });
-
-        logger.log("verbose", `[joinRoomByCode] User joined successfully`);
-        return true;
-    } else {
-        // If the user is not a guest, insert them into the database
-        if (!user.isGuest) {
-            await database.run(
-                "INSERT INTO classusers(classId, studentId, permissions) VALUES(?, ?, ?)",
-                [classroomDb.id, user.id, classInformation.classrooms[classroomDb.id].permissions.userDefaults],
-                (err) => {
-                    if (err) {
-                        throw err;
-                    }
-                }
-            );
-
-            logger.log("info", "[joinRoomByCode] Added user to classusers");
-        }
-
-        // Grab the user from the users list
-        const classData = classInformation.classrooms[classroomDb.id];
-        let currentUser = classInformation.users[email];
-        currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS;
-        currentUser.activeClass = classroomDb.id;
-        currentUser.tags = [];
-
-        // Add the student to the class
-        classData.students[email] = currentUser;
-
-        classInformation.users[email].activeClass = classroomDb.id;
-
-        setClassOfApiSockets(currentUser.API, classroomDb.id);
-
-        // Call classUpdate on all user's tabs
-        userUpdateSocket(email, "classUpdate", classroomDb.id, { global: false, restrictToControlPanel: true });
-
-        logger.log("verbose", `[joinRoomByCode] New user joined successfully`);
-        return true;
-    }
+    // Play leave sound and reload the user's page
+    await advancedEmitToClass("leaveSound", classId, {});
+    await emitToUser(email, "reload");
 }
 
 module.exports = {
     joinRoomByCode,
+    joinRoom,
+    leaveRoom,
 };

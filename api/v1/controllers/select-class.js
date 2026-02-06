@@ -1,6 +1,7 @@
 const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
-const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode } = require("@services/class-service");
+const { getUserJoinedClasses, isUserInClass, getClassCode, getClassIdByCode, joinClass } = require("@services/class-service");
+const { joinRoomByCode } = require("@services/room-service");
 const { logger } = require("@modules/logger");
 const { setClassOfApiSockets, userSockets, emitToUser } = require("@modules/socket-updates");
 const ValidationError = require("@errors/validation-error");
@@ -110,7 +111,8 @@ module.exports = (router) => {
             throw new ValidationError("Either class ID or class code must be provided.");
         }
 
-        if (!classCode) {
+        // If classId is provided, user is re-joining a class they're already a member of
+        if (classId && !classCode) {
             // Check if the user is in the class with the class id provided
             const userInClass = await isUserInClass(req.user.id, classId);
 
@@ -118,26 +120,34 @@ module.exports = (router) => {
                 throw new ForbiddenError("You do not have permission to access this class.");
             }
 
-            classCode = await getClassCode(classId);
+            logger.log("info", `[post /selectClass] ip=(${req.ip}) user=(${req.user?.email}) classId=(${classId})`);
 
+            // Use joinClass for re-joining by ID
+            await joinClass(req.user, classId);
+        } else {
+            // User is joining with a code (first time or with explicit code)
             if (!classCode) {
+                classCode = await getClassCode(classId);
+                if (!classCode) {
+                    throw new NotFoundError("Class not found.");
+                }
+            }
+
+            logger.log("info", `[post /selectClass] ip=(${req.ip}) user=(${req.user?.email}) classCode=(${classCode})`);
+
+            // Use joinRoomByCode for first-time joins with code
+            const classJoinStatus = await joinRoomByCode(classCode, req.user);
+            if (typeof classJoinStatus === "string") {
+                // joinRoomByCode returned an error message
+                throw new AppError(classJoinStatus);
+            }
+
+            // Get classId from code
+            classCode = classCode.toLowerCase();
+            classId = await getClassIdByCode(classCode);
+            if (!classId) {
                 throw new NotFoundError("Class not found.");
             }
-        }
-
-        logger.log("info", `[post /selectClass] ip=(${req.ip}) user=(${req.user?.email}) classCode=(${classCode})`);
-        const classJoinStatus = await joinRoomByCode(classCode, req.user);
-        if (typeof classJoinStatus === "string") {
-            // joinRoomByCode returned an error message
-            throw new AppError(classJoinStatus);
-        }
-
-        // If class code is provided, get classId
-        classCode = classCode.toLowerCase();
-
-        classId = await getClassIdByCode(classCode);
-        if (!classId) {
-            throw new NotFoundError("Class not found.");
         }
 
         // Update classInformation for the user

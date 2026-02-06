@@ -1,15 +1,19 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
-const { database } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { setClassOfApiSockets, advancedEmitToClass, emitToUser, userSockets } = require("@modules/socket-updates");
+const { advancedEmitToClass, emitToUser, userSockets, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
-const { MANAGER_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
+const {
+    MANAGER_PERMISSIONS,
+    DEFAULT_CLASS_PERMISSIONS,
+    CLASS_SOCKET_PERMISSIONS,
+    BANNED_PERMISSIONS,
+    TEACHER_PERMISSIONS,
+} = require("@modules/permissions");
 const { getStudentsInClass, getIdFromEmail, getEmailFromId } = require("@modules/student");
 const { generateKey } = require("@modules/util");
-const { userSocketUpdates } = require("../sockets/init");
-const { joinRoomByCode } = require("@services/room-service");
 const { classKickStudent } = require("@modules/class/kick");
 const { clearPoll } = require("@services/poll-service");
+const { requireInternalParam } = require("@modules/error-wrapper");
 const ValidationError = require("@errors/validation-error");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
@@ -167,65 +171,8 @@ async function createClass(className, ownerId, ownerEmail) {
         await dbRun("INSERT OR IGNORE INTO class_permissions (classId) VALUES (?)", [classroom.id]);
     }
 
-    classroom.permissions = parseClassPermissions(permissions);
-    await initializeClassroom({
-        id: classroom.id,
-        className: classroom.name,
-        key: classroom.key,
-        owner: ownerId,
-        userEmail: ownerEmail,
-        permissions: classroom.permissions,
-        sharedPolls: [],
-        pollHistory: [],
-        tags: classroom.tags,
-    });
-
-    return {
-        classId: classroom.id,
-        key: classroom.key,
-        className: classroom.name,
-    };
-}
-
-/**
- * Joins an existing classroom by its ID
- * @async
- * @param {number} classId - The ID of the class to join
- * @param {number} userId - The ID of the user joining the class
- * @param {string} userEmail - The email of the user joining the class
- * @returns {Promise<{classId: number, key: string, className: string}>} Returns an object with class details on success
- * @throws {NotFoundError} Throws if the class does not exist
- */
-async function joinClassById(classId, userId, userEmail) {
-    const classroom = await dbGet(
-        "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
-        [classId]
-    );
-
-    if (!classroom) {
-        throw new NotFoundError("Class does not exist");
-    }
-
-    // Ensure class_permissions exists and normalize permissions to include defaults
-    let permissionsRow = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [classroom.id]);
-
-    classroom.permissions = parseClassPermissions(permissionsRow);
-
-    // Normalize classroom data (JSON parsing, tags, poll history)
-    normalizeClassroomData(classroom);
-
     // Initialize the classroom in memory
-    await initializeClassroom({
-        id: classroom.id,
-        className: classroom.name,
-        key: classroom.key,
-        owner: classroom.owner,
-        userEmail: userEmail,
-        permissions: classroom.permissions,
-        sharedPolls: classroom.sharedPolls,
-        pollHistory: classroom.pollHistory,
-        tags: classroom.tags,
-    });
+    await initializeClassroom(classroom.id);
 
     return {
         classId: classroom.id,
@@ -236,27 +183,40 @@ async function joinClassById(classId, userId, userEmail) {
 
 /**
  * Initializes a classroom in memory
+ * Fetches all necessary data from the database and creates/updates the classroom in memory
  * @private
- * @param {Object} params - The initialization parameters
- * @param {number} params.id - The class ID
- * @param {string} params.className - The class name
- * @param {string} params.key - The class key
- * @param {number} params.owner - The owner's user ID
- * @param {string} params.userEmail - The email of the user to add to the class
- * @param {Object} params.permissions - The class permissions object
- * @param {Array} [params.sharedPolls=[]] - Array of shared poll IDs
- * @param {Array} [params.pollHistory=[]] - Array of poll history objects
- * @param {Array|string} params.tags - Class tags
+ * @param {number} id - The class ID to initialize
  * @returns {Promise<void>}
  */
-async function initializeClassroom({ id, className, key, owner, permissions, sharedPolls = [], pollHistory = [], tags }) {
-    // Get the user's session data
-    // const user = classInformation.users[userEmail];
-    // if (!user) {
-    //     throw new NotFoundError(`User ${userEmail} not found in classInformation`);
-    // }
+async function initializeClassroom(id) {
+    logger.log("verbose", `[initializeClassroom] Initializing class with id=(${id})`);
 
-    logger.log("verbose", `[initializeClassroom] id=(${id}) name=(${className}) key=(${key}) sharedPolls=(${JSON.stringify(sharedPolls)})`);
+    // Fetch classroom data from database
+    const classroom = await dbGet(
+        "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
+        [id]
+    );
+
+    if (!classroom) {
+        throw new NotFoundError(`Class with id ${id} does not exist`);
+    }
+
+    // Fetch and normalize permissions
+    let permissionsRow = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [id]);
+    if (!permissionsRow) {
+        await dbRun("INSERT OR IGNORE INTO class_permissions (classId) VALUES (?)", [id]);
+        permissionsRow = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [id]);
+    }
+
+    const permissions = parseClassPermissions(permissionsRow);
+
+    // Normalize classroom data (JSON parsing, tags, poll history)
+    normalizeClassroomData(classroom);
+
+    logger.log(
+        "verbose",
+        `[initializeClassroom] id=(${id}) name=(${classroom.name}) key=(${classroom.key}) sharedPolls=(${JSON.stringify(classroom.sharedPolls)})`
+    );
 
     // Validate and normalize permissions
     if (Object.keys(permissions).sort().toString() !== Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
@@ -276,26 +236,27 @@ async function initializeClassroom({ id, className, key, owner, permissions, sha
 
     // Create or update classroom in memory
     if (!classInformation.classrooms[id]) {
-        classInformation.classrooms[id] = new Classroom(id, className, key, owner, permissions, sharedPolls, pollHistory, tags);
+        classInformation.classrooms[id] = new Classroom(
+            id,
+            classroom.name,
+            classroom.key,
+            classroom.owner,
+            permissions,
+            classroom.sharedPolls,
+            classroom.pollHistory,
+            classroom.tags
+        );
     } else {
         classInformation.classrooms[id].permissions = permissions;
-        classInformation.classrooms[id].sharedPolls = sharedPolls;
-        classInformation.classrooms[id].pollHistory = pollHistory;
-        classInformation.classrooms[id].tags = tags;
+        classInformation.classrooms[id].sharedPolls = classroom.sharedPolls;
+        classInformation.classrooms[id].pollHistory = classroom.pollHistory;
+        classInformation.classrooms[id].tags = classroom.tags;
     }
-
-    // Add the user to the newly created/joined class
-    // @TODO finish
-    // classInformation.classrooms[id].students[userEmail] = user;
-    // classInformation.classrooms[id].students[userEmail].classPermissions = MANAGER_PERMISSIONS;
-    // classInformation.users[userEmail].activeClass = id;
-    // classInformation.users[userEmail].classPermissions = MANAGER_PERMISSIONS;
 
     // Get all students in the class and add them to the classroom
     const classStudents = await getStudentsInClass(id);
     for (const studentEmail in classStudents) {
-        // If the student is the current user or already in the class, skip
-        if (studentEmail === userEmail) continue;
+        // If the student is already in the class, skip
         if (classInformation.classrooms[id].students[studentEmail]) continue;
 
         const student = classStudents[studentEmail];
@@ -312,9 +273,8 @@ async function initializeClassroom({ id, className, key, owner, permissions, sha
             }
         }
 
-        // Ensure 'Offline' is present exactly once at the front if the user
-        // is not the creator of the class.
-        if (studentEmail !== userEmail && !student.tags.includes("Offline")) {
+        // Ensure 'Offline' is present exactly once at the front
+        if (!student.tags.includes("Offline")) {
             student.tags.unshift("Offline");
         }
 
@@ -323,10 +283,7 @@ async function initializeClassroom({ id, className, key, owner, permissions, sha
         classInformation.classrooms[id].students[studentEmail] = student;
     }
 
-    // Set the class for all API sockets
-    await setClassOfApiSockets(user.API, id);
-
-    logger.log("verbose", `[initializeClassroom] Successfully initialized class ${id} for user ${userEmail}`);
+    logger.log("verbose", `[initializeClassroom] Successfully initialized class ${id}`);
 }
 
 /**
@@ -393,54 +350,114 @@ async function checkUserClassPermission(userId, classId, permission) {
 }
 
 /**
- * Allows a user to join a room using a class code.
- * Emits the joinClass event to the user with the result.
- * @param {Object} userSession - The session object of the user attempting to join.
- * @param {string} classCode - The code of the class to join.
- * @returns {Promise<boolean>} Returns true if joined successfully.
+ * Internal function to add a user to a classroom session in memory.
+ * Does not perform authorization checks - caller must validate permissions.
+ * @private
+ * @param {number} classId - The class ID
+ * @param {string} email - User's email
+ * @param {Object} sessionUser - The user's session object
+ * @returns {Promise<boolean>} Returns true if successful
  */
-async function joinRoom(userSession, classCode) {
-    logger.log("info", `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
+async function addUserToClassroomSession(classId, email, sessionUser) {
+    // Find the user
+    let user = await dbGet("SELECT id FROM users WHERE email=?", [email]);
 
-    const response = await joinRoomByCode(classCode, userSession);
-    emitToUser(userSession.email, "joinClass", response);
-    return true;
-}
-
-/**
- * Removes a user from a class room.
- * Deletes the user from the class in memory and the database, updates the user's session,
- * emits leave events, and reloads the user's page.
- * @param {Object} userData - The session object of the user leaving the room.
- * @returns {Promise<void>}
- */
-async function leaveRoom(userData) {
-    const classId = userData.classId;
-    const email = userData.email;
-    const studentId = await getIdFromEmail(email);
-
-    // Remove the user from the class
-    delete classInformation.classrooms[classId].students[email];
-    classInformation.users[email].activeClass = null;
-    classInformation.users[email].break = false;
-    classInformation.users[email].help = false;
-    classInformation.users[email].classPermissions = null;
-    await dbRun("DELETE FROM classusers WHERE classId=? AND studentId=?", [classId, studentId]);
-
-    // If the owner of the classroom leaves, then delete the classroom
-    const owner = (await dbGet("SELECT owner FROM classroom WHERE id=?", classId)).owner;
-    if (owner == studentId) {
-        await dbRun("DELETE FROM classroom WHERE id=?", classId);
+    if (!user && !classInformation.users[email]) {
+        throw new NotFoundError("User is not in database");
+    } else if (classInformation.users[email] && classInformation.users[email].isGuest) {
+        user = classInformation.users[email];
     }
 
-    // Update the class and play leave sound
-    for (const socketUpdate of Object.values(userSocketUpdates[email])) {
-        socketUpdate.classUpdate(classId);
+    // Get the class-user relationship if the user is not a guest
+    let classUser;
+    if (!user.isGuest) {
+        classUser = await dbGet("SELECT * FROM classusers WHERE classId=? AND studentId=?", [classId, user.id]);
     }
 
-    // Play leave sound and reload the user's page
-    await advancedEmitToClass("leaveSound", classId, {});
-    await emitToUser(email, "reload");
+    // Get the classroom from database to check ownership
+    const classroomDb = await dbGet("SELECT owner FROM classroom WHERE id=?", [classId]);
+    if (!classroomDb) {
+        throw new NotFoundError("Class not found");
+    }
+
+    // If the user is the owner of the classroom, give them manager permissions
+    if (classroomDb.owner === user.id) {
+        if (!classUser) {
+            classUser = { permissions: MANAGER_PERMISSIONS, tags: "" };
+        } else {
+            classUser.permissions = MANAGER_PERMISSIONS;
+        }
+    }
+
+    if (classUser) {
+        // If the user is banned, don't let them join
+        if (classUser.permissions <= BANNED_PERMISSIONS) {
+            throw new ForbiddenError("You are banned from that class");
+        }
+
+        // Get the student's session data
+        let currentUser = classInformation.users[email];
+
+        // Set class permissions and active class
+        currentUser.classPermissions = classUser.permissions;
+        currentUser.activeClass = classId;
+
+        // Load tags from classusers table
+        currentUser.tags = classUser.tags ? classUser.tags.split(",").filter(Boolean) : [];
+        currentUser.tags = currentUser.tags.filter((tag) => tag !== "Offline");
+        classInformation.users[email].tags = currentUser.tags;
+
+        // Add the student to the class
+        const classroom = classInformation.classrooms[classId];
+        classroom.students[email] = currentUser;
+
+        // Set the active class of the user
+        classInformation.users[email].activeClass = classId;
+        advancedEmitToClass("joinSound", classId, {});
+
+        // Set session class and classId
+        sessionUser.classId = classId;
+
+        // Set the class of the API socket
+        setClassOfApiSockets(currentUser.API, classId);
+
+        // Call classUpdate on all user's tabs
+        userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
+
+        logger.log("verbose", `[addUserToClassroomSession] User joined successfully`);
+        return true;
+    } else {
+        // If the user is not a guest, insert them into the database
+        if (!user.isGuest) {
+            await dbRun("INSERT INTO classusers(classId, studentId, permissions) VALUES(?, ?, ?)", [
+                classId,
+                user.id,
+                classInformation.classrooms[classId].permissions.userDefaults,
+            ]);
+
+            logger.log("info", "[addUserToClassroomSession] Added user to classusers");
+        }
+
+        // Grab the user from the users list
+        const classData = classInformation.classrooms[classId];
+        let currentUser = classInformation.users[email];
+        currentUser.classPermissions = currentUser.id !== classData.owner ? classData.permissions.userDefaults : TEACHER_PERMISSIONS;
+        currentUser.activeClass = classId;
+        currentUser.tags = [];
+
+        // Add the student to the class
+        classData.students[email] = currentUser;
+
+        classInformation.users[email].activeClass = classId;
+
+        setClassOfApiSockets(currentUser.API, classId);
+
+        // Call classUpdate on all user's tabs
+        userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
+
+        logger.log("verbose", `[addUserToClassroomSession] New user joined successfully`);
+        return true;
+    }
 }
 
 /**
@@ -450,10 +467,11 @@ async function leaveRoom(userData) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinClass(userData, classId) {
-    logger.log("info", `[joinClass] session=(${JSON.stringify(userData)}) classId=${classId}`);
-
     const email = userData.email;
-    const studentId = await getIdFromEmail(email);
+    requireInternalParam(classId, "classId");
+    requireInternalParam(email, "email");
+
+    logger.log("info", `[joinClass] session=(${JSON.stringify(userData)}) classId=${classId}`);
 
     // Convert class key to ID if necessary
     const dbClassroom = await dbGet("SELECT * FROM classroom WHERE key=? OR id=?", [classId, classId]);
@@ -469,19 +487,22 @@ async function joinClass(userData, classId) {
     }
 
     // Check if the user is in the class to prevent people from joining classes just from the class ID
-    if (classInformation.classrooms[classId] && !classInformation.classrooms[classId].students[email]) {
-        // If the class is not initialized in memory, check the database
-        const classUsers = await dbGet("SELECT * FROM classusers WHERE studentId=? AND classId=?", [studentId, classId]);
-        if (!classUsers && dbClassroom.owner !== studentId) {
-            throw new ForbiddenError("You are not in that class");
-        }
-    } else if (!classInformation.classrooms[classId]) {
-        // If the user is in memory but not in the class students list, they are not in the class
+    const studentId = await getIdFromEmail(email);
+    const classUsers = await dbGet("SELECT * FROM classusers WHERE studentId=? AND classId=?", [studentId, classId]);
+    const classroomOwner = await dbGet("SELECT owner FROM classroom WHERE id=?", [classId]);
+
+    // User must either be in classusers table or be the owner of the classroom
+    if (!classUsers && (!classroomOwner || classroomOwner.owner !== studentId)) {
         throw new ForbiddenError("You are not in that class");
     }
 
-    // Join the class using the class code
-    const response = await joinRoomByCode(dbClassroom.key, userData);
+    // Initialize classroom if not already loaded
+    if (!classInformation.classrooms[classId]) {
+        await initializeClassroom(classId);
+    }
+
+    // Add user to classroom session
+    const response = await addUserToClassroomSession(classId, email, userData);
 
     // Update all user sockets with the new class
     if (response === true && userSockets[email]) {
@@ -491,8 +512,6 @@ async function joinClass(userData, classId) {
             userSocket.emit("joinClass", response);
         }
     }
-
-    return true;
 }
 
 /**
@@ -563,14 +582,11 @@ module.exports = {
     getClassIdByCode,
     validateClassroomName,
     initializeClassroom,
+    addUserToClassroomSession,
     createClass,
-    joinClassById,
-    normalizeClassroomData,
     startClass,
     endClass,
     checkUserClassPermission,
-    joinRoom,
-    leaveRoom,
     joinClass,
     leaveClass,
     isClassActive,
