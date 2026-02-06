@@ -1,5 +1,5 @@
 const { classInformation } = require("./classroom");
-const { logger } = require("../logger");
+const { logger } = require("../logger.js");
 const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
 const { getEmailFromId } = require("../student");
 const { userSocketUpdates } = require("../../sockets/init");

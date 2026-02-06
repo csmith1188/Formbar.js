@@ -1,5 +1,5 @@
 const { database } = require("../database");
-const { logger } = require("../logger");
+const { logger } = require("../logger.js");
 const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();

@@ -1,4 +1,4 @@
-const { logger } = require("../logger");
+const { logger } = require("../logger.js");
 const { classInformation } = require("./classroom");
 const { advancedEmitToClass, userUpdateSocket } = require("../socketUpdates");
 const { getEmailFromId } = require("../student");

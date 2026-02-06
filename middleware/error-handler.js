@@ -3,6 +3,9 @@ const { logger } = require("@modules/logger");
 const process = require("process");
 
 module.exports = (err, req, res, next) => {
+
+    console.error(err);
+
     let error = err;
     let statusCode = err.statusCode || 500;
 
@@ -11,14 +14,18 @@ module.exports = (err, req, res, next) => {
 
     // is error a crash
     if (!isAppError || !isOperationalError) {
-        
-        req.errorEvent("request.crash", error.message, error);
 
-        if (process.env.NODE_ENV !== "production") console.error(error);
+        req.errorEvent("request.crash", error.message, error);
+        if (process.env.NODE_ENV !== "production") {
+            console.error(error);
+            console.log("Flushing logs before exit...");
+            logger.close();
+        }
+
         statusCode = 500;
         error = new AppError("An unexpected error occurred.", statusCode);
 
-    // is error expected operational error
+        // is error expected operational error
     } else {
         const event = err.event || "request.error";
         req.warnEvent(event, err.message, err);

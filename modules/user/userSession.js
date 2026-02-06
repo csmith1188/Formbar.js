@@ -1,7 +1,7 @@
 const { userSockets, managerUpdate, userUpdateSocket } = require("../socketUpdates");
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
-const { logger } = require("../logger");
+const { logger } = require("../logger.js");
 const { deleteCustomPolls } = require("../polls");
 const { deleteRooms, endClass } = require("../class/class");
 const { lastActivities } = require("../../sockets/middleware/inactivity");

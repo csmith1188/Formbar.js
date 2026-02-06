@@ -1,6 +1,6 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
-const { logger } = require("./logger");
+const { logger } = require("./logger.js");
 const { classInformation } = require("./class/classroom");
 const { compare } = require("./crypto");
 

@@ -1,5 +1,5 @@
 const { classInformation } = require("./class/classroom");
-const { logger } = require("./logger");
+const { logger } = require("./logger.js");
 const { generateColors } = require("./util");
 const { advancedEmitToClass, userUpdateSocket } = require("./socketUpdates");
 const { database, dbGetAll, dbRun } = require("./database");

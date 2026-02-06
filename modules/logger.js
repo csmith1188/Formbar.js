@@ -1,6 +1,6 @@
 const fs = require("fs");
 const winston = require("winston");
-const DailyRotateFile = require("winston-daily-rotate-file");
+require('winston-daily-rotate-file');
 const path = require("path");
 
 const logsDir = 'logs';
@@ -27,7 +27,10 @@ function deleteEmptyLogFiles() {
 }
 
 // Create a new logger instance using the winston library
-function createLogger() {
+async function createLogger() {
+
+    const { SeqTransport } = await import("@datalust/winston-seq");
+
     deleteEmptyLogFiles();
 
     return winston.createLogger({
@@ -41,12 +44,15 @@ function createLogger() {
 
         transports: [
             dailyRotateTransport,
+            new SeqTransport({
+                serverUrl: process.env.SEQ_URL || "http://localhost:5341",
+            }),
         ]
     });
 }
 
 // Create a new logger instance using the winston library
-const logger = createLogger();
+const logger = await createLogger();
 
 // wrapper to log events
 function logEvent(logger, level, event, message = "", meta = {}) {
@@ -57,32 +63,6 @@ function logEvent(logger, level, event, message = "", meta = {}) {
         ...meta
     });
 }
-
-/**
- * Gracefully exit after flushing logs.
- * @param {Error} error The error that caused the exit.
- */
-async function handleExit(error) {
-    if (error) {
-        logger.error(error.stack || error.toString());
-    }
-
-    // Close Winston transports to ensure logs are written
-    console.log("Flushing logs before exit...");
-    logger.close();
-}
-
-// Catch uncaught exceptions
-process.on("uncaughtException", async (err) => {
-    console.error("Uncaught Exception:", err);
-    await handleExit(err);
-});
-
-// Catch unhandled promise rejections
-process.on("unhandledRejection", async (reason) => {
-    console.error("Unhandled Promise Rejection:", reason);
-    await handleExit(reason);
-});
 
 module.exports = {
     logger,

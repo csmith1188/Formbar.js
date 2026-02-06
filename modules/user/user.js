@@ -1,6 +1,6 @@
 const { classInformation } = require("../class/classroom");
 const { database, dbGetAll, dbGet } = require("../database");
-const { logger } = require("../logger");
+const { logger } = require("../logger.js");
 const { compare } = require("../crypto");
 
 /**

@@ -1,6 +1,6 @@
 const { classInformation } = require("./class/classroom");
 const { database, dbGetAll } = require("./database");
-const { logger } = require("./logger");
+const { logger } = require("./logger.js");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("./manager");
 const { io } = require("./webServer");

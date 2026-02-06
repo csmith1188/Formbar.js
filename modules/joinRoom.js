@@ -1,4 +1,4 @@
-const { logger } = require("./logger");
+const { logger } = require("./logger.js");
 const { Classroom, classInformation } = require("./class/classroom");
 const { dbGet, dbGetAll } = require("@modules/database");
 const { BANNED_PERMISSIONS, TEACHER_PERMISSIONS } = require("./permissions");

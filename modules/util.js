@@ -1,4 +1,4 @@
-const { logger } = require("./logger");
+const { logger } = require("./logger.js");
 
 /**
  * Converts HSL color values to Hex color values

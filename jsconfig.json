@@ -9,5 +9,5 @@
             "@errors/*": ["errors/*"]
         }
     },
-    "include": ["**/*.js"]
+    "include": ["**/*.js", "modules/logger.js"]
 }
