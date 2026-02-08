@@ -1,6 +1,6 @@
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { logger } = require("@modules/logger");
-const { getManagerData } = require("@modules/manager");
+const { getManagerData } = require("@services/manager-service");
 const { hasPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 
