@@ -13,6 +13,9 @@ module.exports = (router) => {
      *     tags:
      *       - Logs
      *     description: Returns a list of all available log files
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: List of logs retrieved successfully
@@ -52,6 +55,9 @@ module.exports = (router) => {
      *     tags:
      *       - Logs
      *     description: Returns the contents of a specific log file
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: log

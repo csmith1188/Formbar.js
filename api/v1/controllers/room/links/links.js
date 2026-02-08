@@ -12,6 +12,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Retrieves all links associated with a classroom
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

@@ -17,6 +17,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId
@@ -112,6 +115,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns detailed profile information for a user including digipogs, API status, and PIN status. Email visibility depends on permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId

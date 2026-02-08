@@ -15,6 +15,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Retrieves the current class the user is in
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

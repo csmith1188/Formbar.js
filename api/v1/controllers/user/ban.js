@@ -57,6 +57,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Globally bans a user by setting their permissions to 0. Requires manager permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -108,6 +111,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Globally unbans a user by restoring their permissions to student level. Requires manager permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

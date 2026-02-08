@@ -12,6 +12,9 @@ module.exports = (router) => {
      *     tags:
      *       - Class
      *     description: Returns all links associated with a specific class. User must be a member of the class.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: query
      *         name: classId

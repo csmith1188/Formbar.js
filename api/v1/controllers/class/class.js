@@ -14,6 +14,9 @@ module.exports = (router) => {
      *     tags:
      *       - Class
      *     description: Returns detailed information about a class session, including students and polls
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

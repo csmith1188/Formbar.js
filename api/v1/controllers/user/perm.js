@@ -35,6 +35,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Updates a user's global permission level (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: email

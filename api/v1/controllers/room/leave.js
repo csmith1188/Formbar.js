@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `leaveRoom` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

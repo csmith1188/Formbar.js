@@ -58,6 +58,9 @@ module.exports = {
          *     tags:
          *       - Student
          *     description: Submits a student's poll response for the current question
+         *     security:
+         *       - bearerAuth: []
+         *       - apiKeyAuth: []
          *     parameters:
          *       - in: query
          *         name: poll

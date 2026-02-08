@@ -30,6 +30,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Removes a link from a classroom (requires teacher permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

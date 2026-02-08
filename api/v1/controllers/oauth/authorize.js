@@ -18,6 +18,7 @@ module.exports = (router) => {
      *       **Required Permission:** Authenticated user (via session or JWT)
      *     security:
      *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: query
      *         name: response_type

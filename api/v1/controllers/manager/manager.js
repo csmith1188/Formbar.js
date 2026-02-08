@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: Manager data retrieved successfully

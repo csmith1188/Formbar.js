@@ -48,6 +48,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Verifies and activates a pending user account (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

@@ -26,6 +26,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Deletes a user from Formbar (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

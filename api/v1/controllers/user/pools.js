@@ -12,6 +12,9 @@ module.exports = {
          *     tags:
          *       - Pools
          *     description: Returns all digipog pools that the user owns or is a member of
+         *     security:
+         *       - bearerAuth: []
+         *       - apiKeyAuth: []
          *     responses:
          *       200:
          *         description: Pools retrieved successfully

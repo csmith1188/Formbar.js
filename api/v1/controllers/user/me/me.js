@@ -11,6 +11,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Returns information about the currently authenticated user based on their session.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: Current user information returned successfully

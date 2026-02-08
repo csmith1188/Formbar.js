@@ -37,7 +37,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `classUpdate` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: Tags retrieved successfully
@@ -86,7 +86,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `setTags` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     requestBody:
      *       required: true
      *       content:

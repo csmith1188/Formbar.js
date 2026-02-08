@@ -24,7 +24,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     requestBody:
      *       required: true
      *       content:
