@@ -1,4 +1,4 @@
-// 13_restructure_transactions.js
+// 14_restructure_transactions.js
 // This migration restructures the 'transactions' table to support transactions from digipog pools, to users or other pools.
 
 const { dbGetAll, dbRun } = require("../../../modules/database");
@@ -31,20 +31,37 @@ module.exports = {
                 let fromId, fromType, toId, toType;
 
                 if (!transaction.from_user && transaction.pool) {
+                    // Pool to user transaction
                     fromId = transaction.pool;
                     fromType = "pool";
                     toId = transaction.to_user;
                     toType = "user";
                 } else if (!transaction.to_user && transaction.pool) {
+                    // User to pool transaction
                     toId = transaction.pool;
                     toType = "pool";
                     fromId = transaction.from_user;
                     fromType = "user";
-                } else {
+                } else if (transaction.from_user && transaction.to_user) {
+                    // User to user transaction
                     fromId = transaction.from_user;
                     fromType = "user";
                     toId = transaction.to_user;
                     toType = "user";
+                } else if (!transaction.from_user && transaction.to_user) {
+                    // Pool to user transaction
+                    fromId = 0;
+                    fromType = "pool";
+                    toId = transaction.to_user;
+                    toType = "user";
+                } else if (transaction.from_user && !transaction.to_user) {
+                    // User to pool transaction
+                    fromId = transaction.from_user;
+                    fromType = "user";
+                    toId = 0;
+                    toType = "pool";
+                } else {
+                    throw new Error("Invalid transaction data");
                 }
 
                 await dbRun(
@@ -53,6 +70,7 @@ module.exports = {
                     database
                 );
             }
+
             // Drop the old transactions table and rename the new one
             await dbRun("DROP TABLE IF EXISTS transactions", [], database);
             await dbRun("ALTER TABLE transactions_temp RENAME TO transactions", [], database);
