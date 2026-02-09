@@ -26,15 +26,23 @@ function deleteEmptyLogFiles() {
     } catch { }
 }
 
+
+// Will make good later. This is temporary I swear to god. Steven, fix it.
+
+async function loadSeqTransport() {
+    const seqModule = await import("@datalust/winston-seq");
+    return seqModule.SeqTransport;
+}
+
+
 // Create a new logger instance using the winston library
 async function createLogger() {
 
-    const { SeqTransport } = await import("@datalust/winston-seq");
-
     deleteEmptyLogFiles();
+    const SeqTransport = await loadSeqTransport();
 
     return winston.createLogger({
-
+        level: "info",
         // This sets the format of the log messages.
         format: winston.format.combine(
             winston.format.timestamp(),
@@ -51,9 +59,6 @@ async function createLogger() {
     });
 }
 
-// Create a new logger instance using the winston library
-const logger = await createLogger();
-
 // wrapper to log events
 function logEvent(logger, level, event, message = "", meta = {}) {
     logger.log({
@@ -65,6 +70,6 @@ function logEvent(logger, level, event, message = "", meta = {}) {
 }
 
 module.exports = {
-    logger,
+    createLogger,
     logEvent
 };
