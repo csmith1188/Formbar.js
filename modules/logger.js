@@ -42,7 +42,6 @@ async function createLogger() {
     const SeqTransport = await loadSeqTransport();
 
     return winston.createLogger({
-        level: "info",
         // This sets the format of the log messages.
         format: winston.format.combine(
             winston.format.timestamp(),
@@ -53,6 +52,7 @@ async function createLogger() {
         transports: [
             dailyRotateTransport,
             new SeqTransport({
+                level: "info",
                 serverUrl: process.env.SEQ_URL || "http://localhost:5341",
             }),
         ]
