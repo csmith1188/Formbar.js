@@ -93,8 +93,10 @@ async function leaveRoom(userData) {
     }
 
     // Update the class and play leave sound
-    for (const socketUpdate of Object.values(userSocketUpdates[email])) {
-        socketUpdate.classUpdate(classId);
+    if (userSocketUpdates[email]) {
+        for (const socketUpdate of Object.values(userSocketUpdates[email])) {
+            socketUpdate.classUpdate(classId);
+        }
     }
 
     // Play leave sound and reload the user's page

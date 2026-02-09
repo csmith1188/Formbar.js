@@ -52,7 +52,7 @@ module.exports = (router) => {
 
         // Get a clone of the class data
         // If the class does not exist, return an error
-        const classData = classInformation.classrooms[classId];
+        const classData = structuredClone(classInformation.classrooms[classId]);
         if (!classData) {
             throw new NotFoundError("Class not started");
         }

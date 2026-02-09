@@ -47,7 +47,6 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     router.get("/manager", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        // Grab the user from req.user (set by isAuthenticated middleware)
         const user = req.user;
         logger.log("info", `[get api/manager] ip=(${req.ip}) user=(${req.user?.email})`);
         logger.log("verbose", `[get api/manager] response=(${JSON.stringify(user)})`);

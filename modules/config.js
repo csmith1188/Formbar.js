@@ -42,6 +42,16 @@ function getConfig() {
     let publicKey;
     let privateKey;
 
+    // If the public key is named publicKey.pem, rename it
+    if (fs.existsSync("publicKey.pem") && !fs.existsSync("public-key.pem")) {
+        fs.renameSync("publicKey.pem", "public-key.pem");
+    }
+
+    // If the private key is named privateKey.pem, rename it
+    if (fs.existsSync("privateKey.pem") && !fs.existsSync("private-key.pem")) {
+        fs.renameSync("privateKey.pem", "private-key.pem");
+    }
+
     // If public-key.pem or private-key.pem doesn't exist, create them
     if (!fs.existsSync("public-key.pem") || !fs.existsSync("private-key.pem")) {
         const keyPair = generateKeyPair();

@@ -344,8 +344,20 @@ function pollResponse(classId, res, textRes, userSession) {
     }
 
     if (!isRemoving && !pogMeterTracker.pogMeterIncreased[email]) {
-        const responseObj = classroom.poll.responses.find((response) => response.answer === res);
-        const resWeight = responseObj ? responseObj.weight : 1;
+        let resWeight = 1;
+
+        // Calculate weight based on response type
+        if (classroom.poll.allowMultipleResponses && Array.isArray(res)) {
+            // Sum weights for all selected responses
+            resWeight = res.reduce((sum, answer) => {
+                const responseObj = classroom.poll.responses.find((response) => response.answer === answer);
+                return sum + (responseObj ? responseObj.weight : 1);
+            }, 0);
+        } else {
+            // Single response
+            const responseObj = classroom.poll.responses.find((response) => response.answer === res);
+            resWeight = responseObj ? responseObj.weight : 1;
+        }
 
         // Increase pog meter by 100 times the weight of the response
         // If pog meter reaches 500, increase digipogs by 1 and reset pog meter to 0
@@ -353,7 +365,7 @@ function pollResponse(classId, res, textRes, userSession) {
         classroom.students[email].pogMeter += pogMeterIncrease;
         if (classroom.students[email].pogMeter >= 500) {
             classroom.students[email].pogMeter -= 500;
-            let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 3 digipogs
+            let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 10 digipogs
             database.run("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [addPogs, user.id], (err) => {
                 if (err) {
                     logger.log("error", err.stack);
@@ -416,7 +428,7 @@ async function deleteCustomPolls(userId) {
 
     await dbRun("DELETE FROM custom_polls WHERE owner=?", userId);
     for (let customPoll of customPolls) {
-        await dbRun("DELETE FROM shared_polls WHERE pollId=?", customPoll.pollId);
+        await dbRun("DELETE FROM shared_polls WHERE pollId=?", customPoll.id);
     }
 }
 

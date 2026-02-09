@@ -1,8 +1,9 @@
 const { dbGetAll } = require("@modules/database");
+const jwt = require("jsonwebtoken");
 
 async function getManagerData() {
-    const users = dbGetAll("SELECT id, email, permissions, displayName, verified FROM users");
-    const classrooms = dbGetAll("SELECT * FROM classroom");
+    const users = await dbGetAll("SELECT id, email, permissions, displayName, verified FROM users");
+    const classrooms = await dbGetAll("SELECT * FROM classroom");
 
     // Grab the unverified users from the database and insert them into the user data
     const tempUsers = await dbGetAll("SELECT * FROM temp_user_creation_data");

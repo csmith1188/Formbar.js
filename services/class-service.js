@@ -1,6 +1,6 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { advancedEmitToClass, emitToUser, userSockets, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
+const { advancedEmitToClass, userSockets, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const {
     MANAGER_PERMISSIONS,
@@ -230,7 +230,7 @@ async function initializeClassroom(id) {
             if (typeof permissions[permission] != "number" || permissions[permission] < 1 || permissions[permission] > 5) {
                 permissions[permission] = DEFAULT_CLASS_PERMISSIONS[permission];
             }
-            await dbRun(`UPDATE class_permissions SET ? WHERE classId=?`, [permissions[permission], id]);
+            await dbRun(`UPDATE class_permissions SET ${permission} = ? WHERE classId=?`, [permissions[permission], id]);
         }
     }
 
@@ -536,7 +536,7 @@ function leaveClass(userData, classId) {
 
     // Kick the user from the classroom entirely if they're a guest
     // If not, kick them from the session
-    advancedEmitToClass("leaveSound", userData.classId, {});
+    advancedEmitToClass("leaveSound", classId, {});
     classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
     return true;
 }
