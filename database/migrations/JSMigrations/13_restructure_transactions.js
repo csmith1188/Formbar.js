@@ -6,9 +6,11 @@ module.exports = {
     async run(database) {
         const columns = await dbGetAll("PRAGMA table_info(transactions)", [], database);
         const fromUserColumn = columns.find((column) => column.name === "from_user");
-        if (fromUserColumn) { // If the column exists, then this is a legacy transactions table
+        if (fromUserColumn) {
+            // If the column exists, then this is a legacy transactions table
             // Transfer the data to a new table with the new layout
             const transactions = await dbGetAll("SELECT * FROM transactions", [], database);
+
             // Create new temporary table
             await dbRun(
                 `CREATE TABLE IF NOT EXISTS transactions_temp (
@@ -23,23 +25,26 @@ module.exports = {
                 [],
                 database
             );
+
             // Migrate data
             for (const transaction of transactions) {
+                let fromId, fromType, toId, toType;
+
                 if (!transaction.from_user && transaction.pool) {
-                    var fromId = transaction.pool;
-                    var fromType = "pool";
-                    var toId = transaction.to_user;
-                    var toType = "user";
+                    fromId = transaction.pool;
+                    fromType = "pool";
+                    toId = transaction.to_user;
+                    toType = "user";
                 } else if (!transaction.to_user && transaction.pool) {
-                    var toId = transaction.pool;
-                    var toType = "pool";
-                    var fromId = transaction.from_user;
-                    var fromType = "user";
+                    toId = transaction.pool;
+                    toType = "pool";
+                    fromId = transaction.from_user;
+                    fromType = "user";
                 } else {
-                    var fromId = transaction.from_user;
-                    var fromType = "user";
-                    var toId = transaction.to_user;
-                    var toType = "user";
+                    fromId = transaction.from_user;
+                    fromType = "user";
+                    toId = transaction.to_user;
+                    toType = "user";
                 }
 
                 await dbRun(
