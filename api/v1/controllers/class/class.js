@@ -14,6 +14,9 @@ module.exports = (router) => {
      *     tags:
      *       - Class
      *     description: Returns detailed information about a class session, including students and polls
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -42,7 +45,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/NotFoundError'
      */
     router.get("/class/:id", isAuthenticated, async (req, res) => {
-        let classId = req.params.id;
+        const classId = req.params.id;
 
         // Log the request details
         logger.log("info", `[get api/class/${classId}] ip=(${req.ip}) user=(${req.user?.email})`);
@@ -83,6 +86,9 @@ module.exports = (router) => {
 
         // Log the class data and send the response
         logger.log("verbose", `[get api/class/${classId}] response=(${JSON.stringify(classData)})`);
-        res.status(200).json(classData);
+        res.status(200).json({
+            success: true,
+            data: classData,
+        });
     });
 };

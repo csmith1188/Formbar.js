@@ -32,7 +32,12 @@ module.exports = (router) => {
             1,
         ]);
         await dbRun("DELETE FROM temp_user_creation_data WHERE secret=?", [tempUser.newSecret]);
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**
@@ -43,6 +48,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Verifies and activates a pending user account (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

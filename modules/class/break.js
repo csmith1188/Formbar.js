@@ -1,8 +1,8 @@
 const { logger } = require("../logger");
 const { classInformation } = require("./classroom");
-const { advancedEmitToClass, userUpdateSocket } = require("../socketUpdates");
+const { advancedEmitToClass, userUpdateSocket } = require("../socket-updates");
 const { getEmailFromId } = require("../student");
-const { io } = require("../webServer");
+const { io } = require("../web-server");
 
 function requestBreak(reason, userData) {
     try {

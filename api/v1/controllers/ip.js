@@ -1,7 +1,7 @@
 const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 const { settings } = require("@modules/config");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { getIpAccess } = require("@modules/webServer");
+const { getIpAccess } = require("@modules/web-server");
 const { hasPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 const authentication = require("@modules/middleware/authentication");
@@ -30,7 +30,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: type
@@ -74,7 +74,13 @@ module.exports = (router) => {
 
         const isWhitelist = ipMode === "whitelist" ? 1 : 0;
         const rows = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
-        res.status(200).json({ active: settings[`${ipMode}Active`], ips: rows || [] });
+        res.status(200).json({
+            success: true,
+            data: {
+                active: settings[`${ipMode}Active`],
+                ips: rows || [],
+            },
+        });
     });
 
     // Add IP
@@ -106,7 +112,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(201).json({ ok: true });
+        res.status(201).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -129,7 +140,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: type
@@ -208,7 +219,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -231,7 +247,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: type
@@ -293,7 +309,12 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
     /**
@@ -316,7 +337,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: type
@@ -391,6 +412,13 @@ module.exports = (router) => {
         }
 
         fs.writeFileSync("./.env", updatedIpMode);
-        res.status(200).json({ ok: true, active: settings[`${type}Active`], otherDisabled: !settings[`${otherType}Active`] });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+                active: settings[`${type}Active`],
+                otherDisabled: !settings[`${otherType}Active`],
+            },
+        });
     });
 };

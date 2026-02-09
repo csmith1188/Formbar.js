@@ -56,6 +56,9 @@ module.exports = (router) => {
             }
         }
 
-        res.json({ success: true });
+        res.json({
+            success: true,
+            data: {},
+        });
     });
 };

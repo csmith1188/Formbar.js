@@ -1,8 +1,8 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { isClassActive } = require("@modules/class/class");
+const { isClassActive } = require("@services/class-service");
 const { classInformation } = require("@modules/class/classroom");
-const ForbiddenError = require("@errors/forbidden-error");
 const { isAuthenticated } = require("@modules/middleware/authentication");
+const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
     /**
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -65,6 +65,11 @@ module.exports = (router) => {
         }
 
         const isActive = isClassActive(classId);
-        res.status(200).json({ isActive });
+        res.status(200).json({
+            success: true,
+            data: {
+                isActive,
+            },
+        });
     });
 };

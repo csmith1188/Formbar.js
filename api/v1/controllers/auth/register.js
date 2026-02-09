@@ -87,11 +87,14 @@ module.exports = (router) => {
 
         // Return the tokens and user data
         res.status(201).json({
-            ...result.tokens,
-            user: {
-                id: result.user.id,
-                email: result.user.email,
-                displayName: result.user.displayName,
+            success: true,
+            data: {
+                ...result.tokens,
+                user: {
+                    id: result.user.id,
+                    email: result.user.email,
+                    displayName: result.user.displayName,
+                },
             },
         });
     });

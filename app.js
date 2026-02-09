@@ -17,15 +17,16 @@ if (!fs.existsSync("database/database.db")) {
 }
 
 // Custom modules
-const { logger } = require("./modules/logger.js");
+const { logger } = require("@modules/logger.js");
 const { initSocketRoutes } = require("./sockets/init.js");
-const { app, io, http } = require("./modules/webServer.js");
-const { settings } = require("./modules/config.js");
+const { app, io, http } = require("@modules/web-server.js");
+const { settings } = require("@modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+const NotFoundError = require("@errors/not-found-error");
 
-const { logout } = require("./modules/user/userSession");
-const { passport } = require("./modules/googleOauth.js");
-const { rateLimiter } = require("@modules/middleware/rateLimiter");
+const { logout } = require("@modules/user/user-session");
+const { passport } = require("@modules/google-oauth.js");
+const { rateLimiter } = require("@modules/middleware/rate-limiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -183,6 +184,11 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
+
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+    next(new NotFoundError("Resource not found"));
+});
 
 // Error handling middleware
 app.use(errorHandlerMiddleware);

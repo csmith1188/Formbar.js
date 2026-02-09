@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isVerified, permCheck, isAuthenticated } = require("@modules/middleware/authentication");
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
@@ -17,6 +17,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId
@@ -60,7 +63,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
         logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
 
@@ -84,17 +87,23 @@ module.exports = (router) => {
             logger.log("info", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
-                transactions: [],
-                displayName: userDisplayName,
-                currentUserId: req.user.userId,
+                success: true,
+                data: {
+                    transactions: [],
+                    displayName: userDisplayName,
+                    currentUserId: req.user.userId,
+                },
             });
             return;
         }
 
         res.status(200).json({
-            transactions: transactions,
-            displayName: userDisplayName,
-            currentUserId: req.user.userId,
+            success: true,
+            data: {
+                transactions: transactions,
+                displayName: userDisplayName,
+                currentUserId: req.user.userId,
+            },
         });
     });
 
@@ -106,6 +115,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns detailed profile information for a user including digipogs, API status, and PIN status. Email visibility depends on permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId
@@ -154,7 +166,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
         logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
 
@@ -178,14 +190,17 @@ module.exports = (router) => {
         const isOwnProfile = req.user.userId === userId;
 
         res.status(200).json({
-            displayName: displayName,
-            email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
-            digipogs: digipogs,
-            id: userId,
-            API: isOwnProfile ? "Exists" : null,
-            pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
-            pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-            isOwnProfile: isOwnProfile,
+            success: true,
+            data: {
+                displayName: displayName,
+                email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
+                digipogs: digipogs,
+                id: userId,
+                API: isOwnProfile ? "Exists" : null,
+                pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
+                pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
+                isOwnProfile: isOwnProfile,
+            },
         });
     });
 };

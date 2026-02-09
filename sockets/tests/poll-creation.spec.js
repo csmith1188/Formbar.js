@@ -1,4 +1,4 @@
-const { run: pollCreationRun } = require("../polls/pollCreation");
+const { run: pollCreationRun } = require("../polls/poll-creation");
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const { generateColors } = require("@modules/util");
@@ -13,7 +13,7 @@ describe("startPoll", () => {
     let startPollHandler;
 
     beforeEach(() => {
-        jest.mock("../../modules/socketUpdates");
+        jest.mock("@modules/socket-updates");
         socket = createSocket();
         socketUpdates = createSocketUpdates();
         userSocketUpdates[socket.request.session.email] = socketUpdates;
@@ -91,6 +91,6 @@ describe("startPoll", () => {
     });
 
     afterAll(() => {
-        jest.unmock("@modules/socketUpdates");
+        jest.unmock("@modules/socket-updates");
     });
 });

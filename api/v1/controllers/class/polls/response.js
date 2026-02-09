@@ -1,4 +1,4 @@
-const { pollResponse } = require("@modules/polls");
+const { pollResponse } = require("@services/poll-service");
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { parseJson } = require("@modules/middleware/parse-json");
 const { isAuthenticated } = require("@modules/middleware/authentication");
@@ -24,7 +24,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -71,6 +71,9 @@ module.exports = (router) => {
         const { response, textRes } = req.body;
         const classId = req.params.id;
         await pollResponse(classId, response, textRes, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

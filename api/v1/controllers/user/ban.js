@@ -3,7 +3,7 @@ const { isAuthenticated } = require("@modules/middleware/authentication");
 const { dbGet, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
-const { managerUpdate } = require("@modules/socketUpdates");
+const { managerUpdate } = require("@modules/socket-updates");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
@@ -20,7 +20,12 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     const unbanUserHandler = async (req, res) => {
@@ -36,7 +41,12 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**
@@ -47,6 +57,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Globally bans a user by setting their permissions to 0. Requires manager permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -98,6 +111,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Globally unbans a user by restoring their permissions to student level. Requires manager permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

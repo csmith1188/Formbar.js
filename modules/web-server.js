@@ -41,13 +41,13 @@ function createServer() {
                         type: "http",
                         scheme: "bearer",
                         bearerFormat: "JWT",
-                        description: "JWT authentication token obtained from /api/v1/auth/login",
+                        description: "JWT access token obtained from /api/v1/auth/login or /api/v1/auth/refresh",
                     },
-                    sessionAuth: {
+                    apiKeyAuth: {
                         type: "apiKey",
-                        in: "cookie",
-                        name: "connect.sid",
-                        description: "Session-based authentication cookie",
+                        in: "header",
+                        name: "X-API-Key",
+                        description: "API key associated with your account. Can be retrieved from your user profile.",
                     },
                 },
             },

@@ -2,7 +2,7 @@ const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 const { parseJson } = require("@modules/middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const { updatePoll } = require("@modules/polls");
+const { updatePoll } = require("@services/poll-service");
 
 module.exports = (router) => {
     /**
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -56,6 +56,9 @@ module.exports = (router) => {
     router.post("/class/:id/polls/end", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
         const classId = req.params.id;
         await updatePoll(classId, { status: false }, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

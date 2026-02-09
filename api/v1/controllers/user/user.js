@@ -70,12 +70,15 @@ module.exports = (router) => {
 
         if (user) {
             res.status(200).json({
-                id: user.id,
-                email: userEmail,
-                permissions: user.permissions,
-                digipogs: user.digipogs,
-                displayName: user.displayName,
-                verified: user.verified,
+                success: true,
+                data: {
+                    id: user.id,
+                    email: userEmail,
+                    permissions: user.permissions,
+                    digipogs: user.digipogs,
+                    displayName: user.displayName,
+                    verified: user.verified,
+                },
             });
         } else {
             throw new NotFoundError("User not found.");

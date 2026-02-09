@@ -14,7 +14,12 @@ module.exports = (router) => {
 
         // Remove the link from the database
         await dbRun("DELETE FROM links WHERE classId = ? AND name = ?", [classId, name]);
-        res.status(200).json({ message: "Link removed successfully." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link removed successfully.",
+            },
+        });
     };
 
     /**
@@ -25,6 +30,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Removes a link from a classroom (requires teacher permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

@@ -24,7 +24,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -79,6 +79,9 @@ module.exports = (router) => {
         }
 
         // Send the class permissions as a JSON response
-        res.status(200).json(classData.permissions);
+        res.status(200).json({
+            success: true,
+            data: classData.permissions,
+        });
     });
 };

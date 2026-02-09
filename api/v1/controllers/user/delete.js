@@ -1,4 +1,4 @@
-const { deleteUser } = require("@modules/user/userSession");
+const { deleteUser } = require("@modules/user/user-session");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
@@ -9,7 +9,10 @@ module.exports = (router) => {
         const userId = req.params.id;
         const result = await deleteUser(userId);
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result);
         }
@@ -23,6 +26,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Deletes a user from Formbar (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

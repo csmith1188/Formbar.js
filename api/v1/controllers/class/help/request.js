@@ -17,7 +17,10 @@ module.exports = (router) => {
         const userData = { ...req.user, classId };
         const result = await sendHelpTicket(reason, userData);
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result, 500);
         }
@@ -43,7 +46,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

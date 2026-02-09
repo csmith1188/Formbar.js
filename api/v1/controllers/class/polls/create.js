@@ -1,4 +1,4 @@
-const { createPoll } = require("@modules/polls");
+const { createPoll } = require("@services/poll-service");
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { parseJson } = require("@modules/middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -116,6 +116,9 @@ module.exports = (router) => {
             : body;
 
         await createPoll(classId, pollData, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

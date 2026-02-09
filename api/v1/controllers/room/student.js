@@ -41,9 +41,12 @@ module.exports = {
                 `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.textRes) lesson = (classInformation.classrooms[${"classId"}].lesson)`
             );
             res.status(200).json({
-                user: JSON.stringify(user),
-                myRes: classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes,
-                myTextRes: classInformation.classrooms[classId].students[req.user.email].pollRes.textRes,
+                success: true,
+                data: {
+                    user: JSON.stringify(user),
+                    myRes: classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes,
+                    myTextRes: classInformation.classrooms[classId].students[req.user.email].pollRes.textRes,
+                },
             });
         });
 
@@ -55,6 +58,9 @@ module.exports = {
          *     tags:
          *       - Student
          *     description: Submits a student's poll response for the current question
+         *     security:
+         *       - bearerAuth: []
+         *       - apiKeyAuth: []
          *     parameters:
          *       - in: query
          *         name: poll

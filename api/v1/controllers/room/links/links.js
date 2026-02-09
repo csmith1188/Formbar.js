@@ -12,6 +12,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Retrieves all links associated with a classroom
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -47,7 +50,10 @@ module.exports = (router) => {
         const links = await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 
         if (links) {
-            res.status(200).json(links);
+            res.status(200).json({
+                success: true,
+                data: links,
+            });
         }
     });
 };

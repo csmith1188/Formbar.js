@@ -1,7 +1,7 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { userSockets } = require("@modules/socketUpdates");
+const { userSockets } = require("@modules/socket-updates");
 const { Student } = require("@modules/student");
 const { getUserClass } = require("@modules/user/user");
 const { classKickStudent } = require("@modules/class/kick");

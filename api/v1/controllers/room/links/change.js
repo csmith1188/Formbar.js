@@ -18,7 +18,12 @@ module.exports = (router) => {
         } else {
             await dbRun("UPDATE links SET url = ? WHERE classId = ? AND name = ?", [url, classId, name]);
         }
-        res.status(200).json({ message: "Link updated successfully." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link updated successfully.",
+            },
+        });
     };
 
     /**
@@ -29,6 +34,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Updates an existing link in a classroom (requires teacher permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

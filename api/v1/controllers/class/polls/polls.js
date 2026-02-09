@@ -24,7 +24,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -100,6 +100,9 @@ module.exports = (router) => {
         logger.log("verbose", `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
 
         // Send the poll data as a JSON response
-        res.status(200).json(classData.poll);
+        res.status(200).json({
+            success: true,
+            data: classData.poll,
+        });
     });
 };

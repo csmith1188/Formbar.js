@@ -1,11 +1,14 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { leaveRoom } = require("@modules/class/class");
+const { leaveRoom } = require("@services/room-service");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
         await leaveRoom({ ...req.user, classId: req.params.id });
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     };
 
     /**
@@ -22,7 +25,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `leaveRoom` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

@@ -9,7 +9,10 @@ module.exports = (router) => {
         const userData = { ...req.user, classId: req.params.id };
         const result = await deleteHelpTicket(req.params.userId, userData);
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result, 500);
         }
@@ -35,7 +38,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

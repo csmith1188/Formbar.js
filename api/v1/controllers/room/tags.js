@@ -18,7 +18,10 @@ module.exports = (router) => {
         }
 
         setTags(tags, req.user);
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     };
 
     /**
@@ -34,7 +37,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `classUpdate` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: Tags retrieved successfully
@@ -62,7 +65,12 @@ module.exports = (router) => {
         }
 
         const tags = classInformation.classrooms[classId].tags || [];
-        return res.status(200).json({ tags });
+        return res.status(200).json({
+            success: true,
+            data: {
+                tags,
+            },
+        });
     });
 
     /**
@@ -78,7 +86,7 @@ module.exports = (router) => {
      *       **Required Permission:** Class-specific `setTags` permission
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     requestBody:
      *       required: true
      *       content:

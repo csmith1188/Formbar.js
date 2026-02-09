@@ -1,5 +1,5 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { joinRoom } = require("@modules/class/class");
+const { joinRoom } = require("@services/room-service");
 const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
@@ -23,7 +23,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: code
@@ -49,5 +49,9 @@ module.exports = (router) => {
      */
     router.post("/room/:code/join", isAuthenticated, httpPermCheck("joinRoom"), async (req, res) => {
         await joinRoom(req.user, req.params.code);
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

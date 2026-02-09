@@ -1,9 +1,9 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
-const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {
@@ -16,7 +16,10 @@ module.exports = (router) => {
         const userData = { ...req.user, classId };
         const result = await approveBreak(true, req.params.userId, userData);
         if (result === true) {
-            res.status(200).json({ success: true });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result, 500);
         }
@@ -42,7 +45,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

@@ -1,7 +1,7 @@
 const { classInformation } = require("./classroom");
 const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
-const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socketUpdates");
+const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socket-updates");
 const { dbRun, dbGet } = require("../database");
 const { TEACHER_PERMISSIONS, BANNED_PERMISSIONS } = require("../permissions");
 

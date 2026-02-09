@@ -2,7 +2,7 @@ const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const { settings } = require("@modules/config");
-const { passport } = require("@modules/googleOauth");
+const { passport } = require("@modules/google-oauth");
 const authService = require("@services/auth-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
@@ -107,7 +107,17 @@ module.exports = (router) => {
                 );
             }
 
-            res.json(tokens);
+            res.json({
+                success: true,
+                data: {
+                    ...result.tokens,
+                    user: {
+                        id: result.user.id,
+                        email: result.user.email,
+                        displayName: result.user.displayName,
+                    },
+                },
+            });
         })(req, res, next);
     });
 };

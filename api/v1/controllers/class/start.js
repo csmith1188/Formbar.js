@@ -1,6 +1,6 @@
 const { hasClassPermission } = require("@modules/middleware/permission-check");
 const { isAuthenticated } = require("@modules/middleware/authentication");
-const { startClass } = require("@modules/class/class");
+const { startClass } = require("@services/class-service");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
@@ -24,7 +24,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -55,6 +55,9 @@ module.exports = (router) => {
     router.post("/class/:id/start", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const classId = req.params.id;
         await startClass(classId);
-        return res.json({ success: true });
+        return res.json({
+            success: true,
+            data: {},
+        });
     });
 };

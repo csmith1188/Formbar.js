@@ -19,7 +19,12 @@ module.exports = (router) => {
             classInformation.users[email].permissions = perm;
         }
 
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**
@@ -30,6 +35,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Updates a user's global permission level (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: email

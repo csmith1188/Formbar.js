@@ -26,7 +26,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -71,7 +71,10 @@ module.exports = (router) => {
 
         const result = approveBreak(false, req.params.userId, req.user);
         if (result === true) {
-            res.status(200);
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
             throw new AppError(result, 500);
         }

@@ -15,6 +15,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Retrieves the current class the user is in
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -67,8 +70,11 @@ module.exports = (router) => {
             const classInfo = await dbGet("SELECT * FROM classroom WHERE id = ?", [classId]);
             if (classInfo) {
                 res.status(200).json({
-                    id: classId,
-                    name: classInfo.name,
+                    success: true,
+                    data: {
+                        id: classId,
+                        name: classInfo.name,
+                    },
                 });
             } else {
                 throw new NotFoundError("Class not found.");

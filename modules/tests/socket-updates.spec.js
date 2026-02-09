@@ -1,7 +1,7 @@
 const { classInformation } = require("../class/classroom");
-const { SocketUpdates } = require("../socketUpdates");
+const { SocketUpdates } = require("../socket-updates");
 const { createTestUser, createTestClass, testData } = require("./tests");
-const { io } = require("../webServer");
+const { io } = require("../web-server");
 
 describe("Socket Updates", () => {
     let mockEmit;

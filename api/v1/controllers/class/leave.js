@@ -1,5 +1,5 @@
 const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { leaveClass } = require("@modules/class/class");
+const { leaveClass } = require("@services/class-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
 const { isAuthenticated } = require("@modules/middleware/authentication");
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -72,6 +72,9 @@ module.exports = (router) => {
             throw new ForbiddenError("Unauthorized");
         }
 
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

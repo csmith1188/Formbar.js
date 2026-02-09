@@ -27,7 +27,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -83,6 +83,9 @@ module.exports = (router) => {
             "SELECT users.id, users.email, users.displayName FROM classusers JOIN users ON users.id = classusers.studentId WHERE classusers.classId=? AND classusers.permissions=0",
             [classId]
         );
-        res.status(200).json(rows || []);
+        res.status(200).json({
+            success: true,
+            data: rows || [],
+        });
     });
 };

@@ -76,7 +76,12 @@ module.exports = (router) => {
         }
 
         await userService.resetPassword(password, token);
-        res.status(200).json({ message: "Password has been reset successfully." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Password has been reset successfully.",
+            },
+        });
     });
 
     /**
@@ -140,6 +145,11 @@ module.exports = (router) => {
 
         await userService.requestPasswordReset(email);
 
-        res.status(200).json({ message: "Password reset email has been sent." });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Password reset email has been sent.",
+            },
+        });
     });
 };

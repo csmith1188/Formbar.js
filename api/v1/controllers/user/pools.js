@@ -12,6 +12,9 @@ module.exports = {
          *     tags:
          *       - Pools
          *     description: Returns all digipog pools that the user owns or is a member of
+         *     security:
+         *       - bearerAuth: []
+         *       - apiKeyAuth: []
          *     responses:
          *       200:
          *         description: Pools retrieved successfully
@@ -60,10 +63,13 @@ module.exports = {
             );
 
             res.status(200).json({
-                pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
-                ownedPools: JSON.stringify(ownedPools),
-                memberPools: JSON.stringify(memberPools),
-                userId: userId,
+                success: true,
+                data: {
+                    pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
+                    ownedPools: JSON.stringify(ownedPools),
+                    memberPools: JSON.stringify(memberPools),
+                    userId: userId,
+                },
             });
         });
     },

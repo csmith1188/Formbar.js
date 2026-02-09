@@ -31,8 +31,12 @@ module.exports = (router) => {
      *             schema:
      *               type: object
      *               properties:
-     *                 token:
+     *                 accessToken:
      *                   type: string
+     *                   description: New access token
+     *                 refreshToken:
+     *                   type: string
+     *                   description: New refresh token
      *       400:
      *         description: Refresh token is required
      *         content:
@@ -63,6 +67,12 @@ module.exports = (router) => {
             throw new AuthError(result);
         }
 
-        res.status(200).json({ token: result });
+        res.status(200).json({
+            success: true,
+            data: {
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken,
+            },
+        });
     });
 };
