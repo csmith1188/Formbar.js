@@ -1,6 +1,6 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { advancedEmitToClass, userSockets, setClassOfApiSockets, userUpdateSocket } = require("@modules/socket-updates");
+const { advancedEmitToClass, userSockets, setClassOfApiSockets, setClassOfUserSockets, userUpdateSocket } = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const {
     MANAGER_PERMISSIONS,
@@ -421,6 +421,10 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         // Set the class of the API socket
         setClassOfApiSockets(currentUser.API, classId);
 
+        // Move all user sockets (session-based and JWT-based) to the new class room
+        // This ensures sockets receive classUpdate emissions when joining via HTTP
+        setClassOfUserSockets(email, classId);
+
         // Call classUpdate on all user's tabs
         userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
 
@@ -451,6 +455,10 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         classInformation.users[email].activeClass = classId;
 
         setClassOfApiSockets(currentUser.API, classId);
+
+        // Move all user sockets (session-based and JWT-based) to the new class room
+        // This ensures sockets receive classUpdate emissions when joining via HTTP
+        setClassOfUserSockets(email, classId);
 
         // Call classUpdate on all user's tabs
         userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
