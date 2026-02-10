@@ -19,12 +19,16 @@ module.exports = {
                 if (!validPoolIds.has(poolId)) {
                     const name = pools.find((pool) => pool.id === poolId).name;
                     console.log(`Removing invalid pool ${name} (id: ${poolId})`);
+
+                    // Remove the pog pool and any associated users
                     await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId], database);
+                    await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId], database);
                 }
             }
 
             await dbRun("COMMIT", [], database);
         } catch (err) {
+            await dbRun("ROLLBACK", [], database);
             throw new Error("ALREADY_DONE");
         }
     },
