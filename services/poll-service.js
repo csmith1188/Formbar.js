@@ -162,10 +162,10 @@ async function updatePoll(classId, options, userSession) {
     }
 
     // Broadcast update to all tabs
-    const socketUpdate = userSocketUpdates[userSession.email];
-    for (const socketId in socketUpdate) {
-        socketUpdate[socketId].classUpdate(classId, { global: true });
-        break; // only needs to be called once because it's global
+    const userSockets = userSocketUpdates.get(userSession.email);
+    if (userSockets && userSockets.size > 0) {
+        const firstSocket = userSockets.values().next().value;
+        firstSocket.classUpdate(classId, { global: true });
     }
     return true;
 }

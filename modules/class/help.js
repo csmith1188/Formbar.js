@@ -1,8 +1,7 @@
 const { classInformation } = require("./classroom");
 const { logger } = require("../logger");
-const { advancedEmitToClass, emitToUser } = require("../socket-updates");
+const { advancedEmitToClass, emitToUser, userUpdateSocket } = require("../socket-updates");
 const { getEmailFromId } = require("../student");
-const { userSocketUpdates } = require("../../sockets/init");
 
 function sendHelpTicket(reason, userSession) {
     try {
@@ -32,11 +31,7 @@ function sendHelpTicket(reason, userSession) {
 
         logger.log("verbose", `[help] user=(${JSON.stringify(student)}`);
 
-        // @TODO: TEMP FIX
-        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
-            socketUpdates.classUpdate(classId);
-            break;
-        }
+        userUpdateSocket(email, "classUpdate", classId);
         return true;
     } catch (err) {
         logger.log("error", err.stack);
@@ -55,11 +50,7 @@ async function deleteHelpTicket(studentId, userData) {
         classInformation.classrooms[classId].students[studentEmail].help = false;
         logger.log("verbose", `[deleteTicket] user=(${JSON.stringify(classInformation.classrooms[classId].students[studentEmail])})`);
 
-        // @TODO: TEMP FIX
-        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
-            socketUpdates.classUpdate(classId);
-            break;
-        }
+        userUpdateSocket(email, "classUpdate", classId);
         return true;
     } catch (err) {
         logger.log("error", err.stack);
