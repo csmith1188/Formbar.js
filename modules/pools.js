@@ -57,7 +57,18 @@ async function addUserToPool(poolId, userId, ownerFlag = 0, database) {
 }
 
 async function removeUserFromPool(poolId, userId, database) {
-    return dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId], database);
+    // If the owner is removed, delete the pool and all associations
+    if (await isUserOwner(userId, poolId, database)) {
+        await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId], database);
+
+        for (const poolUser of await getUsersForPool(poolId, database)) {
+            await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, poolUser.user_id], database);
+        }
+        return;
+    }
+
+    // If not the owner, just remove the user from the pool
+    await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId], database);
 }
 
 async function setUserOwnerFlag(poolId, userId, ownerFlag, database) {
