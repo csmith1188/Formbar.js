@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { pollResponse } = require("@services/poll-service");
+const { sendPollResponse } = require("@services/poll-service");
 const { classInformation } = require("@modules/class/classroom");
 
 module.exports = {
@@ -8,7 +8,7 @@ module.exports = {
             try {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
-                pollResponse(classId, res, textRes, socket.request.session);
+                sendPollResponse(classId, res, textRes, socket.request.session);
             } catch (err) {
                 logger.log("error", err.stack);
             }

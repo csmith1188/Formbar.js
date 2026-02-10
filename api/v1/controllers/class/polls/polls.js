@@ -2,17 +2,20 @@ const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
+const { dbGet, dbGetAll } = require("@modules/database");
+const { requireQueryParam } = require("@modules/error-wrapper");
+const { getPreviousPolls } = require("@services/poll-service");
 
 module.exports = (router) => {
     /**
      * @swagger
      * /api/v1/class/{id}/polls:
      *   get:
-     *     summary: Get current poll in a class
+     *     summary: Get polls in a class
      *     tags:
      *       - Class - Polls
      *     description: |
-     *       Returns the current poll data for a class, including status and responses.
+     *       Returns the poll data for a class, including responses.
      *
      *       **Required Permission:** Must be a member of the class (Class-specific `seePoll` permission, default: Guest)
      *
@@ -58,51 +61,17 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/NotFoundError'
      */
-    router.get("/class/:id/polls", (req, res) => {
-        // Get the class key from the request parameters
-        let classId = req.params.id;
+    router.get("/class/:id/polls", async (req, res) => {
+        const classId = req.params.id;
+        requireQueryParam(classId, "classId");
 
-        // Log the request details
-        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) user=(${req.user?.email})`);
+        const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+        const index = req.query.index ? parseInt(req.query.index) : 0;
+        const polls = await getPreviousPolls(classId, index, limit);
 
-        // If the class does not exist, return an error
-        if (!classInformation.classrooms[classId]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
-            throw new NotFoundError("Class not started");
-        }
-
-        // Get the user from the session
-        let user = req.user;
-
-        // If the user is not in the class, return an error
-        if (!classInformation.classrooms[classId].students[user.email]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] user is not logged in`);
-            throw new ForbiddenError("User is not logged into the selected class");
-        }
-
-        // Get a clone of the class data and the poll responses in the class
-        let classData = structuredClone(classInformation.classrooms[classId]);
-
-        // If the class does not exist, return an error
-        if (!classData) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
-            throw new NotFoundError("Class not started");
-        }
-
-        // Update the class data with the poll status, the total number of students, and the poll data
-        classData.poll = {
-            status: classData.status,
-            totalStudents: Object.keys(classData.students).length,
-            ...classData.poll,
-        };
-
-        // Log the poll data
-        logger.log("verbose", `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
-
-        // Send the poll data as a JSON response
         res.status(200).json({
             success: true,
-            data: classData.poll,
+            data: polls,
         });
     });
 };
