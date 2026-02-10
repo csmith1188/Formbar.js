@@ -1,7 +1,7 @@
 const { deleteUser } = require("@modules/user/user-session");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {

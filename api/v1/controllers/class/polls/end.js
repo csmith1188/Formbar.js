@@ -1,6 +1,6 @@
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
-const { parseJson } = require("@modules/middleware/parse-json");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
+const { parseJson } = require("@middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { updatePoll } = require("@services/poll-service");
 

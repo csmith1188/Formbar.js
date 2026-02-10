@@ -1,7 +1,7 @@
 const { clearPoll } = require("@services/poll-service");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**

@@ -96,12 +96,9 @@ function checkRateLimit(accountId) {
         };
     }
 
-<<<<<<< HEAD
-=======
     // Log current failure count for debugging
-    logger.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
+    req.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
 
->>>>>>> upstream/DEV
     return { allowed: true };
 }
 
@@ -197,18 +194,6 @@ async function transferDigipogs(transferData) {
         const { from, to, pin, reason = "", pool } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
-<<<<<<< HEAD
-        // Ensure that the user is not transferring to themselves
-        if (from == to && !pool) {
-            return { success: false, message: "Cannot transfer to the same account." };
-        }
-
-        // Validate input
-        if (!from || (!to && to !== 0) || !amount || !pin || reason === undefined) {
-            return { success: false, message: "Missing required fields." };
-        } else if (amount <= 0) {
-            return { success: false, message: "Amount must be greater than zero." };
-=======
         // Backward compatibility
         let deprecatedFormatUsed = false;
         if (!from.id) {
@@ -234,7 +219,6 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Cannot transfer to the same account." };
         } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
             return { success: false, message: "Invalid sender or recipient type." };
->>>>>>> upstream/DEV
         }
 
         // Check rate limits for the sender
@@ -291,79 +275,6 @@ async function transferDigipogs(transferData) {
         const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1;
         const taxAmount = amount - taxedAmount;
 
-<<<<<<< HEAD
-        // If transferring to a pool (e.g., company pool)
-        if (pool) {
-            // If transferring to a pool, ensure the pool exists and has members
-            const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to]);
-            if (!pool) {
-                recordAttempt(from, false);
-                return { success: false, message: "Recipient pool not found." };
-            }
-
-            // Perform user deduction and pool update atomically
-            try {
-                await dbRun("BEGIN TRANSACTION");
-                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]); // Deduct full amount from user
-                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]); // Credit taxed amount to pool
-                await dbRun("COMMIT");
-            } catch (err) {
-                try {
-                    await dbRun("ROLLBACK");
-                } catch (rollbackErr) {
-                }
-                recordAttempt(from, false);
-                return { success: false, message: "Transfer failed due to database error." };
-            }
-            try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                    from,
-                    null,
-                    to,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
-            } catch (err) {
-                // Record successful attempt
-                recordAttempt(from, true);
-                return { success: true, message: "Transfer successful, but failed to log transaction." };
-            }
-        } else {
-            // Normal user-to-user transfer
-            const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
-            if (!toUser) {
-                recordAttempt(from, false);
-                return { success: false, message: "Recipient account not found." };
-            }
-
-            const newFromBalance = fromUser.digipogs - amount;
-            const newToBalance = Math.ceil(toUser.digipogs + taxedAmount);
-
-            try {
-                await dbRun("BEGIN TRANSACTION");
-                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]);
-                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]);
-                await dbRun("COMMIT");
-            } catch (err) {
-                recordAttempt(from, false);
-                return { success: false, message: "Transfer failed due to database error." };
-            }
-
-            try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                    from,
-                    to,
-                    null,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
-            } catch (err) {
-                // Record successful attempt
-                recordAttempt(from, true);
-                return { success: true, message: "Transfer successful, but failed to log transaction." };
-=======
         // Fetch recipient account
         let toAccount;
         if (to.type === "user") {
@@ -377,7 +288,6 @@ async function transferDigipogs(transferData) {
             if (!toAccount) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
->>>>>>> upstream/DEV
             }
         }
 
@@ -410,9 +320,9 @@ async function transferDigipogs(transferData) {
             try {
                 await dbRun("ROLLBACK");
             } catch (rollbackErr) {
-                logger.log("error", rollbackErr.stack || rollbackErr);
+                req.log("error", rollbackErr.stack || rollbackErr);
             }
-            logger.log("error", err.stack || err);
+            req.log("error", err.stack || err);
             recordAttempt(accountId, false);
             return { success: false, message: "Transfer failed due to database error." };
         }
@@ -429,7 +339,7 @@ async function transferDigipogs(transferData) {
                 Date.now(),
             ]);
         } catch (err) {
-            logger.log("error", err.stack || err);
+            req.log("error", err.stack || err);
             // Don't fail the transfer if logging fails
         }
 

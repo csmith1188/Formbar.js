@@ -1,7 +1,7 @@
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { deleteHelpTicket } = require("@modules/class/help");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {

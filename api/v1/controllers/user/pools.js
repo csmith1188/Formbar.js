@@ -1,5 +1,5 @@
 const { dbGet } = require("@modules/database");
-const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@middleware/authentication");
 const pools = require("@modules/pools");
 
 module.exports = {

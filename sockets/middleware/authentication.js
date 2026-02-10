@@ -15,7 +15,7 @@ module.exports = {
 
 <<<<<<< HEAD
 =======
-                logger.log(
+                req.log(
                     "info",
                     `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) authorization=(${authorization ? "present" : "missing"}) event=(${event})`
                 );
@@ -27,21 +27,21 @@ module.exports = {
                     // Try to authenticate using access token (JWT)
                     const decodedToken = authService.verifyToken(authorization);
                     if (decodedToken.error) {
-                        logger.log("verbose", "[socket authentication] Invalid access token");
+                        req.log("verbose", "[socket authentication] Invalid access token");
                         next(new Error("Invalid access token"));
                         return;
                     }
 
                     const email = decodedToken.email;
                     if (!email) {
-                        logger.log("verbose", "[socket authentication] Access token missing email");
+                        req.log("verbose", "[socket authentication] Access token missing email");
                         next(new Error("Invalid access token - missing email"));
                         return;
                     }
 
                     const user = classInformation.users[email];
                     if (!user) {
-                        logger.log("verbose", "[socket authentication] User not found in classInformation");
+                        req.log("verbose", "[socket authentication] User not found in classInformation");
                         next(new Error("User not found"));
                         return;
                     }
@@ -90,7 +90,7 @@ module.exports = {
 <<<<<<< HEAD
                     next(new Error("Missing API key"));
 =======
-                    logger.log("info", "[socket authentication] Missing email, api, or authorization");
+                    req.log("info", "[socket authentication] Missing email, api, or authorization");
                     next(new Error("Missing authentication credentials"));
 >>>>>>> upstream/DEV
                 }

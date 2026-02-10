@@ -128,12 +128,8 @@ function httpPermCheck(event) {
             if (endpointWhitelistMap.includes(event)) {
                 const id = req.params.id;
                 const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
-<<<<<<<< HEAD:middleware/permissionCheck.js
-                if (user.id == id) {
-========
                 if (user && user.id == id) {
-                    logger.log("info", `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
->>>>>>>> upstream/DEV:middleware/permission-check.js
+                    req.log("info", `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
                     return next();
                 }
             }

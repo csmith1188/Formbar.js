@@ -1,6 +1,6 @@
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { CLASS_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll } = require("@modules/database");
@@ -66,7 +66,7 @@ module.exports = (router) => {
     router.get("/class/:id/students", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         // Get the class key from the request parameters and log the request details
         const classId = req.params.id;
-        logger.log("info", `get api/class/${classId}/students ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("class.students.view", `Viewing class students`, { user: req.user?.email, ip: req.ip, classId });
 
         // Get the students of the class
         // If an error occurs, log the error and return the error
@@ -75,7 +75,7 @@ module.exports = (router) => {
             [classId]
         );
         if (classUsers.error) {
-            logger.log("info", `[get api/class/${classId}] ${classUsers}`);
+            req.warnEvent("class.students.error", `Error retrieving class students`, { classId, error: classUsers.error });
             throw new NotFoundError(classUsers);
         }
 

@@ -1,5 +1,5 @@
 const { getClassLinks, isUserInClass } = require("@services/class-service");
-const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 const ForbiddenError = require("@errors/forbidden-error");
 

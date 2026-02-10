@@ -1,4 +1,4 @@
-const { isAuthenticated, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, permCheck } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const AuthError = require("@errors/auth-error");
@@ -28,17 +28,18 @@ module.exports = {
             };
             let answer = req.query.letter;
 
-            logger.log("info", `[get /student] ip=(${req.ip}) user=(${req.user?.email})`);
-            logger.log("verbose", `[get /student] question=(${JSON.stringify(req.query.question)}) answer=(${req.query.letter})`);
+            req.infoEvent("student.page.view", `Student page accessed`, { user: req.user?.email, ip: req.ip, classId });
+            req.infoEvent("student.question.view", `Student viewing question`, { user: req.user?.email, questionId: req.query.question, answer: req.query.letter });
 
             if (answer) {
                 classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes = answer;
             }
 
             // Render the student page with the user's information
-            logger.log(
-                "verbose",
-                `[get /student] user=(${JSON.stringify(user)}) myRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.buttonRes) myTextRes = (classInformation.classrooms[${"classId"}].students[req.user.email].pollRes.textRes) lesson = (classInformation.classrooms[${"classId"}].lesson)`
+            req.infoEvent(
+                "student.page.render",
+                `Student page data retrieved`,
+                { user: req.user.email, classId, hasButtonRes: !!classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes }
             );
             res.status(200).json({
                 success: true,
@@ -95,8 +96,8 @@ module.exports = {
         It'll save your response to the student object and the database.
         */
         router.post("/student", isAuthenticated, permCheck, (req, res) => {
-            logger.log("info", `[post /student] ip=(${req.ip}) user=(${req.user?.email})`);
-            logger.log("verbose", `[post /student] poll=(${JSON.stringify(req.query.poll)}) question=(${JSON.stringify(req.body.question)})`);
+            req.infoEvent("student.poll.submit", `Student submitting poll response`, { user: req.user?.email, ip: req.ip });
+            req.infoEvent("student.poll.data", `Poll submission data`, { user: req.user?.email, pollId: req.query.poll, questionId: req.body.question });
             const email = req.user.email;
             const userData = classInformation.users[email];
             const classId = userData && userData.activeClass != null ? userData.activeClass : req.user.classId;

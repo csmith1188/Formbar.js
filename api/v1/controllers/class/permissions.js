@@ -61,7 +61,7 @@ module.exports = (router) => {
     router.get("/class/:id/permissions", async (req, res) => {
         // Get the class key from the request parameters and log the request details
         let classId = req.params.id;
-        logger.log("info", `[get api/class/${classId}/permissions] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("class.permissions.view", `Viewing class permissions`, { user: req.user?.email, ip: req.ip, classId });
 
         // Get a clone of the class data
         // If the class does not exist, return an error
@@ -74,7 +74,7 @@ module.exports = (router) => {
         // If the user is not in the class, return an error
         const user = req.user;
         if (!classData.students[user.email]) {
-            logger.log("verbose", `[get api/class/${classId}/permissions] user is not logged in`);
+            req.infoEvent("class.permissions.not_in_class", `User not logged into class`, { user: user.email, classId });
             throw new ForbiddenError("User is not logged into the selected class");
         }
 

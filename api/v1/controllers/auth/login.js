@@ -69,12 +69,12 @@ module.exports = (router) => {
             throw new ValidationError("Email and password are required.");
         }
 
-        logger.log("info", `[post /auth/login] ip=(${req.ip}) email=(${email})`);
+        req.infoEvent("auth.login.attempt", `User login attempt: ${email}`, { email, ip: req.ip });
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            logger.log("verbose", "[post /auth/login] Invalid credentials");
+            req.infoEvent("auth.login.invalid", "Invalid credentials", { email });
             throw new ValidationError("Incorrect password. Try again.");
         }
 

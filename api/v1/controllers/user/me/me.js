@@ -1,5 +1,5 @@
 const { logger } = require("@modules/logger");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const { dbGet } = require("@modules/database");
 
 module.exports = (router) => {
@@ -30,7 +30,7 @@ module.exports = (router) => {
      */
     // Gets the current user's information
     router.get("/user/me", isAuthenticated, async (req, res) => {
-        logger.log("info", `[get api/me] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("user.me.view", `User viewing own data`, { user: req.user?.email, ip: req.ip, userId: req.user.id });
 
         const { digipogs } = await dbGet("SELECT digipogs FROM users WHERE id = ?", [req.user.id]);
         res.status(200).json({

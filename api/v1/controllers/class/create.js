@@ -1,7 +1,7 @@
 const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const classService = require("@services/class-service");
 
 module.exports = (router) => {
@@ -90,8 +90,8 @@ module.exports = (router) => {
             }
 
             const { userId, email: userEmail } = req.user;
-            logger.log("info", `[post /class/create] ip=(${req.ip}) user=(${req.user?.email})`);
-            logger.log("verbose", `[post /class/create] className=(${name})`);
+            req.infoEvent("class.create.attempt", `Attempting to create class`, { user: req.user?.email, ip: req.ip, className: name });
+            req.infoEvent("class.create.details", `Class creation details`, { className: name, userId });
 
             const result = await classService.createClass(name, userId, userEmail);
 
@@ -103,7 +103,7 @@ module.exports = (router) => {
                 },
             });
         } catch (err) {
-            logger.log("error", err.stack);
+            req.warnEvent("class.create.error", `Error creating class`, { error: err.message, stack: err.stack });
             res.status(500).json({ error: "There was a server error. Please try again." });
         }
     });

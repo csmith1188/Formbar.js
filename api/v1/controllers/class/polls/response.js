@@ -1,7 +1,7 @@
 const { pollResponse } = require("@services/poll-service");
-const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { parseJson } = require("@modules/middleware/parse-json");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { httpPermCheck } = require("@middleware/permission-check");
+const { parseJson } = require("@middleware/parse-json");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**

@@ -138,66 +138,10 @@ function normalizeClassroomData(classroom) {
  * @throws {Error} Throws if class creation fails
  */
 async function createClass(className, ownerId, ownerEmail) {
-<<<<<<< HEAD
-    try {
-        // Validate classroom name
-        const validation = validateClassroomName(className);
-        if (!validation.valid) {
-            const error = new Error(validation.error);
-            error.code = "INVALID_CLASSROOM_NAME";
-            throw error;
-        }
-
-        const key = generateKey(4);
-
-        // Add classroom to the database
-        const insertResult = await dbRun("INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)", [className, ownerId, key, null]);
-
-        // Use the ID of the newly created classroom returned by dbRun
-        const classId = insertResult && typeof insertResult.lastID !== "undefined" ? insertResult.lastID : null;
-        if (!classId) {
-            throw new Error("Class was not created successfully");
-        }
-
-        const classroom = {
-            id: classId,
-            name: className,
-            key: key,
-            tags: null,
-        };
-        // Ensure class_permissions exists for the new class
-        let permissions = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [classroom.id]);
-        if (!permissions) {
-            permissions = { ...DEFAULT_CLASS_PERMISSIONS };
-            await dbRun("INSERT OR IGNORE INTO class_permissions (classId) VALUES (?)", [classroom.id]);
-        }
-
-        classroom.permissions = parseClassPermissions(permissions);
-        await initializeClassroom({
-            id: classroom.id,
-            className: classroom.name,
-            key: classroom.key,
-            owner: ownerId,
-            userEmail: ownerEmail,
-            permissions: classroom.permissions,
-            sharedPolls: [],
-            pollHistory: [],
-            tags: classroom.tags,
-        });
-
-        return {
-            classId: classroom.id,
-            key: classroom.key,
-            className: classroom.name,
-        };
-    } catch (err) {
-        throw err;
-=======
     // Validate classroom name
     const validation = validateClassroomName(className);
     if (!validation.valid) {
         throw new ValidationError(validation.error);
->>>>>>> upstream/DEV
     }
 
     const key = generateKey(4);
@@ -205,7 +149,7 @@ async function createClass(className, ownerId, ownerEmail) {
     // Add classroom to the database
     const insertResult = await dbRun("INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)", [className, ownerId, key, null]);
 
-    logger.log("verbose", "[createClass] Added classroom to database");
+    req.log("verbose", "[createClass] Added classroom to database");
 
     // Use the ID of the newly created classroom returned by dbRun
     const classId = insertResult;
@@ -302,17 +246,8 @@ async function joinClassById(classId, userId, userEmail) {
  * @returns {Promise<void>}
  */
 async function initializeClassroom(id) {
-    logger.log("verbose", `[initializeClassroom] Initializing class with id=(${id})`);
+    req.log("verbose", `[initializeClassroom] Initializing class with id=(${id})`);
 
-<<<<<<< HEAD
-        // Validate and normalize permissions
-        if (Object.keys(permissions).sort().toString() !== Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
-            for (let permission of Object.keys(permissions)) {
-                if (!DEFAULT_CLASS_PERMISSIONS[permission]) {
-                    delete permissions[permission];
-                }
-            }
-=======
     // Fetch classroom data from database
     const classroom = await dbGet(
         "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
@@ -322,7 +257,6 @@ async function initializeClassroom(id) {
     if (!classroom) {
         throw new NotFoundError(`Class with id ${id} does not exist`);
     }
->>>>>>> upstream/DEV
 
     // Fetch and normalize permissions
     let permissionsRow = await dbGet("SELECT * FROM class_permissions WHERE classId = ?", [id]);
@@ -336,7 +270,7 @@ async function initializeClassroom(id) {
     // Normalize classroom data (JSON parsing, tags, poll history)
     normalizeClassroomData(classroom);
 
-    logger.log(
+    req.log(
         "verbose",
         `[initializeClassroom] id=(${id}) name=(${classroom.name}) key=(${classroom.key}) sharedPolls=(${JSON.stringify(classroom.sharedPolls)})`
     );
@@ -406,7 +340,7 @@ async function initializeClassroom(id) {
         classInformation.classrooms[id].students[studentEmail] = student;
     }
 
-    logger.log("verbose", `[initializeClassroom] Successfully initialized class ${id}`);
+    req.log("verbose", `[initializeClassroom] Successfully initialized class ${id}`);
 }
 
 /**
@@ -415,7 +349,7 @@ async function initializeClassroom(id) {
  * @param {string|number} classId - The ID of the class to start.
  */
 async function startClass(classId) {
-    logger.log("info", `[startClass] classId=(${classId})`);
+    req.log("info", `[startClass] classId=(${classId})`);
     await advancedEmitToClass("startClassSound", classId, { api: true });
 
     // Activate the class and send the class active event
@@ -427,7 +361,7 @@ async function startClass(classId) {
         classInformation.classrooms[classId].isActive
     );
 
-    logger.log("verbose", `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
+    req.log("verbose", `[startClass] classInformation=(${JSON.stringify(classInformation)})`);
 }
 
 /**
@@ -437,7 +371,7 @@ async function startClass(classId) {
  * @param {Object} [userSession] - The session object of the user ending the class.
  */
 async function endClass(classId, userSession) {
-    logger.log("info", `[endClass] classId=(${classId})`);
+    req.log("info", `[endClass] classId=(${classId})`);
     await advancedEmitToClass("endClassSound", classId, { api: true });
 
     // Deactivate the class and send the class active event
@@ -450,7 +384,7 @@ async function endClass(classId, userSession) {
         { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
         classInformation.classrooms[classId].isActive
     );
-    logger.log("verbose", `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
+    req.log("verbose", `[endClass] classInformation=(${JSON.stringify(classInformation)})`);
 }
 
 /**
@@ -551,7 +485,7 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         // Call classUpdate on all user's tabs
         userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
 
-        logger.log("verbose", `[addUserToClassroomSession] User joined successfully`);
+        req.log("verbose", `[addUserToClassroomSession] User joined successfully`);
         return true;
     } else {
         // If the user is not a guest, insert them into the database
@@ -562,15 +496,9 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
                 classInformation.classrooms[classId].permissions.userDefaults,
             ]);
 
-            logger.log("info", "[addUserToClassroomSession] Added user to classusers");
+            req.log("info", "[addUserToClassroomSession] Added user to classusers");
         }
 
-<<<<<<< HEAD
-        // Set the class for all API sockets
-        await setClassOfApiSockets(user.API, id);
-    } catch (err) {
-        throw err;
-=======
         // Grab the user from the users list
         const classData = classInformation.classrooms[classId];
         let currentUser = classInformation.users[email];
@@ -592,7 +520,7 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         // Call classUpdate on all user's tabs
         userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
 
-        logger.log("verbose", `[addUserToClassroomSession] New user joined successfully`);
+        req.log("verbose", `[addUserToClassroomSession] New user joined successfully`);
         return true;
     }
 }
@@ -608,7 +536,7 @@ async function joinClass(userData, classId) {
     requireInternalParam(classId, "classId");
     requireInternalParam(email, "email");
 
-    logger.log("info", `[joinClass] session=(${JSON.stringify(userData)}) classId=${classId}`);
+    req.log("info", `[joinClass] session=(${JSON.stringify(userData)}) classId=${classId}`);
 
     // Convert class key to ID if necessary
     const dbClassroom = await dbGet("SELECT * FROM classroom WHERE key=? OR id=?", [classId, classId]);
@@ -708,7 +636,6 @@ async function deleteRooms(userId) {
             dbRun("DELETE FROM links WHERE classId=?", classroom.id),
             dbRun("DELETE FROM lessons WHERE class=?", classroom.id),
         ]);
->>>>>>> upstream/DEV
     }
 }
 

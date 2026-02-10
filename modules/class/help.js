@@ -1,11 +1,6 @@
 const { classInformation } = require("./classroom");
-<<<<<<< HEAD
-const { logger } = require("../logger.js");
-const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
-=======
 const { logger } = require("../logger");
 const { advancedEmitToClass, emitToUser, userUpdateSocket } = require("../socket-updates");
->>>>>>> upstream/DEV
 const { getEmailFromId } = require("../student");
 
 function sendHelpTicket(reason, userSession) {
@@ -32,17 +27,9 @@ function sendHelpTicket(reason, userSession) {
         emitToUser(email, "helpSuccess");
         advancedEmitToClass("helpSound", classId, {});
 
-<<<<<<< HEAD
-        // @TODO: TEMP FIX
-        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
-            socketUpdates.classUpdate(classId);
-            break;
-        }
-=======
-        logger.log("verbose", `[help] user=(${JSON.stringify(student)}`);
+        req.log("verbose", `[help] user=(${JSON.stringify(student)}`);
 
         userUpdateSocket(email, "classUpdate", classId);
->>>>>>> upstream/DEV
         return true;
     } catch (err) {
     }
@@ -53,11 +40,8 @@ async function deleteHelpTicket(studentId, userData) {
         const classId = userData.classId;
         const email = userData.email;
         const studentEmail = await getEmailFromId(studentId);
-<<<<<<< HEAD
-=======
-        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
-        logger.log("info", `[deleteTicket] student=(${studentEmail})`);
->>>>>>> upstream/DEV
+        req.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
+        req.log("info", `[deleteTicket] student=(${studentEmail})`);
 
         // Set the student's help ticket to false, indicating that they are no longer requesting help
         classInformation.classrooms[classId].students[studentEmail].help = false;

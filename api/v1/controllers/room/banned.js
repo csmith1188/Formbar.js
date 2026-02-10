@@ -1,9 +1,9 @@
 const { dbGetAll } = require("@modules/database");
 const { logger } = require("@modules/logger");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
@@ -72,7 +72,7 @@ module.exports = (router) => {
      */
     router.get("/class/:id/banned", isAuthenticated, hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
-        logger.log("info", `[get api/class/${classId}/banned] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("class.banned.view", `Viewing banned users for class`, { user: req.user?.email, ip: req.ip, classId });
 
         // Ensure class exists
         if (!classInformation.classrooms[classId]) {

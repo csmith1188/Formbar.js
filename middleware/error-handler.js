@@ -1,5 +1,5 @@
 const AppError = require("@errors/app-error");
-const { logger } = require("@modules/logger");
+const { logger, logEvent } = require("@modules/logger");
 const process = require("process");
 
 module.exports = (err, req, res, next) => {

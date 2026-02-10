@@ -41,15 +41,15 @@ async function createPoll(classId, pollData, userSession) {
     }
 
     // Log poll information
-    logger.log("info", `[createPoll] session=(${JSON.stringify(userSession)})`);
-    logger.log(
+    req.log("info", `[createPoll] session=(${JSON.stringify(userSession)})`);
+    req.log(
         "info",
         `[createPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) answers=(${JSON.stringify(answers)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`
     );
 
     await clearPoll(classId, userSession, false);
     const generatedColors = generateColors(Object.keys(answers).length);
-    logger.log("verbose", `[createPoll] user=(${classroom.students[userSession.email]})`);
+    req.log("verbose", `[createPoll] user=(${classroom.students[userSession.email]})`);
 
     classroom.poll.allowVoteChanges = allowVoteChanges;
     classroom.poll.blind = blind;
@@ -102,7 +102,7 @@ async function createPoll(classId, pollData, userSession) {
     }
 
     // Log data about the class then call the appropriate update functions
-    logger.log("verbose", `[createPoll] classData=(${JSON.stringify(classroom)})`);
+    req.log("verbose", `[createPoll] classData=(${JSON.stringify(classroom)})`);
     userUpdateSocket(userSession.email, "classUpdate", classId, { global: true });
 }
 
@@ -132,7 +132,7 @@ async function updatePoll(classId, options, userSession) {
         throw new NotFoundError("Classroom not found");
     }
 
-    logger.log("info", `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
+    req.log("info", `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
 
     // If an empty object is sent, clear the current poll
     const optionsKeys = Object.keys(options);
@@ -199,7 +199,7 @@ async function savePollToHistory(classId) {
 
     await dbRun("INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)", [classId, JSON.stringify(data), formattedDate]);
 
-    logger.log("verbose", "[savePollToHistory] saved poll to history");
+    req.log("verbose", "[savePollToHistory] saved poll to history");
 }
 
 /**
@@ -262,8 +262,8 @@ async function clearPoll(classId, userSession, updateClass = true) {
  */
 function pollResponse(classId, res, textRes, userSession) {
     const resLength = textRes != null ? textRes.length : 0;
-    logger.log("info", `[pollResponse] session=(${JSON.stringify(userSession)})`);
-    logger.log("info", `[pollResponse] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`);
+    req.log("info", `[pollResponse] session=(${JSON.stringify(userSession)})`);
+    req.log("info", `[pollResponse] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`);
 
     const email = userSession.email;
     const user = classInformation.users[email];
@@ -271,7 +271,7 @@ function pollResponse(classId, res, textRes, userSession) {
 
     // If the classroom does not exist, return
     if (!classroom) {
-        logger.log("warning", `[pollResponse WARNING] session=(${JSON.stringify(userSession)}) - Classroom not found for classId ${classId}`);
+        req.log("warning", `[pollResponse WARNING] session=(${JSON.stringify(userSession)}) - Classroom not found for classId ${classId}`);
         return;
     }
 
@@ -282,14 +282,14 @@ function pollResponse(classId, res, textRes, userSession) {
 
     // Check if user is excluded from voting using poll.excludedRespondents
     if (classroom.poll.excludedRespondents && classroom.poll.excludedRespondents.includes(user.id)) {
-        logger.log("info", `[pollResponse] User ${user.id} is excluded from voting`);
+        req.log("info", `[pollResponse] User ${user.id} is excluded from voting`);
         return;
     }
 
     // Check if user has the "Excluded" tag
     const student = classroom.students[email];
     if (student && student.tags && Array.isArray(student.tags) && student.tags.includes("Excluded")) {
-        logger.log("info", `[pollResponse] User ${user.id} is excluded from voting due to Excluded tag`);
+        req.log("info", `[pollResponse] User ${user.id} is excluded from voting due to Excluded tag`);
         return;
     }
 
@@ -368,15 +368,15 @@ function pollResponse(classId, res, textRes, userSession) {
             let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 10 digipogs
             database.run("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [addPogs, user.id], (err) => {
                 if (err) {
-                    logger.log("error", err.stack);
+                    req.log("error", err.stack);
                 } else {
-                    logger.log("info", `[pollResponse] User ${user.email} earned a Digipog`);
+                    req.log("info", `[pollResponse] User ${user.email} earned a Digipog`);
                 }
             });
         }
         pogMeterTracker.pogMeterIncreased[email] = true;
     }
-    logger.log("verbose", `[pollResponse] user=(${classroom.students[userSession.email]})`);
+    req.log("verbose", `[pollResponse] user=(${classroom.students[userSession.email]})`);
 
     userUpdateSocket(email, "classUpdate", classId, { global: true });
 }

@@ -62,14 +62,14 @@ module.exports = {
 
                             // If the user has an error property
                             if (user.error) {
-                                logger.log("info", user);
+                                req.log("info", user);
                                 res.status(401).json({ error: user.error });
                                 return;
                             }
 
                             // Set the user in the session
                             req.session.user = user;
-                            logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
+                            req.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
                         }
                         return next();
                     }

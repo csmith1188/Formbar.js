@@ -1,8 +1,8 @@
 const { createPoll } = require("@services/poll-service");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { parseJson } = require("@modules/middleware/parse-json");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { parseJson } = require("@middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**

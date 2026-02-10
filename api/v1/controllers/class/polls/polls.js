@@ -63,11 +63,11 @@ module.exports = (router) => {
         let classId = req.params.id;
 
         // Log the request details
-        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("class.polls.view", `Viewing class polls`, { user: req.user?.email, ip: req.ip, classId });
 
         // If the class does not exist, return an error
         if (!classInformation.classrooms[classId]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
+            req.infoEvent("class.polls.not_started", `Class not started`, { classId });
             throw new NotFoundError("Class not started");
         }
 
@@ -76,7 +76,7 @@ module.exports = (router) => {
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] user is not logged in`);
+            req.infoEvent("class.polls.not_in_class", `User not logged into class`, { user: user.email, classId });
             throw new ForbiddenError("User is not logged into the selected class");
         }
 
@@ -85,7 +85,7 @@ module.exports = (router) => {
 
         // If the class does not exist, return an error
         if (!classData) {
-            logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
+            req.infoEvent("class.polls.not_started", `Class not started`, { classId });
             throw new NotFoundError("Class not started");
         }
 
@@ -97,7 +97,7 @@ module.exports = (router) => {
         };
 
         // Log the poll data
-        logger.log("verbose", `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
+        req.infoEvent("class.polls.data_sent", `Poll data sent to client`, { classId, user: req.user?.email, pollStatus: classData.poll.status });
 
         // Send the poll data as a JSON response
         res.status(200).json({

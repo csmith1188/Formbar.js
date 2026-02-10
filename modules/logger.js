@@ -69,7 +69,15 @@ function logEvent(logger, level, event, message = "", meta = {}) {
     });
 }
 
+let logger;
+
+async function initLogger() {
+    logger = await createLogger();
+}
+
+initLogger();
+
 module.exports = {
-    createLogger,
+    logger,
     logEvent
 };

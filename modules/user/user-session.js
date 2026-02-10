@@ -1,14 +1,8 @@
 const { userSockets, managerUpdate, userUpdateSocket } = require("../socket-updates");
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
-<<<<<<< HEAD:modules/user/userSession.js
-const { logger } = require("../logger.js");
-const { deleteCustomPolls } = require("../polls");
-const { deleteRooms, endClass } = require("../class/class");
-=======
 const { logger } = require("../logger");
 const { deleteRooms, endClass } = require("@services/class-service");
->>>>>>> upstream/DEV:modules/user/user-session.js
 const { lastActivities } = require("../../sockets/middleware/inactivity");
 const { GUEST_PERMISSIONS } = require("../permissions");
 const { deleteCustomPolls } = require("@services/poll-service");
