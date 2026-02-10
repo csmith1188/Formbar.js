@@ -260,7 +260,6 @@ async function deleteRooms(userId) {
                 dbRun("DELETE FROM classusers WHERE classId=?", classroom.id),
                 dbRun("DELETE FROM class_polls WHERE classId=?", classroom.id),
                 dbRun("DELETE FROM links WHERE classId=?", classroom.id),
-                dbRun("DELETE FROM lessons WHERE class=?", classroom.id),
             ]);
         }
     } catch (err) {
