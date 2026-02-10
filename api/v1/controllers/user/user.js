@@ -60,7 +60,7 @@ module.exports = (router) => {
         }
 
         // Only include the email if the requester is the user themselves or a manager
-        const requesterEmail = req.session.email;
+        const requesterEmail = req.user?.email;
         let userEmail = undefined;
         // Safer check for manager permissions
         const isManager = requesterEmail && classInformation.users[requesterEmail]?.permissions === MANAGER_PERMISSIONS;
@@ -70,12 +70,15 @@ module.exports = (router) => {
 
         if (user) {
             res.status(200).json({
-                id: user.id,
-                email: userEmail,
-                permissions: user.permissions,
-                digipogs: user.digipogs,
-                displayName: user.displayName,
-                verified: user.verified,
+                success: true,
+                data: {
+                    id: user.id,
+                    email: userEmail,
+                    permissions: user.permissions,
+                    digipogs: user.digipogs,
+                    displayName: user.displayName,
+                    verified: user.verified,
+                },
             });
         } else {
             throw new NotFoundError("User not found.", { event: "user.get.failed", reason: "user_not_found" });

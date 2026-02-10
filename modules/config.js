@@ -29,8 +29,8 @@ function generateKeyPair() {
     });
 
     // Write the keys to files
-    fs.writeFileSync("publicKey.pem", publicKey);
-    fs.writeFileSync("privateKey.pem", privateKey);
+    fs.writeFileSync("public-key.pem", publicKey);
+    fs.writeFileSync("private-key.pem", privateKey);
 
     return {
         publicKey,
@@ -42,14 +42,24 @@ function getConfig() {
     let publicKey;
     let privateKey;
 
-    // If publicKey.pem or privateKey.pem doesn't exist, create them
-    if (!fs.existsSync("publicKey.pem") || !fs.existsSync("privateKey.pem")) {
+    // If the public key is named publicKey.pem, rename it
+    if (fs.existsSync("publicKey.pem") && !fs.existsSync("public-key.pem")) {
+        fs.renameSync("publicKey.pem", "public-key.pem");
+    }
+
+    // If the private key is named privateKey.pem, rename it
+    if (fs.existsSync("privateKey.pem") && !fs.existsSync("private-key.pem")) {
+        fs.renameSync("privateKey.pem", "private-key.pem");
+    }
+
+    // If public-key.pem or private-key.pem doesn't exist, create them
+    if (!fs.existsSync("public-key.pem") || !fs.existsSync("private-key.pem")) {
         const keyPair = generateKeyPair();
         publicKey = keyPair.publicKey;
         privateKey = keyPair.privateKey;
     } else {
-        publicKey = fs.readFileSync("publicKey.pem", "utf8");
-        privateKey = fs.readFileSync("privateKey.pem", "utf8");
+        publicKey = fs.readFileSync("public-key.pem", "utf8");
+        privateKey = fs.readFileSync("private-key.pem", "utf8");
     }
 
     // If logNumber.json doesn't exist, create it

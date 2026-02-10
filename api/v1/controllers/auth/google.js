@@ -2,7 +2,7 @@ const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const { settings } = require("@modules/config");
-const { passport } = require("@modules/googleOauth");
+const { passport } = require("@modules/google-oauth");
 const authService = require("@services/auth-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
@@ -12,7 +12,7 @@ function checkEnabled(req, res, next) {
     if (settings.googleOauthEnabled) {
         next();
     } else {
-        throw new ForbiddenError("Google OAuth is not enabled on this server.", { event: "auth.oauth.failed", reason: "oauth_disabled" });
+        throw new ForbiddenError("Google OAuth is not enabled on this server.");
     }
 }
 
@@ -27,27 +27,68 @@ module.exports = (router) => {
         })
     );
 
+    /**
+     * @swagger
+     * /api/v1/auth/google/callback:
+     *   get:
+     *     summary: Google OAuth callback
+     *     tags:
+     *       - Authentication
+     *     description: Handles the callback from Google OAuth and returns authentication tokens
+     *     responses:
+     *       200:
+     *         description: Authentication successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 accessToken:
+     *                   type: string
+     *                 refreshToken:
+     *                   type: string
+     *       400:
+     *         description: Authentication failed or email not available
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       403:
+     *         description: Google OAuth is not enabled
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
     // Google OAuth callback
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {
             if (err) {
-                req.infoEvent("auth.oauth.failed", "Google authentication failed", { reason: "auth_error" });
-                throw new ValidationError("Authentication failed.", { event: "auth.oauth.failed", reason: "auth_error" });
+                logger.log("error", `[auth/google/callback] Passport error: ${err.message || err}`);
+                throw new ValidationError("Authentication failed.");
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                req.infoEvent("auth.oauth.failed", "Could not retrieve email from Google", { reason: "missing_email" });
-                throw new ValidationError("Could not retrieve email from Google account.", { event: "auth.oauth.failed", reason: "missing_email" });
+                logger.log("error", "[auth/google/callback] No email found in Google profile");
+                throw new ValidationError("Could not retrieve email from Google account.");
             }
 
             const email = user.emails[0].value;
             const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
+            logger.log("info", `[get /auth/google/callback] ip=(${req.ip}) email=(${email})`);
+
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);
             if (result.error) {
-                req.infoEvent("auth.oauth.failed", `OAuth failed for: ${email}`, { reason: "service_error" });
-                throw new ValidationError(result.error, { event: "auth.oauth.failed", reason: "service_error" });
+                logger.log("error", `[auth/google/callback] ${result.error}`);
+                throw new ValidationError(result.error);
             }
 
             // If not already logged in, create a new Student instance in classInformation
@@ -66,16 +107,17 @@ module.exports = (router) => {
                 );
             }
 
-            // Set session data (for backwards compatibility with session-based endpoints)
-            req.session.user = classInformation.users[userData.email];
-            req.session.userId = userData.id;
-            req.session.email = userData.email;
-            req.session.displayName = userData.displayName;
-            req.session.verified = userData.verified;
-            req.session.tags = userData.tags ? userData.tags.split(",") : [];
-
-            req.infoEvent("auth.oauth.success", `User authenticated via Google: ${email}`, { userId: userData.id });
-            res.json(tokens);
+            res.json({
+                success: true,
+                data: {
+                    ...result.tokens,
+                    user: {
+                        id: result.user.id,
+                        email: result.user.email,
+                        displayName: result.user.displayName,
+                    },
+                },
+            });
         })(req, res, next);
     });
 };

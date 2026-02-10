@@ -3,109 +3,112 @@ const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 const { dbGetAll, dbRun } = require("@modules/database");
-const { verifyToken } = require("@services/auth-service");
+const { verifyToken, cleanupExpiredAuthorizationCodes } = require("@services/auth-service");
 const AuthError = require("@errors/auth-error");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
 const whitelistedIps = {};
 const blacklistedIps = {};
-const loginOnlyRoutes = ["/createClass", "/selectClass", "/managerPanel", "/downloadDatabase", "/logs", "/apikey"]; // Routes that can be accessed without being in a class
 
-// Removes expired refresh tokens from the database
+// Removes expired refresh tokens and authorization codes from the database
 async function cleanRefreshTokens() {
     try {
         const refreshTokens = await dbGetAll("SELECT * FROM refresh_tokens");
         for (const refreshToken of refreshTokens) {
             if (Date.now() >= refreshToken.exp) {
-                await dbRun("DELETE FROM refresh_tokens WHERE refresh_token = ?", [refreshToken.refresh_token]);
+                await dbRun("DELETE FROM refresh_tokens WHERE token_hash = ?", [refreshToken.token_hash]);
             }
         }
+        // Also clean up expired authorization codes
+        await cleanupExpiredAuthorizationCodes();
     } catch (err) {
-        // Error cleaning refresh tokens
+        logger.log("error", err.stack);
     }
 }
 
-/*
-Check if user has logged in
-Place at the start of any page that needs to verify if a user is logged in or not
-This allows websites to check on their own if the user is logged in
-This also allows for the website to check for permissions
-*/
+/**
+ * Middleware to verify that a user is authenticated.
+ *
+ * Place at the start of any route that requires an authenticated user.
+ * Verifies the Authorization header, decodes the access token and attaches
+ * user information to `req.user` for downstream handlers.
+ *
+ * @param {import('express').Request} req - Express request object.
+ * @param {import('express').Response} res - Express response object.
+ * @param {import('express').NextFunction} next - Express next middleware function.
+ * @throws {AuthError} When no token is provided, the token is invalid,
+ *                     the token is missing an email, or the user is not found.
+ * @returns {void}
+ */
 function isAuthenticated(req, res, next) {
-    const accessToken = req.headers.authorization;
+    const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
     if (!accessToken) {
-        throw new AuthError("User is not authenticated", { event: "auth.check.failed", reason: "no_token" });
+        throw new AuthError("User is not authenticated");
     }
-
-    // @todo: cleanup
-    // logger.log("info", `[isAuthenticated] url=(${req.url}) ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
 
     const decodedToken = verifyToken(accessToken);
     if (decodedToken.error) {
-        throw new AuthError("Invalid access token provided.", { event: "auth.check.failed", reason: "invalid_token" });
+        throw new AuthError("Invalid access token provided.");
     }
 
     const email = decodedToken.email;
     if (!email) {
-        throw new AuthError("Invalid access token provided. Missing 'email'.", { event: "auth.check.failed", reason: "missing_email" });
+        throw new AuthError("Invalid access token provided. Missing 'email'.");
     }
 
     const user = classInformation.users[email];
     if (!user) {
-        throw new AuthError("User is not authenticated", { event: "auth.check.failed", reason: "user_not_found" });
+        throw new AuthError("User is not authenticated");
     }
 
-    req.session.email = email;
-    req.session.user = user;
-    req.session.userId = user.id;
-    req.session.displayName = user.displayName;
-    req.session.verified = user.verified;
-    req.session.tags = user.tags;
-
-    // Allow access to certain routes without being in a class
-    if (loginOnlyRoutes.includes(req.url)) {
-        next();
-        return;
-    }
-
-    // If the user is not in a class, then continue
-    const isInClass = user.activeClass != null;
-    if (isInClass) {
-        next();
-        return;
-    }
+    // Attach user data to req.user for stateless API authentication
+    req.user = {
+        email: email,
+        ...user,
+        userId: user.id,
+    };
 
     next();
 }
 
 // Create a function to check if the user's email is verified
 function isVerified(req, res, next) {
-    const accessToken = req.headers.authorization;
-    if (!accessToken) {
-        throw new AuthError("User is not authenticated.", { event: "auth.check.failed", reason: "no_token" });
+    // Use req.user if available (set by isAuthenticated), otherwise decode from token
+    let email = req.user?.email;
+    if (!email) {
+        const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
+        if (!accessToken) {
+            throw new AuthError("User is not authenticated.");
+        }
+
+        const decodedToken = verifyToken(accessToken);
+        if (!decodedToken.error && decodedToken.email) {
+            email = decodedToken.email;
+        }
     }
 
-    // Log that the function is being called with the ip and the session of the user
-    if (req.session.email) {
-        // If the user is verified or email functionality is disabled...
-        if (req.session.verified || !settings.emailEnabled || classInformation.users[req.session.email].permissions == GUEST_PERMISSIONS) {
-            next();
-        } else {
-            // Redirect to the login page
-            // @todo: no more redirect
-            res.redirect("/login");
-        }
+    if (!email) {
+        throw new AuthError("User is not authenticated.");
+    }
+
+    const user = classInformation.users[email];
+    // If the user is verified or email functionality is disabled...
+    if ((user && user.verified) || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
+        next();
     } else {
-        // If there is no session, redirect to the login page
-        // @todo: no more redirect
-        res.redirect("/login");
+        throw new AuthError("User email is not verified.");
     }
 }
 
 // Check if user has the permission levels to enter that page
 function permCheck(req, res, next) {
-    const email = req.session.email;
+    const email = req.user?.email;
+    if (!email) {
+        throw new AuthError("User is not authenticated");
+    }
+
+    logger.log("info", `[permCheck] ip=(${req.ip}) user=(${email}) url=(${req.url})`);
 
     if (req.url) {
         // Defines users desired endpoint
@@ -126,24 +129,28 @@ function permCheck(req, res, next) {
             urlPath = urlPath.slice(0, urlPath.indexOf("/"));
         }
 
-        if (!classInformation.users[email]) {
-            req.session.classId = null;
-        }
-
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
 
+        logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
         if (!PAGE_PERMISSIONS[urlPath]) {
-            throw new NotFoundError(`${urlPath} is not in the page permissions`, { event: "permission.check.failed", reason: "page_not_found" });
+            logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
+            throw new NotFoundError(`${urlPath} is not in the page permissions`);
+        }
+
+        const user = classInformation.users[email];
+        if (!user) {
+            throw new AuthError("User not found");
         }
 
         // Checks if users permissions are high enough
-        if (PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+        if (PAGE_PERMISSIONS[urlPath].classPage && user.classPermissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
-        } else if (!PAGE_PERMISSIONS[urlPath].classPage && classInformation.users[email].permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
+        } else if (!PAGE_PERMISSIONS[urlPath].classPage && user.permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
-            throw new ForbiddenError("You do not have permissions to access this page.", { event: "permission.check.failed", reason: "insufficient_permissions" });
+            logger.log("info", "[permCheck] Not enough permissions");
+            throw new ForbiddenError("You do not have permissions to access this page.");
         }
     }
 }

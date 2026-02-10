@@ -3,11 +3,11 @@
         "baseUrl": ".",
         "paths": {
             "@modules/*": ["modules/*"],
-            "@services/*": ["api/v1/services/*"],
-            "@middleware/*": ["middleware/*"],
+            "@services/*": ["services/*"],
             "@controllers/*": ["api/v1/controllers/*"],
-            "@errors/*": ["errors/*"]
+            "@errors/*": ["errors/*"],
+            "@sockets/*": ["sockets/*"]
         }
     },
-    "include": ["**/*.js", "modules/logger.js"]
+    "include": ["**/*.js"]
 }

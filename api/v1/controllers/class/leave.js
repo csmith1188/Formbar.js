@@ -1,24 +1,80 @@
-const { httpPermCheck } = require("@middleware/permissionCheck");
-const { leaveClass } = require("@modules/class/class");
+const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { leaveClass } = require("@services/class-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
+const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
-    // Leaves the current class session
-    // The user is still attached to the classroom
-    router.post("/class/:id/leave", httpPermCheck("leaveClass"), async (req, res) => {
+    /**
+     * @swagger
+     * /api/v1/class/{id}/leave:
+     *   post:
+     *     summary: Leave a class session
+     *     tags:
+     *       - Class
+     *     description: |
+     *       Leaves the current class session. The user is still attached to the classroom.
+     *
+     *       **Required Permission:** Global Guest permission (level 1)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Successfully left the class session
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       400:
+     *         description: Class ID is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Unauthorized
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
+    router.post("/class/:id/leave", isAuthenticated, httpPermCheck("leaveClass"), async (req, res) => {
         const classId = req.params.id;
 
         // Validate that classId is provided
         if (!classId) {
-            throw new ValidationError("Class ID is required.", { event: "class.leave.failed", reason: "missing_class_id" });
+            throw new ValidationError("Class ID is required.");
         }
 
-        const result = leaveClass(req.session, req.params.id);
+        const result = leaveClass(req.user, Number(req.params.id));
         if (!result) {
-            throw new ForbiddenError("Unauthorized", { event: "class.leave.failed", reason: "unauthorized" });
+            throw new ForbiddenError("Unauthorized");
         }
 
-        res.status(200).json({ success: true });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

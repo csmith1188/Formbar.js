@@ -1,0 +1,49 @@
+components:
+  schemas:
+    PermissionLevel:
+      type: object
+      description: Permission level information
+      properties:
+        name:
+          type: string
+          enum: [Guest, Student, Moderator, Teacher, Manager]
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+      example:
+        name: Teacher
+        value: 4
+
+    ClassPermission:
+      type: object
+      description: Class-specific permission settings
+      properties:
+        links:
+          type: integer
+          description: Permission level required to control the links page (default Moderator)
+        controlPoll:
+          type: integer
+          description: Permission level required to control polls (default Moderator)
+        manageStudents:
+          type: integer
+          description: Permission level required to manage students (default Teacher)
+        breakHelp:
+          type: integer
+          description: Permission level required to approve break and help requests (default Moderator)
+        manageClass:
+          type: integer
+          description: Permission level required to manage class settings (default Teacher)
+        auxiliary:
+          type: integer
+          description: Permission level required to control auxiliary features (default Moderator)
+        userDefaults:
+          type: integer
+          description: Default permission level for new users (default Guest)
+        seePoll:
+          type: integer
+          description: Permission level required to view polls (default Guest)
+        votePoll:
+          type: integer
+          description: Permission level required to vote in polls (default Student)
+

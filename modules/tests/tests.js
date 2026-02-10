@@ -1,7 +1,7 @@
 const { classInformation, Classroom } = require("../class/classroom");
 const { Student } = require("../student");
 const express = require("express");
-const { SocketUpdates } = require("../socketUpdates");
+const { SocketUpdates } = require("../socket-updates");
 
 // Common test data
 const testData = {

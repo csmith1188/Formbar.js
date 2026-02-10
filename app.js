@@ -1,6 +1,7 @@
-// Imported modules
+// Support module aliases for importing
 require("module-alias/register");
 
+// Imported modules
 const express = require("express");
 require("express-async-errors"); // To handle async errors in express routes
 
@@ -16,15 +17,16 @@ if (!fs.existsSync("database/database.db")) {
 }
 
 // Custom modules
-const { logger } = require("./modules/logger");
-const { classInformation } = require("./modules/class/classroom.js");
+const { logger } = require("@modules/logger.js");
 const { initSocketRoutes } = require("./sockets/init.js");
-const { app, io, http } = require("./modules/webServer.js");
-const { settings } = require("./modules/config.js");
+const { app, io, http } = require("@modules/web-server.js");
+const { settings } = require("@modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
+const NotFoundError = require("@errors/not-found-error");
 
-const { logout } = require("./modules/user/userSession");
-const { passport } = require("./modules/googleOauth.js");
+const { logout } = require("@modules/user/user-session");
+const { passport } = require("@modules/google-oauth.js");
+const { rateLimiter } = require("@modules/middleware/rate-limiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -33,14 +35,13 @@ const sessionMiddleware = session({
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
 
-const errorHandlerMiddleware = require("@middleware/error-handler.js");
-const requestLoggerMiddleware = require("@middleware/request-logger.js");
+const errorHandlerMiddleware = require("@modules/middleware/error-handler");
+
+// Connect rate limiter middleware
+app.use(rateLimiter);
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
-
-// Request Logging Middleware
-app.use(requestLoggerMiddleware);
 
 // Initialize passport for Google OAuth
 app.use(passport.initialize());
@@ -69,31 +70,10 @@ io.use((socket, next) => {
     }
 });
 
-// Allows express to parse requests
+// Handle cors
 const cors = require("cors");
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(",")
-          .map((origin) => origin.trim())
-          .filter(Boolean)
-    : [];
+app.use(cors({ origin: true }));
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests with no Origin header (e.g., mobile apps, curl)
-            if (!origin) {
-                return callback(null, true);
-            }
-
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-
-            return callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-    })
-);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -157,23 +137,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Add currentUser and permission constants to all pages
-app.use((req, res, next) => {
-    // If the user is in a class, then get the user from the class students list
-    // This ensures that the user data is always up to date
-    if (req.session.classId) {
-        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-        if (!user) {
-            next();
-            return;
-        }
-
-        classInformation.users[req.session.email] = user;
-    }
-
-    next();
-});
-
 function getJSFiles(dir, base = dir) {
     let results = [];
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -196,7 +159,18 @@ for (const apiVersionFolder of apiVersionFolders) {
         const router = express.Router();
 
         const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
-        for (const routeFile of routeFiles) {
+        const middlewareFiles = routeFiles.filter((routeFile) => routeFile.startsWith("middleware/"));
+        const nonMiddlewareFiles = routeFiles.filter((routeFile) => !routeFile.startsWith("middleware/"));
+
+        for (const routeFile of middlewareFiles) {
+            const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
+            if (typeof registerRoute === "function") {
+                registerRoute(router);
+                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute);
+            }
+        }
+
+        for (const routeFile of nonMiddlewareFiles) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
             if (typeof registerRoute === "function") {
                 registerRoute(router);
@@ -210,6 +184,11 @@ for (const apiVersionFolder of apiVersionFolders) {
 
 // Initialize websocket routes
 initSocketRoutes();
+
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+    next(new NotFoundError("Resource not found"));
+});
 
 // Error handling middleware
 app.use(errorHandlerMiddleware);
@@ -226,4 +205,5 @@ http.listen(settings.port, async () => {
         console.log(
             'To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki'
         );
+    logger.log("info", "Start");
 });

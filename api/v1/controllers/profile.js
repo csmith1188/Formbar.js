@@ -1,4 +1,4 @@
-const { isVerified, permCheck } = require("@middleware/authentication");
+const { isVerified, permCheck, isAuthenticated } = require("@modules/middleware/authentication");
 const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
@@ -9,17 +9,73 @@ const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
-    router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
+    /**
+     * @swagger
+     * /api/v1/profile/transactions/{userId}:
+     *   get:
+     *     summary: Get user transaction history
+     *     tags:
+     *       - Profile
+     *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: false
+     *         description: The ID of the user to retrieve transactions for (defaults to current user)
+     *         schema:
+     *           type: string
+     *           example: "1"
+     *     responses:
+     *       200:
+     *         description: Transactions retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 transactions:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                 displayName:
+     *                   type: string
+     *                 currentUserId:
+     *                   type: string
+     *       403:
+     *         description: Forbidden - insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       404:
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
+        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
-        const userId = req.params.userId || req.session.userId;
-        if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
-            throw new ForbiddenError("You do not have permission to view these transactions.", { event: "profile.transactions.get.failed", reason: "insufficient_permissions" });
+        const userId = req.params.userId || req.user.userId;
+        if (req.user.userId !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
+            throw new ForbiddenError("You do not have permission to view these transactions.");
         }
 
         const userData = await getUserData(userId);
         if (!userData) {
+            logger.log("warn", `User not found: userId=${userId}`);
             throw new NotFoundError("User not found.");
         }
 
@@ -28,51 +84,123 @@ module.exports = (router) => {
 
         // Handle case where no transactions are found
         if (!transactions || transactions.length === 0) {
+            logger.log("info", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
-                transactions: [],
-                displayName: userDisplayName,
-                currentUserId: req.session.userId,
+                success: true,
+                data: {
+                    transactions: [],
+                    displayName: userDisplayName,
+                    currentUserId: req.user.userId,
+                },
             });
             return;
         }
 
         res.status(200).json({
-            transactions: transactions,
-            displayName: userDisplayName,
-            currentUserId: req.session.userId,
+            success: true,
+            data: {
+                transactions: transactions,
+                displayName: userDisplayName,
+                currentUserId: req.user.userId,
+            },
         });
     });
 
-    router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
+    /**
+     * @swagger
+     * /api/v1/profile/{userId}:
+     *   get:
+     *     summary: Get user profile information
+     *     tags:
+     *       - Profile
+     *     description: Returns detailed profile information for a user including digipogs, API status, and PIN status. Email visibility depends on permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: false
+     *         description: The ID of the user to retrieve (defaults to current user)
+     *         schema:
+     *           type: string
+     *           example: "1"
+     *     responses:
+     *       200:
+     *         description: Profile retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 displayName:
+     *                   type: string
+     *                 email:
+     *                   type: string
+     *                   description: Hidden if viewer lacks permissions
+     *                 digipogs:
+     *                   type: integer
+     *                 id:
+     *                   type: string
+     *                 API:
+     *                   type: string
+     *                   nullable: true
+     *                 pin:
+     *                   type: string
+     *                   nullable: true
+     *                 pogMeter:
+     *                   type: integer
+     *                 isOwnProfile:
+     *                   type: boolean
+     *       404:
+     *         description: User not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotFoundError'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
+        logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
 
         // Check if userData is null or undefined
-        const userId = req.params.userId || req.session.userId;
+        const userId = req.params.userId || req.user.userId;
         const userData = await getUserData(userId);
         if (!userData) {
-            throw new NotFoundError("User not found.", { event: "profile.get.failed", reason: "user_not_found" });
+            logger.log("warn", `User not found in database: userId=${userId}`);
+            throw new NotFoundError("User not found.");
         }
 
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            throw new AppError("Unable to retrieve profile information. Please try again.", { statusCode: 500, event: "profile.get.failed", reason: "missing_data" });
+            logger.log("error", `Incomplete user data retrieved from database: userId=${userId}, fields missing`);
+            throw new AppError("Unable to retrieve profile information. Please try again.");
         }
 
         // Determine if the email should be visible then render the page
-        const emailVisible = req.session.userId === id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
-        const isOwnProfile = req.session.userId === userId;
+        const emailVisible = req.user.userId === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
+        const isOwnProfile = req.user.userId === userId;
 
         res.status(200).json({
-            displayName: displayName,
-            email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
-            digipogs: digipogs,
-            id: userId,
-            API: isOwnProfile ? "Exists" : null,
-            pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
-            pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-            isOwnProfile: isOwnProfile,
+            success: true,
+            data: {
+                displayName: displayName,
+                email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
+                digipogs: digipogs,
+                id: userId,
+                API: isOwnProfile ? "Exists" : null,
+                pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
+                pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
+                isOwnProfile: isOwnProfile,
+            },
         });
     });
 };

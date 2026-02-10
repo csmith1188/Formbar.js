@@ -2,8 +2,8 @@ const { classInformation } = require("./class/classroom");
 const { database, dbGetAll } = require("./database");
 const { logger } = require("./logger.js");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
-const { getManagerData } = require("./manager");
-const { io } = require("./webServer");
+const { getManagerData } = require("@services/manager-service");
+const { io } = require("./web-server");
 
 const runningTimers = {};
 const rateLimits = {};
@@ -37,11 +37,12 @@ async function userUpdateSocket(email, methodName, ...args) {
     const { userSocketUpdates } = require("../sockets/init");
 
     // If user has no socket connections yet, then return
-    if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
+    const userSockets = userSocketUpdates.get(email);
+    if (!userSockets || userSockets.size === 0) {
         return;
     }
 
-    for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+    for (const socketUpdates of userSockets.values()) {
         if (socketUpdates && typeof socketUpdates[methodName] === "function") {
             socketUpdates[methodName](...args);
         }
@@ -107,6 +108,54 @@ async function setClassOfApiSockets(api, classId) {
         }
     } catch (err) {
         // Error handled
+    }
+}
+
+/**
+ * Sets the class id for all sockets belonging to a specific user.
+ * This is used when a user joins a class via HTTP to ensure their sockets receive class updates.
+ * If no class id is provided, then the class id will be set to null.
+ *
+ * @param {string} email - The user's email identifier.
+ * @param {string} [classId=null] - The class id to set.
+ */
+async function setClassOfUserSockets(email, classId) {
+    try {
+        logger.log("verbose", `[setClassOfUserSockets] email=(${email}) classId=(${classId})`);
+
+        // Check if user has any sockets
+        if (!userSockets[email]) {
+            logger.log("verbose", `[setClassOfUserSockets] No sockets found for user ${email}`);
+            return;
+        }
+
+        // Update all sockets for this user
+        for (let socket of Object.values(userSockets[email])) {
+            // Ensure the socket has a session before continuing
+            if (!socket.request.session) continue;
+
+            // Leave the old class room
+            const oldClassId = socket.request.session.classId;
+            if (oldClassId) {
+                socket.leave(`class-${oldClassId}`);
+            }
+
+            // Update session with new class id
+            socket.request.session.classId = classId;
+            socket.request.session.save();
+
+            // Join the new class room
+            if (classId) {
+                socket.join(`class-${classId}`);
+            }
+
+            // Emit the setClass event to the socket
+            socket.emit("setClass", classId);
+        }
+
+        logger.log("verbose", `[setClassOfUserSockets] Updated ${Object.keys(userSockets[email]).length} socket(s) for user ${email}`);
+    } catch (err) {
+        logger.log("error", err.stack);
     }
 }
 
@@ -553,6 +602,7 @@ module.exports = {
     emitToUser,
     advancedEmitToClass,
     setClassOfApiSockets,
+    setClassOfUserSockets,
     managerUpdate,
     userUpdateSocket,
     SocketUpdates,

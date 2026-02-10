@@ -163,14 +163,10 @@ module.exports = {
                     if (user) {
                         const newBalance = user.digipogs + amountPerMember;
                         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, member.user_id]);
-                        await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                            null,
-                            member.user_id,
-                            pool.id,
-                            amountPerMember,
-                            `Pool Payout`,
-                            Date.now(),
-                        ]);
+                        await dbRun(
+                            "INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            [pool.id, member.user_id, "pool", "user", amountPerMember, `Pool Payout`, Date.now()]
+                        );
                     }
                 }
 

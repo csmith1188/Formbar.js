@@ -1,8 +1,12 @@
 const { classInformation } = require("./classroom");
+<<<<<<< HEAD
 const { logger } = require("../logger.js");
 const { advancedEmitToClass, emitToUser } = require("../socketUpdates");
+=======
+const { logger } = require("../logger");
+const { advancedEmitToClass, emitToUser, userUpdateSocket } = require("../socket-updates");
+>>>>>>> upstream/DEV
 const { getEmailFromId } = require("../student");
-const { userSocketUpdates } = require("../../sockets/init");
 
 function sendHelpTicket(reason, userSession) {
     try {
@@ -28,30 +32,37 @@ function sendHelpTicket(reason, userSession) {
         emitToUser(email, "helpSuccess");
         advancedEmitToClass("helpSound", classId, {});
 
+<<<<<<< HEAD
         // @TODO: TEMP FIX
         for (const socketUpdates of Object.values(userSocketUpdates[email])) {
             socketUpdates.classUpdate(classId);
             break;
         }
+=======
+        logger.log("verbose", `[help] user=(${JSON.stringify(student)}`);
+
+        userUpdateSocket(email, "classUpdate", classId);
+>>>>>>> upstream/DEV
         return true;
     } catch (err) {
     }
 }
 
-async function deleteHelpTicket(studentId, userSession) {
+async function deleteHelpTicket(studentId, userData) {
     try {
-        const classId = userSession.classId;
-        const email = userSession.email;
+        const classId = userData.classId;
+        const email = userData.email;
         const studentEmail = await getEmailFromId(studentId);
+<<<<<<< HEAD
+=======
+        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[deleteTicket] student=(${studentEmail})`);
+>>>>>>> upstream/DEV
 
         // Set the student's help ticket to false, indicating that they are no longer requesting help
         classInformation.classrooms[classId].students[studentEmail].help = false;
 
-        // @TODO: TEMP FIX
-        for (const socketUpdates of Object.values(userSocketUpdates[email])) {
-            socketUpdates.classUpdate(classId);
-            break;
-        }
+        userUpdateSocket(email, "classUpdate", classId);
         return true;
     } catch (err) {
     }

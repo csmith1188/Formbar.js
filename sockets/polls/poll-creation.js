@@ -1,6 +1,6 @@
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
-const { createPoll } = require("@modules/polls");
+const { createPoll } = require("@services/poll-service");
 
 module.exports = {
     run(socket, socketUpdates) {

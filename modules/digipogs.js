@@ -32,17 +32,17 @@ function cleanupOldAttempts() {
 setInterval(cleanupOldAttempts, 5 * 60 * 1000);
 
 /**
- * Check if a user is rate limited
- * @param {number} userId - The user ID attempting the transfer
+ * Check if an account (user or pool) is rate limited
+ * @param {string} accountId - The account ID attempting the transfer (e.g., 'user-123' or 'pool-456')
  * @returns {Object} - { allowed: boolean, message: string, waitTime: number }
  */
-function checkRateLimit(userId) {
+function checkRateLimit(accountId) {
     const now = Date.now();
-    const userAttempts = failedAttempts.get(userId);
+    const userAttempts = failedAttempts.get(accountId);
 
     if (!userAttempts) {
         // First attempt, initialize tracking
-        failedAttempts.set(userId, { attempts: [], lockedUntil: null });
+        failedAttempts.set(accountId, { attempts: [], lockedUntil: null });
         return { allowed: true };
     }
 
@@ -96,17 +96,23 @@ function checkRateLimit(userId) {
         };
     }
 
+<<<<<<< HEAD
+=======
+    // Log current failure count for debugging
+    logger.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
+
+>>>>>>> upstream/DEV
     return { allowed: true };
 }
 
 /**
  * Record a transfer attempt (success or failure)
- * @param {number} userId - The user ID
+ * @param {string} accountId - The account ID (e.g., 'user-123' or 'pool-456')
  * @param {boolean} success - Whether the attempt was successful
  */
-function recordAttempt(userId, success) {
+function recordAttempt(accountId, success) {
     const now = Date.now();
-    const userAttempts = failedAttempts.get(userId) || { attempts: [], lockedUntil: null };
+    const userAttempts = failedAttempts.get(accountId) || { attempts: [], lockedUntil: null };
 
     userAttempts.attempts.push({ timestamp: now, success: success });
 
@@ -116,7 +122,7 @@ function recordAttempt(userId, success) {
         userAttempts.lockedUntil = null;
     }
 
-    failedAttempts.set(userId, userAttempts);
+    failedAttempts.set(accountId, userAttempts);
 }
 
 async function awardDigipogs(awardData, session) {
@@ -167,10 +173,11 @@ async function awardDigipogs(awardData, session) {
         await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to]);
 
         try {
-            await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
                 from,
                 to,
-                null,
+                "user",
+                "user",
                 amount,
                 reason,
                 Date.now(),
@@ -187,9 +194,10 @@ async function awardDigipogs(awardData, session) {
 
 async function transferDigipogs(transferData) {
     try {
-        const { from, to, pin, reason = "", pool = false } = transferData;
+        const { from, to, pin, reason = "", pool } = transferData;
         const amount = Math.floor(transferData.amount); // Ensure amount is an integer
 
+<<<<<<< HEAD
         // Ensure that the user is not transferring to themselves
         if (from == to && !pool) {
             return { success: false, message: "Cannot transfer to the same account." };
@@ -200,10 +208,38 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
+=======
+        // Backward compatibility
+        let deprecatedFormatUsed = false;
+        if (!from.id) {
+            from.id = from;
+            from.type = "user";
+            to.id = pool ? pool : to;
+            to.type = pool ? "pool" : "user";
+            deprecatedFormatUsed = true;
+        }
+        if (!from.type) {
+            from.type = "user";
+        }
+        if (!to.type) {
+            to.type = "user";
         }
 
-        // Check rate limiting
-        const rateLimitCheck = checkRateLimit(from);
+        // Validate input structure
+        if (!from || !from.id || !to || !to.id || !amount || reason === undefined || !pin) {
+            return { success: false, message: "Missing required fields." };
+        } else if (amount <= 0) {
+            return { success: false, message: "Amount must be greater than zero." };
+        } else if (from.type === to.type && from.id === to.id) {
+            return { success: false, message: "Cannot transfer to the same account." };
+        } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
+            return { success: false, message: "Invalid sender or recipient type." };
+>>>>>>> upstream/DEV
+        }
+
+        // Check rate limits for the sender
+        const accountId = `${from.type}-${from.id}`;
+        const rateLimitCheck = checkRateLimit(accountId);
         if (!rateLimitCheck.allowed) {
             return {
                 success: false,
@@ -213,35 +249,49 @@ async function transferDigipogs(transferData) {
             };
         }
 
-        // Fetch sender
-        const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
-        if (!fromUser) {
-            recordAttempt(from, false);
-            return { success: false, message: "Sender account not found." };
+        // Fetch sender account
+        let fromAccount;
+        if (from.type === "user") {
+            fromAccount = await dbGet("SELECT * FROM users WHERE id = ?", [from.id]);
+            if (!fromAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Sender account not found." };
+            }
+        } else {
+            fromAccount = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [from.id]);
+            const poolUser = await dbGet("SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [from.id]);
+            if (!fromAccount) {
+                return { success: false, message: "Sender pool not found." };
+            }
+            const poolOwner = await dbGet("SELECT pin FROM users WHERE id = ?", [poolUser.user_id]);
+            fromAccount.pin = poolOwner.pin; // Use the pool owner's PIN for validation
         }
 
-        // Validate stored PIN exists
-        if (!fromUser.pin) {
-            recordAttempt(from, false);
+        // PIN validation
+        if (!fromAccount.pin) {
+            recordAttempt(accountId, false);
             return { success: false, message: "Account PIN not configured." };
         }
 
-        // Validate PIN and funds
         const pinString = String(pin);
-        const isPinValid = await compare(pinString, fromUser.pin);
+        const isPinValid = await compare(pinString, fromAccount.pin);
         if (!isPinValid) {
-            // Record the failed attempt
-            recordAttempt(from, false);
+            recordAttempt(accountId, false);
             return { success: false, message: "Invalid PIN." };
-        } else if (fromUser.digipogs < amount) {
-            // Even with correct PIN, record as failed if insufficient funds
-            recordAttempt(from, false);
+        }
+
+        // Check funds
+        const fromBalance = from.type === "user" ? fromAccount.digipogs : fromAccount.amount;
+        if (fromBalance < amount) {
+            recordAttempt(accountId, false);
             return { success: false, message: "Insufficient funds." };
         }
 
-        // Calculate taxed amount for all transfers
-        const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
+        // Calculate tax
+        const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1;
+        const taxAmount = amount - taxedAmount;
 
+<<<<<<< HEAD
         // If transferring to a pool (e.g., company pool)
         if (pool) {
             // If transferring to a pool, ensure the pool exists and has members
@@ -313,19 +363,82 @@ async function transferDigipogs(transferData) {
                 // Record successful attempt
                 recordAttempt(from, true);
                 return { success: true, message: "Transfer successful, but failed to log transaction." };
+=======
+        // Fetch recipient account
+        let toAccount;
+        if (to.type === "user") {
+            toAccount = await dbGet("SELECT * FROM users WHERE id = ?", [to.id]);
+            if (!toAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Recipient account not found." };
+            }
+        } else {
+            toAccount = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to.id]);
+            if (!toAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Recipient pool not found." };
+>>>>>>> upstream/DEV
             }
         }
 
-        // Add the tax to the dev pool (id 0) if it exists
-        const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
-        if (devPool) {
-            const newDevPoolAmount = devPool.amount + (amount - taxedAmount);
-            await dbRun("UPDATE digipog_pools SET amount = ? WHERE id = ?", [newDevPoolAmount, 0]);
+        // Perform transfer atomically
+        try {
+            await dbRun("BEGIN TRANSACTION");
+
+            // Deduct from sender
+            if (from.type === "user") {
+                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from.id]);
+            } else {
+                await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [amount, from.id]);
+            }
+
+            // Credit to recipient
+            if (to.type === "user") {
+                await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [taxedAmount, to.id]);
+            } else {
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to.id]);
+            }
+
+            // Add tax to dev pool (id 0)
+            const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
+            if (devPool) {
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxAmount, 0]);
+            }
+
+            await dbRun("COMMIT");
+        } catch (err) {
+            try {
+                await dbRun("ROLLBACK");
+            } catch (rollbackErr) {
+                logger.log("error", rollbackErr.stack || rollbackErr);
+            }
+            logger.log("error", err.stack || err);
+            recordAttempt(accountId, false);
+            return { success: false, message: "Transfer failed due to database error." };
+        }
+
+        // Log transaction
+        try {
+            await dbRun("INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                from.id,
+                from.type,
+                to.id,
+                to.type,
+                amount,
+                reason,
+                Date.now(),
+            ]);
+        } catch (err) {
+            logger.log("error", err.stack || err);
+            // Don't fail the transfer if logging fails
         }
 
         // Record successful attempt
-        recordAttempt(from, true);
-        return { success: true, message: "Transfer successful." };
+        recordAttempt(accountId, true);
+        return {
+            success: true,
+            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated pool transfer format used. See documentation for updated usage." : ""}`,
+        };
     } catch (err) {
         return { success: false, message: "Database error." };
     }

@@ -1,33 +1,94 @@
-const { logger } = require("@modules/logger");
 const { dbGet, dbRun, dbGetAll } = require("@modules/database");
 const { settings } = require("@modules/config");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { getIpAccess } = require("@modules/webServer");
-const { hasPermission } = require("@middleware/permissionCheck");
-const authentication = require("@middleware/authentication");
+const { getIpAccess } = require("@modules/web-server");
+const { hasPermission } = require("@modules/middleware/permission-check");
+const { isAuthenticated } = require("@modules/middleware/authentication");
+const authentication = require("@modules/middleware/authentication");
 const fs = require("fs");
 const ValidationError = require("@errors/validation-error");
 const ConflictError = require("@errors/conflict-error");
 
 module.exports = (router) => {
+    /**
+     * @swagger
+     * /api/v1/ip/{type}:
+     *   get:
+     *     summary: Get IP access list
+     *     tags:
+     *       - IP Management
+     *     description: |
+     *       Retrieves the IP whitelist or blacklist.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: type
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum: [whitelist, blacklist]
+     *         description: Type of IP list
+     *     responses:
+     *       200:
+     *         description: IP list retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/IPList'
+     *       400:
+     *         description: Invalid type
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     // List IPs
-    router.get("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.get("/ip/:type", isAuthenticated, isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const ipMode = req.params.type;
         if (ipMode !== "whitelist" && ipMode !== "blacklist") {
-            throw new ValidationError("Invalid type", { event: "ip.list.get.failed", reason: "invalid_type" });
+            throw new ValidationError("Invalid type");
         }
 
         const isWhitelist = ipMode === "whitelist" ? 1 : 0;
         const rows = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
-        res.status(200).json({ active: settings[`${ipMode}Active`], ips: rows || [] });
+        res.status(200).json({
+            success: true,
+            data: {
+                active: settings[`${ipMode}Active`],
+                ips: rows || [],
+            },
+        });
     });
 
     // Add IP
-    router.post("/ip/:type", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.post("/ip/:type", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const { ip } = req.body || {};
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type", { event: "ip.add.failed", reason: "invalid_type" });
+            throw new ValidationError("Invalid type");
         }
         if (!ip) {
             throw new ValidationError("Missing ip");
@@ -38,7 +99,7 @@ module.exports = (router) => {
         // Check if the IP already exists
         const exists = await dbGet(`SELECT 1 AS one FROM ip_access_list WHERE ip=? AND is_whitelist=?`, [ip, isWhitelist]);
         if (exists && exists.one) {
-            throw new ConflictError("IP already exists", { event: "ip.add.failed", reason: "ip_exists" });
+            throw new ConflictError("IP already exists");
         }
 
         // Insert the IP into the database
@@ -51,19 +112,101 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(201).json({ ok: true });
+        res.status(201).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
+    /**
+     * @swagger
+     * /api/v1/ip/{type}/{id}:
+     *   put:
+     *     summary: Update IP in access list
+     *     tags:
+     *       - IP Management
+     *     description: |
+     *       Updates an IP address in the whitelist or blacklist.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: type
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum: [whitelist, blacklist]
+     *         description: Type of IP list
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: IP entry ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - ip
+     *             properties:
+     *               ip:
+     *                 type: string
+     *                 example: "192.168.1.1"
+     *     responses:
+     *       200:
+     *         description: IP updated successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ok:
+     *                   type: boolean
+     *                   example: true
+     *       400:
+     *         description: Invalid type or missing IP
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     // Update IP
-    router.put("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    router.put("/ip/:type/:id", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;
         const { ip } = req.body || {};
         if (!ip) {
-            throw new ValidationError("Missing ip", { event: "ip.update.failed", reason: "missing_ip" });
+            throw new ValidationError("Missing ip");
         }
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type", { event: "ip.update.failed", reason: "invalid_type" });
+            throw new ValidationError("Invalid type");
         }
 
         const isWhitelist = type === "whitelist" ? 1 : 0;
@@ -76,15 +219,84 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
-    // Remove IP
-    router.delete("/ip/:type/:id", hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
+    /**
+     * @swagger
+     * /api/v1/ip/{type}/{id}:
+     *   delete:
+     *     summary: Remove IP from access list
+     *     tags:
+     *       - IP Management
+     *     description: |
+     *       Removes an IP address from whitelist or blacklist.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: type
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum: [whitelist, blacklist]
+     *         description: Type of IP list
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: IP entry ID
+     *     responses:
+     *       200:
+     *         description: IP removed successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ok:
+     *                   type: boolean
+     *                   example: true
+     *       400:
+     *         description: Invalid type
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
+    router.delete("/ip/:type/:id", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type", { event: "ip.delete.failed", reason: "invalid_type" });
+            throw new ValidationError("Invalid type");
         }
 
         const isWhitelist = type === "whitelist" ? 1 : 0;
@@ -97,14 +309,84 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
-        res.status(200).json({ ok: true });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     });
 
+    /**
+     * @swagger
+     * /api/v1/ip/{type}/toggle:
+     *   post:
+     *     summary: Toggle IP access list
+     *     tags:
+     *       - IP Management
+     *     description: |
+     *       Toggles the IP whitelist or blacklist on/off. Only one can be active at a time.
+     *
+     *       **Required Permission:** Global Manager permission (level 5)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: type
+     *         required: true
+     *         schema:
+     *           type: string
+     *           enum: [whitelist, blacklist]
+     *         description: Type of IP list to toggle
+     *     responses:
+     *       200:
+     *         description: IP list toggled successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 ok:
+     *                   type: boolean
+     *                   example: true
+     *                 active:
+     *                   type: boolean
+     *                   description: Whether the specified type is now active
+     *                 otherDisabled:
+     *                   type: boolean
+     *                   description: Whether the other type is disabled
+     *       400:
+     *         description: Invalid type
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Insufficient permissions
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
     // Toggle ip whitelist/blacklist
-    router.post("/ip/:type/toggle", hasPermission(MANAGER_PERMISSIONS), (req, res) => {
+    router.post("/ip/:type/toggle", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), (req, res) => {
         const type = req.params.type;
         if (type !== "whitelist" && type !== "blacklist") {
-            throw new ValidationError("Invalid type", { event: "ip.toggle.failed", reason: "invalid_type" });
+            throw new ValidationError("Invalid type");
         }
 
         // Toggle the ip mode
@@ -130,6 +412,13 @@ module.exports = (router) => {
         }
 
         fs.writeFileSync("./.env", updatedIpMode);
-        res.status(200).json({ ok: true, active: settings[`${type}Active`], otherDisabled: !settings[`${otherType}Active`] });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+                active: settings[`${type}Active`],
+                otherDisabled: !settings[`${otherType}Active`],
+            },
+        });
     });
 };

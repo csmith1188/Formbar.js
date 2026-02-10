@@ -1,19 +1,25 @@
 const { logger } = require("../logger.js");
 const { classInformation } = require("./classroom");
-const { advancedEmitToClass, userUpdateSocket } = require("../socketUpdates");
+const { advancedEmitToClass, userUpdateSocket } = require("../socket-updates");
 const { getEmailFromId } = require("../student");
-const { io } = require("../webServer");
+const { io } = require("../web-server");
 
-function requestBreak(reason, userSession) {
+function requestBreak(reason, userData) {
     try {
         // Get the class id and email from the session
         // Check if the class is inactive before continuing
-        const classId = userSession.classId;
-        const email = userSession.email;
+        const classId = userData.classId;
+        const email = userData.email;
         if (!classInformation.classrooms[classId].isActive) {
             return "This class is not currently active.";
         }
 
+<<<<<<< HEAD
+=======
+        logger.log("info", `[requestBreak] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[requestBreak] reason=(${reason})`);
+
+>>>>>>> upstream/DEV
         // Get the student, play the break sound, and set the break reason
         const classroom = classInformation.classrooms[classId];
         const student = classroom.students[email];
@@ -26,11 +32,16 @@ function requestBreak(reason, userSession) {
     }
 }
 
-async function approveBreak(breakApproval, userId, userSession) {
+async function approveBreak(breakApproval, userId, userData) {
     try {
         const email = await getEmailFromId(userId);
+<<<<<<< HEAD
+=======
+        logger.log("info", `[approveBreak] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`);
+>>>>>>> upstream/DEV
 
-        const classId = userSession.classId;
+        const classId = userData.classId;
         const classroom = classInformation.classrooms[classId];
         const student = classroom.students[email];
         student.break = breakApproval;
@@ -45,13 +56,24 @@ async function approveBreak(breakApproval, userId, userSession) {
     }
 }
 
-function endBreak(userSession) {
+function endBreak(userData) {
     try {
+<<<<<<< HEAD
         const classroom = classInformation.classrooms[userSession.classId];
         const student = classInformation.users[userSession.email];
         student.break = false;
 
         userUpdateSocket(userSession.email, "classUpdate", userSession.classId);
+=======
+        logger.log("info", `[endBreak] session=(${JSON.stringify(userData)})`);
+
+        const classroom = classInformation.classrooms[userData.classId];
+        const student = classInformation.users[userData.email];
+        student.break = false;
+
+        logger.log("verbose", `[endBreak] user=(${JSON.stringify(classroom.students[userData.email])})`);
+        userUpdateSocket(userData.email, "classUpdate", userData.classId);
+>>>>>>> upstream/DEV
         return true;
     } catch (err) {
     }
