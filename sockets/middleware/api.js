@@ -7,6 +7,7 @@ const { getUserClass } = require("@modules/user/user");
 const { classKickStudent } = require("@modules/class/kick");
 const { compare } = require("@modules/crypto");
 const { verifyToken } = require("@services/auth-service");
+const { addUserSocketUpdate, removeUserSocketUpdate } = require("../init");
 
 module.exports = {
     order: 10,
@@ -58,7 +59,12 @@ module.exports = {
                             socket.join(`api-${userData.API}`);
                             socket.join(`class-${socket.request.session.classId}`);
                             socket.emit("setClass", socket.request.session.classId);
+
+                            // Track SocketUpdates instance for this user
+                            addUserSocketUpdate(userData.email, socket.id, socketUpdates);
+
                             socket.on("disconnect", () => {
+                                removeUserSocketUpdate(userData.email, socket.id);
                                 if (!userSockets[socket.request.session.email]) {
                                     classKickStudent(socket.request.session.email, socket.request.session.classId, false);
                                 }
@@ -129,7 +135,11 @@ module.exports = {
                                 if (!userSockets[userData.email]) userSockets[userData.email] = {};
                                 userSockets[userData.email][socket.id] = socket;
 
+                                // Track SocketUpdates instance for this user
+                                addUserSocketUpdate(userData.email, socket.id, socketUpdates);
+
                                 socket.on("disconnect", () => {
+                                    removeUserSocketUpdate(userData.email, socket.id);
                                     if (userSockets[userData.email]) {
                                         delete userSockets[userData.email][socket.id];
                                         if (Object.keys(userSockets[userData.email]).length === 0) {
@@ -170,8 +180,12 @@ module.exports = {
                 if (!userSockets[email]) userSockets[email] = {};
                 userSockets[email][socket.id] = socket;
 
+                // Track SocketUpdates instance for this user
+                addUserSocketUpdate(email, socket.id, socketUpdates);
+
                 // Cleanup on disconnect
                 socket.on("disconnect", () => {
+                    removeUserSocketUpdate(email, socket.id);
                     if (userSockets[email]) {
                         delete userSockets[email][socket.id];
                         if (Object.keys(userSockets[email]).length === 0) {

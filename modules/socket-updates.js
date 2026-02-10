@@ -37,11 +37,12 @@ async function userUpdateSocket(email, methodName, ...args) {
     const { userSocketUpdates } = require("../sockets/init");
 
     // If user has no socket connections yet, then return
-    if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
+    const userSockets = userSocketUpdates.get(email);
+    if (!userSockets || userSockets.size === 0) {
         return;
     }
 
-    for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+    for (const socketUpdates of userSockets.values()) {
         if (socketUpdates && typeof socketUpdates[methodName] === "function") {
             socketUpdates[methodName](...args);
         }
