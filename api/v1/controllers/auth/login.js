@@ -64,18 +64,18 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/auth/login", async (req, res) => {
+
         const { email, password } = req.body;
         if (!email || !password) {
             throw new ValidationError("Email and password are required.");
         }
 
-        req.infoEvent("auth.login.attempt", `User login attempt: ${email}`, { email, ip: req.ip });
+        req.infoEvent("auth.login.attempt", "User login attempt", { email });
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            req.infoEvent("auth.login.invalid", "Invalid credentials", { email });
-            throw new ValidationError("Incorrect password. Try again.");
+            throw new ValidationError("Incorrect password. Try again.", { event: "auth.login.invalid", reason: "invalid_credentials" });
         }
 
         // If not already logged in, create a new Student instance in classInformation
@@ -93,6 +93,8 @@ module.exports = (router) => {
                 false
             );
         }
+
+        req.infoEvent("auth.login.success", "User logged in successfully", { userId: userData.id, email });
 
         res.json({
             success: true,

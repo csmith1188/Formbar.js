@@ -14,8 +14,8 @@ function requestBreak(reason, userData) {
             return "This class is not currently active.";
         }
 
-        req.log("info", `[requestBreak] session=(${JSON.stringify(userData)})`);
-        req.log("info", `[requestBreak] reason=(${reason})`);
+        logger.log("info", `[requestBreak] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[requestBreak] reason=(${reason})`);
 
         // Get the student, play the break sound, and set the break reason
         const classroom = classInformation.classrooms[classId];
@@ -32,8 +32,8 @@ function requestBreak(reason, userData) {
 async function approveBreak(breakApproval, userId, userData) {
     try {
         const email = await getEmailFromId(userId);
-        req.log("info", `[approveBreak] session=(${JSON.stringify(userData)})`);
-        req.log("info", `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`);
+        logger.log("info", `[approveBreak] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[approveBreak] breakApproval=(${breakApproval}) email=(${email})`);
 
         const classId = userData.classId;
         const classroom = classInformation.classrooms[classId];
@@ -52,13 +52,13 @@ async function approveBreak(breakApproval, userId, userData) {
 
 function endBreak(userData) {
     try {
-        req.log("info", `[endBreak] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[endBreak] session=(${JSON.stringify(userData)})`);
 
         const classroom = classInformation.classrooms[userData.classId];
         const student = classInformation.users[userData.email];
         student.break = false;
 
-        req.log("verbose", `[endBreak] user=(${JSON.stringify(classroom.students[userData.email])})`);
+        logger.log("verbose", `[endBreak] user=(${JSON.stringify(classroom.students[userData.email])})`);
         userUpdateSocket(userData.email, "classUpdate", userData.classId);
         return true;
     } catch (err) {

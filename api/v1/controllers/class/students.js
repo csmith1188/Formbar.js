@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { hasClassPermission } = require("@middleware/permission-check");
 const { isAuthenticated } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
@@ -66,7 +65,7 @@ module.exports = (router) => {
     router.get("/class/:id/students", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         // Get the class key from the request parameters and log the request details
         const classId = req.params.id;
-        req.infoEvent("class.students.view", `Viewing class students`, { user: req.user?.email, ip: req.ip, classId });
+        req.infoEvent("class.students.view", "Viewing class students", { classId });
 
         // Get the students of the class
         // If an error occurs, log the error and return the error
@@ -75,8 +74,7 @@ module.exports = (router) => {
             [classId]
         );
         if (classUsers.error) {
-            req.warnEvent("class.students.error", `Error retrieving class students`, { classId, error: classUsers.error });
-            throw new NotFoundError(classUsers);
+            throw new NotFoundError(classUsers, { event: "class.students.error", reason: "retrieval_error" });
         }
 
         // Guest users cannot be found in the database, so if the classroom exists, then add them to the list

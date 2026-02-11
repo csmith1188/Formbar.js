@@ -75,7 +75,10 @@ module.exports = (router) => {
             throw new ValidationError("Passwords do not match.", { event: "user.password.reset.failed", reason: "password_mismatch" });
         }
 
+        req.infoEvent("user.password.reset.attempt", "Attempting to reset password with token");
         await userService.resetPassword(password, token);
+        
+        req.infoEvent("user.password.reset.success", "Password reset successfully");
         res.status(200).json({
             success: true,
             data: {
@@ -143,7 +146,10 @@ module.exports = (router) => {
             throw new AppError("Email service is not enabled. Password resets are not available at this time.", { statusCode: 503, event: "user.password.reset.request.failed", reason: "email_disabled" });
         }
 
+        req.infoEvent("user.password.reset.request", "Password reset requested", { email });
         await userService.requestPasswordReset(email);
+        
+        req.infoEvent("user.password.reset.request.success", "Password reset email sent", { email });
 
         res.status(200).json({
             success: true,

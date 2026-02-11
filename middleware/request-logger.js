@@ -1,5 +1,5 @@
 const ip = require("@controllers/ip");
-const {logger, logEvent} = require("@modules/logger");
+const {getLogger, logEvent} = require("@modules/logger");
 const crypto = require("crypto");
 
 // Middleware to log incoming requests and their completion time
@@ -20,9 +20,8 @@ async function requestLogger(req, res, next) {
         baseMeta.username = req.session.user.username;
     }
 
-    console.log(logger);
-
     // adds metadata to every log under this request
+    const logger = await getLogger();
     req.logger = logger.child(baseMeta);
 
     // helpers to log events with the request's logger

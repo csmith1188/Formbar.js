@@ -1,4 +1,4 @@
-const { logger } = require("@modules/logger");
+const { getLogger, logEvent } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
@@ -13,6 +13,7 @@ const blacklistedIps = {};
 
 // Removes expired refresh tokens and authorization codes from the database
 async function cleanRefreshTokens() {
+    const logger = await getLogger();
     try {
         const refreshTokens = await dbGetAll("SELECT * FROM refresh_tokens");
         for (const refreshToken of refreshTokens) {
@@ -23,7 +24,7 @@ async function cleanRefreshTokens() {
         // Also clean up expired authorization codes
         await cleanupExpiredAuthorizationCodes();
     } catch (err) {
-        logger.log("error", err.stack);
+        logEvent(logger, "error", "auth.cleanup.error", "Error cleaning refresh tokens", { error: err.message, stack: err.stack });
     }
 }
 
@@ -102,13 +103,14 @@ function isVerified(req, res, next) {
 }
 
 // Check if user has the permission levels to enter that page
-function permCheck(req, res, next) {
+async function permCheck(req, res, next) {
+    const logger = await getLogger();
     const email = req.user?.email;
     if (!email) {
         throw new AuthError("User is not authenticated");
     }
 
-    logger.log("info", `[permCheck] ip=(${req.ip}) user=(${email}) url=(${req.url})`);
+    logEvent(logger, "info", "auth.permission.check", "Checking page permissions", { email, url: req.url });
 
     if (req.url) {
         // Defines users desired endpoint
@@ -132,9 +134,9 @@ function permCheck(req, res, next) {
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
 
-        logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
+        logEvent(logger, "verbose", "auth.permission.path", "Resolved URL path", { urlPath });
         if (!PAGE_PERMISSIONS[urlPath]) {
-            logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
+            logEvent(logger, "info", "auth.permission.not_found", "URL path not in page permissions", { urlPath });
             throw new NotFoundError(`${urlPath} is not in the page permissions`);
         }
 
@@ -149,7 +151,7 @@ function permCheck(req, res, next) {
         } else if (!PAGE_PERMISSIONS[urlPath].classPage && user.permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
-            logger.log("info", "[permCheck] Not enough permissions");
+            logEvent(logger, "info", "auth.permission.denied", "Insufficient permissions", { urlPath, userPermissions: user.permissions, requiredPermissions: PAGE_PERMISSIONS[urlPath].permissions });
             throw new ForbiddenError("You do not have permissions to access this page.");
         }
     }

@@ -13,35 +13,32 @@ module.exports = {
             try {
                 let { api, authorization } = socket.request.headers;
 
-<<<<<<< HEAD
-=======
-                req.log(
+                logger.log(
                     "info",
                     `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) authorization=(${authorization ? "present" : "missing"}) event=(${event})`
                 );
 
->>>>>>> upstream/DEV
                 if (socket.request.session.email) {
                     next();
                 } else if (authorization) {
                     // Try to authenticate using access token (JWT)
                     const decodedToken = authService.verifyToken(authorization);
                     if (decodedToken.error) {
-                        req.log("verbose", "[socket authentication] Invalid access token");
+                        logger.log("verbose", "[socket authentication] Invalid access token");
                         next(new Error("Invalid access token"));
                         return;
                     }
 
                     const email = decodedToken.email;
                     if (!email) {
-                        req.log("verbose", "[socket authentication] Access token missing email");
+                        logger.log("verbose", "[socket authentication] Access token missing email");
                         next(new Error("Invalid access token - missing email"));
                         return;
                     }
 
                     const user = classInformation.users[email];
                     if (!user) {
-                        req.log("verbose", "[socket authentication] User not found in classInformation");
+                        logger.log("verbose", "[socket authentication] User not found in classInformation");
                         next(new Error("User not found"));
                         return;
                     }
@@ -87,12 +84,8 @@ module.exports = {
                 } else if (event == "reload") {
                     next();
                 } else {
-<<<<<<< HEAD
-                    next(new Error("Missing API key"));
-=======
-                    req.log("info", "[socket authentication] Missing email, api, or authorization");
+                    logger.log("info", "[socket authentication] Missing email, api, or authorization");
                     next(new Error("Missing authentication credentials"));
->>>>>>> upstream/DEV
                 }
             } catch (err) {
             }

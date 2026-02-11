@@ -63,12 +63,11 @@ module.exports = (router) => {
         let classId = req.params.id;
 
         // Log the request details
-        req.infoEvent("class.polls.view", `Viewing class polls`, { user: req.user?.email, ip: req.ip, classId });
+        req.infoEvent("class.polls.view", "Viewing class polls", { classId });
 
         // If the class does not exist, return an error
         if (!classInformation.classrooms[classId]) {
-            req.infoEvent("class.polls.not_started", `Class not started`, { classId });
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "class.polls.not_started", reason: "class_not_loaded" });
         }
 
         // Get the user from the session
@@ -76,8 +75,7 @@ module.exports = (router) => {
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {
-            req.infoEvent("class.polls.not_in_class", `User not logged into class`, { user: user.email, classId });
-            throw new ForbiddenError("User is not logged into the selected class");
+            throw new ForbiddenError("User is not logged into the selected class", { event: "class.polls.not_in_class", reason: "user_not_in_class" });
         }
 
         // Get a clone of the class data and the poll responses in the class
@@ -85,8 +83,7 @@ module.exports = (router) => {
 
         // If the class does not exist, return an error
         if (!classData) {
-            req.infoEvent("class.polls.not_started", `Class not started`, { classId });
-            throw new NotFoundError("Class not started");
+            throw new NotFoundError("Class not started", { event: "class.polls.not_started", reason: "class_not_loaded" });
         }
 
         // Update the class data with the poll status, the total number of students, and the poll data
@@ -97,7 +94,7 @@ module.exports = (router) => {
         };
 
         // Log the poll data
-        req.infoEvent("class.polls.data_sent", `Poll data sent to client`, { classId, user: req.user?.email, pollStatus: classData.poll.status });
+        req.infoEvent("class.polls.data_sent", "Poll data sent to client", { classId, pollStatus: classData.poll.status });
 
         // Send the poll data as a JSON response
         res.status(200).json({

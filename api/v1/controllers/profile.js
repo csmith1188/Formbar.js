@@ -1,5 +1,4 @@
 const { isVerified, permCheck, isAuthenticated } = require("@middleware/authentication");
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getUserData } = require("@services/user-service");
@@ -65,7 +64,7 @@ module.exports = (router) => {
      */
     router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        req.infoEvent("profile.transactions.view", `Viewing transactions`, { user: req.user?.email, ip: req.ip, targetUserId: req.params.userId });
+        req.infoEvent("profile.transactions.view", "Viewing transactions", { targetUserId: req.params.userId });
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
         const userId = req.params.userId || req.user.userId;
@@ -75,8 +74,7 @@ module.exports = (router) => {
 
         const userData = await getUserData(userId);
         if (!userData) {
-            req.warnEvent("profile.user_not_found", `User not found: userId=${userId}`, { userId });
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         const userDisplayName = userData.displayName || "Unknown User";
@@ -181,8 +179,7 @@ module.exports = (router) => {
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            req.warnEvent("profile.incomplete_data", `Incomplete user data retrieved from database: userId=${userId}, fields missing`, { userId });
-            throw new AppError("Unable to retrieve profile information. Please try again.");
+            throw new AppError("Unable to retrieve profile information. Please try again.", { event: "profile.incomplete_data", reason: "missing_required_fields" });
         }
 
         // Determine if the email should be visible then render the page

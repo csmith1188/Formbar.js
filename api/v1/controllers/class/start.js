@@ -54,7 +54,11 @@ module.exports = (router) => {
      */
     router.post("/class/:id/start", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.start.attempt", "Starting class session", { classId });
+        
         await startClass(classId);
+        
+        req.infoEvent("class.start.success", "Class session started successfully", { classId });
         return res.json({
             success: true,
             data: {},

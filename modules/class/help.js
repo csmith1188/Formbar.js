@@ -27,7 +27,7 @@ function sendHelpTicket(reason, userSession) {
         emitToUser(email, "helpSuccess");
         advancedEmitToClass("helpSound", classId, {});
 
-        req.log("verbose", `[help] user=(${JSON.stringify(student)}`);
+        logger.log("verbose", `[help] user=(${JSON.stringify(student)}`);
 
         userUpdateSocket(email, "classUpdate", classId);
         return true;
@@ -40,8 +40,8 @@ async function deleteHelpTicket(studentId, userData) {
         const classId = userData.classId;
         const email = userData.email;
         const studentEmail = await getEmailFromId(studentId);
-        req.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
-        req.log("info", `[deleteTicket] student=(${studentEmail})`);
+        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
+        logger.log("info", `[deleteTicket] student=(${studentEmail})`);
 
         // Set the student's help ticket to false, indicating that they are no longer requesting help
         classInformation.classrooms[classId].students[studentEmail].help = false;

@@ -1,5 +1,4 @@
 const { getAllLogs, getLog } = require("@services/log-service");
-const { logger } = require("@modules/logger");
 const { hasPermission } = require("@middleware/permission-check");
 const { isAuthenticated } = require("@middleware/authentication");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
@@ -37,7 +36,7 @@ module.exports = (router) => {
      */
     // Handle displaying all logs to the manager
     router.get("/logs", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        req.infoEvent("logs.view_all", `Viewing all logs`, { user: req.user?.email, ip: req.ip });
+        req.infoEvent("logs.view_all", "Viewing all logs");
         const logs = await getAllLogs();
         res.json({
             success: true,
@@ -86,7 +85,7 @@ module.exports = (router) => {
     // Handle displaying a specific log to the manager
     router.get("/logs/:log", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const logFileName = req.params.log;
-        req.infoEvent("logs.view_single", `Viewing log: ${logFileName}`, { user: req.user?.email, ip: req.ip, logFileName });
+        req.infoEvent("logs.view_single", "Viewing log file", { logFileName });
         const text = await getLog(logFileName);
         res.json({
             success: true,

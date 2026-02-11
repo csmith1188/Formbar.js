@@ -1,5 +1,5 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
-const { logger } = require("@modules/logger");
+const { getLogger, logEvent } = require("@modules/logger");
 const { advancedEmitToClass, userSockets, setClassOfApiSockets, setClassOfUserSockets, userUpdateSocket } = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const {

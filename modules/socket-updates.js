@@ -121,11 +121,11 @@ async function setClassOfApiSockets(api, classId) {
  */
 async function setClassOfUserSockets(email, classId) {
     try {
-        req.log("verbose", `[setClassOfUserSockets] email=(${email}) classId=(${classId})`);
+        logger.log("verbose", `[setClassOfUserSockets] email=(${email}) classId=(${classId})`);
 
         // Check if user has any sockets
         if (!userSockets[email]) {
-            req.log("verbose", `[setClassOfUserSockets] No sockets found for user ${email}`);
+            logger.log("verbose", `[setClassOfUserSockets] No sockets found for user ${email}`);
             return;
         }
 
@@ -153,9 +153,9 @@ async function setClassOfUserSockets(email, classId) {
             socket.emit("setClass", classId);
         }
 
-        req.log("verbose", `[setClassOfUserSockets] Updated ${Object.keys(userSockets[email]).length} socket(s) for user ${email}`);
+        logger.log("verbose", `[setClassOfUserSockets] Updated ${Object.keys(userSockets[email]).length} socket(s) for user ${email}`);
     } catch (err) {
-        req.log("error", err.stack);
+        logger.log("error", err.stack);
     }
 }
 

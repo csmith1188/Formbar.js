@@ -17,7 +17,7 @@ if (!fs.existsSync("database/database.db")) {
 }
 
 // Custom modules
-const { logger } = require("@modules/logger.js");
+const { getLogger } = require("@modules/logger.js");
 const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http } = require("@modules/web-server.js");
 const { settings } = require("@modules/config.js");
@@ -36,13 +36,14 @@ const sessionMiddleware = session({
 });
 
 const errorHandlerMiddleware = require("@middleware/error-handler");
+const requestLoggerMiddleware = require("@middleware/request-logger");
 
 // Connect rate limiter middleware
 app.use(rateLimiter);
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
-
+app.use(requestLoggerMiddleware);
 // Initialize passport for Google OAuth
 app.use(passport.initialize());
 app.use(passport.session());

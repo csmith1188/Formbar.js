@@ -64,7 +64,6 @@ module.exports = (router) => {
 
         const result = await authService.refreshLogin(token);
         if (result.code) {
-            req.infoEvent("auth.refresh.failed", "Invalid refresh token", { reason: "invalid_token" });
             throw new AuthError(result, { event: "auth.refresh.failed", reason: "invalid_token" });
         }
 

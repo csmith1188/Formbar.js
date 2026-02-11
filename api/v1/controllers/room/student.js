@@ -1,6 +1,5 @@
 const { isAuthenticated, permCheck } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
 const AuthError = require("@errors/auth-error");
 
 module.exports = {
@@ -28,8 +27,8 @@ module.exports = {
             };
             let answer = req.query.letter;
 
-            req.infoEvent("student.page.view", `Student page accessed`, { user: req.user?.email, ip: req.ip, classId });
-            req.infoEvent("student.question.view", `Student viewing question`, { user: req.user?.email, questionId: req.query.question, answer: req.query.letter });
+            req.infoEvent("student.page.view", "Student page accessed", { classId });
+            req.infoEvent("student.question.view", "Student viewing question", { questionId: req.query.question, answer: req.query.letter });
 
             if (answer) {
                 classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes = answer;
@@ -96,8 +95,8 @@ module.exports = {
         It'll save your response to the student object and the database.
         */
         router.post("/student", isAuthenticated, permCheck, (req, res) => {
-            req.infoEvent("student.poll.submit", `Student submitting poll response`, { user: req.user?.email, ip: req.ip });
-            req.infoEvent("student.poll.data", `Poll submission data`, { user: req.user?.email, pollId: req.query.poll, questionId: req.body.question });
+            req.infoEvent("student.poll.submit", "Student submitting poll response");
+            req.infoEvent("student.poll.data", "Poll submission data", { pollId: req.query.poll, questionId: req.body.question });
             const email = req.user.email;
             const userData = classInformation.users[email];
             const classId = userData && userData.activeClass != null ? userData.activeClass : req.user.classId;

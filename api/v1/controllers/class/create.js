@@ -1,8 +1,8 @@
-const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { hasPermission } = require("@middleware/permission-check");
 const { isAuthenticated } = require("@middleware/authentication");
 const classService = require("@services/class-service");
+const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
     /**
@@ -78,33 +78,29 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/class/create", isAuthenticated, hasPermission(TEACHER_PERMISSIONS), async (req, res) => {
-        try {
-            const { name } = req.body;
-            if (!name) {
-                return res.status(400).json({ error: "Class name is required" });
-            }
-
-            const { valid, error } = classService.validateClassroomName(name);
-            if (!valid) {
-                return res.status(400).json({ error });
-            }
-
-            const { userId, email: userEmail } = req.user;
-            req.infoEvent("class.create.attempt", `Attempting to create class`, { user: req.user?.email, ip: req.ip, className: name });
-            req.infoEvent("class.create.details", `Class creation details`, { className: name, userId });
-
-            const result = await classService.createClass(name, userId, userEmail);
-
-            return res.status(200).json({
-                success: true,
-                data: {
-                    message: "Class created successfully",
-                    ...result,
-                },
-            });
-        } catch (err) {
-            req.warnEvent("class.create.error", `Error creating class`, { error: err.message, stack: err.stack });
-            res.status(500).json({ error: "There was a server error. Please try again." });
+        const { name } = req.body;
+        if (!name) {
+            throw new ValidationError("Class name is required", { event: "class.create.failed", reason: "missing_name" });
         }
+
+        const { valid, error } = classService.validateClassroomName(name);
+        if (!valid) {
+            throw new ValidationError(error, { event: "class.create.failed", reason: "invalid_name" });
+        }
+
+        const { userId, email: userEmail } = req.user;
+        req.infoEvent("class.create.attempt", "Attempting to create class", { className: name, userId });
+
+        const result = await classService.createClass(name, userId, userEmail);
+        
+        req.infoEvent("class.create.success", "Class created successfully", { classId: result.classId, className: name, userId });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                message: "Class created successfully",
+                ...result,
+            },
+        });
     });
 };

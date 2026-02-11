@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const { settings } = require("@modules/config");
@@ -70,25 +69,22 @@ module.exports = (router) => {
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {
             if (err) {
-                req.warnEvent("auth.google.error", `Passport error: ${err.message || err}`, { error: err.message || err });
-                throw new ValidationError("Authentication failed.");
+                throw new ValidationError("Authentication failed.", { event: "auth.google.error", reason: "passport_error" });
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                req.warnEvent("auth.google.no_email", "No email found in Google profile");
-                throw new ValidationError("Could not retrieve email from Google account.");
+                throw new ValidationError("Could not retrieve email from Google account.", { event: "auth.google.no_email", reason: "email_not_found" });
             }
 
             const email = user.emails[0].value;
             const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
-            req.infoEvent("auth.google.callback", `Google OAuth callback: ${email}`, { email, ip: req.ip });
+            req.infoEvent("auth.google.callback", "Google OAuth callback", { email });
 
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);
             if (result.error) {
-                req.warnEvent("auth.google.oauth_error", result.error, { email });
-                throw new ValidationError(result.error);
+                throw new ValidationError(result.error, { event: "auth.google.oauth_error", reason: "oauth_failed" });
             }
 
             // If not already logged in, create a new Student instance in classInformation

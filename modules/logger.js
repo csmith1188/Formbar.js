@@ -71,13 +71,18 @@ function logEvent(logger, level, event, message = "", meta = {}) {
 
 let logger;
 
-async function initLogger() {
-    logger = await createLogger();
-}
+// the singleton is a temporary solution hopefully.
+async function getLogger() {
+    if (!logger) {
+        logger = await createLogger();
+    }
 
-initLogger();
+    return logger;
+};
+
+
 
 module.exports = {
-    logger,
+    getLogger,
     logEvent
-};
+}

@@ -201,7 +201,7 @@ module.exports = {
                         // Verify the JWT access token
                         const decodedToken = verifyToken(authorization);
                         if (decodedToken.error) {
-                            req.log("verbose", "[socket authentication] invalid access token");
+                            logger.log("verbose", "[socket authentication] invalid access token");
                             throw "Invalid access token";
                         }
 
@@ -209,7 +209,7 @@ module.exports = {
                         const userId = decodedToken.id;
 
                         if (!email || !userId) {
-                            req.log("verbose", "[socket authentication] access token missing required fields");
+                            logger.log("verbose", "[socket authentication] access token missing required fields");
                             throw "Invalid access token: missing required fields";
                         }
 
@@ -219,7 +219,7 @@ module.exports = {
                                 if (err) throw err;
 
                                 if (!userData) {
-                                    req.log("verbose", "[socket authentication] user not found for access token");
+                                    logger.log("verbose", "[socket authentication] user not found for access token");
                                     throw "User not found";
                                 }
 

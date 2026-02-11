@@ -1,5 +1,4 @@
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { logger } = require("@modules/logger");
 const { getManagerData } = require("@services/manager-service");
 const { hasPermission } = require("@middleware/permission-check");
 const { isAuthenticated } = require("@middleware/authentication");
@@ -48,11 +47,12 @@ module.exports = (router) => {
      */
     router.get("/manager", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const user = req.user;
-        req.infoEvent("manager.view", `Manager dashboard accessed`, { user: req.user?.email, ip: req.ip });
-        req.infoEvent("manager.response", `Manager data retrieved`, { user: req.user?.email, userId: user.id });
+        req.infoEvent("manager.view", "Manager dashboard accessed");
 
         // Grab manager data and send it back as a JSON response
         const { users, classrooms } = await getManagerData();
+        
+        req.infoEvent("manager.data.retrieved", "Manager data retrieved", { userId: user.id });
         res.status(200).json({
             success: true,
             data: {

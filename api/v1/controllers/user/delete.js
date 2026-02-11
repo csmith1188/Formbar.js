@@ -7,14 +7,17 @@ const AppError = require("@errors/app-error");
 module.exports = (router) => {
     const deleteUserHandler = async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.delete.attempt", "Attempting to delete user", { userId });
+        
         const result = await deleteUser(userId);
         if (result === true) {
+            req.infoEvent("user.delete.success", "User deleted successfully", { userId });
             res.status(200).json({
                 success: true,
                 data: {},
             });
         } else {
-            throw new AppError(result);
+            throw new AppError(result, { event: "user.delete.failed", reason: "deletion_error" });
         }
     };
 

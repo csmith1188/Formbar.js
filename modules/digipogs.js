@@ -97,7 +97,7 @@ function checkRateLimit(accountId) {
     }
 
     // Log current failure count for debugging
-    req.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
+    logger.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
 
     return { allowed: true };
 }
@@ -320,9 +320,9 @@ async function transferDigipogs(transferData) {
             try {
                 await dbRun("ROLLBACK");
             } catch (rollbackErr) {
-                req.log("error", rollbackErr.stack || rollbackErr);
+                logger.log("error", rollbackErr.stack || rollbackErr);
             }
-            req.log("error", err.stack || err);
+            logger.log("error", err.stack || err);
             recordAttempt(accountId, false);
             return { success: false, message: "Transfer failed due to database error." };
         }
@@ -339,7 +339,7 @@ async function transferDigipogs(transferData) {
                 Date.now(),
             ]);
         } catch (err) {
-            req.log("error", err.stack || err);
+            logger.log("error", err.stack || err);
             // Don't fail the transfer if logging fails
         }
 
