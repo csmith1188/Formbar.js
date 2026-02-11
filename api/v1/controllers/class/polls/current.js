@@ -1,10 +1,10 @@
 const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
-const NotFoundError = require("@errors/not-found-error");
-const ForbiddenError = require("@errors/forbidden-error");
 const { dbGet } = require("@modules/database");
 const { requireQueryParam } = require("@modules/error-wrapper");
 const { isAuthenticated } = require("@modules/middleware/authentication");
+const NotFoundError = require("@errors/not-found-error");
+const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
     /**

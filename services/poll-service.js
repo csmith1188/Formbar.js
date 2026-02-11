@@ -303,7 +303,7 @@ async function updatePoll(classId, options, userSession) {
  */
 function getPreviousPolls(classId, index = 0, limit = 20) {
     requireInternalParam(classId, "classId");
-    return dbGetAll("SELECT * FROM poll_history WHERE class = ? ORDER BY id DESC LIMIT ?, ?", [classId, index, limit]);
+    return dbGetAll("SELECT * FROM poll_history WHERE class = ? ORDER BY id ASC LIMIT ?, ?", [classId, index, limit]);
 }
 
 /**
