@@ -39,8 +39,8 @@ module.exports = {
 
                         // If the user exists, set the user in the session
                         if (user) {
-                            req.session.user = user;
-                            req.session.email = user.email;
+                            req.user = user;
+                            req.user.email = user.email;
                         }
 
                         // Call the next middleware function
@@ -48,10 +48,10 @@ module.exports = {
                     }
 
                     // If no API key is provided, then check if session user exists
-                    if (req.session && req.session.email) {
+                    if (req.user && req.user.email) {
                         // If session has email but not user object, fetch it
-                        if (!req.session.user) {
-                            let user = await getUser({ email: req.session.email });
+                        if (!req.user) {
+                            let user = await getUser({ email: req.user.email });
 
                             // If the user is an instance of Error
                             if (user instanceof Error) {
@@ -66,7 +66,7 @@ module.exports = {
                             }
 
                             // Set the user in the session
-                            req.session.user = user;
+                            req.user = user;
                         }
                         return next();
                     }
@@ -85,8 +85,8 @@ module.exports = {
                     return next();
                 }
 
-                const permissions = req.session.user.permissions;
-                const classPermissions = req.session.user.classPermissions;
+                const permissions = req.user.permissions;
+                const classPermissions = req.user.classPermissions;
                 let urlPath = req.url;
 
                 // If no URL is provided, return

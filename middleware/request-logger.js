@@ -14,10 +14,13 @@ async function requestLogger(req, res, next) {
         ip: req.ip
     }
 
+    console.log(req.user);
+
     // Add user info if available
-    if (req.session?.user) {
-        baseMeta.userId = req.session.user.id;
-        baseMeta.username = req.session.user.username;
+    if (req.user && req.user.id) {
+        baseMeta.userId = req.user.id;
+        baseMeta.email = req.user.email;
+        baseMeta.displayName = req.user.displayName;
     }
 
     // adds metadata to every log under this request

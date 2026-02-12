@@ -107,11 +107,11 @@ module.exports = {
                             }
                         });
                     });
-                } else if (req.session.userId) {
-                    database.get("SELECT * FROM users WHERE id=?", [req.session.userId], (err, userData) => {
+                } else if (req.user.id) {
+                    database.get("SELECT * FROM users WHERE id=?", [req.user.id], (err, userData) => {
                         if (err) throw err;
                         if (userData) {
-                            database.get("SELECT * FROM refresh_tokens WHERE user_id=?", [req.session.userId], async (err, refreshTokenData) => {
+                            database.get("SELECT * FROM refresh_tokens WHERE user_id=?", [req.user.id], async (err, refreshTokenData) => {
                                 if (err) throw err;
                                 if (refreshTokenData) {
                                     // Check if refresh token is past expiration date
@@ -119,8 +119,8 @@ module.exports = {
                                     const currentTime = Math.floor(Date.now() / 1000);
                                     if (decodedRefreshToken.exp < currentTime) {
                                         // Generate new refresh token
-                                        const refreshToken = generateRefreshToken(req.session.userId);
-                                        storeRefreshToken(req.session.userId, refreshToken);
+                                        const refreshToken = generateRefreshToken(req.user.id);
+                                        storeRefreshToken(req.user.id, refreshToken);
                                         return;
                                     }
 
@@ -132,7 +132,7 @@ module.exports = {
                                     res.redirect(`${redirectURL}${querySeparator}token=${accessToken}`);
                                 } else {
                                     const refreshToken = generateRefreshToken(userData);
-                                    storeRefreshToken(req.session.userId, refreshToken);
+                                    storeRefreshToken(req.user.id, refreshToken);
                                     // Invalid refresh token
                                     res.redirect(`/oauth?redirectURL=${redirectURL}`);
                                 }

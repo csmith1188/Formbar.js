@@ -12,8 +12,8 @@ module.exports = {
             try {
 
                 // Check if the user has permission to view these transactions (either their own or they are a manager)
-                const userId = req.params.userId || req.session.userId;
-                if (req.session.userId !== userId && req.session.permissions < MANAGER_PERMISSIONS) {
+                const userId = req.params.userId || req.user.id;
+                if (req.user.id !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
                     res.status(403).json({ error: "You do not have permission to view these transactions." });
                     return;
                 }
@@ -31,7 +31,7 @@ module.exports = {
                     res.status(200).json({
                         transactions: [],
                         displayName: userDisplayName,
-                        currentUserId: req.session.userId,
+                        currentUserId: req.user.id,
                     });
                     return;
                 }
@@ -43,7 +43,7 @@ module.exports = {
                 res.status(200).json({
                     transactions: transactions,
                     displayName: userDisplayName,
-                    currentUserId: req.session.userId,
+                    currentUserId: req.user.id,
                 });
             } catch (err) {
                 res.status(500).json({ error: `Error Number ${logNumbers.error}: There was a server error try again.` });
@@ -55,7 +55,7 @@ module.exports = {
             try {
 
                 // Check if userData is null or undefined
-                const userId = req.params.userId || req.session.userId;
+                const userId = req.params.userId || req.user.id;
                 const userData = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
                 if (!userData) {
                     return res.status(404).json({ error: "Please enter a valid user ID." });
@@ -68,8 +68,8 @@ module.exports = {
                 }
 
                 // Determine if the email should be visible then render the page
-                const emailVisible = req.session.userId == id || classInformation.users[req.session.email].permissions >= MANAGER_PERMISSIONS;
-                const isOwnProfile = req.session.userId === userId;
+                const emailVisible = req.user.id == id || classInformation.users[req.user.email].permissions >= MANAGER_PERMISSIONS;
+                const isOwnProfile = req.user.id === userId;
 
                 res.status(200).json({
                     displayName: displayName,

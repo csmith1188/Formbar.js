@@ -23,7 +23,7 @@ module.exports = {
                 async function makeClass(id, className, key, owner, permissions, sharedPolls = [], pollHistory = [], tags) {
                     try {
                         // Get the teachers session data ready to transport into new class
-                        const user = classInformation.users[req.session.email];
+                        const user = classInformation.users[req.user.email];
 
                         if (Object.keys(permissions).sort().toString() != Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
                             for (let permission of Object.keys(permissions)) {
@@ -53,15 +53,15 @@ module.exports = {
                         }
 
                         // Add the teacher to the newly created class
-                        classInformation.classrooms[id].students[req.session.email] = user;
-                        classInformation.classrooms[id].students[req.session.email].classPermissions = MANAGER_PERMISSIONS;
-                        classInformation.users[req.session.email].activeClass = id;
-                        classInformation.users[req.session.email].classPermissions = MANAGER_PERMISSIONS;
+                        classInformation.classrooms[id].students[req.user.email] = user;
+                        classInformation.classrooms[id].students[req.user.email].classPermissions = MANAGER_PERMISSIONS;
+                        classInformation.users[req.user.email].activeClass = id;
+                        classInformation.users[req.user.email].classPermissions = MANAGER_PERMISSIONS;
 
                         const classStudents = await getStudentsInClass(id);
                         for (const studentEmail in classStudents) {
                             // If the student is the teacher or already in the class, skip
-                            if (studentEmail == req.session.email) continue;
+                            if (studentEmail == req.user.email) continue;
                             if (classInformation.classrooms[id].students[studentEmail]) continue;
 
                             const student = classStudents[studentEmail];
@@ -80,7 +80,7 @@ module.exports = {
 
                             // Ensure 'Offline' is present exactly once at the front if the user
                             // is not the creator of the class.
-                            if (studentEmail !== req.session.email && !student.tags.includes("Offline")) {
+                            if (studentEmail !== req.user.email && !student.tags.includes("Offline")) {
                                 student.tags.unshift("Offline");
                             }
 
@@ -90,7 +90,7 @@ module.exports = {
                         }
 
                         // Add class into the session data
-                        req.session.classId = id;
+                        req.user.classId = id;
 
                         await setClassOfApiSockets(user.API, id);
                         return true;
@@ -108,14 +108,14 @@ module.exports = {
                     // Add classroom to the database
                     database.run(
                         "INSERT INTO classroom(name, owner, key, tags) VALUES(?, ?, ?, ?)",
-                        [className, req.session.userId, key, null],
+                        [className, req.user.id, key, null],
                         (err) => {
                             try {
                                 if (err) throw err;
 
                                 database.get(
                                     "SELECT id, name, key, tags FROM classroom WHERE name = ? AND owner = ?",
-                                    [className, req.session.userId],
+                                    [className, req.user.id],
                                     async (err, classroom) => {
                                         try {
                                             if (err) throw err;
@@ -145,7 +145,7 @@ module.exports = {
                                                 classroom.id,
                                                 classroom.name,
                                                 classroom.key,
-                                                req.session.userId,
+                                                req.user.id,
                                                 classroom.permissions,
                                                 [],
                                                 [],
@@ -153,9 +153,9 @@ module.exports = {
                                             );
 
                                             if (makeClassStatus instanceof Error) throw makeClassStatus;
-                                            if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
-                                                if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
-                                                    emitToUser(req.session.email, "reload", "/controlPanel");
+                                            if (classInformation.users[req.user.email].permissions >= TEACHER_PERMISSIONS) {
+                                                if (userSockets[req.user.email] && Object.keys(userSockets[req.user.email]).length > 0) {
+                                                    emitToUser(req.user.email, "reload", "/controlPanel");
                                                     return;
                                                 }
                                                 res.redirect("/controlPanel");
@@ -220,9 +220,9 @@ module.exports = {
                                     throw makeClassStatus;
                                 }
 
-                                if (classInformation.users[req.session.email].permissions >= TEACHER_PERMISSIONS) {
-                                    if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
-                                        emitToUser(req.session.email, "reload", "/controlPanel");
+                                if (classInformation.users[req.user.email].permissions >= TEACHER_PERMISSIONS) {
+                                    if (userSockets[req.user.email] && Object.keys(userSockets[req.user.email]).length > 0) {
+                                        emitToUser(req.user.email, "reload", "/controlPanel");
                                         return;
                                     }
                                     res.redirect("/controlPanel");

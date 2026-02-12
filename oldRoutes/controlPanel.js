@@ -10,9 +10,9 @@ module.exports = {
         // On render it will send all students in that class to the page
         app.get("/controlPanel", isAuthenticated, permCheck, isVerified, (req, res) => {
             try {
-                const email = req.session.email;
+                const email = req.user.email;
                 const user = classInformation.users[email];
-                const classId = user && user.activeClass != null ? user.activeClass : req.session.classId;
+                const classId = user && user.activeClass != null ? user.activeClass : req.user.classId;
                 const classroom = classInformation.classrooms[classId];
                 if (!classroom) {
                     return res.redirect("/selectClass");

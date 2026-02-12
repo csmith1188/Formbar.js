@@ -25,7 +25,7 @@ module.exports = {
                 }
 
                 // If the user is already logged in, redirect them to the home page
-                if (req.session.email !== undefined && classInformation.users[req.session.email]) {
+                if (req.user.email !== undefined && classInformation.users[req.user.email]) {
                     res.redirect("/");
                     return;
                 }
@@ -75,11 +75,11 @@ module.exports = {
                             false
                         );
                         // Add the user to the session in order to transfer data between each page
-                        req.session.userId = userData.id;
-                        req.session.email = userData.email;
-                        req.session.classId = null;
-                        req.session.displayName = userData.displayName;
-                        req.session.verified = 1;
+                        req.user.id = userData.id;
+                        req.user.email = userData.email;
+                        req.user.classId = null;
+                        req.user.displayName = userData.displayName;
+                        req.user.verified = 1;
 
                         // Delete any temp user creation data with the same email to prevent multiple accounts with the same email
                         const tempUsers = await dbGetAll("SELECT token FROM temp_user_creation_data");
@@ -245,7 +245,7 @@ module.exports = {
                                 }
 
                                 if (loggedIn) {
-                                    req.session.classId = classId;
+                                    req.user.classId = classId;
                                 } else {
                                     classInformation.users[userData.email] = new Student(
                                         userData.email,
@@ -259,15 +259,15 @@ module.exports = {
                                         false
                                     );
 
-                                    req.session.classId = null;
+                                    req.user.classId = null;
                                 }
 
                                 // Add a cookie to transfer user credentials across site
-                                req.session.userId = userData.id;
-                                req.session.email = userData.email;
-                                req.session.tags = userData.tags ? userData.tags.split(",") : [];
-                                req.session.displayName = userData.displayName;
-                                req.session.verified = userData.verified;
+                                req.user.id = userData.id;
+                                req.user.email = userData.email;
+                                req.user.tags = userData.tags ? userData.tags.split(",") : [];
+                                req.user.displayName = userData.displayName;
+                                req.user.verified = userData.verified;
                                 // Log the login post
 
                                 // If the user was logging in from the consent page, redirect them back to the consent page
@@ -374,11 +374,11 @@ module.exports = {
                                                 false
                                             );
                                             // Add the user to the session in order to transfer data between each page
-                                            req.session.userId = userData.id;
-                                            req.session.email = userData.email;
-                                            req.session.classId = null;
-                                            req.session.displayName = userData.displayName;
-                                            req.session.verified = 1;
+                                            req.user.id = userData.id;
+                                            req.user.email = userData.email;
+                                            req.user.classId = null;
+                                            req.user.displayName = userData.displayName;
+                                            req.user.verified = 1;
 
                                             managerUpdate();
 
@@ -479,14 +479,14 @@ module.exports = {
                     classInformation.users[student.email] = student;
 
                     // Set their current class to no class
-                    req.session.classId = null;
+                    req.user.classId = null;
 
                     // Add a cookie to transfer user credentials across site
-                    req.session.userId = student.id;
-                    req.session.email = student.email;
-                    req.session.tags = student.tags;
-                    req.session.displayName = student.displayName;
-                    req.session.verified = student.verified;
+                    req.user.id = student.id;
+                    req.user.email = student.email;
+                    req.user.tags = student.tags;
+                    req.user.displayName = student.displayName;
+                    req.user.verified = student.verified;
                     res.redirect("/");
                 }
             } catch (err) {

@@ -67,8 +67,8 @@ module.exports = (router) => {
         req.infoEvent("profile.transactions.view", "Viewing transactions", { targetUserId: req.params.userId });
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
-        const userId = req.params.userId || req.user.userId;
-        if (req.user.userId !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
+        const userId = req.params.userId || req.user.id;
+        if (req.user.id !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
             throw new ForbiddenError("You do not have permission to view these transactions.");
         }
 
@@ -89,7 +89,7 @@ module.exports = (router) => {
                 data: {
                     transactions: [],
                     displayName: userDisplayName,
-                    currentUserId: req.user.userId,
+                    currentUserId: req.user.id,
                 },
             });
             return;
@@ -100,7 +100,7 @@ module.exports = (router) => {
             data: {
                 transactions: transactions,
                 displayName: userDisplayName,
-                currentUserId: req.user.userId,
+                currentUserId: req.user.id,
             },
         });
     });
@@ -169,7 +169,7 @@ module.exports = (router) => {
             req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
 
         // Check if userData is null or undefined
-        const userId = req.params.userId || req.user.userId;
+        const userId = req.params.userId || req.user.id;
         const userData = await getUserData(userId);
         if (!userData) {
             throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
@@ -182,8 +182,8 @@ module.exports = (router) => {
         }
 
         // Determine if the email should be visible then render the page
-        const emailVisible = req.user.userId === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
-        const isOwnProfile = req.user.userId === userId;
+        const emailVisible = req.user.id === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
+        const isOwnProfile = req.user.id === userId;
 
         res.status(200).json({
             success: true,

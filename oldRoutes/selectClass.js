@@ -14,7 +14,7 @@ module.exports = {
                 // Get all classes the user is in then render the select class page
                 let joinedClasses = await dbGetAll(
                     "SELECT classroom.name, classroom.id, classUsers.permissions FROM users JOIN classusers ON users.id = classusers.studentId JOIN classroom ON classusers.classId = classroom.id WHERE users.email=?",
-                    [req.session.email]
+                    [req.user.email]
                 );
                 joinedClasses = joinedClasses.filter((classroom) => classroom.permissions !== 0);
                 res.render("pages/classes", {
@@ -40,7 +40,7 @@ module.exports = {
                     const userInClass = await new Promise((resolve, reject) => {
                         database.get(
                             "SELECT * FROM users JOIN classusers ON users.id = classusers.studentId WHERE users.email=? AND classusers.classId=?",
-                            [req.session.email, classId],
+                            [req.user.email, classId],
                             (err, user) => {
                                 try {
                                     if (err) {
@@ -92,7 +92,7 @@ module.exports = {
                     });
                 }
 
-                const classJoinStatus = await joinRoomByCode(classCode, req.session);
+                const classJoinStatus = await joinRoomByCode(classCode, req.user);
                 if (typeof classJoinStatus == "string") {
                     res.render("pages/message", {
                         message: `Error: ${classJoinStatus}`,
@@ -124,13 +124,13 @@ module.exports = {
                             }
                         });
                     });
-                    req.session.classId = classId;
+                    req.user.classId = classId;
                 }
 
-                // userSocketUpdates[req.session.email].classUpdate();
-                setClassOfApiSockets(classInformation.users[req.session.email].API, classId);
-                if (userSockets[req.session.email] && Object.keys(userSockets[req.session.email]).length > 0) {
-                    emitToUser(req.session.email, "reload");
+                // userSocketUpdates[req.user.email].classUpdate();
+                setClassOfApiSockets(classInformation.users[req.user.email].API, classId);
+                if (userSockets[req.user.email] && Object.keys(userSockets[req.user.email]).length > 0) {
+                    emitToUser(req.user.email, "reload");
                 }
                 res.redirect("/");
             } catch (err) {

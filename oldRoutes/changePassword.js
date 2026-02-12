@@ -21,8 +21,8 @@ module.exports = {
 
                 // Set session email so that it can be used when changing the password
                 // After that, get their token from the database
-                req.session.email = req.query.email;
-                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [req.session.email]);
+                req.user.email = req.query.email;
+                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [req.user.email]);
                 let token;
                 if (userData) {
                     token = userData.secret;
@@ -47,7 +47,7 @@ module.exports = {
 
         app.post("/changepassword", async (req, res) => {
             try {
-                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [req.session.email || req.body.email]);
+                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [req.user.email || req.body.email]);
                 if (!userData) {
                     return res.render("pages/message", {
                         message: "No user found with that email.",
@@ -75,11 +75,11 @@ module.exports = {
                         message: "Passwords do not match",
                         title: "Error",
                     });
-                } else if (req.session.email) {
+                } else if (req.user.email) {
                     // If the email is in the session, change the password
                     const hashedPassword = await hash(req.body.newPassword);
-                    await dbRun("UPDATE users SET password = ? WHERE email = ?", [hashedPassword, req.session.email]);
-                    console.log(`[${req.session.email}]: Password changed`);
+                    await dbRun("UPDATE users SET password = ? WHERE email = ?", [hashedPassword, req.user.email]);
+                    console.log(`[${req.user.email}]: Password changed`);
                     res.redirect("/");
                 }
             } catch (err) {

@@ -43,7 +43,7 @@ module.exports = {
          */
         // Handle displaying the pools management page
         router.get("/user/pools", isAuthenticated, isVerified, permCheck, async (req, res) => {
-            const userId = req.user.userId;
+            const userId = req.user.id;
             req.infoEvent("user.pools.view.attempt", "Attempting to view user pools");
 
             // Get all pools for this user using the new schema helper
