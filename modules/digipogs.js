@@ -175,7 +175,7 @@ async function awardDigipogs(awardData, user) {
             // Fetch class info and check sender permissions
             const classInfo = await dbGet("SELECT c.id, c.owner FROM classroom c WHERE c.id = ?",[to.id]);
             if (!classInfo) {
-                recordAttempt(accountId, false)
+                recordAttempt(accountId, false);
                 return { success: false, message: "Recipient class not found." };
             }
             
@@ -205,7 +205,7 @@ async function awardDigipogs(awardData, user) {
             );
         } else if (to.type === 'pool') {
             if (!to.id) {
-                recordAttempt(accountId, false)
+                recordAttempt(accountId, false);
                 return { success: false, message: "Missing pool identifier." };
             }
             if (fromUser.permissions < TEACHER_PERMISSIONS) {
