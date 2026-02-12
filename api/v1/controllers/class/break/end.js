@@ -62,6 +62,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/break/end", isAuthenticated, httpPermCheck("endBreak"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.break.end.attempt", "Attempting to end class break", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to end this user's break.");
@@ -70,6 +71,7 @@ module.exports = (router) => {
         const userData = { ...req.user, classId };
         const result = endBreak(userData);
         if (result === true) {
+            req.infoEvent("class.break.end.success", "Class break ended", { classId });
             res.status(200).json({
                 success: true,
                 data: {},

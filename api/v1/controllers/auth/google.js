@@ -79,7 +79,7 @@ module.exports = (router) => {
             const email = user.emails[0].value;
             const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
-            req.infoEvent("auth.google.callback", "Google OAuth callback", { email });
+            req.infoEvent("auth.google.callback", "Google OAuth callback");
 
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);

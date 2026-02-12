@@ -70,7 +70,7 @@ module.exports = (router) => {
             throw new ValidationError("Email and password are required.");
         }
 
-        req.infoEvent("auth.login.attempt", "User login attempt", { email });
+        req.infoEvent("auth.login.attempt", "User login attempt");
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
@@ -94,7 +94,7 @@ module.exports = (router) => {
             );
         }
 
-        req.infoEvent("auth.login.success", "User logged in successfully", { userId: userData.id, email });
+        req.infoEvent("auth.login.success", "User logged in successfully");
 
         res.json({
             success: true,

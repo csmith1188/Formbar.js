@@ -43,6 +43,7 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.get("/class/:id/links", isAuthenticated, permCheck, isVerified, async (req, res) => {
+        req.infoEvent("class.links.view.attempt", "Attempting to view class links", { classId: req.params.id });
         if (!req.params.id) {
             throw new ValidationError("Missing id parameter");
         }
@@ -58,6 +59,7 @@ module.exports = (router) => {
 
         const links = await getClassLinks(classId);
 
+        req.infoEvent("class.links.view.success", "Class links returned", { classId, linkCount: links.length });
         res.send({
             success: true,
             data: {

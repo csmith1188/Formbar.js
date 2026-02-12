@@ -35,7 +35,7 @@ module.exports = (router) => {
         ]);
         await dbRun("DELETE FROM temp_user_creation_data WHERE secret=?", [tempUser.newSecret]);
         
-        req.infoEvent("user.verify.success", "User verified successfully", { email: tempUser.email });
+        req.infoEvent("user.verify.success", "User verified successfully");
         res.status(200).json({
             success: true,
             data: {

@@ -61,6 +61,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/leave", isAuthenticated, httpPermCheck("leaveClass"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.leave.attempt", "Attempting to leave class", { classId });
 
         // Validate that classId is provided
         if (!classId) {
@@ -72,6 +73,7 @@ module.exports = (router) => {
             throw new ForbiddenError("Unauthorized");
         }
 
+        req.infoEvent("class.leave.success", "Class left successfully", { classId });
         res.status(200).json({
             success: true,
             data: {},

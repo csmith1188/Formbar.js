@@ -9,7 +9,7 @@ const NotFoundError = require("@errors/not-found-error");
 module.exports = (router) => {
     const banUserHandler = async (req, res) => {
         const userId = req.params.id;
-        req.infoEvent("user.ban.attempt", "Attempting to ban user", { userId });
+        req.infoEvent("user.ban.attempt", "Attempting to ban user");
         
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
@@ -23,7 +23,7 @@ module.exports = (router) => {
 
         await managerUpdate();
         
-        req.infoEvent("user.ban.success", "User banned successfully", { userId, userEmail: user.email });
+        req.infoEvent("user.ban.success", "User banned successfully", { });
         res.status(200).json({
             success: true,
             data: {
@@ -34,7 +34,7 @@ module.exports = (router) => {
 
     const unbanUserHandler = async (req, res) => {
         const userId = req.params.id;
-        req.infoEvent("user.unban.attempt", "Attempting to unban user", { userId });
+        req.infoEvent("user.unban.attempt", "Attempting to unban user");
         
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
@@ -48,7 +48,7 @@ module.exports = (router) => {
 
         await managerUpdate();
         
-        req.infoEvent("user.unban.success", "User unbanned successfully", { userId, userEmail: user.email });
+        req.infoEvent("user.unban.success", "User unbanned successfully", { });
         res.status(200).json({
             success: true,
             data: {

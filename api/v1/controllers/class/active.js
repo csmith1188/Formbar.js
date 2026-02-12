@@ -59,12 +59,14 @@ module.exports = (router) => {
      */
     router.get("/class/:id/active", isAuthenticated, httpPermCheck("isClassActive"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.active.view.attempt", "Attempting to view class active status", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to view the status of this class.");
         }
 
         const isActive = isClassActive(classId);
+        req.infoEvent("class.active.view.success", "Class active status returned", { classId, isActive });
         res.status(200).json({
             success: true,
             data: {

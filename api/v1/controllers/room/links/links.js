@@ -47,9 +47,11 @@ module.exports = (router) => {
      */
     router.get("/room/:id/links", isAuthenticated, hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("room.links.view.attempt", "Attempting to view room links", { classId });
         const links = await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 
         if (links) {
+            req.infoEvent("room.links.view.success", "Room links returned", { classId, linkCount: links.length });
             res.status(200).json({
                 success: true,
                 data: links,

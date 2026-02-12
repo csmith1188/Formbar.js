@@ -6,9 +6,13 @@ const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const deleteHelpHandler = async (req, res) => {
+        const classId = req.params.id;
+        const targetUserId = req.params.userId;
+        req.infoEvent("class.help.delete.attempt", "Attempting to delete class help request", { classId, targetUserId });
         const userData = { ...req.user, classId: req.params.id };
-        const result = await deleteHelpTicket(req.params.userId, userData);
+        const result = await deleteHelpTicket(targetUserId, userData);
         if (result === true) {
+            req.infoEvent("class.help.delete.success", "Class help request deleted", { classId, targetUserId });
             res.status(200).json({
                 success: true,
                 data: {},

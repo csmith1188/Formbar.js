@@ -146,10 +146,10 @@ module.exports = (router) => {
             throw new AppError("Email service is not enabled. Password resets are not available at this time.", { statusCode: 503, event: "user.password.reset.request.failed", reason: "email_disabled" });
         }
 
-        req.infoEvent("user.password.reset.request", "Password reset requested", { email });
+        req.infoEvent("user.password.reset.request", "Password reset requested");
         await userService.requestPasswordReset(email);
         
-        req.infoEvent("user.password.reset.request.success", "Password reset email sent", { email });
+        req.infoEvent("user.password.reset.request.success", "Password reset email sent");
 
         res.status(200).json({
             success: true,

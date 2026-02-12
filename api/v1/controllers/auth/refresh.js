@@ -58,6 +58,7 @@ module.exports = (router) => {
      */
     router.post("/auth/refresh", async (req, res) => {
         const { token } = req.body;
+        req.infoEvent("auth.refresh.attempt", "Attempting to refresh auth token");
         if (!token) {
             throw new ValidationError("A refresh token is required.", { event: "auth.refresh.failed", reason: "missing_token" });
         }
@@ -67,6 +68,7 @@ module.exports = (router) => {
             throw new AuthError(result, { event: "auth.refresh.failed", reason: "invalid_token" });
         }
 
+        req.infoEvent("auth.refresh.success", "Auth token refreshed successfully");
         res.status(200).json({
             success: true,
             data: {

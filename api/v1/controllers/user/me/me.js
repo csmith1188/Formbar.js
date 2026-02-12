@@ -29,7 +29,7 @@ module.exports = (router) => {
      */
     // Gets the current user's information
     router.get("/user/me", isAuthenticated, async (req, res) => {
-        req.infoEvent("user.me.view", "User viewing own data", { userId: req.user.id });
+        req.infoEvent("user.me.view", "User viewing own data");
 
         const { digipogs } = await dbGet("SELECT digipogs FROM users WHERE id = ?", [req.user.id]);
         res.status(200).json({

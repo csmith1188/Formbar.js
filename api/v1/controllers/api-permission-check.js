@@ -7,6 +7,7 @@ module.exports = (router) => {
     // Used for checking class permissions such as the ability to use games and auxiliary
     router.get("/apiPermissionCheck", async (req, res) => {
         let { api, permissionType, classId } = req.query;
+        req.infoEvent("api.permission.check.attempt", "Attempting API permission check", { permissionType, classId });
 
         let permissionTypes = {
             games: null,
@@ -52,6 +53,7 @@ module.exports = (router) => {
             throw new ForbiddenError("User does not have enough permissions.", { event: "api.permission.check.failed", reason: "insufficient_permissions" });
         }
 
+        req.infoEvent("api.permission.check.success", "API permission check passed", { permissionType, classId });
         res.status(200).json({ allowed: true });
     });
 };

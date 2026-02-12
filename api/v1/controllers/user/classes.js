@@ -61,6 +61,7 @@ module.exports = (router) => {
      */
     router.get("/user/:id/classes", isAuthenticated, httpPermCheck("getOwnedClasses"), async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.classes.view.attempt", "Attempting to view user classes", { targetUserId: userId });
         const user = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
         if (!user) {
             throw new NotFoundError("User not found");
@@ -104,6 +105,7 @@ module.exports = (router) => {
         // Convert map to array
         const allClasses = Array.from(classesMap.values());
 
+        req.infoEvent("user.classes.view.success", "User classes returned", { targetUserId: userId, classCount: allClasses.length });
         res.status(200).json({
             success: true,
             data: allClasses,

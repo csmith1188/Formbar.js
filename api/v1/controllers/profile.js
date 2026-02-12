@@ -82,7 +82,7 @@ module.exports = (router) => {
 
         // Handle case where no transactions are found
         if (!transactions || transactions.length === 0) {
-            req.infoEvent("profile.transactions.empty", "No transactions found for user", { userId });
+            req.infoEvent("profile.transactions.empty", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
                 success: true,
@@ -166,14 +166,13 @@ module.exports = (router) => {
      */
     router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        req.infoEvent("profile.view", `Viewing profile`, { user: req.user?.email, ip: req.ip, targetUserId: req.params.userId });
+            req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
 
         // Check if userData is null or undefined
         const userId = req.params.userId || req.user.userId;
         const userData = await getUserData(userId);
         if (!userData) {
-            req.warnEvent("profile.user_not_found", `User not found in database: userId=${userId}`, { userId });
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         // Destructure userData and validate required fields

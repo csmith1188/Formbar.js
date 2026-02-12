@@ -68,12 +68,14 @@ module.exports = (router) => {
     // List IPs
     router.get("/ip/:type", isAuthenticated, isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const ipMode = req.params.type;
+        req.infoEvent("ip.list.view.attempt", "Attempting to view IP access list", { listType: ipMode });
         if (ipMode !== "whitelist" && ipMode !== "blacklist") {
             throw new ValidationError("Invalid type");
         }
 
         const isWhitelist = ipMode === "whitelist" ? 1 : 0;
         const rows = await dbGetAll(`SELECT id, ip FROM ip_access_list WHERE is_whitelist = ?`, [isWhitelist]);
+        req.infoEvent("ip.list.view.success", "IP access list returned", { listType: ipMode, count: (rows || []).length });
         res.status(200).json({
             success: true,
             data: {
@@ -87,6 +89,7 @@ module.exports = (router) => {
     router.post("/ip/:type", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const { ip } = req.body || {};
+        req.infoEvent("ip.list.add.attempt", "Attempting to add IP to access list", { listType: type });
         if (type !== "whitelist" && type !== "blacklist") {
             throw new ValidationError("Invalid type");
         }
@@ -112,6 +115,7 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
+        req.infoEvent("ip.list.add.success", "IP added to access list", { listType: type });
         res.status(201).json({
             success: true,
             data: {
@@ -202,6 +206,7 @@ module.exports = (router) => {
         const type = req.params.type;
         const id = req.params.id;
         const { ip } = req.body || {};
+        req.infoEvent("ip.list.update.attempt", "Attempting to update IP in access list", { listType: type, ipEntryId: id });
         if (!ip) {
             throw new ValidationError("Missing ip");
         }
@@ -219,6 +224,7 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
+        req.infoEvent("ip.list.update.success", "IP updated in access list", { listType: type, ipEntryId: id });
         res.status(200).json({
             success: true,
             data: {
@@ -295,6 +301,7 @@ module.exports = (router) => {
     router.delete("/ip/:type/:id", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const type = req.params.type;
         const id = req.params.id;
+        req.infoEvent("ip.list.remove.attempt", "Attempting to remove IP from access list", { listType: type, ipEntryId: id });
         if (type !== "whitelist" && type !== "blacklist") {
             throw new ValidationError("Invalid type");
         }
@@ -309,6 +316,7 @@ module.exports = (router) => {
             Object.keys(authentication.blacklistedIps).forEach((k) => delete authentication.blacklistedIps[k]);
             Object.assign(authentication.blacklistedIps, cache);
         }
+        req.infoEvent("ip.list.remove.success", "IP removed from access list", { listType: type, ipEntryId: id });
         res.status(200).json({
             success: true,
             data: {
@@ -385,6 +393,7 @@ module.exports = (router) => {
     // Toggle ip whitelist/blacklist
     router.post("/ip/:type/toggle", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), (req, res) => {
         const type = req.params.type;
+        req.infoEvent("ip.list.toggle.attempt", "Attempting to toggle IP access list", { listType: type });
         if (type !== "whitelist" && type !== "blacklist") {
             throw new ValidationError("Invalid type");
         }
@@ -412,6 +421,7 @@ module.exports = (router) => {
         }
 
         fs.writeFileSync("./.env", updatedIpMode);
+        req.infoEvent("ip.list.toggle.success", "IP access list toggled", { listType: type, active: settings[`${type}Active`] });
         res.status(200).json({
             success: true,
             data: {

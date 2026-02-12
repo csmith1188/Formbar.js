@@ -64,13 +64,16 @@ module.exports = (router) => {
      */
     router.post("/class/:id/students/:userId/break/deny", isAuthenticated, httpPermCheck("approveBreak"), async (req, res) => {
         const classId = req.params.id;
+        const targetUserId = req.params.userId;
+        req.infoEvent("class.break.deny.attempt", "Attempting to deny class break", { classId, targetUserId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to approve this user's break.");
         }
 
-        const result = approveBreak(false, req.params.userId, req.user);
+        const result = approveBreak(false, targetUserId, req.user);
         if (result === true) {
+            req.infoEvent("class.break.deny.success", "Class break denied", { classId, targetUserId });
             res.status(200).json({
                 success: true,
                 data: {},

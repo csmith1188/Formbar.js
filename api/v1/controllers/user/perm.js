@@ -9,6 +9,7 @@ module.exports = (router) => {
     const updatePermissionsHandler = async (req, res) => {
         const email = req.params.email;
         let { perm } = req.body || {};
+        req.infoEvent("user.permissions.update.attempt", "Attempting to update user permissions", { targetEmail: email });
         perm = Number(perm);
         if (!Number.isFinite(perm)) {
             throw new ValidationError("Invalid permission value");
@@ -19,6 +20,7 @@ module.exports = (router) => {
             classInformation.users[email].permissions = perm;
         }
 
+        req.infoEvent("user.permissions.update.success", "User permissions updated", { targetEmail: email, permissionLevel: perm });
         res.status(200).json({
             success: true,
             data: {

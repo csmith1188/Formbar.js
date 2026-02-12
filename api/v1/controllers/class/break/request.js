@@ -81,6 +81,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/break/request", isAuthenticated, httpPermCheck("requestBreak"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.break.request.attempt", "Attempting to request class break", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request a break.");
@@ -92,6 +93,7 @@ module.exports = (router) => {
 
         const result = requestBreak(req.body.reason, { ...req.user, classId });
         if (result === true) {
+            req.infoEvent("class.break.request.success", "Class break requested", { classId });
             res.status(200).json({
                 success: true,
                 data: {},
