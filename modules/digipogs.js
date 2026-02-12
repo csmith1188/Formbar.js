@@ -33,7 +33,7 @@ setInterval(cleanupOldAttempts, 5 * 60 * 1000);
 
 /**
  * Check if an account (user or pool) is rate limited
- * @param {string} accountId - The account ID attempting the transfer (e.g., 'user-123' or 'pool-456')
+ * @param {string} accountId - The account ID attempting the transfer (e.g., "user-123" or "pool-456")
  * @returns {Object} - { allowed: boolean, message: string, waitTime: number }
  */
 function checkRateLimit(accountId) {
@@ -104,7 +104,7 @@ function checkRateLimit(accountId) {
 
 /**
  * Record a transfer attempt (success or failure)
- * @param {string} accountId - The account ID (e.g., 'user-123' or 'pool-456')
+ * @param {string} accountId - The account ID (e.g., "user-123" or "pool-456")
  * @param {boolean} success - Whether the attempt was successful
  */
 function recordAttempt(accountId, success) {
@@ -124,20 +124,26 @@ function recordAttempt(accountId, success) {
 
 async function awardDigipogs(awardData, user) {
     try {
-        const from = user.userID;
+        const from = user.userId;
         const to = awardData.to;
         const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
         const reason = awardData.reason || "Awarded";
 
         // Backward compatibility
+        let deprecatedFormatUsed = false;
         if (!to.id && !to.code) {
-            to.id = to;
-            to.type = 'user';
+            if (typeof to === "string" || typeof to === "number") {
+                to.id = to;
+                to.type = "user";
+            } else {
+                return { success: false, message: "Missing recipient identifier." };
+            }
+            deprecatedFormatUsed = true;
         }
-
+        // Validate input structure
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
-        } else if (to.type !== 'user' && to.type !== 'pool' && to.type !== 'class') {
+        } else if (to.type !== "user" && to.type !== "pool" && to.type !== "class") {
             return { success: false, message: "Invalid recipient type." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
@@ -160,7 +166,7 @@ async function awardDigipogs(awardData, user) {
             return { success: false, message: "Sender account not found." };
         }
 
-        if (to.type === 'class') {
+        if (to.type === "class") {
             if (to.code) {
                 to.id = await getClassIDFromCode(to.code);
                 if (!to.id) {
@@ -203,7 +209,7 @@ async function awardDigipogs(awardData, user) {
                 classInfo.owner
             ]
             );
-        } else if (to.type === 'pool') {
+        } else if (to.type === "pool") {
             if (!to.id) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Missing pool identifier." };
@@ -218,7 +224,7 @@ async function awardDigipogs(awardData, user) {
                 return { success: false, message: "Recipient pool not found." };
             }
             await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [amount, to.id]);
-        } else if (to.type === 'user') {
+        } else if (to.type === "user"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ) {
             // Verify recipient exists
             const toUser = await dbGet("SELECT id FROM users WHERE id = ?", [to.id]);
             if (!toUser) {
@@ -256,7 +262,7 @@ async function awardDigipogs(awardData, user) {
             return { success: true, message: "Award succeeded, but failed to log transaction." };
         }
         recordAttempt(accountId, true);
-        return { success: true, message: "Digipogs awarded successfully." };
+        return { success: true, message: `Digipogs awarded successfully. ${deprecatedFormatUsed ? "Warning: Deprecated award format used. See documentation for updated usage." : ""}` };
     } catch (err) {
         logger.log("error", err.stack);
         return { success: false, message: "Database error." };
@@ -271,17 +277,25 @@ async function transferDigipogs(transferData) {
         // Backward compatibility
         let deprecatedFormatUsed = false;
         if (!from.id) {
+            if (typeof from === "string" || typeof from === "number") {
             from.id = from;
-            from.type = 'user'; 
+            from.type = "user";
+            } else {
+                return { success: false, message: "Missing sender identifier." };
+            }
+            if (typeof to === "string" || typeof to === "number") {
             to.id = pool ? pool : to;
-            to.type = pool ? 'pool' : 'user';
+            to.type = pool ? "pool" : "user";
+            } else {
+                return { success: false, message: "Missing recipient identifier." };
+            }
             deprecatedFormatUsed = true;
         }
         if (!from.type) {
-            from.type = 'user';
+            from.type = "user";
         }
         if (!to.type) {
-            to.type = 'user';
+            to.type = "user";
         }
 
         // Validate input structure
@@ -291,7 +305,7 @@ async function transferDigipogs(transferData) {
             return { success: false, message: "Amount must be greater than zero." };
         } else if (from.type === to.type && from.id === to.id) {
             return { success: false, message: "Cannot transfer to the same account." };
-        } else if ((from.type !== 'user' && from.type !== 'pool') || (to.type !== 'user' && to.type !== 'pool')) {
+        } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
             return { success: false, message: "Invalid sender or recipient type." };
         }
 
@@ -309,7 +323,7 @@ async function transferDigipogs(transferData) {
 
         // Fetch sender account
         let fromAccount;
-        if (from.type === 'user') {
+        if (from.type === "user") {
             fromAccount = await dbGet("SELECT * FROM users WHERE id = ?", [from.id]);
             if (!fromAccount) {
                 recordAttempt(accountId, false);
@@ -340,7 +354,7 @@ async function transferDigipogs(transferData) {
         }
 
         // Check funds
-        const fromBalance = from.type === 'user' ? fromAccount.digipogs : fromAccount.amount;
+        const fromBalance = from.type === "user" ? fromAccount.digipogs : fromAccount.amount;
         if (fromBalance < amount) {
             recordAttempt(accountId, false);
             return { success: false, message: "Insufficient funds." };
@@ -352,7 +366,7 @@ async function transferDigipogs(transferData) {
 
         // Fetch recipient account
         let toAccount;
-        if (to.type === 'user') {
+        if (to.type === "user") {
             toAccount = await dbGet("SELECT * FROM users WHERE id = ?", [to.id]);
             if (!toAccount) {
                 recordAttempt(accountId, false);
@@ -371,14 +385,14 @@ async function transferDigipogs(transferData) {
             await dbRun("BEGIN TRANSACTION");
 
             // Deduct from sender
-            if (from.type === 'user') {
+            if (from.type === "user") {
                 await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from.id]);
             } else {
                 await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [amount, from.id]);
             }
 
             // Credit to recipient
-            if (to.type === 'user') {
+            if (to.type === "user") {
                 await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [taxedAmount, to.id]);
             } else {
                 await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to.id]);
@@ -415,7 +429,7 @@ async function transferDigipogs(transferData) {
 
         // Record successful attempt
         recordAttempt(accountId, true);
-        return { success: true, message: `Transfer successful. ${deprecatedFormatUsed ? 'Warning: Deprecated pool transfer format used. See documentation for updated usage.' : ''}` };
+        return { success: true, message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}` };
     } catch (err) {
         logger.log("error", err.stack);
         return { success: false, message: "Database error." };
