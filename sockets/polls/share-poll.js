@@ -163,8 +163,6 @@ module.exports = {
                                             return;
                                         }
 
-                                        let sharedPolls = classInformation.classrooms[classId].sharedPolls;
-                                        sharedPolls.splice(sharedPolls.indexOf(pollId), 1);
                                         for (let email of Object.keys(classInformation.classrooms[classId].students)) {
                                             socketUpdates.customPollUpdate(email);
                                         }
@@ -241,7 +239,6 @@ module.exports = {
                                                     socket.emit("message", `Shared ${name} with the class`);
                                                     socketUpdates.getPollShareIds(pollId);
 
-                                                    classInformation.classrooms[classroom.id].sharedPolls.push(pollId);
                                                     for (let email of Object.keys(classInformation.classrooms[classroom.id].students)) {
                                                         socketUpdates.customPollUpdate(email);
                                                     }

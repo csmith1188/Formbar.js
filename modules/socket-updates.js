@@ -424,7 +424,7 @@ class SocketUpdates {
         }
     }
 
-    customPollUpdate(email, socket = this.socket) {
+    async customPollUpdate(email, socket = this.socket) {
         try {
             // Ignore any requests which do not have an associated socket with the email
             if (!email && socket.request.session) email = socket.request.session.email;
@@ -441,7 +441,8 @@ class SocketUpdates {
             const userSharedPolls = student.sharedPolls;
             const userOwnedPolls = student.ownedPolls;
             const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)));
-            const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls);
+            const classroomPollRows = await dbGetAll("SELECT pollId FROM class_polls WHERE classId = ?", [classId]);
+            const classroomPolls = classroomPollRows.map((row) => row.pollId);
             const publicPolls = [];
             const customPollIds = userCustomPolls.concat(classroomPolls);
 

@@ -2,7 +2,7 @@ const { classInformation } = require("@modules/class/classroom");
 const { logger } = require("@modules/logger");
 const { generateColors } = require("@modules/util");
 const { advancedEmitToClass, userUpdateSocket } = require("@modules/socket-updates");
-const { database, dbGetAll, dbRun } = require("@modules/database");
+const { database, dbGet, dbGetAll, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { userSocketUpdates } = require("../sockets/init");
 const NotFoundError = require("@errors/not-found-error");
@@ -314,8 +314,7 @@ async function savePollToHistory(classId) {
     const classroom = classInformation.classrooms[classId];
     if (!classroom) return;
 
-    const date = new Date();
-    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+    const createdAt = Date.now();
     const prompt = classroom.poll.prompt;
     const responses = JSON.stringify(classroom.poll.responses);
     const allowMultipleResponses = classroom.poll.allowMultipleResponses ? 1 : 0;
@@ -332,8 +331,8 @@ async function savePollToHistory(classId) {
     }
 
     await dbRun(
-        "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, JSON.stringify(names), JSON.stringify(letter), JSON.stringify(text), formattedDate]
+        "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt) VALUES(?, ?, ?, ?, ?, ?, ?)",
+        [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt]
     );
 
     logger.log("verbose", "[savePollToHistory] saved poll to history");
@@ -367,8 +366,8 @@ async function clearPoll(classId, userSession, updateClass = true) {
     // Adds data to the previous poll answers table upon clearing the poll
     for (const student of Object.values(classInformation.classrooms[classId].students)) {
         if (student.classPermissions < MANAGER_PERMISSIONS) {
-            const pollHistory = classInformation.classrooms[classId].pollHistory || [];
-            const currentPollId = pollHistory.length > 0 ? pollHistory[pollHistory.length - 1].id : undefined;
+            const lastPoll = await dbGet("SELECT id FROM poll_history WHERE class = ? ORDER BY createdAt DESC LIMIT 1", [classId]);
+            const currentPollId = lastPoll ? lastPoll.id : undefined;
             if (!currentPollId) {
                 continue;
             }
@@ -388,8 +387,8 @@ async function clearPoll(classId, userSession, updateClass = true) {
             const textResponse = student.pollRes.textRes || null;
             const studentId = student.id;
             await dbRun(
-                "INSERT INTO poll_answers(pollId, classId, userId, buttonResponse, textResponse) VALUES(?, ?, ?, ?, ?)",
-                [currentPollId, classId, studentId, buttonResponse, textResponse]
+                "INSERT OR REPLACE INTO poll_answers(pollId, classId, userId, buttonResponse, textResponse, createdAt) VALUES(?, ?, ?, ?, ?, ?)",
+                [currentPollId, classId, studentId, buttonResponse, textResponse, Date.now()]
             );
         }
     }

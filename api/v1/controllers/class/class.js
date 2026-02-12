@@ -75,9 +75,7 @@ module.exports = (router) => {
 
         // If the user is not a teacher or manager, remove the sensitive data from the class data
         if (user.classPermissions < TEACHER_PERMISSIONS) {
-            delete classData.pollHistory;
             delete classData.key;
-            delete classData.sharedPolls;
 
             classData.students = { [req.user.email]: classUsers[req.user.email] };
         } else {

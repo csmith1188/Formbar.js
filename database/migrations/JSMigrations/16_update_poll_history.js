@@ -31,7 +31,7 @@ module.exports = {
                     "names"                    TEXT,
                     "letter"                   TEXT,
                     "text"                     TEXT,
-                    "date"                     TEXT NOT NULL,
+                    "createdAt"                INTEGER NOT NULL,
                     PRIMARY KEY ("id" AUTOINCREMENT)
                 )`,
                 [],
@@ -57,10 +57,31 @@ module.exports = {
                 const letter = pollData.letter ? JSON.stringify(pollData.letter) : null;
                 const text = pollData.text ? JSON.stringify(pollData.text) : null;
 
+                // Convert legacy text date to midnight timestamp
+                let createdAt = 0;
+                if (pollEntry.date) {
+                    const parsed = new Date(pollEntry.date + "T00:00:00.000Z");
+                    if (!isNaN(parsed.getTime())) {
+                        createdAt = parsed.getTime();
+                    }
+                }
+
                 await dbRun(
-                    `INSERT INTO poll_history_temp (id, class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, date)
+                    `INSERT INTO poll_history_temp (id, class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, createdAt)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [pollEntry.id, pollEntry.class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, pollEntry.date],
+                    [
+                        pollEntry.id,
+                        pollEntry.class,
+                        prompt,
+                        responses,
+                        allowMultipleResponses,
+                        blind,
+                        allowTextResponses,
+                        names,
+                        letter,
+                        text,
+                        createdAt,
+                    ],
                     database
                 );
             }
@@ -72,12 +93,10 @@ module.exports = {
             await dbRun("COMMIT", [], database);
             console.log("Poll history migration completed successfully!");
         } catch (err) {
-            if (err.message !== "ALREADY_DONE") {
-                try {
-                    await dbRun("ROLLBACK", [], database);
-                } catch (rollbackErr) {
-                    // Transaction may not be active
-                }
+            try {
+                await dbRun("ROLLBACK", [], database);
+            } catch (rollbackErr) {
+                // Transaction may not be active
             }
             throw new Error("ALREADY_DONE");
         }
