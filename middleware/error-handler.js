@@ -1,10 +1,10 @@
 const AppError = require("@errors/app-error");
-const { logger, logEvent } = require("@modules/logger");
+const { getLogger, logEvent } = require("@modules/logger");
 const process = require("process");
 
 module.exports = (err, req, res, next) => {
 
-    console.error(err);
+    const logger = getLogger();
 
     let error = err;
     let statusCode = err.statusCode || 500;
