@@ -41,6 +41,16 @@ async function createLogger() {
     deleteEmptyLogFiles();
     const SeqTransport = await loadSeqTransport();
 
+    const transports = [];
+    transports.push(dailyRotateTransport);
+
+    if (process.env.SEQ_URL) {
+        transports.push(new SeqTransport({
+            level: "info",
+            serverUrl: process.env.SEQ_URL,
+        }));
+    }
+
     return winston.createLogger({
         // This sets the format of the log messages.
         format: winston.format.combine(
@@ -49,13 +59,7 @@ async function createLogger() {
             winston.format.json()
         ),
 
-        transports: [
-            dailyRotateTransport,
-            new SeqTransport({
-                level: "info",
-                serverUrl: process.env.SEQ_URL || "http://localhost:5341",
-            }),
-        ]
+        transports
     });
 }
 
