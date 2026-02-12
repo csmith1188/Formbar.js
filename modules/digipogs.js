@@ -177,14 +177,14 @@ async function awardDigipogs(awardData, user) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Missing class identifier." };
             }
-            
+
             // Fetch class info and check sender permissions
-            const classInfo = await dbGet("SELECT c.id, c.owner FROM classroom c WHERE c.id = ?",[to.id]);
+            const classInfo = await dbGet("SELECT c.id, c.owner FROM classroom c WHERE c.id = ?", [to.id]);
             if (!classInfo) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient class not found." };
             }
-            
+
             // Check sender permissions: either is owner or has teacher permissions in class
             let classPermissions = 0;
             if (classInfo.owner === from) {
@@ -196,16 +196,16 @@ async function awardDigipogs(awardData, user) {
                 );
                 classPermissions = permRow ? permRow.permissions : 0;
             }
-            
+
             if (classPermissions < TEACHER_PERMISSIONS && fromUser.permissions < TEACHER_PERMISSIONS) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender does not have permission to award to this class." };
             }
-            
+
             //increment all class members' digipogs
-            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id IN (SELECT studentId FROM classusers WHERE classId = ?) OR id = ?",[
-                amount, 
-                to.id, 
+            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id IN (SELECT studentId FROM classusers WHERE classId = ?) OR id = ?", [
+                amount,
+                to.id,
                 classInfo.owner
             ]
             );
@@ -217,21 +217,21 @@ async function awardDigipogs(awardData, user) {
             if (fromUser.permissions < TEACHER_PERMISSIONS) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender does not have permission to award to pools." };
-            } 
+            }
             const poolInfo = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to.id]);
             if (!poolInfo) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
             }
             await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [amount, to.id]);
-        } else if (to.type === "user"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ) {
+        } else if (to.type === "user") {
             // Verify recipient exists
             const toUser = await dbGet("SELECT id FROM users WHERE id = ?", [to.id]);
             if (!toUser) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
-            
+
             // Check permissions if sender is not a global teacher
             if (fromUser.permissions < TEACHER_PERMISSIONS) {
                 // Check if sender is a teacher/owner in any class the recipient is in
@@ -244,7 +244,7 @@ async function awardDigipogs(awardData, user) {
                     return { success: false, message: "Sender does not have permission to award to this user." };
                 }
             }
-            
+
             await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [amount, to.id]);
         }
         try {
@@ -278,14 +278,14 @@ async function transferDigipogs(transferData) {
         let deprecatedFormatUsed = false;
         if (!from.id) {
             if (typeof from === "string" || typeof from === "number") {
-            from.id = from;
-            from.type = "user";
+                from.id = from;
+                from.type = "user";
             } else {
                 return { success: false, message: "Missing sender identifier." };
             }
             if (typeof to === "string" || typeof to === "number") {
-            to.id = pool ? pool : to;
-            to.type = pool ? "pool" : "user";
+                to.id = pool ? pool : to;
+                to.type = pool ? "pool" : "user";
             } else {
                 return { success: false, message: "Missing recipient identifier." };
             }
