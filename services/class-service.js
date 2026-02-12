@@ -101,27 +101,11 @@ function parseClassPermissions(permissionsRow) {
  * @returns {Object} The normalized classroom object (mutates in place)
  */
 function normalizeClassroomData(classroom) {
-    // Parse JSON fields
-    classroom.sharedPolls = JSON.parse(classroom.sharedPolls);
-    classroom.pollHistory = JSON.parse(classroom.pollHistory);
-
     // Normalize tags to array
     if (classroom.tags) {
         classroom.tags = classroom.tags.split(",");
     } else {
         classroom.tags = [];
-    }
-
-    if (Array.isArray(classroom.pollHistory)) {
-        // Parse poll data within poll history
-        for (let poll of classroom.pollHistory) {
-            poll.data = JSON.parse(poll.data);
-        }
-
-        // Handle empty poll history
-        if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
-            classroom.pollHistory = null;
-        }
     }
 
     return classroom;
@@ -192,10 +176,7 @@ async function initializeClassroom(id) {
     logger.log("verbose", `[initializeClassroom] Initializing class with id=(${id})`);
 
     // Fetch classroom data from database
-    const classroom = await dbGet(
-        "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
-        [id]
-    );
+    const classroom = await dbGet("SELECT id, name, key, owner, tags FROM classroom WHERE id = ?", [id]);
 
     if (!classroom) {
         throw new NotFoundError(`Class with id ${id} does not exist`);
@@ -213,10 +194,7 @@ async function initializeClassroom(id) {
     // Normalize classroom data (JSON parsing, tags, poll history)
     normalizeClassroomData(classroom);
 
-    logger.log(
-        "verbose",
-        `[initializeClassroom] id=(${id}) name=(${classroom.name}) key=(${classroom.key}) sharedPolls=(${JSON.stringify(classroom.sharedPolls)})`
-    );
+    logger.log("verbose", `[initializeClassroom] id=(${id}) name=(${classroom.name}) key=(${classroom.key})`);
 
     // Validate and normalize permissions
     if (Object.keys(permissions).sort().toString() !== Object.keys(DEFAULT_CLASS_PERMISSIONS).sort().toString()) {
@@ -236,20 +214,16 @@ async function initializeClassroom(id) {
 
     // Create or update classroom in memory
     if (!classInformation.classrooms[id]) {
-        classInformation.classrooms[id] = new Classroom(
+        classInformation.classrooms[id] = new Classroom({
             id,
-            classroom.name,
-            classroom.key,
-            classroom.owner,
+            className: classroom.name,
+            key: classroom.key,
+            owner: classroom.owner,
             permissions,
-            classroom.sharedPolls,
-            classroom.pollHistory,
-            classroom.tags
-        );
+            tags: classroom.tags,
+        });
     } else {
         classInformation.classrooms[id].permissions = permissions;
-        classInformation.classrooms[id].sharedPolls = classroom.sharedPolls;
-        classInformation.classrooms[id].pollHistory = classroom.pollHistory;
         classInformation.classrooms[id].tags = classroom.tags;
     }
 
