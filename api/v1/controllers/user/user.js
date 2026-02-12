@@ -46,6 +46,7 @@ module.exports = (router) => {
      */
     router.get("/user/:id", async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.view.attempt", "Attempting to view user by id", { targetUserId: userId });
 
         // Check if the user is already logged in, and if they're not
         // then load them from the database.
@@ -69,6 +70,7 @@ module.exports = (router) => {
         }
 
         if (user) {
+            req.infoEvent("user.view.success", "User data returned", { targetUserId: userId });
             res.status(200).json({
                 success: true,
                 data: {
@@ -81,7 +83,7 @@ module.exports = (router) => {
                 },
             });
         } else {
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "user.get.failed", reason: "user_not_found" });
         }
     });
 };

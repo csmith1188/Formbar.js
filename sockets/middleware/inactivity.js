@@ -30,7 +30,6 @@ module.exports = {
 
                 next();
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

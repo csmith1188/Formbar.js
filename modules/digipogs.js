@@ -1,6 +1,5 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
-const { logger } = require("./logger");
 const { classInformation } = require("./class/classroom");
 const { compare } = require("./crypto");
 
@@ -97,7 +96,6 @@ function checkRateLimit(accountId) {
     }
 
     // Log current failure count for debugging
-    logger.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
 
     return { allowed: true };
 }
@@ -180,13 +178,11 @@ async function awardDigipogs(awardData, session) {
                 Date.now(),
             ]);
         } catch (err) {
-            logger.log("error", err.stack || err);
             return { success: true, message: "Award succeeded, but failed to log transaction." };
         }
 
         return { success: true, message: "Digipogs awarded successfully." };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }
@@ -322,9 +318,7 @@ async function transferDigipogs(transferData) {
             try {
                 await dbRun("ROLLBACK");
             } catch (rollbackErr) {
-                logger.log("error", rollbackErr.stack || rollbackErr);
             }
-            logger.log("error", err.stack || err);
             recordAttempt(accountId, false);
             return { success: false, message: "Transfer failed due to database error." };
         }
@@ -341,7 +335,6 @@ async function transferDigipogs(transferData) {
                 Date.now(),
             ]);
         } catch (err) {
-            logger.log("error", err.stack || err);
             // Don't fail the transfer if logging fails
         }
 
@@ -352,7 +345,6 @@ async function transferDigipogs(transferData) {
             message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated pool transfer format used. See documentation for updated usage." : ""}`,
         };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }
@@ -361,3 +353,9 @@ module.exports = {
     awardDigipogs,
     transferDigipogs,
 };
+
+
+
+
+
+

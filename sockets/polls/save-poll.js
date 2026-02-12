@@ -11,7 +11,6 @@ module.exports = {
                 database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
                     try {
                         if (err) throw err;
-                        if (!nextPollId) logger.log("critical", "[savePoll] nextPollId not found");
 
                         nextPollId = nextPollId.nextPollId + 1;
 
@@ -40,24 +39,18 @@ module.exports = {
                                     socketUpdates.customPollUpdate(socket.request.session.email);
                                     socket.emit("classPollSave", nextPollId);
                                 } catch (err) {
-                                    logger.log("error", err.stack);
                                 }
                             }
                         );
                     } catch (err) {
-                        logger.log("error", err.stack);
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
         socket.on("savePoll", (poll, pollId) => {
             try {
-                logger.log("info", `[savePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[savePoll] poll=(${JSON.stringify(poll)}) id=(${pollId})`);
-
                 const userId = socket.request.session.userId;
                 if (pollId) {
                     database.get("SELECT * FROM custom_polls WHERE id=?", [pollId], (err, poll) => {
@@ -90,19 +83,16 @@ module.exports = {
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
                                     } catch (err) {
-                                        logger.log("error", err.stack);
                                     }
                                 }
                             );
                         } catch (err) {
-                            logger.log("error", err.stack);
                         }
                     });
                 } else {
                     database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
                         try {
                             if (err) throw err;
-                            if (!nextPollId) logger.log("critical", "[savePoll] nextPollId not found");
 
                             nextPollId = nextPollId.nextPollId + 1;
 
@@ -130,25 +120,19 @@ module.exports = {
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
                                     } catch (err) {
-                                        logger.log("error", err.stack);
                                     }
                                 }
                             );
                         } catch (err) {
-                            logger.log("error", err.stack);
                         }
                     });
                 }
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 
         socket.on("setPublicPoll", (pollId, value) => {
             try {
-                logger.log("info", `[setPublicPoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[setPublicPoll] pollId=(${pollId}) value=(${value})`);
-
                 database.run("UPDATE custom_polls set public=? WHERE id=?", [value, pollId], (err) => {
                     try {
                         if (err) throw err;
@@ -157,11 +141,9 @@ module.exports = {
                             socketUpdates.customPollUpdate(userSocket.request.session.email);
                         }
                     } catch (err) {
-                        logger.log("error", err.stack);
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

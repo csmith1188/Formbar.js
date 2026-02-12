@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
@@ -24,13 +23,13 @@ function hasPermission(permission) {
 
         const user = classInformation.users[req.user.email];
         if (!user) {
-            throw new AuthError("User not found");
+            throw new AuthError("User not found", { event: "permission.check.failed", reason: "user_not_found" });
         }
 
         if (user.permissions >= permission) {
             next();
         } else {
-            throw new ForbiddenError("You do not have permission to access this resource.");
+            throw new ForbiddenError("You do not have permission to access this resource.", { event: "permission.check.failed", reason: "insufficient_permissions" });
         }
     };
 }
@@ -54,7 +53,7 @@ function hasClassPermission(classPermission) {
         if (classroom) {
             const user = classroom.students[email];
             if (!user) {
-                throw new AuthError("User not found in this class.");
+                throw new AuthError("User not found in this class.", { event: "permission.check.failed", reason: "user_not_in_class" });
             }
 
             // Retrieve the permission level from the classroom's permissions
@@ -63,10 +62,10 @@ function hasClassPermission(classPermission) {
             if (user.classPermissions >= requiredPermissionLevel) {
                 next();
             } else {
-                throw new ForbiddenError("Unauthorized");
+                throw new ForbiddenError("Unauthorized", { event: "permission.check.failed", reason: "insufficient_class_permissions" });
             }
         } else {
-            throw new ForbiddenError("This class is not currently active.");
+            throw new ForbiddenError("This class is not currently active.", { event: "permission.check.failed", reason: "class_not_active" });
         }
     };
 }
@@ -81,7 +80,6 @@ function httpPermCheck(event) {
     return async function (req, res, next) {
         // Allow digipogs endpoints without permission checks (public API)
         if (req.path && req.path.startsWith("/digipogs/")) {
-            logger.log("info", `[http permission check] Skipping for public digipogs endpoint ${event}`);
             return next();
         }
 
@@ -94,13 +92,11 @@ function httpPermCheck(event) {
         const classId = req.user?.classId ?? req.user?.activeClass ?? classInformation.users[email]?.classId ?? null;
 
         if (!classInformation.classrooms[classId] && classId != null) {
-            logger.log("info", [`[http permission check] Event=(${event}), email=(${email}), ClassId=(${classId})`]);
-            throw new AuthError("Class does not exist");
+            throw new AuthError("Class does not exist", { event: "permission.check.failed", reason: "class_not_exist" });
         }
 
         if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
-            logger.log("info", "[http permission check] Class is not loaded");
-            throw new AuthError("Class is not loaded");
+            throw new AuthError("Class is not loaded", { event: "permission.check.failed", reason: "class_not_loaded" });
         }
 
         if (CLASS_SOCKET_PERMISSIONS[event] && !classInformation.classrooms[classId]) {
@@ -118,30 +114,25 @@ function httpPermCheck(event) {
         }
 
         if (GLOBAL_SOCKET_PERMISSIONS[event] && userData.permissions >= GLOBAL_SOCKET_PERMISSIONS[event]) {
-            logger.log("info", "[http permission check] Global socket permission check passed");
             return next();
         } else if (CLASS_SOCKET_PERMISSIONS[event] && userData.classPermissions >= CLASS_SOCKET_PERMISSIONS[event]) {
-            logger.log("info", "[http permission check] Class socket permission check passed");
             return next();
         } else if (
             CLASS_SOCKET_PERMISSION_MAPPER[event] &&
             classInformation.classrooms[classId]?.permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]] &&
             userData.classPermissions >= classInformation.classrooms[classId].permissions[CLASS_SOCKET_PERMISSION_MAPPER[event]]
         ) {
-            logger.log("info", "[http permission check] Class socket permission settings check passed");
             return next();
         } else if (!PASSIVE_SOCKETS.includes(event)) {
             if (endpointWhitelistMap.includes(event)) {
                 const id = req.params.id;
                 const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
                 if (user && user.id == id) {
-                    logger.log("info", `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
                     return next();
                 }
             }
 
-            logger.log("info", `[http permission check] User does not have permission to use ${camelCaseToNormal(event)}`);
-            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`);
+            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`, { event: "permission.check.failed", reason: "insufficient_permissions" });
         }
 
         return next();
@@ -153,3 +144,6 @@ module.exports = {
     hasClassPermission,
     httpPermCheck,
 };
+
+
+

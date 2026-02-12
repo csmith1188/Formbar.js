@@ -1,19 +1,21 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { dbRun } = require("@modules/database");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
     const removeLinkHandler = async (req, res) => {
         const classId = req.params.id;
         const { name } = req.body;
+        req.infoEvent("room.links.remove.attempt", "Attempting to remove room link", { classId, linkName: name });
         if (!name) {
             throw new ValidationError("Name is required.");
         }
 
         // Remove the link from the database
         await dbRun("DELETE FROM links WHERE classId = ? AND name = ?", [classId, name]);
+        req.infoEvent("room.links.remove.success", "Room link removed", { classId, linkName: name });
         res.status(200).json({
             success: true,
             data: {

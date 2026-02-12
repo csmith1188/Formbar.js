@@ -86,7 +86,7 @@ function logout(socket) {
                 // If this user owns the classroom, end it
                 database.get("SELECT * FROM classroom WHERE owner=? AND id=?", [userId, classId], (err, classroom) => {
                     if (err) {
-                        logger.log("error", err.stack);
+                        // Error handled
                     }
 
                     if (classroom) {
@@ -95,16 +95,13 @@ function logout(socket) {
                 });
             }
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     });
 }
 
 async function deleteUser(userId, userSession) {
     try {
-        logger.log("info", `[deleteUser] session=(${JSON.stringify(userSession)})`);
-        logger.log("info", `[deleteUser] userId=(${userId})`);
-
         // Get the user's data from their ID and verify they exist
         // If not found in users table, check if they're an unverified user in temp_user_creation_data
         const user = await dbGet("SELECT * FROM users WHERE id=?", [userId]);
@@ -163,7 +160,6 @@ async function deleteUser(userId, userSession) {
             throw err;
         }
     } catch (err) {
-        logger.log("error", err.stack);
         return "There was an internal server error. Please try again.";
     }
 }

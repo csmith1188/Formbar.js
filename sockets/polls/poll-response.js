@@ -10,7 +10,6 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 pollResponse(classId, res, textRes, socket.request.session);
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
     },

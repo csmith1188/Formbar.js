@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
@@ -23,7 +22,6 @@ async function cleanRefreshTokens() {
         // Also clean up expired authorization codes
         await cleanupExpiredAuthorizationCodes();
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -102,13 +100,11 @@ function isVerified(req, res, next) {
 }
 
 // Check if user has the permission levels to enter that page
-function permCheck(req, res, next) {
+async function permCheck(req, res, next) {
     const email = req.user?.email;
     if (!email) {
         throw new AuthError("User is not authenticated");
     }
-
-    logger.log("info", `[permCheck] ip=(${req.ip}) user=(${email}) url=(${req.url})`);
 
     if (req.url) {
         // Defines users desired endpoint
@@ -131,10 +127,7 @@ function permCheck(req, res, next) {
 
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
-
-        logger.log("verbose", `[permCheck] urlPath=(${urlPath})`);
         if (!PAGE_PERMISSIONS[urlPath]) {
-            logger.log("info", `[permCheck] ${urlPath} is not in the page permissions`);
             throw new NotFoundError(`${urlPath} is not in the page permissions`);
         }
 
@@ -149,7 +142,6 @@ function permCheck(req, res, next) {
         } else if (!PAGE_PERMISSIONS[urlPath].classPage && user.permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
-            logger.log("info", "[permCheck] Not enough permissions");
             throw new ForbiddenError("You do not have permissions to access this page.");
         }
     }
@@ -187,3 +179,6 @@ module.exports = {
     permCheck,
     checkIPBanned,
 };
+
+
+

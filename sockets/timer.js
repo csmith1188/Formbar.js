@@ -46,7 +46,6 @@ module.exports = {
                     socketUpdates.timer(sound, active);
                 }
             } catch (err) {
-                logger.log("error", err.stack);
             }
         });
 

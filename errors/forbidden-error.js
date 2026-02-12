@@ -1,8 +1,8 @@
 const AppError = require("./app-error");
 
 class ForbiddenError extends AppError {
-    constructor(message, statusCode = 403, options = {}) {
-        super(message, statusCode, options);
+    constructor(message, options = {}) {
+        super(message, { statusCode: 403, ...options });
     }
 }
 
