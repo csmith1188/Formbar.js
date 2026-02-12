@@ -14,8 +14,6 @@ async function requestLogger(req, res, next) {
         ip: req.ip
     }
 
-    console.log(req.user);
-
     // Add user info if available
     if (req.user && req.user.id) {
         baseMeta.userId = req.user.id;
