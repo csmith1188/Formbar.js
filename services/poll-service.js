@@ -316,24 +316,25 @@ async function savePollToHistory(classId) {
 
     const date = new Date();
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    const data = {
-        prompt: classroom.poll.prompt,
-        responses: classroom.poll.responses,
-        allowMultipleResponses: classroom.poll.allowMultipleResponses,
-        blind: classroom.poll.blind,
-        allowTextResponses: classroom.poll.allowTextResponses,
-        names: [],
-        letter: [],
-        text: [],
-    };
+    const prompt = classroom.poll.prompt;
+    const responses = JSON.stringify(classroom.poll.responses);
+    const allowMultipleResponses = classroom.poll.allowMultipleResponses ? 1 : 0;
+    const blind = classroom.poll.blind ? 1 : 0;
+    const allowTextResponses = classroom.poll.allowTextResponses ? 1 : 0;
+    const names = [];
+    const letter = [];
+    const text = [];
 
     for (const key in classroom.students) {
-        data.names.push(classroom.students[key].email);
-        data.letter.push(classroom.students[key].pollRes.buttonRes);
-        data.text.push(classroom.students[key].pollRes.textRes);
+        names.push(classroom.students[key].email);
+        letter.push(classroom.students[key].pollRes.buttonRes);
+        text.push(classroom.students[key].pollRes.textRes);
     }
 
-    await dbRun("INSERT INTO poll_history(class, data, date) VALUES(?, ?, ?)", [classId, JSON.stringify(data), formattedDate]);
+    await dbRun(
+        "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, JSON.stringify(names), JSON.stringify(letter), JSON.stringify(text), formattedDate]
+    );
 
     logger.log("verbose", "[savePollToHistory] saved poll to history");
 }
@@ -372,15 +373,24 @@ async function clearPoll(classId, userSession, updateClass = true) {
                 continue;
             }
 
-            for (let i = 0; i < student.pollRes.buttonRes.length; i++) {
-                const studentRes = student.pollRes.buttonRes[i];
-                const studentId = student.id;
-                await dbRun("INSERT INTO poll_answers(pollId, userId, buttonResponse) VALUES(?, ?, ?)", [currentPollId, studentId, studentRes]);
+            const buttonRes = student.pollRes.buttonRes;
+            let buttonResponse;
+            if (Array.isArray(buttonRes)) {
+                // Multi-response: store the full string for each selected response
+                buttonResponse = JSON.stringify(buttonRes);
+            } else if (buttonRes !== "" && buttonRes !== null && buttonRes !== undefined) {
+                // Single response: wrap in an array
+                buttonResponse = JSON.stringify([buttonRes]);
+            } else {
+                buttonResponse = JSON.stringify([]);
             }
 
-            const studentTextRes = student.pollRes.textRes;
+            const textResponse = student.pollRes.textRes || null;
             const studentId = student.id;
-            await dbRun("INSERT INTO poll_answers(pollId, userId, textResponse) VALUES(?, ?, ?)", [currentPollId, studentId, studentTextRes]);
+            await dbRun(
+                "INSERT INTO poll_answers(pollId, classId, userId, buttonResponse, textResponse) VALUES(?, ?, ?, ?, ?)",
+                [currentPollId, classId, studentId, buttonResponse, textResponse]
+            );
         }
     }
 
