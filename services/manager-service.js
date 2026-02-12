@@ -2,6 +2,7 @@ const { dbGetAll } = require("@modules/database");
 const jwt = require("jsonwebtoken");
 
 async function getManagerData() {
+    //TODO DO NOT PUT ALL USERS IN MEMORY, THIS IS BAD, NEED TO PAGINATE OR SOMETHING
     const users = await dbGetAll("SELECT id, email, permissions, displayName, verified FROM users");
     const classrooms = await dbGetAll("SELECT * FROM classroom");
 
