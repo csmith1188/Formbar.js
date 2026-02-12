@@ -1,5 +1,4 @@
 const { classInformation } = require("./classroom");
-const { logger } = require("../logger");
 const { advancedEmitToClass, emitToUser, userUpdateSocket } = require("../socket-updates");
 const { getEmailFromId } = require("../student");
 
@@ -27,8 +26,6 @@ function sendHelpTicket(reason, userSession) {
         emitToUser(email, "helpSuccess");
         advancedEmitToClass("helpSound", classId, {});
 
-        logger.log("verbose", `[help] user=(${JSON.stringify(student)}`);
-
         userUpdateSocket(email, "classUpdate", classId);
         return true;
     } catch (err) {
@@ -40,8 +37,6 @@ async function deleteHelpTicket(studentId, userData) {
         const classId = userData.classId;
         const email = userData.email;
         const studentEmail = await getEmailFromId(studentId);
-        logger.log("info", `[deleteTicket] session=(${JSON.stringify(userData)})`);
-        logger.log("info", `[deleteTicket] student=(${studentEmail})`);
 
         // Set the student's help ticket to false, indicating that they are no longer requesting help
         classInformation.classrooms[classId].students[studentEmail].help = false;
@@ -56,3 +51,9 @@ module.exports = {
     sendHelpTicket,
     deleteHelpTicket,
 };
+
+
+
+
+
+

@@ -1,6 +1,5 @@
 const { classInformation } = require("./class/classroom");
 const { database, dbGetAll } = require("./database");
-const { logger } = require("./logger.js");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
 const { getManagerData } = require("@services/manager-service");
 const { io } = require("./web-server");
@@ -121,11 +120,9 @@ async function setClassOfApiSockets(api, classId) {
  */
 async function setClassOfUserSockets(email, classId) {
     try {
-        logger.log("verbose", `[setClassOfUserSockets] email=(${email}) classId=(${classId})`);
 
         // Check if user has any sockets
         if (!userSockets[email]) {
-            logger.log("verbose", `[setClassOfUserSockets] No sockets found for user ${email}`);
             return;
         }
 
@@ -152,10 +149,7 @@ async function setClassOfUserSockets(email, classId) {
             // Emit the setClass event to the socket
             socket.emit("setClass", classId);
         }
-
-        logger.log("verbose", `[setClassOfUserSockets] Updated ${Object.keys(userSockets[email]).length} socket(s) for user ${email}`);
     } catch (err) {
-        logger.log("error", err.stack);
     }
 }
 
@@ -607,3 +601,9 @@ module.exports = {
     userUpdateSocket,
     SocketUpdates,
 };
+
+
+
+
+
+

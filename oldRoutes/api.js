@@ -1,7 +1,6 @@
 const express = require("express");
 const fs = require("fs");
 const router = express.Router();
-const { logger } = require("@modules/logger");
 const { GUEST_PERMISSIONS } = require("@modules/permissions");
 const { getUser } = require("@modules/user/user");
 
@@ -62,14 +61,12 @@ module.exports = {
 
                             // If the user has an error property
                             if (user.error) {
-                                logger.log("info", user);
                                 res.status(401).json({ error: user.error });
                                 return;
                             }
 
                             // Set the user in the session
                             req.session.user = user;
-                            logger.log("info", `[isAuthenticated] user=(${JSON.stringify(req.session.user)})`);
                         }
                         return next();
                     }
@@ -165,3 +162,7 @@ module.exports = {
         }
     },
 };
+
+
+
+

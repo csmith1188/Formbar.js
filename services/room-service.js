@@ -1,4 +1,3 @@
-const { getLogger, logEvent } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet, dbRun } = require("@modules/database");
 const { advancedEmitToClass, emitToUser } = require("@modules/socket-updates");
@@ -27,9 +26,7 @@ function getClassService() {
  * @throws {ForbiddenError} If user is banned from the class
  */
 async function joinRoomByCode(code, sessionUser) {
-    const logger = await getLogger();
     const email = sessionUser.email;
-    logEvent(logger, "info", "room.join_by_code", "User attempting to join room by code", { email, roomCode: code });
 
     // Find the classroom from the database
     const classroomDb = await dbGet("SELECT * FROM classroom WHERE key=?", [code]);
@@ -47,8 +44,6 @@ async function joinRoomByCode(code, sessionUser) {
     // Delegate to class-service to handle the actual joining logic
     // This avoids code duplication and keeps room-service focused on code validation
     const result = await getClassService().addUserToClassroomSession(classroomDb.id, email, sessionUser);
-
-    logEvent(logger, "verbose", "room.join_by_code.success", "User joined room successfully", { email, classId: classroomDb.id });
     return result;
 }
 
@@ -60,8 +55,6 @@ async function joinRoomByCode(code, sessionUser) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinRoom(userSession, classCode) {
-    const logger = await getLogger();
-    logEvent(logger, "info", "room.join", "User joining room", { email: userSession.email, classCode });
 
     const response = await joinRoomByCode(classCode, userSession);
     emitToUser(userSession.email, "joinClass", response);
@@ -112,3 +105,6 @@ module.exports = {
     joinRoom,
     leaveRoom,
 };
+
+
+

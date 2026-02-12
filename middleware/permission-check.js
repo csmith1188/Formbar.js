@@ -1,4 +1,3 @@
-const { getLogger, logEvent } = require("@modules/logger");
 const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
@@ -79,7 +78,6 @@ function hasClassPermission(classPermission) {
  */
 function httpPermCheck(event) {
     return async function (req, res, next) {
-        const logger = await getLogger();
         // Allow digipogs endpoints without permission checks (public API)
         if (req.path && req.path.startsWith("/digipogs/")) {
             return next();
@@ -130,7 +128,6 @@ function httpPermCheck(event) {
                 const id = req.params.id;
                 const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
                 if (user && user.id == id) {
-                    logEvent(logger, "info", "permission.whitelist.passed", "Permission check passed via whitelist", { event: camelCaseToNormal(event) });
                     return next();
                 }
             }
@@ -147,3 +144,5 @@ module.exports = {
     hasClassPermission,
     httpPermCheck,
 };
+
+

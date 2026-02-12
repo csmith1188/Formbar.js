@@ -1,6 +1,5 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database } = require("@modules/database");
-const { logger } = require("@modules/logger");
 const { userSockets } = require("@modules/socket-updates");
 const { Student } = require("@modules/student");
 const { getUserClass } = require("@modules/user/user");
@@ -201,7 +200,6 @@ module.exports = {
                         // Verify the JWT access token
                         const decodedToken = verifyToken(authorization);
                         if (decodedToken.error) {
-                            logger.log("verbose", "[socket authentication] invalid access token");
                             throw "Invalid access token";
                         }
 
@@ -209,7 +207,6 @@ module.exports = {
                         const userId = decodedToken.id;
 
                         if (!email || !userId) {
-                            logger.log("verbose", "[socket authentication] access token missing required fields");
                             throw "Invalid access token: missing required fields";
                         }
 
@@ -219,7 +216,6 @@ module.exports = {
                                 if (err) throw err;
 
                                 if (!userData) {
-                                    logger.log("verbose", "[socket authentication] user not found for access token");
                                     throw "User not found";
                                 }
 
@@ -272,3 +268,8 @@ module.exports = {
         }
     },
 };
+
+
+
+
+

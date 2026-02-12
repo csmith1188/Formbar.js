@@ -2,7 +2,6 @@ const { hash, compare } = require("../modules/crypto");
 const { database, dbRun, dbGet, dbGetAll } = require("../modules/database");
 const { classInformation } = require("../modules/class/classroom");
 const { settings, logNumbers } = require("../modules/config");
-const { logger } = require("../modules/logger");
 const { Student } = require("../modules/student");
 const { STUDENT_PERMISSIONS, MANAGER_PERMISSIONS, GUEST_PERMISSIONS } = require("../modules/permissions");
 const { managerUpdate } = require("../modules/socketUpdates");
@@ -33,7 +32,6 @@ module.exports = {
 
                 // If the user is not logged in, render the login page
                 if (!token) {
-                    logger.log("info", `[get /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)})`);
                     res.render("pages/login", {
                         title: "Login",
                         redirectURL: undefined,
@@ -62,7 +60,6 @@ module.exports = {
                             "INSERT INTO users(email, password, permissions, API, secret, displayName, verified) VALUES(?, ?, ?, ?, ?, ?, ?)",
                             [user.email, user.hashedPassword, user.permissions, hashedAPI, user.newSecret, user.displayName, 1]
                         );
-                        logger.log("verbose", "[get /login] Added user to database");
 
                         // Find the user in which was just created to get the id of the user
                         const userData = await dbGet("SELECT * FROM users WHERE email=?", [user.email]);
@@ -93,15 +90,11 @@ module.exports = {
                             }
                         }
 
-                        logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
-                        logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
-
                         managerUpdate();
                         res.redirect("/");
                     } catch (err) {
                         // Handle the same email being used for multiple accounts
                         if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
-                            logger.log("verbose", "[post /login] Email already exists");
                             res.render("pages/login", {
                                 title: "Login",
                                 redirectURL: undefined,
@@ -113,7 +106,6 @@ module.exports = {
                         }
 
                         // Handle other errors
-                        logger.log("error", err.stack);
                         res.render("pages/message", {
                             message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                             title: "Error",
@@ -121,7 +113,6 @@ module.exports = {
                     }
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",
@@ -145,15 +136,9 @@ module.exports = {
                 };
                 // Trim whitespace from email and set lowercase
                 user.email = user.email.trim().toLowerCase();
-                logger.log("info", `[post /login] ip=(${req.ip}) session=(${JSON.stringify(req.session)}`);
-                logger.log(
-                    "verbose",
-                    `[post /login] email=(${user.email}) password=(${Boolean(user.password)}) loginType=(${user.loginType}) userType=(${user.userType})`
-                );
 
                 // Check whether user is logging in or signing up
                 if (user.loginType === "login") {
-                    logger.log("verbose", "[post /login] User is logging in");
 
                     // Get the users login in data to verify password
                     database.get(
@@ -185,7 +170,6 @@ module.exports = {
                                     }
 
                                     if (tempUser) {
-                                        logger.log("verbose", "[post /login] User exists but is unverified");
                                         res.render("pages/login", {
                                             title: "Verify Email",
                                             redirectURL: undefined,
@@ -196,8 +180,6 @@ module.exports = {
                                         });
                                         return;
                                     }
-
-                                    logger.log("verbose", "[post /login] User does not exist");
                                     res.render("pages/login", {
                                         title: "Login",
                                         redirectURL: undefined,
@@ -210,7 +192,6 @@ module.exports = {
 
                                 // Check if the user has a password set
                                 if (!userData.password) {
-                                    logger.log("verbose", "[post /login] User does not have a password set");
                                     res.render("pages/login", {
                                         title: "Login",
                                         redirectURL: undefined,
@@ -224,7 +205,6 @@ module.exports = {
                                 // Compare password hashes and check if it is correct
                                 const passwordMatches = await compare(user.password, userData.password);
                                 if (!passwordMatches) {
-                                    logger.log("verbose", "[post /login] Incorrect password");
                                     res.render("pages/login", {
                                         title: "Login",
                                         redirectURL: undefined,
@@ -241,9 +221,7 @@ module.exports = {
                                         (err) => {
                                             try {
                                                 if (err) throw err;
-                                                logger.log("verbose", "[post /login] Added displayName to database");
                                             } catch (err) {
-                                                logger.log("error", err.stack);
                                                 res.render("pages/message", {
                                                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                                     title: "Error",
@@ -267,7 +245,6 @@ module.exports = {
                                 }
 
                                 if (loggedIn) {
-                                    logger.log("verbose", "[post /login] User is already logged in");
                                     req.session.classId = classId;
                                 } else {
                                     classInformation.users[userData.email] = new Student(
@@ -292,8 +269,6 @@ module.exports = {
                                 req.session.displayName = userData.displayName;
                                 req.session.verified = userData.verified;
                                 // Log the login post
-                                logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
-                                logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
 
                                 // If the user was logging in from the consent page, redirect them back to the consent page
                                 if (req.body.route === "transfer") {
@@ -304,7 +279,6 @@ module.exports = {
                                 // Redirect the user to the home page to be redirected to the correct spot
                                 res.redirect("/");
                             } catch (err) {
-                                logger.log("error", err.stack);
                                 res.render("pages/message", {
                                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                     title: "Error",
@@ -315,7 +289,6 @@ module.exports = {
                 } else if (user.loginType === "new") {
                     // Check if the password and display name are valid
                     if (!passwordRegex.test(user.password) || !displayRegex.test(user.displayName)) {
-                        logger.log("verbose", "[post /login] Invalid data provided to create new user");
                         res.render("pages/login", {
                             title: "Login",
                             redirectURL: undefined,
@@ -331,8 +304,6 @@ module.exports = {
                     user.email = user.email.trim().toLowerCase();
                     let userPermission = STUDENT_PERMISSIONS;
 
-                    logger.log("verbose", "[post /login] Creating new user");
-
                     // Get all existing users and check for existing emails
                     const users = await dbGetAll("SELECT email, displayName FROM users");
 
@@ -344,7 +315,6 @@ module.exports = {
                     // Check if the email or display name already exists
                     for (const dbUser of users) {
                         if (dbUser.email === user.email) {
-                            logger.log("verbose", "[post /login] User with that email already exists");
                             res.render("pages/message", {
                                 message: "A user with that email already exists.",
                                 title: "Login",
@@ -358,7 +328,6 @@ module.exports = {
 
                         // Check if the display name already exists in the database
                         if (dbUser.displayName.toLowerCase() === user.displayName.toLowerCase()) {
-                            logger.log("verbose", "[post /login] User with that display name already exists");
                             res.render("pages/message", {
                                 message: "A user with that display name already exists.",
                                 title: "Login",
@@ -389,7 +358,6 @@ module.exports = {
                             (err) => {
                                 try {
                                     if (err) throw err;
-                                    logger.log("verbose", "[get /login] Added user to database");
                                     // Find the user in which was just created to get the id of the user
                                     database.get("SELECT * FROM users WHERE email=?", [user.email], (err, userData) => {
                                         try {
@@ -412,14 +380,10 @@ module.exports = {
                                             req.session.displayName = userData.displayName;
                                             req.session.verified = 1;
 
-                                            logger.log("verbose", `[post /login] session=(${JSON.stringify(req.session)})`);
-                                            logger.log("verbose", `[post /login] classInformation=(${JSON.stringify(classInformation)})`);
-
                                             managerUpdate();
 
                                             res.redirect("/");
                                         } catch (err) {
-                                            logger.log("error", err.stack);
                                             res.render("pages/message", {
                                                 message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                                 title: "Error",
@@ -429,7 +393,6 @@ module.exports = {
                                 } catch (err) {
                                     // Handle the same email being used for multiple accounts
                                     if (err.code === "SQLITE_CONSTRAINT" && err.message.includes("UNIQUE constraint failed: users.email")) {
-                                        logger.log("verbose", "[post /login] Email already exists");
                                         res.render("pages/login", {
                                             title: "Login",
                                             redirectURL: undefined,
@@ -441,7 +404,6 @@ module.exports = {
                                     }
 
                                     // Handle other errors
-                                    logger.log("error", err.stack);
                                     res.render("pages/message", {
                                         message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                                         title: "Error",
@@ -491,7 +453,6 @@ module.exports = {
                     }
                 } else if (user.loginType === "guest") {
                     if (user.displayName.trim() === "") {
-                        logger.log("verbose", "[post /login] Invalid display name provided to create guest user");
                         res.render("pages/login", {
                             title: "Login",
                             redirectURL: undefined,
@@ -501,7 +462,6 @@ module.exports = {
                         });
                         return;
                     }
-                    logger.log("verbose", "[post /login] Logging in as guest");
 
                     // Create a temporary guest user
                     const email = "guest" + crypto.randomBytes(4).toString("hex");
@@ -530,7 +490,6 @@ module.exports = {
                     res.redirect("/");
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 res.render("pages/message", {
                     message: `Error Number ${logNumbers.error}: There was a server error try again.`,
                     title: "Error",
@@ -542,7 +501,6 @@ module.exports = {
         app.post("/resend-verification", async (req, res) => {
             try {
                 const { email, secret } = req.body;
-                logger.log("info", `[post /resend-verification] ip=(${req.ip}) email=(${email})`);
 
                 // Check rate limit
                 if (limitStore.has(email) && Date.now() - limitStore.get(email) < RATE_LIMIT) {
@@ -580,9 +538,14 @@ module.exports = {
                 sendMail(email, "Formbar Verification", html);
                 res.status(200).json({ message: "Verification email sent successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
                 res.status(500).json({ error: "There was an error sending the email." });
             }
         });
     },
 };
+
+
+
+
+
+

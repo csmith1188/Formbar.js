@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { CLASS_SOCKET_PERMISSION_MAPPER, GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet } = require("@modules/database");
@@ -129,7 +128,6 @@ function httpPermCheck(event) {
                 const id = req.params.id;
                 const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
                 if (user && user.id == id) {
-                    logger.log("info", `[http permission check] Socket permissions check passed via whitelist for ${camelCaseToNormal(event)}`);
                     return next();
                 }
             }
@@ -146,3 +144,6 @@ module.exports = {
     hasClassPermission,
     httpPermCheck,
 };
+
+
+
