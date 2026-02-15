@@ -1,3 +1,4 @@
+const { getLogger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { settings } = require("@modules/config");
 const { PAGE_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
@@ -21,7 +22,15 @@ async function cleanRefreshTokens() {
         }
         // Also clean up expired authorization codes
         await cleanupExpiredAuthorizationCodes();
-    } catch (err) {}
+    } catch (err) {
+        const logger = await getLogger();
+        logger.error({
+            event: "auth.cleanup.error",
+            message: "Failed to clean up expired refresh tokens or authorization codes",
+            error: err.message,
+            stack: err.stack,
+        });
+    }
 }
 
 /**
@@ -41,21 +50,25 @@ async function cleanRefreshTokens() {
 function isAuthenticated(req, res, next) {
     const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
     if (!accessToken) {
+        req.warnEvent("auth.missing_token", "User is not authenticated: No access token provided");
         throw new AuthError("User is not authenticated");
     }
 
     const decodedToken = verifyToken(accessToken);
     if (decodedToken.error) {
+        req.warnEvent("auth.invalid_token", "Invalid access token provided", { error: decodedToken.error });
         throw new AuthError("Invalid access token provided.");
     }
 
     const email = decodedToken.email;
     if (!email) {
+        req.warnEvent("auth.missing_email", "Invalid access token provided: Missing 'email'");
         throw new AuthError("Invalid access token provided. Missing 'email'.");
     }
 
     const user = classInformation.users[email];
     if (!user) {
+        req.warnEvent("auth.user_not_found", `User not found in classInformation: ${email}`, { email });
         throw new AuthError("User is not authenticated");
     }
 
@@ -76,6 +89,7 @@ function isVerified(req, res, next) {
     if (!email) {
         const accessToken = req.headers.authorization ? req.headers.authorization.replace("Bearer ", "") : null;
         if (!accessToken) {
+            req.warnEvent("auth.not_authenticated", "User is not authenticated: No token found");
             throw new AuthError("User is not authenticated.");
         }
 
@@ -86,6 +100,7 @@ function isVerified(req, res, next) {
     }
 
     if (!email) {
+        req.warnEvent("auth.not_authenticated", "User is not authenticated: Could not determine email");
         throw new AuthError("User is not authenticated.");
     }
 
@@ -94,6 +109,7 @@ function isVerified(req, res, next) {
     if ((user && user.verified) || !settings.emailEnabled || (user && user.permissions == GUEST_PERMISSIONS)) {
         next();
     } else {
+        req.warnEvent("auth.not_verified", `User email is not verified: ${email}`, { email });
         throw new AuthError("User email is not verified.");
     }
 }
@@ -102,6 +118,7 @@ function isVerified(req, res, next) {
 async function permCheck(req, res, next) {
     const email = req.user?.email;
     if (!email) {
+        req.warnEvent("auth.perm_check.not_authenticated", "Permission check failed: User is not authenticated");
         throw new AuthError("User is not authenticated");
     }
 
@@ -127,11 +144,13 @@ async function permCheck(req, res, next) {
         // Ensure the url path is all lowercase
         urlPath = urlPath.toLowerCase();
         if (!PAGE_PERMISSIONS[urlPath]) {
+            req.warnEvent("auth.perm_check.not_found", `Page permissions not found for path: ${urlPath}`, { urlPath });
             throw new NotFoundError(`${urlPath} is not in the page permissions`);
         }
 
         const user = classInformation.users[email];
         if (!user) {
+            req.warnEvent("auth.perm_check.user_not_found", `User not found for permission check: ${email}`, { email });
             throw new AuthError("User not found");
         }
 
@@ -141,6 +160,13 @@ async function permCheck(req, res, next) {
         } else if (!PAGE_PERMISSIONS[urlPath].classPage && user.permissions >= PAGE_PERMISSIONS[urlPath].permissions) {
             next();
         } else {
+            req.warnEvent("auth.perm_check.forbidden", `User ${email} does not have permissions to access ${urlPath}`, {
+                email,
+                urlPath,
+                userPermissions: user.permissions,
+                userClassPermissions: user.classPermissions,
+                requiredPermissions: PAGE_PERMISSIONS[urlPath].permissions,
+            });
             throw new ForbiddenError("You do not have permissions to access this page.");
         }
     }
