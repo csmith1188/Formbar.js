@@ -5,6 +5,11 @@ const path = require("path");
 
 const logsDir = "logs";
 
+// Create the logs directory if it doesn't exist
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir);
+}
+
 const dailyRotateTransport = new winston.transports.DailyRotateFile({
     filename: path.join(logsDir, "app-%DATE%.ndjson"), // logs/app-2026-02-04.log
     datePattern: "YYYY-MM-DD",

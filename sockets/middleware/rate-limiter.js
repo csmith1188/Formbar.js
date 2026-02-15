@@ -1,5 +1,6 @@
 const { rateLimits, PASSIVE_SOCKETS } = require("@modules/socket-updates");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     order: 0,
@@ -35,7 +36,10 @@ module.exports = {
                     userRequests[event].push(currentTime);
                     next();
                 }
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "rate-limiter-middleware");
+                next(err);
+            }
         });
     },
 };

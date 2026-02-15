@@ -8,6 +8,8 @@ const { compare } = require("@modules/crypto");
 const { verifyToken } = require("@services/auth-service");
 const { addUserSocketUpdate, removeUserSocketUpdate } = require("../init");
 
+const { handleSocketError } = require("@modules/socket-error-handler");
+
 /**
  * Ensures a Student instance exists in classInformation for the given user.
  * Creates a new Student object if one doesn't already exist for the user's email.
@@ -264,6 +266,8 @@ module.exports = {
                     }
                 });
             }
-        } catch (err) {}
+        } catch (err) {
+            handleSocketError(err, socket, "api-middleware");
+        }
     },
 };

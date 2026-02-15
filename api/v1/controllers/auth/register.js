@@ -1,5 +1,6 @@
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
+const { requireBodyParam } = require("@modules/error-wrapper");
 
 module.exports = (router) => {
     /**
@@ -65,6 +66,11 @@ module.exports = (router) => {
      */
     router.post("/auth/register", async (req, res) => {
         const { email, password, displayName } = req.body;
+        requireBodyParam(email, "email");
+        requireBodyParam(password, "password");
+        requireBodyParam(displayName, "displayName");
+
+        req.infoEvent("auth.register.attempt", `Attempting to register user`, { email });
 
         // Attempt to register the user
         const result = await authService.register(email, password, displayName);

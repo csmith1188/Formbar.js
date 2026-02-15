@@ -8,6 +8,7 @@ const { joinRoom, leaveRoom } = require("@services/room-service");
 const { getEmailFromId, getIdFromEmail } = require("@modules/student");
 const { BANNED_PERMISSIONS } = require("@modules/permissions");
 const { classKickStudents, classKickStudent } = require("@modules/class/kick");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -18,7 +19,7 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 startClass(classId);
             } catch (err) {
-                socket.emit("startClass", "There was a server error. Please try again");
+                handleSocketError(err, socket, "startClass", "There was a server error. Please try again");
             }
         });
 
@@ -29,7 +30,7 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 endClass(classId, socket.request.session);
             } catch (err) {
-                socket.emit("startClass", "There was a server error. Please try again");
+                handleSocketError(err, socket, "endClass", "There was a server error. Please try again");
             }
         });
 
@@ -73,7 +74,9 @@ module.exports = {
 
                 // If no class is found, set the class to null
                 setClassOfApiSockets(api, null);
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "getActiveClass");
+            }
         });
 
         /**
@@ -160,7 +163,9 @@ module.exports = {
 
                 // Trigger a class update to sync all clients
                 socketUpdates.classUpdate(classId);
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "setClassSetting");
+            }
         });
 
         /**
@@ -171,7 +176,9 @@ module.exports = {
             try {
                 const isActive = isClassActive(socket.request.session.classId);
                 socket.emit("isClassActive", isActive);
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "isClassActive");
+            }
         });
 
         // Regenerates the class code for the classroom in the teacher's session
@@ -188,9 +195,13 @@ module.exports = {
                         // Update the class code in the class information, session, then refresh the page
                         classInformation.classrooms[socket.request.session.classId].key = accessCode;
                         socket.emit("reload");
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "regenerateClassCode:callback");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "regenerateClassCode");
+            }
         });
 
         /**
@@ -214,10 +225,12 @@ module.exports = {
                         socket.emit("changeClassName", name);
                         socket.emit("message", "Class name updated.");
                     } catch (err) {
-                        socket.emit("message", "There was a server error try again.");
+                        handleSocketError(err, socket, "changeClassName:callback", "There was a server error try again.");
                     }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "changeClassName");
+            }
         });
 
         /**
@@ -241,9 +254,13 @@ module.exports = {
                         }
 
                         socketUpdates.getOwnedClasses(socket.request.session.email);
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "deleteClass:callback");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "deleteClass");
+            }
         });
 
         /**
@@ -255,7 +272,9 @@ module.exports = {
                 const classId = socket.request.session.classId;
                 classKickStudent(email, classId);
                 advancedEmitToClass("leaveSound", classId, {});
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "classKickStudent");
+            }
         });
 
         // Removes all students from the class
@@ -266,7 +285,9 @@ module.exports = {
 
                 socketUpdates.classUpdate(classId);
                 advancedEmitToClass("kickStudentsSound", classId, { api: true });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "classKickStudents");
+            }
         });
 
         /**
@@ -303,12 +324,12 @@ module.exports = {
                             socketUpdates.classUpdate();
                             socket.emit("message", `Banned ${email}`);
                         } catch (err) {
-                            socket.emit("message", "There was a server error try again.");
+                            handleSocketError(err, socket, "classBanUser:callback", "There was a server error try again.");
                         }
                     }
                 );
             } catch (err) {
-                socket.emit("message", "There was a server error try again.");
+                handleSocketError(err, socket, "classBanUser", "There was a server error try again.");
             }
         });
 
@@ -352,12 +373,12 @@ module.exports = {
                             socketUpdates.classBannedUsersUpdate();
                             socket.emit("message", `Unbanned ${email}`);
                         } catch (err) {
-                            socket.emit("message", "There was a server error try again.");
+                            handleSocketError(err, socket, "classUnbanUser:callback", "There was a server error try again.");
                         }
                     }
                 );
             } catch (err) {
-                socket.emit("message", "There was a server error try again.");
+                handleSocketError(err, socket, "classUnbanUser", "There was a server error try again.");
             }
         });
 
@@ -408,7 +429,9 @@ module.exports = {
                 // Reload the user's page and update the class
                 io.to(`user-${email}`).emit("reload");
                 socketUpdates.classUpdate();
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "classPermChange");
+            }
         });
 
         /**
@@ -421,9 +444,13 @@ module.exports = {
             try {
                 const classId = socket.request.session.classId;
                 classInformation.classrooms[classId].permissions[permission] = level;
-                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {});
+                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
+                    handleSocketError(err, socket, "setClassPermissionSetting:dbRun");
+                });
                 socketUpdates.classUpdate(classId);
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "setClassPermissionSetting");
+            }
         });
 
         socket.on("updateExcludedRespondents", (respondants) => {
@@ -456,7 +483,9 @@ module.exports = {
                 clearVotesFromExcludedStudents(classId);
 
                 socketUpdates.classUpdate(classId);
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "updateExcludedRespondents");
+            }
         });
     },
 };

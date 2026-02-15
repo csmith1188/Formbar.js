@@ -3,6 +3,7 @@ const { dbGet } = require("@modules/database");
 const { GLOBAL_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, CLASS_SOCKET_PERMISSION_MAPPER } = require("@modules/permissions");
 const { PASSIVE_SOCKETS } = require("@modules/socket-updates");
 const { camelCaseToNormal } = require("@modules/util");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     order: 30,
@@ -53,7 +54,10 @@ module.exports = {
                 } else if (!PASSIVE_SOCKETS.includes(event)) {
                     socket.emit("message", `You do not have permission to use ${camelCaseToNormal(event)}.`);
                 }
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "permission-check-middleware");
+                next(err);
+            }
         });
     },
 };

@@ -1,6 +1,7 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database } = require("@modules/database");
 const { getUserClass } = require("@modules/user/user");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -50,15 +51,25 @@ module.exports = {
 
                                                 classInformation.classrooms[classId].students[user.email].sharedPolls.push(pollId);
                                                 socketUpdates.customPollUpdate(email);
-                                            } catch (err) {}
+                                            } catch (err) {
+                                                handleSocketError(err, socket, "sharePollToUser:dbRun");
+                                            }
                                         });
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "sharePollToUser:dbGet:shared_polls");
+                                    }
                                 });
-                            } catch (err) {}
+                            } catch (err) {
+                                handleSocketError(err, socket, "sharePollToUser:dbGet:custom_polls");
+                            }
                         });
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "sharePollToUser:dbGet:users");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "sharePollToUser");
+            }
         });
 
         socket.on("removeUserPollShare", (pollId, userId) => {
@@ -95,13 +106,21 @@ module.exports = {
                                         let sharedPolls = classInformation.classrooms[classId].students[user.email].sharedPolls;
                                         sharedPolls.splice(sharedPolls.indexOf(pollId), 1);
                                         socketUpdates.customPollUpdate(user.email);
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "removeUserPollShare:dbGet:users");
+                                    }
                                 });
-                            } catch (err) {}
+                            } catch (err) {
+                                handleSocketError(err, socket, "removeUserPollShare:dbRun");
+                            }
                         });
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "removeUserPollShare:dbGet:shared_polls");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "removeUserPollShare");
+            }
         });
 
         socket.on("removeClassPollShare", (pollId, classId) => {
@@ -135,13 +154,21 @@ module.exports = {
                                         for (let email of Object.keys(classInformation.classrooms[classId].students)) {
                                             socketUpdates.customPollUpdate(email);
                                         }
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "removeClassPollShare:dbGet:classroom");
+                                    }
                                 });
-                            } catch (err) {}
+                            } catch (err) {
+                                handleSocketError(err, socket, "removeClassPollShare:dbRun");
+                            }
                         });
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "removeClassPollShare:dbGet:class_polls");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "removeClassPollShare");
+            }
         });
 
         socket.on("getPollShareIds", (pollId) => {
@@ -197,16 +224,26 @@ module.exports = {
                                                     for (let email of Object.keys(classInformation.classrooms[classroom.id].students)) {
                                                         socketUpdates.customPollUpdate(email);
                                                     }
-                                                } catch (err) {}
+                                                } catch (err) {
+                                                    handleSocketError(err, socket, "sharePollToClass:dbRun");
+                                                }
                                             }
                                         );
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "sharePollToClass:dbGet:class_polls");
+                                    }
                                 });
-                            } catch (err) {}
+                            } catch (err) {
+                                handleSocketError(err, socket, "sharePollToClass:dbGet:custom_polls");
+                            }
                         });
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "sharePollToClass:dbGet:classroom");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "sharePollToClass");
+            }
         });
     },
 };

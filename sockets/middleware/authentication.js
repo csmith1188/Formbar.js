@@ -3,6 +3,8 @@ const { compare } = require("@modules/crypto");
 const { classInformation } = require("@modules/class/classroom");
 const authService = require("@services/auth-service");
 
+const { handleSocketError } = require("@modules/socket-error-handler");
+
 module.exports = {
     order: 20,
     run(socket, socketUpdates) {
@@ -69,14 +71,20 @@ module.exports = {
                             socket.request.session.classId = null;
 
                             next();
-                        } catch (err) {}
+                        } catch (err) {
+                            handleSocketError(err, socket, "authentication:api");
+                            next(err);
+                        }
                     });
                 } else if (event == "reload") {
                     next();
                 } else {
                     next(new Error("Missing authentication credentials"));
                 }
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "authentication");
+                next(err);
+            }
         });
     },
 };

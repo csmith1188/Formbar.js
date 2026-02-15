@@ -5,6 +5,7 @@ const { deleteRooms, endClass } = require("@services/class-service");
 const { lastActivities } = require("../../sockets/middleware/inactivity");
 const { GUEST_PERMISSIONS } = require("../permissions");
 const { deleteCustomPolls } = require("@services/poll-service");
+const { handleSocketError } = require("../socket-error-handler");
 
 function logout(socket) {
     const email = socket.request.session.email;
@@ -49,7 +50,7 @@ function logout(socket) {
                 }
 
                 // If the user is a guest, then remove them from the global user list
-                if (user.permissions === GUEST_PERMISSIONS) {
+                if (user && user.permissions === GUEST_PERMISSIONS) {
                     delete classInformation.users[email];
                 }
 
@@ -85,7 +86,7 @@ function logout(socket) {
                 // If this user owns the classroom, end it
                 database.get("SELECT * FROM classroom WHERE owner=? AND id=?", [userId, classId], (err, classroom) => {
                     if (err) {
-                        // Error handled
+                        handleSocketError(err, socket, "logout:database");
                     }
 
                     if (classroom) {
@@ -94,7 +95,7 @@ function logout(socket) {
                 });
             }
         } catch (err) {
-            // Error handled
+            handleSocketError(err, socket, "logout");
         }
     });
 }

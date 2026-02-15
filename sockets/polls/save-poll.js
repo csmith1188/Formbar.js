@@ -1,6 +1,7 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database } = require("@modules/database");
 const { userSockets } = require("@modules/socket-updates");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -37,12 +38,18 @@ module.exports = {
                                     socket.emit("message", "Poll saved successfully!");
                                     socketUpdates.customPollUpdate(socket.request.session.email);
                                     socket.emit("classPollSave", nextPollId);
-                                } catch (err) {}
+                                } catch (err) {
+                                    handleSocketError(err, socket, "classPoll:dbRun");
+                                }
                             }
                         );
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "classPoll:dbGet:sqlite_sequence");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "classPoll");
+            }
         });
 
         socket.on("savePoll", (poll, pollId) => {
@@ -78,10 +85,14 @@ module.exports = {
 
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "savePoll:update:dbRun");
+                                    }
                                 }
                             );
-                        } catch (err) {}
+                        } catch (err) {
+                            handleSocketError(err, socket, "savePoll:update:dbGet");
+                        }
                     });
                 } else {
                     database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
@@ -113,13 +124,19 @@ module.exports = {
                                         ].ownedPolls.push(nextPollId);
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
-                                    } catch (err) {}
+                                    } catch (err) {
+                                        handleSocketError(err, socket, "savePoll:insert:dbRun");
+                                    }
                                 }
                             );
-                        } catch (err) {}
+                        } catch (err) {
+                            handleSocketError(err, socket, "savePoll:insert:dbGet");
+                        }
                     });
                 }
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "savePoll");
+            }
         });
 
         socket.on("setPublicPoll", (pollId, value) => {
@@ -131,9 +148,13 @@ module.exports = {
                         for (const userSocket of Object.values(userSockets)) {
                             socketUpdates.customPollUpdate(userSocket.request.session.email);
                         }
-                    } catch (err) {}
+                    } catch (err) {
+                        handleSocketError(err, socket, "setPublicPoll:dbRun");
+                    }
                 });
-            } catch (err) {}
+            } catch (err) {
+                handleSocketError(err, socket, "setPublicPoll");
+            }
         });
     },
 };
