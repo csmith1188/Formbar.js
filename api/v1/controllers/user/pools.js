@@ -1,5 +1,5 @@
 const { dbGet } = require("@modules/database");
-const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@middleware/authentication");
 const pools = require("@modules/pools");
 
 module.exports = {
@@ -43,7 +43,8 @@ module.exports = {
          */
         // Handle displaying the pools management page
         router.get("/user/pools", isAuthenticated, isVerified, permCheck, async (req, res) => {
-            const userId = req.user.userId;
+            const userId = req.user.id;
+            req.infoEvent("user.pools.view.attempt", "Attempting to view user pools");
 
             // Get all pools for this user using the new schema helper
             const userPools = await pools.getPoolsForUser(userId);
@@ -62,6 +63,7 @@ module.exports = {
                 })
             );
 
+            req.infoEvent("user.pools.view.success", "User pools returned", { poolCount: poolObjs.filter((p) => p).length });
             res.status(200).json({
                 success: true,
                 data: {

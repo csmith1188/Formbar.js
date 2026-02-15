@@ -1,9 +1,15 @@
 class AppError extends Error {
-    constructor(message, statusCode, options = {}) {
+    constructor(
+        message,
+        options = {
+            statusCode: 500,
+            event: "",
+            reason: "",
+        }
+    ) {
         super(message);
 
-        this.statusCode = statusCode;
-        this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
+        this.statusCode = options.statusCode;
         this.isOperational = true;
 
         Object.assign(this, options);

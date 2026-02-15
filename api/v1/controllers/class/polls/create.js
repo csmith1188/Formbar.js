@@ -1,8 +1,8 @@
 const { createPoll } = require("@services/poll-service");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { parseJson } = require("@modules/middleware/parse-json");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { parseJson } = require("@middleware/parse-json");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -92,6 +92,7 @@ module.exports = (router) => {
     router.post("/class/:id/polls/create", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.CONTROL_POLLS), parseJson, async (req, res) => {
         const classId = req.params.id;
         const body = req.body || {};
+        req.infoEvent("class.poll.create.attempt", "Attempting to create poll", { classId });
         const isLegacy =
             body.pollPrompt != null ||
             body.responseNumber != null ||
@@ -116,6 +117,7 @@ module.exports = (router) => {
             : body;
 
         await createPoll(classId, pollData, req.user);
+        req.infoEvent("class.poll.create.success", "Poll created", { classId });
         res.status(200).json({
             success: true,
             data: {},

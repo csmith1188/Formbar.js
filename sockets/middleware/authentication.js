@@ -1,8 +1,9 @@
 const { database } = require("@modules/database");
-const { logger } = require("@modules/logger");
 const { compare } = require("@modules/crypto");
 const { classInformation } = require("@modules/class/classroom");
 const authService = require("@services/auth-service");
+
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     order: 20,
@@ -13,32 +14,24 @@ module.exports = {
             try {
                 let { api, authorization } = socket.request.headers;
 
-                logger.log(
-                    "info",
-                    `[socket authentication] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) api=(${api}) authorization=(${authorization ? "present" : "missing"}) event=(${event})`
-                );
-
                 if (socket.request.session.email) {
                     next();
                 } else if (authorization) {
                     // Try to authenticate using access token (JWT)
                     const decodedToken = authService.verifyToken(authorization);
                     if (decodedToken.error) {
-                        logger.log("verbose", "[socket authentication] Invalid access token");
                         next(new Error("Invalid access token"));
                         return;
                     }
 
                     const email = decodedToken.email;
                     if (!email) {
-                        logger.log("verbose", "[socket authentication] Access token missing email");
                         next(new Error("Invalid access token - missing email"));
                         return;
                     }
 
                     const user = classInformation.users[email];
                     if (!user) {
-                        logger.log("verbose", "[socket authentication] User not found in classInformation");
                         next(new Error("User not found"));
                         return;
                     }
@@ -68,7 +61,6 @@ module.exports = {
                             }
 
                             if (!matchedUser) {
-                                logger.log("verbose", "[socket authentication] not a valid API Key");
                                 next(new Error("Not a valid API key"));
                                 return;
                             }
@@ -80,17 +72,18 @@ module.exports = {
 
                             next();
                         } catch (err) {
-                            logger.log("error", err.stack);
+                            handleSocketError(err, socket, "authentication:api");
+                            next(err);
                         }
                     });
                 } else if (event == "reload") {
                     next();
                 } else {
-                    logger.log("info", "[socket authentication] Missing email, api, or authorization");
                     next(new Error("Missing authentication credentials"));
                 }
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "authentication");
+                next(err);
             }
         });
     },

@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { updatePoll } = require("@services/poll-service");
 
@@ -16,33 +15,24 @@ module.exports = {
          */
         socket.on("updatePoll", async (options) => {
             try {
-                logger.log(
-                    "info",
-                    `[updatePoll] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)}) options=(${JSON.stringify(options)})`
-                );
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email]?.activeClass;
                 if (!classId) {
-                    logger.log("info", "[updatePoll socket] User not in a class");
                     socket.emit("message", "You are not in a class");
                     return;
                 }
 
                 if (!options || typeof options !== "object") {
-                    logger.log("info", "[updatePoll socket] Invalid options");
                     socket.emit("message", "Invalid poll update options");
                     return;
                 }
 
                 const result = await updatePoll(classId, options, socket.request.session);
                 if (result) {
-                    logger.log("verbose", `[updatePoll socket] Poll updated successfully`);
                 } else {
-                    logger.log("info", `[updatePoll socket] Poll update failed`);
                     socket.emit("message", "Failed to update poll");
                 }
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "An error occurred while updating the poll");
             }
         });

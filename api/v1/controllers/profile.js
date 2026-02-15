@@ -1,5 +1,4 @@
-const { isVerified, permCheck, isAuthenticated } = require("@modules/middleware/authentication");
-const { logger } = require("@modules/logger");
+const { isVerified, permCheck, isAuthenticated } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getUserData } = require("@services/user-service");
@@ -65,18 +64,17 @@ module.exports = (router) => {
      */
     router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("profile.transactions.view", "Viewing transactions", { targetUserId: req.params.userId });
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
-        const userId = req.params.userId || req.user.userId;
-        if (req.user.userId !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
+        const userId = req.params.userId || req.user.id;
+        if (req.user.id !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
             throw new ForbiddenError("You do not have permission to view these transactions.");
         }
 
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found: userId=${userId}`);
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         const userDisplayName = userData.displayName || "Unknown User";
@@ -84,14 +82,14 @@ module.exports = (router) => {
 
         // Handle case where no transactions are found
         if (!transactions || transactions.length === 0) {
-            logger.log("info", "No transactions found for user");
+            req.infoEvent("profile.transactions.empty", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
                 success: true,
                 data: {
                     transactions: [],
                     displayName: userDisplayName,
-                    currentUserId: req.user.userId,
+                    currentUserId: req.user.id,
                 },
             });
             return;
@@ -102,7 +100,7 @@ module.exports = (router) => {
             data: {
                 transactions: transactions,
                 displayName: userDisplayName,
-                currentUserId: req.user.userId,
+                currentUserId: req.user.id,
             },
         });
     });
@@ -168,26 +166,27 @@ module.exports = (router) => {
      */
     router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
 
         // Check if userData is null or undefined
-        const userId = req.params.userId || req.user.userId;
+        const userId = req.params.userId || req.user.id;
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found in database: userId=${userId}`);
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            logger.log("error", `Incomplete user data retrieved from database: userId=${userId}, fields missing`);
-            throw new AppError("Unable to retrieve profile information. Please try again.");
+            throw new AppError("Unable to retrieve profile information. Please try again.", {
+                event: "profile.incomplete_data",
+                reason: "missing_required_fields",
+            });
         }
 
         // Determine if the email should be visible then render the page
-        const emailVisible = req.user.userId === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
-        const isOwnProfile = req.user.userId === userId;
+        const emailVisible = req.user.id === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
+        const isOwnProfile = req.user.id === userId;
 
         res.status(200).json({
             success: true,
