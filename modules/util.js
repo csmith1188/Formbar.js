@@ -1,5 +1,3 @@
-const { logger } = require("./logger.js");
-
 /**
  * Converts HSL color values to Hex color values
  * @param hue

@@ -1,7 +1,6 @@
 const { classInformation } = require("./class/classroom");
 const { database, dbGet } = require("./database");
 const { STUDENT_PERMISSIONS } = require("./permissions");
-const { logger } = require("./logger.js");
 
 // This class is used to create a student to be stored in the sessions data
 class Student {

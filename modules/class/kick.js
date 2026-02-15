@@ -1,5 +1,4 @@
 const { classInformation } = require("./classroom");
-const { logger } = require("../logger.js");
 const { getEmailFromId } = require("../student");
 const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socket-updates");
 const { dbRun, dbGet } = require("../database");

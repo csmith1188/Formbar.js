@@ -17,7 +17,6 @@ if (!fs.existsSync("database/database.db")) {
 }
 
 // Custom modules
-const { getLogger } = require("@modules/logger.js");
 const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http } = require("@modules/web-server.js");
 const { settings } = require("@modules/config.js");

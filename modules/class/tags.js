@@ -1,6 +1,5 @@
 const { classInformation } = require("./classroom");
 const { dbRun } = require("../database");
-const { logger } = require("../logger.js");
 const { getEmailFromId } = require("../student");
 
 /**

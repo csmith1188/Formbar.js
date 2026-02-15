@@ -1,5 +1,4 @@
-const ip = require("@controllers/ip");
-const {getLogger, logEvent} = require("@modules/logger");
+const { getLogger, logEvent } = require("@modules/logger");
 const crypto = require("crypto");
 
 // Middleware to log incoming requests and their completion time
