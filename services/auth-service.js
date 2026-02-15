@@ -316,7 +316,7 @@ function generateAuthorizationCode({ client_id, redirect_uri, scope, authorizati
 
     const userData = verifyToken(authorization);
     if (userData.error) {
-        throw new AppError("Invalid authorization token provided.", 400);
+        throw new AppError("Invalid authorization token provided.", { statusCode: 400 });
     }
 
     return jwt.sign(
@@ -347,14 +347,14 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
 
     const authorizationCodeData = verifyToken(code);
     if (authorizationCodeData.error) {
-        throw new AppError("Invalid authorization code provided.", 400);
+        throw new AppError("Invalid authorization code provided.", { statusCode: 400 });
     }
 
     // Check if the authorization code has already been used (single-use per RFC 6749 Section 10.5)
     const codeHash = hashToken(code);
     const usedCode = await dbGet("SELECT * FROM used_authorization_codes WHERE code_hash = ?", [codeHash]);
     if (usedCode) {
-        throw new AppError("Authorization code has already been used.", 400);
+        throw new AppError("Authorization code has already been used.", { statusCode: 400 });
     }
 
     // Mark the authorization code as used
@@ -366,16 +366,16 @@ async function exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id
 
     // Ensure the redirect_uri and client_id match those embedded in the authorization code
     if (authorizationCodeData.redirect_uri !== redirect_uri) {
-        throw new AppError("redirect_uri does not match the original authorization request.", 400);
+        throw new AppError("redirect_uri does not match the original authorization request.", { statusCode: 400 });
     }
     if (authorizationCodeData.aud !== client_id) {
-        throw new AppError("client_id does not match the original authorization request.", 400);
+        throw new AppError("client_id does not match the original authorization request.", { statusCode: 400 });
     }
 
     // Load user details so the OAuth access token includes the same claims as regular access tokens
     const user = await dbGet("SELECT id, email, displayName FROM users WHERE id = ?", [authorizationCodeData.sub]);
     if (!user) {
-        throw new AppError("User associated with the authorization code was not found.", 404);
+        throw new AppError("User associated with the authorization code was not found.", { statusCode: 404 });
     }
 
     const tokenPayload = {
@@ -417,20 +417,20 @@ async function exchangeRefreshTokenForAccessToken({ refresh_token }) {
 
     const refreshTokenData = verifyToken(refresh_token);
     if (refreshTokenData.error) {
-        throw new AppError("Invalid refresh token provided.", 400);
+        throw new AppError("Invalid refresh token provided.", { statusCode: 400 });
     }
 
     // Verify the refresh token exists in the database as an OAuth token (compare hashes)
     const tokenHash = hashToken(refresh_token);
     const dbRefreshToken = await dbGet("SELECT * FROM refresh_tokens WHERE token_hash = ? AND token_type = 'oauth'", [tokenHash]);
     if (!dbRefreshToken) {
-        throw new AppError("Refresh token not found or has been revoked.", 401);
+        throw new AppError("Refresh token not found or has been revoked.", { statusCode: 401 });
     }
 
     // Load user details so the OAuth access token includes the same claims as regular access tokens
     const user = await dbGet("SELECT id, email, display_name AS displayName FROM users WHERE id = ?", [refreshTokenData.id]);
     if (!user) {
-        throw new AppError("User associated with the refresh token was not found.", 404);
+        throw new AppError("User associated with the refresh token was not found.", { statusCode: 404 });
     }
 
     const tokenPayload = {

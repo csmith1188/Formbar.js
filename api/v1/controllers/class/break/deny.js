@@ -79,7 +79,7 @@ module.exports = (router) => {
                 data: {},
             });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500 });
         }
     });
 };

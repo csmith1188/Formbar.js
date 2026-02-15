@@ -117,12 +117,18 @@ function httpPermCheck(event) {
         }
 
         if (CLASS_SOCKET_PERMISSION_MAPPER[event] && !classInformation.classrooms[classId]) {
-            req.warnEvent("auth.http_perm_check.class_not_loaded", `HTTP permission check failed: Class ${classId} is not loaded (mapper match)`, { classId, event });
+            req.warnEvent("auth.http_perm_check.class_not_loaded", `HTTP permission check failed: Class ${classId} is not loaded (mapper match)`, {
+                classId,
+                event,
+            });
             throw new AuthError("Class is not loaded", { event: "permission.check.failed", reason: "class_not_loaded" });
         }
 
         if (CLASS_SOCKET_PERMISSIONS[event] && !classInformation.classrooms[classId]) {
-            req.warnEvent("auth.http_perm_check.class_not_loaded", `HTTP permission check failed: Class ${classId} is not loaded (direct match)`, { classId, event });
+            req.warnEvent("auth.http_perm_check.class_not_loaded", `HTTP permission check failed: Class ${classId} is not loaded (direct match)`, {
+                classId,
+                event,
+            });
             throw new AuthError("Class is not loaded");
         }
 
