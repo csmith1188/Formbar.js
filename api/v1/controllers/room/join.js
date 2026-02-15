@@ -1,6 +1,6 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { httpPermCheck } = require("@middleware/permission-check");
 const { joinRoom } = require("@services/room-service");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -48,7 +48,12 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/UnauthorizedError'
      */
     router.post("/room/:code/join", isAuthenticated, httpPermCheck("joinRoom"), async (req, res) => {
-        await joinRoom(req.user, req.params.code);
+        const code = req.params.code;
+        req.infoEvent("room.join.attempt", "User attempting to join room", { code });
+
+        await joinRoom(req.user, code);
+
+        req.infoEvent("room.join.success", "User joined room successfully", { code });
         res.status(200).json({
             success: true,
             data: {},

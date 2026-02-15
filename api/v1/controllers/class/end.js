@@ -1,5 +1,5 @@
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const { endClass } = require("@services/class-service");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 
@@ -54,7 +54,11 @@ module.exports = (router) => {
      */
     router.post("/class/:id/end", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.end.attempt", "Ending class session", { classId });
+
         await endClass(classId, req.user);
+
+        req.infoEvent("class.end.success", "Class session ended successfully", { classId });
         res.status(200).json({
             success: true,
             data: {},

@@ -1,13 +1,14 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { httpPermCheck } = require("@middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { sendHelpTicket } = require("@modules/class/help");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const requestHelpHandler = async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.help.request.attempt", "Attempting to request class help", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request help in this class.");
@@ -17,12 +18,13 @@ module.exports = (router) => {
         const userData = { ...req.user, classId };
         const result = await sendHelpTicket(reason, userData);
         if (result === true) {
+            req.infoEvent("class.help.request.success", "Class help requested", { classId });
             res.status(200).json({
                 success: true,
                 data: {},
             });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500 });
         }
     };
 

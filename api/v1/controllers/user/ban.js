@@ -1,5 +1,5 @@
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const { dbGet, dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS, BANNED_PERMISSIONS, STUDENT_PERMISSIONS } = require("@modules/permissions");
 const { classInformation } = require("@modules/class/classroom");
@@ -9,9 +9,11 @@ const NotFoundError = require("@errors/not-found-error");
 module.exports = (router) => {
     const banUserHandler = async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.ban.attempt", "Attempting to ban user");
+
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new NotFoundError("User not found", { event: "user.ban.failed", reason: "user_not_found" });
         }
 
         await dbRun("UPDATE users SET permissions=? WHERE id=?", [BANNED_PERMISSIONS, userId]);
@@ -20,6 +22,8 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
+
+        req.infoEvent("user.ban.success", "User banned successfully", {});
         res.status(200).json({
             success: true,
             data: {
@@ -30,9 +34,11 @@ module.exports = (router) => {
 
     const unbanUserHandler = async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.unban.attempt", "Attempting to unban user");
+
         const user = await dbGet(`SELECT * FROM users WHERE id = ?`, [userId]);
         if (!user) {
-            throw new NotFoundError("User not found");
+            throw new NotFoundError("User not found", { event: "user.unban.failed", reason: "user_not_found" });
         }
 
         await dbRun("UPDATE users SET permissions=? WHERE id=?", [STUDENT_PERMISSIONS, userId]);
@@ -41,6 +47,8 @@ module.exports = (router) => {
         }
 
         await managerUpdate();
+
+        req.infoEvent("user.unban.success", "User unbanned successfully", {});
         res.status(200).json({
             success: true,
             data: {

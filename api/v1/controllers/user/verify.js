@@ -1,13 +1,15 @@
 const { dbRun, dbGetAll } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const jwt = require("jsonwebtoken");
 const NotFoundError = require("@errors/not-found-error");
 
 module.exports = (router) => {
     const verifyUserHandler = async (req, res) => {
         const id = req.params.id;
+        req.infoEvent("user.verify.attempt", "Attempting to verify user", { pendingUserId: id });
+
         const tempUsers = await dbGetAll("SELECT * FROM temp_user_creation_data");
         let tempUser;
         for (const user of tempUsers) {
@@ -19,7 +21,7 @@ module.exports = (router) => {
         }
 
         if (!tempUser) {
-            throw new NotFoundError("Pending user not found");
+            throw new NotFoundError("Pending user not found", { event: "user.verify.failed", reason: "user_not_found" });
         }
 
         await dbRun("INSERT INTO users (email, password, permissions, API, secret, displayName, verified) VALUES (?, ?, ?, ?, ?, ?, ?)", [
@@ -32,6 +34,8 @@ module.exports = (router) => {
             1,
         ]);
         await dbRun("DELETE FROM temp_user_creation_data WHERE secret=?", [tempUser.newSecret]);
+
+        req.infoEvent("user.verify.success", "User verified successfully");
         res.status(200).json({
             success: true,
             data: {

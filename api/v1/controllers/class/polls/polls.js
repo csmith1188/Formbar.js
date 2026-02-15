@@ -1,6 +1,9 @@
 const { requireQueryParam } = require("@modules/error-wrapper");
+const { classInformation } = require("@modules/class/classroom");
 const { getPreviousPolls } = require("@services/poll-service");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
+const NotFoundError = require("@errors/not-found-error");
+const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
     /**
@@ -109,9 +112,13 @@ module.exports = (router) => {
         const classId = req.params.id;
         requireQueryParam(classId, "classId");
 
+        req.infoEvent("class.polls.view", "Viewing class polls", { classId });
+
         const limit = req.query.limit ? parseInt(req.query.limit) : 20;
         const index = req.query.index ? parseInt(req.query.index) : 0;
         const polls = await getPreviousPolls(classId, index, limit);
+
+        req.infoEvent("class.polls.data_sent", "Poll data sent to client", { classId, pollStatus: classData.poll.status });
 
         res.status(200).json({
             success: true,

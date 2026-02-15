@@ -1,10 +1,15 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { httpPermCheck } = require("@middleware/permission-check");
 const { leaveRoom } = require("@services/room-service");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
-        await leaveRoom({ ...req.user, classId: req.params.id });
+        const classId = req.params.id;
+        req.infoEvent("room.leave.attempt", "User attempting to leave room", { classId });
+
+        await leaveRoom({ ...req.user, classId });
+
+        req.infoEvent("room.leave.success", "User left room successfully", { classId });
         res.status(200).json({
             success: true,
             data: {},

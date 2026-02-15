@@ -1,5 +1,3 @@
-const { logger } = require("./logger");
-
 /**
  * Converts HSL color values to Hex color values
  * @param hue
@@ -9,8 +7,6 @@ const { logger } = require("./logger");
  */
 function convertHSLToHex(hue, saturation, lightness) {
     try {
-        logger.log("info", `[convertHSLToHex] hue=${hue}, saturation=${saturation}, lightness=${lightness}`);
-
         // Normalize lightness to range 0-1
         lightness /= 100;
 
@@ -33,8 +29,6 @@ function convertHSLToHex(hue, saturation, lightness) {
         }
 
         // Return the hex color
-        logger.log("verbose", `[convertHSLToHex]  color=(${getColorComponent(0)}${getColorComponent(8)}${getColorComponent(4)})`);
-
         let red = getColorComponent(0);
         let green = getColorComponent(8);
         let blue = getColorComponent(4);
@@ -56,7 +50,6 @@ function convertHSLToHex(hue, saturation, lightness) {
  */
 function generateColors(amount) {
     try {
-        logger.log("info", `[generateColors] amount=(${amount})`);
         // Initialize colors array
         let colors = [];
 
@@ -77,7 +70,6 @@ function generateColors(amount) {
         }
 
         // Return the colors array
-        logger.log("verbose", `[generateColors] colors=(${colors})`);
         return colors;
     } catch (err) {
         return err;

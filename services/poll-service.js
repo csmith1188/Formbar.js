@@ -1,5 +1,5 @@
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
+
 const { generateColors } = require("@modules/util");
 const { advancedEmitToClass, userUpdateSocket } = require("@modules/socket-updates");
 const { database, dbGet, dbGetAll, dbRun } = require("@modules/database");
@@ -171,16 +171,8 @@ async function createPoll(classId, pollData, userData) {
         throw new ValidationError("This class is not currently active");
     }
 
-    // Log poll information
-    logger.log("info", `[createPoll] session=(${JSON.stringify(userData)})`);
-    logger.log(
-        "info",
-        `[createPoll] allowTextResponses=(${allowTextResponses}) prompt=(${prompt}) answers=(${JSON.stringify(answers)}) blind=(${blind}) weight=(${weight}) tags=(${tags})`
-    );
-
     await clearPoll(classId, userData, false);
     const generatedColors = generateColors(Object.keys(answers).length);
-    logger.log("verbose", `[createPoll] user=(${classroom.students[userData.email]})`);
 
     classroom.poll.allowVoteChanges = allowVoteChanges;
     classroom.poll.blind = blind;
@@ -228,9 +220,6 @@ async function createPoll(classId, pollData, userData) {
     classroom.poll.allowMultipleResponses = allowMultipleResponses;
 
     resetStudentPollResponses(classroom);
-
-    // Log data about the class then call the appropriate update functions
-    logger.log("verbose", `[createPoll] classData=(${JSON.stringify(classroom)})`);
     broadcastClassUpdate(userData.email, classId);
 }
 
@@ -255,8 +244,6 @@ async function updatePoll(classId, options, userSession) {
     }
 
     const classroom = getClassroom(classId);
-
-    logger.log("info", `[updatePoll] classId=(${classId}) options=(${JSON.stringify(options)})`);
 
     // If an empty object is sent, clear the current poll
     const optionsKeys = Object.keys(options);
@@ -334,8 +321,6 @@ async function savePollToHistory(classId) {
         "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt) VALUES(?, ?, ?, ?, ?, ?, ?)",
         [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt]
     );
-
-    logger.log("verbose", "[savePollToHistory] saved poll to history");
 }
 
 /**
@@ -407,8 +392,6 @@ async function clearPoll(classId, userSession, updateClass = true) {
  */
 function sendPollResponse(classId, res, textRes, userSession) {
     const resLength = textRes != null ? textRes.length : 0;
-    logger.log("info", `[pollResponse] session=(${JSON.stringify(userSession)})`);
-    logger.log("info", `[pollResponse] res=(${res}) textRes=(${textRes}) resLength=(${resLength})`);
 
     const email = userSession.email;
     const user = classInformation.users[email];
@@ -416,7 +399,6 @@ function sendPollResponse(classId, res, textRes, userSession) {
 
     // If the classroom does not exist, return
     if (!classroom) {
-        logger.log("warning", `[pollResponse WARNING] session=(${JSON.stringify(userSession)}) - Classroom not found for classId ${classId}`);
         return;
     }
 
@@ -476,15 +458,12 @@ function sendPollResponse(classId, res, textRes, userSession) {
             let addPogs = Math.floor(Math.random() * 10) + 1; // Randomly add between 1 and 10 digipogs
             database.run("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [addPogs, user.id], (err) => {
                 if (err) {
-                    logger.log("error", err.stack);
                 } else {
-                    logger.log("info", `[pollResponse] User ${user.email} earned a Digipog`);
                 }
             });
         }
         pogMeterTracker.pogMeterIncreased[email] = true;
     }
-    logger.log("verbose", `[pollResponse] user=(${student})`);
 
     broadcastClassUpdate(email, classId);
 }

@@ -6,10 +6,8 @@ database/*.bak
 uploads/
 .env
 
-logNumbers.json
 settings.json
 
 logs/
-logNumbers.json
 
 *.pem

@@ -1,5 +1,4 @@
 const { database } = require("../database");
-const { logger } = require("../logger");
 const { MOD_PERMISSIONS, STUDENT_PERMISSIONS, DEFAULT_CLASS_PERMISSIONS } = require("../permissions");
 
 const classInformation = createClassInformation();
@@ -83,9 +82,6 @@ async function getClassUsers(user, key) {
         // Get the class permissions of the user
         let classPermissions = user.classPermissions;
 
-        // Log the class code
-        logger.log("info", `[getClassUsers] classCode=(${key})`);
-
         // Query the database for the users of the class
         let dbClassUsers = await new Promise((resolve, reject) => {
             database.all(
@@ -166,9 +162,6 @@ async function getClassUsers(user, key) {
                 delete classUsers[user.email].pogMeter;
             }
         }
-
-        // Log the class users
-        logger.log("verbose", `[getClassUsers] classUsers=(${JSON.stringify(classUsers)})`);
 
         // Return the class users
         return classUsers;

@@ -1,5 +1,4 @@
-const { dbRun, dbGet, dbGetAll } = require("@modules/database");
-const { logger } = require("@modules/logger");
+const { dbRun, dbGet } = require("@modules/database");
 const pools = require("@modules/pools");
 
 module.exports = {
@@ -32,7 +31,6 @@ module.exports = {
 
                 return socket.emit("poolCreateResponse", { success: true, message: "Pool created successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
                 return socket.emit("poolCreateResponse", { success: false, message: "An error occurred while creating the pool." });
             }
         });
@@ -58,7 +56,6 @@ module.exports = {
 
                 return socket.emit("poolDeleteResponse", { success: true, message: "Pool deleted successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
                 return socket.emit("poolDeleteResponse", { success: false, message: "An error occurred while deleting the pool." });
             }
         });
@@ -96,7 +93,6 @@ module.exports = {
 
                 return socket.emit("poolAddMemberResponse", { success: true, message: "User added to pool successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
                 return socket.emit("poolAddMemberResponse", { success: false, message: "An error occurred while adding the user." });
             }
         });
@@ -128,7 +124,6 @@ module.exports = {
 
                 return socket.emit("poolRemoveMemberResponse", { success: true, message: "User removed from pool successfully." });
             } catch (err) {
-                logger.log("error", err.stack);
                 return socket.emit("poolRemoveMemberResponse", { success: false, message: "An error occurred while removing the user." });
             }
         });
@@ -179,7 +174,6 @@ module.exports = {
 
                 return socket.emit("poolPayoutResponse", { success: true, message: "Pool payout successful." });
             } catch (err) {
-                logger.log("error", err.stack);
                 return socket.emit("poolPayoutResponse", { success: false, message: "An error occurred during payout." });
             }
         });

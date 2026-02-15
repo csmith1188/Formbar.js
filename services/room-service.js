@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { dbGet, dbRun } = require("@modules/database");
 const { advancedEmitToClass, emitToUser } = require("@modules/socket-updates");
@@ -28,7 +27,6 @@ function getClassService() {
  */
 async function joinRoomByCode(code, sessionUser) {
     const email = sessionUser.email;
-    logger.log("info", `[joinRoomByCode] email=(${email}) roomCode=(${code})`);
 
     // Find the classroom from the database
     const classroomDb = await dbGet("SELECT * FROM classroom WHERE key=?", [code]);
@@ -46,8 +44,6 @@ async function joinRoomByCode(code, sessionUser) {
     // Delegate to class-service to handle the actual joining logic
     // This avoids code duplication and keeps room-service focused on code validation
     const result = await getClassService().addUserToClassroomSession(classroomDb.id, email, sessionUser);
-
-    logger.log("verbose", `[joinRoomByCode] User joined successfully`);
     return result;
 }
 
@@ -59,8 +55,6 @@ async function joinRoomByCode(code, sessionUser) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinRoom(userSession, classCode) {
-    logger.log("info", `[joinRoom] session=(${JSON.stringify(userSession)}) classCode=${classCode}`);
-
     const response = await joinRoomByCode(classCode, userSession);
     emitToUser(userSession.email, "joinClass", response);
     return true;

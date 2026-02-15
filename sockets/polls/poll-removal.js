@@ -1,6 +1,6 @@
 const { classInformation } = require("@modules/class/classroom");
 const { dbRun, dbGet } = require("@modules/database");
-const { logger } = require("@modules/logger");
+const { getLogger, logEvent } = require("@modules/logger");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -8,7 +8,8 @@ module.exports = {
             const { userId } = socket.request.session;
             const ip = socket.handshake.address;
 
-            logger.info(`[deletePoll] ip=(${ip}) pollId=(${pollId}) session=${JSON.stringify(socket.request.session)}`);
+            const logger = await getLogger();
+            logEvent(logger, "info", "deletePoll", `ip=(${ip}) pollId=(${pollId}) session=${JSON.stringify(socket.request.session)}`);
             if (!pollId) return socket.emit("message", "No poll is selected.");
 
             try {
@@ -16,7 +17,7 @@ module.exports = {
                 if (!poll) return socket.emit("message", "Poll not found.");
 
                 if (+poll.owner !== userId) {
-                    logger.info("[deletePoll] not owner");
+                    logEvent(logger, "info", "deletePoll", "not owner");
                     return socket.emit("message", "You do not have permission to delete this poll.");
                 }
 
@@ -47,13 +48,13 @@ module.exports = {
                         }
                     }
 
-                    if (updatePolls) logger.info(`[deletePoll] updated polls for classroom`);
+                    if (updatePolls) logEvent(logger, "info", "deletePoll", "updated polls for classroom");
                 }
 
                 socket.emit("message", "Poll deleted successfully!");
-                logger.info("[deletePoll] deleted");
+                logEvent(logger, "info", "deletePoll", "deleted");
             } catch (err) {
-                logger.error(err.stack);
+                logEvent(logger, "error", "deletePoll", err.message, { stack: err.stack });
             }
         });
     },

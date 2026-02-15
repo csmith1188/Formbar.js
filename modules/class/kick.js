@@ -1,5 +1,4 @@
 const { classInformation } = require("./classroom");
-const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
 const { setClassOfApiSockets, userSockets, userUpdateSocket } = require("../socket-updates");
 const { dbRun, dbGet } = require("../database");
@@ -11,7 +10,6 @@ const { TEACHER_PERMISSIONS, BANNED_PERMISSIONS } = require("../permissions");
 async function classKickStudent(userId, classId, options = { exitRoom: true, ban: false }) {
     try {
         const email = await getEmailFromId(userId);
-        logger.log("info", `[classKickUser] email=(${email}) classId=(${classId}) exitRoom=${options.exitRoom}`);
 
         // Check if user exists in classInformation.users before trying to modify
         if (classInformation.users[email]) {
@@ -72,23 +70,17 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
                 userSocket.emit("reload");
             }
         }
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    } catch (err) {}
 }
 
 function classKickStudents(classId) {
     try {
-        logger.log("info", `[classKickStudents] classId=(${classId})`);
-
         for (const student of Object.values(classInformation.classrooms[classId].students)) {
             if (student.classPermissions < TEACHER_PERMISSIONS) {
                 classKickStudent(student.id, classId);
             }
         }
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    } catch (err) {}
 }
 
 module.exports = {

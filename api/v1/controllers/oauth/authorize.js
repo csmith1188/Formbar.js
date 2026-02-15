@@ -1,7 +1,7 @@
 const authService = require("@services/auth-service");
 const ValidationError = require("@errors/validation-error");
 const { requireQueryParam } = require("@modules/error-wrapper");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -74,7 +74,10 @@ module.exports = (router) => {
         // If response_type is provided, validate it
         // If not, we can assume default behavior
         if (response_type && response_type !== "code") {
-            throw new ValidationError("Unsupported response_type. Only 'code' is supported.");
+            throw new ValidationError("Unsupported response_type. Only 'code' is supported.", {
+                event: "oauth.authorize.failed",
+                reason: "unsupported_response_type",
+            });
         }
 
         // Validate required parameters
@@ -82,6 +85,8 @@ module.exports = (router) => {
         requireQueryParam(redirect_uri, "redirect_uri");
         requireQueryParam(scope, "scope");
         requireQueryParam(state, "state");
+
+        req.infoEvent("oauth.authorize.attempt", "OAuth authorization attempt", { client_id, scope });
 
         // Create an authorization token for the client
         const authorizationCode = authService.generateAuthorizationCode({ client_id, redirect_uri, scope, authorization });
@@ -91,11 +96,15 @@ module.exports = (router) => {
         try {
             url = new URL(redirect_uri);
         } catch (err) {
-            throw new ValidationError("Invalid redirect_uri. It must be a valid absolute URL.");
+            throw new ValidationError("Invalid redirect_uri. It must be a valid absolute URL.", {
+                event: "oauth.authorize.failed",
+                reason: "invalid_redirect_uri",
+            });
         }
         url.searchParams.append("code", authorizationCode);
         url.searchParams.append("state", state);
 
+        req.infoEvent("oauth.authorize.success", "Authorization code generated", { client_id });
         res.status(302).redirect(url.toString());
     });
 };

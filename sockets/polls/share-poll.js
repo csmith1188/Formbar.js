@@ -1,21 +1,17 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database } = require("@modules/database");
-const { logger } = require("@modules/logger");
 const { getUserClass } = require("@modules/user/user");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
         socket.on("sharePollToUser", (pollId, email) => {
             try {
-                logger.log("info", `[sharePollToUser] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[sharePollToUser] pollId=(${pollId}) email=(${email})`);
-
                 database.get("SELECT * FROM users WHERE email=?", email, (err, user) => {
                     try {
                         if (err) throw err;
 
                         if (!user) {
-                            logger.log("info", "User does not exist");
                             socket.emit("message", "User does not exist");
                             return;
                         }
@@ -25,7 +21,6 @@ module.exports = {
                                 if (err) throw err;
 
                                 if (!poll) {
-                                    logger.log("critical", "Poll does not exist");
                                     socket.emit("message", "Poll does not exist (Please contact the programmer)");
                                     return;
                                 }
@@ -57,37 +52,33 @@ module.exports = {
                                                 classInformation.classrooms[classId].students[user.email].sharedPolls.push(pollId);
                                                 socketUpdates.customPollUpdate(email);
                                             } catch (err) {
-                                                logger.log("error", err.stack);
+                                                handleSocketError(err, socket, "sharePollToUser:dbRun");
                                             }
                                         });
                                     } catch (err) {
-                                        logger.log("error", err.stack);
+                                        handleSocketError(err, socket, "sharePollToUser:dbGet:shared_polls");
                                     }
                                 });
                             } catch (err) {
-                                logger.log("error", err.stack);
+                                handleSocketError(err, socket, "sharePollToUser:dbGet:custom_polls");
                             }
                         });
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        handleSocketError(err, socket, "sharePollToUser:dbGet:users");
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "sharePollToUser");
             }
         });
 
         socket.on("removeUserPollShare", (pollId, userId) => {
             try {
-                logger.log("info", `[removeUserPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[removeUserPollShare] pollId=(${pollId}) userId=(${userId})`);
-
                 database.get("SELECT * FROM shared_polls WHERE pollId=? AND userId=?", [pollId, userId], (err, pollShare) => {
                     try {
                         if (err) throw err;
 
                         if (!pollShare) {
-                            logger.log("critical", "[removeUserPollShare] Poll is not shared to this user");
                             socket.emit("message", "Poll is not shared to this user");
                             return;
                         }
@@ -104,7 +95,6 @@ module.exports = {
                                         if (err) throw err;
 
                                         if (!user) {
-                                            logger.log("critical", "[removeUserPollShare] User does not exist");
                                             socket.emit("message", "User does not exist");
                                             return;
                                         }
@@ -117,27 +107,24 @@ module.exports = {
                                         sharedPolls.splice(sharedPolls.indexOf(pollId), 1);
                                         socketUpdates.customPollUpdate(user.email);
                                     } catch (err) {
-                                        logger.log("error", err.stack);
+                                        handleSocketError(err, socket, "removeUserPollShare:dbGet:users");
                                     }
                                 });
                             } catch (err) {
-                                logger.log("error", err.stack);
+                                handleSocketError(err, socket, "removeUserPollShare:dbRun");
                             }
                         });
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        handleSocketError(err, socket, "removeUserPollShare:dbGet:shared_polls");
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "removeUserPollShare");
             }
         });
 
         socket.on("removeClassPollShare", (pollId, classId) => {
             try {
-                logger.log("info", `[removeClassPollShare] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[removeClassPollShare] pollId=(${pollId}) classId=(${classId})`);
-
                 database.get("SELECT * FROM class_polls WHERE pollId=? AND classId=?", [pollId, classId], (err, pollShare) => {
                     try {
                         if (err) throw err;
@@ -159,7 +146,6 @@ module.exports = {
                                         if (err) throw err;
 
                                         if (!classroom) {
-                                            logger.log("critical", "Classroom does not exist");
                                             return;
                                         }
 
@@ -167,34 +153,28 @@ module.exports = {
                                             socketUpdates.customPollUpdate(email);
                                         }
                                     } catch (err) {
-                                        logger.log("error", err.stack);
+                                        handleSocketError(err, socket, "removeClassPollShare:dbGet:classroom");
                                     }
                                 });
                             } catch (err) {
-                                logger.log("error", err.stack);
+                                handleSocketError(err, socket, "removeClassPollShare:dbRun");
                             }
                         });
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        handleSocketError(err, socket, "removeClassPollShare:dbGet:class_polls");
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "removeClassPollShare");
             }
         });
 
         socket.on("getPollShareIds", (pollId) => {
-            logger.log("info", `[getPollShareIds] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-            logger.log("info", `[getPollShareIds] pollId=(${pollId})`);
-
             socketUpdates.getPollShareIds(pollId);
         });
 
         socket.on("sharePollToClass", (pollId, classId) => {
             try {
-                logger.log("info", `[sharePollToClass] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
-                logger.log("info", `[sharePollToClass] pollId=(${pollId}) classId=(${classId})`);
-
                 database.get("SELECT * FROM classroom WHERE id=?", classId, (err, classroom) => {
                     try {
                         if (err) throw err;
@@ -208,7 +188,6 @@ module.exports = {
                                 if (err) throw err;
 
                                 if (!poll) {
-                                    logger.log("critical", "Poll does not exist (Please contact the programmer)");
                                     socket.emit("message", "Poll does not exist (Please contact the programmer)");
                                     return;
                                 }
@@ -243,24 +222,24 @@ module.exports = {
                                                         socketUpdates.customPollUpdate(email);
                                                     }
                                                 } catch (err) {
-                                                    logger.log("error", err.stack);
+                                                    handleSocketError(err, socket, "sharePollToClass:dbRun");
                                                 }
                                             }
                                         );
                                     } catch (err) {
-                                        logger.log("error", err.stack);
+                                        handleSocketError(err, socket, "sharePollToClass:dbGet:class_polls");
                                     }
                                 });
                             } catch (err) {
-                                logger.log("error", err.stack);
+                                handleSocketError(err, socket, "sharePollToClass:dbGet:custom_polls");
                             }
                         });
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        handleSocketError(err, socket, "sharePollToClass:dbGet:classroom");
                     }
                 });
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "sharePollToClass");
             }
         });
     },

@@ -17,7 +17,6 @@ if (!fs.existsSync("database/database.db")) {
 }
 
 // Custom modules
-const { logger } = require("@modules/logger.js");
 const { initSocketRoutes } = require("./sockets/init.js");
 const { app, io, http } = require("@modules/web-server.js");
 const { settings } = require("@modules/config.js");
@@ -26,7 +25,7 @@ const NotFoundError = require("@errors/not-found-error");
 
 const { logout } = require("@modules/user/user-session");
 const { passport } = require("@modules/google-oauth.js");
-const { rateLimiter } = require("@modules/middleware/rate-limiter");
+const { rateLimiter } = require("@middleware/rate-limiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -35,14 +34,15 @@ const sessionMiddleware = session({
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
 
-const errorHandlerMiddleware = require("@modules/middleware/error-handler");
+const errorHandlerMiddleware = require("@middleware/error-handler");
+const requestLoggerMiddleware = require("@middleware/request-logger");
 
 // Connect rate limiter middleware
 app.use(rateLimiter);
 
 // Connect session middleware to express
 app.use(sessionMiddleware);
-
+app.use(requestLoggerMiddleware);
 // Initialize passport for Google OAuth
 app.use(passport.initialize());
 app.use(passport.session());
@@ -205,5 +205,4 @@ http.listen(settings.port, async () => {
         console.log(
             'To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki'
         );
-    logger.log("info", "Start");
 });
