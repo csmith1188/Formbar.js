@@ -98,7 +98,7 @@ function isValidPollResponse(poll, res, isRemoving) {
  * @returns {number} The calculated weight.
  */
 function calculateResponseWeight(poll, res) {
-    let resWeight = 1;
+    let resWeight;
 
     if (poll.allowMultipleResponses && Array.isArray(res)) {
         // Sum weights for all selected responses
