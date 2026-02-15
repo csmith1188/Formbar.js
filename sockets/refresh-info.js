@@ -1,6 +1,4 @@
 const { dbRun } = require("@modules/database");
-const { logger } = require("@modules/logger");
-const { logNumbers } = require("@modules/config");
 const { hash } = require("@modules/crypto");
 const crypto = require("crypto");
 
@@ -13,7 +11,7 @@ module.exports = {
 
                 // Check if userId is null or undefined
                 if (!id) {
-                    return socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
+                    return socket.emit("error", "There was a server error try again.");
                 }
 
                 // Generate a new API key and hash it before storing it in the database
@@ -25,7 +23,7 @@ module.exports = {
                 // Log the successful API key update and emit the plaintext key (one-time view)
                 socket.emit("apiKeyUpdated", newAPI);
             } catch (err) {
-                socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
+                socket.emit("error", "There was a server error try again.");
             }
         });
 
@@ -37,10 +35,10 @@ module.exports = {
                 // Check if userId is null or undefined
                 const userId = socket.request.session.userId;
                 if (!userId) {
-                    return socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
+                    return socket.emit("error", "There was a server error try again.");
                 } else if (!newPin || newPin.length < 4 || newPin.length > 6 || !/^\d+$/.test(newPin)) {
                     // Validate the new PIN. Must be 4-6 digits, numeric only
-                    return socket.emit("error", `Error Number ${logNumbers.error}: Invalid PIN format. PIN must be 4-6 digits.`);
+                    return socket.emit("error", "Invalid PIN format. PIN must be 4-6 digits.");
                 }
 
                 // Hash the new PIN then store it in the database
@@ -50,7 +48,7 @@ module.exports = {
                 // Log the successful PIN update and emit success
                 socket.emit("pinUpdated", { success: true });
             } catch (err) {
-                socket.emit("error", `Error Number ${logNumbers.error}: There was a server error try again.`);
+                socket.emit("error", "There was a server error try again.");
             }
         });
     },

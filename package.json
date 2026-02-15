@@ -32,7 +32,6 @@
 	"nodemonConfig": {
 		"ignore": [
 			"settings.json",
-			"logNumbers.json",
 			"static/**"
 		]
 	},

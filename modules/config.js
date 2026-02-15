@@ -62,11 +62,6 @@ function getConfig() {
         privateKey = fs.readFileSync("private-key.pem", "utf8");
     }
 
-    // If logNumber.json doesn't exist, create it
-    if (!fs.existsSync("logNumbers.json")) {
-        fs.copyFileSync("logNumbers-template.json", "logNumbers.json");
-    }
-
     // If there is no .env file, create one from the template
     if (!fs.existsSync(".env")) fs.copyFileSync(".env-template", ".env");
 
@@ -84,7 +79,6 @@ function getConfig() {
     });
 
     return {
-        logNumbers: JSON.parse(fs.readFileSync("logNumbers.json", "utf8")),
         settings: {
             port: +process.env.PORT || 420,
             whitelistActive: process.env.WHITELIST_ENABLED === "true",
