@@ -74,8 +74,7 @@ module.exports = {
 
                 // If no class is found, set the class to null
                 setClassOfApiSockets(api, null);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -162,8 +161,7 @@ module.exports = {
 
                 // Trigger a class update to sync all clients
                 socketUpdates.classUpdate(classId);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -174,8 +172,7 @@ module.exports = {
             try {
                 const isActive = isClassActive(socket.request.session.classId);
                 socket.emit("isClassActive", isActive);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         // Regenerates the class code for the classroom in the teacher's session
@@ -192,11 +189,9 @@ module.exports = {
                         // Update the class code in the class information, session, then refresh the page
                         classInformation.classrooms[socket.request.session.classId].key = accessCode;
                         socket.emit("reload");
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -223,8 +218,7 @@ module.exports = {
                         socket.emit("message", "There was a server error try again.");
                     }
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -248,11 +242,9 @@ module.exports = {
                         }
 
                         socketUpdates.getOwnedClasses(socket.request.session.email);
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -264,8 +256,7 @@ module.exports = {
                 const classId = socket.request.session.classId;
                 classKickStudent(email, classId);
                 advancedEmitToClass("leaveSound", classId, {});
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         // Removes all students from the class
@@ -276,8 +267,7 @@ module.exports = {
 
                 socketUpdates.classUpdate(classId);
                 advancedEmitToClass("kickStudentsSound", classId, { api: true });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -419,8 +409,7 @@ module.exports = {
                 // Reload the user's page and update the class
                 io.to(`user-${email}`).emit("reload");
                 socketUpdates.classUpdate();
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         /**
@@ -433,11 +422,9 @@ module.exports = {
             try {
                 const classId = socket.request.session.classId;
                 classInformation.classrooms[classId].permissions[permission] = level;
-                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {
-                });
+                dbRun(`UPDATE class_permissions SET ${permission}=? WHERE classId=?`, [level, classId]).catch((err) => {});
                 socketUpdates.classUpdate(classId);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("updateExcludedRespondents", (respondants) => {
@@ -470,8 +457,7 @@ module.exports = {
                 clearVotesFromExcludedStudents(classId);
 
                 socketUpdates.classUpdate(classId);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

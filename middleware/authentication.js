@@ -21,8 +21,7 @@ async function cleanRefreshTokens() {
         }
         // Also clean up expired authorization codes
         await cleanupExpiredAuthorizationCodes();
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 /**
@@ -179,6 +178,3 @@ module.exports = {
     permCheck,
     checkIPBanned,
 };
-
-
-

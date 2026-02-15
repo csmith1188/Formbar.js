@@ -45,8 +45,7 @@ module.exports = {
 
                     socketUpdates.timer(sound, active);
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("timerOn", () => {

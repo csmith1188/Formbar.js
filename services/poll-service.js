@@ -423,7 +423,3 @@ module.exports = {
     deleteCustomPolls,
     pogMeterTracker,
 };
-
-
-
-

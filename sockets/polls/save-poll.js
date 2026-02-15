@@ -38,15 +38,12 @@ module.exports = {
                                     socket.emit("message", "Poll saved successfully!");
                                     socketUpdates.customPollUpdate(socket.request.session.email);
                                     socket.emit("classPollSave", nextPollId);
-                                } catch (err) {
-                                }
+                                } catch (err) {}
                             }
                         );
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("savePoll", (poll, pollId) => {
@@ -82,12 +79,10 @@ module.exports = {
 
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 }
                             );
-                        } catch (err) {
-                        }
+                        } catch (err) {}
                     });
                 } else {
                     database.get('SELECT seq AS nextPollId from sqlite_sequence WHERE name = "custom_polls"', (err, nextPollId) => {
@@ -119,16 +114,13 @@ module.exports = {
                                         ].ownedPolls.push(nextPollId);
                                         socket.emit("message", "Poll saved successfully!");
                                         socketUpdates.customPollUpdate(socket.request.session.email);
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 }
                             );
-                        } catch (err) {
-                        }
+                        } catch (err) {}
                     });
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("setPublicPoll", (pollId, value) => {
@@ -140,11 +132,9 @@ module.exports = {
                         for (const userSocket of Object.values(userSockets)) {
                             socketUpdates.customPollUpdate(userSocket.request.session.email);
                         }
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

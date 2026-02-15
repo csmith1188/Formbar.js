@@ -36,8 +36,7 @@ module.exports = {
                     userRequests[event].push(currentTime);
                     next();
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

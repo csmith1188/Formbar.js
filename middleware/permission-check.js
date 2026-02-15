@@ -29,7 +29,10 @@ function hasPermission(permission) {
         if (user.permissions >= permission) {
             next();
         } else {
-            throw new ForbiddenError("You do not have permission to access this resource.", { event: "permission.check.failed", reason: "insufficient_permissions" });
+            throw new ForbiddenError("You do not have permission to access this resource.", {
+                event: "permission.check.failed",
+                reason: "insufficient_permissions",
+            });
         }
     };
 }
@@ -132,7 +135,10 @@ function httpPermCheck(event) {
                 }
             }
 
-            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`, { event: "permission.check.failed", reason: "insufficient_permissions" });
+            throw new AuthError(`You do not have permission to use ${camelCaseToNormal(event)}.`, {
+                event: "permission.check.failed",
+                reason: "insufficient_permissions",
+            });
         }
 
         return next();
@@ -144,5 +150,3 @@ module.exports = {
     hasClassPermission,
     httpPermCheck,
 };
-
-

@@ -4,14 +4,13 @@ const crypto = require("crypto");
 // Middleware to log incoming requests and their completion time
 
 async function requestLogger(req, res, next) {
-
     // Attach a child logger to the request with relevant metadata
     const baseMeta = {
         requestId: crypto.randomUUID(),
         method: req.method,
         path: req.originalUrl,
-        ip: req.ip
-    }
+        ip: req.ip,
+    };
 
     // Add user info if available
     if (req.user && req.user.id) {
@@ -37,7 +36,7 @@ async function requestLogger(req, res, next) {
         const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
         req.infoEvent("request.complete", "Request Complete", {
             statusCode: res.statusCode,
-            duration: durationMs
+            duration: durationMs,
         });
     });
 

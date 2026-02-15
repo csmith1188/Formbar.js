@@ -120,7 +120,6 @@ async function setClassOfApiSockets(api, classId) {
  */
 async function setClassOfUserSockets(email, classId) {
     try {
-
         // Check if user has any sockets
         if (!userSockets[email]) {
             return;
@@ -149,8 +148,7 @@ async function setClassOfUserSockets(email, classId) {
             // Emit the setClass event to the socket
             socket.emit("setClass", classId);
         }
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 async function managerUpdate() {
@@ -601,9 +599,3 @@ module.exports = {
     userUpdateSocket,
     SocketUpdates,
 };
-
-
-
-
-
-

@@ -42,7 +42,10 @@ module.exports = (router) => {
 
         // Check if the user is in the requested class
         if (user.classId != classId) {
-            throw new ForbiddenError("User is not in the requested class.", { event: "api.permission.check.failed", reason: "not_in_requested_class" });
+            throw new ForbiddenError("User is not in the requested class.", {
+                event: "api.permission.check.failed",
+                reason: "not_in_requested_class",
+            });
         }
 
         const classroom = classInformation.classrooms[user.classId];
@@ -50,7 +53,10 @@ module.exports = (router) => {
         permissionTypes.auxiliary = classroom.permissions.auxiliary;
 
         if (user.classPermissions < permissionTypes[permissionType]) {
-            throw new ForbiddenError("User does not have enough permissions.", { event: "api.permission.check.failed", reason: "insufficient_permissions" });
+            throw new ForbiddenError("User does not have enough permissions.", {
+                event: "api.permission.check.failed",
+                reason: "insufficient_permissions",
+            });
         }
 
         req.infoEvent("api.permission.check.success", "API permission check passed", { permissionType, classId });

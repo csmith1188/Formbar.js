@@ -73,7 +73,10 @@ module.exports = (router) => {
         // If the user is not in the class, return an error
         const user = req.user;
         if (!classData.students[user.email]) {
-            throw new ForbiddenError("User is not logged into the selected class", { event: "class.permissions.not_in_class", reason: "user_not_in_class" });
+            throw new ForbiddenError("User is not logged into the selected class", {
+                event: "class.permissions.not_in_class",
+                reason: "user_not_in_class",
+            });
         }
 
         // Send the class permissions as a JSON response

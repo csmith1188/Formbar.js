@@ -91,7 +91,7 @@ module.exports = (router) => {
         const { userId, email: userEmail } = req.user;
         req.infoEvent("class.create.attempt", "Attempting to create class", { className: name });
         const result = await classService.createClass(name, userId, userEmail);
-        
+
         req.infoEvent("class.create.success", "Class created successfully", { classId: result.classId, className: name });
 
         return res.status(200).json({

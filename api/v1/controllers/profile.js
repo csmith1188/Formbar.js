@@ -166,7 +166,7 @@ module.exports = (router) => {
      */
     router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-            req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
+        req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
 
         // Check if userData is null or undefined
         const userId = req.params.userId || req.user.id;
@@ -178,7 +178,10 @@ module.exports = (router) => {
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            throw new AppError("Unable to retrieve profile information. Please try again.", { event: "profile.incomplete_data", reason: "missing_required_fields" });
+            throw new AppError("Unable to retrieve profile information. Please try again.", {
+                event: "profile.incomplete_data",
+                reason: "missing_required_fields",
+            });
         }
 
         // Determine if the email should be visible then render the page

@@ -3,7 +3,6 @@ const { getLogger, logEvent } = require("@modules/logger");
 const process = require("process");
 
 module.exports = (err, req, res, next) => {
-
     const logger = getLogger();
 
     let error = err;
@@ -14,7 +13,6 @@ module.exports = (err, req, res, next) => {
 
     // is error a crash
     if (!isAppError || !isOperationalError) {
-
         req.errorEvent("request.crash", error.message, error);
         if (process.env.NODE_ENV !== "production") {
             console.error(error);

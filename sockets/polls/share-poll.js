@@ -51,20 +51,15 @@ module.exports = {
 
                                                 classInformation.classrooms[classId].students[user.email].sharedPolls.push(pollId);
                                                 socketUpdates.customPollUpdate(email);
-                                            } catch (err) {
-                                            }
+                                            } catch (err) {}
                                         });
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 });
-                            } catch (err) {
-                            }
+                            } catch (err) {}
                         });
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("removeUserPollShare", (pollId, userId) => {
@@ -101,17 +96,13 @@ module.exports = {
                                         let sharedPolls = classInformation.classrooms[classId].students[user.email].sharedPolls;
                                         sharedPolls.splice(sharedPolls.indexOf(pollId), 1);
                                         socketUpdates.customPollUpdate(user.email);
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 });
-                            } catch (err) {
-                            }
+                            } catch (err) {}
                         });
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("removeClassPollShare", (pollId, classId) => {
@@ -145,17 +136,13 @@ module.exports = {
                                         for (let email of Object.keys(classInformation.classrooms[classId].students)) {
                                             socketUpdates.customPollUpdate(email);
                                         }
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 });
-                            } catch (err) {
-                            }
+                            } catch (err) {}
                         });
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
 
         socket.on("getPollShareIds", (pollId) => {
@@ -211,21 +198,16 @@ module.exports = {
                                                     for (let email of Object.keys(classInformation.classrooms[classroom.id].students)) {
                                                         socketUpdates.customPollUpdate(email);
                                                     }
-                                                } catch (err) {
-                                                }
+                                                } catch (err) {}
                                             }
                                         );
-                                    } catch (err) {
-                                    }
+                                    } catch (err) {}
                                 });
-                            } catch (err) {
-                            }
+                            } catch (err) {}
                         });
-                    } catch (err) {
-                    }
+                    } catch (err) {}
                 });
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

@@ -21,8 +21,7 @@ function requestBreak(reason, userData) {
 
         userUpdateSocket(email, "classUpdate", classId);
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 async function approveBreak(breakApproval, userId, userData) {
@@ -40,20 +39,17 @@ async function approveBreak(breakApproval, userId, userData) {
         }
         userUpdateSocket(email, "classUpdate", classId);
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 function endBreak(userData) {
     try {
-
         const classroom = classInformation.classrooms[userData.classId];
         const student = classInformation.users[userData.email];
         student.break = false;
         userUpdateSocket(userData.email, "classUpdate", userData.classId);
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 module.exports = {
@@ -61,8 +57,3 @@ module.exports = {
     approveBreak,
     endBreak,
 };
-
-
-
-
-

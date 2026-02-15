@@ -35,11 +35,11 @@ module.exports = {
             }
 
             // Render the student page with the user's information
-            req.infoEvent(
-                "student.page.render",
-                `Student page data retrieved`,
-                { user: req.user.email, classId, hasButtonRes: !!classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes }
-            );
+            req.infoEvent("student.page.render", `Student page data retrieved`, {
+                user: req.user.email,
+                classId,
+                hasButtonRes: !!classInformation.classrooms[classId].students[req.user.email].pollRes.buttonRes,
+            });
             res.status(200).json({
                 success: true,
                 data: {

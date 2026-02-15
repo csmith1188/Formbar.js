@@ -10,8 +10,7 @@ module.exports = {
         socket.on("logout", () => {
             try {
                 logout(socket);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

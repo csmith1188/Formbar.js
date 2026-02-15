@@ -54,8 +54,7 @@ module.exports = {
                 } else if (!PASSIVE_SOCKETS.includes(event)) {
                     socket.emit("message", `You do not have permission to use ${camelCaseToNormal(event)}.`);
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

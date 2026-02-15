@@ -317,8 +317,7 @@ async function transferDigipogs(transferData) {
         } catch (err) {
             try {
                 await dbRun("ROLLBACK");
-            } catch (rollbackErr) {
-            }
+            } catch (rollbackErr) {}
             recordAttempt(accountId, false);
             return { success: false, message: "Transfer failed due to database error." };
         }
@@ -353,9 +352,3 @@ module.exports = {
     awardDigipogs,
     transferDigipogs,
 };
-
-
-
-
-
-

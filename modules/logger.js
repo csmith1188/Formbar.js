@@ -1,17 +1,17 @@
 const fs = require("fs");
 const winston = require("winston");
-require('winston-daily-rotate-file');
+require("winston-daily-rotate-file");
 const path = require("path");
 
-const logsDir = 'logs';
+const logsDir = "logs";
 
 const dailyRotateTransport = new winston.transports.DailyRotateFile({
-    filename: path.join(logsDir, "app-%DATE%.ndjson"),   // logs/app-2026-02-04.log
+    filename: path.join(logsDir, "app-%DATE%.ndjson"), // logs/app-2026-02-04.log
     datePattern: "YYYY-MM-DD",
-    zippedArchive: true,               // compress old logs
-    maxFiles: "14d",                   // keep logs for 14 days
+    zippedArchive: true, // compress old logs
+    maxFiles: "14d", // keep logs for 14 days
     level: "info",
-    format: winston.format.json(),     // NDJSON-friendly
+    format: winston.format.json(), // NDJSON-friendly
 });
 
 // Delete empty log files to avoid clutter
@@ -23,9 +23,8 @@ function deleteEmptyLogFiles() {
                 fs.unlinkSync(`logs/${file}`);
             }
         });
-    } catch { }
+    } catch {}
 }
-
 
 // Will make good later. This is temporary I swear to god. Steven, fix it.
 
@@ -34,10 +33,8 @@ async function loadSeqTransport() {
     return seqModule.SeqTransport;
 }
 
-
 // Create a new logger instance using the winston library
 async function createLogger() {
-
     deleteEmptyLogFiles();
     const SeqTransport = await loadSeqTransport();
 
@@ -45,10 +42,12 @@ async function createLogger() {
     transports.push(dailyRotateTransport);
 
     if (process.env.SEQ_URL) {
-        transports.push(new SeqTransport({
-            level: "info",
-            serverUrl: process.env.SEQ_URL,
-        }));
+        transports.push(
+            new SeqTransport({
+                level: "info",
+                serverUrl: process.env.SEQ_URL,
+            })
+        );
     }
 
     return winston.createLogger({
@@ -59,7 +58,7 @@ async function createLogger() {
             winston.format.json()
         ),
 
-        transports
+        transports,
     });
 }
 
@@ -69,7 +68,7 @@ function logEvent(logger, level, event, message = "", meta = {}) {
         level: level,
         event: event,
         message: message,
-        ...meta
+        ...meta,
     });
 }
 
@@ -82,11 +81,9 @@ async function getLogger() {
     }
 
     return logger;
-};
-
-
+}
 
 module.exports = {
     getLogger,
-    logEvent
-}
+    logEvent,
+};

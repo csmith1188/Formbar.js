@@ -73,7 +73,10 @@ module.exports = (router) => {
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                throw new ValidationError("Could not retrieve email from Google account.", { event: "auth.google.no_email", reason: "email_not_found" });
+                throw new ValidationError("Could not retrieve email from Google account.", {
+                    event: "auth.google.no_email",
+                    reason: "email_not_found",
+                });
             }
 
             const email = user.emails[0].value;

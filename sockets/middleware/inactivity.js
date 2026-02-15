@@ -29,8 +29,7 @@ module.exports = {
                 }
 
                 next();
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
     INACTIVITY_LIMIT,

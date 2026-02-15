@@ -28,7 +28,11 @@ async function getLog(logFileName) {
         const content = await fs.readFile(`${logDir}${logFileName}`, "utf8");
         return content;
     } catch (err) {
-        throw new AppError(`Failed to read log file ${logFileName}: ${err.message}`, { statusCode: 500, event: "logs.get.failed", reason: "read_file_error" });
+        throw new AppError(`Failed to read log file ${logFileName}: ${err.message}`, {
+            statusCode: 500,
+            event: "logs.get.failed",
+            reason: "read_file_error",
+        });
     }
 }
 

@@ -25,8 +25,7 @@ async function startClass(classId) {
             { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
             classInformation.classrooms[classId].isActive
         );
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 /**
@@ -49,8 +48,7 @@ async function endClass(classId, userSession) {
             { classPermissions: CLASS_SOCKET_PERMISSIONS.isClassActive },
             classInformation.classrooms[classId].isActive
         );
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 /**
@@ -136,8 +134,7 @@ async function leaveRoom(userSession) {
         await advancedEmitToClass("leaveSound", classId, {});
         await emitToUser(email, "reload");
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 /**
@@ -226,8 +223,7 @@ function leaveClass(userSession, classId) {
         advancedEmitToClass("leaveSound", userSession.classId, {});
         classKickStudent(user.id, classId, { exitRoom: classInformation.users[email].isGuest });
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 /**

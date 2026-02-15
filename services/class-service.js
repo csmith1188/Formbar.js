@@ -187,7 +187,6 @@ async function createClass(className, ownerId, ownerEmail) {
  * @returns {Promise<void>}
  */
 async function initializeClassroom(id) {
-
     // Fetch classroom data from database
     const classroom = await dbGet(
         "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
@@ -577,7 +576,3 @@ module.exports = {
     isClassActive,
     deleteRooms,
 };
-
-
-
-

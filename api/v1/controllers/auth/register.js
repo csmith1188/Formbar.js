@@ -69,7 +69,7 @@ module.exports = (router) => {
         // Attempt to register the user
         const result = await authService.register(email, password, displayName);
 
-        req.infoEvent("auth.register.success", `User registered`, {userId: result.user.id});
+        req.infoEvent("auth.register.success", `User registered`, { userId: result.user.id });
 
         // Return the tokens and user data
         res.status(201).json({

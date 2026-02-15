@@ -74,7 +74,10 @@ module.exports = (router) => {
         // If response_type is provided, validate it
         // If not, we can assume default behavior
         if (response_type && response_type !== "code") {
-            throw new ValidationError("Unsupported response_type. Only 'code' is supported.", { event: "oauth.authorize.failed", reason: "unsupported_response_type" });
+            throw new ValidationError("Unsupported response_type. Only 'code' is supported.", {
+                event: "oauth.authorize.failed",
+                reason: "unsupported_response_type",
+            });
         }
 
         // Validate required parameters
@@ -93,7 +96,10 @@ module.exports = (router) => {
         try {
             url = new URL(redirect_uri);
         } catch (err) {
-            throw new ValidationError("Invalid redirect_uri. It must be a valid absolute URL.", { event: "oauth.authorize.failed", reason: "invalid_redirect_uri" });
+            throw new ValidationError("Invalid redirect_uri. It must be a valid absolute URL.", {
+                event: "oauth.authorize.failed",
+                reason: "invalid_redirect_uri",
+            });
         }
         url.searchParams.append("code", authorizationCode);
         url.searchParams.append("state", state);

@@ -93,7 +93,7 @@ module.exports = (router) => {
                 statusCode: 401,
                 message: "Unable to determine authenticated user for digipogs transfer.",
                 event: "digipogs.transfer.failed",
-                reason: "user_not_found"
+                reason: "user_not_found",
             });
         }
 
@@ -111,7 +111,7 @@ module.exports = (router) => {
         if (!result.success) {
             throw new AppError(result, { event: "digipogs.transfer.failed", reason: "transfer_error" });
         }
-        
+
         req.infoEvent("digipogs.transfer.success", "Digipogs transferred successfully", { from, to, amount });
         res.status(200).json({
             success: true,

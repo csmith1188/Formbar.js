@@ -55,7 +55,6 @@ async function joinRoomByCode(code, sessionUser) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinRoom(userSession, classCode) {
-
     const response = await joinRoomByCode(classCode, userSession);
     emitToUser(userSession.email, "joinClass", response);
     return true;
@@ -105,6 +104,3 @@ module.exports = {
     joinRoom,
     leaveRoom,
 };
-
-
-

@@ -36,14 +36,12 @@ async function setTags(tags, userSession) {
 
             try {
                 await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [studentTags.join(","), student.id, classId]);
-            } catch (err) {
-            }
+            } catch (err) {}
         }
 
         // Persist classroom tags by id
         await dbRun("UPDATE classroom SET tags = ? WHERE id = ?", [tags.toString(), classId]);
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 async function saveTags(studentId, tags, userSession) {
@@ -89,8 +87,7 @@ async function saveTags(studentId, tags, userSession) {
         }
 
         await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [normalized.join(","), studentId, userSession.classId]);
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 module.exports = {

@@ -64,7 +64,10 @@ module.exports = (router) => {
     router.patch("/user/me/password", async (req, res) => {
         const { password, confirmPassword, token } = req.body;
         if (!password || !confirmPassword) {
-            throw new ValidationError("Password and confirm password are required.", { event: "user.password.reset.failed", reason: "missing_fields" });
+            throw new ValidationError("Password and confirm password are required.", {
+                event: "user.password.reset.failed",
+                reason: "missing_fields",
+            });
         }
 
         if (!token) {
@@ -77,7 +80,7 @@ module.exports = (router) => {
 
         req.infoEvent("user.password.reset.attempt", "Attempting to reset password with token");
         await userService.resetPassword(password, token);
-        
+
         req.infoEvent("user.password.reset.success", "Password reset successfully");
         res.status(200).json({
             success: true,
@@ -143,12 +146,16 @@ module.exports = (router) => {
         }
 
         if (!settings.emailEnabled) {
-            throw new AppError("Email service is not enabled. Password resets are not available at this time.", { statusCode: 503, event: "user.password.reset.request.failed", reason: "email_disabled" });
+            throw new AppError("Email service is not enabled. Password resets are not available at this time.", {
+                statusCode: 503,
+                event: "user.password.reset.request.failed",
+                reason: "email_disabled",
+            });
         }
 
         req.infoEvent("user.password.reset.request", "Password reset requested");
         await userService.requestPasswordReset(email);
-        
+
         req.infoEvent("user.password.reset.request.success", "Password reset email sent");
 
         res.status(200).json({

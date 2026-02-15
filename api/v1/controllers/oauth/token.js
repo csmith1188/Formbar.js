@@ -102,7 +102,10 @@ module.exports = (router) => {
         }
 
         if (!tokenResponse) {
-            throw new ValidationError("Invalid grant_type. Supported values: 'authorization_code', 'refresh_token'.", { event: "oauth.token.failed", reason: "invalid_grant_type" });
+            throw new ValidationError("Invalid grant_type. Supported values: 'authorization_code', 'refresh_token'.", {
+                event: "oauth.token.failed",
+                reason: "invalid_grant_type",
+            });
         }
 
         res.json({

@@ -64,7 +64,6 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/auth/login", async (req, res) => {
-
         const { email, password } = req.body;
         if (!email || !password) {
             throw new ValidationError("Email and password are required.");

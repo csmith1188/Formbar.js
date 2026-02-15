@@ -69,21 +69,14 @@ module.exports = {
                             socket.request.session.classId = null;
 
                             next();
-                        } catch (err) {
-                        }
+                        } catch (err) {}
                     });
                 } else if (event == "reload") {
                     next();
                 } else {
                     next(new Error("Missing authentication credentials"));
                 }
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };
-
-
-
-
-

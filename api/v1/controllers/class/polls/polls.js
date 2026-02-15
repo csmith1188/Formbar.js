@@ -75,7 +75,10 @@ module.exports = (router) => {
 
         // If the user is not in the class, return an error
         if (!classInformation.classrooms[classId].students[user.email]) {
-            throw new ForbiddenError("User is not logged into the selected class", { event: "class.polls.not_in_class", reason: "user_not_in_class" });
+            throw new ForbiddenError("User is not logged into the selected class", {
+                event: "class.polls.not_in_class",
+                reason: "user_not_in_class",
+            });
         }
 
         // Get a clone of the class data and the poll responses in the class

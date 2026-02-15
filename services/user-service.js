@@ -22,7 +22,11 @@ function loadPasswordResetTemplate() {
     } catch (err) {
         // Log the underlying error for diagnostics, but throw a controlled error outward.
         console.error("Failed to load password reset email template:", err);
-        throw new AppError("Failed to load password reset email template.", { statusCode: 500, event: "user.password.reset.failed", reason: "template_load_error" });
+        throw new AppError("Failed to load password reset email template.", {
+            statusCode: 500,
+            event: "user.password.reset.failed",
+            reason: "template_load_error",
+        });
     }
 }
 

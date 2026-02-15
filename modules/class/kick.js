@@ -70,8 +70,7 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
                 userSocket.emit("reload");
             }
         }
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 function classKickStudents(classId) {
@@ -81,8 +80,7 @@ function classKickStudents(classId) {
                 classKickStudent(student.id, classId);
             }
         }
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 module.exports = {

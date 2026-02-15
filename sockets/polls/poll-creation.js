@@ -60,8 +60,7 @@ module.exports = {
                     socket.request.session
                 );
                 socket.emit("startPoll");
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

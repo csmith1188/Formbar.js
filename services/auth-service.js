@@ -32,15 +32,24 @@ function hashToken(token) {
  */
 async function register(email, password, displayName) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", {event: "auth.register.failed", reason: "missing_keys"});
+        throw new AppError("Either the public key or private key is not available for JWT signing.", {
+            event: "auth.register.failed",
+            reason: "missing_keys",
+        });
     }
 
     if (!passwordRegex.test(password)) {
-        throw new ValidationError("Password must be 5-20 characters long and can only contain letters, numbers, and special characters.", { event: "auth.register.failed", reason: "invalid_password" });
+        throw new ValidationError("Password must be 5-20 characters long and can only contain letters, numbers, and special characters.", {
+            event: "auth.register.failed",
+            reason: "invalid_password",
+        });
     }
 
     if (!displayRegex.test(displayName)) {
-        throw new ValidationError("Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores.", { event: "auth.register.failed", reason: "invalid_display_name" });
+        throw new ValidationError("Display name must be 5-20 characters long and can only contain letters, numbers, spaces, and underscores.", {
+            event: "auth.register.failed",
+            reason: "invalid_display_name",
+        });
     }
 
     // Normalize email to lowercase to prevent duplicate accounts
@@ -99,7 +108,11 @@ async function register(email, password, displayName) {
  */
 async function login(email, password) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", { statusCode: 500, event: "auth.login.failed", reason: "missing_keys" });
+        throw new AppError("Either the public key or private key is not available for JWT signing.", {
+            statusCode: 500,
+            event: "auth.login.failed",
+            reason: "missing_keys",
+        });
     }
 
     // Normalize email to lowercase to prevent login issues
@@ -237,7 +250,11 @@ function invalidCredentials() {
  */
 async function googleOAuth(email, displayName) {
     if (!privateKey || !publicKey) {
-        throw new AppError("Either the public key or private key is not available for JWT signing.", { statusCode: 500, event: "auth.oauth.failed", reason: "missing_keys" });
+        throw new AppError("Either the public key or private key is not available for JWT signing.", {
+            statusCode: 500,
+            event: "auth.oauth.failed",
+            reason: "missing_keys",
+        });
     }
 
     // Normalize email to lowercase to prevent duplicate accounts

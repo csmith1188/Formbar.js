@@ -51,7 +51,7 @@ module.exports = (router) => {
 
         // Grab manager data and send it back as a JSON response
         const { users, classrooms } = await getManagerData();
-        
+
         req.infoEvent("manager.data.retrieved", "Manager data retrieved");
         res.status(200).json({
             success: true,

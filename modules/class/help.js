@@ -28,8 +28,7 @@ function sendHelpTicket(reason, userSession) {
 
         userUpdateSocket(email, "classUpdate", classId);
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 async function deleteHelpTicket(studentId, userData) {
@@ -43,17 +42,10 @@ async function deleteHelpTicket(studentId, userData) {
 
         userUpdateSocket(email, "classUpdate", classId);
         return true;
-    } catch (err) {
-    }
+    } catch (err) {}
 }
 
 module.exports = {
     sendHelpTicket,
     deleteHelpTicket,
 };
-
-
-
-
-
-

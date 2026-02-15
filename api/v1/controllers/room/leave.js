@@ -6,9 +6,9 @@ module.exports = (router) => {
     const leaveRoomHandler = async (req, res) => {
         const classId = req.params.id;
         req.infoEvent("room.leave.attempt", "User attempting to leave room", { classId });
-        
+
         await leaveRoom({ ...req.user, classId });
-        
+
         req.infoEvent("room.leave.success", "User left room successfully", { classId });
         res.status(200).json({
             success: true,

@@ -9,8 +9,7 @@ module.exports = {
                 const email = socket.request.session.email;
                 const classId = classInformation.users[email].activeClass;
                 pollResponse(classId, res, textRes, socket.request.session);
-            } catch (err) {
-            }
+            } catch (err) {}
         });
     },
 };

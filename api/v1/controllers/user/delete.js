@@ -8,7 +8,7 @@ module.exports = (router) => {
     const deleteUserHandler = async (req, res) => {
         const userId = req.params.id;
         req.infoEvent("user.delete.attempt", "Attempting to delete user");
-        
+
         const result = await deleteUser(userId);
         if (result === true) {
             req.infoEvent("user.delete.success", "User deleted successfully");

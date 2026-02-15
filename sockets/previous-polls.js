@@ -13,7 +13,6 @@ module.exports = {
 
                 socket.emit("getPreviousPolls", previousPolls, totalPolls.count);
             });
-        } catch (err) {
-        }
+        } catch (err) {}
     },
 };
