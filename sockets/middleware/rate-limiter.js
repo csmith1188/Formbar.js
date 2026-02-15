@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { rateLimits, PASSIVE_SOCKETS } = require("@modules/socket-updates");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
 

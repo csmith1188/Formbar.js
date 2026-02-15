@@ -1,5 +1,3 @@
-const { logger } = require("@modules/logger");
-
 module.exports = {
     run(socket, socketUpdates) {
         socket.on("classUpdate", () => {

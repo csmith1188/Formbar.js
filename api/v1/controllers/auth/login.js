@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const authService = require("@services/auth-service");

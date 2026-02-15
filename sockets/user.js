@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { logout } = require("@modules/user/user-session");
 
 module.exports = {

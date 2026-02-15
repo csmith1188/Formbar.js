@@ -1,6 +1,5 @@
 const { classInformation } = require("@modules/class/classroom");
 const { database, dbRun } = require("@modules/database");
-const { logger } = require("@modules/logger");
 const { advancedEmitToClass, setClassOfApiSockets } = require("@modules/socket-updates");
 const { generateKey } = require("@modules/util");
 const { io } = require("@modules/web-server");

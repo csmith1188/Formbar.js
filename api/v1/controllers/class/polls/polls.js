@@ -1,5 +1,4 @@
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
 const NotFoundError = require("@errors/not-found-error");
 const ForbiddenError = require("@errors/forbidden-error");
 

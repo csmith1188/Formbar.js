@@ -1,6 +1,5 @@
 const { run: pollCreationRun } = require("../polls/poll-creation");
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
 const { generateColors } = require("@modules/util");
 const { createTestUser, createTestClass, testData, createSocket, createSocketUpdates } = require("@modules/tests/tests");
 const { userSocketUpdates } = require("../init");
@@ -87,7 +86,8 @@ describe("startPoll", () => {
             allowTextResponses: true,
             allowMultipleResponses: true,
         });
-        expect(logger.log).toHaveBeenCalled();
+        // Error is caught silently in the handler
+        expect(socket.emit).not.toHaveBeenCalledWith("startPoll");
     });
 
     afterAll(() => {

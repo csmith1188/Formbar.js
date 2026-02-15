@@ -26,7 +26,7 @@ module.exports = (router) => {
      */
     router.get("/certs", (req, res) => {
         req.infoEvent("certs.view.attempt", "Attempting to read public certificate");
-        const pem = fs.readFileSync("publicKey.pem", "utf8");
+        const pem = fs.readFileSync("public-key.pem", "utf8");
         req.infoEvent("certs.view.success", "Public certificate returned");
         res.json({
             success: true,

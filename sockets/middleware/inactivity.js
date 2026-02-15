@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 60 minutes
 const lastActivities = {};
 

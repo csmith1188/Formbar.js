@@ -1,6 +1,5 @@
 const { getUser } = require("@modules/user/user");
 const { verifyToken } = require("@services/auth-service");
-const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 
 // In-memory rate limit storage
