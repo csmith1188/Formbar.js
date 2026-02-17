@@ -188,10 +188,7 @@ async function awardDigipogs(awardData, user) {
             if (classInfo.owner === from) {
                 classPermissions = TEACHER_PERMISSIONS;
             } else {
-                const permRow = await dbGet(
-                    "SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?",
-                    [to.id, from]
-                );
+                const permRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [to.id, from]);
                 classPermissions = permRow ? permRow.permissions : 0;
             }
 
@@ -204,9 +201,8 @@ async function awardDigipogs(awardData, user) {
             await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id IN (SELECT studentId FROM classusers WHERE classId = ?) OR id = ?", [
                 amount,
                 to.id,
-                classInfo.owner
-            ]
-            );
+                classInfo.owner,
+            ]);
         } else if (to.type === "pool") {
             if (!to.id) {
                 recordAttempt(accountId, false);
@@ -259,7 +255,10 @@ async function awardDigipogs(awardData, user) {
             return { success: true, message: "Award succeeded, but failed to log transaction." };
         }
         recordAttempt(accountId, true);
-        return { success: true, message: `Digipogs awarded successfully. ${deprecatedFormatUsed ? "Warning: Deprecated award format used. See documentation for updated usage." : ""}` };
+        return {
+            success: true,
+            message: `Digipogs awarded successfully. ${deprecatedFormatUsed ? "Warning: Deprecated award format used. See documentation for updated usage." : ""}`,
+        };
     } catch (err) {
         return { success: false, message: "Database error." };
     }
@@ -411,17 +410,25 @@ async function transferDigipogs(transferData) {
 
         // Log transaction
         try {
-            await dbRun(
-                "INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [from.id, from.type, to.id, to.type, amount, reason, Date.now()]
-            );
+            await dbRun("INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                from.id,
+                from.type,
+                to.id,
+                to.type,
+                amount,
+                reason,
+                Date.now(),
+            ]);
         } catch (err) {
             // Don't fail the transfer if logging fails
         }
 
         // Record successful attempt
         recordAttempt(accountId, true);
-        return { success: true, message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}` };
+        return {
+            success: true,
+            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}`,
+        };
     } catch (err) {
         return { success: false, message: "Database error." };
     }
