@@ -7,6 +7,8 @@ const { io } = require("./web-server");
 const runningTimers = {};
 const rateLimits = {};
 const userSockets = {};
+const classPollIdCache = new Map();
+const CLASS_POLL_CACHE_TTL_MS = 5000;
 
 // These events will not display a permission error if the user does not have permission to use them
 const PASSIVE_SOCKETS = [
@@ -18,6 +20,31 @@ const PASSIVE_SOCKETS = [
     "isClassActive",
     "setClassSetting",
 ];
+
+async function getClassPollIds(classId) {
+    const cacheKey = String(classId);
+    const cached = classPollIdCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && cached.expiresAt > now) {
+        return cached.pollIds;
+    }
+
+    const classroomPollRows = await dbGetAll("SELECT pollId FROM class_polls WHERE classId = ?", [classId]);
+    const pollIds = classroomPollRows.map((row) => row.pollId);
+    classPollIdCache.set(cacheKey, {
+        pollIds,
+        expiresAt: now + CLASS_POLL_CACHE_TTL_MS,
+    });
+    return pollIds;
+}
+
+function invalidateClassPollCache(classId) {
+    if (classId == null) {
+        classPollIdCache.clear();
+        return;
+    }
+    classPollIdCache.delete(String(classId));
+}
 
 async function emitToUser(email, event, ...data) {
     for (const socket of Object.values(userSockets[email])) {
@@ -414,7 +441,7 @@ class SocketUpdates {
         }
     }
 
-    customPollUpdate(email, socket = this.socket) {
+    async customPollUpdate(email, socket = this.socket) {
         try {
             // Ignore any requests which do not have an associated socket with the email
             if (!email && socket.request.session) email = socket.request.session.email;
@@ -430,7 +457,7 @@ class SocketUpdates {
             const userSharedPolls = student.sharedPolls;
             const userOwnedPolls = student.ownedPolls;
             const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)));
-            const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls);
+            const classroomPolls = await getClassPollIds(classId);
             const publicPolls = [];
             const customPollIds = userCustomPolls.concat(classroomPolls);
 
@@ -443,6 +470,12 @@ class SocketUpdates {
 
                         for (let customPoll of customPollsData) {
                             customPoll.answers = JSON.parse(customPoll.answers);
+                            // Convert SQLite integer booleans to actual booleans
+                            customPoll.textRes = !!customPoll.textRes;
+                            customPoll.blind = !!customPoll.blind;
+                            customPoll.allowVoteChanges = !!customPoll.allowVoteChanges;
+                            customPoll.allowMultipleResponses = !!customPoll.allowMultipleResponses;
+                            customPoll.public = !!customPoll.public;
                         }
 
                         customPollsData = customPollsData.reduce((newObject, customPoll) => {
@@ -473,6 +506,10 @@ class SocketUpdates {
         } catch (err) {
             // Error handled
         }
+    }
+
+    invalidateClassPollCache(classId) {
+        invalidateClassPollCache(classId);
     }
 
     classBannedUsersUpdate(classId = this.socket.request.session.classId) {
@@ -589,6 +626,7 @@ module.exports = {
     rateLimits,
     userSockets,
     PASSIVE_SOCKETS,
+    invalidateClassPollCache,
 
     // Socket functions
     emitToUser,

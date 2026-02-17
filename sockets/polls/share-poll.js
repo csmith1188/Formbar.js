@@ -138,6 +138,7 @@ module.exports = {
                             try {
                                 if (err) throw err;
 
+                                socketUpdates.invalidateClassPollCache(classId);
                                 socket.emit("message", "Successfully unshared class");
                                 socketUpdates.getPollShareIds(pollId);
 
@@ -149,8 +150,6 @@ module.exports = {
                                             return;
                                         }
 
-                                        let sharedPolls = classInformation.classrooms[classId].sharedPolls;
-                                        sharedPolls.splice(sharedPolls.indexOf(pollId), 1);
                                         for (let email of Object.keys(classInformation.classrooms[classId].students)) {
                                             socketUpdates.customPollUpdate(email);
                                         }
@@ -217,10 +216,10 @@ module.exports = {
                                                 try {
                                                     if (err) throw err;
 
+                                                    socketUpdates.invalidateClassPollCache(classroom.id);
                                                     socket.emit("message", `Shared ${name} with the class`);
                                                     socketUpdates.getPollShareIds(pollId);
 
-                                                    classInformation.classrooms[classroom.id].sharedPolls.push(pollId);
                                                     for (let email of Object.keys(classInformation.classrooms[classroom.id].students)) {
                                                         socketUpdates.customPollUpdate(email);
                                                     }

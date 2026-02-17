@@ -1,4 +1,4 @@
-const { pollResponse } = require("@services/poll-service");
+const { sendPollResponse } = require("@services/poll-service");
 const { httpPermCheck } = require("@middleware/permission-check");
 const { parseJson } = require("@middleware/parse-json");
 const { isAuthenticated } = require("@middleware/authentication");
@@ -70,9 +70,11 @@ module.exports = (router) => {
     router.post("/class/:id/polls/response", isAuthenticated, httpPermCheck("pollResp"), parseJson, async (req, res) => {
         const { response, textRes } = req.body;
         const classId = req.params.id;
+
         req.infoEvent("class.poll.response.attempt", "Attempting to submit poll response", { classId });
-        await pollResponse(classId, response, textRes, req.user);
+        sendPollResponse(classId, response, textRes, req.user);
         req.infoEvent("class.poll.response.success", "Poll response submitted", { classId });
+
         res.status(200).json({
             success: true,
             data: {},

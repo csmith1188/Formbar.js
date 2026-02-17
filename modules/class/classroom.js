@@ -16,14 +16,12 @@ const DEFAULT_CLASS_SETTINGS = {
 // This class is used to add a new classroom to the session data
 // The classroom will be used to add lessons, do lessons, and for the teacher to operate them
 class Classroom {
-    // Needs the name of the class you want to create
-    constructor(id, className, key, owner, permissions, sharedPolls, pollHistory, tags, settings) {
+    constructor({ id, className, key, owner, permissions, tags, settings } = {}) {
         this.id = id;
         this.className = className;
         this.isActive = false;
         this.owner = owner;
         this.students = {};
-        this.sharedPolls = sharedPolls || [];
         this.poll = {
             status: false,
             prompt: "",
@@ -44,7 +42,6 @@ class Classroom {
             this.permissions = DEFAULT_CLASS_PERMISSIONS;
         }
 
-        this.pollHistory = pollHistory || [];
         this.tags = tags || ["Offline", "Excluded"];
         this.settings = settings || DEFAULT_CLASS_SETTINGS;
         this.timer = {

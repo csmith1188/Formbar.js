@@ -1,6 +1,13 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
 
-const { advancedEmitToClass, userSockets, setClassOfApiSockets, setClassOfUserSockets, userUpdateSocket } = require("@modules/socket-updates");
+const {
+    advancedEmitToClass,
+    userSockets,
+    setClassOfApiSockets,
+    setClassOfUserSockets,
+    userUpdateSocket,
+    invalidateClassPollCache,
+} = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const {
     MANAGER_PERMISSIONS,
@@ -101,27 +108,11 @@ function parseClassPermissions(permissionsRow) {
  * @returns {Object} The normalized classroom object (mutates in place)
  */
 function normalizeClassroomData(classroom) {
-    // Parse JSON fields
-    classroom.sharedPolls = JSON.parse(classroom.sharedPolls);
-    classroom.pollHistory = JSON.parse(classroom.pollHistory);
-
     // Normalize tags to array
     if (classroom.tags) {
         classroom.tags = classroom.tags.split(",");
     } else {
         classroom.tags = [];
-    }
-
-    if (Array.isArray(classroom.pollHistory)) {
-        // Parse poll data within poll history
-        for (let poll of classroom.pollHistory) {
-            poll.data = JSON.parse(poll.data);
-        }
-
-        // Handle empty poll history
-        if (classroom.pollHistory[0] && classroom.pollHistory[0].id == null) {
-            classroom.pollHistory = null;
-        }
     }
 
     return classroom;
@@ -188,10 +179,7 @@ async function createClass(className, ownerId, ownerEmail) {
  */
 async function initializeClassroom(id) {
     // Fetch classroom data from database
-    const classroom = await dbGet(
-        "SELECT classroom.id, classroom.name, classroom.key, classroom.owner, classroom.tags, (CASE WHEN class_polls.pollId IS NULL THEN json_array() ELSE json_group_array(DISTINCT class_polls.pollId) END) as sharedPolls, (SELECT json_group_array(json_object('id', poll_history.id, 'class', poll_history.class, 'data', poll_history.data, 'date', poll_history.date)) FROM poll_history WHERE poll_history.class = classroom.id ORDER BY poll_history.date) as pollHistory FROM classroom LEFT JOIN class_polls ON class_polls.classId = classroom.id WHERE classroom.id = ?",
-        [id]
-    );
+    const classroom = await dbGet("SELECT id, name, key, owner, tags FROM classroom WHERE id = ?", [id]);
 
     if (!classroom) {
         throw new NotFoundError(`Class with id ${id} does not exist`);
@@ -227,20 +215,16 @@ async function initializeClassroom(id) {
 
     // Create or update classroom in memory
     if (!classInformation.classrooms[id]) {
-        classInformation.classrooms[id] = new Classroom(
+        classInformation.classrooms[id] = new Classroom({
             id,
-            classroom.name,
-            classroom.key,
-            classroom.owner,
+            className: classroom.name,
+            key: classroom.key,
+            owner: classroom.owner,
             permissions,
-            classroom.sharedPolls,
-            classroom.pollHistory,
-            classroom.tags
-        );
+            tags: classroom.tags,
+        });
     } else {
         classInformation.classrooms[id].permissions = permissions;
-        classInformation.classrooms[id].sharedPolls = classroom.sharedPolls;
-        classInformation.classrooms[id].pollHistory = classroom.pollHistory;
         classInformation.classrooms[id].tags = classroom.tags;
     }
 
@@ -555,6 +539,7 @@ async function deleteRooms(userId) {
             dbRun("DELETE FROM links WHERE classId=?", classroom.id),
             dbRun("DELETE FROM lessons WHERE class=?", classroom.id),
         ]);
+        invalidateClassPollCache(classroom.id);
     }
 }
 

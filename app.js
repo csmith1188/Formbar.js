@@ -166,7 +166,6 @@ for (const apiVersionFolder of apiVersionFolders) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
             if (typeof registerRoute === "function") {
                 registerRoute(router);
-                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute);
             }
         }
 
@@ -174,7 +173,6 @@ for (const apiVersionFolder of apiVersionFolders) {
             const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
             if (typeof registerRoute === "function") {
                 registerRoute(router);
-                router.use(`/api/${apiVersionFolder}/${routeFile}`, registerRoute);
             }
         }
 

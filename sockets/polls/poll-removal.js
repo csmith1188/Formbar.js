@@ -33,12 +33,12 @@ module.exports = {
                     await dbRun("ROLLBACK");
                     throw err;
                 }
+                socketUpdates.invalidateClassPollCache();
 
                 // Update classrooms
                 for (const classroom of Object.values(classInformation.classrooms)) {
                     let updatePolls = false;
 
-                    classroom.sharedPolls = classroom.sharedPolls?.filter((id) => id !== pollId) || [];
                     for (const user of Object.values(classroom.students)) {
                         const before = [...user.sharedPolls, ...user.ownedPolls];
                         user.sharedPolls = user.sharedPolls.filter((id) => id !== pollId);
