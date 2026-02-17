@@ -1,7 +1,7 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { httpPermCheck } = require("@middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { requestBreak } = require("@modules/class/break");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
@@ -27,7 +27,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -81,6 +81,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/break/request", isAuthenticated, httpPermCheck("requestBreak"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.break.request.attempt", "Attempting to request class break", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to request a break.");
@@ -92,9 +93,13 @@ module.exports = (router) => {
 
         const result = requestBreak(req.body.reason, { ...req.user, classId });
         if (result === true) {
-            res.status(200).json({ success: true });
+            req.infoEvent("class.break.request.success", "Class break requested", { classId });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500 });
         }
     });
 };

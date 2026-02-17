@@ -1,5 +1,4 @@
-const { isVerified, permCheck } = require("@modules/middleware/authentication");
-const { logger } = require("@modules/logger");
+const { isVerified, permCheck, isAuthenticated } = require("@middleware/authentication");
 const { classInformation } = require("@modules/class/classroom");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { getUserData } = require("@services/user-service");
@@ -17,6 +16,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId
@@ -60,20 +62,19 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/transactions/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/transactions/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile/transactions] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("profile.transactions.view", "Viewing transactions", { targetUserId: req.params.userId });
 
         // Check if the user has permission to view these transactions (either their own or they are a manager)
-        const userId = req.params.userId || req.user.userId;
-        if (req.user.userId !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
+        const userId = req.params.userId || req.user.id;
+        if (req.user.id !== userId && req.user.permissions < MANAGER_PERMISSIONS) {
             throw new ForbiddenError("You do not have permission to view these transactions.");
         }
 
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found: userId=${userId}`);
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         const userDisplayName = userData.displayName || "Unknown User";
@@ -81,20 +82,26 @@ module.exports = (router) => {
 
         // Handle case where no transactions are found
         if (!transactions || transactions.length === 0) {
-            logger.log("info", "No transactions found for user");
+            req.infoEvent("profile.transactions.empty", "No transactions found for user");
             // Still render the page, just with an empty array
             res.status(200).json({
-                transactions: [],
-                displayName: userDisplayName,
-                currentUserId: req.user.userId,
+                success: true,
+                data: {
+                    transactions: [],
+                    displayName: userDisplayName,
+                    currentUserId: req.user.id,
+                },
             });
             return;
         }
 
         res.status(200).json({
-            transactions: transactions,
-            displayName: userDisplayName,
-            currentUserId: req.user.userId,
+            success: true,
+            data: {
+                transactions: transactions,
+                displayName: userDisplayName,
+                currentUserId: req.user.id,
+            },
         });
     });
 
@@ -106,6 +113,9 @@ module.exports = (router) => {
      *     tags:
      *       - Profile
      *     description: Returns detailed profile information for a user including digipogs, API status, and PIN status. Email visibility depends on permissions.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: userId
@@ -154,38 +164,42 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/profile/:userId?", isVerified, permCheck, async (req, res) => {
+    router.get("/profile/:userId?", isAuthenticated, isVerified, permCheck, async (req, res) => {
         // Log the request information
-        logger.log("info", `[get /profile] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("profile.view", "Viewing profile", { targetUserId: req.params.userId });
 
         // Check if userData is null or undefined
-        const userId = req.params.userId || req.user.userId;
+        const userId = req.params.userId || req.user.id;
         const userData = await getUserData(userId);
         if (!userData) {
-            logger.log("warn", `User not found in database: userId=${userId}`);
-            throw new NotFoundError("User not found.");
+            throw new NotFoundError("User not found.", { event: "profile.user_not_found", reason: "user_not_in_database" });
         }
 
         // Destructure userData and validate required fields
         const { id, displayName, email, digipogs, API, pin } = userData;
         if (!id || !displayName || !email || digipogs === undefined || !API) {
-            logger.log("error", `Incomplete user data retrieved from database: userId=${userId}, fields missing`);
-            throw new AppError("Unable to retrieve profile information. Please try again.");
+            throw new AppError("Unable to retrieve profile information. Please try again.", {
+                event: "profile.incomplete_data",
+                reason: "missing_required_fields",
+            });
         }
 
         // Determine if the email should be visible then render the page
-        const emailVisible = req.user.userId === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
-        const isOwnProfile = req.user.userId === userId;
+        const emailVisible = req.user.id === id || classInformation.users[req.user.email]?.permissions >= MANAGER_PERMISSIONS;
+        const isOwnProfile = req.user.id === userId;
 
         res.status(200).json({
-            displayName: displayName,
-            email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
-            digipogs: digipogs,
-            id: userId,
-            API: isOwnProfile ? "Exists" : null,
-            pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
-            pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
-            isOwnProfile: isOwnProfile,
+            success: true,
+            data: {
+                displayName: displayName,
+                email: emailVisible ? email : "Hidden", // Hide email if the user is not the owner of the profile and is not a manager
+                digipogs: digipogs,
+                id: userId,
+                API: isOwnProfile ? "Exists" : null,
+                pin: isOwnProfile ? (pin ? "Exists" : null) : "Hidden",
+                pogMeter: classInformation.users[email] ? classInformation.users[email].pogMeter : 0,
+                isOwnProfile: isOwnProfile,
+            },
         });
     });
 };

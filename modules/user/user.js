@@ -1,6 +1,5 @@
 const { classInformation } = require("../class/classroom");
 const { database, dbGetAll, dbGet } = require("../database");
-const { logger } = require("../logger");
 const { compare } = require("../crypto");
 
 /**
@@ -99,9 +98,6 @@ async function getUser(userIdentifier) {
             }
         }
 
-        // Log the user's data
-        logger.log("verbose", `[getUser] userData=(${JSON.stringify(userData)})`);
-
         // Return the user's data
         return userData;
     } catch (err) {
@@ -116,9 +112,6 @@ async function getUser(userIdentifier) {
  * @param userSession
  */
 async function getUserOwnedClasses(email, userSession) {
-    logger.log("info", `[getOwnedClasses] session=(${JSON.stringify(userSession)})`);
-    logger.log("info", `[getOwnedClasses] email=(${email})`);
-
     const userId = (await dbGet("SELECT id FROM users WHERE email = ?", [email])).id;
     return await dbGetAll("SELECT * FROM classroom WHERE owner=?", [userId]);
 }
@@ -131,23 +124,14 @@ async function getUserOwnedClasses(email, userSession) {
  */
 function getUserClass(email) {
     try {
-        // Log the email
-        logger.log("info", `[getUserClass] email=(${email})`);
-
         // Iterate over the classrooms to find which class the user is in
         for (const classroomId in classInformation.classrooms) {
             const classroom = classInformation.classrooms[classroomId];
             if (classroom.students[email]) {
-                // Log the class id
-                logger.log("verbose", `[getUserClass] classId=(${classInformation.id})`);
-
                 // Return the class code
                 return classroom.id;
             }
         }
-
-        // If the user is not found in any class, log null
-        logger.log("verbose", `[getUserClass] classId=(${null})`);
 
         // Return null
         return null;
@@ -190,7 +174,6 @@ async function getEmailFromAPIKey(api) {
                     }
 
                     if (!userData) {
-                        logger.log("verbose", "[getEmailFromAPIKeyClass] not a valid API Key");
                         resolve({ error: "Not a valid API key" });
                         return;
                     }

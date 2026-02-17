@@ -1,11 +1,11 @@
-const { userSockets, managerUpdate, userUpdateSocket } = require("../socketUpdates");
+const { userSockets, managerUpdate, userUpdateSocket } = require("../socket-updates");
 const { classInformation } = require("../class/classroom");
 const { database, dbGet, dbRun } = require("../database");
-const { logger } = require("../logger");
-const { deleteCustomPolls } = require("../polls");
-const { deleteRooms, endClass } = require("../class/class");
+const { deleteRooms, endClass } = require("@services/class-service");
 const { lastActivities } = require("../../sockets/middleware/inactivity");
 const { GUEST_PERMISSIONS } = require("../permissions");
+const { deleteCustomPolls } = require("@services/poll-service");
+const { handleSocketError } = require("../socket-error-handler");
 
 function logout(socket) {
     const email = socket.request.session.email;
@@ -50,7 +50,7 @@ function logout(socket) {
                 }
 
                 // If the user is a guest, then remove them from the global user list
-                if (user.permissions === GUEST_PERMISSIONS) {
+                if (user && user.permissions === GUEST_PERMISSIONS) {
                     delete classInformation.users[email];
                 }
 
@@ -86,7 +86,7 @@ function logout(socket) {
                 // If this user owns the classroom, end it
                 database.get("SELECT * FROM classroom WHERE owner=? AND id=?", [userId, classId], (err, classroom) => {
                     if (err) {
-                        logger.log("error", err.stack);
+                        handleSocketError(err, socket, "logout:database");
                     }
 
                     if (classroom) {
@@ -95,16 +95,13 @@ function logout(socket) {
                 });
             }
         } catch (err) {
-            logger.log("error", err.stack);
+            handleSocketError(err, socket, "logout");
         }
     });
 }
 
 async function deleteUser(userId, userSession) {
     try {
-        logger.log("info", `[deleteUser] session=(${JSON.stringify(userSession)})`);
-        logger.log("info", `[deleteUser] userId=(${userId})`);
-
         // Get the user's data from their ID and verify they exist
         // If not found in users table, check if they're an unverified user in temp_user_creation_data
         const user = await dbGet("SELECT * FROM users WHERE id=?", [userId]);
@@ -163,7 +160,6 @@ async function deleteUser(userId, userSession) {
             throw err;
         }
     } catch (err) {
-        logger.log("error", err.stack);
         return "There was an internal server error. Please try again.";
     }
 }

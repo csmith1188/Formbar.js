@@ -1,17 +1,24 @@
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { deleteHelpTicket } = require("@modules/class/help");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const deleteHelpHandler = async (req, res) => {
+        const classId = req.params.id;
+        const targetUserId = req.params.userId;
+        req.infoEvent("class.help.delete.attempt", "Attempting to delete class help request", { classId, targetUserId });
         const userData = { ...req.user, classId: req.params.id };
-        const result = await deleteHelpTicket(req.params.userId, userData);
+        const result = await deleteHelpTicket(targetUserId, userData);
         if (result === true) {
-            res.status(200).json({ success: true });
+            req.infoEvent("class.help.delete.success", "Class help request deleted", { classId, targetUserId });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500 });
         }
     };
 
@@ -35,7 +42,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

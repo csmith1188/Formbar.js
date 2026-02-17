@@ -14,9 +14,11 @@
 	},
 	"_moduleAliases": {
 		"@modules": "modules",
+		"@middleware": "middleware",
 		"@services": "services",
 		"@controllers": "api/v1/controllers",
-		"@errors": "errors"
+		"@errors": "errors",
+		"@sockets": "sockets"
 	},
 	"repository": {
 		"type": "git",
@@ -30,11 +32,11 @@
 	"nodemonConfig": {
 		"ignore": [
 			"settings.json",
-			"logNumbers.json",
 			"static/**"
 		]
 	},
 	"dependencies": {
+		"@datalust/winston-seq": "^3.0.1",
 		"axios": "^1.12.2",
 		"axios-cookiejar-support": "^6.0.4",
 		"bcrypt": "^6.0.0",
@@ -46,7 +48,7 @@
 		"google-auth-library": "^10.5.0",
 		"handlebars": "^4.7.8",
 		"jsonwebtoken": "^9.0.2",
-		"module-alias": "^2.2.3",
+		"module-alias": "^2.3.4",
 		"node-fetch": "^3.3.2",
 		"nodemailer": "^7.0.12",
 		"passport": "^0.7.0",

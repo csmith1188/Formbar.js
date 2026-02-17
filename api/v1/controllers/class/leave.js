@@ -1,8 +1,8 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { leaveClass } = require("@modules/class/class");
+const { httpPermCheck } = require("@middleware/permission-check");
+const { leaveClass } = require("@services/class-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -61,6 +61,7 @@ module.exports = (router) => {
      */
     router.post("/class/:id/leave", isAuthenticated, httpPermCheck("leaveClass"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.leave.attempt", "Attempting to leave class", { classId });
 
         // Validate that classId is provided
         if (!classId) {
@@ -72,6 +73,10 @@ module.exports = (router) => {
             throw new ForbiddenError("Unauthorized");
         }
 
-        res.status(200).json({ success: true });
+        req.infoEvent("class.leave.success", "Class left successfully", { classId });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

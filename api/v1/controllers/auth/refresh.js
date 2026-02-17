@@ -31,8 +31,12 @@ module.exports = (router) => {
      *             schema:
      *               type: object
      *               properties:
-     *                 token:
+     *                 accessToken:
      *                   type: string
+     *                   description: New access token
+     *                 refreshToken:
+     *                   type: string
+     *                   description: New refresh token
      *       400:
      *         description: Refresh token is required
      *         content:
@@ -54,15 +58,23 @@ module.exports = (router) => {
      */
     router.post("/auth/refresh", async (req, res) => {
         const { token } = req.body;
+        req.infoEvent("auth.refresh.attempt", "Attempting to refresh auth token");
         if (!token) {
-            throw new ValidationError("A refresh token is required.");
+            throw new ValidationError("A refresh token is required.", { event: "auth.refresh.failed", reason: "missing_token" });
         }
 
         const result = await authService.refreshLogin(token);
         if (result.code) {
-            throw new AuthError(result);
+            throw new AuthError(result, { event: "auth.refresh.failed", reason: "invalid_token" });
         }
 
-        res.status(200).json({ token: result });
+        req.infoEvent("auth.refresh.success", "Auth token refreshed successfully");
+        res.status(200).json({
+            success: true,
+            data: {
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken,
+            },
+        });
     });
 };

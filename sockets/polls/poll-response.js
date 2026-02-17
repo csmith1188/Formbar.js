@@ -1,6 +1,6 @@
-const { logger } = require("@modules/logger");
-const { pollResponse } = require("@modules/polls");
+const { pollResponse } = require("@services/poll-service");
 const { classInformation } = require("@modules/class/classroom");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -10,7 +10,7 @@ module.exports = {
                 const classId = classInformation.users[email].activeClass;
                 pollResponse(classId, res, textRes, socket.request.session);
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "pollResp");
             }
         });
     },

@@ -1,20 +1,23 @@
 const { getClassLinks, isUserInClass } = require("@services/class-service");
-const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
     /**
      * @swagger
-     * /api/v1/links:
+     * /api/v1/class/{id}/links:
      *   get:
      *     summary: Get class links
      *     tags:
      *       - Class
      *     description: Returns all links associated with a specific class. User must be a member of the class.
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
-     *       - in: query
-     *         name: classId
+     *       - in: path
+     *         name: id
      *         required: true
      *         description: The ID of the class to retrieve links for
      *         schema:
@@ -39,20 +42,29 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.get("/links", isAuthenticated, permCheck, isVerified, async (req, res) => {
-        if (!req.query.classId) {
-            throw new ValidationError("Missing classId parameter");
+    router.get("/class/:id/links", isAuthenticated, permCheck, isVerified, async (req, res) => {
+        req.infoEvent("class.links.view.attempt", "Attempting to view class links", { classId: req.params.id });
+        if (!req.params.id) {
+            throw new ValidationError("Missing id parameter");
         }
-        const classId = parseInt(req.query.classId, 10);
+
+        const classId = parseInt(req.params.id, 10);
         if (!Number.isInteger(classId) || classId <= 0) {
-            throw new ValidationError("Invalid classId parameter");
+            throw new ValidationError("Invalid id parameter");
         }
+
         if (!(await isUserInClass(req.user.id, classId))) {
             throw new ForbiddenError("You are not a member of this class");
         }
 
         const links = await getClassLinks(classId);
 
-        res.send({ links });
+        req.infoEvent("class.links.view.success", "Class links returned", { classId, linkCount: links.length });
+        res.send({
+            success: true,
+            data: {
+                links,
+            },
+        });
     });
 };

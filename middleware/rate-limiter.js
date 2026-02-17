@@ -1,6 +1,5 @@
 const { getUser } = require("@modules/user/user");
 const { verifyToken } = require("@services/auth-service");
-const { logger } = require("@modules/logger");
 const { TEACHER_PERMISSIONS, GUEST_PERMISSIONS } = require("@modules/permissions");
 
 // In-memory rate limit storage
@@ -65,6 +64,12 @@ async function rateLimiter(req, res, next) {
     if (userRequests[path].length >= limit) {
         if (!userRequests["hasBeenMessaged"]) {
             userRequests["hasBeenMessaged"] = true;
+            req.warnEvent("rate_limit.exceeded", `Rate limit exceeded for user ${identifier} on path ${path}`, {
+                identifier,
+                path,
+                limit,
+                permissions: user.permissions,
+            });
             return res.status(429).json({ error: `You are being rate limited. Please try again in ${timeFrame / 1000} seconds.` });
         }
     } else {

@@ -47,6 +47,7 @@ module.exports = (router) => {
      */
     router.post("/oauth/revoke", async (req, res) => {
         const { token, token_type_hint } = req.body;
+        req.infoEvent("oauth.revoke.attempt", "Attempting OAuth token revocation", { hasToken: !!token, tokenTypeHint: token_type_hint || null });
 
         // Return 200 OK even if the token is invalid to prevent token enumeration attacks
         if (token) {
@@ -56,6 +57,10 @@ module.exports = (router) => {
             }
         }
 
-        res.json({ success: true });
+        req.infoEvent("oauth.revoke.success", "OAuth token revocation processed", { hasToken: !!token, tokenTypeHint: token_type_hint || null });
+        res.json({
+            success: true,
+            data: {},
+        });
     });
 };

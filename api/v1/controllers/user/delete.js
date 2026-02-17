@@ -1,17 +1,23 @@
-const { deleteUser } = require("@modules/user/userSession");
+const { deleteUser } = require("@modules/user/user-session");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
     const deleteUserHandler = async (req, res) => {
         const userId = req.params.id;
+        req.infoEvent("user.delete.attempt", "Attempting to delete user");
+
         const result = await deleteUser(userId);
         if (result === true) {
-            res.status(200).json({ success: true });
+            req.infoEvent("user.delete.success", "User deleted successfully");
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
-            throw new AppError(result);
+            throw new AppError(result, { event: "user.delete.failed", reason: "deletion_error" });
         }
     };
 
@@ -23,6 +29,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Deletes a user from Formbar (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

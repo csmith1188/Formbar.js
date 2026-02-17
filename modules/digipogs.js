@@ -1,6 +1,5 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
-const { logger } = require("./logger");
 const { getClassIDFromCode } = require("./class/classroom");
 const { compare } = require("./crypto");
 
@@ -97,7 +96,6 @@ function checkRateLimit(accountId) {
     }
 
     // Log current failure count for debugging
-    logger.log("info", `Account ${accountId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
 
     return { allowed: true };
 }
@@ -258,13 +256,11 @@ async function awardDigipogs(awardData, user) {
                 Date.now(),
             ]);
         } catch (err) {
-            logger.log("error", err.stack || err);
             return { success: true, message: "Award succeeded, but failed to log transaction." };
         }
         recordAttempt(accountId, true);
         return { success: true, message: `Digipogs awarded successfully. ${deprecatedFormatUsed ? "Warning: Deprecated award format used. See documentation for updated usage." : ""}` };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }
@@ -408,10 +404,7 @@ async function transferDigipogs(transferData) {
         } catch (err) {
             try {
                 await dbRun("ROLLBACK");
-            } catch (rollbackErr) {
-                logger.log("error", rollbackErr.stack || rollbackErr);
-            }
-            logger.log("error", err.stack || err);
+            } catch (rollbackErr) {}
             recordAttempt(accountId, false);
             return { success: false, message: "Transfer failed due to database error." };
         }
@@ -423,7 +416,6 @@ async function transferDigipogs(transferData) {
                 [from.id, from.type, to.id, to.type, amount, reason, Date.now()]
             );
         } catch (err) {
-            logger.log("error", err.stack || err);
             // Don't fail the transfer if logging fails
         }
 
@@ -431,7 +423,6 @@ async function transferDigipogs(transferData) {
         recordAttempt(accountId, true);
         return { success: true, message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}` };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }

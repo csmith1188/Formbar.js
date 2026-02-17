@@ -1,14 +1,15 @@
 const { classInformation } = require("@modules/class/classroom");
 const { dbRun } = require("@modules/database");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
     const updatePermissionsHandler = async (req, res) => {
         const email = req.params.email;
         let { perm } = req.body || {};
+        req.infoEvent("user.permissions.update.attempt", "Attempting to update user permissions", { targetEmail: email });
         perm = Number(perm);
         if (!Number.isFinite(perm)) {
             throw new ValidationError("Invalid permission value");
@@ -19,7 +20,13 @@ module.exports = (router) => {
             classInformation.users[email].permissions = perm;
         }
 
-        res.status(200).json({ ok: true });
+        req.infoEvent("user.permissions.update.success", "User permissions updated", { targetEmail: email, permissionLevel: perm });
+        res.status(200).json({
+            success: true,
+            data: {
+                ok: true,
+            },
+        });
     };
 
     /**
@@ -30,6 +37,9 @@ module.exports = (router) => {
      *     tags:
      *       - Users
      *     description: Updates a user's global permission level (requires manager permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: email

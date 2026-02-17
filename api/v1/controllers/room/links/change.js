@@ -1,13 +1,14 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { dbRun } = require("@modules/database");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
     const changeLinkHandler = async (req, res) => {
         const classId = req.params.id;
         const { oldName, name, url } = req.body;
+        req.infoEvent("room.links.update.attempt", "Attempting to update room link", { classId, linkName: name, oldLinkName: oldName || null });
         if (!name || !url) {
             throw new ValidationError("Name and URL are required.");
         }
@@ -18,7 +19,13 @@ module.exports = (router) => {
         } else {
             await dbRun("UPDATE links SET url = ? WHERE classId = ? AND name = ?", [url, classId, name]);
         }
-        res.status(200).json({ message: "Link updated successfully." });
+        req.infoEvent("room.links.update.success", "Room link updated", { classId, linkName: name, oldLinkName: oldName || null });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link updated successfully.",
+            },
+        });
     };
 
     /**
@@ -29,6 +36,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Updates an existing link in a classroom (requires teacher permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

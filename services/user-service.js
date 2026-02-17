@@ -22,7 +22,11 @@ function loadPasswordResetTemplate() {
     } catch (err) {
         // Log the underlying error for diagnostics, but throw a controlled error outward.
         console.error("Failed to load password reset email template:", err);
-        throw new AppError("Failed to load password reset email template.", 500);
+        throw new AppError("Failed to load password reset email template.", {
+            statusCode: 500,
+            event: "user.password.reset.failed",
+            reason: "template_load_error",
+        });
     }
 }
 
@@ -42,7 +46,7 @@ async function requestPasswordReset(email) {
 async function resetPassword(password, token) {
     const user = await dbGet("SELECT * FROM users WHERE secret = ?", [token]);
     if (!user) {
-        throw new NotFoundError("Password reset token is invalid or has expired.");
+        throw new NotFoundError("Password reset token is invalid or has expired.", { event: "user.password.reset.failed", reason: "invalid_token" });
     }
 
     const hashedPassword = await hash(password, 10);

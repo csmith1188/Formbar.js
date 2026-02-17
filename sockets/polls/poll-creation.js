@@ -1,6 +1,6 @@
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
-const { createPoll } = require("@modules/polls");
+const { createPoll } = require("@services/poll-service");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -61,7 +61,7 @@ module.exports = {
                 );
                 socket.emit("startPoll");
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "startPoll");
             }
         });
     },

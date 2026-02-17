@@ -1,6 +1,6 @@
-const { logger } = require("@modules/logger");
-const { rateLimits, PASSIVE_SOCKETS } = require("@modules/socketUpdates");
+const { rateLimits, PASSIVE_SOCKETS } = require("@modules/socket-updates");
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     order: 0,
@@ -37,7 +37,8 @@ module.exports = {
                     next();
                 }
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "rate-limiter-middleware");
+                next(err);
             }
         });
     },

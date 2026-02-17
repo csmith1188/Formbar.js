@@ -18,7 +18,7 @@ describe("apikey", () => {
     it("should fail if user id is not found in session", async () => {
         socket.request.session.userId = null;
         await refreshApiKeyHandler();
-        expect(socket.emit).toHaveBeenCalledWith("error", expect.stringContaining("Error Number"));
+        expect(socket.emit).toHaveBeenCalledWith("error", expect.stringContaining("There was a server error"));
     });
 
     it("should update API key in session and database", async () => {

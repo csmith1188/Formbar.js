@@ -1,8 +1,8 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { isClassActive } = require("@modules/class/class");
+const { httpPermCheck } = require("@middleware/permission-check");
+const { isClassActive } = require("@services/class-service");
 const { classInformation } = require("@modules/class/classroom");
+const { isAuthenticated } = require("@middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
-const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -59,12 +59,19 @@ module.exports = (router) => {
      */
     router.get("/class/:id/active", isAuthenticated, httpPermCheck("isClassActive"), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("class.active.view.attempt", "Attempting to view class active status", { classId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to view the status of this class.");
         }
 
         const isActive = isClassActive(classId);
-        res.status(200).json({ isActive });
+        req.infoEvent("class.active.view.success", "Class active status returned", { classId, isActive });
+        res.status(200).json({
+            success: true,
+            data: {
+                isActive,
+            },
+        });
     });
 };

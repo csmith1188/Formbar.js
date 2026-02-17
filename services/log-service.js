@@ -19,7 +19,7 @@ async function getAllLogs() {
         );
         return logs.filter(Boolean); // Remove null values
     } catch (err) {
-        throw new AppError(`Failed to retrieve logs: ${err.message}`, 500);
+        throw new AppError(`Failed to retrieve logs: ${err.message}`, { statusCode: 500, event: "logs.get.failed", reason: "read_directory_error" });
     }
 }
 
@@ -28,7 +28,11 @@ async function getLog(logFileName) {
         const content = await fs.readFile(`${logDir}${logFileName}`, "utf8");
         return content;
     } catch (err) {
-        throw new AppError(`Failed to read log file ${logFileName}: ${err.message}`, 500);
+        throw new AppError(`Failed to read log file ${logFileName}: ${err.message}`, {
+            statusCode: 500,
+            event: "logs.get.failed",
+            reason: "read_file_error",
+        });
     }
 }
 

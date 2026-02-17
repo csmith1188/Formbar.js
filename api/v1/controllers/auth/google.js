@@ -1,8 +1,7 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const { settings } = require("@modules/config");
-const { passport } = require("@modules/googleOauth");
+const { passport } = require("@modules/google-oauth");
 const authService = require("@services/auth-service");
 const ForbiddenError = require("@errors/forbidden-error");
 const ValidationError = require("@errors/validation-error");
@@ -70,25 +69,25 @@ module.exports = (router) => {
     router.get("/auth/google/callback", checkEnabled, (req, res, next) => {
         passport.authenticate("google", { session: false }, async (err, user) => {
             if (err) {
-                logger.log("error", `[auth/google/callback] Passport error: ${err.message || err}`);
-                throw new ValidationError("Authentication failed.");
+                throw new ValidationError("Authentication failed.", { event: "auth.google.error", reason: "passport_error" });
             }
 
             if (!user || !user.emails || user.emails.length === 0) {
-                logger.log("error", "[auth/google/callback] No email found in Google profile");
-                throw new ValidationError("Could not retrieve email from Google account.");
+                throw new ValidationError("Could not retrieve email from Google account.", {
+                    event: "auth.google.no_email",
+                    reason: "email_not_found",
+                });
             }
 
             const email = user.emails[0].value;
             const displayName = user.name ? `${user.name.givenName} ${user.name.familyName}` : email;
 
-            logger.log("info", `[get /auth/google/callback] ip=(${req.ip}) email=(${email})`);
+            req.infoEvent("auth.google.callback", "Google OAuth callback");
 
             // Authenticate the user via Google OAuth
             const result = await authService.googleOAuth(email, displayName);
             if (result.error) {
-                logger.log("error", `[auth/google/callback] ${result.error}`);
-                throw new ValidationError(result.error);
+                throw new ValidationError(result.error, { event: "auth.google.oauth_error", reason: "oauth_failed" });
             }
 
             // If not already logged in, create a new Student instance in classInformation
@@ -107,7 +106,17 @@ module.exports = (router) => {
                 );
             }
 
-            res.json(tokens);
+            res.json({
+                success: true,
+                data: {
+                    ...result.tokens,
+                    user: {
+                        id: result.user.id,
+                        email: result.user.email,
+                        displayName: result.user.displayName,
+                    },
+                },
+            });
         })(req, res, next);
     });
 };

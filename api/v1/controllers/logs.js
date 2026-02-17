@@ -1,7 +1,6 @@
 const { getAllLogs, getLog } = require("@services/log-service");
-const { logger } = require("@modules/logger");
-const { hasPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 
 module.exports = (router) => {
@@ -13,6 +12,9 @@ module.exports = (router) => {
      *     tags:
      *       - Logs
      *     description: Returns a list of all available log files
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     responses:
      *       200:
      *         description: List of logs retrieved successfully
@@ -34,9 +36,14 @@ module.exports = (router) => {
      */
     // Handle displaying all logs to the manager
     router.get("/logs", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
-        logger.log("info", `[get /logs] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("logs.view_all", "Viewing all logs");
         const logs = await getAllLogs();
-        res.json({ logs });
+        res.json({
+            success: true,
+            data: {
+                logs,
+            },
+        });
     });
 
     /**
@@ -47,6 +54,9 @@ module.exports = (router) => {
      *     tags:
      *       - Logs
      *     description: Returns the contents of a specific log file
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: log
@@ -75,8 +85,13 @@ module.exports = (router) => {
     // Handle displaying a specific log to the manager
     router.get("/logs/:log", isAuthenticated, hasPermission(MANAGER_PERMISSIONS), async (req, res) => {
         const logFileName = req.params.log;
-        logger.log("info", `[get /logs/:log] ip=(${req.ip}) user=(${req.user?.email})`);
+        req.infoEvent("logs.view_single", "Viewing log file", { logFileName });
         const text = await getLog(logFileName);
-        res.json({ text });
+        res.json({
+            success: true,
+            data: {
+                text,
+            },
+        });
     });
 };

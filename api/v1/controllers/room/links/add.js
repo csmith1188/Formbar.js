@@ -1,7 +1,7 @@
 const { TEACHER_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { dbRun } = require("@modules/database");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const ValidationError = require("@errors/validation-error");
 
 module.exports = (router) => {
@@ -13,6 +13,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Adds a new link to a classroom (requires teacher permissions)
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -63,12 +66,19 @@ module.exports = (router) => {
     router.post("/room/:id/links/add", isAuthenticated, hasClassPermission(TEACHER_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
         const { name, url } = req.body;
+        req.infoEvent("room.links.add.attempt", "Attempting to add room link", { classId, linkName: name });
         if (!name || !url) {
             throw new ValidationError("Name and URL are required.");
         }
 
         // Add the link to the database
         await dbRun("INSERT INTO links (classId, name, url) VALUES (?, ?, ?)", [classId, name, url]);
-        res.status(200).json({ message: "Link added successfully." });
+        req.infoEvent("room.links.add.success", "Room link added", { classId, linkName: name });
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Link added successfully.",
+            },
+        });
     });
 };

@@ -1,7 +1,7 @@
-const { hasClassPermission } = require("@modules/middleware/permission-check");
+const { hasClassPermission } = require("@middleware/permission-check");
 const { CLASS_PERMISSIONS } = require("@modules/permissions");
 const { awardDigipogs } = require("@modules/digipogs");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { isAuthenticated } = require("@middleware/authentication");
 const AppError = require("@errors/app-error");
 
 module.exports = (router) => {
@@ -25,7 +25,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     requestBody:
      *       required: true
      *       content:
@@ -70,10 +70,18 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/digipogs/award", isAuthenticated, hasClassPermission(CLASS_PERMISSIONS.MANAGE_CLASS), async (req, res) => {
+        const { userId, amount } = req.body;
+        req.infoEvent("digipogs.award.attempt", "Attempting to award digipogs", { amount });
+
         const result = await awardDigipogs(req.body, req.user);
         if (!result.success) {
-            throw new AppError(result);
+            throw new AppError(result, { event: "digipogs.award.failed", reason: "award_error" });
         }
-        res.status(200).json(result);
+
+        req.infoEvent("digipogs.award.success", "Digipogs awarded successfully", { amount });
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
     });
 };

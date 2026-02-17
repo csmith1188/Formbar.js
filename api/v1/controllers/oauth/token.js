@@ -90,17 +90,27 @@ module.exports = (router) => {
             requireBodyParam(redirect_uri, "redirect_uri");
             requireBodyParam(client_id, "client_id");
 
+            req.infoEvent("oauth.token.authorization_code", "Exchanging authorization code for token", { client_id });
             tokenResponse = await authService.exchangeAuthorizationCodeForToken({ code, redirect_uri, client_id });
+            req.infoEvent("oauth.token.success", "Authorization code exchanged successfully", { client_id });
         } else if (grant_type === "refresh_token") {
             requireBodyParam(refresh_token, "refresh_token");
 
+            req.infoEvent("oauth.token.refresh", "Refreshing access token");
             tokenResponse = await authService.exchangeRefreshTokenForAccessToken({ refresh_token });
+            req.infoEvent("oauth.token.refresh.success", "Access token refreshed successfully");
         }
 
         if (!tokenResponse) {
-            throw new ValidationError("Invalid grant_type. Supported values: 'authorization_code', 'refresh_token'.");
+            throw new ValidationError("Invalid grant_type. Supported values: 'authorization_code', 'refresh_token'.", {
+                event: "oauth.token.failed",
+                reason: "invalid_grant_type",
+            });
         }
 
-        res.json(tokenResponse);
+        res.json({
+            success: true,
+            data: tokenResponse,
+        });
     });
 };

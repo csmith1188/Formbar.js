@@ -1,4 +1,3 @@
-const { logger } = require("@modules/logger");
 const { classInformation } = require("@modules/class/classroom");
 const { Student } = require("@modules/student");
 const authService = require("@services/auth-service");
@@ -69,13 +68,12 @@ module.exports = (router) => {
             throw new ValidationError("Email and password are required.");
         }
 
-        logger.log("info", `[post /auth/login] ip=(${req.ip}) email=(${email})`);
+        req.infoEvent("auth.login.attempt", "User login attempt");
 
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            logger.log("verbose", "[post /auth/login] Invalid credentials");
-            throw new ValidationError("Incorrect password. Try again.");
+            throw new ValidationError("Incorrect password. Try again.", { event: "auth.login.invalid", reason: "invalid_credentials" });
         }
 
         // If not already logged in, create a new Student instance in classInformation
@@ -94,6 +92,13 @@ module.exports = (router) => {
             );
         }
 
-        res.json(tokens);
+        req.infoEvent("auth.login.success", "User logged in successfully");
+
+        res.json({
+            success: true,
+            data: {
+                ...tokens,
+            },
+        });
     });
 };

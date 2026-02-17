@@ -1,9 +1,8 @@
 const { classInformation } = require("./class/classroom");
 const { database, dbGetAll } = require("./database");
-const { logger } = require("./logger");
 const { TEACHER_PERMISSIONS, CLASS_SOCKET_PERMISSIONS, GUEST_PERMISSIONS, MANAGER_PERMISSIONS, MOD_PERMISSIONS } = require("./permissions");
-const { getManagerData } = require("./manager");
-const { io } = require("./webServer");
+const { getManagerData } = require("@services/manager-service");
+const { io } = require("./web-server");
 
 const runningTimers = {};
 const rateLimits = {};
@@ -37,11 +36,12 @@ async function userUpdateSocket(email, methodName, ...args) {
     const { userSocketUpdates } = require("../sockets/init");
 
     // If user has no socket connections yet, then return
-    if (!userSocketUpdates || !userSocketUpdates[email] || Object.keys(userSocketUpdates[email]).length === 0) {
+    const userSockets = userSocketUpdates.get(email);
+    if (!userSockets || userSockets.size === 0) {
         return;
     }
 
-    for (const socketUpdates of Object.values(userSocketUpdates[email])) {
+    for (const socketUpdates of userSockets.values()) {
         if (socketUpdates && typeof socketUpdates[methodName] === "function") {
             socketUpdates[methodName](...args);
         }
@@ -92,8 +92,6 @@ async function advancedEmitToClass(event, classId, options, ...data) {
  */
 async function setClassOfApiSockets(api, classId) {
     try {
-        logger.log("verbose", `[setClassOfApiSockets] api=(${api}) classId=(${classId})`);
-
         const sockets = await io.in(`api-${api}`).fetchSockets();
         for (let socket of sockets) {
             // Ensure the socket has a session before continuing
@@ -108,8 +106,49 @@ async function setClassOfApiSockets(api, classId) {
             socket.emit("setClass", classId);
         }
     } catch (err) {
-        logger.log("error", err.stack);
+        // Error handled
     }
+}
+
+/**
+ * Sets the class id for all sockets belonging to a specific user.
+ * This is used when a user joins a class via HTTP to ensure their sockets receive class updates.
+ * If no class id is provided, then the class id will be set to null.
+ *
+ * @param {string} email - The user's email identifier.
+ * @param {string} [classId=null] - The class id to set.
+ */
+async function setClassOfUserSockets(email, classId) {
+    try {
+        // Check if user has any sockets
+        if (!userSockets[email]) {
+            return;
+        }
+
+        // Update all sockets for this user
+        for (let socket of Object.values(userSockets[email])) {
+            // Ensure the socket has a session before continuing
+            if (!socket.request.session) continue;
+
+            // Leave the old class room
+            const oldClassId = socket.request.session.classId;
+            if (oldClassId) {
+                socket.leave(`class-${oldClassId}`);
+            }
+
+            // Update session with new class id
+            socket.request.session.classId = classId;
+            socket.request.session.save();
+
+            // Join the new class room
+            if (classId) {
+                socket.join(`class-${classId}`);
+            }
+
+            // Emit the setClass event to the socket
+            socket.emit("setClass", classId);
+        }
+    } catch (err) {}
 }
 
 async function managerUpdate() {
@@ -125,7 +164,7 @@ async function managerUpdate() {
             }
         }
     } catch (err) {
-        logger.log("error", err.stack);
+        // Error handled
     }
 }
 
@@ -371,7 +410,7 @@ class SocketUpdates {
                 this.customPollUpdate();
             }
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 
@@ -388,18 +427,12 @@ class SocketUpdates {
             const student = classInformation.classrooms[classId].students[email];
             if (!student) return; // If the student is not in the class, then do not update the custom polls
 
-            logger.log("info", `[customPollUpdate] email=(${email})`);
             const userSharedPolls = student.sharedPolls;
             const userOwnedPolls = student.ownedPolls;
             const userCustomPolls = Array.from(new Set(userSharedPolls.concat(userOwnedPolls)));
             const classroomPolls = structuredClone(classInformation.classrooms[classId].sharedPolls);
             const publicPolls = [];
             const customPollIds = userCustomPolls.concat(classroomPolls);
-
-            logger.log(
-                "verbose",
-                `[customPollUpdate] userSharedPolls=(${userSharedPolls}) userOwnedPolls=(${userOwnedPolls}) userCustomPolls=(${userCustomPolls}) classroomPolls=(${classroomPolls}) publicPolls=(${publicPolls}) customPollIds=(${customPollIds})`
-            );
 
             database.all(
                 `SELECT * FROM custom_polls WHERE id IN(${customPollIds.map(() => "?").join(", ")}) OR public = 1 OR owner=?`,
@@ -417,7 +450,7 @@ class SocketUpdates {
                                 newObject[customPoll.id] = customPoll;
                                 return newObject;
                             } catch (err) {
-                                logger.log("error", err.stack);
+                                // Error handled
                             }
                         }, {});
 
@@ -427,33 +460,23 @@ class SocketUpdates {
                             }
                         }
 
-                        logger.log(
-                            "verbose",
-                            `[customPollUpdate] publicPolls=(${publicPolls}) classroomPolls=(${classroomPolls}) userCustomPolls=(${userCustomPolls}) customPollsData=(${JSON.stringify(customPollsData)})`
-                        );
-
                         io.to(`user-${email}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
                         const apiId = this.socket && this.socket.request && this.socket.request.session && this.socket.request.session.api;
                         if (apiId) {
                             io.to(`api-${apiId}`).emit("customPollUpdate", publicPolls, classroomPolls, userCustomPolls, customPollsData);
                         }
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        // Error handled
                     }
                 }
             );
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 
     classBannedUsersUpdate(classId = this.socket.request.session.classId) {
         try {
-            logger.log(
-                "info",
-                `[classBannedUsersUpdate] ip=(${this.socket.handshake.address}) session=(${JSON.stringify(this.socket.request.session)})`
-            );
-            logger.log("info", `[classBannedUsersUpdate] classId=(${classId})`);
             if (!classId) return;
 
             database.all(
@@ -471,28 +494,24 @@ class SocketUpdates {
                             bannedStudents
                         );
                     } catch (err) {
-                        logger.log("error", err.stack);
+                        // Error handled
                     }
                 }
             );
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 
     async getOwnedClasses(email) {
         try {
-            logger.log("info", `[getOwnedClasses] email=(${email})`);
-
             // Check if the user exists before accessing .id
             if (!classInformation.users[email] || !classInformation.users[email].id) {
-                logger.log("error", `[getOwnedClasses] User not found for email=(${email})`);
                 return;
             }
 
             // Get the user's owned classes from the database
             const ownedClasses = await dbGetAll("SELECT name, id FROM classroom WHERE owner=?", [classInformation.users[email].id]);
-            logger.log("info", `[getOwnedClasses] ownedClasses=(${JSON.stringify(ownedClasses)})`);
 
             // Send the owned classes to the user's sockets
             io.to(`user-${email}`).emit("getOwnedClasses", ownedClasses);
@@ -503,14 +522,12 @@ class SocketUpdates {
                 io.to(`api-${session.api}`).emit("getOwnedClasses", ownedClasses);
             }
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 
     getPollShareIds(pollId) {
         try {
-            logger.log("info", `[getPollShareIds] pollId=(${pollId})`);
-
             database.all(
                 "SELECT pollId, userId FROM shared_polls LEFT JOIN users ON users.id = shared_polls.userId WHERE pollId=?",
                 pollId,
@@ -525,14 +542,9 @@ class SocketUpdates {
                                 try {
                                     if (err) throw err;
 
-                                    logger.log(
-                                        "info",
-                                        `[getPollShareIds] userPollShares=(${JSON.stringify(userPollShares)}) classPollShares=(${JSON.stringify(classPollShares)})`
-                                    );
-
                                     this.socket.emit("getPollShareIds", userPollShares, classPollShares);
                                 } catch (err) {
-                                    logger.log("error", err.stack);
+                                    // Error handled
                                 }
                             }
                         );
@@ -540,7 +552,7 @@ class SocketUpdates {
                 }
             );
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 
@@ -566,7 +578,7 @@ class SocketUpdates {
                 classData.timer
             );
         } catch (err) {
-            logger.log("error", err.stack);
+            // Error handled
         }
     }
 }
@@ -582,6 +594,7 @@ module.exports = {
     emitToUser,
     advancedEmitToClass,
     setClassOfApiSockets,
+    setClassOfUserSockets,
     managerUpdate,
     userUpdateSocket,
     SocketUpdates,

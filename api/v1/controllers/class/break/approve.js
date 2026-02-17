@@ -1,24 +1,30 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
+const { httpPermCheck } = require("@middleware/permission-check");
 const { classInformation } = require("@modules/class/classroom");
 const { approveBreak } = require("@modules/class/break");
+const { isAuthenticated } = require("@middleware/authentication");
 const ForbiddenError = require("@errors/forbidden-error");
 const AppError = require("@errors/app-error");
-const { isAuthenticated } = require("@modules/middleware/authentication");
 
 module.exports = (router) => {
     const approveBreakHandler = async (req, res) => {
         const classId = req.params.id;
+        const targetUserId = req.params.userId;
+        req.infoEvent("class.break.approve.attempt", "Attempting to approve class break", { classId, targetUserId });
         const classroom = classInformation.classrooms[classId];
         if (classroom && !classroom.students[req.user.email]) {
             throw new ForbiddenError("You do not have permission to approve this user's break.");
         }
 
         const userData = { ...req.user, classId };
-        const result = await approveBreak(true, req.params.userId, userData);
+        const result = await approveBreak(true, targetUserId, userData);
         if (result === true) {
-            res.status(200).json({ success: true });
+            req.infoEvent("class.break.approve.success", "Class break approved", { classId, targetUserId });
+            res.status(200).json({
+                success: true,
+                data: {},
+            });
         } else {
-            throw new AppError(result, 500);
+            throw new AppError(result, { statusCode: 500 });
         }
     };
 
@@ -42,7 +48,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id

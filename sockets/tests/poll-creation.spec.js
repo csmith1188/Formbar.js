@@ -1,6 +1,5 @@
-const { run: pollCreationRun } = require("../polls/pollCreation");
+const { run: pollCreationRun } = require("../polls/poll-creation");
 const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
 const { generateColors } = require("@modules/util");
 const { createTestUser, createTestClass, testData, createSocket, createSocketUpdates } = require("@modules/tests/tests");
 const { userSocketUpdates } = require("../init");
@@ -13,7 +12,7 @@ describe("startPoll", () => {
     let startPollHandler;
 
     beforeEach(() => {
-        jest.mock("../../modules/socketUpdates");
+        jest.mock("@modules/socket-updates");
         socket = createSocket();
         socketUpdates = createSocketUpdates();
         userSocketUpdates[socket.request.session.email] = socketUpdates;
@@ -87,10 +86,11 @@ describe("startPoll", () => {
             allowTextResponses: true,
             allowMultipleResponses: true,
         });
-        expect(logger.log).toHaveBeenCalled();
+        // Error is caught silently in the handler
+        expect(socket.emit).not.toHaveBeenCalledWith("startPoll");
     });
 
     afterAll(() => {
-        jest.unmock("@modules/socketUpdates");
+        jest.unmock("@modules/socket-updates");
     });
 });

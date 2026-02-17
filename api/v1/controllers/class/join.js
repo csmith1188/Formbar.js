@@ -1,6 +1,6 @@
-const { httpPermCheck } = require("@modules/middleware/permission-check");
-const { joinClass } = require("@modules/class/class");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { httpPermCheck } = require("@middleware/permission-check");
+const { joinClass } = require("@services/class-service");
+const { isAuthenticated } = require("@middleware/authentication");
 
 module.exports = (router) => {
     /**
@@ -23,7 +23,7 @@ module.exports = (router) => {
      *       - 5: Manager
      *     security:
      *       - bearerAuth: []
-     *       - sessionAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -52,7 +52,15 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/Error'
      */
     router.post("/class/:id/join", isAuthenticated, httpPermCheck("joinClass"), async (req, res) => {
-        await joinClass(req.user, req.params.id);
-        res.status(200).json({ success: true });
+        const classId = req.params.id;
+        req.infoEvent("class.join.attempt", "User attempting to join class", { classId });
+
+        await joinClass(req.user, classId);
+
+        req.infoEvent("class.join.success", "User joined class successfully", { classId });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
     });
 };

@@ -1,6 +1,5 @@
 const { classInformation } = require("./classroom");
 const { dbRun } = require("../database");
-const { logger } = require("../logger");
 const { getEmailFromId } = require("../student");
 
 /**
@@ -37,23 +36,17 @@ async function setTags(tags, userSession) {
 
             try {
                 await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [studentTags.join(","), student.id, classId]);
-            } catch (err) {
-                logger.log("error", err.stack);
-            }
+            } catch (err) {}
         }
 
         // Persist classroom tags by id
         await dbRun("UPDATE classroom SET tags = ? WHERE id = ?", [tags.toString(), classId]);
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    } catch (err) {}
 }
 
 async function saveTags(studentId, tags, userSession) {
     try {
         const email = await getEmailFromId(studentId);
-        logger.log("info", `[saveTags] session=(${JSON.stringify(userSession)})`);
-        logger.log("info", `[saveTags] studentId=(${studentId}) tags=(${JSON.stringify(tags)})`);
         if (!Array.isArray(tags)) return;
 
         // Remove blank/Offline for active students
@@ -94,9 +87,7 @@ async function saveTags(studentId, tags, userSession) {
         }
 
         await dbRun("UPDATE classusers SET tags = ? WHERE studentId = ? AND classId = ?", [normalized.join(","), studentId, userSession.classId]);
-    } catch (err) {
-        logger.log("error", err.stack);
-    }
+    } catch (err) {}
 }
 
 module.exports = {

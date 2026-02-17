@@ -1,5 +1,5 @@
 const { dbGet } = require("@modules/database");
-const { isAuthenticated, isVerified, permCheck } = require("@modules/middleware/authentication");
+const { isAuthenticated, isVerified, permCheck } = require("@middleware/authentication");
 const pools = require("@modules/pools");
 
 module.exports = {
@@ -12,6 +12,9 @@ module.exports = {
          *     tags:
          *       - Pools
          *     description: Returns all digipog pools that the user owns or is a member of
+         *     security:
+         *       - bearerAuth: []
+         *       - apiKeyAuth: []
          *     responses:
          *       200:
          *         description: Pools retrieved successfully
@@ -40,7 +43,8 @@ module.exports = {
          */
         // Handle displaying the pools management page
         router.get("/user/pools", isAuthenticated, isVerified, permCheck, async (req, res) => {
-            const userId = req.user.userId;
+            const userId = req.user.id;
+            req.infoEvent("user.pools.view.attempt", "Attempting to view user pools");
 
             // Get all pools for this user using the new schema helper
             const userPools = await pools.getPoolsForUser(userId);
@@ -59,11 +63,15 @@ module.exports = {
                 })
             );
 
+            req.infoEvent("user.pools.view.success", "User pools returned", { poolCount: poolObjs.filter((p) => p).length });
             res.status(200).json({
-                pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
-                ownedPools: JSON.stringify(ownedPools),
-                memberPools: JSON.stringify(memberPools),
-                userId: userId,
+                success: true,
+                data: {
+                    pools: JSON.stringify(poolObjs.filter((p) => p)), // Filter out null values
+                    ownedPools: JSON.stringify(ownedPools),
+                    memberPools: JSON.stringify(memberPools),
+                    userId: userId,
+                },
             });
         });
     },

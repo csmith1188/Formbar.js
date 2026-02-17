@@ -1,6 +1,6 @@
 const { GUEST_PERMISSIONS } = require("@modules/permissions");
-const { hasClassPermission } = require("@modules/middleware/permission-check");
-const { isAuthenticated } = require("@modules/middleware/authentication");
+const { hasClassPermission } = require("@middleware/permission-check");
+const { isAuthenticated } = require("@middleware/authentication");
 const { dbGetAll } = require("@modules/database");
 
 module.exports = (router) => {
@@ -12,6 +12,9 @@ module.exports = (router) => {
      *     tags:
      *       - Room - Links
      *     description: Retrieves all links associated with a classroom
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
      *     parameters:
      *       - in: path
      *         name: id
@@ -44,10 +47,15 @@ module.exports = (router) => {
      */
     router.get("/room/:id/links", isAuthenticated, hasClassPermission(GUEST_PERMISSIONS), async (req, res) => {
         const classId = req.params.id;
+        req.infoEvent("room.links.view.attempt", "Attempting to view room links", { classId });
         const links = await dbGetAll("SELECT name, url FROM links WHERE classId = ?", [classId]);
 
         if (links) {
-            res.status(200).json(links);
+            req.infoEvent("room.links.view.success", "Room links returned", { classId, linkCount: links.length });
+            res.status(200).json({
+                success: true,
+                data: links,
+            });
         }
     });
 };
