@@ -127,6 +127,14 @@ module.exports = (router) => {
         const classId = req.params.id;
         requireQueryParam(classId, "classId");
 
+        // Ensure the authenticated user is logged into / associated with this class.
+        const userClassId = req.user && (req.user.currentClassId || req.user.classId);
+        if (!userClassId || String(userClassId) !== String(classId)) {
+            return res.status(403).json({
+                success: false,
+                error: "User is not logged into the selected class or lacks permission",
+            });
+        }
         req.infoEvent("class.polls.view", "Viewing class polls", { classId });
 
         const limit = parseIntegerQueryParam(req.query.limit, DEFAULT_POLL_LIMIT);
