@@ -33,6 +33,7 @@ module.exports = {
                     await dbRun("ROLLBACK");
                     throw err;
                 }
+                socketUpdates.invalidateClassPollCache();
 
                 // Update classrooms
                 for (const classroom of Object.values(classInformation.classrooms)) {

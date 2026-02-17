@@ -1,6 +1,13 @@
 const { dbGetAll, dbGet, dbRun } = require("@modules/database");
 
-const { advancedEmitToClass, userSockets, setClassOfApiSockets, setClassOfUserSockets, userUpdateSocket } = require("@modules/socket-updates");
+const {
+    advancedEmitToClass,
+    userSockets,
+    setClassOfApiSockets,
+    setClassOfUserSockets,
+    userUpdateSocket,
+    invalidateClassPollCache,
+} = require("@modules/socket-updates");
 const { classInformation, Classroom } = require("@modules/class/classroom");
 const {
     MANAGER_PERMISSIONS,
@@ -532,6 +539,7 @@ async function deleteRooms(userId) {
             dbRun("DELETE FROM links WHERE classId=?", classroom.id),
             dbRun("DELETE FROM lessons WHERE class=?", classroom.id),
         ]);
+        invalidateClassPollCache(classroom.id);
     }
 }
 

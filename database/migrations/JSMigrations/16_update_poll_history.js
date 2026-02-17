@@ -28,9 +28,6 @@ module.exports = {
                     "allowMultipleResponses"   INTEGER NOT NULL DEFAULT 0,
                     "blind"                    INTEGER NOT NULL DEFAULT 0,
                     "allowTextResponses"       INTEGER NOT NULL DEFAULT 0,
-                    "names"                    TEXT,
-                    "letter"                   TEXT,
-                    "text"                     TEXT,
                     "createdAt"                INTEGER NOT NULL,
                     PRIMARY KEY ("id" AUTOINCREMENT)
                 )`,
@@ -53,9 +50,6 @@ module.exports = {
                 const allowMultipleResponses = pollData.allowMultipleResponses ? 1 : 0;
                 const blind = pollData.blind ? 1 : 0;
                 const allowTextResponses = pollData.allowTextResponses ? 1 : 0;
-                const names = pollData.names ? JSON.stringify(pollData.names) : null;
-                const letter = pollData.letter ? JSON.stringify(pollData.letter) : null;
-                const text = pollData.text ? JSON.stringify(pollData.text) : null;
 
                 // Convert legacy text date to midnight timestamp
                 let createdAt = 0;
@@ -67,21 +61,9 @@ module.exports = {
                 }
 
                 await dbRun(
-                    `INSERT INTO poll_history_temp (id, class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, names, letter, text, createdAt)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        pollEntry.id,
-                        pollEntry.class,
-                        prompt,
-                        responses,
-                        allowMultipleResponses,
-                        blind,
-                        allowTextResponses,
-                        names,
-                        letter,
-                        text,
-                        createdAt,
-                    ],
+                    `INSERT INTO poll_history_temp (id, class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [pollEntry.id, pollEntry.class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt],
                     database
                 );
             }
@@ -93,12 +75,18 @@ module.exports = {
             await dbRun("COMMIT", [], database);
             console.log("Poll history migration completed successfully!");
         } catch (err) {
+            // Check if this is because migration was already done
+            if (err.message === "ALREADY_DONE") {
+                throw err;
+            }
+
+            // Try to rollback for other errors
             try {
                 await dbRun("ROLLBACK", [], database);
             } catch (rollbackErr) {
                 // Transaction may not be active
             }
-            throw new Error("ALREADY_DONE");
+            throw err;
         }
     },
 };

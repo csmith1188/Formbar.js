@@ -7,6 +7,7 @@ const { MANAGER_PERMISSIONS } = require("@modules/permissions");
 const { userSocketUpdates } = require("../sockets/init");
 const NotFoundError = require("@errors/not-found-error");
 const ValidationError = require("@errors/validation-error");
+const ForbiddenError = require("@errors/forbidden-error");
 const { requireInternalParam } = require("@modules/error-wrapper");
 
 // Stores an object containing the pog meter increases for users in a poll
@@ -258,7 +259,8 @@ async function updatePoll(classId, options, userSession) {
 
         // Save to history when ending poll
         if (option === "status" && value === false && classroom.poll.status === true) {
-            savePollToHistory(classId);
+            const savedPollId = await savePollToHistory(classId);
+            classroom.poll.lastSavedPollId = savedPollId;
         }
 
         // If studentsAllowedToVote is being changed, then ensure it always contains numbers
@@ -283,14 +285,33 @@ async function updatePoll(classId, options, userSession) {
 
 /**
  * Gets previous polls for a class from the database with pagination.
+ * Post-processes results to ensure proper types (booleans as actual booleans, responses as parsed objects).
  * @param classId
  * @param index
  * @param limit
  * @returns {Promise<Array<Object>>}
  */
-function getPreviousPolls(classId, index = 0, limit = 20) {
+async function getPreviousPolls(classId, index = 0, limit = 20) {
     requireInternalParam(classId, "classId");
-    return dbGetAll("SELECT * FROM poll_history WHERE class = ? ORDER BY id ASC LIMIT ?, ?", [classId, index, limit]);
+    const polls = await dbGetAll("SELECT * FROM poll_history WHERE class = ? ORDER BY id DESC LIMIT ?, ?", [classId, index, limit]);
+
+    return polls.map((poll) => {
+        // Convert to booleans for API consistency
+        poll.allowMultipleResponses = !!poll.allowMultipleResponses;
+        poll.blind = !!poll.blind;
+        poll.allowTextResponses = !!poll.allowTextResponses;
+
+        // Parse responses from JSON string to object
+        if (typeof poll.responses === "string") {
+            try {
+                poll.responses = JSON.parse(poll.responses);
+            } catch (err) {
+                poll.responses = null;
+            }
+        }
+
+        return poll;
+    });
 }
 
 /**
@@ -307,17 +328,8 @@ async function savePollToHistory(classId) {
     const allowMultipleResponses = classroom.poll.allowMultipleResponses ? 1 : 0;
     const blind = classroom.poll.blind ? 1 : 0;
     const allowTextResponses = classroom.poll.allowTextResponses ? 1 : 0;
-    const names = [];
-    const letter = [];
-    const text = [];
 
-    for (const key in classroom.students) {
-        names.push(classroom.students[key].email);
-        letter.push(classroom.students[key].pollRes.buttonRes);
-        text.push(classroom.students[key].pollRes.textRes);
-    }
-
-    await dbRun(
+    return dbRun(
         "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt) VALUES(?, ?, ?, ?, ?, ?, ?)",
         [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt]
     );
@@ -332,13 +344,16 @@ async function savePollToHistory(classId) {
  * @param {boolean} [updateClass=true] - Whether to update the class state after clearing the poll.
  */
 async function clearPoll(classId, userSession, updateClass = true) {
-    if (classInformation.classrooms[classId].poll.status) {
+    const classroom = classInformation.classrooms[classId];
+    if (classroom.poll.status) {
         await updatePoll(classId, { status: false }, userSession);
     }
 
-    classInformation.classrooms[classId].poll.responses = [];
-    classInformation.classrooms[classId].poll.prompt = "";
-    classInformation.classrooms[classId].poll = {
+    const currentPollId = classroom.poll.lastSavedPollId;
+
+    classroom.poll.responses = [];
+    classroom.poll.prompt = "";
+    classroom.poll = {
         status: false,
         responses: [],
         allowTextResponses: false,
@@ -346,30 +361,34 @@ async function clearPoll(classId, userSession, updateClass = true) {
         weight: 1,
         blind: false,
         excludedRespondents: [],
+        lastSavedPollId: null,
     };
 
     // Adds data to the previous poll answers table upon clearing the poll
-    for (const student of Object.values(classInformation.classrooms[classId].students)) {
-        if (student.classPermissions < MANAGER_PERMISSIONS) {
-            const lastPoll = await dbGet("SELECT id FROM poll_history WHERE class = ? ORDER BY createdAt DESC LIMIT 1", [classId]);
-            const currentPollId = lastPoll ? lastPoll.id : undefined;
-            if (!currentPollId) {
-                continue;
-            }
+    if (!currentPollId) {
+        if (updateClass && userSession) {
+            broadcastClassUpdate(userSession.email, classId);
+        }
+        return;
+    }
 
+    for (const student of Object.values(classroom.students)) {
+        if (student.classPermissions < MANAGER_PERMISSIONS) {
             const buttonRes = student.pollRes.buttonRes;
-            let buttonResponse;
-            if (Array.isArray(buttonRes)) {
-                // Multi-response: store the full string for each selected response
+            let buttonResponse = null;
+            if (Array.isArray(buttonRes) && buttonRes.length > 0) {
+                // Multi-response: store the full array
                 buttonResponse = JSON.stringify(buttonRes);
-            } else if (buttonRes !== "" && buttonRes !== null && buttonRes !== undefined) {
+            } else if (!Array.isArray(buttonRes) && buttonRes !== "" && buttonRes !== null && buttonRes !== undefined) {
                 // Single response: wrap in an array
                 buttonResponse = JSON.stringify([buttonRes]);
-            } else {
-                buttonResponse = JSON.stringify([]);
             }
 
             const textResponse = student.pollRes.textRes || null;
+
+            // Skip students with no response at all
+            if (buttonResponse === null && textResponse === null) continue;
+
             const studentId = student.id;
             await dbRun(
                 "INSERT OR REPLACE INTO poll_answers(pollId, classId, userId, buttonResponse, textResponse, createdAt) VALUES(?, ?, ?, ?, ?, ?)",
@@ -506,6 +525,41 @@ function getPollResponses(classData) {
 }
 
 /**
+ * Gets the current poll for an active class and validates access.
+ * @param {number|string} classId - The class ID.
+ * @param {Object} userData - The requesting user session object.
+ * @returns {Promise<Object>} Poll data including total student count.
+ * @throws {ValidationError} If required params are missing.
+ * @throws {NotFoundError} If class does not exist or is not currently active.
+ * @throws {ForbiddenError} If user is not in the class.
+ */
+async function getCurrentPoll(classId, userData) {
+    requireInternalParam(classId, "classId");
+    requireInternalParam(userData, "userData");
+
+    const classroom = classInformation.classrooms[classId];
+
+    if (!classroom) {
+        const classroomRow = await dbGet("SELECT id FROM classroom WHERE id = ?", [classId]);
+        if (classroomRow) {
+            throw new NotFoundError("This class is not currently active");
+        }
+        throw new NotFoundError("This class does not exist");
+    }
+
+    if (!classroom.students[userData.email]) {
+        throw new ForbiddenError("You do not have permission to view polls in this class");
+    }
+
+    const poll = structuredClone(classroom.poll);
+    return {
+        ...poll,
+        status: poll.status,
+        totalStudents: Object.keys(classroom.students).length,
+    };
+}
+
+/**
  * Deletes all custom polls owned by a user
  * @param {number} userId - The ID of the user whose custom polls should be deleted
  */
@@ -523,6 +577,7 @@ module.exports = {
     createPoll,
     updatePoll,
     getPreviousPolls,
+    getCurrentPoll,
     savePollToHistory,
     clearPoll,
     sendPollResponse,

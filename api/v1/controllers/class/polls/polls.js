@@ -1,9 +1,23 @@
 const { requireQueryParam } = require("@modules/error-wrapper");
-const { classInformation } = require("@modules/class/classroom");
 const { getPreviousPolls } = require("@services/poll-service");
 const { isAuthenticated } = require("@middleware/authentication");
-const NotFoundError = require("@errors/not-found-error");
-const ForbiddenError = require("@errors/forbidden-error");
+const ValidationError = require("@errors/validation-error");
+
+const DEFAULT_POLL_LIMIT = 20;
+const MAX_POLL_LIMIT = 100;
+
+function parseIntegerQueryParam(value, defaultValue) {
+    if (value == null) {
+        return defaultValue;
+    }
+
+    const normalized = String(value).trim();
+    if (!/^-?\d+$/.test(normalized)) {
+        return NaN;
+    }
+
+    return Number.parseInt(normalized, 10);
+}
 
 module.exports = (router) => {
     /**
@@ -41,6 +55,7 @@ module.exports = (router) => {
      *           type: integer
      *           default: 20
      *           minimum: 1
+     *           maximum: 100
      *         description: Maximum number of polls to return
      *       - in: query
      *         name: index
@@ -114,11 +129,20 @@ module.exports = (router) => {
 
         req.infoEvent("class.polls.view", "Viewing class polls", { classId });
 
-        const limit = req.query.limit ? parseInt(req.query.limit) : 20;
-        const index = req.query.index ? parseInt(req.query.index) : 0;
+        const limit = parseIntegerQueryParam(req.query.limit, DEFAULT_POLL_LIMIT);
+        const index = parseIntegerQueryParam(req.query.index, 0);
+
+        if (!Number.isInteger(limit) || limit < 1 || limit > MAX_POLL_LIMIT) {
+            throw new ValidationError(`Invalid limit. Expected an integer between 1 and ${MAX_POLL_LIMIT}.`);
+        }
+
+        if (!Number.isInteger(index) || index < 0) {
+            throw new ValidationError("Invalid index. Expected a non-negative integer.");
+        }
+
         const polls = await getPreviousPolls(classId, index, limit);
 
-        req.infoEvent("class.polls.data_sent", "Poll data sent to client", { classId, pollStatus: classData.poll.status });
+        req.infoEvent("class.polls.data_sent", "Poll data sent to client", { classId, pollCount: polls.length, limit, index });
 
         res.status(200).json({
             success: true,

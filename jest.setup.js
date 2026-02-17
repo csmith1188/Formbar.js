@@ -1,5 +1,12 @@
+// Prevent the tests from using the logger as it can cause tests to fail
+jest.mock("./modules/logger.js", () => ({
+    logger: {
+        log: jest.fn(),
+    },
+}));
+
 // Prevent tests from using the actual database
-jest.mock("@modules/database", () => ({
+jest.mock("./modules/database", () => ({
     database: {
         get: jest.fn(),
         run: jest.fn(),
@@ -8,4 +15,18 @@ jest.mock("@modules/database", () => ({
     dbGet: jest.fn().mockResolvedValue({}),
     dbRun: jest.fn().mockResolvedValue({}),
     dbGetAll: jest.fn().mockResolvedValue({}),
+}));
+
+// Mock manager service
+jest.mock("./services/manager-service", () => ({
+    getManagerData: jest.fn().mockResolvedValue({ users: {}, classrooms: {} }),
+}));
+
+// Mock web server
+jest.mock("./modules/web-server", () => ({
+    io: {
+        in: jest.fn().mockReturnValue({
+            fetchSockets: jest.fn().mockResolvedValue([]),
+        }),
+    },
 }));

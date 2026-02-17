@@ -138,6 +138,7 @@ module.exports = {
                             try {
                                 if (err) throw err;
 
+                                socketUpdates.invalidateClassPollCache(classId);
                                 socket.emit("message", "Successfully unshared class");
                                 socketUpdates.getPollShareIds(pollId);
 
@@ -215,6 +216,7 @@ module.exports = {
                                                 try {
                                                     if (err) throw err;
 
+                                                    socketUpdates.invalidateClassPollCache(classroom.id);
                                                     socket.emit("message", `Shared ${name} with the class`);
                                                     socketUpdates.getPollShareIds(pollId);
 

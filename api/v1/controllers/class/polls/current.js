@@ -1,10 +1,6 @@
-const { classInformation } = require("@modules/class/classroom");
-const { logger } = require("@modules/logger");
-const { dbGet } = require("@modules/database");
+const { getCurrentPoll } = require("@services/poll-service");
+const { isAuthenticated } = require("@middleware/authentication");
 const { requireQueryParam } = require("@modules/error-wrapper");
-const { isAuthenticated } = require("@modules/middleware/authentication");
-const NotFoundError = require("@errors/not-found-error");
-const ForbiddenError = require("@errors/forbidden-error");
 
 module.exports = (router) => {
     /**
@@ -63,47 +59,15 @@ module.exports = (router) => {
      */
     router.get("/class/:id/polls/current", isAuthenticated, async (req, res) => {
         const classId = req.params.id;
-        requireQueryParam(classId, "classId");
+        requireQueryParam(classId);
 
-        logger.log("info", `[get api/class/${classId}/polls] ip=(${req.ip}) user=(${req.user?.email})`);
-
-        // Check if class exists
-        const classroomExists = Boolean(classInformation.classrooms[classId]);
-        if (!classroomExists) {
-            const classId = await dbGet("SELECT id FROM classroom WHERE id = ?", [classId]);
-            if (classId) {
-                // The classroom exists in the database, but it's not currently active
-                logger.log("verbose", `[get api/class/${classId}/polls] class not started`);
-                throw new NotFoundError("This class is not currently active");
-            } else {
-                // The classroom does not exist
-                logger.log("verbose", `[get api/class/${classId}/polls] class does not exist`);
-                throw new NotFoundError("This class does not exist");
-            }
-        }
-
-        const user = req.user;
-
-        // If the user is not in the class, return an error
-        console.log(classInformation.classrooms[classId].students);
-        if (!classInformation.classrooms[classId].students[user.email]) {
-            logger.log("verbose", `[get api/class/${classId}/polls] user does not have permission to view polls in this class`);
-            throw new ForbiddenError("You do not have permission to view polls in this class");
-        }
-
-        // Create a clone of the class data and add poll information to it
-        const classData = structuredClone(classInformation.classrooms[classId]);
-        classData.poll = {
-            status: classData.status,
-            totalStudents: Object.keys(classData.students).length,
-            ...classData.poll,
-        };
-
-        logger.log("verbose", `[get api/class/${classId}/polls] response=(${JSON.stringify(classData.poll)})`);
+        req.infoEvent("class.poll.current.view.attempt", "Attempting to view current poll", { classId });
+        const poll = await getCurrentPoll(classId, req.user);
+        req.infoEvent("class.poll.current.view.success", "Current poll returned", { classId, pollStatus: poll.status });
 
         res.status(200).json({
             success: true,
-            data: classData.poll,
+            data: poll,
         });
     });
 };
