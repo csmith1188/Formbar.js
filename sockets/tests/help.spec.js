@@ -1,4 +1,4 @@
-const { createTestClass, testData, createTestUser, createSocket } = require("../../modules/tests/tests");
+const { createTestClass, testData, createTestUser, createSocket } = require("@modules/tests/tests");
 const { run: helpRun } = require("../help");
 
 describe("help", () => {

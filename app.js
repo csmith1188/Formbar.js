@@ -1,35 +1,31 @@
+// Support module aliases for importing
+require("module-alias/register");
+
 // Imported modules
 const express = require("express");
+require("express-async-errors"); // To handle async errors in express routes
+
 const session = require("express-session"); // For storing client login data
 const crypto = require("crypto");
 const fs = require("fs");
 require("dotenv").config(); // For environment variables
 
+// If the database does not exist, then prompt the user to initialize it and exit
 if (!fs.existsSync("database/database.db")) {
     console.log('The database file does not exist. Please run "npm run init-db" to initialize the database.');
     return;
 }
 
 // Custom modules
-const { logger } = require("./modules/logger.js");
-const {
-    MANAGER_PERMISSIONS,
-    TEACHER_PERMISSIONS,
-    GUEST_PERMISSIONS,
-    STUDENT_PERMISSIONS,
-    MOD_PERMISSIONS,
-    BANNED_PERMISSIONS,
-} = require("./modules/permissions.js");
-const { classInformation } = require("./modules/class/classroom.js");
 const { initSocketRoutes } = require("./sockets/init.js");
-const { app, io, http, getIpAccess } = require("./modules/webServer.js");
-const { settings } = require("./modules/config.js");
+const { app, io, http } = require("@modules/web-server.js");
+const { settings } = require("@modules/config.js");
 const { lastActivities, INACTIVITY_LIMIT } = require("./sockets/middleware/inactivity");
-const { logout } = require("./modules/user/userSession");
-const authentication = require("./routes/middleware/authentication.js");
+const NotFoundError = require("@errors/not-found-error");
 
-// Set EJS as our view engine
-app.set("view engine", "ejs");
+const { logout } = require("@modules/user/user-session");
+const { passport } = require("@modules/google-oauth.js");
+const { rateLimiter } = require("@middleware/rate-limiter");
 
 // Create session for user information to be transferred from page to page
 const sessionMiddleware = session({
@@ -38,8 +34,18 @@ const sessionMiddleware = session({
     saveUninitialized: false, // Forces a session that is new, but not modified, or 'uninitialized' to be saved to the session store
 });
 
+const errorHandlerMiddleware = require("@middleware/error-handler");
+const requestLoggerMiddleware = require("@middleware/request-logger");
+
+// Connect rate limiter middleware
+app.use(rateLimiter);
+
 // Connect session middleware to express
 app.use(sessionMiddleware);
+app.use(requestLoggerMiddleware);
+// Initialize passport for Google OAuth
+app.use(passport.initialize());
+app.use(passport.session());
 
 // For further uses on this use this link: https://socket.io/how-to/use-with-express-session
 // Uses a middleware function to successfully transmit data between the user and server
@@ -53,27 +59,23 @@ io.use((socket, next) => {
     try {
         let ip = socket.handshake.address;
         if (ip && ip.startsWith("::ffff:")) ip = ip.slice(7);
-        if (authentication.checkIPBanned(ip)) {
-            return next(new Error("IP banned"));
-        }
+
+        // @TODO fix
+        // if (authentication.checkIPBanned(ip)) {
+        //     return next(new Error("IP banned"));
+        // }
         next();
     } catch (err) {
         next(err);
     }
 });
 
-// Allows express to parse requests
+// Handle cors
+const cors = require("cors");
+app.use(cors({ origin: true }));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Use a static folder for web page assets
-app.use(express.static(__dirname + "/static"));
-app.use("/js/chart.js", express.static(__dirname + "/node_modules/chart.js/dist/chart.umd.js"));
-app.use("/js/iro.js", express.static(__dirname + "/node_modules/@jaames/iro/dist/iro.min.js"));
-app.use("/js/floating-ui-core.js", express.static(__dirname + "/node_modules/@floating-ui/core/dist/floating-ui.core.umd.min.js"));
-app.use("/js/floating-ui-dom.js", express.static(__dirname + "/node_modules/@floating-ui/dom/dist/floating-ui.dom.umd.min.js"));
-app.use("/js/monaco-loader.js", express.static(__dirname + "/node_modules/monaco-editor/min/vs/loader.js"));
-app.use("/js/vs", express.static(__dirname + "/node_modules/monaco-editor/min/vs"));
 
 // Begin checking for any users who have not performed any actions for a specified amount of time
 const INACTIVITY_CHECK_TIME = 60000; // 1 Minute
@@ -104,11 +106,12 @@ setInterval(() => {
     }
 }, INACTIVITY_CHECK_TIME);
 
-const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60; // 1 hour
-authentication.cleanRefreshTokens();
-setInterval(async () => {
-    authentication.cleanRefreshTokens();
-}, REFRESH_TOKEN_CHECK_TIME);
+// @TODO fix
+// const REFRESH_TOKEN_CHECK_TIME = 1000 * 60 * 60; // 1 hour
+// authentication.cleanRefreshTokens();
+// setInterval(async () => {
+//     authentication.cleanRefreshTokens();
+// }, REFRESH_TOKEN_CHECK_TIME);
 
 // Check if an IP is banned
 app.use((req, res, next) => {
@@ -116,9 +119,10 @@ app.use((req, res, next) => {
     if (!ip) return next();
     if (ip.startsWith("::ffff:")) ip = ip.slice(7);
 
+    // @TODO: fix
     // Check if the user is ip banned
     // If the user is not ip banned and is on the ip-banned page, redirect them to the home page
-    const isIPBanned = authentication.checkIPBanned(ip);
+    // const isIPBanned = authentication.checkIPBanned(ip);
     if (req.path === "/ip-banned" && isIPBanned) {
         return next();
     } else if (req.path === "/ip-banned" && !isIPBanned) {
@@ -126,65 +130,72 @@ app.use((req, res, next) => {
     }
 
     // Redirect to the IP banned page if they are banned
-    if (isIPBanned) {
-        return res.redirect("/ip-banned");
-    }
+    // if (isIPBanned) {
+    //     return res.redirect("/ip-banned");
+    // }
 
     next();
 });
 
-// Add currentUser and permission constants to all pages
-app.use((req, res, next) => {
-    res.locals = {
-        ...res.locals,
-        MANAGER_PERMISSIONS,
-        TEACHER_PERMISSIONS,
-        MOD_PERMISSIONS,
-        STUDENT_PERMISSIONS,
-        GUEST_PERMISSIONS,
-        BANNED_PERMISSIONS,
-    };
+function getJSFiles(dir, base = dir) {
+    let results = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+        const full = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) {
+            results = results.concat(getJSFiles(full, base));
+        } else if (entry.isFile() && entry.name.endsWith(".js")) {
+            results.push(full.slice(base.length + 1)); // relative path from base folder
+        }
+    }
+    return results;
+}
 
-    // If the user is in a class, then get the user from the class students list
-    // This ensures that the user data is always up to date
-    if (req.session.classId) {
-        const user = classInformation.classrooms[req.session.classId].students[req.session.email];
-        if (!user) {
-            res.locals.currentUser = classInformation.users[req.session.email];
-            next();
-            return;
+// Import API routes
+const apiVersionFolders = fs.readdirSync("./api");
+for (const apiVersionFolder of apiVersionFolders) {
+    const controllerFolders = fs.readdirSync(`./api/${apiVersionFolder}`).filter((file) => file === "controllers");
+    for (const controllerFolder of controllerFolders) {
+        const router = express.Router();
+
+        const routeFiles = getJSFiles(`./api/${apiVersionFolder}/${controllerFolder}`);
+        const middlewareFiles = routeFiles.filter((routeFile) => routeFile.startsWith("middleware/"));
+        const nonMiddlewareFiles = routeFiles.filter((routeFile) => !routeFile.startsWith("middleware/"));
+
+        for (const routeFile of middlewareFiles) {
+            const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
+            if (typeof registerRoute === "function") {
+                registerRoute(router);
+            }
         }
 
-        classInformation.users[req.session.email] = user;
-        res.locals.currentUser = user;
-    } else {
-        res.locals.currentUser = classInformation.users[req.session.email];
+        for (const routeFile of nonMiddlewareFiles) {
+            const registerRoute = require(`./api/${apiVersionFolder}/${controllerFolder}/${routeFile}`);
+            if (typeof registerRoute === "function") {
+                registerRoute(router);
+            }
+        }
+
+        app.use(`/api/${apiVersionFolder}`, router);
     }
-
-    next();
-});
-
-// Import HTTP routes
-const routeFiles = fs.readdirSync("./routes/").filter((file) => file.endsWith(".js"));
-for (const routeFile of routeFiles) {
-    // Skip for now as it will be handled later
-    if (routeFile == "404.js") {
-        continue;
-    }
-
-    const route = require(`./routes/${routeFile}`);
-    route.run(app);
 }
 
 // Initialize websocket routes
 initSocketRoutes();
 
-// Import 404 error page
-require("./routes/404.js").run(app);
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+    next(new NotFoundError("Resource not found"));
+});
+
+// Error handling middleware
+app.use(errorHandlerMiddleware);
+
+// Start the server
 
 http.listen(settings.port, async () => {
-    Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));
-    Object.assign(authentication.blacklistedIps, await getIpAccess("blacklist"));
+    // Object.assign(authentication.whitelistedIps, await getIpAccess("whitelist"));
+    // Object.assign(authentication.blacklistedIps, await getIpAccess("blacklist"));
     console.log(`Running on port: ${settings.port}`);
     if (!settings.emailEnabled) console.log("Email functionality is disabled.");
     if (!settings.googleOauthEnabled) console.log("Google Oauth functionality is disabled.");
@@ -192,5 +203,4 @@ http.listen(settings.port, async () => {
         console.log(
             'To enable the disabled function(s), follow the related instructions under "Hosting Formbar.js Locally" in the Formbar wiki page at https://github.com/csmith1188/Formbar.js/wiki'
         );
-    logger.log("info", "Start");
 });

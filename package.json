@@ -1,6 +1,6 @@
 {
 	"name": "formbar",
-	"version": "1.1.0",
+	"version": "3.0.0",
 	"description": "Javascript rewrite of Formbar, an open source classroom management tool",
 	"main": "app.js",
 	"scripts": {
@@ -11,6 +11,14 @@
 		"migrate": "node database/migrate.js",
 		"format": "prettier --write \"**/*.js\"",
 		"format:check": "prettier --check \"**/*.js\""
+	},
+	"_moduleAliases": {
+		"@modules": "modules",
+		"@middleware": "middleware",
+		"@services": "services",
+		"@controllers": "api/v1/controllers",
+		"@errors": "errors",
+		"@sockets": "sockets"
 	},
 	"repository": {
 		"type": "git",
@@ -24,28 +32,25 @@
 	"nodemonConfig": {
 		"ignore": [
 			"settings.json",
-			"logNumbers.json",
 			"static/**"
 		]
 	},
 	"dependencies": {
-		"@floating-ui/dom": "^1.5.3",
-		"@jaames/iro": "^5.5.2",
+		"@datalust/winston-seq": "^3.0.1",
 		"axios": "^1.12.2",
 		"axios-cookiejar-support": "^6.0.4",
-		"bcrypt": "^5.1.1",
-		"chart.js": "^4.4.0",
-		"cheerio": "^1.1.2",
+		"bcrypt": "^6.0.0",
+		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
-		"ejs": "^3.1.8",
 		"express": "^4.18.2",
+		"express-async-errors": "^3.1.1",
 		"express-session": "^1.18.2",
-		"google-auth-library": "^9.15.0",
-		"init": "^0.1.2",
+		"google-auth-library": "^10.5.0",
+		"handlebars": "^4.7.8",
 		"jsonwebtoken": "^9.0.2",
-		"monaco-editor": "^0.52.2",
+		"module-alias": "^2.3.4",
 		"node-fetch": "^3.3.2",
-		"nodemailer": "^6.9.16",
+		"nodemailer": "^7.0.12",
 		"passport": "^0.7.0",
 		"passport-google-oauth20": "^2.0.0",
 		"prettier": "^3.6.2",
@@ -53,7 +58,9 @@
 		"socket.io": "^4.5.4",
 		"socket.io-client": "^4.8.1",
 		"sqlite3": "^5.1.7",
-		"tough-cookie": "^5.1.2",
+		"swagger-jsdoc": "^6.2.8",
+		"swagger-ui-express": "^5.0.1",
+		"tough-cookie": "^6.0.0",
 		"unzipper": "^0.12.3",
 		"winston": "^3.11.0",
 		"winston-daily-rotate-file": "^4.7.1"

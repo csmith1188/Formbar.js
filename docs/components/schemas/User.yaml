@@ -1,0 +1,27 @@
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        email:
+          type: string
+          nullable: true
+          description: Email is only present if requester is the user or a manager
+          example: "student@example.com"
+        permissions:
+          type: integer
+          description: Numeric permission level (higher means more privileges)
+          example: 2
+        digipogs:
+          type: integer
+          description: Number of digipogs the user has
+          example: 42
+        displayName:
+          type: string
+          example: "Student Name"
+        verified:
+          type: boolean
+          example: true

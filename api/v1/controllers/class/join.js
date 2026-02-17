@@ -1,0 +1,66 @@
+const { httpPermCheck } = require("@middleware/permission-check");
+const { joinClass } = require("@services/class-service");
+const { isAuthenticated } = require("@middleware/authentication");
+
+module.exports = (router) => {
+    /**
+     * @swagger
+     * /api/v1/class/{id}/join:
+     *   post:
+     *     summary: Join a class session
+     *     tags:
+     *       - Class
+     *     description: |
+     *       Joins the current class session as a participant.
+     *
+     *       **Required Permission:** Global Guest permission (level 1)
+     *
+     *       **Permission Levels:**
+     *       - 1: Guest
+     *       - 2: Student
+     *       - 3: Moderator
+     *       - 4: Teacher
+     *       - 5: Manager
+     *     security:
+     *       - bearerAuth: []
+     *       - apiKeyAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Class ID
+     *     responses:
+     *       200:
+     *         description: Successfully joined the class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SuccessResponse'
+     *       401:
+     *         description: Not authenticated
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/UnauthorizedError'
+     *       403:
+     *         description: Unauthorized to join this class
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     */
+    router.post("/class/:id/join", isAuthenticated, httpPermCheck("joinClass"), async (req, res) => {
+        const classId = req.params.id;
+        req.infoEvent("class.join.attempt", "User attempting to join class", { classId });
+
+        await joinClass(req.user, classId);
+
+        req.infoEvent("class.join.success", "User joined class successfully", { classId });
+        res.status(200).json({
+            success: true,
+            data: {},
+        });
+    });
+};

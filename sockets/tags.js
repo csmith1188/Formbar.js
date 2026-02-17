@@ -1,5 +1,4 @@
-const { logger } = require("../modules/logger");
-const { setTags, saveTags } = require("../modules/class/tags");
+const { setTags, saveTags } = require("@modules/class/tags");
 
 module.exports = {
     run(socket, socketUpdates) {
@@ -9,7 +8,6 @@ module.exports = {
                 await setTags(tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });
@@ -20,7 +18,6 @@ module.exports = {
                 await saveTags(studentId, tags, socket.request.session);
                 socketUpdates.classUpdate();
             } catch (err) {
-                logger.log("error", err.stack);
                 socket.emit("message", "There was a server error try again.");
             }
         });

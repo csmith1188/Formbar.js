@@ -14,7 +14,7 @@ const { dbGetAll, dbGet, dbRun } = require("./database");
     - setUserOwnerFlag(poolId, userId, ownerFlag, database)
 
   Usage:
-    const pools = require("../modules/pools");
+    const pools = require("@modules/pools");
     await pools.addUserToPool(123, 456, 1, database);
     const users = await pools.getUsersForPool(123, database);
 
@@ -57,7 +57,20 @@ async function addUserToPool(poolId, userId, ownerFlag = 0, database) {
 }
 
 async function removeUserFromPool(poolId, userId, database) {
-    return dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId], database);
+    // If the last owner is removed, delete the pool
+    if (await isUserOwner(userId, poolId, database)) {
+        const poolUsers = await getUsersForPool(poolId, database);
+        const otherOwners = poolUsers.filter((poolUser) => poolUser.user_id !== userId && poolUser.owner);
+        if (otherOwners.length === 0) {
+            // No other owners, delete the pool and all associated users
+            await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId], database);
+            await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId], database);
+            return;
+        }
+    }
+
+    // If not the owner, just remove the user from the pool
+    await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId], database);
 }
 
 async function setUserOwnerFlag(poolId, userId, ownerFlag, database) {

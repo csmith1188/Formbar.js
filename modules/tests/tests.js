@@ -1,7 +1,7 @@
 const { classInformation, Classroom } = require("../class/classroom");
 const { Student } = require("../student");
 const express = require("express");
-const { SocketUpdates } = require("../socketUpdates");
+const { SocketUpdates } = require("../socket-updates");
 
 // Common test data
 const testData = {
@@ -34,7 +34,7 @@ function createTestUser(email, classId, permissions = 5) {
  * @param {string} name - The name of the test class
  */
 function createTestClass(code, name) {
-    classInformation.classrooms[code] = new Classroom(code, name, code, 1, [], [], []);
+    classInformation.classrooms[code] = new Classroom({ id: code, className: name, key: code, owner: 1 });
     return classInformation.classrooms[code];
 }
 

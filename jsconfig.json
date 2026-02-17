@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@modules/*": ["modules/*"],
+            "@services/*": ["services/*"],
+            "@controllers/*": ["api/v1/controllers/*"],
+            "@errors/*": ["errors/*"],
+            "@sockets/*": ["sockets/*"]
+        }
+    },
+    "include": ["**/*.js"]
+}

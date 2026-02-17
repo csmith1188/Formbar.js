@@ -1,4 +1,5 @@
-const { logger } = require("../../modules/logger");
+const { handleSocketError } = require("@modules/socket-error-handler");
+
 const INACTIVITY_LIMIT = 60 * 60 * 1000; // 60 minutes
 const lastActivities = {};
 
@@ -30,7 +31,8 @@ module.exports = {
 
                 next();
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "inactivity-middleware");
+                next(err);
             }
         });
     },

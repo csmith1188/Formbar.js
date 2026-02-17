@@ -1,14 +1,13 @@
 const { dbGet, dbRun } = require("./database");
 const { TEACHER_PERMISSIONS } = require("./permissions");
-const { logger } = require("./logger");
-const { classInformation } = require("./class/classroom");
+const { getClassIDFromCode } = require("./class/classroom");
 const { compare } = require("./crypto");
 
 // Import rate limiting configuration
 const { rateLimit } = require("./config");
 
 // Store failed transaction attempts
-const failedAttempts = new Map(); // Structure: userId -> { attempts: [{timestamp, success}], lockedUntil: timestamp }
+const failedAttempts = new Map(); // Structure: accountID -> { attempts: [{timestamp, success}], lockedUntil: timestamp }
 
 /**
  * Clean up old attempt records to prevent memory leaks
@@ -32,17 +31,17 @@ function cleanupOldAttempts() {
 setInterval(cleanupOldAttempts, 5 * 60 * 1000);
 
 /**
- * Check if a user is rate limited
- * @param {number} userId - The user ID attempting the transfer
+ * Check if an account (user or pool) is rate limited
+ * @param {string} accountId - The account ID attempting the transfer (e.g., "user-123" or "pool-456")
  * @returns {Object} - { allowed: boolean, message: string, waitTime: number }
  */
-function checkRateLimit(userId) {
+function checkRateLimit(accountId) {
     const now = Date.now();
-    const userAttempts = failedAttempts.get(userId);
+    const userAttempts = failedAttempts.get(accountId);
 
     if (!userAttempts) {
         // First attempt, initialize tracking
-        failedAttempts.set(userId, { attempts: [], lockedUntil: null });
+        failedAttempts.set(accountId, { attempts: [], lockedUntil: null });
         return { allowed: true };
     }
 
@@ -97,19 +96,18 @@ function checkRateLimit(userId) {
     }
 
     // Log current failure count for debugging
-    logger.log("info", `User ${userId} has ${failedCount} failed attempts (max: ${rateLimit.maxAttempts})`);
 
     return { allowed: true };
 }
 
 /**
  * Record a transfer attempt (success or failure)
- * @param {number} userId - The user ID
+ * @param {string} accountId - The account ID (e.g., "user-123" or "pool-456")
  * @param {boolean} success - Whether the attempt was successful
  */
-function recordAttempt(userId, success) {
+function recordAttempt(accountId, success) {
     const now = Date.now();
-    const userAttempts = failedAttempts.get(userId) || { attempts: [], lockedUntil: null };
+    const userAttempts = failedAttempts.get(accountId) || { attempts: [], lockedUntil: null };
 
     userAttempts.attempts.push({ timestamp: now, success: success });
 
@@ -119,96 +117,38 @@ function recordAttempt(userId, success) {
         userAttempts.lockedUntil = null;
     }
 
-    failedAttempts.set(userId, userAttempts);
+    failedAttempts.set(accountId, userAttempts);
 }
 
-async function awardDigipogs(awardData, session) {
+async function awardDigipogs(awardData, user) {
     try {
-        const { from, to } = awardData;
+        const from = user.userId;
+        const to = awardData.to;
         const amount = Math.ceil(awardData.amount); // Ensure amount is an integer
-        const reason = "Awarded";
+        const reason = awardData.reason || "Awarded";
 
+        // Backward compatibility
+        let deprecatedFormatUsed = false;
+        if (!to.id && !to.code) {
+            if (typeof to === "string" || typeof to === "number") {
+                to.id = to;
+                to.type = "user";
+            } else {
+                return { success: false, message: "Missing recipient identifier." };
+            }
+            deprecatedFormatUsed = true;
+        }
+        // Validate input structure
         if (!from || !to || !amount) {
             return { success: false, message: "Missing required fields." };
-        } else if (from !== session.userId) {
-            return { success: false, message: "Sender ID does not match session user." };
-        }
-
-        const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
-
-        // Check if the awarding user is a teacher in a class
-        if (!fromUser || !fromUser.email || !classInformation.users[fromUser.email] || !classInformation.users[fromUser.email].activeClass) {
-            return { success: false, message: "Sender is not currently active in any class." };
-        }
-        let classPermissionsRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [
-            classInformation.users[fromUser.email].activeClass,
-            from,
-        ]);
-        let classPermissions = classPermissionsRow ? classPermissionsRow.permissions : undefined;
-        // Owners are not in the classusers table, so we need to check if they are the owner of the class
-        if (classPermissions === undefined) {
-            const classOwnerId = await dbGet("SELECT owner FROM classroom WHERE id = ?", [classInformation.users[fromUser.email].activeClass]);
-            if (classOwnerId && classOwnerId.owner === from) {
-                classPermissions = TEACHER_PERMISSIONS;
-            }
-        }
-
-        if (!fromUser) {
-            return { success: false, message: "Sender account not found." };
-        } else if (classPermissions == null) {
-            return { success: false, message: "Insufficient permissions." };
-        } else if (classPermissions < TEACHER_PERMISSIONS) {
-            return { success: false, message: "Insufficient permissions." };
-        }
-
-        const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
-        if (!toUser) {
-            return { success: false, message: "Recipient account not found." };
-        }
-
-        const newBalance = toUser.digipogs + amount;
-        await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newBalance, to]);
-
-        try {
-            await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                from,
-                to,
-                null,
-                amount,
-                reason,
-                Date.now(),
-            ]);
-        } catch (err) {
-            logger.log("error", err.stack || err);
-            return { success: true, message: "Award succeeded, but failed to log transaction." };
-        }
-
-        return { success: true, message: "Digipogs awarded successfully." };
-    } catch (err) {
-        logger.log("error", err.stack);
-        return { success: false, message: "Database error." };
-    }
-}
-
-async function transferDigipogs(transferData) {
-    try {
-        const { from, to, pin, reason = "", pool = false } = transferData;
-        const amount = Math.floor(transferData.amount); // Ensure amount is an integer
-
-        // Ensure that the user is not transferring to themselves
-        if (from == to && !pool) {
-            return { success: false, message: "Cannot transfer to the same account." };
-        }
-
-        // Validate input
-        if (!from || (!to && to !== 0) || !amount || !pin || reason === undefined) {
-            return { success: false, message: "Missing required fields." };
+        } else if (to.type !== "user" && to.type !== "pool" && to.type !== "class") {
+            return { success: false, message: "Invalid recipient type." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };
         }
 
-        // Check rate limiting
-        const rateLimitCheck = checkRateLimit(from);
+        const accountId = `award-${from}`;
+        const rateLimitCheck = checkRateLimit(accountId);
         if (!rateLimitCheck.allowed) {
             return {
                 success: false,
@@ -218,128 +158,278 @@ async function transferDigipogs(transferData) {
             };
         }
 
-        // Fetch sender
-        const fromUser = await dbGet("SELECT * FROM users WHERE id = ?", [from]);
-        if (!fromUser) {
-            recordAttempt(from, false);
+        const fromUser = await dbGet("SELECT email, permissions FROM users WHERE id = ?", [from]);
+        if (!fromUser || !fromUser.email) {
+            recordAttempt(accountId, false);
             return { success: false, message: "Sender account not found." };
         }
 
-        // Validate stored PIN exists
-        if (!fromUser.pin) {
-            recordAttempt(from, false);
-            return { success: false, message: "Account PIN not configured." };
-        }
+        if (to.type === "class") {
+            if (to.code) {
+                to.id = await getClassIDFromCode(to.code);
+                if (!to.id) {
+                    recordAttempt(accountId, false);
+                    return { success: false, message: "Invalid class code." };
+                }
+            } else if (!to.id) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Missing class identifier." };
+            }
 
-        // Validate PIN and funds
-        const pinString = String(pin);
-        const isPinValid = await compare(pinString, fromUser.pin);
-        if (!isPinValid) {
-            // Record the failed attempt
-            recordAttempt(from, false);
-            return { success: false, message: "Invalid PIN." };
-        } else if (fromUser.digipogs < amount) {
-            // Even with correct PIN, record as failed if insufficient funds
-            recordAttempt(from, false);
-            return { success: false, message: "Insufficient funds." };
-        }
+            // Fetch class info and check sender permissions
+            const classInfo = await dbGet("SELECT c.id, c.owner FROM classroom c WHERE c.id = ?", [to.id]);
+            if (!classInfo) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Recipient class not found." };
+            }
 
-        // Calculate taxed amount for all transfers
-        const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1; // Ensure at least 1 digipog is transferred after tax
+            // Check sender permissions: either is owner or has teacher permissions in class
+            let classPermissions = 0;
+            if (classInfo.owner === from) {
+                classPermissions = TEACHER_PERMISSIONS;
+            } else {
+                const permRow = await dbGet("SELECT permissions FROM classusers WHERE classId = ? AND studentId = ?", [to.id, from]);
+                classPermissions = permRow ? permRow.permissions : 0;
+            }
 
-        // If transferring to a pool (e.g., company pool)
-        if (pool) {
-            // If transferring to a pool, ensure the pool exists and has members
-            const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to]);
-            if (!pool) {
-                recordAttempt(from, false);
+            if (classPermissions < TEACHER_PERMISSIONS && fromUser.permissions < TEACHER_PERMISSIONS) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Sender does not have permission to award to this class." };
+            }
+
+            //increment all class members' digipogs
+            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id IN (SELECT studentId FROM classusers WHERE classId = ?) OR id = ?", [
+                amount,
+                to.id,
+                classInfo.owner,
+            ]);
+        } else if (to.type === "pool") {
+            if (!to.id) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Missing pool identifier." };
+            }
+            if (fromUser.permissions < TEACHER_PERMISSIONS) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Sender does not have permission to award to pools." };
+            }
+            const poolInfo = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to.id]);
+            if (!poolInfo) {
+                recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
             }
-
-            // Perform user deduction and pool update atomically
-            try {
-                await dbRun("BEGIN TRANSACTION");
-                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from]); // Deduct full amount from user
-                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to]); // Credit taxed amount to pool
-                await dbRun("COMMIT");
-            } catch (err) {
-                try {
-                    await dbRun("ROLLBACK");
-                } catch (rollbackErr) {
-                    logger.log("error", rollbackErr.stack || rollbackErr);
-                }
-                logger.log("error", err.stack || err);
-                recordAttempt(from, false);
-                return { success: false, message: "Transfer failed due to database error." };
-            }
-            try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                    from,
-                    null,
-                    to,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
-            } catch (err) {
-                logger.log("error", err.stack || err);
-
-                // Record successful attempt
-                recordAttempt(from, true);
-                return { success: true, message: "Transfer successful, but failed to log transaction." };
-            }
-        } else {
-            // Normal user-to-user transfer
-            const toUser = await dbGet("SELECT * FROM users WHERE id = ?", [to]);
+            await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [amount, to.id]);
+        } else if (to.type === "user") {
+            // Verify recipient exists
+            const toUser = await dbGet("SELECT id FROM users WHERE id = ?", [to.id]);
             if (!toUser) {
-                recordAttempt(from, false);
+                recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
 
-            const newFromBalance = fromUser.digipogs - amount;
-            const newToBalance = Math.ceil(toUser.digipogs + taxedAmount);
-
-            try {
-                await dbRun("BEGIN TRANSACTION");
-                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newFromBalance, from]);
-                await dbRun("UPDATE users SET digipogs = ? WHERE id = ?", [newToBalance, to]);
-                await dbRun("COMMIT");
-            } catch (err) {
-                logger.log("error", err.stack || err);
-                recordAttempt(from, false);
-                return { success: false, message: "Transfer failed due to database error." };
+            // Check permissions if sender is not a global teacher
+            if (fromUser.permissions < TEACHER_PERMISSIONS) {
+                // Check if sender is a teacher/owner in any class the recipient is in
+                const hasPermission = await dbGet(
+                    "SELECT 1 FROM classusers cu1 INNER JOIN classroom c ON c.id = cu1.classId WHERE cu1.studentId = ? AND (cu1.classId IN (SELECT classId FROM classusers cu2 WHERE cu2.studentId = ? AND cu2.permissions >= ?) OR c.owner = ?)",
+                    [to.id, from, TEACHER_PERMISSIONS, from]
+                );
+                if (!hasPermission) {
+                    recordAttempt(accountId, false);
+                    return { success: false, message: "Sender does not have permission to award to this user." };
+                }
             }
 
-            try {
-                await dbRun("INSERT INTO transactions (from_user, to_user, pool, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?)", [
-                    from,
-                    to,
-                    null,
-                    amount,
-                    reason,
-                    Date.now(),
-                ]);
-            } catch (err) {
-                logger.log("error", err.stack || err);
+            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [amount, to.id]);
+        }
+        try {
+            await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                from,
+                to.id,
+                "award",
+                to.type,
+                amount,
+                reason,
+                Date.now(),
+            ]);
+        } catch (err) {
+            return { success: true, message: "Award succeeded, but failed to log transaction." };
+        }
+        recordAttempt(accountId, true);
+        return {
+            success: true,
+            message: `Digipogs awarded successfully. ${deprecatedFormatUsed ? "Warning: Deprecated award format used. See documentation for updated usage." : ""}`,
+        };
+    } catch (err) {
+        return { success: false, message: "Database error." };
+    }
+}
 
-                // Record successful attempt
-                recordAttempt(from, true);
-                return { success: true, message: "Transfer successful, but failed to log transaction." };
+async function transferDigipogs(transferData) {
+    try {
+        const { from, to, pin, reason = "", pool } = transferData;
+        const amount = Math.floor(transferData.amount); // Ensure amount is an integer
+
+        // Backward compatibility
+        let deprecatedFormatUsed = false;
+        if (!from.id) {
+            if (typeof from === "string" || typeof from === "number") {
+                from.id = from;
+                from.type = "user";
+            } else {
+                return { success: false, message: "Missing sender identifier." };
+            }
+            if (typeof to === "string" || typeof to === "number") {
+                to.id = pool ? pool : to;
+                to.type = pool ? "pool" : "user";
+            } else {
+                return { success: false, message: "Missing recipient identifier." };
+            }
+            deprecatedFormatUsed = true;
+        }
+        if (!from.type) {
+            from.type = "user";
+        }
+        if (!to.type) {
+            to.type = "user";
+        }
+
+        // Validate input structure
+        if (!from || !from.id || !to || !to.id || !amount || reason === undefined || !pin) {
+            return { success: false, message: "Missing required fields." };
+        } else if (amount <= 0) {
+            return { success: false, message: "Amount must be greater than zero." };
+        } else if (from.type === to.type && from.id === to.id) {
+            return { success: false, message: "Cannot transfer to the same account." };
+        } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
+            return { success: false, message: "Invalid sender or recipient type." };
+        }
+
+        // Check rate limits for the sender
+        const accountId = `${from.type}-${from.id}`;
+        const rateLimitCheck = checkRateLimit(accountId);
+        if (!rateLimitCheck.allowed) {
+            return {
+                success: false,
+                message: rateLimitCheck.message,
+                rateLimited: true,
+                waitTime: rateLimitCheck.waitTime,
+            };
+        }
+
+        // Fetch sender account
+        let fromAccount;
+        if (from.type === "user") {
+            fromAccount = await dbGet("SELECT * FROM users WHERE id = ?", [from.id]);
+            if (!fromAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Sender account not found." };
+            }
+        } else {
+            fromAccount = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [from.id]);
+            const poolUser = await dbGet("SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [from.id]);
+            if (!fromAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Sender pool not found." };
+            }
+            const poolOwner = await dbGet("SELECT pin FROM users WHERE id = ?", [poolUser.user_id]);
+            fromAccount.pin = poolOwner.pin; // Use the pool owner's PIN for validation
+        }
+
+        // PIN validation
+        if (!fromAccount.pin) {
+            recordAttempt(accountId, false);
+            return { success: false, message: "Account PIN not configured." };
+        }
+
+        const pinString = String(pin);
+        const isPinValid = await compare(pinString, fromAccount.pin);
+        if (!isPinValid) {
+            recordAttempt(accountId, false);
+            return { success: false, message: "Invalid PIN." };
+        }
+
+        // Check funds
+        const fromBalance = from.type === "user" ? fromAccount.digipogs : fromAccount.amount;
+        if (fromBalance < amount) {
+            recordAttempt(accountId, false);
+            return { success: false, message: "Insufficient funds." };
+        }
+
+        // Calculate tax
+        const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1;
+        const taxAmount = amount - taxedAmount;
+
+        // Fetch recipient account
+        let toAccount;
+        if (to.type === "user") {
+            toAccount = await dbGet("SELECT * FROM users WHERE id = ?", [to.id]);
+            if (!toAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Recipient account not found." };
+            }
+        } else {
+            toAccount = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [to.id]);
+            if (!toAccount) {
+                recordAttempt(accountId, false);
+                return { success: false, message: "Recipient pool not found." };
             }
         }
 
-        // Add the tax to the dev pool (id 0) if it exists
-        const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
-        if (devPool) {
-            const newDevPoolAmount = devPool.amount + (amount - taxedAmount);
-            await dbRun("UPDATE digipog_pools SET amount = ? WHERE id = ?", [newDevPoolAmount, 0]);
+        // Perform transfer atomically
+        try {
+            await dbRun("BEGIN TRANSACTION");
+
+            // Deduct from sender
+            if (from.type === "user") {
+                await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ?", [amount, from.id]);
+            } else {
+                await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [amount, from.id]);
+            }
+
+            // Credit to recipient
+            if (to.type === "user") {
+                await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [taxedAmount, to.id]);
+            } else {
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxedAmount, to.id]);
+            }
+
+            // Add tax to dev pool (id 0)
+            const devPool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [0]);
+            if (devPool) {
+                await dbRun("UPDATE digipog_pools SET amount = amount + ? WHERE id = ?", [taxAmount, 0]);
+            }
+
+            await dbRun("COMMIT");
+        } catch (err) {
+            try {
+                await dbRun("ROLLBACK");
+            } catch (rollbackErr) {}
+            recordAttempt(accountId, false);
+            return { success: false, message: "Transfer failed due to database error." };
+        }
+
+        // Log transaction
+        try {
+            await dbRun("INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+                from.id,
+                from.type,
+                to.id,
+                to.type,
+                amount,
+                reason,
+                Date.now(),
+            ]);
+        } catch (err) {
+            // Don't fail the transfer if logging fails
         }
 
         // Record successful attempt
-        recordAttempt(from, true);
-        return { success: true, message: "Transfer successful." };
+        recordAttempt(accountId, true);
+        return {
+            success: true,
+            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}`,
+        };
     } catch (err) {
-        logger.log("error", err.stack);
         return { success: false, message: "Database error." };
     }
 }

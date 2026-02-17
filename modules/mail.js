@@ -1,6 +1,5 @@
 const nodemailer = require("nodemailer");
 const { settings } = require("./config");
-const { logger } = require("./logger");
 
 // Create a map to store the email rate limits
 const limitStore = new Map();
@@ -28,7 +27,6 @@ function sendMail(recipient, subject, html) {
     // Check if the user has sent an email within the specified time period
     const currentTime = Date.now();
     if (limitStore.has(recipient) && currentTime - limitStore.get(recipient) < RATE_LIMIT) {
-        logger.log("info", `Email rejected: ${recipient} exceeded rate limit`);
         return;
     }
 
@@ -60,7 +58,6 @@ function sendMail(recipient, subject, html) {
             console.error("Error sending email:", error);
         } else {
             // Log email and store the current time for the recipient
-            logger.log("info", `[mail] Email sent to ${recipient}`);
             limitStore.set(recipient, currentTime);
         }
     });

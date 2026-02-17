@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS "refresh_tokens"
 (
     "user_id"       INTEGER NOT NULL,
     "refresh_token" TEXT    NOT NULL UNIQUE,
-    "exp"           INTEGER NOT NULL
+    "exp"           INTEGER NOT NULL,
+    "token_type"    TEXT    NOT NULL DEFAULT 'auth'
 );
 
 CREATE TABLE IF NOT EXISTS "shared_polls"

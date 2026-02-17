@@ -1,23 +1,27 @@
-const { classInformation } = require("../modules/class/classroom");
-const { logger } = require("../modules/logger");
-const { CLASS_SOCKET_PERMISSIONS } = require("../modules/permissions");
-const { advancedEmitToClass, runningTimers } = require("../modules/socketUpdates");
+const { classInformation } = require("@modules/class/classroom");
+const { CLASS_SOCKET_PERMISSIONS } = require("@modules/permissions");
+const { advancedEmitToClass, runningTimers } = require("@modules/socket-updates");
+const { handleSocketError } = require("@modules/socket-error-handler");
 
 module.exports = {
     run(socket, socketUpdates) {
         socket.on("vbTimer", () => {
-            let classData = classInformation.classrooms[socket.request.session.classId];
-            let email = socket.request.session.email;
+            try {
+                let classData = classInformation.classrooms[socket.request.session.classId];
+                let email = socket.request.session.email;
 
-            advancedEmitToClass(
-                "vbTimer",
-                socket.request.session.classId,
-                {
-                    classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
-                    email,
-                },
-                classData.timer
-            );
+                advancedEmitToClass(
+                    "vbTimer",
+                    socket.request.session.classId,
+                    {
+                        classPermissions: CLASS_SOCKET_PERMISSIONS.vbTimer,
+                        email,
+                    },
+                    classData.timer
+                );
+            } catch (err) {
+                handleSocketError(err, socket, "vbTimer");
+            }
         });
 
         // This handles the server side timer
@@ -46,12 +50,16 @@ module.exports = {
                     socketUpdates.timer(sound, active);
                 }
             } catch (err) {
-                logger.log("error", err.stack);
+                handleSocketError(err, socket, "timer");
             }
         });
 
         socket.on("timerOn", () => {
-            socket.emit("timerOn", classInformation.classrooms[socket.request.session.classId].timer.active);
+            try {
+                socket.emit("timerOn", classInformation.classrooms[socket.request.session.classId].timer.active);
+            } catch (err) {
+                handleSocketError(err, socket, "timerOn");
+            }
         });
     },
 };

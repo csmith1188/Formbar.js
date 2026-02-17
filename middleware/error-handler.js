@@ -1,0 +1,49 @@
+const AppError = require("@errors/app-error");
+const { getLogger, logEvent } = require("@modules/logger");
+const process = require("process");
+
+module.exports = async (err, req, res, next) => {
+    const logger = await getLogger();
+
+    let error = err;
+    let statusCode = err.statusCode || 500;
+
+    const isAppError = err instanceof AppError;
+    const isOperationalError = isAppError && err.isOperational;
+
+    // is error a crash
+    if (!isAppError || !isOperationalError) {
+        if (req.errorEvent) {
+            req.errorEvent("request.crash", error.message, error);
+        } else {
+            logEvent(logger, "error", "request.crash", error.message, { error });
+        }
+
+        if (process.env.NODE_ENV !== "production") {
+            console.error(error);
+            console.log("Flushing logs before exit...");
+            logger.close();
+        }
+
+        statusCode = 500;
+        error = new AppError("An unexpected error occurred.", { statusCode });
+
+        // is error expected operational error
+    } else {
+        const event = err.event || "request.error";
+        if (req.warnEvent) {
+            req.warnEvent(event, err.message, err);
+        } else {
+            logEvent(logger, "warn", event, err.message, { error: err });
+        }
+    }
+
+    const response = {
+        success: false,
+        error: {
+            message: error.message,
+        },
+    };
+
+    res.status(statusCode).json(response);
+};

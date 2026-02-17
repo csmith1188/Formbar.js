@@ -8,14 +8,11 @@ const BANNED_PERMISSIONS = 0;
 
 // Permission level needed to access each page along with if it's a class-related page or not
 const PAGE_PERMISSIONS = {
-    controlpanel: { permissions: MOD_PERMISSIONS, classPage: true },
     student: { permissions: GUEST_PERMISSIONS, classPage: true },
-    virtualbar: { permissions: GUEST_PERMISSIONS, classPage: true },
     links: { permissions: GUEST_PERMISSIONS, classPage: true },
     createclass: { permissions: TEACHER_PERMISSIONS, classPage: false },
     selectclass: { permissions: GUEST_PERMISSIONS, classPage: false },
-    managerpanel: { permissions: MANAGER_PERMISSIONS, classPage: false },
-    downloaddatabase: { permissions: MANAGER_PERMISSIONS, classPage: false },
+    manager: { permissions: MANAGER_PERMISSIONS, classPage: false },
     logs: { permissions: MANAGER_PERMISSIONS, classPage: false },
     profile: { permissions: STUDENT_PERMISSIONS, classPage: false },
     pools: { permissions: STUDENT_PERMISSIONS, classPage: false },

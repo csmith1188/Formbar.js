@@ -16,3 +16,17 @@ jest.mock("./modules/database", () => ({
     dbRun: jest.fn().mockResolvedValue({}),
     dbGetAll: jest.fn().mockResolvedValue({}),
 }));
+
+// Mock manager service
+jest.mock("./services/manager-service", () => ({
+    getManagerData: jest.fn().mockResolvedValue({ users: {}, classrooms: {} }),
+}));
+
+// Mock web server
+jest.mock("./modules/web-server", () => ({
+    io: {
+        in: jest.fn().mockReturnValue({
+            fetchSockets: jest.fn().mockResolvedValue([]),
+        }),
+    },
+}));

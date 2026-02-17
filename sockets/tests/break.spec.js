@@ -1,4 +1,4 @@
-const { createSocket, createTestUser, testData, createTestClass, createSocketUpdates } = require("../../modules/tests/tests");
+const { createSocket, createTestUser, testData, createTestClass, createSocketUpdates } = require("@modules/tests/tests");
 const { run: breakRun } = require("../break");
 
 describe("break", () => {

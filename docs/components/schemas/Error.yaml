@@ -1,0 +1,29 @@
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "An error occurred"
+
+    UnauthorizedError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Unauthorized"
+
+    NotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+
+    ServerError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "There was a server error try again."
