@@ -103,8 +103,8 @@ setInterval(() => {
                 // Only logout non-API sockets
                 if (!isApiSocket) {
                     logout(activity.socket); // Log the user out
-                    // Remove only this socket's entry; logout() already cleans lastActivities[email][socketId]
-                    // but guard against it not being deleted yet
+
+                    // Remove only this socket's entry from the lastActivities object
                     if (lastActivities[email]) {
                         delete lastActivities[email][socketId];
                     }

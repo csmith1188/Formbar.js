@@ -5,7 +5,7 @@ const lastActivities = {};
 module.exports = {
     order: 40,
     run(socket, socketUpdates) {
-        // Seed the user into lastActivities on connection so that completely idle users
+        // Add the user into lastActivities on connection so that completely idle users
         // (who never send any socket events) are still tracked and timed out.
         try {
             const isApiSocket = [...socket.rooms].some((room) => room.startsWith("api-"));
