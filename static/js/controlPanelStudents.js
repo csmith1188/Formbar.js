@@ -359,6 +359,22 @@ function buildStudent(classroomData, studentData) {
             extraButtons.appendChild(banStudentButton);
         }
 
+        const removeFromSessionButton = document.createElement("button");
+        removeFromSessionButton.className = "removeFromSession quickButton revampButton warningButton";
+        removeFromSessionButton.setAttribute("data-userid", studentData.id);
+        removeFromSessionButton.onclick = () => {
+            if (confirm(`Remove ${studentData.displayName} from the current session? They will remain on the class roster and can rejoin.`)) {
+                socket.emit("classRemoveFromSession", studentData.id);
+            }
+        };
+        removeFromSessionButton.textContent = "Remove from Session";
+
+        // Only show the "Remove from Session" button if the student is currently active in the class
+        const isOffline = Array.isArray(studentData.tags) && studentData.tags.includes("Offline");
+        if (!isOffline) {
+            extraButtons.appendChild(removeFromSessionButton);
+        }
+
         const kickUserButton = document.createElement("button");
         kickUserButton.className = "kickUser quickButton revampButton warningButton";
         kickUserButton.setAttribute("data-userid", studentData.id);

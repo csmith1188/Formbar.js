@@ -3383,9 +3383,18 @@ div.accordionOptions.permsOptions select.permSwitch option {
 div.accordionOptions.kickBanOptions div#extraButtons {
     height: 100%;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+}
+
+div.accordionOptions.kickBanOptions div#extraButtons button {
+    flex: 1 1 auto;
+    min-width: max-content;
+    font-size: 16px;
+    padding: 5px 8px;
+    white-space: nowrap;
 }
 
 p.accordionTitle {
