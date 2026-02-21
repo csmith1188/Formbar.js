@@ -289,6 +289,23 @@ module.exports = {
             }
         });
 
+        /**
+         * Removes a student from the current class session without removing them from the classroom roster.
+         * The student will appear as offline on the teacher's page but can rejoin the session.
+         * @param {number} userId - The ID of the user to remove from the session.
+         */
+        socket.on("classRemoveFromSession", (userId) => {
+            try {
+                logger.log("info", `[classRemoveFromSession] ip=(${socket.handshake.address}) session=(${JSON.stringify(socket.request.session)})`);
+                logger.log("info", `[classRemoveFromSession] userId=(${userId})`);
+
+                const classId = socket.request.session.classId;
+                classKickStudent(userId, classId, { exitRoom: false, ban: false });
+            } catch (err) {
+                logger.log("error", err.stack);
+            }
+        });
+
         // Removes all students from the class
         socket.on("classKickStudents", () => {
             try {

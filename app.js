@@ -82,10 +82,16 @@ setInterval(() => {
     for (const email of Object.keys(lastActivities)) {
         const userSockets = lastActivities[email];
         for (const [socketId, activity] of Object.entries(userSockets)) {
+            // If the socket is already disconnected, just clean up the entry
+            if (!activity.socket || !activity.socket.connected) {
+                delete lastActivities[email][socketId];
+                continue;
+            }
+
             if (currentTime - activity.time > INACTIVITY_LIMIT) {
                 // Check if this is an API socket - API sockets should not timeout
                 let isApiSocket = false;
-                if (activity.socket && activity.socket.rooms) {
+                if (activity.socket.rooms) {
                     for (const room of activity.socket.rooms) {
                         if (room.startsWith("api-")) {
                             isApiSocket = true;
@@ -97,9 +103,18 @@ setInterval(() => {
                 // Only logout non-API sockets
                 if (!isApiSocket) {
                     logout(activity.socket); // Log the user out
-                    delete lastActivities[email]; // Remove the user from the inactivity check
+                    // Remove only this socket's entry; logout() already cleans lastActivities[email][socketId]
+                    // but guard against it not being deleted yet
+                    if (lastActivities[email]) {
+                        delete lastActivities[email][socketId];
+                    }
                 }
             }
+        }
+
+        // Clean up the email key if all sockets have been removed
+        if (lastActivities[email] && Object.keys(lastActivities[email]).length === 0) {
+            delete lastActivities[email];
         }
     }
 }, INACTIVITY_CHECK_TIME);

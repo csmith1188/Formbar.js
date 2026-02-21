@@ -100,6 +100,6 @@ module.exports = {
             await dbRun("ROLLBACK", [], database);
             throw err;
         }
-		await dbRun("COMMIT", [], database);
+        await dbRun("COMMIT", [], database);
     },
 };
