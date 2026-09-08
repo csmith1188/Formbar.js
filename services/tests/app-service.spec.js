@@ -62,7 +62,7 @@ afterAll(async () => {
     await mockDatabase.close();
 });
 
-const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1, shareItemId: 1 };
+const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1, shareItemId: 7 };
 
 describe("createApp()", () => {
     it("returns appId, apiKey, and apiSecret", async () => {

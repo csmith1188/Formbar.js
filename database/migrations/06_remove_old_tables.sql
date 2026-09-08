@@ -1,9 +1,6 @@
 -- 06_remove_old_tables.sql
 -- This migration removes obsolete tables: lessons, plugins, and stats.
 
--- DROP TABLE IF EXISTS apps
--- Removed due to deleting modern apps table
-
 DROP TABLE IF EXISTS lessons;
 DROP TABLE IF EXISTS plugins;
 DROP TABLE IF EXISTS stats;
