@@ -1,4 +1,4 @@
--- 38_update_trades_for_sources.sql
+-- 41_update_trades_for_sources.sql
 -- Rebuilds the trades table to support source-based trading (inventory items or pool digipogs).
 -- Migrates old 'accepted' rows to 'completed'; preserves 'pending' and 'rejected' rows.
 

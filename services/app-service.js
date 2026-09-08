@@ -82,7 +82,7 @@ async function createApp({ name, description, ownerId, redirectUris = [] }) {
             stackSize: SHARES_PER_APP,
             iconUrl: null,
         });
-        const poolId = await createPool({ name: `${name} Developer Pool`, description, ownerId });
+        const poolId = await createPool({ name: `${name} Developer Pool`, description, ownerId, shareItemId });
 
         const appId = await dbRun("INSERT INTO apps (name, description, owner_user_id, share_item_id, pool_id) VALUES (?, ?, ?, ?, ?)", [
             name,

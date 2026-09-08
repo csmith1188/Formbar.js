@@ -162,10 +162,11 @@ async function getComputedGlobalUser(userId) {
  * @param {string} poolData.name - Pool name.
  * @param {string} [poolData.description] - Pool description.
  * @param {number} poolData.ownerId - Owner user ID.
+ * @param {number} poolData.shareItemId - Id of pool share item
  * @returns {Promise<number>}
  */
-async function createPool({ name, description = "", ownerId }) {
-    const poolId = await dbRun("INSERT INTO digipog_pools (name, description, amount) VALUES (?, ?, ?)", [name, description, 0]);
+async function createPool({ name, description = "", ownerId, shareItemId = null}) {
+    const poolId = await dbRun("INSERT INTO digipog_pools (name, description, amount, share_item) VALUES (?, ?, ?, ?)", [name, description, 0, shareItemId]);
     await addUserToPool(poolId, ownerId, 1);
     return poolId;
 }

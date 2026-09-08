@@ -62,7 +62,7 @@ afterAll(async () => {
     await mockDatabase.close();
 });
 
-const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1 };
+const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1, shareItemId: 7 };
 
 describe("createApp()", () => {
     it("returns appId, apiKey, and apiSecret", async () => {
@@ -87,6 +87,7 @@ describe("createApp()", () => {
             name: "TestApp Developer Pool",
             description: APP_INPUT.description,
             ownerId: APP_INPUT.ownerId,
+			shareItemId: APP_INPUT.shareItemId
         });
     });
 

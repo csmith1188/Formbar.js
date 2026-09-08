@@ -8,10 +8,11 @@ CREATE TABLE apps_temp (
     description TEXT,
     owner_user_id INTEGER NOT NULL,
     share_item_id INTEGER NOT NULL,
-    pool_id INTEGER NOT NULL
+    pool_id INTEGER NOT NULL,
+	client_secret_hash TEXT
 );
 
--- Copy data from apps table to apps_temp table
+-- -- Copy data from apps table to apps_temp table
 INSERT INTO apps_temp (id, name, description, owner_user_id, share_item_id, pool_id)
 SELECT id, name, description, owner_user_id, share_item_id, pool_id FROM apps;
 
