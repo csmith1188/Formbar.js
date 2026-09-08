@@ -436,9 +436,10 @@ async function updatePoll(classId, options, userSession) {
  * @param {number} classId - The ID of the class.
  * @param {number} [limit=20] - The maximum number of records to return.
  * @param {number} [offset=0] - The number of records to skip.
+ * @param {boolean} [includeResponses=false] - Include user responses in the returned data?\
  * @returns {Promise<Object>} An object containing polls array and total count.
  */
-async function getPreviousPolls(classId, limit = 20, offset = 0) {
+async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponses = false) {
     requireInternalParam(classId, "classId");
 
     const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM poll_history WHERE class = ?`, [classId]);
@@ -465,6 +466,8 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
         if (!Array.isArray(parsedResponses)) {
             parsedResponses = [];
         }
+
+		console.log(parsedResponses)
 
         return {
             globalPollId: poll.id,
