@@ -103,14 +103,6 @@ module.exports = (router) => {
             throw new ValidationError("Invalid pool description.", { event: "pool.create.failed", reason: "invalid_description" });
         }
 
-        // Check if the pools limit has been reached
-        // If the user is a manager, they can create as many pools as they want
-        const userPools = await digipogService.getPoolsForUser(req.user.id);
-        const ownedPools = userPools.filter((pool) => pool.owner);
-        if (ownedPools.length >= 5 && !userHasScope(req.user, SCOPES.GLOBAL.SYSTEM.ADMIN)) {
-            throw new ValidationError("You can only own up to 5 pools.", { event: "pool.create.failed", reason: "max_pools" });
-        }
-
         // Create the pool
         const result = await digipogService.createPool({ name, description, ownerId: req.user.id });
         const poolId = result.lastID || result;
