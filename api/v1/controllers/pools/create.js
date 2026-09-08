@@ -20,8 +20,7 @@ module.exports = (router) => {
      *     tags:
      *       - Pools
      *     description: |
-     *       Creates a new digipog pool. The authenticated user becomes the owner of the pool.
-     *       Users can own up to 5 pools (unlimited for managers).
+     *       Creates a new digipog pool with a cost of 1000 digipogs (managers exempt). The authenticated user becomes the owner of the pool.
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -103,6 +102,9 @@ module.exports = (router) => {
             throw new ValidationError("Invalid pool description.", { event: "pool.create.failed", reason: "invalid_description" });
         }
 
+        // Charge digipogs
+        digipogService.transferDigipogs()
+        
         // Create the pool
         const result = await digipogService.createPool({ name, description, ownerId: req.user.id });
         const poolId = result.lastID || result;
