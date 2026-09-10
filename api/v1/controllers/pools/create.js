@@ -21,7 +21,7 @@ module.exports = (router) => {
      *     tags:
      *       - Pools
      *     description: |
-     *       Creates a new digipog pool at the cost of 10,000 digipogs (admins exempt). The authenticated user becomes the owner of the pool.
+     *       Creates a new digipog pool at the cost of 10,000 digipogs (admins do not need pin). The authenticated user becomes the owner of the pool.
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -98,7 +98,6 @@ module.exports = (router) => {
 
         requireBodyParam(name, "name");
         requireBodyParam(description, "description");
-        requireBodyParam(pin, "pin");
 
         if (typeof name !== "string" || name.length <= 0 || name.length > 50) {
             throw new ValidationError("Invalid pool name.", { event: "pool.create.failed", reason: "invalid_name" });
@@ -108,12 +107,14 @@ module.exports = (router) => {
             throw new ValidationError("Invalid pool description.", { event: "pool.create.failed", reason: "invalid_description" });
         }
 
-        if (typeof pin !== "string") {
-            throw new ValidationError("Invalid pin.", { event: "pool.create.failed", reason: "invalid_pin" });
-        }
+
 
         // Admins exempt from cost
         if (!userHasScope(req.user, SCOPES.GLOBAL.SYSTEM.ADMIN)) {
+            requireBodyParam(pin, "pin");
+            if (typeof pin !== "string") {
+                throw new ValidationError("Invalid pin.", { event: "pool.create.failed", reason: "invalid_pin" });
+            }   
             // Charge digipogs
             const transferPayload = {
                 from: { id: req.user.id, type: "user" },
