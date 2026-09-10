@@ -48,7 +48,8 @@ module.exports = {
 
         app.post("/changepassword", async (req, res) => {
             try {
-                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [req.session.email || req.body.email]);
+				const userEmail = req.session.email ? req.session.email.toLowerCase() : req.body.email.toLowerCase();
+                const userData = await dbGet("SELECT secret FROM users WHERE email = ?", [userEmail]);
                 if (!userData) {
                     return res.render("pages/message", {
                         message: "No user found with that email.",

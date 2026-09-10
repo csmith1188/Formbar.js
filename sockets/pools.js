@@ -19,10 +19,6 @@ module.exports = {
                 const userPools = await pools.getPoolsForUser(socket.request.session.userId);
                 const ownedPools = userPools.filter((p) => p.owner);
 
-                if (ownedPools.length >= 5) {
-                    return socket.emit("poolCreateResponse", { success: false, message: "You can only own up to 5 pools." });
-                }
-
                 // Create the pool
                 const result = await dbRun("INSERT INTO digipog_pools (name, description, amount) VALUES (?, ?, 0)", [name, description]);
                 const poolId = result.lastID || result;
