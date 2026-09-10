@@ -1057,7 +1057,7 @@ async function transferDigipogs(transferData, options = {}) {
         }
         if (!to.type) to.type = "user";
 
-        if (!from || !from.id || !to || !to.id || !amount || reason === undefined || (!pin && !pinVerified)) {
+        if (!from || from.id === undefined || !to || to.id === undefined || !amount || reason === undefined || (!pin && !pinVerified)) {
             return { success: false, message: "Missing required fields." };
         } else if (amount <= 0) {
             return { success: false, message: "Amount must be greater than zero." };

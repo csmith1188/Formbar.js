@@ -5,6 +5,7 @@ const { isAuthenticated } = require("@middleware/authentication");
 const { requireBodyParam } = require("@modules/error-wrapper");
 const digipogService = require("@services/digipog-service");
 const ValidationError = require("@errors/validation-error");
+const AppError = require("@errors/app-error");
 
 /**
  * Register create controller routes.
@@ -20,7 +21,7 @@ module.exports = (router) => {
      *     tags:
      *       - Pools
      *     description: |
-     *       Creates a new digipog pool with a cost of 1000 digipogs (managers exempt). The authenticated user becomes the owner of the pool.
+     *       Creates a new digipog pool at the cost of 10,000 digipogs (admins exempt). The authenticated user becomes the owner of the pool.
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -45,6 +46,10 @@ module.exports = (router) => {
      *                 description: Description of the pool (0-255 characters)
      *                 maxLength: 255
      *                 example: "Pool for rewarding student participation"
+     *               pin:
+     *                 type: string
+     *                 example: "1234"
+     *                 description: User's PIN for authentication
      *     responses:
      *       200:
      *         description: Pool created successfully
@@ -64,7 +69,7 @@ module.exports = (router) => {
      *                       description: ID of the newly created pool
      *                       example: 42
      *       400:
-     *         description: Validation error (invalid name/description or pool limit reached)
+     *         description: Validation error (invalid name/description/pin)
      *         content:
      *           application/json:
      *             schema:
@@ -89,10 +94,11 @@ module.exports = (router) => {
      *               $ref: '#/components/schemas/ServerError'
      */
     router.post("/pools/create", isAuthenticated, hasScope(SCOPES.GLOBAL.POOLS.MANAGE), async (req, res) => {
-        const { name, description } = req.body;
+        const { name, description, pin } = req.body;
 
         requireBodyParam(name, "name");
         requireBodyParam(description, "description");
+        requireBodyParam(pin, "pin");
 
         if (typeof name !== "string" || name.length <= 0 || name.length > 50) {
             throw new ValidationError("Invalid pool name.", { event: "pool.create.failed", reason: "invalid_name" });
@@ -102,9 +108,27 @@ module.exports = (router) => {
             throw new ValidationError("Invalid pool description.", { event: "pool.create.failed", reason: "invalid_description" });
         }
 
-        // Charge digipogs
-        digipogService.transferDigipogs()
-        
+        if (typeof pin !== "string") {
+            throw new ValidationError("Invalid pin.", { event: "pool.create.failed", reason: "invalid_pin" });
+        }
+
+        // Admins exempt from cost
+        if (!userHasScope(req.user, SCOPES.GLOBAL.SYSTEM.ADMIN)) {
+            // Charge digipogs
+            const transferPayload = {
+                from: { id: req.user.id, type: "user" },
+                to: { id: 0, type: "pool" },
+                pin: pin,
+                amount: 10000,
+                reason: "Pool Creation Fee"
+            }
+            const transferResult = await digipogService.transferDigipogs(transferPayload);
+
+            if (!transferResult.success) {
+                throw new AppError(transferResult.message, { statusCode: 400, event: "digipogs.transfer.failed", reason: "transfer_error" });
+            }
+        }
+
         // Create the pool
         const result = await digipogService.createPool({ name, description, ownerId: req.user.id });
         const poolId = result.lastID || result;
