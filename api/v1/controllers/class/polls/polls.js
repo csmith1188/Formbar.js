@@ -2,7 +2,7 @@ const { requireQueryParam } = require("@modules/error-wrapper");
 const { getPreviousPolls } = require("@services/poll-service");
 const { classStateStore } = require("@services/classroom-service");
 const { isAuthenticated } = require("@middleware/authentication");
-const { isOwnerOrHasScopes } = require("@middleware/permission-check");
+const { hasClassScope, isOwnerOrHasScopes } = require("@middleware/permission-check");
 const { SCOPES } = require("@modules/permissions");
 const { buildPagination, parsePaginationQuery } = require("@modules/pagination");
 const membershipService = require("@services/class-membership-service");
@@ -28,12 +28,6 @@ module.exports = (router) => {
      *     
 	 *       **Required Permission:** `CLASS.POLL.READ`
      *
-     *       **Permission Levels:**
-     *       - 1: Guest
-     *       - 2: Student
-     *       - 3: Moderator
-     *       - 4: Teacher
-     *       - 5: Manager
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -189,14 +183,8 @@ module.exports = (router) => {
      *     description: |
      *       Returns the poll history data for a class, including responses. Results are paginated.
      *
-     *       **Required Permission:** `CLASS.POLL.READ`
+     *       **Required Permission:** `CLASS.SYSTEM.ADMIN`
      *
-     *       **Permission Levels:**
-     *       - 1: Guest
-     *       - 2: Student
-     *       - 3: Moderator
-     *       - 4: Teacher
-     *       - 5: Manager
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -310,7 +298,7 @@ module.exports = (router) => {
     router.get(
         "/class/:id/pollhistory",
         isAuthenticated,
-        isOwnerOrHasScopes(membershipService.classroomOwnerCheck, SCOPES.CLASS.POLL.READ, "You do not have permission to view polls for this class."),
+        hasClassScope(SCOPES.CLASS.SYSTEM.ADMIN, "You do not have permission to view polls with user responses for this class."),
         async (req, res) => {
             const classId = req.params.id;
             requireQueryParam(classId, "classId");
@@ -328,7 +316,7 @@ module.exports = (router) => {
 
             const { limit, offset } = parsePaginationQuery(req.query, DEFAULT_POLL_LIMIT, MAX_POLL_LIMIT);
 
-            const { polls, total } = await getPreviousPolls(classId, limit, offset);
+            const { polls, total } = await getPreviousPolls(classId, limit, offset, true);
 
             req.infoEvent("class.polls.data_sent", "Poll data sent to client", { classId, pollCount: polls.length, limit, offset });
 

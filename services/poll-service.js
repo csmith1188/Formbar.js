@@ -452,7 +452,7 @@ async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponse
         [classId, limit, offset]
     );
 
-    const enrichedPolls = polls.map((poll) => {
+    const enrichedPolls = await Promise.all(polls.map(async (poll) => {
         // Parse responses into a predictable array for clients.
         let parsedResponses = poll.responses;
         if (typeof poll.responses === "string") {
@@ -467,7 +467,24 @@ async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponse
             parsedResponses = [];
         }
 
-		console.log(parsedResponses)
+
+		if(includeResponses) {
+			parsedResponses.forEach((resp) => { resp.studentsResponded = [] });
+
+			const userResponses = await dbGetAll("SELECT * FROM poll_answers WHERE classId = ? AND pollId = ?", [classId, poll.id]);
+
+			userResponses.map((studentRes) => {
+				const studentResponseIds = JSON.parse(studentRes.responseIds);
+				const matchingResponses = parsedResponses.filter((response) => studentResponseIds.includes(response.id));
+				matchingResponses.forEach((matchedResp) => matchedResp.studentsResponded.push(
+					{
+						userId: studentRes.userId,
+						textResponse: studentRes.textResponse,
+						respondedAt: studentRes.createdAt
+					}
+				));
+			})
+		}
 
         return {
             globalPollId: poll.id,
@@ -479,7 +496,7 @@ async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponse
             allowTextResponses: !!poll.allowTextResponses,
             createdAt: poll.createdAt,
         };
-    });
+    }));
 
     return {
         polls: enrichedPolls,
