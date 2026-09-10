@@ -298,7 +298,7 @@ module.exports = (router) => {
     router.get(
         "/class/:id/pollhistory",
         isAuthenticated,
-        hasClassScope(SCOPES.CLASS.SYSTEM.ADMIN, "You do not have permission to view polls with user responses for this class."),
+        isOwnerOrHasScopes(SCOPES.CLASS.SYSTEM.ADMIN, "You do not have permission to view polls with user responses for this class."),
         async (req, res) => {
             const classId = req.params.id;
             requireQueryParam(classId, "classId");
