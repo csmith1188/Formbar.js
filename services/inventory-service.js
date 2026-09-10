@@ -135,6 +135,14 @@ async function removeItemFromInventory(userId, itemId, quantity) {
     if (existingItems.length === 0) {
         throw new NotFoundError("Item not found in inventory");
     }
+	
+	//? Check if this item is a pool share item.
+	const sharePool = await dbGet("SELECT * FROM digipog_pools WHERE share_item = ? LIMIT 1", [itemId]);
+	let topShareholder;
+	if(sharePool) {
+		const shareholders = await dbGetAll('SELECT * FROM inventory WHERE item_id = ?', [itemId])
+		topShareholder = shareholders.sort((shareholderA, shareholderB) => shareholderB.quantity - shareholderA.quantity)[0];
+	}
 
     let remainingQuantity = quantity;
 
@@ -152,6 +160,11 @@ async function removeItemFromInventory(userId, itemId, quantity) {
             await dbRun("DELETE FROM inventory WHERE id = ?", [item.id]);
             remainingQuantity = Math.abs(newQuantity);
         }
+
+		if(topShareholder) {
+        	const topNewQuantity = topShareholder.quantity + quantity;
+			await dbRun("UPDATE inventory SET quantity = ? WHERE id = ?", [topNewQuantity, topShareholder.id]);
+		}
     }
 }
 
