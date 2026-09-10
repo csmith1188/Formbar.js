@@ -107,8 +107,6 @@ module.exports = (router) => {
             throw new ValidationError("Invalid pool description.", { event: "pool.create.failed", reason: "invalid_description" });
         }
 
-
-
         // Admins exempt from cost
         if (!userHasScope(req.user, SCOPES.GLOBAL.SYSTEM.ADMIN)) {
             requireBodyParam(pin, "pin");
