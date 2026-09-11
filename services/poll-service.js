@@ -436,9 +436,10 @@ async function updatePoll(classId, options, userSession) {
  * @param {number} classId - The ID of the class.
  * @param {number} [limit=20] - The maximum number of records to return.
  * @param {number} [offset=0] - The number of records to skip.
+ * @param {boolean} [includeResponses=false] - Include user responses in the returned data?\
  * @returns {Promise<Object>} An object containing polls array and total count.
  */
-async function getPreviousPolls(classId, limit = 20, offset = 0) {
+async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponses = false) {
     requireInternalParam(classId, "classId");
 
     const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM poll_history WHERE class = ?`, [classId]);
@@ -451,7 +452,7 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
         [classId, limit, offset]
     );
 
-    const enrichedPolls = polls.map((poll) => {
+    const enrichedPolls = await Promise.all(polls.map(async (poll) => {
         // Parse responses into a predictable array for clients.
         let parsedResponses = poll.responses;
         if (typeof poll.responses === "string") {
@@ -466,6 +467,25 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
             parsedResponses = [];
         }
 
+
+		if(includeResponses) {
+			parsedResponses.forEach((resp) => { resp.studentsResponded = [] });
+
+			const userResponses = await dbGetAll("SELECT * FROM poll_answers WHERE classId = ? AND pollId = ?", [classId, poll.id]);
+
+			userResponses.map((studentRes) => {
+				const studentResponseIds = JSON.parse(studentRes.responseIds);
+				const matchingResponses = parsedResponses.filter((response) => studentResponseIds.includes(response.id));
+				matchingResponses.forEach((matchedResp) => matchedResp.studentsResponded.push(
+					{
+						userId: studentRes.userId,
+						textResponse: studentRes.textResponse,
+						respondedAt: studentRes.createdAt
+					}
+				));
+			})
+		}
+
         return {
             globalPollId: poll.id,
             classPollId: Number(poll.pollId),
@@ -476,7 +496,7 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
             allowTextResponses: !!poll.allowTextResponses,
             createdAt: poll.createdAt,
         };
-    });
+    }));
 
     return {
         polls: enrichedPolls,
