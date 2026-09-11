@@ -1,5 +1,6 @@
 const { dbGet, dbGetAll, dbRun } = require("@modules/database");
 const NotFoundError = require("@errors/not-found-error");
+const ConflictError = require("@errors/conflict-error");
 
 /**
  * Get a user inventory.
@@ -142,6 +143,8 @@ async function removeItemFromInventory(userId, itemId, quantity) {
 	if(sharePool) {
 		const shareholders = await dbGetAll('SELECT * FROM inventory WHERE item_id = ?', [itemId])
 		topShareholder = shareholders.sort((shareholderA, shareholderB) => shareholderB.quantity - shareholderA.quantity)[0];
+
+		if(topShareholder.user_id === userId) throw new ConflictError("Main shareholder cannot remove shares.")
 	}
 
     let remainingQuantity = quantity;
