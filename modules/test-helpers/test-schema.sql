@@ -218,6 +218,7 @@ CREATE TABLE IF NOT EXISTS "digipog_pools" (
     "name"        TEXT    NOT NULL,
     "description" TEXT    NOT NULL DEFAULT 'None',
     "amount"      INTEGER NOT NULL DEFAULT 0,
+	"share_item"  INTEGER DEFAULT NULL,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
