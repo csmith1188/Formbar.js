@@ -33,6 +33,24 @@ module.exports = (router) => {
      *         schema:
      *           type: integer
      *           example: 42
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - amount
+     *               - payoutType
+     *             properties:
+     *               amount:
+     *                 type: integer
+     *                 description:  Amount to pay out of pool (percentage or set)
+     *                 example: 60
+     *               payoutType:
+     *                 type: string
+     *                 description:  Can either be "percent" or "set"
+     *                 example: percent
      *     responses:
      *       200:
      *         description: Pool payout executed successfully
