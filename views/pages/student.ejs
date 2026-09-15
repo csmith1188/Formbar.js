@@ -13,6 +13,8 @@
 		}
 	</style>
 	<script src="/js/deepObjectEqual.js"></script>
+	<script src="/js/commonmark.js"></script>
+	<script src="/js/pollText.js"></script>
 </head>
 
 <body role="document" tabindex="0">
@@ -91,7 +93,7 @@
 	let classroomData = {}; // Store classroom data for guests too
 
 	function updatePage(newPoll) {
-		pollPromptDisplayGuest.innerText = newPoll.prompt;
+		pollPromptDisplayGuest.innerHTML = renderPollText(newPoll.prompt);
 	}
 
 	// Get the reason why a user cannot vote
@@ -272,8 +274,8 @@
 
 			pollForm.innerHTML = '';
 
-			// Update the poll prompt
-			pollPromptDisplay.innerText = poll.prompt;
+			// Update the poll prompt (C escapes + CommonMark)
+			pollPromptDisplay.innerHTML = renderPollText(poll.prompt);
 
 			// If user cannot vote
 			const mayNotAnswer = document.getElementById('pollControl');
@@ -312,8 +314,9 @@
 			const responseButtons = Array.from(pollForm.querySelectorAll('.pollButton'));
 			responseButtons.forEach(btn => btn.remove());
 
-			// Add new response options
+			// Add new response options (raw answer kept as id for voting; display uses C escapes + CommonMark)
 			for (let response of poll.responses) {
+				const answerHtml = renderPollText(response.answer, { inline: true });
 				if (multiAnswer !== 'button') {
 					const checkbox = document.createElement('input');
 					checkbox.type = 'checkbox';
@@ -321,8 +324,11 @@
 					checkbox.className = 'revampButton pollButton';
 					checkbox.id = response.answer;
 					checkbox.style.cssText = `--color: ${response.color}44;--theme-color: ${response.color};`;
+					const answerLabel = document.createElement('span');
+					answerLabel.className = 'pollAnswerText';
+					answerLabel.innerHTML = answerHtml;
 					pollForm.appendChild(checkbox);
-					pollForm.appendChild(document.createTextNode(response.answer));
+					pollForm.appendChild(answerLabel);
 					checkbox.checked = userSelectedCheckboxes.includes(response.answer);
 					checkbox.onclick = () => {
 						if (checkbox.checked) {
@@ -337,7 +343,7 @@
 					btn.className = `revampButton pollButton ${response.answer === currentUser.pollRes.buttonRes ? 'activePollButton' : ''}`;
 					btn.id = response.answer;
 					btn.style.cssText = `background: ${response.color}44;--color: ${response.color};--theme-color: black;`;
-					btn.textContent = response.answer;
+					btn.innerHTML = answerHtml;
 					btn.onclick = () => submitPoll(btn);
 					pollForm.appendChild(btn);
 				}

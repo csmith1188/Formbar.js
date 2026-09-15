@@ -666,6 +666,42 @@ input[type="radio"]:focus {
 	display: none;
 }
 
+#pollPrompt > :first-child {
+	margin-top: 0;
+}
+
+#pollPrompt > :last-child {
+	margin-bottom: 0;
+}
+
+#pollPrompt p,
+.pollAnswerText p,
+#pollForm .pollButton p {
+	margin: 0.25em 0;
+}
+
+#pollPrompt code,
+.pollAnswerText code,
+#pollForm .pollButton code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.85em;
+}
+
+#pollPrompt pre,
+.pollAnswerText pre,
+#pollForm .pollButton pre {
+	text-align: left;
+	overflow-x: auto;
+	font-size: 0.6em;
+	padding: 0.5em;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.25);
+}
+
+#pollForm .pollAnswerText {
+	color: inherit;
+}
+
 /* --- CONTROL PANEL --- */
 @keyframes fadeIn {
 	from {
