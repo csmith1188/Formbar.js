@@ -134,7 +134,7 @@ module.exports = (router) => {
                 : body;
             // Require a valid prompt field
             if (typeof pollData.prompt === undefined && pollData.promptMD === undefined && pollData.promptHTML === undefined) {
-                throw new ValidationError("Missing 'prompt', 'promptMD', or 'promptHTML'");
+                throw new ValidationError("Missing 'prompt', 'promptMD', and 'promptHTML'");
             }
             // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
             else if (pollData.prompt === undefined && (pollData.promptMD !== undefined || pollData.promptHTML !== undefined)) {
