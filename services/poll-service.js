@@ -140,6 +140,30 @@ function normalizeThresholdPercent(value) {
 }
 
 /**
+ * Modifies the creation poll data to set the prompt fields if they are missing
+ * @param {Object} pollData - the creation data for a poll
+ * @returns {void}
+ * @throws {ValidationError} If poll prompt is missing
+ */
+function normalizePollPrompts(pollData) {
+    // Require a valid prompt field
+    if (pollData.prompt === undefined && pollData.promptMD === undefined && pollData.promptHTML === undefined) {
+        throw new ValidationError("Missing 'prompt', 'promptMD', and 'promptHTML'");
+    }
+    // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
+    else if (pollData.prompt === undefined && (pollData.promptMD !== undefined || pollData.promptHTML !== undefined)) {
+        pollData.prompt = (pollData.promptMD !== undefined ? pollData.promptMD : pollData.promptHTML).trim();
+    }
+    // Set any missing formatted prompt fields from `prompt`
+    if (pollData.promptMD === undefined) {
+        pollData.promptMD = pollData.prompt;
+    }
+    if (pollData.promptHTML === undefined) {
+        pollData.promptHTML = pollData.prompt;
+    }
+}
+
+/**
  * Whether clearing should insert a poll_history row for a poll that was never formally ended.
  * @param {Object|null|undefined} poll - The in-memory poll snapshot about to be cleared.
  * @returns {boolean} True when the poll is active or has a prompt or response options.
@@ -268,11 +292,15 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
  * @param {Object} userData - The user session object.
  * @returns {Promise<void>}
  * @throws {NotFoundError} If classroom is not found
- * @throws {ValidationError} If class is not active
+ * @throws {ValidationError} If class is not active or poll prompt is missing
  */
 async function createPoll(classId, pollData, userData) {
+    normalizePollPrompts(pollData);
+
     const {
         prompt,
+        promptMD,
+        promptHTML,
         answers,
         blind,
         weight,
@@ -284,6 +312,7 @@ async function createPoll(classId, pollData, userData) {
         autoEndThreshold,
         blindUntilEnded,
     } = pollData;
+    console.log(prompt, promptMD, promptHTML);
     const numberOfResponses = Object.keys(answers).length;
     const normalizedAutoEndTimer = normalizePositiveNumber(autoEndTimer);
     const normalizedAutoEndThreshold = normalizePositiveNumber(autoEndThreshold);

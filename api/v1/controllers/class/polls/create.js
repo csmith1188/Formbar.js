@@ -132,22 +132,7 @@ module.exports = (router) => {
                       blindUntilEnded: body.blindUntilEnded != null ? !!body.blindUntilEnded : undefined,
                   }
                 : body;
-            // Require a valid prompt field
-            if (typeof pollData.prompt === undefined && pollData.promptMD === undefined && pollData.promptHTML === undefined) {
-                throw new ValidationError("Missing 'prompt', 'promptMD', and 'promptHTML'");
-            }
-            // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
-            else if (pollData.prompt === undefined && (pollData.promptMD !== undefined || pollData.promptHTML !== undefined)) {
-                pollData.prompt = (pollData.promptMD !== undefined ? pollData.promptMD : pollData.promptHTML).trim();
-            }
 
-            // Set any missing formatted prompt fields from `prompt`
-            if (pollData.promptMD === undefined) {
-                pollData.promptMD = pollData.prompt;
-            }
-            if (pollData.promptHTML === undefined) {
-                pollData.promptHTML = pollData.prompt;
-            }
 
             await createPoll(classId, pollData, req.user);
             req.infoEvent("class.poll.create.success", "Poll created", { classId });
