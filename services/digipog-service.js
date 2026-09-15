@@ -376,7 +376,7 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
  * @param {number} payoutData.actingUserId - Acting user ID.
  * @param {number} payoutData.poolId - Pool ID.
  * @param {number} payoutData.amount - Percentage or set amount.
- * @param {number} payoutData.payoutType - Determines whether amount is percent/set 
+ * @param {number} payoutData.payoutType - Determines whether amount is percent/digipogs
  * @returns {Promise<Object>}
  */
 async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
@@ -398,15 +398,15 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
 		return { success: false, message: "Cannot payout 0 pogs." }
 	}
 
-	if(payoutType !== "percent" && payoutType !== "set") {
-		return { success: false, message: `Payout type must be "percent" or "set".` }
+	if(payoutType !== "percent" && payoutType !== "digipogs") {
+		return { success: false, message: `Payout type must be "percent" or "digipogs".` }
 	}
 
 	if(amount > 100 && payoutType === "percent") {
 		return { success: false, message: "Cannot payout more than 100% of the pool." }
 	}
 
-	if(amount > pool.amount && payoutType === "set") {
+	if(amount > pool.amount && payoutType === "digipogs") {
 		return { success: false, message: "Cannot payout more than the pool\'s amount." }
 	}
 

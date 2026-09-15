@@ -45,11 +45,11 @@ module.exports = (router) => {
      *             properties:
      *               amount:
      *                 type: integer
-     *                 description:  Amount to pay out of pool (percentage or set)
+     *                 description:  Amount to pay out of pool (percentage or digipogs)
      *                 example: 60
      *               payoutType:
      *                 type: string
-     *                 description:  Can either be "percent" or "set"
+     *                 description:  Can either be "percent" or "digipogs"
      *                 example: percent
      *     responses:
      *       200:
