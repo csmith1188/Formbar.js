@@ -1,6 +1,7 @@
 /**
  * Unescape C-style escape sequences in poll prompt/answer text.
  * Supports: \\ \' \" \a \b \f \n \r \t \v \0 \xHH \uHHHH \UHHHHHHHH \OOO
+ * Unknown escapes keep the backslash so CommonMark escapes like \* still work.
  */
 function unescapeCEscapes(text) {
 	if (typeof text !== "string" || text.length === 0) {
@@ -81,8 +82,8 @@ function unescapeCEscapes(text) {
 					}
 					result += String.fromCharCode(parseInt(octal, 8));
 				} else {
-					// Unknown escape: keep the escaped character as-is
-					result += next;
+					// Preserve unknown escapes for CommonMark (e.g. \*, \_)
+					result += "\\" + next;
 				}
 				break;
 			}
@@ -92,8 +93,19 @@ function unescapeCEscapes(text) {
 	return result;
 }
 
-const pollMarkdownParser = typeof commonmark !== "undefined" ? new commonmark.Parser() : null;
-const pollMarkdownRenderer = typeof commonmark !== "undefined" ? new commonmark.HtmlRenderer({ safe: true }) : null;
+let pollMarkdownParser = null;
+let pollMarkdownRenderer = null;
+
+function getPollMarkdown() {
+	if (typeof commonmark === "undefined") {
+		return null;
+	}
+	if (!pollMarkdownParser || !pollMarkdownRenderer) {
+		pollMarkdownParser = new commonmark.Parser();
+		pollMarkdownRenderer = new commonmark.HtmlRenderer({ safe: true });
+	}
+	return { parser: pollMarkdownParser, renderer: pollMarkdownRenderer };
+}
 
 /**
  * Render poll prompt/answer text with C-escape unescaping and CommonMark.
@@ -103,7 +115,8 @@ const pollMarkdownRenderer = typeof commonmark !== "undefined" ? new commonmark.
  */
 function renderPollText(text, options = {}) {
 	const unescaped = unescapeCEscapes(text ?? "");
-	if (!pollMarkdownParser || !pollMarkdownRenderer) {
+	const md = getPollMarkdown();
+	if (!md) {
 		const escaped = unescaped
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")
@@ -112,7 +125,7 @@ function renderPollText(text, options = {}) {
 		return options.inline ? escaped : `<p>${escaped}</p>`;
 	}
 
-	let html = pollMarkdownRenderer.render(pollMarkdownParser.parse(unescaped));
+	let html = md.renderer.render(md.parser.parse(unescaped));
 	if (options.inline) {
 		html = html.replace(/^\s*<p>([\s\S]*?)<\/p>\s*$/i, "$1").trim();
 	}

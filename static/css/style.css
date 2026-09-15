@@ -685,6 +685,9 @@ input[type="radio"]:focus {
 #pollForm .pollButton code {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.85em;
+	padding: 0.1em 0.35em;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.35);
 }
 
 #pollPrompt pre,
