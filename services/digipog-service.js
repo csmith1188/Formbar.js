@@ -433,7 +433,7 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
             ]);
         }
 
-        await dbRun("UPDATE digipog_pools SET amount = 0 WHERE id = ?", [poolId]);
+        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [payoutAmount, poolId]);
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
