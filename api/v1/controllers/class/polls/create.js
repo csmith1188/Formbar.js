@@ -148,7 +148,6 @@ module.exports = (router) => {
             if (pollData.promptHTML === undefined) {
                 pollData.promptHTML = pollData.prompt;
             }
-            console.log(body);
 
             await createPoll(classId, pollData, req.user);
             req.infoEvent("class.poll.create.success", "Poll created", { classId });
