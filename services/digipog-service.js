@@ -375,9 +375,11 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
  * @param {Object} payoutData - Payout data.
  * @param {number} payoutData.actingUserId - Acting user ID.
  * @param {number} payoutData.poolId - Pool ID.
+ * @param {number} payoutData.amount - Percentage or set amount.
+ * @param {number} payoutData.payoutType - Determines whether amount is percent/digipogs
  * @returns {Promise<Object>}
  */
-async function payoutPool({ actingUserId, poolId }) {
+async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
     if (!Number.isInteger(poolId) || poolId < 0) {
         return { success: false, message: "Invalid pool ID." };
     }
@@ -392,37 +394,50 @@ async function payoutPool({ actingUserId, poolId }) {
         return { success: false, message: "Pool not found." };
     }
 
-    const members = await getUsersForPool(poolId);
-    if (members.length === 0) {
-        return { success: false, message: "Pool has no members." };
-    }
+	if(amount <= 0) {
+		return { success: false, message: "Cannot payout 0 pogs." }
+	}
 
-    const amountPerMember = Math.floor(pool.amount / members.length);
+	if(payoutType !== "percent" && payoutType !== "digipogs") {
+		return { success: false, message: `Payout type must be "percent" or "digipogs".` }
+	}
+
+	if(amount > 100 && payoutType === "percent") {
+		return { success: false, message: "Cannot payout more than 100% of the pool." }
+	}
+
+	if(amount > pool.amount && payoutType === "digipogs") {
+		return { success: false, message: "Cannot payout more than the pool\'s amount." }
+	}
+
+	const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
+    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item])
 
     // Payout each member
     try {
         await dbRun("BEGIN TRANSACTION");
-        for (const member of members) {
-            const user = await dbGet("SELECT * FROM users WHERE id = ?", [member.user_id]);
-            if (!user) continue;
+        for (const shareholder of shareholders) {
+            const userShare = await dbGet("SELECT quantity FROM inventory WHERE item_id = ? AND user_id = ?", [pool.share_item, shareholder.user_id]);
+			const userPayout = Math.floor(payoutAmount * (userShare.quantity / 100));
+            if (!userShare) continue;
 
-            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [amountPerMember, member.user_id]);
-            await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+			await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
+			await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
                 pool.id,
-                member.user_id,
+                shareholder.user_id,
                 "pool",
                 "user",
-                amountPerMember,
+                userPayout,
                 "Pool Payout",
                 Date.now(),
             ]);
         }
 
-        await dbRun("UPDATE digipog_pools SET amount = 0 WHERE id = ?", [poolId]);
+        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [payoutAmount, poolId]);
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
-        throw AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
+        throw new AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
     }
 
     return { success: true, message: "Pool payout successful." };
