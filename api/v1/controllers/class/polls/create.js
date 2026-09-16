@@ -50,11 +50,26 @@ module.exports = (router) => {
      *               prompt:
      *                 type: string
      *                 example: "What is 2+2?"
+     *               promptMD:
+     *                 type: string
+     *                 example: "What is **2+2**"
+     *               promptHTML:
+     *                 type: string
+     *                 example: "<p>What is <strong>2+2</strong></p>"
      *               answers:
      *                 type: array
      *                 items:
-     *                   type: string
-     *                 example: ["3", "4", "5"]
+     *                   type: object
+     *                   properties:
+     *                     answer:
+     *                       type: string
+     *                     correct:
+     *                       type: boolean
+     *                     color:
+     *                       type: string
+     *                     weight:
+     *                       type: number
+     *                 example: [{"answer":"2","weight":0.9,"color":"#00FF00","correct":false},{"answer":"3","weight":1,"color":"#00FFFF","correct":false},{"answer":"4","weight":1.1,"color":"#FF0000","correct":true}]
      *               blind:
      *                 type: boolean
      *                 example: false
