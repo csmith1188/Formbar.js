@@ -148,11 +148,11 @@ function normalizeThresholdPercent(value) {
 function normalizePollPrompts(pollData) {
     // Require a valid prompt field
     if (pollData.prompt == null && pollData.promptMD == null && pollData.promptHTML == null) {
-        throw new ValidationError("Missing 'prompt', 'promptMD', and 'promptHTML'");
+        throw new ValidationError("Poll 'prompt', 'promptMD', or 'promptHTML' is required");
     }
     // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
     else if (pollData.prompt == null && (pollData.promptMD != null || pollData.promptHTML != null)) {
-        pollData.prompt = (pollData.promptMD != null ? pollData.promptMD : pollData.promptHTML).trim();
+        pollData.prompt = pollData.promptMD != null ? pollData.promptMD : pollData.promptHTML;
     }
     // Set any missing formatted prompt fields from `prompt`
     if (pollData.promptMD == null) {
@@ -161,6 +161,10 @@ function normalizePollPrompts(pollData) {
     if (pollData.promptHTML == null) {
         pollData.promptHTML = pollData.prompt;
     }
+    // Trim all
+    pollData.prompt = typeof pollData.prompt === "string" ? pollData.prompt.trim() : "";
+    pollData.promptMD = typeof pollData.promptMD === "string" ? pollData.promptMD.trim() : "";
+    pollData.promptHTML = typeof pollData.promptHTML === "string" ? pollData.promptHTML.trim() : "";
 }
 
 /**
@@ -906,10 +910,9 @@ async function insertCustomPollTemplate(userId, pollData) {
         throw new ValidationError("Poll name is required.");
     }
 
-    const prompt = typeof pollData.prompt === "string" ? pollData.prompt.trim() : "";
-    if (!prompt) {
-        throw new ValidationError("Poll prompt is required.");
-    }
+    normalizePollPrompts(pollData);
+
+    const { prompt, promptMD, promptHTML } = pollData;
 
     if (!Array.isArray(pollData.answers) || pollData.answers.length === 0) {
         throw new ValidationError("At least one poll answer is required.");
@@ -918,11 +921,13 @@ async function insertCustomPollTemplate(userId, pollData) {
     const textRes = pollData.textRes != null ? (pollData.textRes ? 1 : 0) : pollData.allowTextResponses ? 1 : 0;
 
     return dbRun(
-        "INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO custom_polls (owner, name, prompt, promptMD, promptHTML, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
             userId,
             name,
             prompt,
+            promptMD,
+            promptHTML,
             JSON.stringify(pollData.answers),
             textRes,
             pollData.blind ? 1 : 0,
