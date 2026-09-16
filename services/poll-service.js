@@ -147,18 +147,18 @@ function normalizeThresholdPercent(value) {
  */
 function normalizePollPrompts(pollData) {
     // Require a valid prompt field
-    if (pollData.prompt === undefined && pollData.promptMD === undefined && pollData.promptHTML === undefined) {
+    if (pollData.prompt == null && pollData.promptMD == null && pollData.promptHTML == null) {
         throw new ValidationError("Missing 'prompt', 'promptMD', and 'promptHTML'");
     }
     // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
-    else if (pollData.prompt === undefined && (pollData.promptMD !== undefined || pollData.promptHTML !== undefined)) {
-        pollData.prompt = (pollData.promptMD !== undefined ? pollData.promptMD : pollData.promptHTML).trim();
+    else if (pollData.prompt == null && (pollData.promptMD != null || pollData.promptHTML != null)) {
+        pollData.prompt = (pollData.promptMD != null ? pollData.promptMD : pollData.promptHTML).trim();
     }
     // Set any missing formatted prompt fields from `prompt`
-    if (pollData.promptMD === undefined) {
+    if (pollData.promptMD == null) {
         pollData.promptMD = pollData.prompt;
     }
-    if (pollData.promptHTML === undefined) {
+    if (pollData.promptHTML == null) {
         pollData.promptHTML = pollData.prompt;
     }
 }
@@ -312,7 +312,7 @@ async function createPoll(classId, pollData, userData) {
         autoEndThreshold,
         blindUntilEnded,
     } = pollData;
-    console.log(prompt, promptMD, promptHTML);
+    
     const numberOfResponses = Object.keys(answers).length;
     const normalizedAutoEndTimer = normalizePositiveNumber(autoEndTimer);
     const normalizedAutoEndThreshold = normalizePositiveNumber(autoEndThreshold);
@@ -384,6 +384,8 @@ async function createPoll(classId, pollData, userData) {
         weight: weight,
         allowTextResponses: allowTextResponses,
         prompt: prompt,
+        promptMD: promptMD,
+        promptHTML: promptHTML,
         allowMultipleResponses: allowMultipleResponses,
         endTime: null,
         autoEndTimer: normalizedAutoEndTimer,
@@ -514,11 +516,13 @@ async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponse
 				));
 			})
 		}
-
+        
         return {
             globalPollId: poll.id,
             classPollId: Number(poll.pollId),
             prompt: poll.prompt,
+            promptMD: poll.promptMD,
+            promptHTML: poll.promptHTML,
             responses: parsedResponses,
             blind: !!poll.blind,
             allowMultipleResponses: !!poll.allowMultipleResponses,
@@ -546,6 +550,8 @@ async function savePollToHistory(classId, pollSnapshot = null) {
 
     const createdAt = Date.now();
     const prompt = pollToSave.prompt;
+    const promptMD = pollToSave.promptMD;
+    const promptHTML = pollToSave.promptHTML;
     const responses = JSON.stringify(pollToSave.responses);
     const allowMultipleResponses = pollToSave.allowMultipleResponses ? 1 : 0;
     const blind = pollToSave.blind ? 1 : 0;
@@ -555,8 +561,8 @@ async function savePollToHistory(classId, pollSnapshot = null) {
     const blindUntilEnded = pollToSave.blindUntilEnded ? 1 : 0;
 
     return dbRun(
-        "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, auto_end_timer, auto_end_threshold, blind_until_ended) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, autoEndTimer, autoEndThreshold, blindUntilEnded]
+        "INSERT INTO poll_history(class, prompt, promptMD, promptHTML, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, auto_end_timer, auto_end_threshold, blind_until_ended) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [classId, prompt, promptMD, promptHTML, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, autoEndTimer, autoEndThreshold, blindUntilEnded]
     );
 }
 
