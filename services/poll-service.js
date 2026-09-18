@@ -12,6 +12,10 @@ const ForbiddenError = require("@errors/forbidden-error");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const { pollRuntimeStore } = require("@stores/poll-runtime-store");
 
+// Used for stripping formatted prompts
+const sanitizeHtml = require("sanitize-html");
+const removeMarkdown = require("remove-markdown");
+
 /**
  * Gets a classroom by ID and throws an error if not found.
  * @param {number} classId - The ID of the class.
@@ -140,34 +144,6 @@ function normalizeThresholdPercent(value) {
 }
 
 /**
- * Modifies the creation poll data to set the prompt fields if they are missing
- * @param {Object} pollData - the creation data for a poll
- * @returns {void}
- * @throws {ValidationError} If poll prompt is missing
- */
-function normalizePollPrompts(pollData) {
-    // Require a valid prompt field
-    if (pollData.prompt == null && pollData.promptMD == null && pollData.promptHTML == null) {
-        throw new ValidationError("Poll 'prompt', 'promptMD', or 'promptHTML' is required");
-    }
-    // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
-    else if (pollData.prompt == null && (pollData.promptMD != null || pollData.promptHTML != null)) {
-        pollData.prompt = pollData.promptMD != null ? pollData.promptMD : pollData.promptHTML;
-    }
-    // Set any missing formatted prompt fields from `prompt`
-    if (pollData.promptMD == null) {
-        pollData.promptMD = pollData.prompt;
-    }
-    if (pollData.promptHTML == null) {
-        pollData.promptHTML = pollData.prompt;
-    }
-    // Trim all
-    pollData.prompt = typeof pollData.prompt === "string" ? pollData.prompt.trim() : "";
-    pollData.promptMD = typeof pollData.promptMD === "string" ? pollData.promptMD.trim() : "";
-    pollData.promptHTML = typeof pollData.promptHTML === "string" ? pollData.promptHTML.trim() : "";
-}
-
-/**
  * Whether clearing should insert a poll_history row for a poll that was never formally ended.
  * @param {Object|null|undefined} poll - The in-memory poll snapshot about to be cleared.
  * @returns {boolean} True when the poll is active or has a prompt or response options.
@@ -289,6 +265,34 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
     }
 }
 
+
+/**
+ * Modifies the creation poll data to set the prompt fields if they are missing
+ * @param {Object} pollData - the creation data for a poll
+ * @returns {void}
+ * @throws {ValidationError} If poll prompt is missing
+ */
+function populatePollPrompts(pollData) {
+    // Require a valid prompt field
+    if (pollData.prompt == null && pollData.promptMD == null && pollData.promptHTML == null) {
+        throw new ValidationError("Poll 'prompt', 'promptMD', or 'promptHTML' is required");
+    }
+    if (typeof pollData.prompt !== "string" && typeof pollData.promptMD !== "string" && typeof pollData.promptHTML !== "string") { 
+        throw new ValidationError("Poll prompt is required to be a string");
+    }
+
+    // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
+    if (pollData.prompt == null) {
+        // Set missing prompt fields from formatted prompt fields
+        if (pollData.promptMD != null) {
+            pollData.prompt = removeMarkdown(pollData.promptMD);
+        }
+        if (pollData.promptHTML != null) {
+            pollData.prompt = sanitizeHtml(pollData.promptHTML, { allowedTags: [], allowedAttributes: {} });
+        }
+    }
+}
+
 /**
  * Creates a new poll in the class.
  * @param {number} classId - The ID of the class.
@@ -299,7 +303,7 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
  * @throws {ValidationError} If class is not active or poll prompt is missing
  */
 async function createPoll(classId, pollData, userData) {
-    normalizePollPrompts(pollData);
+    populatePollPrompts(pollData);
 
     const {
         prompt,
@@ -521,18 +525,24 @@ async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponse
 			})
 		}
         
-        return {
+        const normalizedPoll = {
             globalPollId: poll.id,
             classPollId: Number(poll.pollId),
             prompt: poll.prompt,
-            promptMD: poll.promptMD,
-            promptHTML: poll.promptHTML,
             responses: parsedResponses,
             blind: !!poll.blind,
             allowMultipleResponses: !!poll.allowMultipleResponses,
             allowTextResponses: !!poll.allowTextResponses,
             createdAt: poll.createdAt,
         };
+
+        if (poll.promptMD != null) {
+            normalizedPoll.promptMD = poll.promptMD;
+        } else if (poll.promptHTML != null) {
+            normalizedPoll.promptHTML = poll.promptHTML;
+        }
+
+        return normalizedPoll;
     }));
 
     return {
@@ -831,7 +841,7 @@ async function getCurrentPoll(classId, userData) {
 function formatCustomPollRow(row) {
     if (!row) return null;
 
-    return {
+    const customPoll = {
         id: row.id,
         owner: row.owner != null ? Number(row.owner) : null,
         name: row.name,
@@ -844,6 +854,12 @@ function formatCustomPollRow(row) {
         weight: row.weight,
         public: !!row.public,
     };
+    if (row.promptMD != null) {
+        customPoll.promptMD = row.promptMD;
+    } else if (row.promptHTML != null) {
+        customPoll.promptHTML = row.promptHTML;
+    }
+    return customPoll;
 }
 
 /**
@@ -910,7 +926,7 @@ async function insertCustomPollTemplate(userId, pollData) {
         throw new ValidationError("Poll name is required.");
     }
 
-    normalizePollPrompts(pollData);
+    populatePollPrompts(pollData);
 
     const { prompt, promptMD, promptHTML } = pollData;
 
