@@ -3,7 +3,7 @@
 -- fails if custom_polls has already been migrated
 ALTER TABLE custom_polls ADD COLUMN promptMD TEXT;
 
-CREATE TABLE IF NOT EXISTS "custom_polls"
+CREATE TABLE IF NOT EXISTS "custom_polls_temp"
 (
     "id"                INTEGER NOT NULL UNIQUE,
     "owner"             TEXT,
@@ -27,12 +27,6 @@ INSERT INTO custom_polls_temp (
 SELECT
     id, owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public
 FROM custom_polls;
-
-UPDATE custom_polls_temp
-SET 
-    promptMD = prompt,
-    promptHTML = prompt
-WHERE promptMD IS NULL OR promptHTML IS NULL;
 
 DROP TABLE custom_polls;
 ALTER TABLE custom_polls_temp RENAME TO custom_polls;
