@@ -68,7 +68,7 @@ function isUserExcludedFromVoting(classroom, user, student) {
  */
 function isValidPollResponse(poll, res, isRemoving) {
     if (!poll.allowMultipleResponses) {
-        if (res !== "remove" && !poll.responses.some((response) => response.answer === res)) {
+        if (res !== "remove" && !poll.responses.some((response) => response.answer === res.toString())) {
             return false;
         }
     } else {
@@ -259,7 +259,7 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
         student.pollRes.textRes = "";
         student.pollRes.time = "";
     } else {
-        student.pollRes.buttonRes = res;
+        student.pollRes.buttonRes = allowMultipleResponses ? res : res.toString();
         student.pollRes.textRes = textRes;
         student.pollRes.time = new Date();
     }
