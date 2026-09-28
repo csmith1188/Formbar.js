@@ -4,11 +4,9 @@ const { resolveAPIKey } = require("@services/api-key-service");
 const { SCOPES } = require("@modules/scopes");
 const { flattenObject } = require("@modules/util");
 const { createPool } = require("@services/digipog-service");
-const { registerItem, addItemToInventory } = require("@services/inventory-service");
 const ValidationError = require("@errors/validation-error");
 const crypto = require("crypto");
 
-const SHARES_PER_APP = 100;
 const VALID_APP_SCOPES = flattenObject(SCOPES.APP);
 
 function normalizeOAuthScopes(scopes = "") {
@@ -76,13 +74,9 @@ async function createApp({ name, description, ownerId, redirectUris = [] }) {
     await dbRun("BEGIN TRANSACTION");
 
     try {
-        const shareItemId = await registerItem({
-            name: `${name} Share`,
-            description: `Share of ${name}`,
-            stackSize: SHARES_PER_APP,
-            iconUrl: null,
-        });
-        const poolId = await createPool({ name: `${name} Developer Pool`, description, ownerId, shareItemId });
+        const poolId = await createPool({ name: `${name} Developer Pool`, description, ownerId });
+        const pool = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId]);
+        const shareItemId = pool.share_item;
 
         const appId = await dbRun("INSERT INTO apps (name, description, owner_user_id, share_item_id, pool_id) VALUES (?, ?, ?, ?, ?)", [
             name,
@@ -105,7 +99,6 @@ async function createApp({ name, description, ownerId, redirectUris = [] }) {
         await dbRun("INSERT INTO api_keys (api_key_hash, entity_id, entity_type) VALUES (?, ?, ?)", [apiKeyHash, appId, "app"]);
         await dbRun("UPDATE apps SET client_secret_hash = ? WHERE id = ?", [apiSecretHash, appId]);
 
-        await addItemToInventory(ownerId, shareItemId, SHARES_PER_APP);
         await dbRun("COMMIT");
 
         return {
