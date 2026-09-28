@@ -5,6 +5,9 @@ const { getGlobalPermissionLevelForUser } = require("@modules/scope-resolver");
 const { compareBcrypt } = require("@modules/crypto");
 const { digipogRateLimit } = require("@modules/config");
 const AppError = require("@errors/app-error");
+const { registerItem, addItemToInventory } = require("@services/inventory-service");
+
+const SHARES_PER_POOL = 100;
 
 // Rate limiting
 
@@ -162,12 +165,18 @@ async function getComputedGlobalUser(userId) {
  * @param {string} poolData.name - Pool name.
  * @param {string} [poolData.description] - Pool description.
  * @param {number} poolData.ownerId - Owner user ID.
- * @param {number} poolData.shareItemId - Id of pool share item
  * @returns {Promise<number>}
  */
-async function createPool({ name, description = "", ownerId, shareItemId = null}) {
+async function createPool({ name, description = "", ownerId }) {
+    const shareItemId = await registerItem({
+        name: `${name} Share`,
+        description: `Share of ${name}`,
+        stackSize: SHARES_PER_POOL,
+        iconUrl: null,
+    });
     const poolId = await dbRun("INSERT INTO digipog_pools (name, description, amount, share_item) VALUES (?, ?, ?, ?)", [name, description, 0, shareItemId]);
     await addUserToPool(poolId, ownerId, 1);
+    await addItemToInventory(ownerId, shareItemId, SHARES_PER_POOL);
     return poolId;
 }
 
