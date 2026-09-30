@@ -104,7 +104,7 @@ function setupDisconnectHandler(socket, email, classId, isApiAuth = false) {
                 const timer = setTimeout(async () => {
                     reconnectTimers.delete(email);
                     if (!socketStateStore.hasUserSockets(email)) {
-                        classKickStudent(userId, activeClassId, { exitRoom: false, ban: false });
+                        if (activeClassId) classKickStudent(userId, activeClassId, { exitRoom: false, ban: false });
                     }
                 }, reconnectGraceMs);
                 reconnectTimers.set(email, timer);
