@@ -78,7 +78,7 @@ module.exports = (router) => {
         // Attempt login through auth service
         const result = await authService.login(email, password);
         if (result.code) {
-            throw new ValidationError("Incorrect password. Try again.", { event: "auth.login.invalid", reason: "invalid_credentials" });
+            throw new ValidationError("Could not log you in with those credentials. Try again.", { event: "auth.login.invalid", reason: "invalid_credentials" });
         }
 
         // If not already logged in, create a new Student instance in classInformation
