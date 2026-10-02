@@ -15,7 +15,7 @@ const { getAssignedClassScopes, getClassAccessProfile, userHasAnyScope, userHasS
 const { getStudentsInClass, getIdFromEmail, getEmailFromId } = require("@services/student-service");
 const { generateKey } = require("@modules/util");
 const { clearPoll } = require("@services/poll-service");
-const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles } = require("@services/role-service");
+const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles, getStudentRoles, removeStudentRole, getUserRoles } = require("@services/role-service");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const { buildRoleReferences } = require("@modules/role-reference");
 const { io } = require("@modules/web-server");
@@ -340,6 +340,7 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinClass(userData, classId) {
+    console.log(`User is joining class ${classId}.`)
     const email = userData.email;
     requireInternalParam(classId, "classId");
     requireInternalParam(email, "email");
@@ -400,6 +401,7 @@ async function joinClass(userData, classId) {
  * @returns {boolean} True if the user was removed successfully, false otherwise.
  */
 async function leaveClass(userData, classId) {
+    console.log(`User is leaving ${classId}.`)
     // If no classId is provided, use the user's active class
     if (!classId) {
         classId = userData.activeClass;
@@ -500,6 +502,15 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
 
     if (classroom && classroomStudent) {
         const student = classroomStudent;
+
+        // Remove all class roles from the student
+        const studentClassRoles = (await getUserRoles(userId)).class
+        if (studentClassRoles) studentClassRoles.forEach(role => removeStudentRole(classId, userId, role.id))
+
+        student.pollRes = {}
+        student.help = false
+        student.break = false
+
         student.activeClass = null;
         student.break = false;
         student.help = false;
@@ -559,7 +570,7 @@ async function classKickStudents(classId) {
         if (kickOperations.length > 0) {
             await Promise.all(kickOperations);
         }
-    } catch (err) {}
+    } catch (err) { }
 }
 
 /**

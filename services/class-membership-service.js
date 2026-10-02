@@ -19,6 +19,7 @@ const { buildRoleReferences } = require("@modules/role-reference");
 const { userSocketUpdates } = require("../sockets/init");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const NotFoundError = require("@errors/not-found-error");
+const { joinClass } = require("@services/class-service");
 
 // Lazy-load class-service to avoid circular dependency
 let classService;
@@ -141,10 +142,10 @@ async function setClassroomBanStatus(classroomId, userId, isBanned) {
         const normalizedBannedRole =
             isBanned && bannedRole
                 ? classroom?.availableRoles?.find(
-                      (role) =>
-                          Number(role.id) === Number(bannedRole.id) ||
-                          (Array.isArray(role.scopes) && role.scopes.includes(SCOPES.CLASS.SYSTEM.BLOCKED))
-                  ) || bannedRole
+                    (role) =>
+                        Number(role.id) === Number(bannedRole.id) ||
+                        (Array.isArray(role.scopes) && role.scopes.includes(SCOPES.CLASS.SYSTEM.BLOCKED))
+                ) || bannedRole
                 : null;
 
         classStateStore.updateClassroomStudent(classroomId, email, {
@@ -196,6 +197,8 @@ async function enrollByCode(code, sessionUser) {
     if (!result) {
         return { success: false };
     }
+
+    joinClass(sessionUser, classId)
 
     return {
         success: true,
