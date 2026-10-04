@@ -340,7 +340,6 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
  * @returns {Promise<boolean>} Returns true if joined successfully.
  */
 async function joinClass(userData, classId) {
-    console.log(`User is joining class ${classId}.`)
     const email = userData.email;
     requireInternalParam(classId, "classId");
     requireInternalParam(email, "email");
@@ -401,7 +400,6 @@ async function joinClass(userData, classId) {
  * @returns {boolean} True if the user was removed successfully, false otherwise.
  */
 async function leaveClass(userData, classId) {
-    console.log(`User is leaving ${classId}.`)
     // If no classId is provided, use the user's active class
     if (!classId) {
         classId = userData.activeClass;
