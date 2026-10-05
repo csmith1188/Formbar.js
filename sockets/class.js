@@ -104,8 +104,8 @@ module.exports = {
                     setting && typeof setting === "object" && !Array.isArray(setting)
                         ? setting
                         : {
-                              [setting]: value,
-                          };
+                            [setting]: value,
+                        };
 
                 await updateClassSetting(classId, classSettings);
 
@@ -192,7 +192,7 @@ module.exports = {
         onSocketEvent(socket, "classRemoveFromSession", hasClassScope(SCOPES.CLASS.STUDENTS.KICK), async (socketContext, userId) => {
             try {
                 const classId = await socketContext.resolveClassId();
-                await classKickStudent(userId, classId, { exitRoom: false, ban: false });
+                if (classId) await classKickStudent(userId, classId, { exitRoom: false, ban: false });
                 socketUpdates.classUpdate(classId);
             } catch (err) {
                 handleSocketError(err, socket, "classRemoveFromSession");
