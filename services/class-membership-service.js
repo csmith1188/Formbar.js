@@ -198,8 +198,6 @@ async function enrollByCode(code, sessionUser) {
         return { success: false };
     }
 
-    joinClass(sessionUser, classId)
-
     return {
         success: true,
         roomId: classId,
