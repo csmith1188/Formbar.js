@@ -15,7 +15,7 @@ const { getAssignedClassScopes, getClassAccessProfile, userHasAnyScope, userHasS
 const { getStudentsInClass, getIdFromEmail, getEmailFromId } = require("@services/student-service");
 const { generateKey } = require("@modules/util");
 const { clearPoll } = require("@services/poll-service");
-const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles, getStudentRoles, removeStudentRole, getUserRoles } = require("@services/role-service");
+const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles, getStudentRoles } = require("@services/role-service");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const { buildRoleReferences } = require("@modules/role-reference");
 const { io } = require("@modules/web-server");
@@ -498,12 +498,19 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         setClassOfApiSockets(existingUser.API, null);
     }
 
+    if (options.exitRoom && !options.ban) {
+        await dbRun("DELETE FROM user_roles WHERE userId=? AND classId=?", [userId, classId]);
+    }
+
     if (classroom && classroomStudent) {
         const student = classroomStudent;
 
-        // Remove all class roles from the student
-        const studentClassRoles = (await getUserRoles(userId)).class
-        if (studentClassRoles) studentClassRoles.forEach(role => removeStudentRole(classId, userId, role.id))
+        if (options.exitRoom && !options.ban) {
+            student.roles = {
+                global: student.roles?.global || [],
+                class: [],
+            };
+        }
 
         student.pollRes = {}
         student.help = false
