@@ -278,6 +278,21 @@ describe("classKickStudent()", () => {
 
         await expect(classKickStudent(student.id, classId)).rejects.toThrow(/not in the specified class/i);
     });
+
+    it("clears class role assignments before a kicked user can rejoin", async () => {
+        const teacher = await seedUser("teacher-role-kick@example.com", "Teacher Role Kick");
+        const student = await seedUser("student-role-kick@example.com", "Student Role Kick");
+        const { id: classId } = await seedClassroom({ ownerId: teacher.id, name: "Role Kick Class" });
+        const role = await mockDatabase.dbGet("SELECT id FROM roles WHERE name = ? LIMIT 1", ["Student"]);
+
+        await mockDatabase.dbRun("INSERT INTO classusers (classId, studentId) VALUES (?, ?)", [classId, student.id]);
+        await mockDatabase.dbRun("INSERT INTO user_roles (userId, roleId, classId) VALUES (?, ?, ?)", [student.id, role.id, classId]);
+
+        await classKickStudent(student.id, classId);
+
+        const assignments = await mockDatabase.dbGetAll("SELECT * FROM user_roles WHERE userId = ? AND classId = ?", [student.id, classId]);
+        expect(assignments).toEqual([]);
+    });
 });
 
 describe("startTimer()", () => {

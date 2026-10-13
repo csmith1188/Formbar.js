@@ -133,6 +133,10 @@ describe("createPool()", () => {
         const pool = await getPoolById(poolId);
         expect(pool.name).toBe("My Pool");
         expect(pool.amount).toBe(0);
+        const shareItem = await mockDatabase.dbGet("SELECT name, description, stack_size FROM item_registry WHERE id = ?", [pool.share_item]);
+        expect(shareItem).toEqual({ name: "My Pool Share", description: "Share of My Pool", stack_size: 100 });
+        const shares = await mockDatabase.dbGet("SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ?", [user.id, pool.share_item]);
+        expect(shares.quantity).toBe(100);
 
         const ownerFlag = await isPoolFoundedByUser(poolId, user.id);
         expect(ownerFlag).toBe(true);

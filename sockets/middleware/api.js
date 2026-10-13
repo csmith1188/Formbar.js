@@ -89,7 +89,7 @@ function setupDisconnectHandler(socket, email, classId, isApiAuth = false) {
         const userId = await getIdFromEmail(email);
         if (isApiAuth) {
             if (!socketStateStore.hasUserSockets(email)) {
-                classKickStudent(userId, classId, { exitRoom: false, ban: false });
+                if (classId) classKickStudent(userId, classId, { exitRoom: false, ban: false });
             }
         } else {
             const { emptyAfterRemoval } = socketStateStore.removeUserSocket(email, socket.id);
@@ -104,7 +104,7 @@ function setupDisconnectHandler(socket, email, classId, isApiAuth = false) {
                 const timer = setTimeout(async () => {
                     reconnectTimers.delete(email);
                     if (!socketStateStore.hasUserSockets(email)) {
-                        classKickStudent(userId, activeClassId, { exitRoom: false, ban: false });
+                        if (activeClassId) classKickStudent(userId, activeClassId, { exitRoom: false, ban: false });
                     }
                 }, reconnectGraceMs);
                 reconnectTimers.set(email, timer);
