@@ -317,8 +317,7 @@ describe("getTopHoldingPoolsForUser()", () => {
         const { share_item: lowerShareItemId } = await getPoolById(lowerPoolId);
         await addUserToPool(topPoolId, user.id);
         await addUserToPool(lowerPoolId, user.id);
-        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [other.id, topShareItemId, 5]);
-        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [other.id, lowerShareItemId, 105]);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [user.id, topShareItemId, 105]);
 
         expect(await getTopHoldingPoolsForUser(user.id)).toEqual([topPoolId]);
     });
@@ -561,16 +560,19 @@ describe("payoutPool()", () => {
         const member = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", ownerId: owner.id });
         await addUserToPool(poolId, member.id, 0);
+        await mockDatabase.dbRun("UPDATE inventory SET quantity = 100 WHERE user_id = ?", [member.id]);
+
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 100 WHERE id = ?", [poolId]);
 
-        const result = await payoutPool({ actingUserId: owner.id, poolId });
+        
+        const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
         expect(result).toEqual({ success: true, message: "Pool payout successful." });
-
+        
         const ownerRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [owner.id]);
         const memberRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [member.id]);
         expect(ownerRow.digipogs).toBe(50);
         expect(memberRow.digipogs).toBe(50);
-
+        
         const pool = await getPoolById(poolId);
         expect(pool.amount).toBe(0);
     });

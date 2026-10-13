@@ -246,6 +246,26 @@ CREATE TABLE IF NOT EXISTS "transactions" (
 CREATE INDEX IF NOT EXISTS idx_transactions_from_account_date ON transactions (from_type, from_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_to_account_date ON transactions (to_type, to_id, date DESC);
 
+-- Exchanges
+CREATE TABLE IF NOT EXISTS "exchanges"
+( 
+    "id"            INTEGER NOT NULL UNIQUE,
+    "from_user_id"  INTEGER,
+    "from_id"       INTEGER,
+    "from_type"     TEXT,
+    "offer"         TEXT,
+    "to_user_id"    INTEGER,
+    "to_id"         INTEGER,
+    "to_type"       TEXT,
+    "request"       TEXT,
+    "reason"        TEXT,
+    "status"        TEXT,
+    "failure_reason"    TEXT,
+    "created_at"    TEXT, -- iso-8601
+    "updated_at"    TEXT, -- iso-8601
+    PRIMARY KEY ("id" AUTOINCREMENT)
+);
+
 -- Notifications (migration 21)
 CREATE TABLE IF NOT EXISTS "notifications" (
     "id"         INTEGER NOT NULL,
@@ -283,7 +303,7 @@ CREATE TABLE IF NOT EXISTS "trades" (
     "from_user"          INTEGER NOT NULL,
     "to_user"            INTEGER NOT NULL,
     "from_source_type"   TEXT    NOT NULL DEFAULT 'inventory' CHECK (from_source_type IN ('inventory', 'pool')),
-    "from_pool_id"       INTEGER,
+    "from_id"       INTEGER,
     "to_source_type"     TEXT    NOT NULL DEFAULT 'inventory' CHECK (to_source_type IN ('inventory', 'pool')),
     "to_pool_id"         INTEGER,
     "offered_items"      TEXT,

@@ -545,18 +545,21 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
 	}
 
 	const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
-    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item])
+    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item]);
+    const { totalShares } = await dbGet("SELECT SUM(quantity) AS totalShares FROM inventory WHERE item_id = ?", [pool.share_item]);
+
+    console.log(totalShares);
 
     // Payout each member
     try {
         await dbRun("BEGIN TRANSACTION");
         for (const shareholder of shareholders) {
             const userShare = await dbGet("SELECT quantity FROM inventory WHERE item_id = ? AND user_id = ?", [pool.share_item, shareholder.user_id]);
-			const userPayout = Math.floor(payoutAmount * (userShare.quantity / 100));
+			const userPayout = Math.floor(payoutAmount * (userShare.quantity / totalShares));
             if (!userShare) continue;
 
 			await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
-			await dbRun("INSERT INTO exchanges (from_user_id, from_pool_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+			await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
                 actingUserId,
                 pool.id,
                 "pool",
@@ -571,10 +574,11 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
             ]);
         }
 
-        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [payoutAmount, poolId]);
+        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [Math.floor(payoutAmount), poolId]);
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
+        throw err;
         throw new AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
     }
 
