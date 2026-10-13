@@ -13,6 +13,7 @@ const AppError = require("@errors/app-error");
  * @param {Object} payload - An object with item IDs as keys and quantities as values
  * @returns {Object} A new object containing only non-zero item IDs with their quantities
  */
+
 function getPayloadItems(payload) {
     let items = {};
     for (const [itemId, quantity] of Object.entries(payload)) {
@@ -508,11 +509,11 @@ async function getExchangeById(exchangeId, userId) {
  * @param {{limit?: number, offset?: number, filters?: string[]}} options
  * @returns {Promise<{success: boolean, data: {exchanges: Object[], total: number, limit: number, offset: number, hasMore: boolean}}>} 
  */
-async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = ["inbound", "outbound"] }) {
-    // Always include inbound and outbound by default if neither are specified
-    if (filters == null || (!filters.includes("inbound") && !filters.includes("outbound"))) {
+async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = ["included"] }) {
+    // Always include 'included' (inbound or outbound) by default if inbound or outbound is not specified
+    if (filters == null || !filters.includes("included")) {
         filters ??= [];
-        filters.push("inbound", "outbound");
+        filters.push("included");
     }
 
     // Filters that can be achieved with a simple sql condition
@@ -525,10 +526,14 @@ async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = [
     // All are functions that return a Promise<boolean>
     const jsFilters = {
         inbound: async (exchange) => {
-            return exchange.to_user_id === userId && await getTopHoldingPoolsForUser(userId).includes(exchange.to_id);
+            return exchange.to_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.to_id);
         },
         outbound: async (exchange) => {
-            return exchange.from_user_id === userId || await getTopHoldingPoolsForUser(userId).includes(exchange.from_id);
+            return exchange.from_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.from_id);
+        },
+        included: async (exchange) => {
+            return (exchange.to_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.to_id) ||
+                    exchange.from_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.from_id));
         },
     }
 
@@ -563,7 +568,8 @@ async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = [
 
     for (const exchange of exchanges) {
         const filterResults = await Promise.allSettled(activeJsFilters.map((filter) => filter.call(this, exchange)));
-        if (!filterResults.includes(false)) {
+        
+        if (filterResults.every((result) => result.value)) {
             filteredExchanges.push(formatExchangeFromDbToApi(exchange));
         }
     }
@@ -611,7 +617,7 @@ async function cancelExchange(exchangeId, pin) {
 
     await dbRun("BEGIN IMMEDIATE TRANSACTION");
     {
-        await dbRun("UPDATE exchanges SET status = 'cancelled', failure_reason = 'Creator initiated cancel'");
+        await dbRun("UPDATE exchanges SET status = 'canceled', failure_reason = 'Creator initiated cancel' WHERE id = ?", [exchangeId]);
     }
     await dbRun("COMMIT");
 
@@ -645,7 +651,7 @@ async function rejectExchange(exchangeId, pin) {
 
     await dbRun("BEGIN IMMEDIATE TRANSACTION");
     {
-        await dbRun("UPDATE exchanges SET status = 'rejected', failure_reason = 'Recipient rejected the exchange'");
+        await dbRun("UPDATE exchanges SET status = 'rejected', failure_reason = 'Recipient rejected the exchange' WHERE id = ?", [exchangeId]);
     }
     await dbRun("COMMIT");
 
