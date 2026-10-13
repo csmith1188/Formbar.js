@@ -44,7 +44,7 @@ module.exports = (router) => {
      *       404:
      *         description: Exchange not found
      */
-    router.post("/trades/:id/cancel", isAuthenticated, async (req, res) => {
+    router.post("/exchanges/:id/cancel", isAuthenticated, async (req, res) => {
         requireParam(req.params.id, "id");
         requireBodyParam(req.body.pin, "pin");
 
@@ -54,9 +54,9 @@ module.exports = (router) => {
             throw new ValidationError("Exchange ID must be a positive integer.", { reason: "invalid_exchange_id" });
         }
 
-        req.infoEvent("trades.cancel", "Canceling trade", { exchangeId, userId: req.user.id });
+        req.infoEvent("exchanges.cancel", "Canceling exchange", { exchangeId, userId: req.user.id });
 
-        await cancelExchange(exchangeId, req.user.id);
+        await cancelExchange(exchangeId, pin);
         res.status(200).json({ success: true, data: {} });
     });
 };

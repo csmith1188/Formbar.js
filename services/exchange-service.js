@@ -573,6 +573,8 @@ async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = [
         success: true,
         data: {
             exchanges: finalExchanges,
+        },
+        pagination: {
             total: filteredExchanges.length,
             limit,
             offset,
@@ -602,9 +604,9 @@ async function cancelExchange(exchangeId, pin) {
 
 
     if (from_type === "user") {
-        verifyPin(from_user_id, pin);
+        await verifyPin(from_user_id, pin);
     } else {
-        verifyPoolPin(from_id, pin);
+        await verifyPoolPin(from_id, pin);
     }
 
     await dbRun("BEGIN IMMEDIATE TRANSACTION");
@@ -636,9 +638,9 @@ async function rejectExchange(exchangeId, pin) {
     }
 
     if (to_type === "user") {
-        verifyPin(to_user_id, pin);
+        await verifyPin(to_user_id, pin);
     } else {
-        verifyPoolPin(to_id, pin);
+        await verifyPoolPin(to_id, pin);
     }
 
     await dbRun("BEGIN IMMEDIATE TRANSACTION");
