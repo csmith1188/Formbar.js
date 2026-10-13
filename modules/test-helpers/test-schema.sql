@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS "digipog_pools" (
     "description" TEXT    NOT NULL DEFAULT 'None',
     "amount"      INTEGER NOT NULL DEFAULT 0,
 	"share_item"  INTEGER DEFAULT NULL,
+    "pin"         TEXT    DEFAULT NULL,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
@@ -261,7 +262,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications (user_id
 CREATE TABLE IF NOT EXISTS "inventory" (
     "id"       INTEGER NOT NULL,
     "user_id"  INTEGER NOT NULL,
-    "item_id"  INTEGER NOT NULL,
+    "item_id"  INTEGER,
     "quantity" INTEGER NOT NULL DEFAULT 1 CHECK ("quantity" > 0),
     PRIMARY KEY ("id" AUTOINCREMENT)
 );

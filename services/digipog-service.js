@@ -304,7 +304,7 @@ async function getTopHoldingPoolsForUser(userId) {
     let topHoldingPools = [];
 
     for (const {pool_id} of pools) {
-        if (await isPoolUserTopHolder(userId))
+        if (await isPoolUserTopHolder(pool_id, userId))
             topHoldingPools.push(pool_id);
     }
     
@@ -509,7 +509,7 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         return { success: false, message: "Invalid pool ID." };
     }
 
-    const isFounder = await isPoolFoundedByUser(poolId, actingUserId);
+    const isFounder = await isPoolUserTopHolder(poolId, actingUserId);
     if (!isFounder) {
         return { success: false, message: "You do not own this pool." };
     }

@@ -52,6 +52,11 @@ const {
     isUserInPool,
     isPoolFoundedByUser,
     poolFounderCheck,
+    getTopHoldingPoolsForUser,
+    isPoolUserTopHolder,
+    poolTopHolderCheck,
+    updatePoolPin,
+    verifyPoolPin,
     addUserToPool,
     removeUserFromPool,
     setUserOwnerFlag,
@@ -268,6 +273,99 @@ describe("poolFounderCheck()", () => {
         const poolId = await createPool({ name: "P", ownerId: owner.id });
         const req = { user: { id: other.id }, params: { id: String(poolId) } };
         expect(await poolFounderCheck(req)).toBe(false);
+    });
+});
+
+describe("isPoolUserTopHolder()", () => {
+    it("returns true for every tied highest shareholder", async () => {
+        const first = await seedUser();
+        const second = await seedUser();
+        const third = await seedUser();
+        const poolId = await createPool({ name: "Share Pool", ownerId: first.id });
+        const { share_item: shareItemId } = await getPoolById(poolId);
+
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [second.id, shareItemId, 100]);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [third.id, shareItemId, 5]);
+
+        expect(await isPoolUserTopHolder(poolId, first.id)).toBe(true);
+        expect(await isPoolUserTopHolder(poolId, second.id)).toBe(true);
+        expect(await isPoolUserTopHolder(poolId, third.id)).toBe(false);
+    });
+});
+
+describe("poolTopHolderCheck()", () => {
+    it("reads the pool ID and user ID from the request", async () => {
+        const owner = await seedUser();
+        const poolId = await createPool({ name: "Top Holder Pool", ownerId: owner.id });
+
+        const req = { user: { id: owner.id }, params: { id: String(poolId) } };
+        expect(await poolTopHolderCheck(req)).toBe(true);
+    });
+});
+
+describe("getTopHoldingPoolsForUser()", () => {
+    it("returns only memberships where the user is a top holder", async () => {
+        const user = await seedUser();
+        const other = await seedUser();
+        const topPoolId = await createPool({ name: "Top Pool", ownerId: other.id });
+        const lowerPoolId = await createPool({ name: "Lower Pool", ownerId: other.id });
+        const { share_item: topShareItemId } = await getPoolById(topPoolId);
+        const { share_item: lowerShareItemId } = await getPoolById(lowerPoolId);
+        await addUserToPool(topPoolId, user.id);
+        await addUserToPool(lowerPoolId, user.id);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [other.id, topShareItemId, 5]);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [other.id, lowerShareItemId, 105]);
+
+        expect(await getTopHoldingPoolsForUser(user.id)).toEqual([topPoolId]);
+    });
+});
+
+describe("updatePoolPin()", () => {
+    it("sets a PIN when the pool has no PIN", async () => {
+        const owner = await seedUser();
+        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+
+        await updatePoolPin(poolId, null, "1234");
+
+        await expect(verifyPoolPin(poolId, "1234")).resolves.toBe(true);
+    });
+
+    it("requires and verifies the current PIN before replacing it", async () => {
+        const owner = await seedUser();
+        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        await updatePoolPin(poolId, null, "1234");
+
+        await expect(updatePoolPin(poolId, null, "5678")).rejects.toThrow("Missing the current PIN");
+        await expect(updatePoolPin(poolId, "0000", "5678")).rejects.toThrow("Current PIN is incorrect.");
+        await updatePoolPin(poolId, "1234", "5678");
+
+        await expect(verifyPoolPin(poolId, "5678")).resolves.toBe(true);
+    });
+
+    it("throws when the pool does not exist", async () => {
+        await expect(updatePoolPin(99999, null, "1234")).rejects.toThrow("pool not found.");
+    });
+});
+
+describe("verifyPoolPin()", () => {
+    it("throws when no PIN is set", async () => {
+        const owner = await seedUser();
+        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+
+        await expect(verifyPoolPin(poolId, "1234")).rejects.toThrow("No PIN is set");
+    });
+
+    it("returns true for a matching PIN and rejects an incorrect PIN", async () => {
+        const owner = await seedUser();
+        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        await updatePoolPin(poolId, null, "1234");
+
+        await expect(verifyPoolPin(poolId, "1234")).resolves.toBe(true);
+        await expect(verifyPoolPin(poolId, "0000")).rejects.toThrow("PIN is incorrect.");
+    });
+
+    it("throws when the pool does not exist", async () => {
+        await expect(verifyPoolPin(99999, "1234")).rejects.toThrow("pool not found.");
     });
 });
 
