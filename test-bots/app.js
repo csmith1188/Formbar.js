@@ -1,7 +1,7 @@
 import Bot from "./bot.js";
 process.stdin.setEncoding('utf8');
 const consoleIn = process.stdin;
-export const FORMBAR_URL = 'http://localhost:420';
+export const FORMBAR_URL = 'http://172.16.3.223:420';
 const bots = [];
 let tasks = [];
 let takenIds = [];
@@ -31,7 +31,7 @@ export class Task {
                     clearInterval(interval);
                 }
             }, 0);
-        }, 2000);
+        }, 5000);
     }
 }
 consoleIn.on('data', (data) => {
@@ -104,6 +104,11 @@ async function vote(amount, answer) {
         bots[i].vote(answer);
     }
 }
+
+function bar(length, color) {
+    return `\x1b[${color}m-\x1b[0m`.repeat(length)
+}
+
 function main() {
     console.clear();
     let types = [];
@@ -111,16 +116,19 @@ function main() {
         types.push(task.task);
     }
     types = [...new Set(types)];
-    for (let type of types) {
+    for (let type of types.sort()) {
         let tasksOfType = tasks.filter(t => t.task === type);
         const remaining = tasksOfType.filter(t => !t.finished).length;
         const failed = tasksOfType.filter(t => t.finished && t.success === false).length;
         const successful = tasksOfType.filter(t => t.finished && t.success).length;
         const finished = tasksOfType.filter(t => t.finished).length;
-        console.log(`${type}: Remaining: ${remaining}/${tasksOfType.length} Failed: ${Math.round(failed / finished * 100) || 0}% Successful: ${Math.round(successful / finished * 100) || 0}%`);
+        console.log(`${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * 20, '1;92')}${bar(failed / tasksOfType.length * 20, '1;91')}${bar(remaining / tasksOfType.length * 20, 0)}]\n`);
     }
 }
-setInterval(() => { if (tasks.length) {
-    main();
-} }, 100);
+
+setInterval(() => {
+    if (tasks.length) {
+        main();
+    }
+}, 100);
 //# sourceMappingURL=app.js.map

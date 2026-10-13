@@ -33,7 +33,7 @@ function deleteEmptyLogFiles() {
                 fs.unlinkSync(`logs/${file}`);
             }
         });
-    } catch {}
+    } catch { }
 }
 
 // Will make good later. This is temporary I swear to god. Steven, fix it.
@@ -103,6 +103,7 @@ function logEvent(logger, level, event, message = "", meta = {}) {
 }
 
 let logger;
+let loggerPromise;
 
 // the singleton is a temporary solution hopefully.
 /**
@@ -111,10 +112,11 @@ let logger;
  * @returns {Promise<*>}
  */
 async function getLogger() {
-    if (!logger) {
-        logger = await createLogger();
+    if (!loggerPromise) {
+        loggerPromise = createLogger();
     }
 
+    logger = await loggerPromise;
     return logger;
 }
 
