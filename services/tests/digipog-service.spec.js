@@ -559,11 +559,10 @@ describe("payoutPool()", () => {
         const owner = await seedUser({ digipogs: 0 });
         const member = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const pool = await getPoolById(poolId);
         await addUserToPool(poolId, member.id, 0);
-        await mockDatabase.dbRun("UPDATE inventory SET quantity = 100 WHERE user_id = ?", [member.id]);
-
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, 100)", [member.id, pool.share_item]);
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 100 WHERE id = ?", [poolId]);
-
         
         const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
         expect(result).toEqual({ success: true, message: "Pool payout successful." });
@@ -573,7 +572,6 @@ describe("payoutPool()", () => {
         expect(ownerRow.digipogs).toBe(50);
         expect(memberRow.digipogs).toBe(50);
         
-        const pool = await getPoolById(poolId);
         expect(pool.amount).toBe(0);
     });
 
@@ -584,7 +582,7 @@ describe("payoutPool()", () => {
 
         await payoutPool({ actingUserId: owner.id, poolId });
 
-        const txns = await mockDatabase.dbGetAll("SELECT * FROM transactions WHERE from_id = ? AND from_type = 'pool'", [poolId]);
+        const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_id = ? AND from_type = 'pool'", [poolId]);
         expect(txns).toHaveLength(1);
         expect(txns[0].to_id).toBe(owner.id);
         expect(txns[0].amount).toBe(50);
