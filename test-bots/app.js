@@ -1,7 +1,7 @@
 import Bot from "./bot.js";
 process.stdin.setEncoding('utf8');
 const consoleIn = process.stdin;
-export const FORMBAR_URL = 'http://172.16.3.223:420';
+export const FORMBAR_URL = 'http://172.16.3.119:420';
 const bots = [];
 let tasks = [];
 let takenIds = [];
@@ -10,6 +10,7 @@ export class Task {
     task;
     finished = false;
     success = true;
+    removeScheduled = false;
     constructor(task) {
         this.id = 1;
         while (takenIds.includes(this.id)) {
@@ -22,6 +23,13 @@ export class Task {
     finish(success) {
         this.finished = true;
         this.success = success;
+    }
+
+    remove() {
+        if (this.removeScheduled) {
+            return;
+        }
+        this.removeScheduled = true;
         setTimeout(() => {
             let interval = setInterval(() => {
                 let me = tasks.find(t => t.id === this.id);
@@ -100,7 +108,6 @@ async function getClass(amount) {
 async function vote(amount, answer) {
     amount = Math.min(amount, bots.length);
     for (let i = 0; i < amount; i++) {
-        await bots[i].getClass();
         bots[i].vote(answer);
     }
 }
@@ -109,12 +116,22 @@ function bar(length, color) {
     return `\x1b[${color}m-\x1b[0m`.repeat(length)
 }
 
+let barLength = 100
+
 function main() {
     console.clear();
     let types = [];
     for (let task of tasks) {
         types.push(task.task);
     }
+
+    for (let type of types) {
+        let tasksOfType = tasks.filter(t => t.task === type);
+        if (tasksOfType.length && tasksOfType.every(t => t.finished)) {
+            for (let task of tasksOfType) task.remove();
+        }
+    }
+
     types = [...new Set(types)];
     for (let type of types.sort()) {
         let tasksOfType = tasks.filter(t => t.task === type);
@@ -122,7 +139,7 @@ function main() {
         const failed = tasksOfType.filter(t => t.finished && t.success === false).length;
         const successful = tasksOfType.filter(t => t.finished && t.success).length;
         const finished = tasksOfType.filter(t => t.finished).length;
-        console.log(`${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * 20, '1;92')}${bar(failed / tasksOfType.length * 20, '1;91')}${bar(remaining / tasksOfType.length * 20, 0)}]\n`);
+        console.log(`${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * barLength, '1;92')}${bar(failed / tasksOfType.length * barLength, '1;91')}${bar(remaining / tasksOfType.length * barLength, 0)}]\n`);
     }
 }
 

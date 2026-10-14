@@ -217,7 +217,6 @@ export default class Bot {
         }
     }
     async vote(answer) {
-        await this.getClass();
         let task = new Task(`Vote ${answer}`);
         if (!this.classInfo.isActive && !this.classInfo.poll || !this.classInfo.poll?.responses) {
             task.finish(false);
@@ -226,6 +225,7 @@ export default class Bot {
         let body;
         const url = `${FORMBAR_URL}/api/v1/class/${this.inRoom}/polls/response`;
         if (answer == 'RANDOM') {
+            await this.getClass();
             let allResponses = this.classInfo.poll.responses.map((response) => {
                 return {
                     id: response.id,
