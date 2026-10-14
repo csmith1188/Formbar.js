@@ -101,15 +101,19 @@ async function seedPool(name = "Test Pool", amount = 0) {
     return { id, name, amount };
 }
 
-async function seedTransaction(from_id, to_id, from_type, to_type, amount, reason = "test") {
-    await mockDatabase.dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+async function seedTransaction(from_user_id, from_id, to_user_id, to_id, from_type, to_type, amount, reason = "test") {
+    const now = new Date().toISOString();
+    await mockDatabase.dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, '{}', ?, 'completed', ?, ?)", [
+        from_user_id,
         from_id,
-        to_id,
         from_type,
+        JSON.stringify({0: amount}),
+        to_user_id,
+        to_id,
         to_type,
-        amount,
         reason,
-        Date.now(),
+        now,
+        now
     ]);
 }
 
@@ -578,14 +582,15 @@ describe("payoutPool()", () => {
     it("creates transaction records for each payout", async () => {
         const owner = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", ownerId: owner.id });
+        await mockDatabase.dbRun("DELETE FROM exchanges");
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 50 WHERE id = ?", [poolId]);
 
-        await payoutPool({ actingUserId: owner.id, poolId });
+        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
 
         const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_id = ? AND from_type = 'pool'", [poolId]);
         expect(txns).toHaveLength(1);
-        expect(txns[0].to_id).toBe(owner.id);
-        expect(txns[0].amount).toBe(50);
+        expect(txns[0].to_user_id).toBe(owner.id);
+        expect(JSON.parse(txns[0].offer)["0"]).toBe(50);
         expect(txns[0].reason).toBe("Pool Payout");
     });
 
@@ -594,11 +599,14 @@ describe("payoutPool()", () => {
         const m1 = await seedUser({ digipogs: 0 });
         const m2 = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const pool = await getPoolById(poolId);
         await addUserToPool(poolId, m1.id, 0);
         await addUserToPool(poolId, m2.id, 0);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, 100)", [m1.id, pool.share_item]);
+        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, 100)", [m2.id, pool.share_item]);
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 10 WHERE id = ?", [poolId]);
 
-        await payoutPool({ actingUserId: owner.id, poolId });
+        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
 
         const ownerRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [owner.id]);
         // 10 / 3 = 3 (floored)
@@ -636,9 +644,10 @@ describe("getUserTransactions()", () => {
     it("returns enriched transactions involving the user", async () => {
         const sender = await seedUser();
         const receiver = await seedUser();
-        await seedTransaction(sender.id, receiver.id, "user", "user", 10, "gift");
+        await seedTransaction(sender.id, null, receiver.id, null, "user", "user", 10, "gift");
 
         const txns = await getUserTransactions(sender.id);
+        
         expect(txns).toHaveLength(1);
         expect(txns[0].amount).toBe(10);
         expect(txns[0].reason).toBe("gift");
@@ -650,7 +659,7 @@ describe("getUserTransactions()", () => {
     it("returns transactions where user is the recipient", async () => {
         const sender = await seedUser();
         const receiver = await seedUser();
-        await seedTransaction(sender.id, receiver.id, "user", "user", 5);
+        await seedTransaction(sender.id, null, receiver.id, null, "user", "user", 5);
 
         const txns = await getUserTransactions(receiver.id);
         expect(txns).toHaveLength(1);
@@ -668,7 +677,7 @@ describe("getUserTransactionsPaginated()", () => {
         const user = await seedUser();
         const other = await seedUser();
         for (let i = 0; i < 5; i++) {
-            await seedTransaction(user.id, other.id, "user", "user", i + 1, `txn-${i}`);
+            await seedTransaction(user.id, null, other.id, null, "user", "user", i + 1, `txn-${i}`);
         }
 
         const result = await getUserTransactionsPaginated(user.id, 2, 0);
@@ -679,7 +688,7 @@ describe("getUserTransactionsPaginated()", () => {
     it("enriches pool-type transactions", async () => {
         const user = await seedUser();
         const pool = await seedPool("Enriched Pool", 50);
-        await seedTransaction(pool.id, user.id, "pool", "user", 25, "payout");
+        await seedTransaction(99999, pool.id, user.id, null, "pool", "user", 25, "payout");
 
         const result = await getUserTransactionsPaginated(user.id, 10, 0);
         expect(result.transactions).toHaveLength(1);
@@ -691,7 +700,7 @@ describe("getUserTransactionsPaginated()", () => {
         const user = await seedUser();
         await mockDatabase.dbRun("INSERT INTO classroom (name, owner, key) VALUES (?, ?, ?)", ["TestClass", user.id, "key123"]);
         const classRow = await mockDatabase.dbGet("SELECT id FROM classroom WHERE name = 'TestClass'");
-        await seedTransaction(user.id, classRow.id, "user", "class", 10, "class-award");
+        await seedTransaction(user.id, null, 99999, classRow.id, "user", "class", 10, "class-award");
 
         const result = await getUserTransactionsPaginated(user.id, 10, 0);
         expect(result.transactions[0].to.type).toBe("class");
@@ -1083,7 +1092,7 @@ describe("transferDigipogs()", () => {
             reason: "test-txn",
         });
 
-        const txns = await mockDatabase.dbGetAll("SELECT * FROM transactions WHERE from_id = ? AND from_type = 'user'", [sender.id]);
+        const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
         expect(txns).toHaveLength(1);
         expect(txns[0].amount).toBe(10);
         expect(txns[0].reason).toBe("test-txn");

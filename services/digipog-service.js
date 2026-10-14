@@ -279,7 +279,7 @@ function poolFounderCheck(req) {
  */
 async function isPoolUserTopHolder(poolId, userId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
-    if (row.share_item == null) return isPoolFoundedByUser(poolId, userId);
+    if (row == null || row.share_item == null) return isPoolFoundedByUser(poolId, userId);
     
     const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
     const maxQuantity = shareholders[0].quantity;
@@ -518,14 +518,14 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         return { success: false, message: "Invalid pool ID." };
     }
 
-    const isFounder = await isPoolUserTopHolder(poolId, actingUserId);
-    if (!isFounder) {
-        return { success: false, message: "You do not own this pool." };
-    }
-
     const pool = await getPoolById(poolId);
     if (!pool) {
         return { success: false, message: "Pool not found." };
+    }
+
+    const isFounder = await isPoolUserTopHolder(poolId, actingUserId);
+    if (!isFounder) {
+        return { success: false, message: "You do not own this pool." };
     }
 
 	if(amount <= 0) {
@@ -548,8 +548,6 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
     const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item]);
     const { totalShares } = await dbGet("SELECT SUM(quantity) AS totalShares FROM inventory WHERE item_id = ?", [pool.share_item]);
 
-    console.log(totalShares);
-
     // Payout each member
     try {
         await dbRun("BEGIN TRANSACTION");
@@ -563,11 +561,11 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
                 actingUserId,
                 pool.id,
                 "pool",
-                JSON.stringify({0: amount}),
+                JSON.stringify({0: userPayout}),
                 shareholder.user_id,
                 "user",
                 JSON.stringify({}),
-                "Pool payout",
+                "Pool Payout",
                 "completed",
                 Date.now(),
                 Date.now(),
@@ -593,10 +591,15 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
  * @returns {Promise<Object[]>}
  */
 async function getUserTransactions(userId) {
-    const transactions = await dbGetAll(
-        "SELECT * FROM transactions WHERE (from_id = ? AND from_type = 'user') OR (to_id = ? AND to_type = 'user') ORDER BY date DESC",
+    let transactions = await dbGetAll(
+        "SELECT * FROM exchanges WHERE request = '{}' AND ((from_user_id = ? AND from_type = 'user') OR (to_user_id = ? AND to_type = 'user')) ORDER BY created_at DESC",
         [userId, userId]
     );
+    // Filter only for transactions.
+    transactions = transactions.filter((transaction) => {
+        const keys = Object.keys(JSON.parse(transaction.offer));
+        return keys.length === 1 && keys.includes("0");
+    });
     return enrichTransactions(transactions);
 }
 
@@ -612,7 +615,7 @@ async function getUserTransactionsPaginated(userId, limit = 25, offset = 0) {
     const params = [userId, userId];
 
     const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM exchanges ${whereQuery}`, params);
-    let transactions = await dbGetAll(`SELECT from_user_id, to_user_id, from_id, to_id, from_type, to_type, offer, reason, created_at FROM exchanges ${whereQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    let transactions = await dbGetAll(`SELECT * FROM exchanges ${whereQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
     // Filter only for transactions.
     transactions = transactions.filter((transaction) => {
         const keys = Object.keys(JSON.parse(transaction.offer));
@@ -622,7 +625,7 @@ async function getUserTransactionsPaginated(userId, limit = 25, offset = 0) {
 
     return {
         transactions: enrichedTransactions,
-        total: enrichedTransactions.length,
+        total: totalRow.count,
     };
 }
 
@@ -660,7 +663,7 @@ async function enrichTransactions(transactions) {
                 classIds.add(transaction.to_id);
             }
         }
-    }
+    }    
 
     const [users, pools, classes] = await Promise.all([
         fetchUsersByIds(Array.from(userIds)),
@@ -673,7 +676,7 @@ async function enrichTransactions(transactions) {
         reason: transaction.reason,
         date: transaction.date,
         from: buildTransactionParty(transaction.from_user_id, transaction.from_id, transaction.from_type, users, pools, classes),
-        to: buildTransactionParty(transaction.from_user_id, transaction.to_id, transaction.to_type, users, pools, classes),
+        to: buildTransactionParty(transaction.to_user_id, transaction.to_id, transaction.to_type, users, pools, classes),
     }));
 }
 
@@ -1291,7 +1294,7 @@ async function transferDigipogs(transferData, options = {}) {
             // return founder if no share item
             const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [toAccount.id]);
             if (row.share_item == null) {
-                const { userId } = await dbGet("SELECT user_id AS userId FROM digipog_pool_users WHERE pool_id = ? AND owner = 1 LIMIT 1", [to.id]);
+                const { userId } = await dbGet("SELECT user_id AS userId FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [toAccount.id]);
                 toAccount.userId = userId;
             } else {    
                 const { userId } = await dbGet("SELECT user_id AS userId FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item]);
