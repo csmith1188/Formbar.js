@@ -14,6 +14,7 @@ export default class Bot {
     constructor(id) {
         this.id = id;
     }
+
     async makeAccount() {
         let task = new Task('Make Account');
         const url = `${FORMBAR_URL}/api/v1/auth/register`;
@@ -48,6 +49,7 @@ export default class Bot {
             await this.logIn();
         }
     }
+
     async getMe() {
         let task = new Task('Get Me');
         const url = `${FORMBAR_URL}/api/v1/user/me`;
@@ -75,6 +77,7 @@ export default class Bot {
             return false;
         }
     }
+
     async logIn() {
         let task = new Task('Log In');
         const url = `${FORMBAR_URL}/api/v1/auth/login`;
@@ -109,6 +112,7 @@ export default class Bot {
             return false;
         }
     }
+
     async getApi() {
         let task = new Task(`Get API Key`);
         const url = `${FORMBAR_URL}/api/v1/user/${this.formbarId}/api/regenerate`;
@@ -135,6 +139,7 @@ export default class Bot {
             task.finish(false);
         }
     }
+
     async enroll(code) {
         let task = new Task(`Enroll in Class ${code}`);
         const url = `${FORMBAR_URL}/api/v1/class/enroll/${code}`;
@@ -163,6 +168,7 @@ export default class Bot {
             return false;
         }
     }
+
     async leave() {
         let task = new Task(`Leave Room ${this.inRoom}`);
         const url = `${FORMBAR_URL}/api/v1/class/${this.inRoom}/unenroll`;
@@ -189,6 +195,7 @@ export default class Bot {
             return false;
         }
     }
+
     async getClass() {
         await this.getMe();
         let task = new Task('Get Class Info');
@@ -216,6 +223,7 @@ export default class Bot {
             return false;
         }
     }
+
     async vote(answer) {
         let task = new Task(`Vote ${answer}`);
         if (!this.classInfo.isActive && !this.classInfo.poll || !this.classInfo.poll?.responses) {
@@ -257,6 +265,67 @@ export default class Bot {
             return task.finish(false);
         }
         const data = await response.json();
+        if (data.success === true) {
+            task.finish(true);
+            return true;
+        }
+        else {
+            task.finish(false);
+            return false;
+        }
+    }
+
+    async requestBreak() {
+        let task = new Task('Request Break')
+        await this.getClass()
+        let body = {
+            reason: "I need a break!"
+        }
+
+        try {
+            response = await fetch(`${FORMBAR_URL}/api/v1/class/${this.inRoom}/break/request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}`
+                },
+                body: JSON.stringify(body)
+            })
+        } catch {
+            return task.finish(false)
+        }
+
+        const data = await response.json()
+
+        if (data.success === true) {
+            task.finish(true);
+            return true;
+        }
+        else {
+            task.finish(false);
+            return false;
+        }
+    }
+
+    async help() {
+        let task = new Task('Request Help')
+        await this.getClass()
+
+        try {
+            response = await fetch(`${FORMBAR_URL}/api/v1/class/${this.inRoom}/help/request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
+            })
+        } catch {
+            return task.finish(false)
+        }
+
+        const data = await response.json()
+        console.log(data)
+
         if (data.success === true) {
             task.finish(true);
             return true;
