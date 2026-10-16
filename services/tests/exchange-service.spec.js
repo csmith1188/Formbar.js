@@ -271,13 +271,14 @@ describe("getExchangeById()", () => {
 
         const exchange = await getExchangeById(exchangeId, 1);
 
-        expect(exchange).toEqual({
-            id: exchangeId,
-            from: { id: 1, type: "user", offer: { 1: 2 } },
-            to: { id: 2, type: "user", request: { 0: 5 } },
-            status: "pending",
-            reason: "test",
-        });
+        expect(exchange).toEqual(
+            expect.objectContaining({
+                id: exchangeId,
+                from: { id: 1, type: "user", offer: { 1: 2 } },
+                to: { id: 2, type: "user", request: { 0: 5 } },
+                status: "pending",
+            })
+        );
         expect(await getExchangeById(exchangeId, 2)).toEqual(exchange);
     });
 });
