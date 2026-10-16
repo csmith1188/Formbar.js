@@ -61,6 +61,7 @@ jest.mock("@stores/class-code-cache-store", () => ({
 jest.mock("@services/class-service", () => ({
     initializeClassroom: jest.fn(),
     addUserToClassroomSession: jest.fn(() => true),
+    applyDefaultEnrollmentRole: jest.fn(),
     endClass: jest.fn(),
     classKickStudent: jest.fn(),
 }));
