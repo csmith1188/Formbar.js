@@ -1338,7 +1338,7 @@ async function transferDigipogs(transferData, options = {}) {
 
         try {
             await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-                from.userId,
+                fromAccount.userId ?? from.userId,
                 fromAccount.id,
                 from.type,
                 JSON.stringify({0: amount}),

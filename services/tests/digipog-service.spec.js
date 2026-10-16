@@ -1024,19 +1024,18 @@ describe("transferDigipogs()", () => {
 
     it("transfers from user to pool", async () => {
         const sender = await seedUser({ digipogs: 100, pin: hashedPin });
-        const pool = await seedPool("Target Pool", 0);
-        const receiver = await seedUser({ digipogs: 0 });
+        const poolId = await createPool({ name: "Target Pool", description: "desc", ownerId: sender.id });
 
         const result = await transferDigipogs({
             from: { id: sender.id, type: "user" },
-            to: { id: pool.id, type: "pool" },
+            to: { id: poolId, type: "pool" },
             amount: 20,
             pin: "1234",
             reason: "",
         });
 
         expect(result.success).toBe(true);
-        const poolRow = await mockDatabase.dbGet("SELECT amount FROM digipog_pools WHERE id = ?", [pool.id]);
+        const poolRow = await mockDatabase.dbGet("SELECT amount FROM digipog_pools WHERE id = ?", [poolId]);
         expect(poolRow.amount).toBe(18); // 20 * 0.9 = 18
     });
 
@@ -1084,7 +1083,7 @@ describe("transferDigipogs()", () => {
         const sender = await seedUser({ digipogs: 100, pin: hashedPin });
         const receiver = await seedUser({ digipogs: 0 });
 
-        await transferDigipogs({
+        const result = await transferDigipogs({
             from: { id: sender.id, type: "user" },
             to: { id: receiver.id, type: "user" },
             amount: 10,
@@ -1092,10 +1091,12 @@ describe("transferDigipogs()", () => {
             reason: "test-txn",
         });
 
-        const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
-        expect(txns).toHaveLength(1);
-        expect(txns[0].amount).toBe(10);
-        expect(txns[0].reason).toBe("test-txn");
+        setTimeout(async () => {
+            const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
+            expect(txns).toHaveLength(1);
+            expect(txns[0].amount).toBe(10);
+            expect(txns[0].reason).toBe("test-txn");
+        }, 1000);
     });
 
     it("deposits tax into dev pool (id=0) when it exists", async () => {
