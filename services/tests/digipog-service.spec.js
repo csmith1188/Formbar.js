@@ -107,7 +107,7 @@ async function seedTransaction(from_user_id, from_id, to_user_id, to_id, from_ty
         from_user_id,
         from_id,
         from_type,
-        JSON.stringify({0: amount}),
+        JSON.stringify({ 0: amount }),
         to_user_id,
         to_id,
         to_type,
@@ -567,15 +567,15 @@ describe("payoutPool()", () => {
         await addUserToPool(poolId, member.id, 0);
         await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, 100)", [member.id, pool.share_item]);
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 100 WHERE id = ?", [poolId]);
-        
+
         const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
         expect(result).toEqual({ success: true, message: "Pool payout successful." });
-        
+
         const ownerRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [owner.id]);
         const memberRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [member.id]);
         expect(ownerRow.digipogs).toBe(50);
         expect(memberRow.digipogs).toBe(50);
-        
+
         expect(pool.amount).toBe(0);
     });
 
@@ -647,7 +647,7 @@ describe("getUserTransactions()", () => {
         await seedTransaction(sender.id, null, receiver.id, null, "user", "user", 10, "gift");
 
         const txns = await getUserTransactions(sender.id);
-        
+
         expect(txns).toHaveLength(1);
         expect(txns[0].amount).toBe(10);
         expect(txns[0].reason).toBe("gift");
@@ -1083,7 +1083,7 @@ describe("transferDigipogs()", () => {
         const sender = await seedUser({ digipogs: 100, pin: hashedPin });
         const receiver = await seedUser({ digipogs: 0 });
 
-        const result = await transferDigipogs({
+        await transferDigipogs({
             from: { id: sender.id, type: "user" },
             to: { id: receiver.id, type: "user" },
             amount: 10,
@@ -1091,12 +1091,10 @@ describe("transferDigipogs()", () => {
             reason: "test-txn",
         });
 
-        setTimeout(async () => {
-            const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
-            expect(txns).toHaveLength(1);
-            expect(txns[0].amount).toBe(10);
-            expect(txns[0].reason).toBe("test-txn");
-        }, 1000);
+        const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
+        expect(txns).toHaveLength(1);
+        expect(txns[0].amount).toBe(10);
+        expect(txns[0].reason).toBe("test-txn");
     });
 
     it("deposits tax into dev pool (id=0) when it exists", async () => {

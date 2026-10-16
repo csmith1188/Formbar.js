@@ -1244,13 +1244,13 @@ async function transferDigipogs(transferData, options = {}) {
         let fromAccount;
         if (from.type === "user") {
             fromAccount = await dbGet("SELECT id AS userId, digipogs, pin FROM users WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender account not found." };
             }
         } else {
             fromAccount = await dbGet("SELECT id, amount, pin FROM digipog_pools WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender pool not found." };
             }
@@ -1279,14 +1279,14 @@ async function transferDigipogs(transferData, options = {}) {
         if (to.type === "user") {
             const toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
             
-            if (!toAccount) {
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
         } else {
             toAccount = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [to.id]);
             
-            if (!toAccount) {
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
             }
@@ -1351,7 +1351,9 @@ async function transferDigipogs(transferData, options = {}) {
                 new Date().toISOString(),
                 new Date().toISOString()
             ]);
-        } catch (err) {}
+        } catch (err) {
+            throw err;
+        }
 
         recordAttempt(accountId, true);
         return {
