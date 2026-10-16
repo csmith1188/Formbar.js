@@ -43,8 +43,7 @@ export class Task {
     }
 }
 
-consoleIn.on('data', (data) => {
-    let terms = data.replaceAll(/[\r\n]+/gm, '').trim().split(' ');
+async function doCommand(terms) {
     if (terms[0] == 'make' && Number(terms[1])) {
         makeBots(Number(terms[1]));
     }
@@ -73,8 +72,8 @@ consoleIn.on('data', (data) => {
     if (terms[0] == 'cls' || terms[0] == 'clear') console.clear();
 
     if (terms[0] == 'exit') {
-        leave(Infinity)
-            .then(() => process.exit(0))
+        await leave(Infinity)
+        process.exit()
     }
 
     if (terms[0] == 'vote' && terms[1] && terms.length > 2) {
@@ -92,7 +91,7 @@ consoleIn.on('data', (data) => {
             requestHelp(amount)
         }
     }
-});
+}
 
 async function makeBots(amount) {
     for (let i = 0; i < amount; i++) {
@@ -150,10 +149,47 @@ function bar(length, color) {
     return `\x1b[${color}m-\x1b[0m`.repeat(length)
 }
 
-let barLength = 100
+import readline from 'readline'
+
+readline.emitKeypressEvents(process.stdin);
+process.stdin.setRawMode(true);
+
+let input = '';
+process.stdout.write('\r\x1b[2K> ' + input)
+
+process.stdin.on('keypress', async (char, key) => {
+    console.clear()
+    main()
+    if (key.ctrl && key.name === 'c') {
+        await leave(Infinity)
+        process.exit()
+    }
+
+    if (key.name === 'return') {
+        const command = input.trim();
+        input = ''
+        if (command) {
+            await doCommand(command.split(/\s+/));
+        }
+        if (!tasks.length) {
+            process.stdout.write('\r\x1b[2K> ' + input);
+        }
+        return;
+    }
+
+    if (key.name === 'backspace') {
+        input = input.slice(0, -1)
+    } else if (char && !key.ctrl && !key.meta) {
+        input += char
+    }
+
+    process.stdout.write('\r\x1b[2K> ' + input)
+});
+
+let barLength = 30
 
 function main() {
-    // console.clear();
+    console.clear();
     let types = [];
     for (let task of tasks) {
         types.push(task.task);
@@ -175,6 +211,8 @@ function main() {
         const finished = tasksOfType.filter(t => t.finished).length;
         console.log(`${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * barLength, '1;92')}${bar(failed / tasksOfType.length * barLength, '1;91')}${bar(remaining / tasksOfType.length * barLength, 0)}]\n`);
     }
+
+    process.stdout.write('\r\x1b[2K> ' + input)
 }
 
 setInterval(() => {
