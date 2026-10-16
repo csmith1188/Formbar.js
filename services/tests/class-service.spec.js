@@ -54,6 +54,9 @@ const {
     pauseTimer,
     resumeTimer,
     classKickStudent,
+    addUserToClassroomSession,
+    applyDefaultEnrollmentRole,
+    updateClassSetting,
 } = require("@services/class-service");
 
 const { classStateStore } = require("@services/classroom-service");
@@ -292,6 +295,37 @@ describe("classKickStudent()", () => {
 
         const assignments = await mockDatabase.dbGetAll("SELECT * FROM user_roles WHERE userId = ? AND classId = ?", [student.id, classId]);
         expect(assignments).toEqual([]);
+    });
+});
+
+describe("default enrollment role", () => {
+    it("assigns the configured role to a newly enrolled user", async () => {
+        const owner = await seedUser("owner-default-role@example.com", "Default Role Owner");
+        const student = await seedUser("student-default-role@example.com", "Default Role Student");
+        const { classId } = await createClass("Default Role Class", owner.id, owner.email);
+        const role = await mockDatabase.dbGet(
+            `SELECT r.id
+             FROM roles r
+             JOIN class_roles cr ON cr.roleId = r.id
+             WHERE r.name = ? AND cr.classId = ?`,
+            ["Mod", classId]
+        );
+
+        await updateClassSetting(classId, { defaultRoleId: role.id });
+        classStateStore.setUser(student.email, { id: student.id, email: student.email, roles: { global: [], class: [] } });
+
+        await addUserToClassroomSession(classId, student.email, { email: student.email });
+        expect(classStateStore.getUser(student.email).isOffline).toBe(false);
+        expect(
+            await mockDatabase.dbGet("SELECT roleId FROM user_roles WHERE userId = ? AND classId = ?", [student.id, classId])
+        ).toBeUndefined();
+        await applyDefaultEnrollmentRole(classId, student.id);
+
+        const assignment = await mockDatabase.dbGet(
+            "SELECT roleId FROM user_roles WHERE userId = ? AND classId = ?",
+            [student.id, classId]
+        );
+        expect(assignment.roleId).toBe(role.id);
     });
 });
 

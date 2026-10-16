@@ -173,6 +173,39 @@ describe("PATCH /api/v1/class/:id/settings", () => {
         expect(dbClass.name).toBe(newName);
     });
 
+    it("updates and persists the default enrollment role", async () => {
+        const { classId, teacherTokens } = await setupClassWithStudent();
+        const role = await mockDatabase.dbGet(
+            `SELECT r.id
+             FROM roles r
+             JOIN class_roles cr ON cr.roleId = r.id
+             WHERE r.name = ? AND cr.classId = ?`,
+            ["Mod", classId]
+        );
+
+        const res = await request(app)
+            .patch(`/api/v1/class/${classId}/settings`)
+            .set("Authorization", `Bearer ${teacherTokens.accessToken}`)
+            .send({ defaultRoleId: role.id });
+
+        expect(res.status).toBe(200);
+        expect(classStateStore.getClassroom(classId).settings.defaultRoleId).toBe(role.id);
+
+        const dbClass = await mockDatabase.dbGet("SELECT settings FROM classroom WHERE id = ?", [classId]);
+        expect(JSON.parse(dbClass.settings).defaultRoleId).toBe(role.id);
+    });
+
+    it("rejects a default role that is not available in the class", async () => {
+        const { classId, teacherTokens } = await setupClassWithStudent();
+
+        const res = await request(app)
+            .patch(`/api/v1/class/${classId}/settings`)
+            .set("Authorization", `Bearer ${teacherTokens.accessToken}`)
+            .send({ defaultRoleId: 999999 });
+
+        expect(res.status).toBe(400);
+    });
+
     it("returns 400 when classroom name is invalid", async () => {
         const { classId, teacherTokens } = await setupClassWithStudent();
 
