@@ -155,6 +155,9 @@ readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 
 let input = '';
+let previousInputs = ['']
+let previousSelector = 0
+console.clear()
 process.stdout.write('\r\x1b[2K> ' + input)
 
 process.stdin.on('keypress', async (char, key) => {
@@ -166,6 +169,8 @@ process.stdin.on('keypress', async (char, key) => {
     }
 
     if (key.name === 'return') {
+        previousInputs.push(input)
+        previousSelector = previousInputs.length
         const command = input.trim();
         input = ''
         if (command) {
@@ -175,6 +180,22 @@ process.stdin.on('keypress', async (char, key) => {
             process.stdout.write('\r\x1b[2K> ' + input);
         }
         return;
+    }
+
+    if (key.name === 'up') {
+        previousSelector--
+        previousSelector = Math.max(previousSelector, 0)
+        input = previousInputs[previousSelector]
+        process.stdout.write('\r\x1b[2K> ' + input)
+        return
+    }
+
+    if (key.name === 'down') {
+        previousSelector++
+        previousSelector = Math.min(previousSelector, previousInputs.length - 1)
+        input = previousInputs[previousSelector]
+        process.stdout.write('\r\x1b[2K> ' + input)
+        return
     }
 
     if (key.name === 'backspace') {
