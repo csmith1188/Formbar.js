@@ -8,6 +8,8 @@ const ForbiddenError = require("@errors/forbidden-error");
 const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
 
+const ALLOWED_EXCHANGE_TYPES = ["user", "pool"];
+
 /**
  * Filters for only the item IDs of payload
  * @param {Object} payload - An object with item IDs as keys and quantities as values
@@ -143,7 +145,7 @@ async function validateExchangePartyFields(exchangeParty, payload, name, payload
     if (exchangeParty.id == null || exchangeParty.id <= 0) {
         throw new ValidationError(`'id' field of '${name}' must be a valid user or pool ID.`);
     }
-    if (exchangeParty.type == null || !(["user", "pool"].includes(exchangeParty.type))) {
+    if (exchangeParty.type == null || !(ALLOWED_EXCHANGE_TYPES.includes(exchangeParty.type))) {
         throw new ValidationError(`'type' field of '${name}' must be either 'user' or 'pool'.`);
     }
 
