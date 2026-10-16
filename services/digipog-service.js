@@ -1277,7 +1277,7 @@ async function transferDigipogs(transferData, options = {}) {
 
         let toAccount;
         if (to.type === "user") {
-            const toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
+            toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
             
             if (toAccount == null) {
                 recordAttempt(accountId, false);

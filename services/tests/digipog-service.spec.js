@@ -1093,7 +1093,7 @@ describe("transferDigipogs()", () => {
 
         const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_user_id = ? AND from_type = 'user'", [sender.id]);
         expect(txns).toHaveLength(1);
-        expect(txns[0].amount).toBe(10);
+        expect(JSON.parse(txns[0].offer)["0"]).toBe(10);
         expect(txns[0].reason).toBe("test-txn");
     });
 
