@@ -51,29 +51,38 @@ async function seedPoolOwner(poolId, userId) {
 }
 
 async function seedTrade(opts) {
+    const exchangeOffer = {};
+    for (const { itemId, quantity } of opts.offeredItems ?? []) {
+        exchangeOffer[itemId] = quantity;
+    }
+    if (opts.offeredDigipogs) exchangeOffer["0"] = opts.offeredDigipogs;
+
+    const exchangeRequest = {};
+    for (const { itemId, quantity } of opts.requestedItems ?? []) {
+        exchangeRequest[itemId] = quantity;
+    }
+    if (opts.requestedDigipogs) exchangeRequest["0"] = opts.requestedDigipogs;
+
     const now = new Date().toISOString();
-    const id = await mockDatabase.dbRun(
-        `INSERT INTO trades (from_user, to_user, from_source_type, from_pool_id, to_source_type, to_pool_id,
-                             offered_items, requested_items, offered_digipogs, requested_digipogs,
-                             status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const tradeId = await mockDatabase.dbRun(
+        `INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type,
+                                request, reason, status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Trade', ?, ?, ?)`,
         [
             opts.fromUser,
+            opts.fromPoolId ?? null,
+            opts.fromSourceType === "inventory" || opts.fromSourceType == null ? "user" : opts.fromSourceType,
+            Object.keys(exchangeOffer).length > 0 ? JSON.stringify(exchangeOffer) : "{}",
             opts.toUser,
-            opts.fromSourceType || "inventory",
-            opts.fromPoolId || null,
-            opts.toSourceType || "inventory",
-            opts.toPoolId || null,
-            opts.offeredItems ? JSON.stringify(opts.offeredItems) : null,
-            opts.requestedItems ? JSON.stringify(opts.requestedItems) : null,
-            opts.offeredDigipogs || null,
-            opts.requestedDigipogs || null,
-            opts.status || "pending",
+            opts.toPoolId ?? null,
+            opts.toSourceType === "inventory" || opts.toSourceType == null ? "user" : opts.toSourceType,
+            Object.keys(exchangeRequest).length > 0 ? JSON.stringify(exchangeRequest) : "{}",
+            opts.status ?? "pending",
             now,
             now,
         ]
     );
-    return id;
+    return tradeId;
 }
 
 beforeAll(async () => {
@@ -279,13 +288,8 @@ describe("createTrade() - validation", () => {
             requested: { source: { type: "inventory" }, items: [{ itemId: 2, quantity: 1 }] },
         });
 
-        const trade = await mockDatabase.dbGet("SELECT offered_items FROM trades WHERE id = ?", [tradeId]);
-        expect(JSON.parse(trade.offered_items)).toEqual(
-            expect.arrayContaining([
-                { itemId: 1, quantity: 2 },
-                { itemId: 2, quantity: 3 },
-            ])
-        );
+        const trade = await mockDatabase.dbGet("SELECT offer FROM exchanges WHERE id = ?", [tradeId]);
+        expect(JSON.parse(trade.offer)).toEqual(expect.objectContaining({1: 2, 2: 3}));
     });
 
     it("notifies the recipient on create", async () => {
@@ -307,6 +311,7 @@ describe("getTradesForUser()", () => {
     beforeEach(async () => {
         await seedUser(1);
         await seedUser(2);
+        await mockDatabase.dbRun("DELETE FROM exchanges");
     });
 
     it("returns empty buckets when user has no trades", async () => {
@@ -354,10 +359,11 @@ describe("getTradesForUser()", () => {
             fromSourceType: "inventory",
             toSourceType: "inventory",
             offeredItems: [],
-            requestedItems: [],
+            requestedItems: [{"itemId": 1, "quantity": 2}],
             status: "completed",
         });
         const result = await getTradesForUser(1);
+        console.log(result);
         expect(result.completed.total).toBe(1);
     });
 
@@ -568,7 +574,7 @@ describe("acceptTrade()", () => {
         });
 
         await acceptTrade(id, 2);
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id = ?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id = ?", [id]);
         expect(trade.status).toBe("completed");
     });
 
@@ -611,7 +617,7 @@ describe("acceptTrade()", () => {
         const result = await acceptTrade(id, 2);
         expect(result.success).toBe(false);
 
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id = ?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id = ?", [id]);
         expect(trade.status).toBe("failed");
 
         // User 2's inventory must be unchanged
@@ -659,9 +665,9 @@ describe("acceptTrade()", () => {
 
         const result = await acceptTrade(id, 2);
         expect(result.success).toBe(false);
-        expect(result.reason).toBe("Requester no longer owns the source pool.");
+        expect(result.reason).toBe("Requester is no longer a top holder.");
 
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id = ?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id = ?", [id]);
         const pool = await mockDatabase.dbGet("SELECT amount FROM digipog_pools WHERE id = 1");
         const u2shield = await mockDatabase.dbGet("SELECT COALESCE(SUM(quantity),0) AS total FROM inventory WHERE user_id=2 AND item_id=2");
         expect(trade.status).toBe("failed");
@@ -688,9 +694,9 @@ describe("acceptTrade()", () => {
 
         const result = await acceptTrade(id, 2);
         expect(result.success).toBe(false);
-        expect(result.reason).toBe("Recipient no longer owns the source pool.");
+        expect(result.reason).toBe("Recipient is no longer a top holder.");
 
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id = ?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id = ?", [id]);
         const pool = await mockDatabase.dbGet("SELECT amount FROM digipog_pools WHERE id = 2");
         const u1sword = await mockDatabase.dbGet("SELECT COALESCE(SUM(quantity),0) AS total FROM inventory WHERE user_id=1 AND item_id=1");
         expect(trade.status).toBe("failed");
@@ -799,7 +805,7 @@ describe("rejectTrade()", () => {
         });
         await rejectTrade(id, 2);
 
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id=?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id=?", [id]);
         expect(trade.status).toBe("rejected");
 
         const notif = await mockDatabase.dbGet("SELECT 1 FROM notifications WHERE user_id=1 AND type='trade_rejected'");
@@ -849,7 +855,7 @@ describe("cancelTrade()", () => {
         });
         await cancelTrade(id, 1);
 
-        const trade = await mockDatabase.dbGet("SELECT status FROM trades WHERE id=?", [id]);
+        const trade = await mockDatabase.dbGet("SELECT status FROM exchanges WHERE id=?", [id]);
         expect(trade.status).toBe("canceled");
 
         const notif = await mockDatabase.dbGet("SELECT 1 FROM notifications WHERE user_id=2 AND type='trade_canceled'");
