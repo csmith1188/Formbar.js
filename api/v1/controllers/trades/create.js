@@ -12,7 +12,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/trades:
      *   post:
-     *     summary: Create a trade
+     *     summary: Create a trade. This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Creates a new pending trade between the authenticated user (requester) and
      *       another user (recipient). Each side specifies exactly one source: `inventory`

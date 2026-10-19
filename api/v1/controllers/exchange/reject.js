@@ -25,6 +25,19 @@ module.exports = (router) => {
      *         required: true
      *         schema:
      *           type: integer
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - pin
+     *             properties:
+     *               pin:
+     *                 type: string
+     *                 description: 4-6 numeric user or pool pin
+     *                 example: "1234"
      *     responses:
      *       200:
      *         description: exchange rejected successfully

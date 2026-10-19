@@ -10,7 +10,7 @@ const ValidationError = require("@errors/validation-error");
 module.exports = (router) => {
         /**
     * @swagger
-    * /api/v1/exchanges:
+    * /api/v1/exchanges/{id}/accept:
     *   post:
     *     summary: Create a new exchange
     *     description: Creates a new exchange transaction between two parties
@@ -25,12 +25,12 @@ module.exports = (router) => {
     *           schema:
     *             type: object
     *             required:
-    *               - to
-    *               - from
+    *               - pin
     *             properties:
     *               pin:
     *                 type: string
     *                 description: 4-6 numeric user or pool pin
+    *                 example: "1234"
     *     responses:
     *       200:
     *         description: Exchange accepted successfully

@@ -14,7 +14,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/digipogs/transfer:
      *   post:
-     *     summary: Transfer digipogs to another user
+     *     summary: Transfer digipogs to another user. This endpoint is deprecated. Use the endpoints under the Exchanges tags instead
+     *     deprecated: true
      *     tags:
      *       - Digipogs
      *     description: |

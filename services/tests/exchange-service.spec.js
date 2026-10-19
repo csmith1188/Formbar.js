@@ -334,15 +334,18 @@ describe("getExchangesForUser()", () => {
         await seedExchange({ fromUser: 1, toUser: 2, offer: { 1: 1 }, request: { 0: 5 }, status: "pending" });
         await seedExchange({ fromUser: 1, toUser: 2, offer: { 0: 5 }, request: {}, status: "completed" });
         await seedExchange({ fromUser: 1, toUser: 2, offer: { 0: 5 }, request: {}, status: "canceled" });
+        await seedExchange({ fromUser: 1, toUser: 2, offer: { 0: 5 }, request: {}, status: "rejected" });
 
         const tradeResult = await getExchangesForUser(1, { filters: ["trade"] });
         const transactionResult = await getExchangesForUser(1, { filters: ["transaction"] });
         const inactiveResult = await getExchangesForUser(1, { filters: ["inactive"] });
+        const rejectedResult = await getExchangesForUser(1, { filters: ["rejected"] });
 
         expect(tradeResult.data.exchanges).toHaveLength(1);
-        expect(transactionResult.data.exchanges).toHaveLength(2);
-        expect(inactiveResult.data.exchanges).toHaveLength(1);
+        expect(transactionResult.data.exchanges).toHaveLength(3);
+        expect(inactiveResult.data.exchanges).toHaveLength(2);
         expect(inactiveResult.data.exchanges[0].status).toBe("canceled");
+        expect(rejectedResult.data.exchanges[0].status).toBe("rejected");
     });
 
     it("applies pagination after filtering", async () => {

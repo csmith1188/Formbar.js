@@ -18,7 +18,7 @@ module.exports = (router) => {
      *       Returns a single exchange. Returns 404 if the exchange does not exist or if
      *       the requesting user is not a participant, so that the existence of
      *       exchanges is not revealed to non-participants.
-     *     tags: [exchanges]
+     *     tags: [Exchanges]
      *     security:
      *       - bearerAuth: []
      *     parameters:

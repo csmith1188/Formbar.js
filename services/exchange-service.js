@@ -503,13 +503,14 @@ async function getExchangesForUser(userId, options) {
         filters: ["included"],
         ...options
     };
+    
+    let { limit, offset, filters } = options;
 
-    const { limit, offset, filters } = options;
+    filters = new Set(filters);
     
     // Always include 'included' (inbound or outbound) by default if inbound or outbound is not specified
-    if (filters == null || !filters.includes("included")) {
-        filters ??= [];
-        filters.push("included");
+    if (!filters.has("inbound") && !filters.has("outbound") && !filters.has("included")) {
+        filters.add("included");
     }
 
     // Filters that can be achieved with a simple sql condition

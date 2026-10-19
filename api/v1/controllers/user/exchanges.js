@@ -37,6 +37,27 @@ module.exports = (router) => {
      *           type: integer
      *           default: 0
      *         description: Number of exchanges to skip per bucket
+     *       - in: query
+     *         name: filters
+     *         schema:
+     *           type: array
+     *           items:
+     *             type: string
+     *             enum:
+     *               - completed
+     *               - pending
+     *               - canceled
+     *               - rejected
+     *               - inactive
+     *               - trade
+     *               - transaction
+     *               - inbound
+     *               - outbound
+     *               - included
+     *           style: form
+     *           explode: false
+     *           description: Filters results based on specific criteria. Multiple filters can be chained by separating them with commas.
+     *           default: 'included'
      *     responses:
      *       200:
      *         description: exchange buckets returned successfully
@@ -66,7 +87,7 @@ module.exports = (router) => {
         }
 
         const { limit, offset } = parsePaginationQuery(req.query, DEFAULT_EXCHANGE_LIMIT, MAX_EXCHANGE_LIMIT);
-        const filters = req.query.filter?.match(/\S+/g);
+        const filters = req.query.filter?.split(",").map((filter) => filter.trim());
         const requestedUser = await getUserDataFromDb(userId);
         if (!requestedUser) {
             throw new NotFoundError("User not found.", { event: "user.exchanges.list.failed", reason: "user_not_found" });
@@ -74,7 +95,7 @@ module.exports = (router) => {
 
         req.infoEvent("user.exchanges.list.attempt", "Attempting to list user exchanges", { userId: userId });
 
-        const buckets = await getExchangesForUser(userId, { limit, offset, filters});
+        const buckets = await getExchangesForUser(userId, { limit, offset, filters });
         req.infoEvent("user.trades.list.success", "User trades listed successfully", { userId: userId });
         res.status(200).json({ success: true, data: buckets });
     });

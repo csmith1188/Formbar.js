@@ -16,7 +16,7 @@ module.exports = (router) => {
      *     description: >
      *       Cancels a pending exchanges as the requester. The recipient receives a
      *       `exchanges_canceled` notification.
-     *     tags: [Exchangess]
+     *     tags: [Exchanges]
      *     security:
      *       - bearerAuth: []
      *     parameters:
@@ -25,6 +25,19 @@ module.exports = (router) => {
      *         required: true
      *         schema:
      *           type: integer
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - pin
+     *             properties:
+     *               pin:
+     *                 type: string
+     *                 description: 4-6 numeric user or pool pin
+     *                 example: "1234"
      *     responses:
      *       200:
      *         description: Exchange canceled successfully

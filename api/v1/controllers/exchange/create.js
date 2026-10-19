@@ -6,7 +6,7 @@ const ValidationError = require("@errors/validation-error");
 module.exports = (router) => {
     /**
     * @swagger
-    * /exchanges:
+    * /api/v1/exchanges:
     *   post:
     *     summary: Create a new exchange
     *     description: Creates a new exchange transaction between two parties
@@ -26,10 +26,58 @@ module.exports = (router) => {
     *             properties:
     *               to:
     *                 type: object
-    *                 description: Recipient details
+    *                 required:
+    *                   - id
+    *                   - type
+    *                   - request
+    *                 properties:
+    *                   id:
+    *                     type: integer
+    *                     example: 2
+    *                   type:
+    *                     type: string
+    *                     enum:
+    *                       - user
+    *                       - pool
+    *                   request:
+    *                     type: object
+    *                     description: Item quantities keyed by item ID (0 for digipogs).
+    *                     additionalProperties:
+    *                       type: integer
+    *                       description: Quantity of the item.
+    *                     example:
+    *                       "1": 67
+    *                       "27": 20
     *               from:
     *                 type: object
-    *                 description: Sender details
+    *                 required:
+    *                   - id
+    *                   - type
+    *                   - offer
+    *                   - pin
+    *                 properties:
+    *                   id:
+    *                     type: integer
+    *                     example: 1
+    *                   type:
+    *                     type: string
+    *                     enum:
+    *                       - user
+    *                       - pool
+    *                       - award
+    *                   offer:
+    *                     type: object
+    *                     description: Item quantities keyed by item ID (0 for digipogs).
+    *                     additionalProperties:
+    *                       type: integer
+    *                       description: Quantity of the item.
+    *                     example:
+    *                       "0": 10
+    *                       "2": 1200
+    *                   pin:
+    *                     type: string
+    *                     description: 4-6 numeric user or pool pin
+    *                     example: "1234"
     *               reason:
     *                 type: string
     *                 description: Reason for the exchange
