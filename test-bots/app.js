@@ -1,7 +1,6 @@
 import Bot from "./bot.js";
 process.stdin.setEncoding('utf8');
-const consoleIn = process.stdin;
-export const FORMBAR_URL = 'http://localhost:420';
+export const FORMBAR_URL = 'https://formbarapi.yorktechapps.com';
 const bots = [];
 let tasks = [];
 let takenIds = [];
@@ -20,27 +19,28 @@ export class Task {
         takenIds.push(this.id);
         tasks.push(this);
     }
+
     finish(success) {
         this.finished = true;
         this.success = success;
     }
 
-    remove() {
-        if (this.removeScheduled) {
-            return;
-        }
-        this.removeScheduled = true;
-        setTimeout(() => {
-            let interval = setInterval(() => {
-                let me = tasks.find(t => t.id === this.id);
-                if (me) {
-                    tasks.splice(tasks.indexOf(me), 1);
-                    main();
-                    clearInterval(interval);
-                }
-            }, 0);
-        }, 2000);
+}
+
+function removeTasksOfType(type) {
+    const tasksToRemove = tasks.filter(task => task.task === type && !task.removeScheduled);
+    if (!tasksToRemove.length || !tasksToRemove.every(task => task.finished)) {
+        return;
     }
+
+    for (const task of tasksToRemove) {
+        task.removeScheduled = true;
+    }
+
+    setTimeout(() => {
+        tasks = tasks.filter(task => !tasksToRemove.includes(task));
+        main();
+    }, 2000);
 }
 
 async function doCommand(terms) {
@@ -69,7 +69,9 @@ async function doCommand(terms) {
         getClass(amount);
     }
 
-    if (terms[0] == 'cls' || terms[0] == 'clear') console.clear();
+    if (terms[0] == 'cls' || terms[0] == 'clear') {
+        lastRender = '';
+    }
 
     if (terms[0] == 'exit') {
         await leave(Infinity)
@@ -98,7 +100,6 @@ async function makeBots(amount) {
         let bot = new Bot(i + 1);
         bots.push(bot);
         bot.makeAccount();
-        console.clear();
     }
 }
 
@@ -106,7 +107,6 @@ async function enroll(amount, code) {
     amount = Math.min(amount, bots.length);
     for (let i = 0; i < amount; i++) {
         bots[i].enroll(code);
-        console.clear();
     }
 }
 
@@ -161,10 +161,7 @@ console.clear()
 process.stdout.write('\r\x1b[2K> ' + input)
 
 process.stdin.on('keypress', async (char, key) => {
-    console.clear()
-    main()
     if (key.ctrl && key.name === 'c') {
-        await leave(Infinity)
         process.exit()
     }
 
@@ -176,9 +173,7 @@ process.stdin.on('keypress', async (char, key) => {
         if (command) {
             await doCommand(command.split(/\s+/));
         }
-        if (!tasks.length) {
-            process.stdout.write('\r\x1b[2K> ' + input);
-        }
+        main();
         return;
     }
 
@@ -186,7 +181,7 @@ process.stdin.on('keypress', async (char, key) => {
         previousSelector--
         previousSelector = Math.max(previousSelector, 0)
         input = previousInputs[previousSelector]
-        process.stdout.write('\r\x1b[2K> ' + input)
+        main()
         return
     }
 
@@ -194,7 +189,7 @@ process.stdin.on('keypress', async (char, key) => {
         previousSelector++
         previousSelector = Math.min(previousSelector, previousInputs.length - 1)
         input = previousInputs[previousSelector]
-        process.stdout.write('\r\x1b[2K> ' + input)
+        main()
         return
     }
 
@@ -204,13 +199,13 @@ process.stdin.on('keypress', async (char, key) => {
         input += char
     }
 
-    process.stdout.write('\r\x1b[2K> ' + input)
+    main()
 });
 
 let barLength = 30
+let lastRender = ''
 
 function main() {
-    console.clear();
     let types = [];
     for (let task of tasks) {
         types.push(task.task);
@@ -219,21 +214,31 @@ function main() {
     for (let type of types) {
         let tasksOfType = tasks.filter(t => t.task === type);
         if (tasksOfType.length && tasksOfType.every(t => t.finished)) {
-            for (let task of tasksOfType) task.remove();
+            removeTasksOfType(type);
         }
     }
 
     types = [...new Set(types)];
+    let render = '';
     for (let type of types.sort()) {
         let tasksOfType = tasks.filter(t => t.task === type);
         const remaining = tasksOfType.filter(t => !t.finished).length;
         const failed = tasksOfType.filter(t => t.finished && t.success === false).length;
         const successful = tasksOfType.filter(t => t.finished && t.success).length;
         const finished = tasksOfType.filter(t => t.finished).length;
-        console.log(`${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * barLength, '1;92')}${bar(failed / tasksOfType.length * barLength, '1;91')}${bar(remaining / tasksOfType.length * barLength, 0)}]\n`);
+        render += `${type}: ${finished}/${tasksOfType.length}\n└─ [${bar(successful / tasksOfType.length * barLength, '1;92')}${bar(failed / tasksOfType.length * barLength, '1;91')}${bar(remaining / tasksOfType.length * barLength, 0)}]\n\n`;
     }
 
-    process.stdout.write('\r\x1b[2K> ' + input)
+    render += '\x1b[2K> ' + input;
+    if (render === lastRender) {
+        return;
+    }
+    lastRender = render;
+    const clearedRender = render
+        .split('\n')
+        .map(line => '\x1b[2K' + line)
+        .join('\n');
+    process.stdout.write('\x1b[H' + clearedRender + '\x1b[J');
 }
 
 setInterval(() => {
