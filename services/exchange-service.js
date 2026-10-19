@@ -176,9 +176,9 @@ async function validateExchangePartyFields(exchangeParty, payload, name, payload
                 }
 
                 try {
-                    getItemById(itemId);
+                    await getItemById(itemId);
                 } catch (err) {
-                    throw NotFoundError(`Item ID ${itemId} is not associated with a valid item.`);
+                    throw new NotFoundError(`Item ID ${itemId} is not associated with a valid item.`);
                 }
             }
         }
@@ -208,7 +208,7 @@ async function validateRequesterPartyFields(fromParty, fromPayload, name, payloa
         if (typeof fromPayload["0"] === "number" && fromAccount.digipogs < fromPayload["0"]) {
             throw new ForbiddenError(`The requester has insufficient digipog balance: need ${fromPayload["0"]}, have ${fromAccount.digipogs}.`);
         }
-        checkInventoryAvailability(fromAccount.id, getPayloadItems(fromPayload));
+        await checkInventoryAvailability(fromAccount.id, getPayloadItems(fromPayload));
     } else {
         if (fromAccount.amount < fromPayload["0"]) {
             throw new ForbiddenError(`The requester pool has insufficient digipog balance: need ${fromPayload["0"]}, have ${fromAccount.amount}.`);
@@ -287,21 +287,6 @@ async function createExchange(exchange) {
             {
                 if (offerDigipogs > 0) {
                     exchangeDigipogs(offerDigipogs, from.type, from.id, to.type, to.id);
-                    // Transfer digipogs
-                    if (from.type === "user") {
-                        await dbRun("UPDATE users SET digipogs = digipogs - ? WHERE id = ? AND digipogs >= ?", [
-                            offerDigipogs,
-                            from.userId,
-                            offerDigipogs,
-                        ]);
-                    } else {
-                        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ? AND amount >= ?", [
-                            offerDigipogs,
-                            from.poolId,
-                            offerDigipogs,
-                        ]);
-                    }
-                    await creditDigipogTransferRecipient(offerDigipogs, to.type, to.id);
                 }
                 // Transfer items
                 for (const [itemId, quantity] of Object.entries(offerItems)) {
@@ -333,8 +318,8 @@ async function createExchange(exchange) {
             await dbRun("COMMIT");
             status = 200;
         } catch (err) {
-            console.error(err)
             await dbRun("ROLLBACK");
+            throw err;
         }
     }
 
@@ -511,7 +496,16 @@ async function getExchangeById(exchangeId, userId) {
  * @param {{limit?: number, offset?: number, filters?: string[]}} options
  * @returns {Promise<{success: boolean, data: {exchanges: Object[], total: number, limit: number, offset: number, hasMore: boolean}}>} 
  */
-async function getExchangesForUser(userId, { limit = 20, offset = 0, filters = ["included"] }) {
+async function getExchangesForUser(userId, options) {
+    options = {
+        limit: 20,
+        offset: 0,
+        filters: ["included"],
+        ...options
+    };
+
+    const { limit, offset, filters } = options;
+    
     // Always include 'included' (inbound or outbound) by default if inbound or outbound is not specified
     if (filters == null || !filters.includes("included")) {
         filters ??= [];

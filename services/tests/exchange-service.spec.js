@@ -60,24 +60,27 @@ async function userBalance(userId) {
     return row.digipogs;
 }
 
-async function seedExchange({
-    fromUser = 1,
-    toUser = 2,
-    offer = {},
-    request = {},
-    status = "pending",
-    fromType = "user",
-    toType = "user",
-    fromId = null,
-    toId = null,
-}) {
+async function seedExchange(opts) {
+    opts = {
+        fromUser: 1,
+        toUser: 2,
+        offer: {},
+        request: {},
+        status: "pending",
+        fromType: "user",
+        toType: "user",
+        fromId: null,
+        toId: null,
+        ...opts
+    }
+    
     const now = new Date().toISOString();
     return mockDatabase.dbRun(
         `INSERT INTO exchanges
             (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type,
              request, reason, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'test', ?, ?, ?)`,
-        [fromUser, fromId, fromType, JSON.stringify(offer), toUser, toId, toType, JSON.stringify(request), status, now, now]
+        [opts.fromUser, opts.fromId, opts.fromType, JSON.stringify(opts.offer), opts.toUser, opts.toId, opts.toType, JSON.stringify(opts.request), opts.status, now, now]
     );
 }
 
@@ -166,7 +169,7 @@ describe("createExchange()", () => {
         });
 
         expect(await userBalance(1)).toBe(75);
-        expect(await userBalance(2)).toBe(125);
+        expect(await userBalance(2)).toBe(122);
         expect(result.exchangeId).toBeDefined();
     });
 });
@@ -218,8 +221,8 @@ describe("acceptExchange()", () => {
 
         await acceptExchange(exchangeId, PIN);
 
-        expect(await userBalance(1)).toBe(85);
-        expect(await userBalance(2)).toBe(115);
+        expect(await userBalance(1)).toBe(84);
+        expect(await userBalance(2)).toBe(112);
         expect(await notificationsFor(1, "exchange_completed")).toHaveLength(1);
         expect(await notificationsFor(2, "exchange_completed")).toHaveLength(1);
     });
@@ -285,6 +288,7 @@ describe("getExchangeById()", () => {
 
 describe("getExchangesForUser()", () => {
     beforeEach(async () => {
+        await mockDatabase.dbRun("DELETE FROM exchanges");
         await seedUser(1);
         await seedUser(2);
         await seedUser(3);
@@ -311,6 +315,21 @@ describe("getExchangesForUser()", () => {
         expect(result.data.exchanges).toHaveLength(2);
     });
 
+    it("filters by inbound and outbound separately when explicitly passed", async () => {
+        await seedExchange({ fromUser: 1, toUser: 2, offer: { 67: 67 } });
+        await seedExchange({ fromUser: 2, toUser: 1, offer: { 39: 39 } });
+
+        const defaultResult = await getExchangesForUser(1);
+        const inboundResult = await getExchangesForUser(1, { filters: ["inbound"] });
+        const outboundResult = await getExchangesForUser(1, { filters: ["outbound"] });
+
+        expect(defaultResult.data.exchanges).toHaveLength(2);
+        expect(inboundResult.data.exchanges).toHaveLength(1);
+        expect(inboundResult.data.exchanges[0].from.offer["39"]).toBe(39)
+        expect(outboundResult.data.exchanges).toHaveLength(1);
+        expect(outboundResult.data.exchanges[0].from.offer["67"]).toBe(67)
+    });
+    
     it("filters by trade, transaction, and status", async () => {
         await seedExchange({ fromUser: 1, toUser: 2, offer: { 1: 1 }, request: { 0: 5 }, status: "pending" });
         await seedExchange({ fromUser: 1, toUser: 2, offer: { 0: 5 }, request: {}, status: "completed" });

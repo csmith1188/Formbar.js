@@ -363,7 +363,6 @@ describe("getTradesForUser()", () => {
             status: "completed",
         });
         const result = await getTradesForUser(1);
-        console.log(result);
         expect(result.completed.total).toBe(1);
     });
 
