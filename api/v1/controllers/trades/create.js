@@ -117,13 +117,13 @@ module.exports = (router) => {
 
         req.infoEvent("trades.create", "Creating trade", { fromUserId: req.user.id, toUserId: parsedToUserId });
 
-        const { tradeId } = await createTrade({
+        const { tradeId, message } = await createTrade({
             fromUserId: req.user.id,
             toUserId: parsedToUserId,
             offered,
             requested,
         });
 
-        res.status(200).json({ success: true, data: { tradeId } });
+        res.status(200).json({ success: true, data: { tradeId, message } });
     });
 };

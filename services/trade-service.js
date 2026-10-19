@@ -335,7 +335,7 @@ async function createTrade({ fromUserId, toUserId, offered, requested }) {
 
     await createNotification(toUserId, "trade_received", { tradeId, fromUserId });
 
-    return { tradeId };
+    return { tradeId, message: `This endpoint is deprecated. Check the docs for endpoints under the "Exchanges" category` };
 }
 
 /**

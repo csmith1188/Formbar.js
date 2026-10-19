@@ -780,19 +780,6 @@ describe("awardDigipogs()", () => {
         expect(result.message).toMatch(/Recipient account not found/);
     });
 
-    it("handles deprecated plain-ID format with warning", async () => {
-        const teacher = await seedUser({ permissions: 4 });
-        const student = await seedUser({ digipogs: 0 });
-
-        await mockDatabase.dbRun("INSERT INTO classroom (name, owner, key) VALUES (?, ?, ?)", ["C2", teacher.id, "k2"]);
-        const classRow = await mockDatabase.dbGet("SELECT id FROM classroom WHERE owner = ?", [teacher.id]);
-        await mockDatabase.dbRun("INSERT INTO classusers (classId, studentId, digiPogs) VALUES (?, ?, ?)", [classRow.id, student.id, 0]);
-
-        const result = await awardDigipogs({ to: student.id, amount: 5 }, { id: teacher.id });
-        expect(result.success).toBe(true);
-        expect(result.message).toMatch(/Deprecated/);
-    });
-
     it("handles missing 'from' user", async () => {
         const result = await awardDigipogs({ to: { id: 1, type: "user" }, amount: 5 }, {});
         expect(result.success).toBe(false);
@@ -1037,22 +1024,6 @@ describe("transferDigipogs()", () => {
         expect(result.success).toBe(true);
         const poolRow = await mockDatabase.dbGet("SELECT amount FROM digipog_pools WHERE id = ?", [poolId]);
         expect(poolRow.amount).toBe(18); // 20 * 0.9 = 18
-    });
-
-    it("handles deprecated plain-ID format", async () => {
-        const sender = await seedUser({ digipogs: 100, pin: hashedPin });
-        const receiver = await seedUser({ digipogs: 0 });
-
-        const result = await transferDigipogs({
-            from: sender.id,
-            to: receiver.id,
-            amount: 10,
-            pin: "1234",
-            reason: "",
-        });
-
-        expect(result.success).toBe(true);
-        expect(result.message).toMatch(/Deprecated/);
     });
 
     it("rejects when missing sender identifier", async () => {

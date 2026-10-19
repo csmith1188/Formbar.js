@@ -1358,7 +1358,7 @@ async function transferDigipogs(transferData, options = {}) {
         recordAttempt(accountId, true);
         return {
             success: true,
-            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}`,
+            message: `Transfer successful. This endpoint is deprecated. Check the docs for endpoints under the "Exchanges" category`,
         };
     } catch (err) {
         console.log(err);
