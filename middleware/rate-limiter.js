@@ -22,6 +22,17 @@ function normalizeIpAddress(ipAddress) {
 }
 
 /**
+ * Determine whether an address is localhost.
+ *
+ * @param {*} ipAddress - Client IP address.
+ * @returns {boolean}
+ */
+function isLocalhost(ipAddress) {
+    const normalizedIp = normalizeIpAddress(ipAddress);
+    return normalizedIp === "127.0.0.1" || normalizedIp === "::1" || normalizedIp === "localhost";
+}
+
+/**
  * Convert a possible account id to a limiter key.
  *
  * @param {*} userId - Authenticated user id.
@@ -140,6 +151,11 @@ function createRateLimiter(options = {}) {
 
     return {
         httpMiddleware: async (req, res, next) => {
+            if (isLocalhost(req.ip)) {
+                next();
+                return;
+            }
+
             let rateLimitKey;
             try {
                 rateLimitKey = await getRequestRateLimitKey(req);
