@@ -82,8 +82,6 @@ module.exports = {
                     roleName = PERMISSIONS_TO_ROLE[user.permissions] || null;
                 }
 
-                if (!roleName || roleName === "Guest") continue; // Guest is implicit
-
                 // Look up the global role ID
                 const role = await dbGet(
                     `SELECT r.id

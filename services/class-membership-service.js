@@ -19,6 +19,7 @@ const { buildRoleReferences } = require("@modules/role-reference");
 const { userSocketUpdates } = require("../sockets/init");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const NotFoundError = require("@errors/not-found-error");
+const { joinClass } = require("@services/class-service");
 
 // Lazy-load class-service to avoid circular dependency
 let classService;
@@ -141,10 +142,10 @@ async function setClassroomBanStatus(classroomId, userId, isBanned) {
         const normalizedBannedRole =
             isBanned && bannedRole
                 ? classroom?.availableRoles?.find(
-                      (role) =>
-                          Number(role.id) === Number(bannedRole.id) ||
-                          (Array.isArray(role.scopes) && role.scopes.includes(SCOPES.CLASS.SYSTEM.BLOCKED))
-                  ) || bannedRole
+                    (role) =>
+                        Number(role.id) === Number(bannedRole.id) ||
+                        (Array.isArray(role.scopes) && role.scopes.includes(SCOPES.CLASS.SYSTEM.BLOCKED))
+                ) || bannedRole
                 : null;
 
         classStateStore.updateClassroomStudent(classroomId, email, {
@@ -197,6 +198,11 @@ async function enrollByCode(code, sessionUser) {
         return { success: false };
     }
 
+    const userId = await getIdFromEmail(email);
+    if (userId) {
+        await getClassService().applyDefaultEnrollmentRole(classId, userId);
+    }
+
     return {
         success: true,
         roomId: classId,
@@ -243,7 +249,10 @@ async function unenrollFromClass(userData, classId) {
         break: false,
         help: false,
     });
+
     await dbRun("DELETE FROM classusers WHERE classId=? AND studentId=?", [resolvedClassId, studentId]);
+
+    await dbRun("DELETE FROM user_roles WHERE classId=? AND userId=?", [resolvedClassId, studentId]);
 
     // If the owner of the classroom leaves, then delete the classroom
     const classRow = await dbGet("SELECT owner FROM classroom WHERE id=?", resolvedClassId);

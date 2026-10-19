@@ -97,11 +97,17 @@ module.exports = (router) => {
      *             required:
      *               - name
      *               - prompt
+     *               - promptMD
+     *               - promptHTML
      *               - answers
      *             properties:
      *               name:
      *                 type: string
      *               prompt:
+     *                 type: string
+     *               promptMD:
+     *                 type: string
+     *               promptHTML:
      *                 type: string
      *               answers:
      *                 type: array

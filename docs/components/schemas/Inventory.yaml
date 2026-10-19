@@ -1,0 +1,30 @@
+components:
+    schemas:
+        InventoryItem:
+            type: object
+            required:
+                - id
+                - name
+                - description
+                - stack_size
+                - image_url
+                - quantity
+            properties:
+                id:
+                    type: integer
+                    example: 1
+                name:
+                    type: string
+                    example: "Jukebar Share"
+                description:
+                    type: string
+                    example: "Share of Jukebar"
+                stack_size:
+                    type: integer
+                    example: 100
+                image_url:
+                    type: string
+                    example: NULL
+                quantity:
+                    type: integer
+                    example: 100

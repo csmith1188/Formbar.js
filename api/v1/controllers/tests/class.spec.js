@@ -50,6 +50,38 @@ jest.mock("@services/socket-updates-service", () => ({
     setClassOfUserSockets: jest.fn(),
     userUpdateSocket: jest.fn(),
     invalidateClassPollCache: jest.fn(),
+    buildClassPollData: jest.fn((classData) => {
+        if (!classData?.poll) return classData?.poll;
+
+        const poll = structuredClone(classData.poll);
+        if (!Array.isArray(poll.responses)) {
+            poll.responses = [];
+        }
+
+        for (const response of poll.responses) {
+            response.responses = 0;
+        }
+
+        let totalResponses = 0;
+        for (const student of Object.values(classData.students || {})) {
+            const buttonRes = student?.pollRes?.buttonRes;
+            if (Array.isArray(buttonRes)) {
+                if (buttonRes.length > 0) totalResponses++;
+                for (const answer of buttonRes) {
+                    const responseObj = poll.responses.find((response) => response.answer === answer);
+                    if (responseObj) responseObj.responses++;
+                }
+            } else if (buttonRes) {
+                totalResponses++;
+                const responseObj = poll.responses.find((response) => response.answer === buttonRes);
+                if (responseObj) responseObj.responses++;
+            }
+        }
+
+        poll.totalResponses = totalResponses;
+        poll.totalResponders = Object.keys(classData.students || {}).length;
+        return poll;
+    }),
 }));
 
 jest.mock("../../../../sockets/init", () => ({
@@ -390,6 +422,9 @@ describe("GET /api/v1/class/:id", () => {
         expect(res.body.success).toBe(true);
         expect(res.body.data.students).toEqual(expect.objectContaining({ [teacher.email]: expect.any(Object), [student.email]: expect.any(Object) }));
         expect(res.body.data.poll).toEqual(expect.objectContaining({ active: true }));
+        expect(res.body.data.poll.responses[0].responses).toBe(0);
+        expect(res.body.data.poll.totalResponses).toBe(0);
+        expect(res.body.data.poll.totalResponders).toBe(2);
         expect(res.body.data.settings).toEqual({ emailEnabled: false });
         expect(res.body.data.roles).toEqual(expect.arrayContaining([expect.objectContaining({ id: 100 })]));
     });

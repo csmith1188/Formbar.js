@@ -1,7 +1,7 @@
 const { SCOPES } = require("@modules/permissions");
 const { hasScope, isOwnerOrHasScopes } = require("@middleware/permission-check");
 const { isAuthenticated } = require("@middleware/authentication");
-const { requireQueryParam } = require("@modules/error-wrapper");
+const { requireQueryParam, requireBodyParam } = require("@modules/error-wrapper");
 const digipogService = require("@services/digipog-service");
 const AppError = require("@errors/app-error");
 const ValidationError = require("@errors/validation-error");
@@ -33,6 +33,24 @@ module.exports = (router) => {
      *         schema:
      *           type: integer
      *           example: 42
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - amount
+     *               - payoutType
+     *             properties:
+     *               amount:
+     *                 type: integer
+     *                 description:  Amount to pay out of pool (percentage or digipogs)
+     *                 example: 60
+     *               payoutType:
+     *                 type: string
+     *                 description:  Can either be "percent" or "digipogs"
+     *                 example: percent
      *     responses:
      *       200:
      *         description: Pool payout executed successfully
@@ -79,12 +97,18 @@ module.exports = (router) => {
         isOwnerOrHasScopes(digipogService.poolOwnerCheck, SCOPES.GLOBAL.SYSTEM.ADMIN, "You do not own this pool."),
         async (req, res) => {
             const poolId = Number(req.params.id);
+            const amount = Number(req.body.amount);
+            const payoutType = req.body.payoutType;
 
             requireQueryParam(poolId, "poolId");
+            requireBodyParam(amount, "amount");
+            requireBodyParam(payoutType, "payoutType");
 
             req.infoEvent("pool.payout.attempt", "Attempting to pay out a pool", {
                 poolId,
                 actingUserId: req.user.id,
+				amount,
+				payoutType,
             });
 
             // Check if the pool exists
@@ -96,6 +120,8 @@ module.exports = (router) => {
             const result = await digipogService.payoutPool({
                 actingUserId: req.user.id,
                 poolId,
+				amount,
+				payoutType
             });
 
             if (!result.success) {
@@ -109,6 +135,8 @@ module.exports = (router) => {
             req.infoEvent("pool.payout.success", "Pool payout completed successfully", {
                 poolId,
                 actingUserId: req.user.id,
+				amount,
+				payoutType
             });
 
             res.status(200).json({

@@ -23,8 +23,9 @@ module.exports = (router) => {
      *
      *       **Required scope:** `class.session.settings`
      *
-     *       Currently supported request fields:
-     *       - `name`: Renames the class
+    *       Currently supported request fields:
+    *       - `name`: Renames the class
+    *       - `defaultRoleId`: Role ID automatically assigned to newly enrolled users; `null` clears it
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
@@ -41,13 +42,15 @@ module.exports = (router) => {
      *         application/json:
      *           schema:
      *             type: object
-     *             required:
-     *               - name
      *             properties:
      *               name:
      *                 type: string
      *                 description: New class name
      *                 example: Algebra I
+    *               defaultRoleId:
+    *                 type: integer
+    *                 nullable: true
+    *                 description: Class role assigned to newly enrolled users
      *     responses:
      *       200:
      *         description: Class setting updated successfully

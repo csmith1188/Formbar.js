@@ -1,6 +1,7 @@
 const { isAuthenticated } = require("@middleware/authentication");
 const { classStateStore } = require("@services/classroom-service");
 const { getClassUsers } = require("@services/class-service");
+const { buildClassPollData } = require("@services/socket-updates-service");
 const { SCOPES } = require("@modules/permissions");
 const { userHasScope } = require("@modules/scope-resolver");
 const { requireQueryParam } = require("@modules/error-wrapper");
@@ -80,6 +81,8 @@ module.exports = (router) => {
             throw new NotFoundError(classUsers, { event: "class.users_error", reason: "retrieval_error" });
         }
 
+        const pollData = canReadPoll ? buildClassPollData(rawClassData) : undefined;
+
         // Log the class data and send the response
         req.infoEvent("class.data_sent", "Class data sent to client", { classId, hasPolls: !!rawClassData.poll });
         res.status(200).json({
@@ -89,7 +92,7 @@ module.exports = (router) => {
                 name: rawClassData.className,
                 isActive: rawClassData.isActive,
                 owner: rawClassData.owner,
-                poll: canReadPoll ? rawClassData.poll : undefined,
+                poll: pollData,
                 students: canReadStudents ? classUsers : undefined,
                 settings: canReadSettings ? rawClassData.settings : undefined,
                 timer: rawClassData.timer,

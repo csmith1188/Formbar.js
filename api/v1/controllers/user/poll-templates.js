@@ -88,6 +88,8 @@ module.exports = (router) => {
      *             required:
      *               - name
      *               - prompt
+     *               - promptMD
+     *               - promptHTML
      *               - answers
      *             properties:
      *               name:
@@ -96,6 +98,12 @@ module.exports = (router) => {
      *               prompt:
      *                 type: string
      *                 example: "Which answer is correct?"
+     *               promptMD:
+     *                 type: string
+     *                 example: "Which answer is *correct*?"
+     *               promptHTML:
+     *                 type: string
+     *                 example: "<p>Which answer is <em>correct</em></p>?"
      *               answers:
      *                 type: array
      *                 items:

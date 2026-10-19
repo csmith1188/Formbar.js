@@ -23,7 +23,6 @@ module.exports = (router) => {
      *       - Class Roles
      *     description: |
      *       Returns all roles currently assigned to a student in the class.
-     *       Guest is implicit and not included in the list.
      *
      *       **Required:** Must be authenticated and a member of the class.
      *     security:
@@ -117,7 +116,6 @@ module.exports = (router) => {
      *     description: |
      *       Adds a role to a student in the class. Students can have multiple roles
      *       simultaneously. Effective scopes are the union of all assigned roles.
-     *       Guest is implicit and cannot be added.
      *
      *       **Required scope:** `class.roles.assign`
      *     security:
@@ -209,8 +207,7 @@ module.exports = (router) => {
      *     tags:
      *       - Class Roles
      *     description: |
-     *       Removes a role from a student in the class. Guest is implicit
-     *       and cannot be removed. If all roles are removed, the student
+     *       Removes a role from a student in the class. If all roles are removed, the student
      *       effectively has only Guest permissions.
      *
      *       **Required scope:** `class.roles.manage`

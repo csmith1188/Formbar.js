@@ -12,6 +12,10 @@ const ForbiddenError = require("@errors/forbidden-error");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const { pollRuntimeStore } = require("@stores/poll-runtime-store");
 
+// Used for stripping formatted prompts
+const sanitizeHtml = require("sanitize-html");
+const removeMarkdown = require("remove-markdown");
+
 /**
  * Gets a classroom by ID and throws an error if not found.
  * @param {number} classId - The ID of the class.
@@ -64,7 +68,7 @@ function isUserExcludedFromVoting(classroom, user, student) {
  */
 function isValidPollResponse(poll, res, isRemoving) {
     if (!poll.allowMultipleResponses) {
-        if (res !== "remove" && !poll.responses.some((response) => response.answer === res)) {
+        if (res !== "remove" && !poll.responses.some((response) => response.answer === res.toString())) {
             return false;
         }
     } else {
@@ -255,9 +259,37 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
         student.pollRes.textRes = "";
         student.pollRes.time = "";
     } else {
-        student.pollRes.buttonRes = res;
+        student.pollRes.buttonRes = allowMultipleResponses ? res : res.toString();
         student.pollRes.textRes = textRes;
         student.pollRes.time = new Date();
+    }
+}
+
+
+/**
+ * Modifies the creation poll data to set the prompt fields if they are missing
+ * @param {Object} pollData - the creation data for a poll
+ * @returns {void}
+ * @throws {ValidationError} If poll prompt is missing
+ */
+function populatePollPrompts(pollData) {
+    // Require a valid prompt field
+    if (pollData.prompt == null && pollData.promptMD == null && pollData.promptHTML == null) {
+        throw new ValidationError("Poll 'prompt', 'promptMD', or 'promptHTML' is required");
+    }
+    if (typeof pollData.prompt !== "string" && typeof pollData.promptMD !== "string" && typeof pollData.promptHTML !== "string") { 
+        throw new ValidationError("Poll prompt is required to be a string");
+    }
+
+    // Set `prompt` field to `promptMD` or `promptHTML` if `promptMD` is undefined
+    if (pollData.prompt == null) {
+        // Set missing prompt fields from formatted prompt fields
+        if (pollData.promptMD != null) {
+            pollData.prompt = removeMarkdown(pollData.promptMD);
+        }
+        if (pollData.promptHTML != null) {
+            pollData.prompt = sanitizeHtml(pollData.promptHTML, { allowedTags: [], allowedAttributes: {} });
+        }
     }
 }
 
@@ -268,11 +300,15 @@ function updateStudentPollResponse(student, res, textRes, isRemoving, allowMulti
  * @param {Object} userData - The user session object.
  * @returns {Promise<void>}
  * @throws {NotFoundError} If classroom is not found
- * @throws {ValidationError} If class is not active
+ * @throws {ValidationError} If class is not active or poll prompt is missing
  */
 async function createPoll(classId, pollData, userData) {
+    populatePollPrompts(pollData);
+
     const {
         prompt,
+        promptMD,
+        promptHTML,
         answers,
         blind,
         weight,
@@ -284,6 +320,7 @@ async function createPoll(classId, pollData, userData) {
         autoEndThreshold,
         blindUntilEnded,
     } = pollData;
+    
     const numberOfResponses = Object.keys(answers).length;
     const normalizedAutoEndTimer = normalizePositiveNumber(autoEndTimer);
     const normalizedAutoEndThreshold = normalizePositiveNumber(autoEndThreshold);
@@ -355,6 +392,8 @@ async function createPoll(classId, pollData, userData) {
         weight: weight,
         allowTextResponses: allowTextResponses,
         prompt: prompt,
+        promptMD: promptMD,
+        promptHTML: promptHTML,
         allowMultipleResponses: allowMultipleResponses,
         endTime: null,
         autoEndTimer: normalizedAutoEndTimer,
@@ -436,9 +475,10 @@ async function updatePoll(classId, options, userSession) {
  * @param {number} classId - The ID of the class.
  * @param {number} [limit=20] - The maximum number of records to return.
  * @param {number} [offset=0] - The number of records to skip.
+ * @param {boolean} [includeResponses=false] - Include user responses in the returned data?\
  * @returns {Promise<Object>} An object containing polls array and total count.
  */
-async function getPreviousPolls(classId, limit = 20, offset = 0) {
+async function getPreviousPolls(classId, limit = 20, offset = 0, includeResponses = false) {
     requireInternalParam(classId, "classId");
 
     const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM poll_history WHERE class = ?`, [classId]);
@@ -451,7 +491,7 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
         [classId, limit, offset]
     );
 
-    const enrichedPolls = polls.map((poll) => {
+    const enrichedPolls = await Promise.all(polls.map(async (poll) => {
         // Parse responses into a predictable array for clients.
         let parsedResponses = poll.responses;
         if (typeof poll.responses === "string") {
@@ -466,7 +506,26 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
             parsedResponses = [];
         }
 
-        return {
+
+		if(includeResponses) {
+			parsedResponses.forEach((resp) => { resp.studentsResponded = [] });
+
+			const userResponses = await dbGetAll("SELECT * FROM poll_answers WHERE classId = ? AND pollId = ?", [classId, poll.id]);
+
+			userResponses.map((studentRes) => {
+				const studentResponseIds = JSON.parse(studentRes.responseIds);
+				const matchingResponses = parsedResponses.filter((response) => studentResponseIds.includes(response.id));
+				matchingResponses.forEach((matchedResp) => matchedResp.studentsResponded.push(
+					{
+						userId: studentRes.userId,
+						textResponse: studentRes.textResponse,
+						respondedAt: studentRes.createdAt
+					}
+				));
+			})
+		}
+        
+        const normalizedPoll = {
             globalPollId: poll.id,
             classPollId: Number(poll.pollId),
             prompt: poll.prompt,
@@ -476,7 +535,15 @@ async function getPreviousPolls(classId, limit = 20, offset = 0) {
             allowTextResponses: !!poll.allowTextResponses,
             createdAt: poll.createdAt,
         };
-    });
+
+        if (poll.promptMD != null) {
+            normalizedPoll.promptMD = poll.promptMD;
+        } else if (poll.promptHTML != null) {
+            normalizedPoll.promptHTML = poll.promptHTML;
+        }
+
+        return normalizedPoll;
+    }));
 
     return {
         polls: enrichedPolls,
@@ -497,6 +564,8 @@ async function savePollToHistory(classId, pollSnapshot = null) {
 
     const createdAt = Date.now();
     const prompt = pollToSave.prompt;
+    const promptMD = pollToSave.promptMD;
+    const promptHTML = pollToSave.promptHTML;
     const responses = JSON.stringify(pollToSave.responses);
     const allowMultipleResponses = pollToSave.allowMultipleResponses ? 1 : 0;
     const blind = pollToSave.blind ? 1 : 0;
@@ -506,8 +575,8 @@ async function savePollToHistory(classId, pollSnapshot = null) {
     const blindUntilEnded = pollToSave.blindUntilEnded ? 1 : 0;
 
     return dbRun(
-        "INSERT INTO poll_history(class, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, auto_end_timer, auto_end_threshold, blind_until_ended) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [classId, prompt, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, autoEndTimer, autoEndThreshold, blindUntilEnded]
+        "INSERT INTO poll_history(class, prompt, promptMD, promptHTML, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, auto_end_timer, auto_end_threshold, blind_until_ended) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [classId, prompt, promptMD, promptHTML, responses, allowMultipleResponses, blind, allowTextResponses, createdAt, autoEndTimer, autoEndThreshold, blindUntilEnded]
     );
 }
 
@@ -772,7 +841,7 @@ async function getCurrentPoll(classId, userData) {
 function formatCustomPollRow(row) {
     if (!row) return null;
 
-    return {
+    const customPoll = {
         id: row.id,
         owner: row.owner != null ? Number(row.owner) : null,
         name: row.name,
@@ -785,6 +854,12 @@ function formatCustomPollRow(row) {
         weight: row.weight,
         public: !!row.public,
     };
+    if (row.promptMD != null) {
+        customPoll.promptMD = row.promptMD;
+    } else if (row.promptHTML != null) {
+        customPoll.promptHTML = row.promptHTML;
+    }
+    return customPoll;
 }
 
 /**
@@ -851,10 +926,9 @@ async function insertCustomPollTemplate(userId, pollData) {
         throw new ValidationError("Poll name is required.");
     }
 
-    const prompt = typeof pollData.prompt === "string" ? pollData.prompt.trim() : "";
-    if (!prompt) {
-        throw new ValidationError("Poll prompt is required.");
-    }
+    populatePollPrompts(pollData);
+
+    const { prompt, promptMD, promptHTML } = pollData;
 
     if (!Array.isArray(pollData.answers) || pollData.answers.length === 0) {
         throw new ValidationError("At least one poll answer is required.");
@@ -863,11 +937,13 @@ async function insertCustomPollTemplate(userId, pollData) {
     const textRes = pollData.textRes != null ? (pollData.textRes ? 1 : 0) : pollData.allowTextResponses ? 1 : 0;
 
     return dbRun(
-        "INSERT INTO custom_polls (owner, name, prompt, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO custom_polls (owner, name, prompt, promptMD, promptHTML, answers, textRes, blind, allowVoteChanges, allowMultipleResponses, weight, public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
             userId,
             name,
             prompt,
+            promptMD,
+            promptHTML,
             JSON.stringify(pollData.answers),
             textRes,
             pollData.blind ? 1 : 0,

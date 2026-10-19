@@ -162,12 +162,12 @@ async function findActiveClassStudent(classroom, userId) {
 }
 
 /**
- * Checks whether a student already has a role assigned in memory.
+ * Checks whether a student already has a class role assigned in memory.
  * @param {Object|null|undefined} student
  * @param {string|number} roleId
  * @returns {boolean}
  */
-function hasInMemoryRole(student, roleId) {
+function hasInMemoryClassRole(student, roleId) {
     if (!student) {
         return false;
     }
@@ -193,20 +193,6 @@ function buildScopesKey(scopes) {
 function getGlobalRolePermissionLevel(role) {
     return computeGlobalPermissionLevel(parseScopesField(role.scopes));
 }
-
-/**
- * Identifies the implicit member/guest role that should not be assigned explicitly.
- * @param {{scopes: string|string[]|null|undefined}} role
- * @returns {boolean}
- */
-function isImplicitGuestRole(role) {
-    if (role?.name === ROLE_NAMES.GUEST) {
-        return true;
-    }
-
-    return buildScopesKey(role.scopes) === buildScopesKey(ROLES[ROLE_NAMES.GUEST]?.class || []);
-}
-
 /**
  * Resolves a role by ID for a specific class.
  * Accepts class-scoped role IDs and maps legacy global IDs to the closest
@@ -607,9 +593,6 @@ async function addStudentRole(classId, userId, roleId, actingClassUser, classroo
     if (!role) {
         throw new ValidationError(`Role "${roleId}" does not exist in this class.`);
     }
-    if (isImplicitGuestRole(role)) {
-        throw new ValidationError("The implicit member role cannot be assigned explicitly.");
-    }
 
     if (actingClassUser && classroom) {
         validateNoPrivilegeEscalationForRole(role, actingClassUser, classroom);
@@ -624,18 +607,8 @@ async function addStudentRole(classId, userId, roleId, actingClassUser, classroo
     }
 
     const existing = await dbGet("SELECT 1 FROM user_roles WHERE userId = ? AND roleId = ? AND classId = ?", [userId, role.id, classId]);
-    const legacyExisting = await dbGet(
-        `SELECT 1
-         FROM user_roles ur
-         JOIN class_roles cr ON cr.roleId = ur.roleId
-         WHERE ur.userId = ?
-           AND ur.roleId = ?
-           AND ur.classId IS NULL
-           AND cr.classId = ?`,
-        [userId, role.id, classId]
-    );
 
-    if (existing || legacyExisting || hasInMemoryRole(activeStudent, role.id)) {
+    if (existing || hasInMemoryClassRole(activeStudent, role.id)) {
         throw new ValidationError(`User already has the "${role.name}" role.`);
     }
 
@@ -667,44 +640,19 @@ async function removeStudentRole(classId, userId, roleId) {
     if (!role) {
         throw new ValidationError(`Role "${roleId}" does not exist in this class.`);
     }
-    if (isImplicitGuestRole(role)) {
-        throw new ValidationError("The implicit member role cannot be removed explicitly.");
-    }
 
-    const existing = await dbGet(
-        `SELECT *
-         FROM user_roles ur
-         WHERE ur.userId = ?
-           AND ur.roleId = ?
-           AND (
-                ur.classId = ?
-                OR (
-                    ur.classId IS NULL
-                    AND EXISTS (SELECT 1 FROM class_roles cr WHERE cr.roleId = ur.roleId AND cr.classId = ?)
-                )
-           )
-		LIMIT 1`,
-        [userId, role.id, classId, classId]
-    );
+    const existing = await dbGet("SELECT 1 FROM user_roles WHERE userId = ? AND roleId = ? AND classId = ?", [userId, role.id, classId]);
+	
     const classroomObj = classStateStore.getClassroom(classId);
     const activeStudent = await findActiveClassStudent(classroomObj, userId);
-    if (!existing && !hasInMemoryRole(activeStudent, role.id)) {
+    if (!existing && !hasInMemoryClassRole(activeStudent, role.id)) {
         throw new ValidationError(`User does not have the "${role.name}" role.`);
     }
 
     if (existing) {
         await dbRun(
-            `DELETE FROM user_roles
-             WHERE userId = ?
-               AND roleId = ?
-               AND (
-                    classId = ?
-                    OR (
-                        classId IS NULL
-                        AND EXISTS (SELECT 1 FROM class_roles cr WHERE cr.roleId = user_roles.roleId AND cr.classId = ?)
-                    )
-               )`,
-            [userId, role.id, classId, classId]
+            "DELETE FROM user_roles WHERE userId = ? AND roleId = ? AND classId = ?",
+            [userId, role.id, classId]
         );
     }
 

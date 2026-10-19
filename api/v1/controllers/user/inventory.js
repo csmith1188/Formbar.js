@@ -26,6 +26,42 @@ module.exports = (router) => {
         return hasScope(SCOPES.GLOBAL.USERS.MANAGE)(req, res, next);
     }
 
+	/**
+     * @swagger
+     * /api/v1/user/{id}/inventory:
+     *   get:
+     *     summary: Get a user's inventory
+     *     description: >
+     *       Returns the user's full inventory as an array of items with their amounts and item information.
+     *     tags: [Inventory, Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: id
+	 *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID of the user
+     *     responses:
+     *       200:
+     *         description: Inventory returned successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: array
+     *                   items:
+	*                       $ref: '#/components/schemas/InventoryItem'
+     *       401:
+     *         description: Not authenticated
+     *       403:
+     *         description: Forbidden
+     */
     router.get("/user/:id/inventory/", isAuthenticated, isOwnerOrHasScopes(ownsInventory, [SCOPES.GLOBAL.USERS.MANAGE]), async (req, res) => {
         req.infoEvent("user.inventory.get", "Fetching user inventory");
         requireParam(req.params.id, "id");
@@ -42,6 +78,59 @@ module.exports = (router) => {
         res.status(200).json({ success: true, data: inventory });
     });
 
+	
+	/**
+     * @swagger
+     * /api/v1/user/{id}/inventory/{itemId}:
+     *   post:
+     *     summary: Add item to inventory
+     *     description: >
+     *       Adds an item to users inventory 
+     *     tags: [Inventory, Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: id
+	 *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID of the user
+     *       - in: query
+     *         name: itemId
+	 *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID of the given item
+     *     responses:
+     *       200:
+     *         description: Inventory returned successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: object
+	 *                   properties:
+	 *                     userId: 
+	 *                       type: integer
+	 *                       example: 1
+	 *                     itemId: 
+	 *                       type: integer
+	 *                       example: 1
+	 *                     quantity: 
+	 *                       type: integer
+	 *                       example: 6
+     *       401:
+     *         description: Not authenticated
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Item not found in registry
+     */
     router.post("/user/:id/inventory/:itemId", isAuthenticated, canGiveInventoryItem, async (req, res) => {
         const { id, itemId } = req.params;
         const { quantity } = req.body;
@@ -87,6 +176,63 @@ module.exports = (router) => {
             },
         });
     });
+
+	
+	/**
+     * @swagger
+     * /api/v1/user/{id}/inventory/{itemId}:
+     *   delete:
+     *     summary: Removes item from inventory
+     *     description: >
+     *       Removes an item from a users inventory 
+     *     tags: [Inventory, Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: id
+	 *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID of the user
+     *       - in: query
+     *         name: itemId
+	 *         required: true
+     *         schema:
+     *           type: integer
+     *         description: ID of the given item
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - quantity
+     *             properties:
+     *               quantity:
+     *                 type: integer
+     *                 example: 6
+     *     responses:
+     *       200:
+     *         description: Inventory returned successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: object
+	 *                   properties:
+     *       401:
+     *         description: Not authenticated
+     *       403:
+     *         description: Forbidden
+     *       404:
+     *         description: Item not found in registry
+     */
 
     router.delete(
         "/user/:id/inventory/:itemId",

@@ -28,17 +28,14 @@ jest.mock("@modules/config", () => ({
 }));
 
 jest.mock("@services/digipog-service", () => ({
-    createPool: jest.fn(() => 42),
-}));
-
-jest.mock("@services/inventory-service", () => ({
-    registerItem: jest.fn(() => 7),
-    addItemToInventory: jest.fn(),
+    createPool: jest.fn(async () => {
+        await mockDatabase.dbRun("INSERT OR IGNORE INTO digipog_pools (id, name, description, amount, share_item) VALUES (42, 'TestApp Developer Pool', 'A test application', 0, 7)");
+        return 42;
+    }),
 }));
 
 const { createApp } = require("@services/app-service");
 const { createPool } = require("@services/digipog-service");
-const { registerItem, addItemToInventory } = require("@services/inventory-service");
 
 beforeAll(async () => {
     mockDatabase = await createTestDb();
@@ -62,7 +59,7 @@ afterAll(async () => {
     await mockDatabase.close();
 });
 
-const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1 };
+const APP_INPUT = { name: "TestApp", description: "A test application", ownerId: 1, shareItemId: 7 };
 
 describe("createApp()", () => {
     it("returns appId, apiKey, and apiSecret", async () => {
@@ -88,18 +85,6 @@ describe("createApp()", () => {
             description: APP_INPUT.description,
             ownerId: APP_INPUT.ownerId,
         });
-    });
-
-    it("calls registerItem with share item name", async () => {
-        await createApp(APP_INPUT);
-
-        expect(registerItem).toHaveBeenCalledWith(expect.objectContaining({ name: "TestApp Share" }));
-    });
-
-    it("calls addItemToInventory with ownerId and shareItemId", async () => {
-        await createApp(APP_INPUT);
-
-        expect(addItemToInventory).toHaveBeenCalledWith(APP_INPUT.ownerId, 7, 100);
     });
 
     it("inserts row into apps table with hashed key/secret", async () => {

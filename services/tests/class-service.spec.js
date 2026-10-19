@@ -54,6 +54,9 @@ const {
     pauseTimer,
     resumeTimer,
     classKickStudent,
+    addUserToClassroomSession,
+    applyDefaultEnrollmentRole,
+    updateClassSetting,
 } = require("@services/class-service");
 
 const { classStateStore } = require("@services/classroom-service");
@@ -277,6 +280,52 @@ describe("classKickStudent()", () => {
         const { id: classId } = await seedClassroom({ ownerId: teacher.id, name: "Kick Guard Class" });
 
         await expect(classKickStudent(student.id, classId)).rejects.toThrow(/not in the specified class/i);
+    });
+
+    it("clears class role assignments before a kicked user can rejoin", async () => {
+        const teacher = await seedUser("teacher-role-kick@example.com", "Teacher Role Kick");
+        const student = await seedUser("student-role-kick@example.com", "Student Role Kick");
+        const { id: classId } = await seedClassroom({ ownerId: teacher.id, name: "Role Kick Class" });
+        const role = await mockDatabase.dbGet("SELECT id FROM roles WHERE name = ? LIMIT 1", ["Student"]);
+
+        await mockDatabase.dbRun("INSERT INTO classusers (classId, studentId) VALUES (?, ?)", [classId, student.id]);
+        await mockDatabase.dbRun("INSERT INTO user_roles (userId, roleId, classId) VALUES (?, ?, ?)", [student.id, role.id, classId]);
+
+        await classKickStudent(student.id, classId);
+
+        const assignments = await mockDatabase.dbGetAll("SELECT * FROM user_roles WHERE userId = ? AND classId = ?", [student.id, classId]);
+        expect(assignments).toEqual([]);
+    });
+});
+
+describe("default enrollment role", () => {
+    it("assigns the configured role to a newly enrolled user", async () => {
+        const owner = await seedUser("owner-default-role@example.com", "Default Role Owner");
+        const student = await seedUser("student-default-role@example.com", "Default Role Student");
+        const { classId } = await createClass("Default Role Class", owner.id, owner.email);
+        const role = await mockDatabase.dbGet(
+            `SELECT r.id
+             FROM roles r
+             JOIN class_roles cr ON cr.roleId = r.id
+             WHERE r.name = ? AND cr.classId = ?`,
+            ["Mod", classId]
+        );
+
+        await updateClassSetting(classId, { defaultRoleId: role.id });
+        classStateStore.setUser(student.email, { id: student.id, email: student.email, roles: { global: [], class: [] } });
+
+        await addUserToClassroomSession(classId, student.email, { email: student.email });
+        expect(classStateStore.getUser(student.email).isOffline).toBe(false);
+        expect(
+            await mockDatabase.dbGet("SELECT roleId FROM user_roles WHERE userId = ? AND classId = ?", [student.id, classId])
+        ).toBeUndefined();
+        await applyDefaultEnrollmentRole(classId, student.id);
+
+        const assignment = await mockDatabase.dbGet(
+            "SELECT roleId FROM user_roles WHERE userId = ? AND classId = ?",
+            [student.id, classId]
+        );
+        expect(assignment.roleId).toBe(role.id);
     });
 });
 

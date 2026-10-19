@@ -15,7 +15,7 @@ const { getAssignedClassScopes, getClassAccessProfile, userHasAnyScope, userHasS
 const { getStudentsInClass, getIdFromEmail, getEmailFromId } = require("@services/student-service");
 const { generateKey } = require("@modules/util");
 const { clearPoll } = require("@services/poll-service");
-const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles } = require("@services/role-service");
+const { loadCustomRoles, getClassRoles, getStudentRoleAssignments, addDefaultClassRoles, getStudentRoles, addStudentRole } = require("@services/role-service");
 const { requireInternalParam } = require("@modules/error-wrapper");
 const { buildRoleReferences } = require("@modules/role-reference");
 const { io } = require("@modules/web-server");
@@ -149,7 +149,7 @@ async function createClass(className, ownerId, ownerEmail) {
  */
 async function initializeClassroom(id) {
     // Fetch classroom data from database
-    const classroom = await dbGet("SELECT id, name, key, owner FROM classroom WHERE id = ?", [id]);
+    const classroom = await dbGet("SELECT id, name, key, owner, settings FROM classroom WHERE id = ?", [id]);
 
     if (!classroom) {
         throw new NotFoundError(`Class with id ${id} does not exist`);
@@ -158,6 +158,14 @@ async function initializeClassroom(id) {
     // Create or update classroom in memory
     const customRoles = await loadCustomRoles(id);
     const availableRoles = await getClassRoles(id);
+    let settings = {};
+    if (classroom.settings) {
+        try {
+            settings = JSON.parse(classroom.settings);
+        } catch {
+            settings = {};
+        }
+    }
     if (!classStateStore.getClassroom(id)) {
         classStateStore.setClassroom(
             id,
@@ -168,11 +176,13 @@ async function initializeClassroom(id) {
                 owner: classroom.owner,
                 customRoles,
                 availableRoles,
+                settings,
             })
         );
     } else {
         classStateStore.getClassroom(id).customRoles = customRoles;
         classStateStore.getClassroom(id).availableRoles = availableRoles;
+        classStateStore.getClassroom(id).settings = settings;
     }
 
     // Get all students in the class and add them to the classroom
@@ -314,6 +324,7 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         const isOwner = currentUser.id === classData.owner;
         currentUser.roles = { global: currentUser.roles?.global || [], class: [] };
         currentUser.isClassOwner = isOwner;
+        currentUser.isOffline = false;
         currentUser.activeClass = classId;
 
         // Add the student to the class
@@ -330,6 +341,19 @@ async function addUserToClassroomSession(classId, email, sessionUser) {
         // Call classUpdate on all user's tabs
         userUpdateSocket(email, "classUpdate", classId, { global: false, restrictToControlPanel: true });
         return true;
+    }
+}
+
+/**
+ * Applies the configured default role to a newly enrolled class member.
+ * @param {number} classId - The class ID.
+ * @param {number} userId - The user ID.
+ * @returns {Promise<void>}
+ */
+async function applyDefaultEnrollmentRole(classId, userId) {
+    const classroom = classStateStore.getClassroom(classId);
+    if (classroom?.settings?.defaultRoleId != null) {
+        await addStudentRole(classId, userId, classroom.settings.defaultRoleId);
     }
 }
 
@@ -498,8 +522,24 @@ async function classKickStudent(userId, classId, options = { exitRoom: true, ban
         setClassOfApiSockets(existingUser.API, null);
     }
 
+    if (options.exitRoom && !options.ban) {
+        await dbRun("DELETE FROM user_roles WHERE userId=? AND classId=?", [userId, classId]);
+    }
+
     if (classroom && classroomStudent) {
         const student = classroomStudent;
+
+        if (options.exitRoom && !options.ban) {
+            student.roles = {
+                global: student.roles?.global || [],
+                class: [],
+            };
+        }
+
+        student.pollRes = {}
+        student.help = false
+        student.break = false
+
         student.activeClass = null;
         student.break = false;
         student.help = false;
@@ -559,7 +599,7 @@ async function classKickStudents(classId) {
         if (kickOperations.length > 0) {
             await Promise.all(kickOperations);
         }
-    } catch (err) {}
+    } catch (err) { }
 }
 
 /**
@@ -1034,26 +1074,47 @@ async function updateClassSetting(classId, classSettings) {
         throw new NotFoundError("Class not started");
     }
 
-    // When more settings are added, this should be refactored
+    const supportedSettings = new Set(["name", "defaultRoleId"]);
+    const unsupportedSetting = Object.keys(classSettings).find((key) => !supportedSettings.has(key));
+    if (unsupportedSetting) {
+        throw new ValidationError("Invalid setting provided.");
+    }
+
+    const settings = { ...(classroom.settings || {}) };
     const newClassName = classSettings.name;
+    let normalizedName = classroom.className;
     if (newClassName != null) {
         if (typeof newClassName !== "string") {
             throw new ValidationError("The new class name must be a string");
         }
 
-        const normalizedName = newClassName.trim();
+        normalizedName = newClassName.trim();
         const validation = validateClassroomName(normalizedName);
         if (!validation.valid) {
             throw new ValidationError(validation.error);
         }
-
-        await dbRun("UPDATE classroom SET name = ? WHERE id = ?", [normalizedName, classId]);
-        classStateStore.updateClassroom(classId, { className: normalizedName });
-        broadcastClassUpdate(classId);
-        return;
     }
 
-    throw new ValidationError("Invalid setting provided.");
+    if (Object.prototype.hasOwnProperty.call(classSettings, "defaultRoleId")) {
+        const defaultRoleId = classSettings.defaultRoleId;
+        if (defaultRoleId === null) {
+            delete settings.defaultRoleId;
+        } else if (!Number.isInteger(defaultRoleId) || defaultRoleId <= 0) {
+            throw new ValidationError("The default role ID must be a positive integer or null");
+        } else if (!classroom.availableRoles.some((role) => Number(role.id) === defaultRoleId)) {
+            throw new ValidationError("The default role does not exist in this class");
+        } else {
+            settings.defaultRoleId = defaultRoleId;
+        }
+    }
+
+    if (newClassName == null && !Object.prototype.hasOwnProperty.call(classSettings, "defaultRoleId")) {
+        throw new ValidationError("Invalid setting provided.");
+    }
+
+    await dbRun("UPDATE classroom SET name = ?, settings = ? WHERE id = ?", [normalizedName, JSON.stringify(settings), classId]);
+    classStateStore.updateClassroom(classId, { className: normalizedName, settings });
+    broadcastClassUpdate(classId);
 }
 
 module.exports = {
@@ -1062,6 +1123,7 @@ module.exports = {
     validateClassroomName,
     initializeClassroom,
     addUserToClassroomSession,
+    applyDefaultEnrollmentRole,
     createClass,
     startClass,
     endClass,

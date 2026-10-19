@@ -44,13 +44,14 @@ CREATE INDEX IF NOT EXISTS idx_user_tokens_user_purpose ON user_tokens (user_id,
 CREATE INDEX IF NOT EXISTS idx_user_tokens_purpose_hash ON user_tokens (purpose, token_hash);
 CREATE INDEX IF NOT EXISTS idx_user_tokens_expires ON user_tokens (expires_at);
 
--- Classroom (final state: no permissions column, no settings column)
+-- Classroom (final state: no permissions column)
 CREATE TABLE IF NOT EXISTS "classroom" (
     "id"       INTEGER NOT NULL UNIQUE,
     "name"     TEXT    NOT NULL,
     "owner"    INTEGER NOT NULL,
     "key"      INTEGER NOT NULL,
     "tags"     TEXT,
+    "settings" TEXT,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 CREATE INDEX IF NOT EXISTS idx_classroom_owner ON classroom (owner);
@@ -218,6 +219,7 @@ CREATE TABLE IF NOT EXISTS "digipog_pools" (
     "name"        TEXT    NOT NULL,
     "description" TEXT    NOT NULL DEFAULT 'None',
     "amount"      INTEGER NOT NULL DEFAULT 0,
+	"share_item"  INTEGER DEFAULT NULL,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 

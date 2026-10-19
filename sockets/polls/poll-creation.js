@@ -33,6 +33,8 @@ module.exports = {
                     ] = args;
                     pollData = {
                         prompt: pollPrompt,
+                        promptMD: pollPrompt,
+                        promptHTML: pollPrompt,
                         answers: Array.isArray(polls) ? polls : [],
                         blind: !!blind,
                         allowVoteChanges: !!allowVoteChanges,
@@ -50,6 +52,8 @@ module.exports = {
 
                 const normalizedPollData = {
                     prompt: pollData.prompt,
+                    promptMD: pollData.promptMD,
+                    promptHTML: pollData.promptHTML,
                     answers: Array.isArray(pollData.answers) ? pollData.answers : [],
                     blind: !!pollData.blind,
                     allowVoteChanges: !!pollData.allowVoteChanges,

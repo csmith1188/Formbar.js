@@ -480,18 +480,6 @@ describe("POST /api/v1/class/:id/students/:userId/roles", () => {
         expect(res.status).toBe(404);
     });
 
-    it("returns 400 when adding Guest (implicit role)", async () => {
-        const { classId, teacherTokens, student } = await setupClassWithTeacherAndStudent();
-        const guestRoleId = await getRoleIdByName("Guest");
-
-        const res = await request(app)
-            .post(`/api/v1/class/${classId}/students/${student.id}/roles/${guestRoleId}`)
-            .set("Authorization", `Bearer ${teacherTokens.accessToken}`)
-            .send({});
-
-        expect(res.status).toBe(400);
-    });
-
     it("returns 400 when adding a role the student already has", async () => {
         const { classId, teacherTokens, student } = await setupClassWithTeacherAndStudent();
         const modRoleId = await getRoleIdByName("Mod");
@@ -581,17 +569,6 @@ describe("DELETE /api/v1/class/:id/students/:userId/roles/:roleId", () => {
             .get(`/api/v1/class/${classId}/students/${student.id}/roles`)
             .set("Authorization", `Bearer ${teacherTokens.accessToken}`);
         expect(listRes.body.data.roles.map((role) => role.id)).not.toContain(modRoleId);
-    });
-
-    it("returns 400 when removing Guest (implicit role)", async () => {
-        const { classId, teacherTokens, student } = await setupClassWithTeacherAndStudent();
-        const guestRoleId = await getRoleIdByName("Guest");
-
-        const res = await request(app)
-            .delete(`/api/v1/class/${classId}/students/${student.id}/roles/${guestRoleId}`)
-            .set("Authorization", `Bearer ${teacherTokens.accessToken}`);
-
-        expect(res.status).toBe(400);
     });
 
     it("returns 400 when removing a role the student does not have", async () => {
