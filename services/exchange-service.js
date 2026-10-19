@@ -459,6 +459,8 @@ function formatExchangeFromDbToApi(rawExchange) {
         },
         reason: rawExchange.reason,
         status: rawExchange.status,
+        created: rawExchange.created_at,
+        updated: rawExchange.updated_at 
     };
 
     if (rawExchange.failure_reason != null) {

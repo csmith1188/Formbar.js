@@ -13,7 +13,7 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/exchanges/{id}:
      *   get:
-     *     summary: Get a exchange by ID
+     *     summary: Get an exchange by ID
      *     description: >
      *       Returns a single exchange. Returns 404 if the exchange does not exist or if
      *       the requesting user is not a participant, so that the existence of
@@ -49,14 +49,14 @@ module.exports = (router) => {
 
         const exchangeId = Number(req.params.id);
         if (!Number.isInteger(exchangeId) || exchangeId <= 0) {
-            throw new ValidationError("exchange ID must be a positive integer.", { reason: "invalid_exchange_id" });
+            throw new ValidationError("Exchange ID must be a positive integer.", { reason: "invalid_exchange_id" });
         }
 
         req.infoEvent("exchanges.get", "Fetching exchange", { exchangeId, userId: req.user.id });
 
         const exchange = await getExchangeById(exchangeId, req.user.id);
         if (!exchange) {
-            throw new NotFoundError("exchange not found.");
+            throw new NotFoundError("Exchange not found.");
         }
 
         res.status(200).json({ success: true, data: exchange });

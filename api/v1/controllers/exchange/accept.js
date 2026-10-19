@@ -12,8 +12,8 @@ module.exports = (router) => {
     * @swagger
     * /api/v1/exchanges/{id}/accept:
     *   post:
-    *     summary: Create a new exchange
-    *     description: Creates a new exchange transaction between two parties
+    *     summary: Accept an exchange
+    *     description: Accepts an exchange between two parties
     *     tags:
     *       - Exchanges
     *     security:

@@ -12,7 +12,7 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/exchanges/{id}/reject:
      *   post:
-     *     summary: Reject a exchange (recipient only)
+     *     summary: Reject an exchange (recipient only)
      *     description: >
      *       Rejects a pending exchange as the recipient. The requester receives a
      *       `exchange_rejected` notification.
