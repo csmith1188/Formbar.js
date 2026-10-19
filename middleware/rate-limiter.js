@@ -90,19 +90,23 @@ async function getApiKeyRateLimitKey(apiKeyValue) {
 async function getRequestRateLimitKey(req) {
     const sessionRateLimitKey = getAccountRateLimitKey(req.user?.id);
     if (sessionRateLimitKey) {
+        console.log('Session')
         return sessionRateLimitKey;
     }
 
     const authorizationRateLimitKey = getAuthorizationRateLimitKey(req.headers.authorization);
     if (authorizationRateLimitKey) {
+        console.log('Authorization')
         return authorizationRateLimitKey;
     }
 
     const apiRateLimitKey = await getApiKeyRateLimitKey(typeof req.headers.api === "string" ? req.headers.api : req.query?.api);
     if (apiRateLimitKey) {
+        console.log('API')
         return apiRateLimitKey;
     }
 
+    console.log(`ip:${normalizeIpAddress(req.ip)}`)
     return `ip:${normalizeIpAddress(req.ip)}`;
 }
 
