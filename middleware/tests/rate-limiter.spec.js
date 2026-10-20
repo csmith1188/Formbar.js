@@ -12,6 +12,7 @@ jest.mock("@services/auth-service", () => ({
 }));
 
 const RateLimitError = require("@errors/rate-limit-error");
+const AppError = require("@errors/app-error");
 const { resolveAPIKey } = require("@services/api-key-service");
 const { verifyToken } = require("@services/auth-service");
 const { createRateLimiter, getRequestRateLimitKey, getSocketRateLimitKey, normalizeIpAddress } = require("@middleware/rate-limiter");
@@ -168,6 +169,20 @@ describe("getSocketRateLimitKey()", () => {
 });
 
 describe("createRateLimiter()", () => {
+    it("returns the anonymous header and requires it on the first request", async () => {
+        const rateLimiter = createRateLimiter({ basePoints: 1, durationSeconds: 60, rateLimitMultiplier: 1 });
+        const response = buildResponse();
+        const next = jest.fn();
+
+        await rateLimiter.httpMiddleware(buildRequest({ ip: "192.0.2.20" }), response, next);
+
+        const error = next.mock.calls[0][0];
+        expect(error).toBeInstanceOf(AppError);
+        expect(error.statusCode).toBe(428);
+        expect(error.event).toBe("rate-limit.anonymous_header_required");
+        expect(response.getHeader("X-Anonymous-Client-Id")).toMatch(/^[a-f0-9]{32}$/);
+    });
+
     it("keeps HTTP and socket budgets separate", async () => {
         const rateLimiter = createRateLimiter({ basePoints: 1, durationSeconds: 60, rateLimitMultiplier: 1 });
         const req = buildRequest({ user: { id: 42 } });

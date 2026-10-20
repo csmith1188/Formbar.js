@@ -1,5 +1,6 @@
 const { RateLimiterMemory } = require("rate-limiter-flexible");
 const crypto = require("crypto");
+const AppError = require("@errors/app-error");
 const RateLimitError = require("@errors/rate-limit-error");
 const { resolveAPIKey } = require("@services/api-key-service");
 const { verifyToken } = require("@services/auth-service");
@@ -25,7 +26,6 @@ function normalizeIpAddress(ipAddress) {
 
 /**
  * Determine whether an address is localhost.
- *
  * @param {*} ipAddress - Client IP address.
  * @returns {boolean}
  */
@@ -196,7 +196,7 @@ function createRateLimiter(options = {}) {
 
     return {
         httpMiddleware: async (req, res, next) => {
-            if (isLocalhost(req.ip)) {
+            if (isLocalhost(req.ip) || req.method === "OPTIONS") {
                 next();
                 return;
             }
@@ -206,6 +206,17 @@ function createRateLimiter(options = {}) {
                 rateLimitKey = await getRequestRateLimitKey(req, res);
             } catch (err) {
                 next(err);
+                return;
+            }
+
+            if (rateLimitKey.startsWith("anonymous:") && !getAnonymousClientHeader(req.headers[ANONYMOUS_CLIENT_HEADER])) {
+                next(
+                    new AppError("The X-Anonymous-Client-Id header is required. Retry the request with the value provided in this response.", {
+                        statusCode: 428,
+                        event: "rate-limit.anonymous_header_required",
+                        reason: "anonymous_header_required",
+                    })
+                );
                 return;
             }
 
