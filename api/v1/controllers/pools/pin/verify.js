@@ -15,14 +15,14 @@ const ForbiddenError = require("@errors/forbidden-error");
 module.exports = (router) => {
     /**
      * @swagger
-     * /api/v1/user/{id}/pin/verify:
+     * /api/v1/pool/{id}/pin/verify:
      *   post:
-     *     summary: Verify user PIN for sensitive actions
+     *     summary: Verify pool PIN for sensitive actions
      *     tags:
      *       - Pools
      *     description: |
-     *       Verifies the authenticated user's PIN before unlocking sensitive information.
-     *       Users may only verify the PIN for their own account.
+     *       Verifies the authenticated user's pool PIN before unlocking sensitive information.
+     *       Users may only verify the PIN for any pools they are the top holder in.
      *     security:
      *       - bearerAuth: []
      *       - apiKeyAuth: []
