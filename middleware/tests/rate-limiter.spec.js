@@ -23,10 +23,20 @@ afterEach(() => {
 function buildRequest(overrides = {}) {
     return {
         user: null,
+        session: {},
         headers: {},
         query: {},
         ip: "127.0.0.1",
         ...overrides,
+    };
+}
+
+function buildResponse() {
+    const headers = new Map();
+
+    return {
+        getHeader: (name) => headers.get(name),
+        setHeader: (name, value) => headers.set(name, value),
     };
 }
 
@@ -59,6 +69,25 @@ describe("normalizeIpAddress()", () => {
 });
 
 describe("getRequestRateLimitKey()", () => {
+    it("prefers the session user id", async () => {
+        const key = await getRequestRateLimitKey(buildRequest({ session: { userId: 123 } }), buildResponse());
+
+        expect(key).toBe("account:123");
+    });
+
+    it("creates and reuses an anonymous client header", async () => {
+        const firstResponse = buildResponse();
+        const firstKey = await getRequestRateLimitKey(buildRequest(), firstResponse);
+        const clientId = firstResponse.getHeader("X-Anonymous-Client-Id");
+        const secondKey = await getRequestRateLimitKey(
+            buildRequest({ headers: { "x-anonymous-client-id": clientId } }),
+            buildResponse()
+        );
+
+        expect(firstKey).toBe(`anonymous:${clientId}`);
+        expect(secondKey).toBe(firstKey);
+    });
+
     it("prefers the session user id", async () => {
         const key = await getRequestRateLimitKey(buildRequest({ user: { id: 123 } }));
 
@@ -168,7 +197,7 @@ describe("createRateLimiter()", () => {
 
     it("passes a RateLimitError to next when the HTTP budget is exhausted", async () => {
         const rateLimiter = createRateLimiter({ basePoints: 1, durationSeconds: 60, rateLimitMultiplier: 1 });
-        const req = buildRequest({ user: { id: 99 } });
+        const req = buildRequest({ user: { id: 99 }, ip: "192.0.2.10" });
         const next = jest.fn();
 
         await rateLimiter.httpMiddleware(req, {}, next);
