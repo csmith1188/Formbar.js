@@ -293,12 +293,11 @@ async function createExchange(exchange) {
                     await strictRemoveFromInventory(from.userId, itemId, quantity);
                     await addItemToInventory(to.userId, itemId, quantity);
                 }
-
                 // Log exchange
                 exchangeId = await dbRun(
                     `INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type,
-                                    request, reason, status, created_at, updated_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)`,
+                                request, reason, status, created_at, updated_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)`,
                     [
                         from.userId,
                         from.poolId,
@@ -313,9 +312,13 @@ async function createExchange(exchange) {
                         now,
                     ]
                 );
-                
+                await Promise.allSettled([
+                    createNotification(from.userId, "exchange_completed", { exchangeId }),
+                    createNotification(to.userId, "exchange_completed", { exchangeId }),
+                ]);
             }
             await dbRun("COMMIT");
+
             status = 200;
         } catch (err) {
             await dbRun("ROLLBACK");
@@ -460,7 +463,7 @@ function formatExchangeFromDbToApi(rawExchange) {
         reason: rawExchange.reason,
         status: rawExchange.status,
         created: rawExchange.created_at,
-        updated: rawExchange.updated_at 
+        updated: rawExchange.updated_at
     };
 
     if (rawExchange.failure_reason != null) {
@@ -505,11 +508,11 @@ async function getExchangesForUser(userId, options) {
         filters: ["included"],
         ...options
     };
-    
+
     let { limit, offset, filters } = options;
 
     filters = new Set(filters);
-    
+
     // Always include 'included' (inbound or outbound) by default if inbound or outbound is not specified
     if (!filters.has("inbound") && !filters.has("outbound") && !filters.has("included")) {
         filters.add("included");
@@ -532,7 +535,7 @@ async function getExchangesForUser(userId, options) {
         },
         included: async (exchange) => {
             return (exchange.to_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.to_id) ||
-                    exchange.from_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.from_id));
+                exchange.from_user_id === userId || (await getTopHoldingPoolsForUser(userId)).includes(exchange.from_id));
         },
     }
 
@@ -567,7 +570,7 @@ async function getExchangesForUser(userId, options) {
 
     for (const exchange of exchanges) {
         const filterResults = await Promise.allSettled(activeJsFilters.map((filter) => filter.call(this, exchange)));
-        
+
         if (filterResults.every((result) => result.value)) {
             filteredExchanges.push(formatExchangeFromDbToApi(exchange));
         }
