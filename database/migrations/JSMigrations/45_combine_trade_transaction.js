@@ -3,20 +3,20 @@ const { dbGet, dbGetAll, dbRun } = require("@modules/database");
 module.exports = {
     async run(database) {
         // Doesn't run if exchanges already exists
-        const exchangeTable = await dbGet("SELECT name FROM sqlite_master WHERE name = 'exchanges' and type = 'table'");
+        const exchangeTable = await dbGet("SELECT name FROM sqlite_master WHERE name = 'exchanges' and type = 'table'", [], database);
         if (exchangeTable?.name) return;
 
-        const transactionRows = await dbGetAll("SELECT * FROM transactions");
+        const transactionRows = await dbGetAll("SELECT * FROM transactions", [], database);
         
         let combinedExchanges = await Promise.all(transactionRows.map(async (transaction) => {
             let fromFounderId, toFounderId;
             const selectPoolFounder = "SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1";
             
             if (transaction.from_type === "pool") {
-                fromFounderId = (await dbGet(selectPoolFounder, [transaction.from_id])).user_id;
+                fromFounderId = (await dbGet(selectPoolFounder, [transaction.from_id], database)).user_id;
             }
             if (transaction.to_type === "pool") {
-                toFounderId = (await dbGet(selectPoolFounder, [transaction.to_id])).user_id;
+                toFounderId = (await dbGet(selectPoolFounder, [transaction.to_id]), database).user_id;
             }
             
             const datetime = new Date(Number(transaction.date));
@@ -112,7 +112,7 @@ module.exports = {
                    "created_at"    TEXT, -- iso-8601
                    "updated_at"    TEXT, -- iso-8601
                    PRIMARY KEY ("id" AUTOINCREMENT)
-               )`
+               )`, [], database
              );
 
         for (const exchange of combinedExchanges) {
@@ -131,8 +131,11 @@ module.exports = {
                       exchange.failureReason,
                       exchange.createdAt.toISOString(),
                       exchange.updatedAt.toISOString()
-                  ]);
+                  ], database);
         }
+
+        await dbRun("DROP TABLE transactions", [], database);
+        await dbRun("DROP TABLE trades", [], database);
 
         await dbRun("COMMIT");
     }
