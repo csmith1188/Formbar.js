@@ -127,6 +127,25 @@ CREATE TABLE IF NOT EXISTS "transactions"
     "date"     TEXT    NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "exchanges"
+( 
+    "id"            INTEGER NOT NULL UNIQUE,
+    "from_user_id"  INTEGER,
+    "from_id"       INTEGER,
+    "from_type"     TEXT,
+    "offer"         TEXT,
+    "to_user_id"    INTEGER,
+    "to_id"         INTEGER,
+    "to_type"       TEXT,
+    "request"       TEXT,
+    "reason"        TEXT,
+    "status"        TEXT,
+    "failure_reason"    TEXT,
+    "created_at"    TEXT, -- iso-8601
+    "updated_at"    TEXT, -- iso-8601
+    PRIMARY KEY ("id" AUTOINCREMENT)
+);
+
 CREATE TABLE IF NOT EXISTS "users"
 (
     "id"          INTEGER NOT NULL UNIQUE,

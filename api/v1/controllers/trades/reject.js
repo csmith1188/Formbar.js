@@ -12,7 +12,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/trades/{id}/reject:
      *   post:
-     *     summary: Reject a trade (recipient only)
+     *     summary: Reject a trade (recipient only). This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Rejects a pending trade as the recipient. The requester receives a
      *       `trade_rejected` notification.

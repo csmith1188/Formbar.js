@@ -18,7 +18,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/user/{id}/trades:
      *   get:
-     *     summary: List the user's trades
+     *     summary: List the user's trades. This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Returns the user's trades organized into four buckets:
      *       `inbound` (pending trades where the user is the recipient),

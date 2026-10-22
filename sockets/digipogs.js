@@ -12,6 +12,7 @@ module.exports = {
 
         // For transferring digipogs between users for third party services
         onSocketEvent(socket, "transferDigipogs", hasScope(SCOPES.GLOBAL.DIGIPOGS.TRANSFER), async (socketContext, transferData) => {
+            transferData.userId = socketContext.session.id;
             const result = await transferDigipogs(transferData);
             socket.emit("transferResponse", result);
         });

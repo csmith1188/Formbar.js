@@ -12,7 +12,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/trades/{id}/accept:
      *   post:
-     *     summary: Accept a trade (recipient only)
+     *     summary: Accept a trade (recipient only). This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Accepts a pending trade as the recipient. Atomically re-checks both
      *       sides for available assets and performs the full exchange in a single

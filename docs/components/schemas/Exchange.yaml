@@ -1,0 +1,79 @@
+components:
+  schemas:
+    Exchange:
+      type: object
+      required:
+        - id
+        - to
+        - from
+        - reason
+        - status
+      properties:
+        id:
+          type: integer
+          example: 42
+        to:
+          type: object
+          required:
+            - id
+            - type
+            - request
+          properties:
+            id:
+              type: integer
+              example: 2
+            type:
+              type: string
+              enum:
+                - user
+                - pool
+            request:
+              type: object
+              description: Item quantities keyed by item ID (0 for digipogs).
+              additionalProperties:
+                type: integer
+                description: Quantity of the item.
+              example:
+                "1": 67
+                "27": 20
+        from:
+          type: object
+          required:
+            - id
+            - type
+            - offer
+          properties:
+            id:
+              type: integer
+              example: 1
+            type:
+              type: string
+              enum:
+                - user
+                - pool
+                - award
+            offer:
+              type: object
+              description: Item quantities keyed by item ID (0 for digipogs).
+              additionalProperties:
+                type: integer
+                description: Quantity of the item.
+              example:
+                "0": 10
+                "2": 1200
+        reason:
+          type: string
+          nullable: true
+          example: "Trading classroom supplies"
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - rejected
+            - canceled
+            - failed
+        failureReason:
+          type: string
+          nullable: true
+          example: "insufficient_resources"

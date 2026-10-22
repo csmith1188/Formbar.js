@@ -10,19 +10,12 @@ const { isAuthenticated } = require("@middleware/authentication");
  * @returns {void}
  */
 module.exports = (router) => {
-    function authenticateIfBearerToken(req, res, next) {
-        if (!req.headers.authorization) {
-            return next();
-        }
-
-        return isAuthenticated(req, res, next);
-    }
-
     /**
      * @swagger
      * /api/v1/digipogs/transfer:
      *   post:
-     *     summary: Transfer digipogs to another user
+     *     summary: Transfer digipogs to another user. This endpoint is deprecated. Use the endpoints under the Exchanges tags instead
+     *     deprecated: true
      *     tags:
      *       - Digipogs
      *     description: |
@@ -44,11 +37,13 @@ module.exports = (router) => {
      *                 oneOf:
      *                   - type: integer
      *                   - type: object
-     *                 example: 1
+     *                 example: { id: 1, type: "user" }
      *                 description: Sender account. The PIN is validated against this sender.
      *               to:
-     *                 type: string
-     *                 example: "user123"
+     *                 oneOf:
+     *                   - type: integer
+     *                   - type: object
+     *                 example: { id: 2, type: "pool" }
      *                 description: ID of the recipient user
      *               amount:
      *                 type: integer
@@ -57,7 +52,7 @@ module.exports = (router) => {
      *               pin:
      *                 type: string
      *                 example: "1234"
-     *                 description: User's PIN for authentication
+     *                 description: User's or Pool's PIN for authentication
      *               reason:
      *                 type: string
      *                 example: "Payment for services"
@@ -86,10 +81,11 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/digipogs/transfer", authenticateIfBearerToken, async (req, res) => {
+    router.post("/digipogs/transfer", isAuthenticated, async (req, res) => {
         const body = { ...(req.body || {}) };
         delete body.pinVerified;
         const requestedFrom = normalizeTransferFrom(getTransferFromValue(body)) || (req.user?.oauth ? { id: req.user.id, type: "user" } : null);
+        requestedFrom.userId = req.user.id;
 
         if (!requestedFrom) {
             throw new AppError("Missing sender identifier.", {

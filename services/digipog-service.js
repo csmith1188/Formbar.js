@@ -2,8 +2,9 @@ const { database, dbGetAll, dbGet, dbRun } = require("@modules/database");
 const { SCOPES, filterScopesByDomain, parseScopesField, TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { getClassIDFromCode } = require("@services/classroom-service");
 const { getGlobalPermissionLevelForUser } = require("@modules/scope-resolver");
-const { compareBcrypt } = require("@modules/crypto");
+const { hashBcrypt, compareBcrypt } = require("@modules/crypto");
 const { digipogRateLimit } = require("@modules/config");
+const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
 const { registerItem, addItemToInventory } = require("@services/inventory-service");
 
@@ -250,34 +251,158 @@ async function isUserInPool(userId, poolId) {
 }
 
 /**
- * Checks whether a specific user is an owner of a pool.
+ * Checks whether a specific user is a founder of a pool.
  * @param {number} poolId - The pool to check.
  * @param {number} userId - The user to check.
- * @returns {Promise<boolean>} True if the user is an owner of the pool.
+ * @returns {Promise<boolean>} True if the user is a founder of the pool.
  */
-async function isPoolOwnedByUser(poolId, userId) {
+async function isPoolFoundedByUser(poolId, userId) {
+    // "owner" now represents founder because I didn't wish to change the API
     const row = await dbGet("SELECT owner FROM digipog_pool_users WHERE pool_id = ? AND user_id = ? LIMIT 1", [poolId, userId]);
     return !!(row && row.owner);
 }
 
 /**
- * Middleware-compatible ownership check for pools.
+ * Middleware-compatible founder check for pools.
  * @param {Object} req - Express request object
- * @returns {Promise<boolean>} Whether the requesting user owns the pool
+ * @returns {Promise<boolean>} Whether the requesting user founded the pool
  */
-function poolOwnerCheck(req) {
-    return isPoolOwnedByUser(Number(req.params.id), req.user.id);
+function poolFounderCheck(req) {
+    return isPoolFoundedByUser(Number(req.params.id), req.user.id);
+}
+
+/**
+ * Checks whether a specific user is a top shareholder of the pool
+ * @param {number} poolId - The pool to check.
+ * @param {number} userId - The user to check.
+ * @returns {Promise<boolean>} True if the user is a top shareholder of the pool.
+ */
+async function isPoolUserTopHolder(poolId, userId) {
+    const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
+    if (row == null || row.share_item == null) return isPoolFoundedByUser(poolId, userId);
+    
+    const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
+    const maxQuantity = shareholders[0].quantity;
+    
+    for (const shareholder of shareholders) {
+        if (shareholder.quantity < maxQuantity) break;
+        if (shareholder.user_id === userId) return true;
+    }
+
+    return false;
+}
+
+/**
+ * Middleware-compatible founder check for pools.
+ * @param {Object} req - Express request object
+ * @returns {Promise<boolean>} Whether the requesting user founded the pool
+ */
+function poolTopHolderCheck(req) {
+    return isPoolUserTopHolder(Number(req.params.id), req.user.id);
+}
+
+
+/**
+ * Get the IDs of pools where the user is a top holder.
+ * @param {number} userId - The user to check.
+ * @returns {Promise<Array<number>>} Pool IDs where the user is a top holder.
+ */
+async function getTopHoldingPoolsForUser(userId) {
+    const pools = await getPoolsForUser(userId);
+
+    let topHoldingPools = [];
+
+    for (const {pool_id} of pools) {
+        if (await isPoolUserTopHolder(pool_id, userId))
+            topHoldingPools.push(pool_id);
+    }
+    
+    return topHoldingPools;
+}
+
+/**
+ * Update a pool PIN after verifying the old PIN.
+ * @param {number} poolId - poolId.
+ * @param {string} oldPin - oldPin.
+ * @param {string} newPin - newPin.
+ * @returns {Promise<void>}
+ */
+async function updatePoolPin(poolId, oldPin, newPin) {
+    const pool = await getPoolById(poolId);
+    if (!pool) {
+        throw new NotFoundError("pool not found.", {
+            event: "pool.pin.update.failed",
+            reason: "pool_not_found",
+        });
+    }
+
+    // If pool already has a PIN, verify the old one matches
+    if (pool.pin) {
+        if (oldPin == null) {
+            const ValidationError = require("@errors/validation-error");
+            throw new ValidationError("Missing the current PIN", {
+                event: "pool.pin.update.failed",
+                reason: "missing_old_pin",
+            });
+        }
+        const oldPinMatches = await compareBcrypt(String(oldPin), pool.pin);
+        if (!oldPinMatches) {
+            const AuthError = require("@errors/auth-error");
+            throw new AuthError("Current PIN is incorrect.", {
+                event: "pool.pin.update.failed",
+                reason: "incorrect_old_pin",
+            });
+        }
+    }
+
+    const hashedPin = await hashBcrypt(String(newPin));
+    await dbRun("UPDATE digipog_pools SET pin = ? WHERE id = ?", [hashedPin, poolId]);
+}
+
+/**
+ * Verify a user PIN.
+ * @param {number} poolId - poolId.
+ * @param {string} pin - pin.
+ * @returns {Promise<boolean>}
+ */
+async function verifyPoolPin(poolId, pin) {
+    const pool = await getPoolById(poolId);
+    if (!pool) {
+        throw new NotFoundError("pool not found.", {
+            event: "pool.pin.verify.failed",
+            reason: "pool_not_found",
+        });
+    }
+
+    if (!pool.pin) {
+        throw new AppError("No PIN is set for this account. Please create one first.", {
+            statusCode: 400,
+            event: "user.pin.verify.failed",
+            reason: "pin_not_set",
+        });
+    }
+
+    const pinMatches = await compareBcrypt(String(pin), pool.pin);
+    if (!pinMatches) {
+        const AuthError = require("@errors/auth-error");
+        throw new AuthError("PIN is incorrect.", {
+            event: "pool.pin.verify.failed",
+            reason: "incorrect_pin",
+        });
+    }
+
+    return true;
 }
 
 /**
  * Add a user to a pool.
  * @param {number} poolId - poolId.
  * @param {number} userId - userId.
- * @param {boolean} ownerFlag - ownerFlag.
+ * @param {boolean} founderFlag - founderFlag.
  * @returns {Promise<void>}
  */
-async function addUserToPool(poolId, userId, ownerFlag = 0) {
-    return dbRun("INSERT OR REPLACE INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [poolId, userId, ownerFlag ? 1 : 0]);
+async function addUserToPool(poolId, userId, founderFlag = 0) {
+    return dbRun("INSERT OR REPLACE INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [poolId, userId, founderFlag ? 1 : 0]);
 }
 
 /**
@@ -287,7 +412,7 @@ async function addUserToPool(poolId, userId, ownerFlag = 0) {
  * @returns {Promise<void>}
  */
 async function removeUserFromPool(poolId, userId) {
-    if (await isPoolOwnedByUser(poolId, userId)) {
+    if (await isPoolFoundedByUser(poolId, userId)) {
         const poolUsers = await getUsersForPool(poolId);
         const otherOwners = poolUsers.filter((poolUser) => poolUser.user_id !== userId && poolUser.owner);
         if (otherOwners.length === 0) {
@@ -327,7 +452,7 @@ async function addMemberToPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
+    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
@@ -364,7 +489,7 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
+    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
@@ -393,14 +518,14 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         return { success: false, message: "Invalid pool ID." };
     }
 
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
-    if (!isOwner) {
-        return { success: false, message: "You do not own this pool." };
-    }
-
     const pool = await getPoolById(poolId);
     if (!pool) {
         return { success: false, message: "Pool not found." };
+    }
+
+    const isFounder = await isPoolUserTopHolder(poolId, actingUserId);
+    if (!isFounder) {
+        return { success: false, message: "You do not own this pool." };
     }
 
 	if(amount <= 0) {
@@ -420,32 +545,38 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
 	}
 
 	const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
-    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item])
+    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item]);
+    const { totalShares } = await dbGet("SELECT SUM(quantity) AS totalShares FROM inventory WHERE item_id = ?", [pool.share_item]);
 
     // Payout each member
     try {
         await dbRun("BEGIN TRANSACTION");
         for (const shareholder of shareholders) {
             const userShare = await dbGet("SELECT quantity FROM inventory WHERE item_id = ? AND user_id = ?", [pool.share_item, shareholder.user_id]);
-			const userPayout = Math.floor(payoutAmount * (userShare.quantity / 100));
+			const userPayout = Math.floor(payoutAmount * (userShare.quantity / totalShares));
             if (!userShare) continue;
 
 			await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
-			await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+			await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                actingUserId,
                 pool.id,
-                shareholder.user_id,
                 "pool",
+                JSON.stringify({0: userPayout}),
+                shareholder.user_id,
                 "user",
-                userPayout,
+                JSON.stringify({}),
                 "Pool Payout",
+                "completed",
+                Date.now(),
                 Date.now(),
             ]);
         }
 
-        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [payoutAmount, poolId]);
+        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [Math.floor(payoutAmount), poolId]);
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
+        throw err;
         throw new AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
     }
 
@@ -460,10 +591,15 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
  * @returns {Promise<Object[]>}
  */
 async function getUserTransactions(userId) {
-    const transactions = await dbGetAll(
-        "SELECT * FROM transactions WHERE (from_id = ? AND from_type = 'user') OR (to_id = ? AND to_type = 'user') ORDER BY date DESC",
+    let transactions = await dbGetAll(
+        "SELECT * FROM exchanges WHERE request = '{}' AND ((from_user_id = ? AND from_type = 'user') OR (to_user_id = ? AND to_type = 'user')) ORDER BY created_at DESC",
         [userId, userId]
     );
+    // Filter only for transactions.
+    transactions = transactions.filter((transaction) => {
+        const keys = Object.keys(JSON.parse(transaction.offer));
+        return keys.length === 1 && keys.includes("0");
+    });
     return enrichTransactions(transactions);
 }
 
@@ -475,16 +611,21 @@ async function getUserTransactions(userId) {
  * @returns {Promise<Object[]>}
  */
 async function getUserTransactionsPaginated(userId, limit = 25, offset = 0) {
-    let whereQuery = "WHERE (from_id = ? AND from_type = 'user') OR (to_id = ? AND to_type = 'user')";
+    let whereQuery = "WHERE request = '{}' AND ((from_user_id = ? AND from_type = 'user') OR (to_user_id = ? AND to_type = 'user'))";
     const params = [userId, userId];
 
-    const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM transactions ${whereQuery}`, params);
-    const transactions = await dbGetAll(`SELECT * FROM transactions ${whereQuery} ORDER BY date DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM exchanges ${whereQuery}`, params);
+    let transactions = await dbGetAll(`SELECT * FROM exchanges ${whereQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    // Filter only for transactions.
+    transactions = transactions.filter((transaction) => {
+        const keys = Object.keys(JSON.parse(transaction.offer));
+        return keys.length === 1 && keys.includes("0");
+    });
     const enrichedTransactions = await enrichTransactions(transactions);
 
     return {
         transactions: enrichedTransactions,
-        total: totalRow ? totalRow.count : 0,
+        total: totalRow.count,
     };
 }
 
@@ -503,9 +644,9 @@ async function enrichTransactions(transactions) {
     const classIds = new Set();
 
     for (const transaction of transactions) {
-        if (transaction.from_id != null) {
+        if (transaction.from_user_id != null) {
             if (transaction.from_type === "user" || transaction.from_type === "award") {
-                userIds.add(transaction.from_id);
+                userIds.add(transaction.from_user_id);
             } else if (transaction.from_type === "pool") {
                 poolIds.add(transaction.from_id);
             } else if (transaction.from_type === "class") {
@@ -513,16 +654,16 @@ async function enrichTransactions(transactions) {
             }
         }
 
-        if (transaction.to_id != null) {
+        if (transaction.to_user_id != null) {
             if (transaction.to_type === "user" || transaction.to_type === "award") {
-                userIds.add(transaction.to_id);
+                userIds.add(transaction.to_user_id);
             } else if (transaction.to_type === "pool") {
                 poolIds.add(transaction.to_id);
             } else if (transaction.to_type === "class") {
                 classIds.add(transaction.to_id);
             }
         }
-    }
+    }    
 
     const [users, pools, classes] = await Promise.all([
         fetchUsersByIds(Array.from(userIds)),
@@ -531,11 +672,11 @@ async function enrichTransactions(transactions) {
     ]);
 
     return transactions.map((transaction) => ({
-        amount: transaction.amount,
+        amount: JSON.parse(transaction.offer)[0],
         reason: transaction.reason,
         date: transaction.date,
-        from: buildTransactionParty(transaction.from_id, transaction.from_type, users, pools, classes),
-        to: buildTransactionParty(transaction.to_id, transaction.to_type, users, pools, classes),
+        from: buildTransactionParty(transaction.from_user_id, transaction.from_id, transaction.from_type, users, pools, classes),
+        to: buildTransactionParty(transaction.to_user_id, transaction.to_id, transaction.to_type, users, pools, classes),
     }));
 }
 
@@ -611,18 +752,21 @@ async function fetchClassesByIds(classIds) {
  * @param {Object} classes - classes.
  * @returns {Object|null}
  */
-function buildTransactionParty(id, type, users, pools, classes) {
+function buildTransactionParty(userId, typedId, type, users, pools, classes) {
     const normalizedType = type || "unknown";
     let username = null;
-
+    let id = null;
+    
     if (normalizedType === "user" || normalizedType === "award") {
-        username = users.get(id)?.username || "Unknown User";
+        username = users.get(userId)?.username || "Unknown User";
+        id = userId;
     } else if (normalizedType === "pool") {
-        username = pools.get(id)?.username || "Unknown Pool";
+        username = pools.get(typedId)?.username || "Unknown Pool";
+        id = typedId;
     } else if (normalizedType === "class") {
-        username = classes.get(id)?.username || "Unknown Class";
+        username = classes.get(typedId)?.username || "Unknown Class";
+        id = typedId;
     }
-
     return {
         id,
         type: normalizedType,
@@ -984,14 +1128,14 @@ async function awardDigipogs(awardData, user) {
         }
 
         try {
-            await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO exchanges (from_user_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, 'user', ?, ?, ?, '{}', ?, 'completed', ?, ?)", [
                 from,
+                JSON.stringify({0: amount}),
                 to.id,
-                "award",
                 to.type,
-                amount,
                 reason,
-                Date.now(),
+                new Date().toISOString(),
+                new Date().toISOString()
             ]);
         } catch (err) {
             return { success: true, message: "Award succeeded, but failed to log transaction." };
@@ -1099,30 +1243,17 @@ async function transferDigipogs(transferData, options = {}) {
 
         let fromAccount;
         if (from.type === "user") {
-            fromAccount = await dbGet("SELECT id, digipogs, pin FROM users WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            fromAccount = await dbGet("SELECT id AS userId, digipogs, pin FROM users WHERE id = ?", [from.id]);
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender account not found." };
             }
         } else {
-            fromAccount = await dbGet("SELECT id, amount FROM digipog_pools WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            fromAccount = await dbGet("SELECT id, amount, pin FROM digipog_pools WHERE id = ?", [from.id]);
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender pool not found." };
             }
-            const poolOwner = await dbGet(
-                `SELECT u.pin
-                 FROM digipog_pool_users dpu
-                 JOIN users u ON u.id = dpu.user_id
-                 WHERE dpu.pool_id = ? AND dpu.owner = 1
-                 LIMIT 1`,
-                [from.id]
-            );
-            if (!poolOwner) {
-                recordAttempt(accountId, false);
-                return { success: false, message: "Sender pool owner not found." };
-            }
-            fromAccount.pin = poolOwner.pin;
         }
 
         if (!pinVerified && !fromAccount.pin) {
@@ -1146,16 +1277,28 @@ async function transferDigipogs(transferData, options = {}) {
 
         let toAccount;
         if (to.type === "user") {
-            toAccount = await dbGet("SELECT id FROM users WHERE id = ?", [to.id]);
-            if (!toAccount) {
+            toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
+            
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
         } else {
             toAccount = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [to.id]);
-            if (!toAccount) {
+            
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
+            }
+            
+            // return founder if no share item
+            const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [toAccount.id]);
+            if (row.share_item == null) {
+                const { userId } = await dbGet("SELECT user_id AS userId FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [toAccount.id]);
+                toAccount.userId = userId;
+            } else {    
+                const { userId } = await dbGet("SELECT user_id AS userId FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item]);
+                toAccount.userId = userId;
             }
         }
 
@@ -1194,23 +1337,31 @@ async function transferDigipogs(transferData, options = {}) {
         }
 
         try {
-            await dbRun("INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
-                from.id,
+            await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                fromAccount.userId ?? from.userId,
+                fromAccount.id,
                 from.type,
-                to.id,
+                JSON.stringify({0: amount}),
+                toAccount.userId,
+                toAccount.id,
                 to.type,
-                amount,
-                reason,
-                Date.now(),
+                JSON.stringify({}),
+                transferData.reason,
+                "completed",
+                new Date().toISOString(),
+                new Date().toISOString()
             ]);
-        } catch (err) {}
+        } catch (err) {
+            throw err;
+        }
 
         recordAttempt(accountId, true);
         return {
             success: true,
-            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}`,
+            message: `Transfer successful. This endpoint is deprecated. Check the docs for endpoints under the "Exchanges" category`,
         };
     } catch (err) {
+        console.log(err);
         return { success: false, message: "Database error." };
     }
 }
@@ -1230,9 +1381,14 @@ module.exports = {
     getPoolsForUserPaginated,
     getUsersForPool,
     getPoolById,
+    getTopHoldingPoolsForUser,
     isUserInPool,
-    isPoolOwnedByUser,
-    poolOwnerCheck,
+    isPoolFoundedByUser,
+    poolFounderCheck,
+    isPoolUserTopHolder,
+    poolTopHolderCheck,
+    updatePoolPin,
+    verifyPoolPin,
     addUserToPool,
     removeUserFromPool,
     setUserOwnerFlag,
