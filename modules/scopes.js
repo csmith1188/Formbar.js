@@ -10,6 +10,7 @@ const SCOPES = {
         DIGIPOGS: {
             AWARD: "global.digipogs.award",
             TRANSFER: "global.digipogs.transfer",
+            REVOKE: "global.digipogs.revoke"
         },
         POOLS: {
             MANAGE: "global.pools.manage",

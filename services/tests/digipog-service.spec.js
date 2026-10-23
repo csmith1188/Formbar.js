@@ -747,6 +747,41 @@ describe("awardDigipogs()", () => {
         expect(result.message).toMatch(/greater than zero/);
     });
 
+    it("allows a teacher to revoke digipogs from a user", async () => {
+        const teacher = await seedUser({ permissions: 4 });
+        const student = await seedUser({ digipogs: 10 });
+
+        await mockDatabase.dbRun("INSERT INTO classroom (name, owner, key) VALUES (?, ?, ?)", ["RevokeClass", teacher.id, "revoke-key"]);
+        const classRow = await mockDatabase.dbGet("SELECT id FROM classroom WHERE owner = ?", [teacher.id]);
+        await mockDatabase.dbRun("INSERT INTO classusers (classId, studentId, digiPogs) VALUES (?, ?, ?)", [classRow.id, student.id, 0]);
+
+        const result = await awardDigipogs({ to: { id: student.id, type: "user" }, amount: -3, reason: "Revoked" }, { id: teacher.id });
+        expect(result.success).toBe(true);
+
+        const row = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [student.id]);
+        expect(row.digipogs).toBe(7);
+    });
+
+    it("allows a manager to award a negative amount", async () => {
+        const manager = await seedUser({ permissions: 5 });
+        const student = await seedUser({ digipogs: 10 });
+
+        const result = await awardDigipogs({ to: { id: student.id, type: "user" }, amount: -4 }, { id: manager.id });
+        expect(result.success).toBe(true);
+
+        const row = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [student.id]);
+        expect(row.digipogs).toBe(6);
+    });
+
+    it("rejects negative awards from non-teachers", async () => {
+        const studentSender = await seedUser({ permissions: 2 });
+        const recipient = await seedUser({ digipogs: 10 });
+
+        const result = await awardDigipogs({ to: { id: recipient.id, type: "user" }, amount: -1 }, { id: studentSender.id });
+        expect(result.success).toBe(false);
+        expect(result.message).toMatch(/Only teachers and managers/);
+    });
+
     it("returns error when sender account not found", async () => {
         const result = await awardDigipogs({ to: { id: 1, type: "user" }, amount: 5 }, { id: 99999 });
         expect(result.success).toBe(false);
@@ -931,6 +966,26 @@ describe("transferDigipogs()", () => {
         });
         expect(result.success).toBe(false);
         expect(result.message).toMatch(/greater than zero/);
+    });
+
+    it("revokes the exact negative amount without tax", async () => {
+        const teacher = await seedUser({ permissions: 4, digipogs: 100, pin: hashedPin });
+        const student = await seedUser({ digipogs: 10 });
+
+        const result = await transferDigipogs({
+            from: { id: teacher.id, type: "user" },
+            to: { id: student.id, type: "user" },
+            amount: -4,
+            pin: "1234",
+            reason: "Revoked",
+        });
+
+        expect(result.success).toBe(true);
+
+        const teacherRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [teacher.id]);
+        const studentRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [student.id]);
+        expect(teacherRow.digipogs).toBe(100);
+        expect(studentRow.digipogs).toBe(6);
     });
 
     it("rejects invalid sender/recipient type", async () => {

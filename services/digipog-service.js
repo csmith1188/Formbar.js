@@ -280,10 +280,10 @@ function poolFounderCheck(req) {
 async function isPoolUserTopHolder(poolId, userId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
     if (row == null || row.share_item == null) return isPoolFoundedByUser(poolId, userId);
-    
+
     const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
     const maxQuantity = shareholders[0].quantity;
-    
+
     for (const shareholder of shareholders) {
         if (shareholder.quantity < maxQuantity) break;
         if (shareholder.user_id === userId) return true;
@@ -312,11 +312,11 @@ async function getTopHoldingPoolsForUser(userId) {
 
     let topHoldingPools = [];
 
-    for (const {pool_id} of pools) {
+    for (const { pool_id } of pools) {
         if (await isPoolUserTopHolder(pool_id, userId))
             topHoldingPools.push(pool_id);
     }
-    
+
     return topHoldingPools;
 }
 
@@ -528,23 +528,23 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         return { success: false, message: "You do not own this pool." };
     }
 
-	if(amount <= 0) {
-		return { success: false, message: "Cannot payout 0 pogs." }
-	}
+    if (amount <= 0) {
+        return { success: false, message: "Cannot payout 0 pogs." }
+    }
 
-	if(payoutType !== "percent" && payoutType !== "digipogs") {
-		return { success: false, message: `Payout type must be "percent" or "digipogs".` }
-	}
+    if (payoutType !== "percent" && payoutType !== "digipogs") {
+        return { success: false, message: `Payout type must be "percent" or "digipogs".` }
+    }
 
-	if(amount > 100 && payoutType === "percent") {
-		return { success: false, message: "Cannot payout more than 100% of the pool." }
-	}
+    if (amount > 100 && payoutType === "percent") {
+        return { success: false, message: "Cannot payout more than 100% of the pool." }
+    }
 
-	if(amount > pool.amount && payoutType === "digipogs") {
-		return { success: false, message: "Cannot payout more than the pool\'s amount." }
-	}
+    if (amount > pool.amount && payoutType === "digipogs") {
+        return { success: false, message: "Cannot payout more than the pool\'s amount." }
+    }
 
-	const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
+    const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
     const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item]);
     const { totalShares } = await dbGet("SELECT SUM(quantity) AS totalShares FROM inventory WHERE item_id = ?", [pool.share_item]);
 
@@ -553,15 +553,15 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         await dbRun("BEGIN TRANSACTION");
         for (const shareholder of shareholders) {
             const userShare = await dbGet("SELECT quantity FROM inventory WHERE item_id = ? AND user_id = ?", [pool.share_item, shareholder.user_id]);
-			const userPayout = Math.floor(payoutAmount * (userShare.quantity / totalShares));
+            const userPayout = Math.floor(payoutAmount * (userShare.quantity / totalShares));
             if (!userShare) continue;
 
-			await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
-			await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
+            await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
                 actingUserId,
                 pool.id,
                 "pool",
-                JSON.stringify({0: userPayout}),
+                JSON.stringify({ 0: userPayout }),
                 shareholder.user_id,
                 "user",
                 JSON.stringify({}),
@@ -663,7 +663,7 @@ async function enrichTransactions(transactions) {
                 classIds.add(transaction.to_id);
             }
         }
-    }    
+    }
 
     const [users, pools, classes] = await Promise.all([
         fetchUsersByIds(Array.from(userIds)),
@@ -756,7 +756,7 @@ function buildTransactionParty(userId, typedId, type, users, pools, classes) {
     const normalizedType = type || "unknown";
     let username = null;
     let id = null;
-    
+
     if (normalizedType === "user" || normalizedType === "award") {
         username = users.get(userId)?.username || "Unknown User";
         id = userId;
@@ -825,7 +825,7 @@ function normalizeAwardRecipient(awardData) {
  * @returns {void}
  */
 function validateAwardRequest({ from, to, amount }) {
-    if (!from || Number.isNaN(amount)) {
+    if (!from || !Number.isFinite(amount)) {
         return "Missing required fields.";
     }
 
@@ -833,12 +833,26 @@ function validateAwardRequest({ from, to, amount }) {
         return "Invalid recipient type.";
     }
 
-    if (amount <= 0) {
+    if (to.type !== "class" && !to.id) {
+        return "Missing recipient identifier.";
+    }
+
+    return null;
+}
+
+/**
+ * Check whether a sender may use an award to revoke digipogs.
+ * @param {number} amount - Award amount.
+ * @param {number} senderPermissionLevel - Sender permission level.
+ * @returns {string|null}
+ */
+function validateAwardAmount(amount, senderPermissionLevel) {
+    if (amount === 0) {
         return "Amount must be greater than zero.";
     }
 
-    if (to.type !== "class" && !to.id) {
-        return "Missing recipient identifier.";
+    if (amount < 0 && senderPermissionLevel < TEACHER_PERMISSIONS) {
+        return "Only teachers and managers can revoke digipogs.";
     }
 
     return null;
@@ -1122,6 +1136,11 @@ async function awardDigipogs(awardData, user) {
         }
         const senderPermissionLevel = getGlobalPermissionLevelForUser(fromUser);
 
+        const amountError = validateAwardAmount(amount, senderPermissionLevel);
+        if (amountError) {
+            return fail(amountError);
+        }
+
         const awardFailure = await applyAwardDigipogs({ from, to, amount, senderPermissionLevel, fail });
         if (awardFailure) {
             return awardFailure;
@@ -1130,7 +1149,7 @@ async function awardDigipogs(awardData, user) {
         try {
             await dbRun("INSERT INTO exchanges (from_user_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, 'user', ?, ?, ?, '{}', ?, 'completed', ?, ?)", [
                 from,
-                JSON.stringify({0: amount}),
+                JSON.stringify({ 0: amount }),
                 to.id,
                 to.type,
                 reason,
@@ -1157,6 +1176,13 @@ async function awardDigipogs(awardData, user) {
  * @returns {{taxedAmount: number, taxAmount: number}}
  */
 function calculateDigipogTransferTax(amount) {
+    if (amount < 0) {
+        return {
+            taxedAmount: amount,
+            taxAmount: 0,
+        };
+    }
+
     const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1;
     return {
         taxedAmount,
@@ -1225,10 +1251,26 @@ async function transferDigipogs(transferData, options = {}) {
         }
         if (!to.type) to.type = "user";
 
-        if (!from || from.id === undefined || !to || to.id === undefined || !amount || reason === undefined || (!pin && !pinVerified)) {
+        if (
+            !from ||
+            from.id === undefined ||
+            !to ||
+            to.id === undefined ||
+            amount === undefined ||
+            amount === null ||
+            Number.isNaN(amount) ||
+            reason === undefined ||
+            (!pin && !pinVerified)
+        ) {
             return { success: false, message: "Missing required fields." };
-        } else if (amount <= 0) {
+        } else if (amount === 0) {
             return { success: false, message: "Amount must be greater than zero." };
+        } else if (amount < 0) {
+            const sender = from.type === "user" ? await getComputedGlobalUser(from.id) : null;
+            const senderPermissionLevel = sender ? getGlobalPermissionLevelForUser(sender) : 0;
+            if (senderPermissionLevel < TEACHER_PERMISSIONS) {
+                return { success: false, message: "Amount must be greater than zero." };
+            }
         } else if (from.type === to.type && from.id === to.id) {
             return { success: false, message: "Cannot transfer to the same account." };
         } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
@@ -1278,25 +1320,25 @@ async function transferDigipogs(transferData, options = {}) {
         let toAccount;
         if (to.type === "user") {
             toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
-            
+
             if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
         } else {
             toAccount = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [to.id]);
-            
+
             if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
             }
-            
+
             // return founder if no share item
             const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [toAccount.id]);
             if (row.share_item == null) {
                 const { userId } = await dbGet("SELECT user_id AS userId FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [toAccount.id]);
                 toAccount.userId = userId;
-            } else {    
+            } else {
                 const { userId } = await dbGet("SELECT user_id AS userId FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item]);
                 toAccount.userId = userId;
             }
@@ -1304,7 +1346,25 @@ async function transferDigipogs(transferData, options = {}) {
 
         try {
             await dbRun("BEGIN IMMEDIATE TRANSACTION");
-            if (from.type === "user") {
+            if (amount < 0) {
+                const requiredBalance = Math.abs(amount);
+                const recipientUpdated =
+                    to.type === "user"
+                        ? await dbRunChanges("UPDATE users SET digipogs = digipogs + ? WHERE id = ? AND digipogs >= ?", [
+                              amount,
+                              to.id,
+                              requiredBalance,
+                          ])
+                        : await dbRunChanges("UPDATE digipog_pools SET amount = amount + ? WHERE id = ? AND amount >= ?", [
+                              amount,
+                              to.id,
+                              requiredBalance,
+                          ]);
+
+                if (!recipientUpdated) {
+                    throw new Error("Insufficient funds.");
+                }
+            } else if (from.type === "user") {
                 const debited = await dbRunChanges("UPDATE users SET digipogs = digipogs - ? WHERE id = ? AND digipogs >= ?", [
                     amount,
                     from.id,
@@ -1323,12 +1383,14 @@ async function transferDigipogs(transferData, options = {}) {
                     throw new Error("Insufficient funds.");
                 }
             }
-            await creditDigipogTransferRecipient(amount, to.type, to.id);
+            if (amount >= 0) {
+                await creditDigipogTransferRecipient(amount, to.type, to.id);
+            }
             await dbRun("COMMIT");
         } catch (err) {
             try {
                 await dbRun("ROLLBACK");
-            } catch (rollbackErr) {}
+            } catch (rollbackErr) { }
             recordAttempt(accountId, false);
             if (err && err.message === "Insufficient funds.") {
                 return { success: false, message: "Insufficient funds." };
@@ -1341,7 +1403,7 @@ async function transferDigipogs(transferData, options = {}) {
                 fromAccount.userId ?? from.userId,
                 fromAccount.id,
                 from.type,
-                JSON.stringify({0: amount}),
+                JSON.stringify({ 0: amount }),
                 toAccount.userId,
                 toAccount.id,
                 to.type,
