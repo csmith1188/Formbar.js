@@ -58,7 +58,7 @@ async function checkInventoryAvailability(userId, items) {
 
 /**
  * Simply transfers digipogs from one user to another.
- * transferDigipogs from digipog service works with API objects
+ * exchangeDigipogs from digipog service works with API objects
  * @param {number} amount
  * @param {string} fromType
  * @param {number} fromId

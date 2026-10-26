@@ -165,10 +165,10 @@ async function getComputedGlobalUser(userId) {
  * @param {Object} poolData - Pool data.
  * @param {string} poolData.name - Pool name.
  * @param {string} [poolData.description] - Pool description.
- * @param {number} poolData.ownerId - Owner user ID.
+ * @param {number} poolData.defaultShareholderId - Owner user ID.
  * @returns {Promise<number>}
  */
-async function createPool({ name, description = "", ownerId }) {
+async function createPool({ name, description = "", defaultShareholderId }) {
     const shareItemId = await registerItem({
         name: `${name} Share`,
         description: `Share of ${name}`,
@@ -176,8 +176,8 @@ async function createPool({ name, description = "", ownerId }) {
         iconUrl: null,
     });
     const poolId = await dbRun("INSERT INTO digipog_pools (name, description, amount, share_item) VALUES (?, ?, ?, ?)", [name, description, 0, shareItemId]);
-    await addUserToPool(poolId, ownerId, 1);
-    await addItemToInventory(ownerId, shareItemId, SHARES_PER_POOL);
+    await addUserToPool(poolId, defaultShareholderId);
+    await addItemToInventory(defaultShareholderId, shareItemId, SHARES_PER_POOL);
     return poolId;
 }
 
@@ -401,8 +401,8 @@ async function verifyPoolPin(poolId, pin) {
  * @param {boolean} founderFlag - founderFlag.
  * @returns {Promise<void>}
  */
-async function addUserToPool(poolId, userId, founderFlag = 0) {
-    return dbRun("INSERT OR REPLACE INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [poolId, userId, founderFlag ? 1 : 0]);
+async function addUserToPool(poolId, userId) {
+    return dbRun("INSERT OR REPLACE INTO digipog_pool_users (pool_id, user_id) VALUES (?, ?)", [poolId, userId]);
 }
 
 /**
@@ -467,7 +467,7 @@ async function addMemberToPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "User is already a member of this pool." };
     }
 
-    await addUserToPool(poolId, userId, 0);
+    await addUserToPool(poolId, userId);
 
     return { success: true, message: "User added to pool successfully." };
 }

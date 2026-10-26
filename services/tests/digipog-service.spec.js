@@ -132,7 +132,7 @@ afterAll(async () => {
 describe("createPool()", () => {
     it("creates a pool and adds the owner", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "My Pool", description: "desc", ownerId: user.id });
+        const poolId = await createPool({ name: "My Pool", description: "desc", defaultShareholderId: user.id });
 
         const pool = await getPoolById(poolId);
         expect(pool.name).toBe("My Pool");
@@ -142,8 +142,8 @@ describe("createPool()", () => {
         const shares = await mockDatabase.dbGet("SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ?", [user.id, pool.share_item]);
         expect(shares.quantity).toBe(100);
 
-        const ownerFlag = await isPoolFoundedByUser(poolId, user.id);
-        expect(ownerFlag).toBe(true);
+        const topHolder = await isPoolUserTopHolder(poolId, user.id);
+        expect(topHolder).toBe(true);
     });
 
     it("defaults description to empty string", async () => {
@@ -224,7 +224,7 @@ describe("getUsersForPool()", () => {
         const owner = await seedUser();
         const member = await seedUser();
         const poolId = await createPool({ name: "Team", ownerId: owner.id });
-        await addUserToPool(poolId, member.id, 0);
+        await addUserToPool(poolId, member.id);
 
         const users = await getUsersForPool(poolId);
         expect(users).toHaveLength(2);
