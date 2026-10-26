@@ -268,7 +268,7 @@ async function isPoolFoundedByUser(poolId, userId) {
  * @returns {Promise<boolean>} Whether the requesting user founded the pool
  */
 function poolFounderCheck(req) {
-    return isPoolFoundedByUser(Number(req.params.id), req.user.id);
+    return isPoolUserTopHolder(Number(req.params.id), req.user.id);
 }
 
 /**
@@ -279,7 +279,6 @@ function poolFounderCheck(req) {
  */
 async function isPoolUserTopHolder(poolId, userId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
-    if (row == null || row.share_item == null) return isPoolFoundedByUser(poolId, userId);
 
     const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
     const maxQuantity = shareholders[0].quantity;
@@ -409,10 +408,10 @@ async function addUserToPool(poolId, userId, founderFlag = 0) {
  * Remove a user from a pool.
  * @param {number} poolId - poolId.
  * @param {number} userId - userId.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} 
  */
 async function removeUserFromPool(poolId, userId) {
-    if (await isPoolFoundedByUser(poolId, userId)) {
+    if (await isPoolUserTopHolder(poolId, userId)) {
         const poolUsers = await getUsersForPool(poolId);
         const otherOwners = poolUsers.filter((poolUser) => poolUser.user_id !== userId && poolUser.owner);
         if (otherOwners.length === 0) {
@@ -452,7 +451,7 @@ async function addMemberToPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
+    const isOwner = await isPoolUserTopHolder(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
@@ -489,7 +488,7 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
+    const isOwner = await isPoolUserTopHolder(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
@@ -1351,15 +1350,15 @@ async function transferDigipogs(transferData, options = {}) {
                 const recipientUpdated =
                     to.type === "user"
                         ? await dbRunChanges("UPDATE users SET digipogs = digipogs + ? WHERE id = ? AND digipogs >= ?", [
-                              amount,
-                              to.id,
-                              requiredBalance,
-                          ])
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ])
                         : await dbRunChanges("UPDATE digipog_pools SET amount = amount + ? WHERE id = ? AND amount >= ?", [
-                              amount,
-                              to.id,
-                              requiredBalance,
-                          ]);
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ]);
 
                 if (!recipientUpdated) {
                     throw new Error("Insufficient funds.");
@@ -1445,7 +1444,6 @@ module.exports = {
     getPoolById,
     getTopHoldingPoolsForUser,
     isUserInPool,
-    isPoolFoundedByUser,
     poolFounderCheck,
     isPoolUserTopHolder,
     poolTopHolderCheck,
