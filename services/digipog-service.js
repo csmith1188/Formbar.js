@@ -187,6 +187,8 @@ async function createPool({ name, description = "", ownerId }) {
  * @returns {Promise<void>}
  */
 async function deletePool(poolId) {
+    let foo = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId])
+    await dbRun("DELETE FROM inventory WHERE item_id = ?", [foo.share_item])
     await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
     await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
 }
