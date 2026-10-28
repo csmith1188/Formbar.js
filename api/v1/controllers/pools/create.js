@@ -137,7 +137,7 @@ module.exports = (router) => {
         }
 
         // Create the pool
-        const result = await digipogService.createPool({ name, description, ownerId: req.user.id });
+        const result = await digipogService.createPool({ name, description, defaultShareholderId: req.user.id });
         const poolId = result.lastID || result;
 
         res.status(200).send({

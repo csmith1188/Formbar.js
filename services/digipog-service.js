@@ -6,7 +6,7 @@ const { hashBcrypt, compareBcrypt } = require("@modules/crypto");
 const { digipogRateLimit } = require("@modules/config");
 const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
-const { registerItem, addItemToInventory } = require("@services/inventory-service");
+const { registerItem, addItemToInventory, removeItemFromInventory } = require("@services/inventory-service");
 
 const SHARES_PER_POOL = 100;
 
@@ -197,7 +197,7 @@ async function deletePool(poolId) {
  * @returns {Promise<Object[]>}
  */
 async function getPoolsForUser(userId) {
-    return dbGetAll("SELECT pool_id, owner FROM digipog_pool_users WHERE user_id = ?", [userId]);
+    return dbGetAll("SELECT pool_id FROM digipog_pool_users WHERE user_id = ?", [userId]);
 }
 
 /**
@@ -398,7 +398,6 @@ async function verifyPoolPin(poolId, pin) {
  * Add a user to a pool.
  * @param {number} poolId - poolId.
  * @param {number} userId - userId.
- * @param {boolean} founderFlag - founderFlag.
  * @returns {Promise<void>}
  */
 async function addUserToPool(poolId, userId) {
@@ -412,15 +411,18 @@ async function addUserToPool(poolId, userId) {
  * @returns {Promise<void>}
  */
 async function removeUserFromPool(poolId, userId) {
-    if (await isPoolFoundedByUser(poolId, userId)) {
-        const poolUsers = await getUsersForPool(poolId);
-        const otherOwners = poolUsers.filter((poolUser) => poolUser.user_id !== userId && poolUser.owner);
-        if (otherOwners.length === 0) {
+    const { shareItem } = await dbGet("SELECT share_item AS shareItem FROM digipog_pools WHERE id = ?", [poolId]);
+    if (await isPoolUserTopHolder(poolId, userId)) {
+        const otherShareHolders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ? AND user_id != ?", [shareItem, userId]);
+        if (otherShareHolders.length === 0) {
             await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
             await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
+            await dbRun("DELETE FROM inventory WHERE item_id = ?", [shareItem]);
             return;
         }
     }
+    const { userShares } = await dbGet("SELECT SUM(quantity) AS userShares FROM inventory WHERE item_id = ? AND user_id = ?", [shareItem, userId]);
+    if (userShares != null) await removeItemFromInventory(userId, shareItem, userShares);
     await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId]);
 }
 
@@ -452,7 +454,7 @@ async function addMemberToPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
+    const isOwner = await isPoolUserTopHolder(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
@@ -489,7 +491,7 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
         return { success: false, message: "Invalid user ID." };
     }
 
-    const isOwner = await isPoolFoundedByUser(poolId, actingUserId);
+    const isOwner = await isPoolUserTopHolder(poolId, actingUserId);
     if (!isOwner) {
         return { success: false, message: "You do not own this pool." };
     }
