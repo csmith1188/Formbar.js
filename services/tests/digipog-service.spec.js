@@ -132,7 +132,7 @@ afterAll(async () => {
 describe("createPool()", () => {
     it("creates a pool and adds the owner", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "My Pool", description: "desc", ownerId: user.id });
+        const poolId = await createPool({ name: "My Pool", description: "desc", defaultShareholderId: user.id });
 
         const pool = await getPoolById(poolId);
         expect(pool.name).toBe("My Pool");
@@ -148,7 +148,7 @@ describe("createPool()", () => {
 
     it("defaults description to empty string", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "No Desc", ownerId: user.id });
+        const poolId = await createPool({ name: "No Desc", defaultShareholderId: user.id });
         const pool = await getPoolById(poolId);
         expect(pool.description).toBe("");
     });
@@ -157,7 +157,7 @@ describe("createPool()", () => {
 describe("deletePool()", () => {
     it("removes the pool and all pool_users rows", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "Gone", ownerId: user.id });
+        const poolId = await createPool({ name: "Gone", defaultShareholderId: user.id });
 
         await deletePool(poolId);
 
@@ -182,11 +182,11 @@ describe("getPoolById()", () => {
 describe("getPoolsForUser()", () => {
     it("returns pool_id and owner for each membership", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "P1", ownerId: user.id });
+        const poolId = await createPool({ name: "P1", defaultShareholderId: user.id });
 
         const pools = await getPoolsForUser(user.id);
         expect(pools).toHaveLength(1);
-        expect(pools[0]).toEqual({ pool_id: poolId, owner: 1 });
+        expect(pools[0]).toEqual({ pool_id: poolId });
     });
 
     it("returns empty array for user with no pools", async () => {
@@ -198,9 +198,9 @@ describe("getPoolsForUser()", () => {
 describe("getPoolsForUserPaginated()", () => {
     it("returns paginated pools with total count", async () => {
         const user = await seedUser();
-        await createPool({ name: "A", ownerId: user.id });
-        await createPool({ name: "B", ownerId: user.id });
-        await createPool({ name: "C", ownerId: user.id });
+        await createPool({ name: "A", defaultShareholderId: user.id });
+        await createPool({ name: "B", defaultShareholderId: user.id });
+        await createPool({ name: "C", defaultShareholderId: user.id });
 
         const result = await getPoolsForUserPaginated(user.id, 2, 0);
         expect(result.pools).toHaveLength(2);
@@ -209,9 +209,9 @@ describe("getPoolsForUserPaginated()", () => {
 
     it("respects offset", async () => {
         const user = await seedUser();
-        await createPool({ name: "A", ownerId: user.id });
-        await createPool({ name: "B", ownerId: user.id });
-        await createPool({ name: "C", ownerId: user.id });
+        await createPool({ name: "A", defaultShareholderId: user.id });
+        await createPool({ name: "B", defaultShareholderId: user.id });
+        await createPool({ name: "C", defaultShareholderId: user.id });
 
         const result = await getPoolsForUserPaginated(user.id, 2, 2);
         expect(result.pools).toHaveLength(1);
@@ -223,8 +223,8 @@ describe("getUsersForPool()", () => {
     it("returns all users in a pool", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "Team", ownerId: owner.id });
-        await addUserToPool(poolId, member.id, 0);
+        const poolId = await createPool({ name: "Team", defaultShareholderId: owner.id });
+        await addUserToPool(poolId, member.id);
 
         const users = await getUsersForPool(poolId);
         expect(users).toHaveLength(2);
@@ -234,7 +234,7 @@ describe("getUsersForPool()", () => {
 describe("isUserInPool()", () => {
     it("returns true for member", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: user.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: user.id });
         expect(await isUserInPool(user.id, poolId)).toBe(true);
     });
 
@@ -246,17 +246,17 @@ describe("isUserInPool()", () => {
 });
 
 describe("isPoolUserTopHolder()", () => {
-    it("returns true for owner", async () => {
+    it("returns true for top holder", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: user.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: user.id });
         expect(await isPoolUserTopHolder(poolId, user.id)).toBe(true);
     });
 
     it("returns false for non-owner member", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
-        await addUserToPool(poolId, member.id, 0);
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
+        await addUserToPool(poolId, member.id);
         expect(await isPoolUserTopHolder(poolId, member.id)).toBe(false);
     });
 
@@ -267,47 +267,20 @@ describe("isPoolUserTopHolder()", () => {
     });
 });
 
-describe("poolFounderCheck()", () => {
-    it("returns true when req.user owns the pool", async () => {
+describe("poolTopHolderCheck()", () => {
+    it("returns true when req.user is top holder", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: user.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: user.id });
         const req = { user: { id: user.id }, params: { id: String(poolId) } };
-        expect(await poolFounderCheck(req)).toBe(true);
+        expect(await poolTopHolderCheck(req)).toBe(true);
     });
 
-    it("returns false when req.user does not own the pool", async () => {
+    it("returns false when req.user is not the pool", async () => {
         const owner = await seedUser();
         const other = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         const req = { user: { id: other.id }, params: { id: String(poolId) } };
-        expect(await poolFounderCheck(req)).toBe(false);
-    });
-});
-
-describe("isPoolUserTopHolder()", () => {
-    it("returns true for every tied highest shareholder", async () => {
-        const first = await seedUser();
-        const second = await seedUser();
-        const third = await seedUser();
-        const poolId = await createPool({ name: "Share Pool", ownerId: first.id });
-        const { share_item: shareItemId } = await getPoolById(poolId);
-
-        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [second.id, shareItemId, 100]);
-        await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [third.id, shareItemId, 5]);
-
-        expect(await isPoolUserTopHolder(poolId, first.id)).toBe(true);
-        expect(await isPoolUserTopHolder(poolId, second.id)).toBe(true);
-        expect(await isPoolUserTopHolder(poolId, third.id)).toBe(false);
-    });
-});
-
-describe("poolTopHolderCheck()", () => {
-    it("reads the pool ID and user ID from the request", async () => {
-        const owner = await seedUser();
-        const poolId = await createPool({ name: "Top Holder Pool", ownerId: owner.id });
-
-        const req = { user: { id: owner.id }, params: { id: String(poolId) } };
-        expect(await poolTopHolderCheck(req)).toBe(true);
+        expect(await poolTopHolderCheck(req)).toBe(false);
     });
 });
 
@@ -315,8 +288,8 @@ describe("getTopHoldingPoolsForUser()", () => {
     it("returns only memberships where the user is a top holder", async () => {
         const user = await seedUser();
         const other = await seedUser();
-        const topPoolId = await createPool({ name: "Top Pool", ownerId: other.id });
-        const lowerPoolId = await createPool({ name: "Lower Pool", ownerId: other.id });
+        const topPoolId = await createPool({ name: "Top Pool", defaultShareholderId: other.id });
+        const lowerPoolId = await createPool({ name: "Lower Pool", defaultShareholderId: other.id });
         const { share_item: topShareItemId } = await getPoolById(topPoolId);
         const { share_item: lowerShareItemId } = await getPoolById(lowerPoolId);
         await addUserToPool(topPoolId, user.id);
@@ -330,7 +303,7 @@ describe("getTopHoldingPoolsForUser()", () => {
 describe("updatePoolPin()", () => {
     it("sets a PIN when the pool has no PIN", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        const poolId = await createPool({ name: "PIN Pool", defaultShareholderId: owner.id });
 
         await updatePoolPin(poolId, null, "1234");
 
@@ -339,7 +312,7 @@ describe("updatePoolPin()", () => {
 
     it("requires and verifies the current PIN before replacing it", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        const poolId = await createPool({ name: "PIN Pool", defaultShareholderId: owner.id });
         await updatePoolPin(poolId, null, "1234");
 
         await expect(updatePoolPin(poolId, null, "5678")).rejects.toThrow("Missing the current PIN");
@@ -357,14 +330,14 @@ describe("updatePoolPin()", () => {
 describe("verifyPoolPin()", () => {
     it("throws when no PIN is set", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        const poolId = await createPool({ name: "PIN Pool", defaultShareholderId: owner.id });
 
         await expect(verifyPoolPin(poolId, "1234")).rejects.toThrow("No PIN is set");
     });
 
     it("returns true for a matching PIN and rejects an incorrect PIN", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "PIN Pool", ownerId: owner.id });
+        const poolId = await createPool({ name: "PIN Pool", defaultShareholderId: owner.id });
         await updatePoolPin(poolId, null, "1234");
 
         await expect(verifyPoolPin(poolId, "1234")).resolves.toBe(true);
@@ -386,19 +359,12 @@ describe("addUserToPool()", () => {
         expect(await isPoolUserTopHolder(pool.id, user.id)).toBe(false);
     });
 
-    it("adds a user as owner when flag is truthy", async () => {
-        const pool = await seedPool();
-        const user = await seedUser();
-        await addUserToPool(pool.id, user.id, 1);
-        expect(await isPoolUserTopHolder(pool.id, user.id)).toBe(true);
-    });
-
     it("replaces existing entry on duplicate", async () => {
         const pool = await seedPool();
         const user = await seedUser();
-        await addUserToPool(pool.id, user.id, 0);
-        await addUserToPool(pool.id, user.id, 1);
-        expect(await isPoolUserTopHolder(pool.id, user.id)).toBe(true);
+        await addUserToPool(pool.id, user.id);
+        await addUserToPool(pool.id, user.id);
+        expect((await getUsersForPool(pool.id)).length).toBe(1);
     });
 });
 
@@ -406,7 +372,7 @@ describe("removeUserFromPool()", () => {
     it("removes a non-owner member without deleting the pool", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await addUserToPool(poolId, member.id, 0);
 
         await removeUserFromPool(poolId, member.id);
@@ -417,7 +383,7 @@ describe("removeUserFromPool()", () => {
 
     it("deletes the entire pool when the sole owner is removed", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         await removeUserFromPool(poolId, owner.id);
 
@@ -427,8 +393,10 @@ describe("removeUserFromPool()", () => {
     it("does not delete pool if another owner exists", async () => {
         const owner1 = await seedUser();
         const owner2 = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner1.id });
-        await addUserToPool(poolId, owner2.id, 1);
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner1.id });
+        const pool = await getPoolById(poolId);
+        await addUserToPool(pool.id, owner2.id);
+        await mockDatabase.dbRun("INSERT INTO inventory(user_id, item_id, quantity) VALUES (?, ?, 100)", [owner2.id, pool.share_item]);
 
         await removeUserFromPool(poolId, owner1.id);
 
@@ -442,7 +410,7 @@ describe("setUserOwnerFlag()", () => {
     it("promotes a member to owner", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await addUserToPool(poolId, member.id, 0);
 
         await setUserOwnerFlag(poolId, member.id, 1);
@@ -451,7 +419,7 @@ describe("setUserOwnerFlag()", () => {
 
     it("demotes an owner to member", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         await setUserOwnerFlag(poolId, owner.id, 0);
         expect(await isPoolUserTopHolder(poolId, owner.id)).toBe(false);
@@ -462,7 +430,7 @@ describe("addMemberToPool()", () => {
     it("adds a user to a pool the acting user owns", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         const result = await addMemberToPool({ actingUserId: owner.id, poolId, userId: member.id });
         expect(result).toEqual({ success: true, message: "User added to pool successfully." });
@@ -485,7 +453,7 @@ describe("addMemberToPool()", () => {
         const owner = await seedUser();
         const nonOwner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         const result = await addMemberToPool({ actingUserId: nonOwner.id, poolId, userId: member.id });
         expect(result.success).toBe(false);
@@ -494,7 +462,7 @@ describe("addMemberToPool()", () => {
 
     it("rejects when target user does not exist", async () => {
         const owner = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         const result = await addMemberToPool({ actingUserId: owner.id, poolId, userId: 99999 });
         expect(result.success).toBe(false);
@@ -504,7 +472,7 @@ describe("addMemberToPool()", () => {
     it("rejects when user is already in pool", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await addUserToPool(poolId, member.id, 0);
 
         const result = await addMemberToPool({ actingUserId: owner.id, poolId, userId: member.id });
@@ -517,7 +485,7 @@ describe("removeMemberFromPool()", () => {
     it("removes a member from the pool", async () => {
         const owner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await addUserToPool(poolId, member.id, 0);
 
         const result = await removeMemberFromPool({ actingUserId: owner.id, poolId, userId: member.id });
@@ -539,7 +507,7 @@ describe("removeMemberFromPool()", () => {
         const owner = await seedUser();
         const nonOwner = await seedUser();
         const member = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await addUserToPool(poolId, member.id, 0);
 
         const result = await removeMemberFromPool({ actingUserId: nonOwner.id, poolId, userId: member.id });
@@ -550,7 +518,7 @@ describe("removeMemberFromPool()", () => {
     it("rejects when target user is not in pool", async () => {
         const owner = await seedUser();
         const outsider = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         const result = await removeMemberFromPool({ actingUserId: owner.id, poolId, userId: outsider.id });
         expect(result.success).toBe(false);
@@ -562,7 +530,7 @@ describe("payoutPool()", () => {
     it("distributes pool amount equally among members", async () => {
         const owner = await seedUser({ digipogs: 0 });
         const member = await seedUser({ digipogs: 0 });
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         const pool = await getPoolById(poolId);
         await addUserToPool(poolId, member.id, 0);
         await mockDatabase.dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, 100)", [member.id, pool.share_item]);
@@ -581,7 +549,7 @@ describe("payoutPool()", () => {
 
     it("creates transaction records for each payout", async () => {
         const owner = await seedUser({ digipogs: 0 });
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         await mockDatabase.dbRun("DELETE FROM exchanges");
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 50 WHERE id = ?", [poolId]);
 
@@ -598,7 +566,7 @@ describe("payoutPool()", () => {
         const owner = await seedUser({ digipogs: 0 });
         const m1 = await seedUser({ digipogs: 0 });
         const m2 = await seedUser({ digipogs: 0 });
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
         const pool = await getPoolById(poolId);
         await addUserToPool(poolId, m1.id, 0);
         await addUserToPool(poolId, m2.id, 0);
@@ -621,7 +589,7 @@ describe("payoutPool()", () => {
     it("rejects when acting user is not owner", async () => {
         const owner = await seedUser();
         const other = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: owner.id });
+        const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         const result = await payoutPool({ actingUserId: other.id, poolId });
         expect(result.success).toBe(false);
@@ -630,8 +598,8 @@ describe("payoutPool()", () => {
 
     it("rejects when pool is not found", async () => {
         const user = await seedUser();
-        const poolId = await createPool({ name: "P", ownerId: user.id });
-        // Delete the pool row but leave pool_users so isPoolUserTopHolder passes
+        const poolId = await createPool({ name: "P", defaultShareholderId: user.id });
+        // Delete the pool row but leave pool_users so isPoolFoundedByUser passes
         await mockDatabase.dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
 
         const result = await payoutPool({ actingUserId: user.id, poolId });
@@ -1066,7 +1034,7 @@ describe("transferDigipogs()", () => {
 
     it("transfers from user to pool", async () => {
         const sender = await seedUser({ digipogs: 100, pin: hashedPin });
-        const poolId = await createPool({ name: "Target Pool", description: "desc", ownerId: sender.id });
+        const poolId = await createPool({ name: "Target Pool", description: "desc", defaultShareholderId: sender.id });
 
         const result = await transferDigipogs({
             from: { id: sender.id, type: "user" },
