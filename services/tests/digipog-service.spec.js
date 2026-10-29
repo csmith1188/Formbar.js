@@ -50,7 +50,7 @@ const {
     getPoolsForUserPaginated,
     getUsersForPool,
     isUserInPool,
-    isPoolFoundedByUser,
+    isPoolUserTopHolder,
     poolFounderCheck,
     getTopHoldingPoolsForUser,
     isPoolUserTopHolder,
@@ -142,8 +142,8 @@ describe("createPool()", () => {
         const shares = await mockDatabase.dbGet("SELECT quantity FROM inventory WHERE user_id = ? AND item_id = ?", [user.id, pool.share_item]);
         expect(shares.quantity).toBe(100);
 
-        const topHolder = await isPoolUserTopHolder(poolId, user.id);
-        expect(topHolder).toBe(true);
+        const ownerFlag = await isPoolUserTopHolder(poolId, user.id);
+        expect(ownerFlag).toBe(true);
     });
 
     it("defaults description to empty string", async () => {
@@ -414,7 +414,7 @@ describe("setUserOwnerFlag()", () => {
         await addUserToPool(poolId, member.id, 0);
 
         await setUserOwnerFlag(poolId, member.id, 1);
-        expect(await isPoolFoundedByUser(poolId, member.id)).toBe(true);
+        expect(await isPoolUserTopHolder(poolId, member.id)).toBe(true);
     });
 
     it("demotes an owner to member", async () => {
@@ -422,7 +422,7 @@ describe("setUserOwnerFlag()", () => {
         const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
 
         await setUserOwnerFlag(poolId, owner.id, 0);
-        expect(await isPoolFoundedByUser(poolId, owner.id)).toBe(false);
+        expect(await isPoolUserTopHolder(poolId, owner.id)).toBe(false);
     });
 });
 

@@ -1,4 +1,4 @@
-const { hasClassScope } = require("@middleware/permission-check");
+const { hasClassScope, hasScope } = require("@middleware/permission-check");
 const { SCOPES } = require("@modules/permissions");
 const { awardDigipogs } = require("@services/digipog-service");
 const { isAuthenticated } = require("@middleware/authentication");
@@ -89,7 +89,7 @@ module.exports = (router) => {
      *             schema:
      *               $ref: '#/components/schemas/ServerError'
      */
-    router.post("/digipogs/award", isAuthenticated, hasClassScope(SCOPES.CLASS.DIGIPOGS.AWARD), async (req, res) => {
+    router.post("/digipogs/award", isAuthenticated, hasScope(SCOPES.GLOBAL.DIGIPOGS.AWARD), async (req, res) => {
         const { amount, to, userId, studentId } = req.body || {};
 
         if (amount === undefined || amount === null) {

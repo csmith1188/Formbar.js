@@ -187,6 +187,8 @@ async function createPool({ name, description = "", defaultShareholderId }) {
  * @returns {Promise<void>}
  */
 async function deletePool(poolId) {
+    let foo = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId])
+    await dbRun("DELETE FROM inventory WHERE item_id = ?", [foo.share_item])
     await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
     await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
 }
@@ -268,7 +270,7 @@ async function isPoolFoundedByUser(poolId, userId) {
  * @returns {Promise<boolean>} Whether the requesting user founded the pool
  */
 function poolFounderCheck(req) {
-    return isPoolFoundedByUser(Number(req.params.id), req.user.id);
+    return isPoolUserTopHolder(Number(req.params.id), req.user.id);
 }
 
 /**
@@ -279,7 +281,6 @@ function poolFounderCheck(req) {
  */
 async function isPoolUserTopHolder(poolId, userId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
-    if (row == null || row.share_item == null) return isPoolFoundedByUser(poolId, userId);
 
     const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
     const maxQuantity = shareholders[0].quantity;
@@ -408,7 +409,7 @@ async function addUserToPool(poolId, userId) {
  * Remove a user from a pool.
  * @param {number} poolId - poolId.
  * @param {number} userId - userId.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} 
  */
 async function removeUserFromPool(poolId, userId) {
     const { shareItem } = await dbGet("SELECT share_item AS shareItem FROM digipog_pools WHERE id = ?", [poolId]);
@@ -1353,15 +1354,15 @@ async function transferDigipogs(transferData, options = {}) {
                 const recipientUpdated =
                     to.type === "user"
                         ? await dbRunChanges("UPDATE users SET digipogs = digipogs + ? WHERE id = ? AND digipogs >= ?", [
-                              amount,
-                              to.id,
-                              requiredBalance,
-                          ])
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ])
                         : await dbRunChanges("UPDATE digipog_pools SET amount = amount + ? WHERE id = ? AND amount >= ?", [
-                              amount,
-                              to.id,
-                              requiredBalance,
-                          ]);
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ]);
 
                 if (!recipientUpdated) {
                     throw new Error("Insufficient funds.");
@@ -1447,7 +1448,6 @@ module.exports = {
     getPoolById,
     getTopHoldingPoolsForUser,
     isUserInPool,
-    isPoolFoundedByUser,
     poolFounderCheck,
     isPoolUserTopHolder,
     poolTopHolderCheck,
