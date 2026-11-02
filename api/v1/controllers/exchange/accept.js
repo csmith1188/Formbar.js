@@ -2,13 +2,14 @@ const { isAuthenticated } = require("@middleware/authentication");
 const { requireParam, requireBodyParam } = require("@modules/error-wrapper");
 const { acceptExchange } = require("@services/exchange-service");
 const ValidationError = require("@errors/validation-error");
+const { hasScope } = require("@middleware/permission-check");
 
 /**
  * Register trades accept controller routes.
  * @param {import("express").Router} router
  */
 module.exports = (router) => {
-        /**
+    /**
     * @swagger
     * /api/v1/exchanges/{id}/accept:
     *   post:
@@ -60,7 +61,7 @@ module.exports = (router) => {
     *       500:
     *         description: Failed transfer
     */
-    router.post("/exchanges/:id/accept", isAuthenticated, async (req, res) => {
+    router.post("/exchanges/:id/accept", isAuthenticated, hasScope('global.exchanges.accept'), async (req, res) => {
         const { pin } = req.body;
 
         requireParam(req.params.id, "id");
