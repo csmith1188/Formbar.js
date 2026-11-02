@@ -74,7 +74,7 @@ async function createApp({ name, description, ownerId, redirectUris = [] }) {
     await dbRun("BEGIN TRANSACTION");
 
     try {
-        const poolId = await createPool({ name: `${name} Developer Pool`, description, ownerId });
+        const poolId = await createPool({ name: `${name} Developer Pool`, description, defaultShareholderId: ownerId });
         const pool = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId]);
         const shareItemId = pool.share_item;
 

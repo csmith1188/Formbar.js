@@ -1,0 +1,1 @@
+DROP TABLE 'digipog_pool_users';

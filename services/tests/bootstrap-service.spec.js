@@ -49,12 +49,11 @@ describe("ensureFormbarDeveloperPool()", () => {
         expect(pool.amount).toBe(0);
     });
 
-    it("adds user 1 (id=1) as an owner of the pool", async () => {
+    it("adds user 1 (id=1) as top holder", async () => {
         await ensureFormbarDeveloperPool();
-        const member = await mockDatabase.dbGet("SELECT * FROM digipog_pool_users WHERE pool_id = 0");
+        const member = await mockDatabase.dbGet("SELECT * FROM inventory WHERE user_id = 1");
         expect(member).toBeDefined();
-        expect(member.user_id).toBe(1);
-        expect(member.owner).toBe(1);
+        expect(member.item_id).toBe(1);
     });
 
     it("is idempotent – calling it twice does not create duplicate pools", async () => {
@@ -69,7 +68,7 @@ describe("ensureFormbarDeveloperPool()", () => {
         await ensureFormbarDeveloperPool();
         await ensureFormbarDeveloperPool();
 
-        const members = await mockDatabase.dbGetAll("SELECT * FROM digipog_pool_users WHERE pool_id = 0");
+        const members = await mockDatabase.dbGetAll("SELECT * FROM inventory WHERE user_id = 1");
         expect(members).toHaveLength(1);
     });
 });

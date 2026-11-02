@@ -107,7 +107,7 @@ const CLEARABLE_TABLES = [
 ];
 
 /**
- * Creates and initialises an in-memory SQLite database.
+ * Creates and initializes an in-memory SQLite database.
  *
  * @returns {Promise<{
  *   db: sqlite3.Database,

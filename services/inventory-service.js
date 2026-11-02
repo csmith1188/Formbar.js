@@ -140,14 +140,14 @@ async function removeItemFromInventory(userId, itemId, quantity) {
 	//? Check if this item is a pool share item.
 	const sharePool = await dbGet("SELECT * FROM digipog_pools WHERE share_item = ? LIMIT 1", [itemId]);
 	let topShareholder;
-	if(sharePool) {
+	if (sharePool) {
 		const shareholders = await dbGetAll('SELECT * FROM inventory WHERE item_id = ? ORDER BY quantity DESC', [itemId])
         
-        let topShareholder = shareholders[0];
+        topShareholder = shareholders[0];
 
 		if(topShareholder.user_id === userId) {
-            if (shareholders.length > 1 && shareholders[1].quantity < topShareholder.quantity) {
-                throw new ConflictError("Top shareholder cannot remove shares.")
+            if (shareholders.length <= 1 || shareholders[1].quantity < topShareholder.quantity) {
+                throw new ConflictError("Top shareholder cannot remove shares.");
             }
         }
 	}
