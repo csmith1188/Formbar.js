@@ -100,9 +100,6 @@ module.exports = (router) => {
      *                                   type: integer
      *                                 displayName:
      *                                   type: string
-     *                           createdAt:
-     *                             type: string
-     *                             format: date-time
      *                         additionalProperties: true
      *                     pagination:
      *                       type: object
