@@ -143,12 +143,11 @@ async function removeItemFromInventory(userId, itemId, quantity) {
 	if (sharePool) {
 		const shareholders = await dbGetAll('SELECT * FROM inventory WHERE item_id = ? ORDER BY quantity DESC', [itemId])
         
-        let topShareholder = shareholders[0];
-        console.log(userId, topShareholder);
+        topShareholder = shareholders[0];
 
 		if(topShareholder.user_id === userId) {
             if (shareholders.length <= 1 || shareholders[1].quantity < topShareholder.quantity) {
-                throw new ConflictError("Top shareholder cannot remove shares.")
+                throw new ConflictError("Top shareholder cannot remove shares.");
             }
         }
 	}
