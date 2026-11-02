@@ -78,7 +78,11 @@ module.exports = (router) => {
      *                           description:
      *                             type: string
      *                             nullable: true
-     *                           owners:
+     *                           amount:
+     *                             type: integer
+     *                           shareItem:
+     *                             type: integer
+     *                           topShareholders:
      *                             type: array
      *                             items:
      *                               type: object
@@ -96,9 +100,6 @@ module.exports = (router) => {
      *                                   type: integer
      *                                 displayName:
      *                                   type: string
-     *                           created_at:
-     *                             type: string
-     *                             format: date-time
      *                         additionalProperties: true
      *                     pagination:
      *                       type: object
@@ -147,6 +148,7 @@ module.exports = (router) => {
             const poolObjs = await Promise.all(
                 userPools.map(async (poolData) => {
                     const pool = await dbGet("SELECT * FROM digipog_pools WHERE id = ?", [poolData.pool_id]);
+                    let poolApiObject = null;
                     if (pool) {
                         const users = await pools.getUsersForPool(poolData.pool_id);
                         const userIds = users.map((u) => u.user_id);
@@ -158,24 +160,43 @@ module.exports = (router) => {
                                 displayNameMap[row.id] = row.displayName;
                             }
                         }
-                        pool.members = users
-                            .filter((userData) => !userData.owner)
+                        
+                        const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [pool.share_item]);
+                        const topShareholderIds = [];
+                        let maxQuantity = shareholders[0].quantity;
+                        for (const shareholder of shareholders) {
+                            if (shareholder.quantity < maxQuantity) break;
+                            topShareholderIds.push(shareholder.user_id);
+                        }
+
+                        const members = users
+                            .filter((userData) => !topShareholderIds.includes(userData.user_id))
                             .map((u) => ({
                                 id: u.user_id,
                                 displayName: displayNameMap[u.user_id] || "Unknown User",
                             }));
-                        pool.owners = users
-                            .filter((userData) => userData.owner)
+                        const topShareholders = users
+                            .filter((userData) => topShareholderIds.includes(userData.user_id))
                             .map((u) => ({
                                 id: u.user_id,
                                 displayName: displayNameMap[u.user_id] || "Unknown User",
                             }));
+
+                        poolApiObject = {
+                            id: pool.id,
+                            name: pool.name,
+                            description: pool.description,
+                            shareItem: pool.share_item,
+                            amount: pool.amount,
+                            topShareholders,
+                            members,
+                        };
                     }
-                    return pool;
+                    return poolApiObject;
                 })
             );
 
-            const filteredPools = poolObjs.filter((pool) => pool !== null);
+            const filteredPools = poolObjs.filter((pool) => pool != null);
             const pagination = buildPagination(total, limit, offset, filteredPools.length);
 
             req.infoEvent("user.pools.view.success", "User pools returned", {

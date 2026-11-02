@@ -122,11 +122,7 @@ async function strictRemoveFromInventory(userId, itemId, quantity) {
  */
 async function getTopPoolHolderId(poolId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId]);
-    if (row.share_item == null) {
-        return (await dbGet("SELECT user_id FROM digipog_pool_users WHERE pool_id = ? AND owner = 1 LIMIT 1", [poolId])).user_id;
-    } else {
-        return (await dbGet("SELECT user_id FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item])).user_id;
-    }
+    return (await dbGet("SELECT user_id FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item])).user_id;
 }
 
 /**
