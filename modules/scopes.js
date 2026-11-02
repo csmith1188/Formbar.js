@@ -20,6 +20,10 @@ const SCOPES = {
             MODERATE: "global.system.moderate",
             BLOCKED: "global.system.blocked",
         },
+        EXCHANGES: {
+            CREATE: 'global.exchanges.create',
+            ACCEPT: 'global.exchanges.accept',
+        }
     },
 
     CLASS: {

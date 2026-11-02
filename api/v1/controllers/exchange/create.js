@@ -2,6 +2,7 @@ const { createExchange } = require("@services/exchange-service");
 const { isAuthenticated } = require("@middleware/authentication");
 const { requireBodyParam } = require("@modules/error-wrapper");
 const ValidationError = require("@errors/validation-error");
+const { hasScope } = require("@middleware/permission-check");
 
 module.exports = (router) => {
     /**
@@ -121,7 +122,7 @@ module.exports = (router) => {
     *       500:
     *         description: Failed transfer
     */
-    router.post("/exchanges", isAuthenticated, async (req, res) => {
+    router.post("/exchanges", isAuthenticated, hasScope('global.exchanges.create'), async (req, res) => {
         const { to, from } = req.body;
 
         requireBodyParam(to, "to");
