@@ -97,6 +97,6 @@ module.exports = (router) => {
 
         const buckets = await getExchangesForUser(userId, { limit, offset, filters });
         req.infoEvent("user.trades.list.success", "User trades listed successfully", { userId: userId });
-        res.status(200).json({ success: true, data: buckets });
+        res.status(200).json(buckets);
     });
 };
