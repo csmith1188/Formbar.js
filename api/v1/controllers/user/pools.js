@@ -230,7 +230,7 @@ module.exports = (router) => {
      *     tags:
      *       - Authentication
      *     description: Sends a pin reset email to the specified email address
-     *   parameters:
+     *     parameters:
      *       - in: path
      *         name: id
      *         required: true
