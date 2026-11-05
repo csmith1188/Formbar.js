@@ -277,6 +277,9 @@ async function isUserInPool(userId, poolId) {
  */
 async function isPoolUserTopHolder(poolId, userId) {
     const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
+    if (!row) {
+        return false;
+    }
 
     const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
     const maxQuantity = shareholders[0]?.quantity ?? 0;

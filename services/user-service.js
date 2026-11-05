@@ -25,11 +25,13 @@ const { error } = require("console");
 let passwordResetTemplate;
 let verifyEmailTemplate;
 let pinResetTemplate;
+let poolPinResetTemplate;
 
 const TOKEN_PURPOSES = {
     PASSWORD_RESET: "password_reset",
     PIN_RESET: "pin_reset",
     EMAIL_VERIFY: "email_verify",
+    POOL_PIN_RESET: "pool_pin_reset"
 };
 
 const TOKEN_TTL_SECONDS = {
@@ -59,9 +61,10 @@ function dbRunChanges(query, params = []) {
  *
  * @param {*} userId - userId.
  * @param {*} purpose - purpose.
+ * @param {number|null} [poolId] - Target pool for pool PIN reset tokens.
  * @returns {Promise<*>}
  */
-async function issueAccountToken(userId, purpose) {
+async function issueAccountToken(userId, purpose, poolId = null) {
     requireInternalParam(userId, "userId");
     requireInternalParam(purpose, "purpose");
 
@@ -70,13 +73,17 @@ async function issueAccountToken(userId, purpose) {
     const tokenHash = sha256(token);
     const expiresAt = now + (TOKEN_TTL_SECONDS[purpose] || 60 * 60);
 
-    await dbRun("UPDATE user_tokens SET used_at = ? WHERE user_id = ? AND purpose = ? AND used_at IS NULL", [now, userId, purpose]);
-    await dbRun("INSERT INTO user_tokens (user_id, purpose, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)", [
+    await dbRun(
+        "UPDATE user_tokens SET used_at = ? WHERE user_id = ? AND purpose = ? AND used_at IS NULL AND (pool_id = ? OR (pool_id IS NULL AND ? IS NULL))",
+        [now, userId, purpose, poolId, poolId]
+    );
+    await dbRun("INSERT INTO user_tokens (user_id, purpose, token_hash, created_at, expires_at, pool_id) VALUES (?, ?, ?, ?, ?, ?)", [
         userId,
         purpose,
         tokenHash,
         now,
         expiresAt,
+        poolId,
     ]);
 
     return token;
@@ -87,17 +94,20 @@ async function issueAccountToken(userId, purpose) {
  *
  * @param {*} token - token.
  * @param {*} purpose - purpose.
+ * @param {number|null} [poolId] - Expected target pool.
  * @returns {Promise<*>}
  */
-async function consumeAccountToken(token, purpose) {
+async function consumeAccountToken(token, purpose, poolId = null) {
     requireInternalParam(token, "token");
     requireInternalParam(purpose, "purpose");
 
     const tokenHash = sha256(String(token));
     const now = Math.floor(Date.now() / 1000);
+    const poolClause = poolId === null ? "" : " AND pool_id = ?";
+    const params = poolId === null ? [now, tokenHash, purpose, now] : [now, tokenHash, purpose, now, poolId];
     const markedUsed = await dbRunChanges(
-        "UPDATE user_tokens SET used_at = ? WHERE token_hash = ? AND purpose = ? AND used_at IS NULL AND expires_at > ?",
-        [now, tokenHash, purpose, now]
+        `UPDATE user_tokens SET used_at = ? WHERE token_hash = ? AND purpose = ? AND used_at IS NULL AND expires_at > ?${poolClause}`,
+        params
     );
 
     if (!markedUsed) {
@@ -133,6 +143,30 @@ function loadPasswordResetTemplate() {
         throw new AppError("Failed to load password reset email template.", {
             statusCode: 500,
             event: "user.password.reset.failed",
+            reason: "template_load_error",
+        });
+    }
+}
+
+/**
+ * Load the pool pin reset email template.
+ * @returns {string}
+ */
+function loadPoolPinResetTemplate() {
+    if (poolPinResetTemplate) {
+        return poolPinResetTemplate;
+    }
+
+    try {
+        const resetEmailContent = fs.readFileSync("email-templates/pool-pin-reset.hbs", "utf8");
+        poolPinResetTemplate = handlebars.compile(resetEmailContent);
+        return poolPinResetTemplate;
+    } catch (err) {
+        // Log the underlying error for diagnostics, but throw a controlled error outward.
+        console.error("Failed to load pool pin reset email template:", err);
+        throw new AppError("Failed to load pool pin reset email template.", {
+            statusCode: 500,
+            event: "user.poolPin.reset.failed",
             reason: "template_load_error",
         });
     }
@@ -350,6 +384,37 @@ async function requestPasswordReset(email) {
 }
 
 /**
+ * Send a pin reset email for a pool.
+ * @param {string} email - email.
+ * @param {number} id - pool id.
+ * @returns {Promise<void>}
+ */
+async function requestPoolPinReset(email, id) {
+    requireInternalParam(email, "email");
+    requireInternalParam(id, "id");
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const pool = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [id]);
+    if (!pool) {
+        throw new NotFoundError("Pool not found.", {
+            event: "user.poolPin.reset.request.failed",
+            reason: "pool_not_found",
+        });
+    }
+
+    const user = await dbGet("SELECT id FROM users WHERE email = ?", [normalizedEmail]);
+    if (!user) {
+        return true;
+    }
+
+    const template = loadPoolPinResetTemplate();
+    const secret = await issueAccountToken(user.id, TOKEN_PURPOSES.POOL_PIN_RESET, id);
+
+    sendMail(normalizedEmail, "Formbar Pool Pin Change", template({ resetUrl: `${frontendUrl}/pool/${id}/pin/reset?code=${secret}` }));
+    return true;
+}
+
+/**
  * Send a verification email.
  * @param {number} userId - userId.
  * @param {string} apiBaseUrl - apiBaseUrl.
@@ -426,6 +491,40 @@ async function resetPassword(password, token) {
 
     const hashedPassword = await hashBcrypt(password);
     await dbRun("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, user.id]);
+    return true;
+}
+
+/**
+ * Reset a pool pin using a token.
+ * @param {string} pin - pin.
+ * @param {number} poolId - pool id.
+ * @param {string} token - token.
+ * @returns {Promise<void>}
+ */
+async function resetPoolPin(pin, token, poolId) {
+    requireInternalParam(pin, "pin");
+    requireInternalParam(token, "token");
+    requireInternalParam(poolId, "poolId");
+
+    const pool = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [poolId]);
+
+    if (!pool) {
+        throw new NotFoundError("Invalid pool id for pool pin reset.", {
+            event: "user.poolPin.reset.failed",
+            reason: "invalid_id",
+        });
+    }
+
+    const user = await consumeAccountToken(token, TOKEN_PURPOSES.POOL_PIN_RESET, poolId);
+    if (!user) {
+        throw new NotFoundError("Pool pin reset token is invalid or has expired.", {
+            event: "user.poolPin.reset.failed",
+            reason: "invalid_token",
+        });
+    }
+
+    const hashedPin = await hashBcrypt(pin);
+    await dbRun("UPDATE digipog_pools SET pin = ? WHERE id = ?", [hashedPin, poolId]);
     return true;
 }
 
@@ -547,12 +646,12 @@ async function getUser(userIdentifier) {
             const activeClassUser = classroom.students[dbUser.email];
             const effectiveClassUser = activeClassUser
                 ? {
-                      ...activeClassUser,
-                      isClassOwner: activeClassUser.isClassOwner === true || dbUser.id === classroomOwnerId,
-                  }
+                    ...activeClassUser,
+                    isClassOwner: activeClassUser.isClassOwner === true || dbUser.id === classroomOwnerId,
+                }
                 : dbUser.id === classroomOwnerId
-                  ? { id: dbUser.id, email: dbUser.email, roles: { global: dbUser.roles?.global || [], class: [] }, isClassOwner: true }
-                  : null;
+                    ? { id: dbUser.id, email: dbUser.email, roles: { global: dbUser.roles?.global || [], class: [] }, isClassOwner: true }
+                    : null;
 
             if (effectiveClassUser) {
                 const classScopes = getUserScopes(effectiveClassUser, classroom).class;
@@ -718,4 +817,6 @@ module.exports = {
     getUserClass,
     logout,
     deleteUser,
+    requestPoolPinReset,
+    resetPoolPin
 };

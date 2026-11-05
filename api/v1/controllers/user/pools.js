@@ -5,6 +5,12 @@ const { SCOPES } = require("@modules/permissions");
 const { buildPagination, parsePaginationQuery } = require("@modules/pagination");
 const { requireQueryParam } = require("@modules/error-wrapper");
 const pools = require("@services/digipog-service");
+const ValidationError = require("@errors/validation-error");
+const userService = require("@services/user-service");
+const { settings } = require("@modules/config");
+const AppError = require("@errors/app-error");
+const AuthError = require("@errors/auth-error");
+const { isValidPin } = require("@modules/pin-validation");
 
 const DEFAULT_POOL_LIMIT = 20;
 const MAX_POOL_LIMIT = 100;
@@ -160,7 +166,7 @@ module.exports = (router) => {
                                 displayNameMap[row.id] = row.displayName;
                             }
                         }
-                        
+
                         const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [pool.share_item]);
                         const topShareholderIds = [];
                         let maxQuantity = shareholders[0].quantity;
@@ -215,4 +221,208 @@ module.exports = (router) => {
             });
         }
     );
+
+    /**
+     * @swagger
+     * /api/v1/pool/{id}/reset:
+     *   post:
+     *     summary: Request pin reset email for a digipog pool
+     *     tags:
+     *       - Authentication
+     *     description: Sends a pin reset email to the specified email address
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         description: The ID of the user to retrieve pools for
+     *         schema:
+     *           type: integer
+     *           example: 1
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - email
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 format: email
+     *     responses:
+     *       200:
+     *         description: Pool pin reset email sent
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *       400:
+     *         description: Email is required
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       503:
+     *         description: Email service not enabled
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.post("/pool/:id/reset", async (req, res) => {
+        const { email } = req.body || {};
+        const id = Number(req.params.id);
+        requireQueryParam(id, "id");
+
+        if (!email) {
+            throw new ValidationError("Email is required.", { event: "user.poolPin.reset.request.failed", reason: "missing_email" });
+        }
+
+        if (!id) {
+            throw new ValidationError("Pool id is required.", { event: "user.poolPin.reset.request.failed", reason: "missing_pool_id" });
+        }
+
+        const user = await dbGet("SELECT id FROM users WHERE email = ?", [String(email).trim().toLowerCase()]);
+
+        if (!user) {
+            throw new AuthError("User is not authorized for this pool.", {
+                event: "user.poolPin.reset.request.failed",
+                reason: "user_not_found",
+            });
+        }
+
+        const topHolder = await pools.isPoolUserTopHolder(id, user.id);
+
+        if (!topHolder) {
+            throw new AuthError("User is not the top share holder.", {
+                event: "user.poolPin.reset.request.failed",
+                reason: "not_top_share_holder",
+            });
+        }
+
+        if (!settings.emailEnabled) {
+            throw new AppError("Email service is not enabled. Pin resets are not available at this time.", {
+                statusCode: 503,
+                event: "user.poolPin.reset.request.failed",
+                reason: "email_disabled",
+            });
+        }
+
+        req.infoEvent("user.poolPin.reset.request", "Pool pin reset requested");
+        await userService.requestPoolPinReset(email, id);
+
+        req.infoEvent("user.poolPin.reset.request.success", "Pool Pin reset email sent");
+
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Pool pin reset email has been sent.",
+            },
+        });
+    });
+
+    /**
+     * @swagger
+     * /api/v1/pool/{id}/pin/reset:
+     *   patch:
+     *     summary: Reset pool pin with token
+     *     tags:
+     *       - Authentication
+     *     description: |
+     *       Resets a user's pool pin using a token received via email.
+     *
+     *       **Required Permission:** None (public endpoint, requires valid reset token)
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - pin
+     *               - confirmPin
+     *               - token
+     *             properties:
+     *               pin:
+     *                 type: string
+     *                 format: password
+     *                 description: New pool pin
+     *               confirmPin:
+     *                 type: string
+     *                 format: password
+     *                 description: Confirmation of new pin
+     *               token:
+     *                 type: string
+     *                 description: Pool pin reset token received via email
+     *     responses:
+     *       200:
+     *         description: Pool pin reset successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: "Pool pin has been reset successfully."
+     *       400:
+     *         description: Validation error (missing fields or pins don't match)
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Error'
+     *       500:
+     *         description: Server error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/ServerError'
+     */
+    router.patch("/pool/:id/pin/reset", async (req, res) => {
+        const { pin, confirmPin, token } = req.body || {};
+        const poolId = Number(req.params.id);
+        requireQueryParam(poolId, "id");
+        if (!pin || !confirmPin) {
+            throw new ValidationError("Pool pin and confirm pin are required.", {
+                event: "user.poolPin.reset.failed",
+                reason: "missing_fields",
+            });
+        }
+
+        if (!token) {
+            throw new ValidationError("Token is required.", { event: "user.poolPin.reset.failed", reason: "missing_token" });
+        }
+
+        if (pin !== confirmPin) {
+            throw new ValidationError("Pins do not match.", { event: "user.poolPin.reset.failed", reason: "password_mismatch" });
+        }
+
+        if (!isValidPin(pin)) {
+            throw new ValidationError("Invalid PIN format. PIN must be 4-6 numeric digits.", {
+                event: "user.poolPin.reset.failed",
+                reason: "invalid_pin_format",
+            });
+        }
+
+        req.infoEvent("user.poolPin.reset.attempt", "Attempting to reset pool pin with token");
+        await userService.resetPoolPin(pin, token, poolId);
+
+        req.infoEvent("user.poolPin.reset.success", "Pool pin reset successfully");
+        res.status(200).json({
+            success: true,
+            data: {
+                message: "Pool pin has been reset successfully.",
+            },
+        });
+    });
 };

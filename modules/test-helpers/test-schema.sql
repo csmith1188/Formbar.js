@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "user_tokens" (
     "created_at" INTEGER NOT NULL,
     "expires_at" INTEGER NOT NULL,
     "used_at"    INTEGER,
+    "pool_id"    INTEGER,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 CREATE INDEX IF NOT EXISTS idx_user_tokens_user_purpose ON user_tokens (user_id, purpose);
