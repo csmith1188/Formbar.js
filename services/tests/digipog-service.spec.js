@@ -318,7 +318,7 @@ describe("updatePoolPin()", () => {
     });
 
     it("throws when the pool does not exist", async () => {
-        await expect(updatePoolPin(99999, null, "1234")).rejects.toThrow("pool not found.");
+        await expect(updatePoolPin(99999, null, "1234")).rejects.toThrow("Pool not found.");
     });
 });
 
@@ -340,7 +340,7 @@ describe("verifyPoolPin()", () => {
     });
 
     it("throws when the pool does not exist", async () => {
-        await expect(verifyPoolPin(99999, "1234")).rejects.toThrow("pool not found.");
+        await expect(verifyPoolPin(99999, "1234")).rejects.toThrow("Pool not found.");
     });
 });
 
@@ -349,12 +349,15 @@ describe("payoutPool()", () => {
         const owner = await seedUser({ digipogs: 0 });
         const member = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
+
+        await updatePoolPin(poolId, null, "1234")
+
         const pool = await getPoolById(poolId);
         await addItemToInventory(member.id, pool.share_item, 100)
         
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 100 WHERE id = ?", [poolId]);
 
-        const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
+        const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent", pin: "1234" });
         expect(result).toEqual({ success: true, message: "Pool payout successful." });
 
         const ownerRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [owner.id]);
@@ -368,10 +371,13 @@ describe("payoutPool()", () => {
     it("creates transaction records for each payout", async () => {
         const owner = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
+
+        await updatePoolPin(poolId, null, "1234");
+
         await mockDatabase.dbRun("DELETE FROM exchanges");
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 50 WHERE id = ?", [poolId]);
-
-        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
+        
+        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent", pin: "1234" });
 
         const txns = await mockDatabase.dbGetAll("SELECT * FROM exchanges WHERE from_id = ? AND from_type = 'pool'", [poolId]);
         expect(txns).toHaveLength(1);
@@ -385,12 +391,13 @@ describe("payoutPool()", () => {
         const m1 = await seedUser({ digipogs: 0 });
         const m2 = await seedUser({ digipogs: 0 });
         const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
+        await updatePoolPin(poolId, null, "1234");
         const pool = await getPoolById(poolId);
         await addItemToInventory(m1.id, pool.share_item, 100);
         await addItemToInventory(m2.id, pool.share_item, 100);
         await mockDatabase.dbRun("UPDATE digipog_pools SET amount = 10 WHERE id = ?", [poolId]);
 
-        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent" });
+        await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent", pin: "1234" });
 
         const ownerRow = await mockDatabase.dbGet("SELECT digipogs FROM users WHERE id = ?", [owner.id]);
         // 10 / 3 = 3 (floored)
@@ -402,14 +409,14 @@ describe("payoutPool()", () => {
         expect(result.success).toBe(false);
     });
 
-    it("rejects when acting user is not owner", async () => {
+    it("rejects when pin is wrong", async () => {
         const owner = await seedUser();
-        const other = await seedUser();
         const poolId = await createPool({ name: "P", defaultShareholderId: owner.id });
+        await updatePoolPin(poolId, null, "1234");
 
-        const result = await payoutPool({ actingUserId: other.id, poolId });
+        const result = await payoutPool({ actingUserId: owner.id, poolId, amount: 100, payoutType: "percent", pin: "5678" });
         expect(result.success).toBe(false);
-        expect(result.message).toMatch(/do not own/);
+        expect(result.message).toBe("PIN is incorrect.");
     });
 
     it("rejects when pool is not found", async () => {
