@@ -340,7 +340,7 @@ async function updatePoolPin(poolId, oldPin, newPin) {
     if (pool.pin) {
         if (oldPin == null) {
             const ValidationError = require("@errors/validation-error");
-            throw new ValidationError("Missing the current PIN", {
+            throw new ValidationError("Missing the current pool PIN", {
                 event: "pool.pin.update.failed",
                 reason: "missing_old_pin",
             });
@@ -348,7 +348,7 @@ async function updatePoolPin(poolId, oldPin, newPin) {
         const oldPinMatches = await compareBcrypt(String(oldPin), pool.pin);
         if (!oldPinMatches) {
             const AuthError = require("@errors/auth-error");
-            throw new AuthError("Current PIN is incorrect.", {
+            throw new AuthError("Current pool PIN is incorrect.", {
                 event: "pool.pin.update.failed",
                 reason: "incorrect_old_pin",
             });
@@ -375,9 +375,9 @@ async function verifyPoolPin(poolId, pin) {
     }
 
     if (!pool.pin) {
-        throw new AppError("No PIN is set for this account. Please create one first.", {
+        throw new AppError("No PIN is set for this pool. Please create one first.", {
             statusCode: 400,
-            event: "user.pin.verify.failed",
+            event: "pool.pin.verify.failed",
             reason: "pin_not_set",
         });
     }
@@ -385,7 +385,7 @@ async function verifyPoolPin(poolId, pin) {
     const pinMatches = await compareBcrypt(String(pin), pool.pin);
     if (!pinMatches) {
         const AuthError = require("@errors/auth-error");
-        throw new AuthError("PIN is incorrect.", {
+        throw new AuthError("Pool PIN is incorrect.", {
             event: "pool.pin.verify.failed",
             reason: "incorrect_pin",
         });
