@@ -7,6 +7,7 @@ const { digipogRateLimit } = require("@modules/config");
 const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
 const { registerItem, addItemToInventory, removeItemFromInventory } = require("@services/inventory-service");
+const { isValidPin } = require("@modules/pin-validation");
 
 const SHARES_PER_POOL = 100;
 
@@ -329,7 +330,7 @@ async function getTopHoldingPoolsForUser(userId) {
 async function updatePoolPin(poolId, oldPin, newPin) {
     const pool = await getPoolById(poolId);
     if (!pool) {
-        throw new NotFoundError("pool not found.", {
+        throw new NotFoundError("Pool not found.", {
             event: "pool.pin.update.failed",
             reason: "pool_not_found",
         });
@@ -367,7 +368,7 @@ async function updatePoolPin(poolId, oldPin, newPin) {
 async function verifyPoolPin(poolId, pin) {
     const pool = await getPoolById(poolId);
     if (!pool) {
-        throw new NotFoundError("pool not found.", {
+        throw new NotFoundError("Pool not found.", {
             event: "pool.pin.verify.failed",
             reason: "pool_not_found",
         });
@@ -422,7 +423,7 @@ async function removeUserFromPool(poolId, userId) {
  * @param {number} payoutData.payoutType - Determines whether amount is percent/digipogs
  * @returns {Promise<Object>}
  */
-async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
+async function payoutPool({ actingUserId, poolId, amount, payoutType, pin }) {
     if (!Number.isInteger(poolId) || poolId < 0) {
         return { success: false, message: "Invalid pool ID." };
     }
@@ -430,11 +431,6 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
     const pool = await getPoolById(poolId);
     if (!pool) {
         return { success: false, message: "Pool not found." };
-    }
-
-    const isFounder = await isPoolUserTopHolder(poolId, actingUserId);
-    if (!isFounder) {
-        return { success: false, message: "You do not own this pool." };
     }
 
     if (amount <= 0) {
@@ -451,6 +447,16 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
 
     if (amount > pool.amount && payoutType === "digipogs") {
         return { success: false, message: "Cannot payout more than the pool\'s amount." }
+    }
+
+    if (!isValidPin(pin)) {
+        return { success: false, message: "Invalid PIN format. PIN must be 4-6 numeric digits." };
+    }
+    
+    try {
+        await verifyPoolPin(poolId, pin);
+    } catch (err) {
+        return { success: false, message: err.message, statusCode: err.statusCode };
     }
 
     const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
@@ -485,6 +491,7 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
+        // Remove
         throw err;
         throw new AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
     }
