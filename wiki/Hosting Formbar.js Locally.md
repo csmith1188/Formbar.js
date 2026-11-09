@@ -20,6 +20,27 @@ Follow these instructions to run both pieces on your local machine.
 
 ---
 
+## Prerequisites
+
+### Required Software
+- **[Node.js](https://nodejs.org/)** (Version 18.x or higher recommended for the backend; 20.19+ recommended for the frontend)
+- **[npm](https://www.npmjs.com/get-npm)** (Usually comes with Node.js)
+- **[Git](https://git-scm.com/)** (To clone the repository)
+
+### Optional but Recommended
+- **Code Editor**: VS Code, WebStorm, or your preferred editor
+- **Database Browser**: SQLite Browser for database inspection
+- **API Testing Tool**: Postman or Insomnia for API testing
+
+### System Requirements
+- **Operating System**: Windows, macOS, or Linux
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Storage**: 1GB free space for dependencies and database
+- **Network**: Internet connection for package installation
+
+---
+
+
 ## Quick Start
 
 For a quick backend development setup, access the terminal and copy the following code:
@@ -45,26 +66,6 @@ npm run dev
 ```
 
 Visit the frontend dev server, usually `http://localhost:5173`. The backend API remains available at `http://localhost:420`, with Swagger docs at `http://localhost:420/docs`.
-
----
-
-## Prerequisites
-
-### Required Software
-- **[Node.js](https://nodejs.org/)** (Version 18.x or higher recommended for the backend; 20.19+ recommended for the frontend)
-- **[npm](https://www.npmjs.com/get-npm)** (Usually comes with Node.js)
-- **[Git](https://git-scm.com/)** (To clone the repository)
-
-### Optional but Recommended
-- **Code Editor**: VS Code, WebStorm, or your preferred editor
-- **Database Browser**: SQLite Browser for database inspection
-- **API Testing Tool**: Postman or Insomnia for API testing
-
-### System Requirements
-- **Operating System**: Windows, macOS, or Linux
-- **Memory**: 4GB RAM minimum, 8GB recommended
-- **Storage**: 1GB free space for dependencies and database
-- **Network**: Internet connection for package installation
 
 ---
 
@@ -120,35 +121,52 @@ cp .env-template .env
 Edit the `.env` file with your preferred editor:
 
 ```env
-# Server Configuration
-PORT=420
-FRONTEND_URL=http://localhost:5173
+## Environmental variables for Formbar
+PORT='420'
+WHITELIST_ENABLED='false'
+BLACKLIST_ENABLED='false'
+FRONTEND_URL='http://localhost:5173' # No trailing slash
 
-# Database (SQLite - no additional setup required)
-# Database file will be created automatically
+# Base percentage pog meter increments per response
+POG_METER_INCREMENT=20
 
-# Email Configuration (Optional)
-EMAIL_ENABLED=false
-EMAIL_USER=your-email@example.com
-EMAIL_PASSWORD=your-app-password
-
-# OIDC Login Providers (Optional)
-GOOGLE_OIDC_ISSUER=https://accounts.google.com
-GOOGLE_OIDC_CLIENT_ID=your-google-client-id
-GOOGLE_OIDC_CLIENT_SECRET=your-google-client-secret
-
-MICROSOFT_OIDC_ISSUER=https://login.microsoftonline.com/common/v2.0
-MICROSOFT_OIDC_CLIENT_ID=your-microsoft-client-id
-MICROSOFT_OIDC_CLIENT_SECRET=your-microsoft-client-secret
-MICROSOFT_OIDC_TENANT_ID=
-
-# Reverse proxy / CORS
+# Trust proxy determines how many jumps Express will accept in the proxy chain.
+# For example, Nginx is one jump, and Cloudflare + Nginx is two jumps.
+# Not doing this will cause rate limiting issues.
 TRUST_PROXY=1
-ENABLE_CORS=false
+ENABLE_CORS='false' # Set this to true if you are not enforcing CORS through nginx or another reverse proxy. This is not recommended for production, but can be useful for development or testing without a reverse proxy.
 
-# IP Management (Optional)
-WHITELIST_ENABLED=false
-BLACKLIST_ENABLED=false
+# For the email API
+EMAIL_ENABLED='false'
+EMAIL_USER='SampleUser@SampleAddress.com'
+EMAIL_PASSWORD='S@mpleP@ssw0rd!'
+
+NODE_ENV=development
+SEQ_URL='http://localhost:6767'
+
+GOOGLE_OIDC_ISSUER='https://accounts.google.com'
+GOOGLE_OIDC_CLIENT_ID=''
+GOOGLE_OIDC_CLIENT_SECRET=''
+
+MICROSOFT_OIDC_ISSUER='https://login.microsoftonline.com/common/v2.0'
+MICROSOFT_OIDC_CLIENT_ID=''
+MICROSOFT_OIDC_CLIENT_SECRET=''
+MICROSOFT_OIDC_TENANT_ID=''
+
+# Rate limiting controls
+
+# RATE_LIMIT_MULTIPLIER - Scales all per-user request limits (guests, students, teachers).
+#   Default: 1 (no change).
+RATE_LIMIT_MULTIPLIER='1'
+
+# RATE_LIMIT_BASE_POINTS - Base number of points applied before multiplier (default: 60)
+#   Example: set to 120 to allow 120 requests per `RATE_LIMIT_DURATION_SECONDS` window
+RATE_LIMIT_BASE_POINTS='60'
+
+# RATE_LIMIT_DURATION_SECONDS - Window duration in seconds for the base points (default: 60)
+#   Example: set to 60 for per-minute limits, or 900 for 15-minute windows
+RATE_LIMIT_DURATION_SECONDS='60'
+
 ```
 
 ### 4. Database Initialization
@@ -344,7 +362,7 @@ Formbar.js/
 │   └── polls/             # Poll-related sockets
 ├── stores/                # In-memory runtime/cache stores
 ├── docs/                  # OpenAPI component schemas
-├── database/             # Database initialization and migrations
+├── database/              # Database initialization and migrations
 └── */tests/               # Jest test files near each module area
 ```
 

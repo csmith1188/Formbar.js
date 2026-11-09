@@ -33,6 +33,7 @@ Backend:
 git clone https://github.com/csmith1188/Formbar.js.git
 cd Formbar.js
 npm install
+cp .env-template .env
 npm run init-db
 npm run migrate
 npm start

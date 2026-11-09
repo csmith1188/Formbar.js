@@ -1,14 +1,14 @@
 # Usage in NodeJS
 
 ## Set up constants
-Set the address for the Formbar.js instance you wish to connect to. New HTTP endpoints are versioned under `/api`.
+Set the address for the Formbar.js instance you wish to connect to. New HTTP endpoints are versioned under `/api/v1`.
 
 ```JS
 const FBJS_URL = 'https://formbar.yorktechapps.com'; // Main formbar production instance
 const API_KEY = 'get your own API key and put it here';
 ```
 
-API keys can be regenerated with `POST /api/user/{id}/api/regenerate`, or from the Formbar profile UI when available.
+API keys can be regenerated with `POST /api/v1/user/{id}/api/regenerate`, or from the Formbar profile UI when available.
 
 ## Prepare headers for API calls
 Authenticated endpoints accept either a bearer access token or the `API` header.
@@ -83,7 +83,7 @@ except requests.exceptions.RequestException as err:
 
 # Overview
 
-Formbar.js exposes a versioned REST API at `/api`. The old non-versioned `/api` routes are still routed to the v1 handlers for backwards compatibility, but they send deprecation headers and should not be used for new integrations.
+Formbar.js exposes a versioned REST API at `/api/v1`. The old non-versioned `/api/v1` routes are still routed to the v1 handlers for backwards compatibility, but they send deprecation headers and should not be used for new integrations.
 
 The official frontend is now a separate repository, `Formbar.ts-client`. Configure that frontend with `VITE_FORMBAR_API_URL` pointing at the Formbar.js backend. The backend's HTTP docs and Swagger UI are still served by Formbar.js.
 
@@ -100,10 +100,10 @@ Because Swagger is generated from the controller comments, this wiki page focuse
 Formbar.js supports these HTTP authentication methods:
 
 ### 1. Bearer Access Token
-Use `/api/auth/login` or `/api/auth/refresh` to obtain an access token, then include it in the `Authorization` header.
+Use `/api/v1/auth/login` or `/api/v1/auth/refresh` to obtain an access token, then include it in the `Authorization` header.
 
 ```javascript
-const response = await fetch('https://formbar.yorktechapps.com/api/auth/login', {
+const response = await fetch('https://formbar.yorktechapps.com/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -117,7 +117,7 @@ const accessToken = data.accessToken;
 ```
 
 ```javascript
-const me = await fetch('https://formbar.yorktechapps.com/api/user/me', {
+const me = await fetch('https://formbar.yorktechapps.com/api/v1/user/me', {
     headers: { Authorization: `Bearer ${accessToken}` }
 }).then((res) => res.json());
 ```
@@ -131,7 +131,7 @@ const headers = {
     'Content-Type': 'application/json'
 };
 
-fetch('https://formbar.yorktechapps.com/api/user/me', { headers });
+fetch('https://formbar.yorktechapps.com/api/v1/user/me', { headers });
 ```
 
 ```python
@@ -142,7 +142,7 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-response = requests.get('https://formbar.yorktechapps.com/api/user/me', headers=headers)
+response = requests.get('https://formbar.yorktechapps.com/api/v1/user/me', headers=headers)
 ```
 
 Errors are JSON and usually include `error`, `message`, or both depending on the error middleware path:
@@ -196,111 +196,111 @@ See `/docs` for full request/response schemas. The table below is a quick map of
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/auth/register` | Register an account |
-| POST | `/api/auth/login` | Login and receive tokens |
-| POST | `/api/auth/refresh` | Refresh access token |
-| POST | `/api/auth/guest` | Create/login guest |
-| GET | `/api/auth/oidc/providers` | List configured OIDC providers |
-| GET | `/api/auth/oidc/{provider}` | Start OIDC login |
-| GET | `/api/auth/oidc/{provider}/callback` | OIDC callback |
-| GET | `/api/config` | Public runtime config |
-| GET | `/api/certs` | Public signing certificates |
-| GET | `/api/user/me` | Current user profile, roles, scopes |
-| GET | `/api/user/{id}` | User profile |
-| GET | `/api/user/{id}/class` | User active class |
-| GET | `/api/user/{id}/classes` | User owned/enrolled classes |
-| GET | `/api/user/{id}/pools` | User digipog pools |
-| GET | `/api/user/{id}/transactions` | User digipog transactions |
-| GET | `/api/user/{id}/scopes` | User scopes |
-| POST | `/api/user/{id}/api/regenerate` | Regenerate API key |
-| PATCH | `/api/user/{id}/pin` | Update PIN |
-| POST | `/api/user/{id}/pin/verify` | Verify PIN |
-| POST | `/api/user/{id}/pin/reset` | Request PIN reset |
-| PATCH | `/api/user/pin/reset` | Complete PIN reset |
-| PATCH | `/api/user/me/password` | Change password |
-| POST | `/api/user/me/password/reset` | Request password reset |
-| POST | `/api/user/{id}/verify/request` | Request verification email |
-| GET | `/api/user/verify/email` | Verify email token |
-| PATCH/POST | `/api/user/{id}/verify` | Manager verifies user |
-| PATCH | `/api/user/{id}/perm` | Manager updates global permission/roles |
-| PATCH | `/api/user/{id}/ban` | Manager bans user |
-| PATCH | `/api/user/{id}/unban` | Manager unbans user |
-| DELETE | `/api/user/{id}` | Manager deletes user |
-| POST | `/api/class/create` | Create class |
-| GET | `/api/class/{id}` | Class snapshot |
-| DELETE | `/api/class/{id}` | Delete class |
-| POST | `/api/class/enroll/{code}` | Enroll by class code |
-| POST | `/api/class/{id}/join` | Join class session |
-| POST | `/api/class/{id}/leave` | Leave class session |
-| POST | `/api/class/{id}/unenroll` | Leave classroom membership |
-| POST | `/api/class/{id}/start` | Start class session |
-| POST | `/api/class/{id}/end` | End class session |
-| GET | `/api/class/{id}/active` | Class active state |
-| PATCH | `/api/class/{id}/settings` | Update class settings |
-| POST | `/api/class/{id}/code/regenerate` | Regenerate class code |
-| GET | `/api/class/{id}/students` | List students |
-| POST | `/api/class/{id}/students/{userId}/kick` | Kick student |
-| POST | `/api/class/{id}/students/kick-all` | Kick all students |
-| GET | `/api/class/{id}/banned` | List class-banned users |
-| GET | `/api/class/{id}/tags` | Read class tags |
-| PUT/POST | `/api/class/{id}/tags` | Set class tags |
-| GET | `/api/class/{id}/links` | Read class links |
-| POST | `/api/class/{id}/links/add` | Add class link |
-| PUT | `/api/class/{id}/links` | Update class link |
-| DELETE | `/api/class/{id}/links` | Remove class link |
-| GET | `/api/class/{id}/roles` | List class roles |
-| POST | `/api/class/{id}/roles` | Create class role |
-| PATCH | `/api/class/{id}/roles/{roleId}` | Update class role |
-| DELETE | `/api/class/{id}/roles/{roleId}` | Delete class role |
-| GET | `/api/class/{id}/students/{userId}/roles` | Read student class roles |
-| POST | `/api/class/{id}/students/{userId}/roles/{roleId}` | Assign class role |
-| DELETE | `/api/class/{id}/students/{userId}/roles/{roleId}` | Remove class role |
-| GET | `/api/class/{id}/polls` | Poll history/current data |
-| GET | `/api/class/{id}/polls/current` | Current poll |
-| POST | `/api/class/{id}/polls/create` | Create/start poll |
-| POST | `/api/class/{id}/polls/response` | Submit poll response |
-| POST | `/api/class/{id}/polls/end` | End active poll |
-| POST | `/api/class/{id}/polls/clear` | Clear active poll |
-| POST | `/api/class/{id}/help/request` | Request help |
-| DELETE | `/api/class/{id}/students/{userId}/help` | Clear help ticket |
-| POST | `/api/class/{id}/break/request` | Request break |
-| POST | `/api/class/{id}/break/end` | End own break |
-| GET/POST | `/api/class/{id}/students/{userId}/break/approve` | Approve break |
-| POST | `/api/class/{id}/students/{userId}/break/deny` | Deny break |
-| GET | `/api/class/{id}/timer` | Get timer |
-| POST | `/api/class/{id}/timer/start` | Start timer |
-| POST | `/api/class/{id}/timer/pause` | Pause timer |
-| POST | `/api/class/{id}/timer/resume` | Resume timer |
-| POST | `/api/class/{id}/timer/end` | End timer |
-| POST | `/api/class/{id}/timer/clear` | Clear timer |
-| POST | `/api/digipogs/award` | Award digipogs |
-| POST | `/api/digipogs/transfer` | Transfer digipogs |
-| POST | `/api/pools/create` | Create digipog pool |
-| POST | `/api/pools/{id}/add-member` | Add pool member |
-| POST | `/api/pools/{id}/remove-member` | Remove pool member |
-| POST | `/api/pools/{id}/payout` | Payout pool |
-| DELETE | `/api/pools/{id}` | Delete pool |
-| GET | `/api/notifications` | List notifications |
-| GET | `/api/notifications/{id}` | Get notification |
-| POST | `/api/notifications/{id}/mark-read` | Mark notification read |
-| DELETE | `/api/notifications/{id}` | Delete one notification |
-| DELETE | `/api/notifications` | Delete notifications |
-| POST | `/api/apps/register` | Register OAuth/client app |
-| GET | `/api/oauth/authorize` | OAuth authorization-code endpoint |
-| POST | `/api/oauth/token` | OAuth token endpoint |
-| POST | `/api/oauth/revoke` | Revoke OAuth refresh token |
-| GET | `/api/manager` | Manager dashboard data |
-| GET/POST/PUT/DELETE | `/api/ip/...` | IP whitelist/blacklist management |
-| GET | `/api/logs` | List logs |
-| GET | `/api/logs/{log}` | Read log |
-| GET | `/api/apiPermissionCheck` | Check API user's class capability |
+| POST | `/api/v1/auth/register` | Register an account |
+| POST | `/api/v1/auth/login` | Login and receive tokens |
+| POST | `/api/v1/auth/refresh` | Refresh access token |
+| POST | `/api/v1/auth/guest` | Create/login guest |
+| GET | `/api/v1/auth/oidc/providers` | List configured OIDC providers |
+| GET | `/api/v1/auth/oidc/{provider}` | Start OIDC login |
+| GET | `/api/v1/auth/oidc/{provider}/callback` | OIDC callback |
+| GET | `/api/v1/config` | Public runtime config |
+| GET | `/api/v1/certs` | Public signing certificates |
+| GET | `/api/v1/user/me` | Current user profile, roles, scopes |
+| GET | `/api/v1/user/{id}` | User profile |
+| GET | `/api/v1/user/{id}/class` | User active class |
+| GET | `/api/v1/user/{id}/classes` | User owned/enrolled classes |
+| GET | `/api/v1/user/{id}/pools` | User digipog pools |
+| GET | `/api/v1/user/{id}/transactions` | User digipog transactions |
+| GET | `/api/v1/user/{id}/scopes` | User scopes |
+| POST | `/api/v1/user/{id}/api/regenerate` | Regenerate API key |
+| PATCH | `/api/v1/user/{id}/pin` | Update PIN |
+| POST | `/api/v1/user/{id}/pin/verify` | Verify PIN |
+| POST | `/api/v1/user/{id}/pin/reset` | Request PIN reset |
+| PATCH | `/api/v1/user/pin/reset` | Complete PIN reset |
+| PATCH | `/api/v1/user/me/password` | Change password |
+| POST | `/api/v1/user/me/password/reset` | Request password reset |
+| POST | `/api/v1/user/{id}/verify/request` | Request verification email |
+| GET | `/api/v1/user/verify/email` | Verify email token |
+| PATCH/POST | `/api/v1/user/{id}/verify` | Manager verifies user |
+| PATCH | `/api/v1/user/{id}/perm` | Manager updates global permission/roles |
+| PATCH | `/api/v1/user/{id}/ban` | Manager bans user |
+| PATCH | `/api/v1/user/{id}/unban` | Manager unbans user |
+| DELETE | `/api/v1/user/{id}` | Manager deletes user |
+| POST | `/api/v1/class/create` | Create class |
+| GET | `/api/v1/class/{id}` | Class snapshot |
+| DELETE | `/api/v1/class/{id}` | Delete class |
+| POST | `/api/v1/class/enroll/{code}` | Enroll by class code |
+| POST | `/api/v1/class/{id}/join` | Join class session |
+| POST | `/api/v1/class/{id}/leave` | Leave class session |
+| POST | `/api/v1/class/{id}/unenroll` | Leave classroom membership |
+| POST | `/api/v1/class/{id}/start` | Start class session |
+| POST | `/api/v1/class/{id}/end` | End class session |
+| GET | `/api/v1/class/{id}/active` | Class active state |
+| PATCH | `/api/v1/class/{id}/settings` | Update class settings |
+| POST | `/api/v1/class/{id}/code/regenerate` | Regenerate class code |
+| GET | `/api/v1/class/{id}/students` | List students |
+| POST | `/api/v1/class/{id}/students/{userId}/kick` | Kick student |
+| POST | `/api/v1/class/{id}/students/kick-all` | Kick all students |
+| GET | `/api/v1/class/{id}/banned` | List class-banned users |
+| GET | `/api/v1/class/{id}/tags` | Read class tags |
+| PUT/POST | `/api/v1/class/{id}/tags` | Set class tags |
+| GET | `/api/v1/class/{id}/links` | Read class links |
+| POST | `/api/v1/class/{id}/links/add` | Add class link |
+| PUT | `/api/v1/class/{id}/links` | Update class link |
+| DELETE | `/api/v1/class/{id}/links` | Remove class link |
+| GET | `/api/v1/class/{id}/roles` | List class roles |
+| POST | `/api/v1/class/{id}/roles` | Create class role |
+| PATCH | `/api/v1/class/{id}/roles/{roleId}` | Update class role |
+| DELETE | `/api/v1/class/{id}/roles/{roleId}` | Delete class role |
+| GET | `/api/v1/class/{id}/students/{userId}/roles` | Read student class roles |
+| POST | `/api/v1/class/{id}/students/{userId}/roles/{roleId}` | Assign class role |
+| DELETE | `/api/v1/class/{id}/students/{userId}/roles/{roleId}` | Remove class role |
+| GET | `/api/v1/class/{id}/polls` | Poll history/current data |
+| GET | `/api/v1/class/{id}/polls/current` | Current poll |
+| POST | `/api/v1/class/{id}/polls/create` | Create/start poll |
+| POST | `/api/v1/class/{id}/polls/response` | Submit poll response |
+| POST | `/api/v1/class/{id}/polls/end` | End active poll |
+| POST | `/api/v1/class/{id}/polls/clear` | Clear active poll |
+| POST | `/api/v1/class/{id}/help/request` | Request help |
+| DELETE | `/api/v1/class/{id}/students/{userId}/help` | Clear help ticket |
+| POST | `/api/v1/class/{id}/break/request` | Request break |
+| POST | `/api/v1/class/{id}/break/end` | End own break |
+| GET/POST | `/api/v1/class/{id}/students/{userId}/break/approve` | Approve break |
+| POST | `/api/v1/class/{id}/students/{userId}/break/deny` | Deny break |
+| GET | `/api/v1/class/{id}/timer` | Get timer |
+| POST | `/api/v1/class/{id}/timer/start` | Start timer |
+| POST | `/api/v1/class/{id}/timer/pause` | Pause timer |
+| POST | `/api/v1/class/{id}/timer/resume` | Resume timer |
+| POST | `/api/v1/class/{id}/timer/end` | End timer |
+| POST | `/api/v1/class/{id}/timer/clear` | Clear timer |
+| POST | `/api/v1/digipogs/award` | Award digipogs |
+| POST | `/api/v1/digipogs/transfer` | Transfer digipogs |
+| POST | `/api/v1/pools/create` | Create digipog pool |
+| POST | `/api/v1/pools/{id}/add-member` | Add pool member |
+| POST | `/api/v1/pools/{id}/remove-member` | Remove pool member |
+| POST | `/api/v1/pools/{id}/payout` | Payout pool |
+| DELETE | `/api/v1/pools/{id}` | Delete pool |
+| GET | `/api/v1/notifications` | List notifications |
+| GET | `/api/v1/notifications/{id}` | Get notification |
+| POST | `/api/v1/notifications/{id}/mark-read` | Mark notification read |
+| DELETE | `/api/v1/notifications/{id}` | Delete one notification |
+| DELETE | `/api/v1/notifications` | Delete notifications |
+| POST | `/api/v1/apps/register` | Register OAuth/client app |
+| GET | `/api/v1/oauth/authorize` | OAuth authorization-code endpoint |
+| POST | `/api/v1/oauth/token` | OAuth token endpoint |
+| POST | `/api/v1/oauth/revoke` | Revoke OAuth refresh token |
+| GET | `/api/v1/manager` | Manager dashboard data |
+| GET/POST/PUT/DELETE | `/api/v1/ip/...` | IP whitelist/blacklist management |
+| GET | `/api/v1/logs` | List logs |
+| GET | `/api/v1/logs/{log}` | Read log |
+| GET | `/api/v1/apiPermissionCheck` | Check API user's class capability |
 
 # Examples
 
 ## Login and call `/user/me`
 
 ```javascript
-const baseUrl = 'https://formbar.yorktechapps.com/api';
+const baseUrl = 'https://formbar.yorktechapps.com/api/v1';
 
 const login = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
@@ -429,7 +429,8 @@ const transfer = await fetch(`${baseUrl}/digipogs/transfer`, {
         to: 2,
         amount: 25,
         pin: '1234',
-        reason: 'Study group reward'
+        reason: 'Study group reward',
+        pool: false
     })
 }).then((res) => res.json());
 
@@ -488,7 +489,7 @@ The server still mounts a compatibility layer for non-versioned `/api` routes. I
 
 Legacy responses include deprecation headers:
 
-- `X-Deprecated: Use /v1/api endpoints instead`
+- `X-Deprecated: Use /api/v1 endpoints instead`
 - `Deprecation: true`
 - `Sunset: Tue, 01 Sep 2026 00:00:00 GMT`
-- `Warning: 299 - "Deprecated API: Non-versioned /api endpoints are deprecated. Use /api endpoints instead. This compatibility layer will be removed in a future version."`
+- `Warning: 299 - "Deprecated API: Non-versioned /api endpoints are deprecated. Use /api/v1 endpoints instead. This compatibility layer will be removed in a future version."`

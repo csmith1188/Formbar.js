@@ -58,7 +58,8 @@ const data = {
     to: 2,
     amount: 10,
     reason: "test",
-    pin: 1234 // not a string!
+    pin: 1234, // not a string!
+    pool: false // Whether or not the digipogs are going into a pool
 }
 ```
 Once you have connected successfully, send the transfer.
@@ -85,7 +86,8 @@ const data = {
     to: 97,
     amount: 10,
     reason: "test",
-    pin: 6969
+    pin: 6969,
+    pool: false
 }
 
 // Wait for successful connection
