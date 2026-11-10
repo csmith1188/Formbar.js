@@ -43,7 +43,7 @@ Set up your socket.io to talk to the instance of Formbar you want to use, and pr
 ```javascript
 const io = require('socket.io-client');
 // Replace this address with the address of the Formbar you want to use.
-const socket = io("https://formbeta.yorktechapps.com/", {
+const socket = io("https://formbarapi.yorktechapps.com/", {
     extraHeaders: {
         api: "<API KEY HERE>"
     }
@@ -75,7 +75,7 @@ Complete example:
 // Connect to Formbar WS API
 const io = require('socket.io-client');
 // Replace this address with the address of the Formbar you want to use.
-const socket = io("https://formbeta.yorktechapps.com/", {
+const socket = io("https://formbarapi.yorktechapps.com/", {
     extraHeaders: {
         api: "<API KEY HERE>"
     }
@@ -126,7 +126,7 @@ def transferResponse(response):
 Set up your socket.io client to talk to the instance of Formbar you want to use, and provide your API key. API keys can be found in `/profile`:
 ```python
 # Replace this address with the address of the Formbar you want to use.
-sio.connect('https://formbeta.yorktechapps.com/', headers={'api': '<API KEY HERE>'})
+sio.connect('https://formbarapi.yorktechapps.com/', headers={'api': '<API KEY HERE>'})
 ```
 
 You will need all of the data required to complete the transaction. In this case, `from` and `to` are the ID numbers of the users. You can get these from each user's `/profile`. The `amount` is the number of digipogs, but remember, a percentage of these will be removed as the transaction happens. `reason` is a string to be read by humans that explains why it was transferred. Finally, `pin` is the pin of the sender. You can find this in their `/profile`.
@@ -157,7 +157,7 @@ import socketio
 sio = socketio.Client()
 
 # Replace this address with the address of the Formbar you want to use.
-sio.connect('https://formbeta.yorktechapps.com/', headers={'api': '<API KEY HERE>'})
+sio.connect('https://formbarapi.yorktechapps.com/', headers={'api': '<API KEY HERE>'})
 
 # Example Data Object
 data = {
