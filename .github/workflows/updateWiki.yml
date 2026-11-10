@@ -1,0 +1,39 @@
+name: Update Wiki
+run-name: Updated Wiki
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  update_wiki:
+    name: Update Wiki
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Wiki
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy Markdown Files
+        run: |
+          cp wiki/*.md wiki-repo/
+
+      - name: Push Changes to Wiki
+        run: |
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Update Wiki"
+          git push
