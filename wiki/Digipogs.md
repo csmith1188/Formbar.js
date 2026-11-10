@@ -13,23 +13,24 @@ When you submit an answer to a poll for the first time, your "Pog Meter" increas
 - Only the first response to each poll counts toward the pog meter
 
 ## Transferring
+> **Deprecated:** Direct digipog transfers are deprecated. For new integrations, use Exchanges instead. See the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in the server's [`/docs`](/docs).
+
 When digipogs are transferred between users, Formbar takes a 10% cut of the transfer. This is to control artificial inflation. The tax is automatically added to the Formbar Developer Pool (ID 0).
 
-As an added layer of security, and for physical implementations, you will need the digipog PIN number of the user sending the pogs. This can be found and reset in the user's profile page.
+As an added layer of security, and for physical implementations, you will need the digipog PIN number of the user sending the pogs. This can be found on and reset from the user's profile page.
 
 ## Digipog Pools
 Digipog pools allow users to create shared pools of digipogs that can be distributed among members. Key features:
-- Users can create up to 5 pools
-- Pool owners can add/remove members
-- Pool funds can be distributed equally among all members
+- Pool shares can be traded for pool membership
+- Pool funds can be distributed amongst members according to the amount of shares they hold.
 - Pools can receive transfers directly by sending a typed recipient such as `{ id: 123, type: "pool" }`, or by using the legacy `pool` field with the pool ID
 - The Formbar Developer Pool (ID 0) automatically receives the 10% tax from all transfers
 
-# Digipog Implementation Tutorials
-Below are brief tutorials on how to build an application that transfers digipogs with Formbar's HTTP API or WS API. There is a complete example a little further down if that is desired.
+# Legacy Digipog Transfer Examples
+The examples below are retained for existing integrations only. The HTTP transfer endpoint and the Socket.IO transfer flow are deprecated; use the Exchanges workflow for new integrations.
 
 
-## Socket
+## Legacy Socket.IO Transfers
 ### Node.JS:
 The transfer response is sent directly as a JSON object:
 ```javascript
@@ -49,7 +50,7 @@ const socket = io("https://formbeta.yorktechapps.com/", {
 });
 ```
 
-You will need to get all of the data you need to do the transaction. In this case, `from` and `to` are the ID numbers of the users. You can get these from each user's `/profile`. The `amount` is the number of digipogs, but remember, a percent of these will be removed as the transaction happens. `reason` is a string to be read by humans that explains why it was transferred. Finally. `pin` is the pin of the sender. You can find this in their `/profile`.
+You will need to get all of the data you need to do the transaction. In this case, `from` and `to` are the ID numbers of the users. You can get these from each user's `/profile`. The `amount` is the number of digipogs, but remember, a percent of these will be removed as the transaction happens. `reason` is a string to be read by humans that explains why it was transferred. Finally, `pin` is the pin of the sender. You can find this in their `/profile`.
 
 ```javascript
 // Example Data Object
@@ -59,7 +60,7 @@ const data = {
     amount: 10,
     reason: "test",
     pin: 1234, // not a string!
-    pool: false // Whether or not the digipogs are going into a pool
+    type: "user"
 }
 ```
 Once you have connected successfully, send the transfer.
@@ -87,7 +88,7 @@ const data = {
     amount: 10,
     reason: "test",
     pin: 6969,
-    pool: false
+    type: "user"
 }
 
 // Wait for successful connection
@@ -128,7 +129,7 @@ Set up your socket.io client to talk to the instance of Formbar you want to use,
 sio.connect('https://formbeta.yorktechapps.com/', headers={'api': '<API KEY HERE>'})
 ```
 
-You will need to get all of the data you need to do the transaction. In this case, `from` and `to` are the ID numbers of the users. You can get these from each user's `/profile`. The `amount` is the number of digipogs, but remember, a percent of these will be removed as the transaction happens. `reason` is a string to be read by humans that explains why it was transferred. Finally. `pin` is the pin of the sender. You can find this in their `/profile`.
+You will need all of the data required to complete the transaction. In this case, `from` and `to` are the ID numbers of the users. You can get these from each user's `/profile`. The `amount` is the number of digipogs, but remember, a percentage of these will be removed as the transaction happens. `reason` is a string to be read by humans that explains why it was transferred. Finally, `pin` is the pin of the sender. You can find this in their `/profile`.
 
 ```python
 # Example Data Object
@@ -216,48 +217,8 @@ requests.post(
 ```
 
 ### Adding Members to a Pool
-```javascript
-// Javascript
-await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/add-member`, {
-    method: 'POST',
-    headers: {
-        API: API_KEY,
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ userId: 456 })
-});
-```
 
-```python
-# Python
-requests.post(
-    f'{FORMBAR_ADDRESS}/api/v1/pools/123/add-member',
-    headers={'API': API_KEY, 'Content-Type': 'application/json'},
-    json={'userId': 456}
-)
-```
-
-### Removing Members from a Pool
-```javascript
-// Javascript
-await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/remove-member`, {
-    method: 'POST',
-    headers: {
-        API: API_KEY,
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ userId: 456 })
-});
-```
-
-```python
-# Python
-requests.post(
-    f'{FORMBAR_ADDRESS}/api/v1/pools/123/remove-member',
-    headers={'API': API_KEY, 'Content-Type': 'application/json'},
-    json={'userId': 456}
-)
-```
+Users gain membership by obtaining shares. See the [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) page for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
 
 ### Distributing Pool Funds
 ```javascript
@@ -267,7 +228,12 @@ await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/payout`, {
     headers: {
         API: API_KEY,
         'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify({
+        amount: 100, // Either a percent or an amount of digipogs. Specifies how much should be paid out.
+        payoutType: 'percent', // Specify "percent" or "digipogs"
+        pin: 1234 // Digipog pools require a pin to be paid out. Each pool has its own pin.
+    })
 });
 ```
 
@@ -275,7 +241,8 @@ await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/payout`, {
 # Python
 requests.post(
     f'{FORMBAR_ADDRESS}/api/v1/pools/123/payout',
-    headers={'API': API_KEY, 'Content-Type': 'application/json'}
+    headers={'API': API_KEY, 'Content-Type': 'application/json'},
+    json={'amount': 1000, 'payoutType': 'digipogs', 'pin': 1234}
 )
 ```
 
@@ -299,7 +266,8 @@ requests.delete(
 )
 ```
 
-### Transferring to a Pool
+### Legacy Transfer to a Pool
+This Socket.IO transfer shape is deprecated. Use the Exchanges workflow instead; see the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges).
 ```javascript
 // Javascript
 socket.emit('transferDigipogs', {
@@ -322,136 +290,7 @@ sio.emit('transferDigipogs', {
 })
 ```
 
-Legacy transfer-to-pool shape:
-
-```javascript
-socket.emit('transferDigipogs', {
-    from: 1,
-    to: 123,
-    amount: 50,
-    reason: 'Contribution to study group',
-    pin: 1234,
-    pool: 123
-});
-```
-
 The old socket pool events (`poolCreate`, `poolDelete`, `poolAddMember`, `poolRemoveMember`, and `poolPayout`) are no longer registered.
 
-## HTTP
-### Node.JS:
-The HTTP API returns the response directly as JSON:
-```javascript
-const FORMBAR_ADDRESS = 'https://formbeta.yorktechapps.com';
-
-// Get the data ready
-const payload = {
-    from: 1,
-    to: 2,
-    amount: 10,
-    reason: 'Transfer',
-    pin: 1234
-};
-```
-Make the request
-```javascript
-fetch(`${FORMBAR_ADDRESS}/api/v1/digipogs/transfer`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-}).then((transferResult) => {
-    return transferResult.json();
-}).then((responseData) => {
-    console.log("Transfer Response:", responseData);
-    // responseData will be: { success: true, data: { success: true, message: "..." } }
-});
-```
-Complete code
-```javascript
-const FORMBAR_ADDRESS = 'https://formbeta.yorktechapps.com';
-
-// Get the data ready
-const payload = {
-    from: 1,
-    to: 2,
-    amount: 10,
-    reason: 'Transfer',
-    pin: 1234
-};
-
-// Make the transfer request
-fetch(`${FORMBAR_ADDRESS}/api/v1/digipogs/transfer`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-}).then((transferResult) => {
-    return transferResult.json();
-}).then((responseData) => {
-    console.log("Transfer Response:", responseData);
-    // responseData will be: { success: true, data: { success: true, message: "..." } }
-});
-```
-
-### Python:
-For Python, you'll need to install the `requests` package:
-```bash
-pip install requests
-```
-
-The HTTP API returns the response directly as JSON:
-```python
-import requests
-import json
-
-FORMBAR_ADDRESS = 'https://formbeta.yorktechapps.com'
-
-# Get the data ready
-payload = {
-    'from': 1,
-    'to': 2,
-    'amount': 10,
-    'reason': 'Transfer',
-    'pin': 1234
-}
-```
-
-Make the request:
-```python
-response = requests.post(
-    f'{FORMBAR_ADDRESS}/api/v1/digipogs/transfer',
-    headers={'Content-Type': 'application/json'},
-    data=json.dumps(payload)
-)
-
-response_data = response.json()
-print("Transfer Response:", response_data)
-# response_data will be: { "success": true, "data": { "success": true, "message": "..." } }
-```
-
-Complete code:
-```python
-import requests
-import json
-
-FORMBAR_ADDRESS = 'https://formbeta.yorktechapps.com'
-
-# Get the data ready
-payload = {
-    'from': 1,
-    'to': 2,
-    'amount': 10,
-    'reason': 'Transfer',
-    'pin': 1234
-}
-
-# Make the transfer request
-response = requests.post(
-    f'{FORMBAR_ADDRESS}/api/v1/digipogs/transfer',
-    headers={'Content-Type': 'application/json'},
-    data=json.dumps(payload)
-)
-
-response_data = response.json()
-print("Transfer Response:", response_data)
-# response_data will be: { "success": true, "data": { "success": true, "message": "..." } }
-```
-
+## Legacy HTTP Transfers
+`POST /api/v1/digipogs/transfer` is deprecated. Use the Exchanges workflow instead; see the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in [`/docs`](/docs).
