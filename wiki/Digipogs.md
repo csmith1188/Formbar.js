@@ -218,9 +218,16 @@ requests.post(
 
 ### Adding Members to a Pool
 
-Users gain membership by obtaining shares. See the [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) page for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
+Users gain membership by obtaining shares. See the [Exchanges Page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
 
 ### Distributing Pool Funds
+
+Digipog pools require a pin to be paid out. Each pool has its own pin. Pools can be paid out by percentage or digipog amount. The funds will be distributed amongst all share holders. The amount sent to each user depends on the amount of shares they own.
+
+To do this, visit the `/pools` page,  click the payout icon, enter your pin, type an amount or percentage, and click `Payout`. Digipogs are distributed based on the amount of shares each user owns. For example, say `user1` has 80 shares and `user2` has 20. `user1` decides to pay out 100 digipogs. `user1` will receive 80 digipogs, and `user2` will receive 20. 
+
+Here is an example using the HTTP API:
+
 ```javascript
 // Javascript
 await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/payout`, {
@@ -231,8 +238,8 @@ await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/payout`, {
     },
     body: JSON.stringify({
         amount: 100, // Either a percent or an amount of digipogs. Specifies how much should be paid out.
-        payoutType: 'percent', // Specify "percent" or "digipogs"
-        pin: 1234 // Digipog pools require a pin to be paid out. Each pool has its own pin.
+        payoutType: 'digipogs', // Specify "percent" or "digipogs"
+        pin: 1234
     })
 });
 ```
@@ -242,14 +249,19 @@ await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123/payout`, {
 requests.post(
     f'{FORMBAR_ADDRESS}/api/v1/pools/123/payout',
     headers={'API': API_KEY, 'Content-Type': 'application/json'},
-    json={'amount': 1000, 'payoutType': 'digipogs', 'pin': 1234}
+    json={'amount': 100, 'payoutType': 'digipogs', 'pin': 1234}
 )
 ```
 
 ### Deleting a Pool
+
+When a pool is deleted, every user with shares in that pool loses them. Pools can be deleted by going to `/pools`, then clicking the delete button on a specific pool.
+
+Here is an example using the HTTP API:
+
 ```javascript
 // Javascript
-await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123`, {
+await fetch(`${FORMBAR_ADDRESS}/api/v1/pools/123`, { // 123 is the pool's id.
     method: 'DELETE',
     headers: {
         API: API_KEY,
