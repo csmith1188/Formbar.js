@@ -610,7 +610,7 @@ socket.emit('transferDigipogs', {
     amount: 25,
     reason: 'Study group reward',
     pin: '1234',
-    pool: false
+    type: "user"
 });
 
 socket.on('transferResponse', (result) => {
