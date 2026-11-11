@@ -1,5 +1,5 @@
 # Exchanges
-Exchanges is new system added in Formbar 3.0 that supersedes the deprecated transfer and trade systems. Users can offer and request items and digipogs from other users. 
+Exchanges is new system added in Formbar 3.0 that supersedes the deprecated transfer and trade systems. Users can offer and request items and digipogs from other users. The Formbar Developer Pool (ID 0) automatically receives the 10% tax from all transfers
 
 # Transactions vs. Trades
 Exchanges can be one-way transactions (requests nothing, sends items/digipogs **immediately**) or two-way (requests items/digipogs, requires approval of the other party).
@@ -18,7 +18,7 @@ In the `Exchanges` page, there is a `Create exchange` submenu. After finding the
 
 Exchanges let one party send resources to another party, or let two parties propose and accept a trade. Both `from` and `to` can independently use either `"user"` or `"pool"` as their `type`. A `"pool"` type cannot exchange items.
 
-The examples below use the HTTP API at `https://formbarapi.yorktechapps.com`. For the current request schemas, authentication requirements, response definitions, and error responses, see the [API documentation](https://formbarapi.yorktechapps.com/docs).
+The examples below use the HTTP API at `https://formbarapi.yorktechapps.com`. For the current request schemas, authentication requirements, response definitions, and error responses, see `/docs` in a browser.
 
 ## Exchange Payloads
 
