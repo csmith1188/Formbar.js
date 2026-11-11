@@ -1,12 +1,18 @@
 # Exchanges
-Exchanges is new system added in Formbar 3.0 that supersedes the separate transfer and trade systems. Users can offer and request items and digipogs from other users. Exchanges can be one-way (requesting nothing and sending items/digipogs immeadiately) or two-way (requesting items/digipogs and requiring approval of the other party).
+Exchanges is new system added in Formbar 3.0 that supersedes the deprecated transfer and trade systems. Users can offer and request items and digipogs from other users. 
+
+# Transactions vs. Trades
+Exchanges can be one-way transactions (requests nothing, sends items/digipogs **immediately**) or two-way (requests items/digipogs, requires approval of the other party).
 
 # Viewing
-Exchanges can be viewed under the `Exchanges` menu of your profile. Here you will see a log of every exchange along with their info and statuses.
+The `Exchanges` page available on your profile consists of a log of every exchange along with their info and statuses. More specific info and actions can be shown by clicking on the exchange.
+
+# Accepting
+If an exchange was one-way, then you will have received the offer as soon as it was created.
+Exchanges with pending statuses require you to accept or reject the exchange. Accepting an exchange requires a PIN. This is either your user PIN or the pool PIN (if the recipient is a pool).
 
 # Creation
-
-In the `Exchanges` menu, there is a `Create exchange` button that will allow you to exchange with the 
+In the `Exchanges` page, there is a `Create exchange` submenu. After finding the user ID of whoever you want to trade with, you can load their inventory, set your offered digipogs/items, set your requested digipogs/items, and finally create the exchange.
 
 # Exchange Implementation Tutorials
 
