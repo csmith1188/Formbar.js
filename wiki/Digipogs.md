@@ -26,9 +26,14 @@ Digipog pools allow users to create shared pools of digipogs that can be distrib
 - Pools can send or receive digipogs directly by sending a typed recipient such as `{ id: 123, type: "pool" }` (See [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges))
 - The Formbar Developer Pool (ID 0) automatically receives the 10% tax from all transfers
 
-# Legacy Digipog Transfer Examples
-The examples below are retained for existing integrations only. The HTTP transfer endpoint and the Socket.IO transfer flow are deprecated; use the Exchanges workflow for new integrations.
+## Adding Members to a Pool
+Users gain membership by obtaining shares. See the [Exchanges Page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
 
+## Pool Pins
+A pool pin is required to payout pools. It can be set and changed by going to `/pools`, clicking the key icon, and inputting your old and new pin. You may also click `I forgot my pin` to get a pin-reset email.
+
+# Legacy Digipog Transfer Examples
+The examples below are retained for existing integrations only. The HTTP transfer endpoint and the Socket.IO transfer flow are deprecated; use the [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) workflow for new integrations.
 
 ## Legacy Socket.IO Transfers
 ### Node.JS:
@@ -215,12 +220,6 @@ requests.post(
     }
 )
 ```
-
-### Adding Members to a Pool
-Users gain membership by obtaining shares. See the [Exchanges Page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
-
-### Pool Pins
-A pool pin is required to payout pools. It can be set and changed by going to `/pools`, clicking the key icon, and inputting your old and new pin. You may also click `I forgot my pin` to get a pin-reset email.
 
 ### Distributing Pool Funds
 Digipog pools require a pin to be paid out. Each pool has its own pin. Pools can be paid out by percentage or digipog amount. The funds will be distributed amongst all share holders. The amount sent to each user depends on the amount of shares they own.
