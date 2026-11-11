@@ -13,7 +13,7 @@ When you submit an answer to a poll for the first time, your "Pog Meter" increas
 - Only the first response to each poll counts toward the pog meter
 
 ## Transferring
-> **Deprecated:** Direct digipog transfers are deprecated. For new integrations, use Exchanges instead. See the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in the server's [`/docs`](/docs).
+> **Deprecated:** Direct digipog transfers are deprecated. For new integrations, use Exchanges instead. See the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in the [API documentation](https://www.formbarapi.yorktechapps.com/docs).
 
 When digipogs are transferred between users, Formbar takes a 10% cut of the transfer. This is to control artificial inflation. The tax is automatically added to the Formbar Developer Pool (ID 0).
 
@@ -23,12 +23,17 @@ As an added layer of security, and for physical implementations, you will need t
 Digipog pools allow users to create shared pools of digipogs that can be distributed among members. Key features:
 - Pool shares can be traded for pool membership
 - Pool funds can be distributed amongst members according to the amount of shares they hold.
-- Pools can receive transfers directly by sending a typed recipient such as `{ id: 123, type: "pool" }`, or by using the legacy `pool` field with the pool ID
+- Pools can send or receive digipogs directly by sending a typed recipient such as `{ id: 123, type: "pool" }` (See [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges))
 - The Formbar Developer Pool (ID 0) automatically receives the 10% tax from all transfers
 
-# Legacy Digipog Transfer Examples
-The examples below are retained for existing integrations only. The HTTP transfer endpoint and the Socket.IO transfer flow are deprecated; use the Exchanges workflow for new integrations.
+## Adding Members to a Pool
+Users gain membership by obtaining shares. See the [Exchanges Page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
 
+## Pool Pins
+A pool pin is required to payout pools. It can be set and changed by going to `/pools`, clicking the key icon, and inputting your old and new pin. You may also click `I forgot my pin` to get a pin-reset email.
+
+# Legacy Digipog Transfer Examples
+The examples below are retained for existing integrations only. The HTTP transfer endpoint and the Socket.IO transfer flow are deprecated; use the [Exchanges](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) workflow for new integrations.
 
 ## Legacy Socket.IO Transfers
 ### Node.JS:
@@ -216,12 +221,6 @@ requests.post(
 )
 ```
 
-### Adding Members to a Pool
-Users gain membership by obtaining shares. See the [Exchanges Page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) for more information on obtaining shares. Directly adding members to a pool is legacy behavior that was removed.
-
-### Pool Pins
-A pool pin is required to payout pools. It can be set and changed by going to `/pools`, clicking the key icon, and inputting your old and new pin. You may also click `I forgot my pin` to get a pin-reset email.
-
 ### Distributing Pool Funds
 Digipog pools require a pin to be paid out. Each pool has its own pin. Pools can be paid out by percentage or digipog amount. The funds will be distributed amongst all share holders. The amount sent to each user depends on the amount of shares they own.
 
@@ -306,4 +305,4 @@ sio.emit('transferDigipogs', {
 The old socket pool events (`poolCreate`, `poolDelete`, `poolAddMember`, `poolRemoveMember`, and `poolPayout`) are no longer registered.
 
 ## Legacy HTTP Transfers
-`POST /api/v1/digipogs/transfer` is deprecated. Use the Exchanges workflow instead; see the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in [`/docs`](/docs).
+`POST /api/v1/digipogs/transfer` is deprecated. Use the Exchanges workflow instead; see the [Exchanges page](https://github.com/csmith1188/Formbar.js/wiki/Exchanges) and the Exchanges endpoints in `/docs`.

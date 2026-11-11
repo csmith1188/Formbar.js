@@ -1,4 +1,6 @@
 const { isAuthenticated, isVerified } = require("@middleware/authentication");
+const { isSelfOrHasScopes } = require("@middleware/permission-check");
+const { SCOPES } = require("@modules/permissions");
 const { getExchangesForUser } = require("@services/exchange-service");
 const { getUserDataFromDb } = require("@services/user-service");
 const { requireQueryParam } = require("@modules/error-wrapper");
@@ -38,7 +40,7 @@ module.exports = (router) => {
      *           default: 0
      *         description: Number of exchanges to skip per bucket
      *       - in: query
-     *         name: filters
+     *         name: filter
      *         schema:
      *           type: array
      *           items:
@@ -78,25 +80,25 @@ module.exports = (router) => {
      *       403:
      *         description: Not able to view other users exchanges
      */
-    router.get("/user/:id/exchanges", isAuthenticated, isVerified, async (req, res) => {
-        const userId = Number(req.params.id);
-        requireQueryParam(userId, "id");
+    router.get("/user/:id/exchanges",
+        isAuthenticated,
+        isVerified,
+        isSelfOrHasScopes(SCOPES.GLOBAL.USERS.MANAGE, "You do not have permission to view these exchanges."),
+        async (req, res) => {
+            const userId = Number(req.params.id);
+            requireQueryParam(userId, "id");
 
-        if (req.user.id !== userId) {
-            throw new ForbiddenError("You can only view your own exchanges.", { event: "user.exchanges.list.failed", reason: "forbidden" });
-        }
+            const { limit, offset } = parsePaginationQuery(req.query, DEFAULT_EXCHANGE_LIMIT, MAX_EXCHANGE_LIMIT);
+            const filters = req.query.filter?.split(",").map((filter) => filter.trim());
+            const requestedUser = await getUserDataFromDb(userId);
+            if (!requestedUser) {
+                throw new NotFoundError("User not found.", { event: "user.exchanges.list.failed", reason: "user_not_found" });
+            }
 
-        const { limit, offset } = parsePaginationQuery(req.query, DEFAULT_EXCHANGE_LIMIT, MAX_EXCHANGE_LIMIT);
-        const filters = req.query.filter?.split(",").map((filter) => filter.trim());
-        const requestedUser = await getUserDataFromDb(userId);
-        if (!requestedUser) {
-            throw new NotFoundError("User not found.", { event: "user.exchanges.list.failed", reason: "user_not_found" });
-        }
+            req.infoEvent("user.exchanges.list.attempt", "Attempting to list user exchanges", { userId: userId });
 
-        req.infoEvent("user.exchanges.list.attempt", "Attempting to list user exchanges", { userId: userId });
-
-        const buckets = await getExchangesForUser(userId, { limit, offset, filters });
-        req.infoEvent("user.trades.list.success", "User trades listed successfully", { userId: userId });
-        res.status(200).json(buckets);
-    });
+            const buckets = await getExchangesForUser(userId, { limit, offset, filters });
+            req.infoEvent("user.trades.list.success", "User trades listed successfully", { userId: userId });
+            res.status(200).json(buckets);
+        });
 };
