@@ -47,6 +47,15 @@ async function markNotificationAsRead(notificationId) {
 }
 
 /**
+ * Mark a notification as unread.
+ * @param {Object} notificationId - notificationId.
+ * @returns {Promise<void>}
+ */
+async function markNotificationAsUnread(notificationId) {
+    await dbRun("UPDATE notifications SET is_read = 0 WHERE id = ?", [notificationId]);
+}
+
+/**
  * Create a notification.
  * @param {number} userId - userId.
  * @param {string} type - type.
@@ -80,6 +89,7 @@ module.exports = {
     getNotificationsForUser,
     getNotificationsForUserPaginated,
     markNotificationAsRead,
+    markNotificationAsUnread,
     createNotification,
     emptyInboxForUser,
     deleteNotification,

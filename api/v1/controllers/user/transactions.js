@@ -20,7 +20,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/user/{id}/transactions:
      *   get:
-     *     summary: Get user transaction history
+     *     summary: Get user transaction history. This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     tags:
      *       - Users
      *     description: Returns the transaction history for a user. Users can view their own transactions, or managers can view any user's transactions.

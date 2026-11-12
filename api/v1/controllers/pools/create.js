@@ -4,6 +4,7 @@ const { userHasScope } = require("@modules/scope-resolver");
 const { isAuthenticated } = require("@middleware/authentication");
 const { requireBodyParam } = require("@modules/error-wrapper");
 const digipogService = require("@services/digipog-service");
+const { createExchange } = require("@services/exchange-service");
 const ValidationError = require("@errors/validation-error");
 const AppError = require("@errors/app-error");
 
@@ -114,22 +115,29 @@ module.exports = (router) => {
                 throw new ValidationError("Invalid pin.", { event: "pool.create.failed", reason: "invalid_pin" });
             }   
             // Charge digipogs
-            const transferPayload = {
-                from: { id: req.user.id, type: "user" },
-                to: { id: 0, type: "pool" },
-                pin: pin,
-                amount: 10000,
+            const payload = {
+                to: { 
+                    id: 0, 
+                    type: "pool", 
+                    request: {} 
+                },
+                from: { 
+                    id: req.user.id, 
+                    type: "user",
+                    offer: {0: 10000},
+                    pin,
+                },
                 reason: "Pool Creation Fee"
             }
-            const transferResult = await digipogService.transferDigipogs(transferPayload);
+            const exchangeResult = await createExchange(payload);
 
-            if (!transferResult.success) {
-                throw new AppError(transferResult.message, { statusCode: 400, event: "digipogs.transfer.failed", reason: "transfer_error" });
+            if (!exchangeResult.success) {
+                throw new AppError(exchangeResult.message, { statusCode: 400, event: "digipogs.transfer.failed", reason: "transfer_error" });
             }
         }
 
         // Create the pool
-        const result = await digipogService.createPool({ name, description, ownerId: req.user.id });
+        const result = await digipogService.createPool({ name, description, defaultShareholderId: req.user.id });
         const poolId = result.lastID || result;
 
         res.status(200).send({

@@ -183,7 +183,7 @@ describe("removeItemFromInventory()", () => {
 	it("throws ConflictError when item is a share and user is highest shareholder", async () => {
 		const createdApp = await createApp(SHARE_APP_INPUT);
        	const app = await mockDatabase.dbGet("SELECT share_item_id FROM apps WHERE id = ?", [createdApp.appId]);
-		await expect(removeItemFromInventory(USER_ID, app.share_item_id, 3)).rejects.toThrow(/main shareholder/i);
+		await expect(removeItemFromInventory(USER_ID, app.share_item_id, 3)).rejects.toThrow(/Top shareholder/i);
 
 		const inventory = await getUserInventory(USER_ID);
 		expect(inventory[0].quantity).toBe(100);

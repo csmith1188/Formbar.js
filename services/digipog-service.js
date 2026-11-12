@@ -2,10 +2,12 @@ const { database, dbGetAll, dbGet, dbRun } = require("@modules/database");
 const { SCOPES, filterScopesByDomain, parseScopesField, TEACHER_PERMISSIONS } = require("@modules/permissions");
 const { getClassIDFromCode } = require("@services/classroom-service");
 const { getGlobalPermissionLevelForUser } = require("@modules/scope-resolver");
-const { compareBcrypt } = require("@modules/crypto");
+const { hashBcrypt, compareBcrypt } = require("@modules/crypto");
 const { digipogRateLimit } = require("@modules/config");
+const NotFoundError = require("@errors/not-found-error");
 const AppError = require("@errors/app-error");
-const { registerItem, addItemToInventory } = require("@services/inventory-service");
+const { registerItem, addItemToInventory, removeItemFromInventory } = require("@services/inventory-service");
+const { isValidPin } = require("@modules/pin-validation");
 
 const SHARES_PER_POOL = 100;
 
@@ -164,10 +166,10 @@ async function getComputedGlobalUser(userId) {
  * @param {Object} poolData - Pool data.
  * @param {string} poolData.name - Pool name.
  * @param {string} [poolData.description] - Pool description.
- * @param {number} poolData.ownerId - Owner user ID.
+ * @param {number} poolData.defaultShareholderId - Owner user ID.
  * @returns {Promise<number>}
  */
-async function createPool({ name, description = "", ownerId }) {
+async function createPool({ name, description = "", defaultShareholderId }) {
     const shareItemId = await registerItem({
         name: `${name} Share`,
         description: `Share of ${name}`,
@@ -175,8 +177,7 @@ async function createPool({ name, description = "", ownerId }) {
         iconUrl: null,
     });
     const poolId = await dbRun("INSERT INTO digipog_pools (name, description, amount, share_item) VALUES (?, ?, ?, ?)", [name, description, 0, shareItemId]);
-    await addUserToPool(poolId, ownerId, 1);
-    await addItemToInventory(ownerId, shareItemId, SHARES_PER_POOL);
+    await addItemToInventory(defaultShareholderId, shareItemId, SHARES_PER_POOL);
     return poolId;
 }
 
@@ -186,17 +187,30 @@ async function createPool({ name, description = "", ownerId }) {
  * @returns {Promise<void>}
  */
 async function deletePool(poolId) {
+    let row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId])
+    await dbRun("DELETE FROM inventory WHERE item_id = ?", [row.share_item])
     await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
-    await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
 }
 
 /**
- * Get pools joined by a user.
+ * Get pools a user owns shares for.
  * @param {number} userId - userId.
- * @returns {Promise<Object[]>}
+ * @returns {Promise<number[]>}
  */
 async function getPoolsForUser(userId) {
-    return dbGetAll("SELECT pool_id, owner FROM digipog_pool_users WHERE user_id = ?", [userId]);
+    const allItems = await dbGetAll("SELECT item_id FROM inventory WHERE user_id = ?", [userId]);
+
+    // For some reason, stacks are represented by multiple rows in the database
+    // Turn into to Set to filter for uniqueness 
+    const itemIds = new Set(allItems.map((item) => item.item_id));
+
+    let pools = [];
+    for (let item of itemIds) {
+        const pool = await dbGet("SELECT id AS pool_id FROM digipog_pools WHERE share_item = ?", [item]);
+        if (pool) pools.push(pool);
+    }
+
+    return [...pools]
 }
 
 /**
@@ -216,16 +230,13 @@ async function getPoolById(poolId) {
  * @returns {Promise<Object[]>}
  */
 async function getPoolsForUserPaginated(userId, limit = 20, offset = 0) {
-    const totalRow = await dbGet("SELECT COUNT(*) AS count FROM digipog_pool_users WHERE user_id = ?", [userId]);
-    const pools = await dbGetAll("SELECT pool_id, owner FROM digipog_pool_users WHERE user_id = ? ORDER BY pool_id DESC LIMIT ? OFFSET ?", [
-        userId,
-        limit,
-        offset,
-    ]);
+    const og = await getPoolsForUser(userId)
+
+    const pools = og.slice(offset, offset + limit)
 
     return {
-        pools,
-        total: totalRow ? totalRow.count : 0,
+        pools: pools,
+        total: og.length
     };
 }
 
@@ -235,7 +246,11 @@ async function getPoolsForUserPaginated(userId, limit = 20, offset = 0) {
  * @returns {Promise<Object[]>}
  */
 async function getUsersForPool(poolId) {
-    return dbGetAll("SELECT user_id, owner FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
+    const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId]);
+    if (row == null) return [];
+    const users = await dbGetAll("SELECT user_id FROM inventory WHERE item_id = ?", [row.share_item]);
+    let set = new Set(users);
+    return [...set];
 }
 
 /**
@@ -245,138 +260,158 @@ async function getUsersForPool(poolId) {
  * @returns {Promise<boolean>}
  */
 async function isUserInPool(userId, poolId) {
-    const row = await dbGet("SELECT 1 FROM digipog_pool_users WHERE pool_id = ? AND user_id = ? LIMIT 1", [poolId, userId]);
-    return !!row;
+    const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [poolId]);
+    if (row == null) return false;
+
+    const users = await dbGetAll("SELECT user_id FROM inventory WHERE item_id = ?", [row.share_item]);
+    for (const user of users) {
+        if (user.user_id === userId) return true;
+    }
+    return false;
 }
 
 /**
- * Checks whether a specific user is an owner of a pool.
+ * Checks whether a specific user is a top shareholder of the pool
  * @param {number} poolId - The pool to check.
  * @param {number} userId - The user to check.
- * @returns {Promise<boolean>} True if the user is an owner of the pool.
+ * @returns {Promise<boolean>} True if the user is a top shareholder of the pool.
  */
-async function isPoolOwnedByUser(poolId, userId) {
-    const row = await dbGet("SELECT owner FROM digipog_pool_users WHERE pool_id = ? AND user_id = ? LIMIT 1", [poolId, userId]);
-    return !!(row && row.owner);
+async function isPoolUserTopHolder(poolId, userId) {
+    const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id=?", [poolId]);
+    if (!row) {
+        return false;
+    }
+
+    const shareholders = await dbGetAll("SELECT user_id, quantity FROM inventory WHERE item_id=? ORDER BY quantity DESC", [row.share_item]);
+    const maxQuantity = shareholders[0]?.quantity ?? 0;
+
+    for (const shareholder of shareholders) {
+        if (shareholder.quantity < maxQuantity) break;
+        if (shareholder.user_id === userId) return true;
+    }
+
+    return false;
 }
 
 /**
- * Middleware-compatible ownership check for pools.
+ * Middleware-compatible founder check for pools.
  * @param {Object} req - Express request object
- * @returns {Promise<boolean>} Whether the requesting user owns the pool
+ * @returns {Promise<boolean>} Whether the requesting user founded the pool
  */
-function poolOwnerCheck(req) {
-    return isPoolOwnedByUser(Number(req.params.id), req.user.id);
+function poolTopHolderCheck(req) {
+    return isPoolUserTopHolder(Number(req.params.id), req.user.id);
+}
+
+
+/**
+ * Get the IDs of pools where the user is a top holder.
+ * @param {number} userId - The user to check.
+ * @returns {Promise<Array<number>>} Pool IDs where the user is a top holder.
+ */
+async function getTopHoldingPoolsForUser(userId) {
+    const pools = await getPoolsForUser(userId);
+
+    let topHoldingPools = [];
+    for (const { pool_id } of pools) {
+        if (await isPoolUserTopHolder(pool_id, userId))
+            topHoldingPools.push(pool_id);
+    }
+
+    return topHoldingPools;
 }
 
 /**
- * Add a user to a pool.
+ * Update a pool PIN after verifying the old PIN.
  * @param {number} poolId - poolId.
- * @param {number} userId - userId.
- * @param {boolean} ownerFlag - ownerFlag.
+ * @param {string} oldPin - oldPin.
+ * @param {string} newPin - newPin.
  * @returns {Promise<void>}
  */
-async function addUserToPool(poolId, userId, ownerFlag = 0) {
-    return dbRun("INSERT OR REPLACE INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [poolId, userId, ownerFlag ? 1 : 0]);
+async function updatePoolPin(poolId, oldPin, newPin) {
+    const pool = await getPoolById(poolId);
+    if (!pool) {
+        throw new NotFoundError("Pool not found.", {
+            event: "pool.pin.update.failed",
+            reason: "pool_not_found",
+        });
+    }
+
+    // If pool already has a PIN, verify the old one matches
+    if (pool.pin) {
+        if (oldPin == null) {
+            const ValidationError = require("@errors/validation-error");
+            throw new ValidationError("Missing the current pool PIN", {
+                event: "pool.pin.update.failed",
+                reason: "missing_old_pin",
+            });
+        }
+        const oldPinMatches = await compareBcrypt(String(oldPin), pool.pin);
+        if (!oldPinMatches) {
+            const AuthError = require("@errors/auth-error");
+            throw new AuthError("Current pool PIN is incorrect.", {
+                event: "pool.pin.update.failed",
+                reason: "incorrect_old_pin",
+            });
+        }
+    }
+
+    const hashedPin = await hashBcrypt(String(newPin));
+    await dbRun("UPDATE digipog_pools SET pin = ? WHERE id = ?", [hashedPin, poolId]);
+}
+
+/**
+ * Verify a user PIN.
+ * @param {number} poolId - poolId.
+ * @param {string} pin - pin.
+ * @returns {Promise<boolean>}
+ */
+async function verifyPoolPin(poolId, pin) {
+    const pool = await getPoolById(poolId);
+    if (!pool) {
+        throw new NotFoundError("Pool not found.", {
+            event: "pool.pin.verify.failed",
+            reason: "pool_not_found",
+        });
+    }
+
+    if (!pool.pin) {
+        throw new AppError("No PIN is set for this pool. Please create one first.", {
+            statusCode: 400,
+            event: "pool.pin.verify.failed",
+            reason: "pin_not_set",
+        });
+    }
+
+    const pinMatches = await compareBcrypt(String(pin), pool.pin);
+    if (!pinMatches) {
+        const AuthError = require("@errors/auth-error");
+        throw new AuthError("Pool PIN is incorrect.", {
+            event: "pool.pin.verify.failed",
+            reason: "incorrect_pin",
+        });
+    }
+
+    return true;
 }
 
 /**
  * Remove a user from a pool.
  * @param {number} poolId - poolId.
  * @param {number} userId - userId.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} 
  */
 async function removeUserFromPool(poolId, userId) {
-    if (await isPoolOwnedByUser(poolId, userId)) {
-        const poolUsers = await getUsersForPool(poolId);
-        const otherOwners = poolUsers.filter((poolUser) => poolUser.user_id !== userId && poolUser.owner);
-        if (otherOwners.length === 0) {
+    const { shareItem } = await dbGet("SELECT share_item AS shareItem FROM digipog_pools WHERE id = ?", [poolId]);
+    if (await isPoolUserTopHolder(poolId, userId)) {
+        const otherShareHolders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ? AND user_id != ?", [shareItem, userId]);
+        if (otherShareHolders.length === 0) {
             await dbRun("DELETE FROM digipog_pools WHERE id = ?", [poolId]);
-            await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ?", [poolId]);
+            await dbRun("DELETE FROM inventory WHERE item_id = ?", [shareItem]);
             return;
         }
     }
-    await dbRun("DELETE FROM digipog_pool_users WHERE pool_id = ? AND user_id = ?", [poolId, userId]);
-}
-
-/**
- * Set pool ownership for a user.
- * @param {number} poolId - poolId.
- * @param {number} userId - userId.
- * @param {boolean} ownerFlag - ownerFlag.
- * @returns {Promise<void>}
- */
-async function setUserOwnerFlag(poolId, userId, ownerFlag) {
-    return dbRun("UPDATE digipog_pool_users SET owner = ? WHERE pool_id = ? AND user_id = ?", [ownerFlag ? 1 : 0, poolId, userId]);
-}
-
-/**
- * Add a member to a pool after permission checks.
- * @param {Object} membershipData - Membership data.
- * @param {number} membershipData.actingUserId - Acting user ID.
- * @param {number} membershipData.poolId - Pool ID.
- * @param {number} membershipData.userId - User ID to add.
- * @returns {Promise<Object>}
- */
-async function addMemberToPool({ actingUserId, poolId, userId }) {
-    if (!Number.isInteger(poolId) || poolId < 0) {
-        return { success: false, message: "Invalid pool ID." };
-    }
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-        return { success: false, message: "Invalid user ID." };
-    }
-
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
-    if (!isOwner) {
-        return { success: false, message: "You do not own this pool." };
-    }
-
-    const userToAdd = await dbGet("SELECT * FROM users WHERE id = ?", [userId]);
-    if (!userToAdd) {
-        return { success: false, message: "User not found." };
-    }
-
-    const isInPool = await isUserInPool(userId, poolId);
-    if (isInPool) {
-        return { success: false, message: "User is already a member of this pool." };
-    }
-
-    await addUserToPool(poolId, userId, 0);
-
-    return { success: true, message: "User added to pool successfully." };
-}
-
-/**
- * Remove a member from a pool after permission checks.
- * @param {Object} membershipData - Membership data.
- * @param {number} membershipData.actingUserId - Acting user ID.
- * @param {number} membershipData.poolId - Pool ID.
- * @param {number} membershipData.userId - User ID to remove.
- * @returns {Promise<Object>}
- */
-async function removeMemberFromPool({ actingUserId, poolId, userId }) {
-    if (!Number.isInteger(poolId) || poolId < 0) {
-        return { success: false, message: "Invalid pool ID." };
-    }
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-        return { success: false, message: "Invalid user ID." };
-    }
-
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
-    if (!isOwner) {
-        return { success: false, message: "You do not own this pool." };
-    }
-
-    const isInPool = await isUserInPool(userId, poolId);
-    if (!isInPool) {
-        return { success: false, message: "User is not a member of this pool." };
-    }
-
-    await removeUserFromPool(poolId, userId);
-
-    return { success: true, message: "User removed from pool successfully." };
+    const { userShares } = await dbGet("SELECT SUM(quantity) AS userShares FROM inventory WHERE item_id = ? AND user_id = ?", [shareItem, userId]);
+    if (userShares != null) await removeItemFromInventory(userId, shareItem, userShares);
 }
 
 /**
@@ -388,14 +423,9 @@ async function removeMemberFromPool({ actingUserId, poolId, userId }) {
  * @param {number} payoutData.payoutType - Determines whether amount is percent/digipogs
  * @returns {Promise<Object>}
  */
-async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
+async function payoutPool({ actingUserId, poolId, amount, payoutType, pin }) {
     if (!Number.isInteger(poolId) || poolId < 0) {
         return { success: false, message: "Invalid pool ID." };
-    }
-
-    const isOwner = await isPoolOwnedByUser(poolId, actingUserId);
-    if (!isOwner) {
-        return { success: false, message: "You do not own this pool." };
     }
 
     const pool = await getPoolById(poolId);
@@ -403,49 +433,66 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
         return { success: false, message: "Pool not found." };
     }
 
-	if(amount <= 0) {
-		return { success: false, message: "Cannot payout 0 pogs." }
-	}
+    if (amount <= 0) {
+        return { success: false, message: "Cannot payout 0 pogs." }
+    }
 
-	if(payoutType !== "percent" && payoutType !== "digipogs") {
-		return { success: false, message: `Payout type must be "percent" or "digipogs".` }
-	}
+    if (payoutType !== "percent" && payoutType !== "digipogs") {
+        return { success: false, message: `Payout type must be "percent" or "digipogs".` }
+    }
 
-	if(amount > 100 && payoutType === "percent") {
-		return { success: false, message: "Cannot payout more than 100% of the pool." }
-	}
+    if (amount > 100 && payoutType === "percent") {
+        return { success: false, message: "Cannot payout more than 100% of the pool." }
+    }
 
-	if(amount > pool.amount && payoutType === "digipogs") {
-		return { success: false, message: "Cannot payout more than the pool\'s amount." }
-	}
+    if (amount > pool.amount && payoutType === "digipogs") {
+        return { success: false, message: "Cannot payout more than the pool\'s amount." }
+    }
 
-	const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
-    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item])
+    if (!isValidPin(pin)) {
+        return { success: false, message: "Invalid PIN format. PIN must be 4-6 numeric digits." };
+    }
+    
+    try {
+        await verifyPoolPin(poolId, pin);
+    } catch (err) {
+        return { success: false, message: err.message, statusCode: err.statusCode };
+    }
+
+    const payoutAmount = (payoutType === "percent" ? pool.amount * (amount / 100) : amount);
+    const shareholders = await dbGetAll("SELECT * FROM inventory WHERE item_id = ?", [pool.share_item]);
+    const { totalShares } = await dbGet("SELECT SUM(quantity) AS totalShares FROM inventory WHERE item_id = ?", [pool.share_item]);
 
     // Payout each member
     try {
         await dbRun("BEGIN TRANSACTION");
         for (const shareholder of shareholders) {
             const userShare = await dbGet("SELECT quantity FROM inventory WHERE item_id = ? AND user_id = ?", [pool.share_item, shareholder.user_id]);
-			const userPayout = Math.floor(payoutAmount * (userShare.quantity / 100));
+            const userPayout = Math.floor(payoutAmount * (userShare.quantity / totalShares));
             if (!userShare) continue;
 
-			await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
-			await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+            await dbRun("UPDATE users SET digipogs = digipogs + ? WHERE id = ?", [userPayout, shareholder.user_id])
+            await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                actingUserId,
                 pool.id,
-                shareholder.user_id,
                 "pool",
+                JSON.stringify({ 0: userPayout }),
+                shareholder.user_id,
                 "user",
-                userPayout,
+                JSON.stringify({}),
                 "Pool Payout",
+                "completed",
+                Date.now(),
                 Date.now(),
             ]);
         }
 
-        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [payoutAmount, poolId]);
+        await dbRun("UPDATE digipog_pools SET amount = amount - ? WHERE id = ?", [Math.floor(payoutAmount), poolId]);
         await dbRun("COMMIT");
     } catch (err) {
         await dbRun("ROLLBACK");
+        // Remove
+        throw err;
         throw new AppError("An error occurred while processing the pool payout.", { event: "digipog_pool_payout_error", error: err.message });
     }
 
@@ -460,10 +507,15 @@ async function payoutPool({ actingUserId, poolId, amount, payoutType }) {
  * @returns {Promise<Object[]>}
  */
 async function getUserTransactions(userId) {
-    const transactions = await dbGetAll(
-        "SELECT * FROM transactions WHERE (from_id = ? AND from_type = 'user') OR (to_id = ? AND to_type = 'user') ORDER BY date DESC",
+    let transactions = await dbGetAll(
+        "SELECT * FROM exchanges WHERE request = '{}' AND ((from_user_id = ? AND from_type = 'user') OR (to_user_id = ? AND to_type = 'user')) ORDER BY created_at DESC",
         [userId, userId]
     );
+    // Filter only for transactions.
+    transactions = transactions.filter((transaction) => {
+        const keys = Object.keys(JSON.parse(transaction.offer));
+        return keys.length === 1 && keys.includes("0");
+    });
     return enrichTransactions(transactions);
 }
 
@@ -475,16 +527,21 @@ async function getUserTransactions(userId) {
  * @returns {Promise<Object[]>}
  */
 async function getUserTransactionsPaginated(userId, limit = 25, offset = 0) {
-    let whereQuery = "WHERE (from_id = ? AND from_type = 'user') OR (to_id = ? AND to_type = 'user')";
+    let whereQuery = "WHERE request = '{}' AND ((from_user_id = ? AND from_type = 'user') OR (to_user_id = ? AND to_type = 'user'))";
     const params = [userId, userId];
 
-    const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM transactions ${whereQuery}`, params);
-    const transactions = await dbGetAll(`SELECT * FROM transactions ${whereQuery} ORDER BY date DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const totalRow = await dbGet(`SELECT COUNT(*) AS count FROM exchanges ${whereQuery}`, params);
+    let transactions = await dbGetAll(`SELECT * FROM exchanges ${whereQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    // Filter only for transactions.
+    transactions = transactions.filter((transaction) => {
+        const keys = Object.keys(JSON.parse(transaction.offer));
+        return keys.length === 1 && keys.includes("0");
+    });
     const enrichedTransactions = await enrichTransactions(transactions);
 
     return {
         transactions: enrichedTransactions,
-        total: totalRow ? totalRow.count : 0,
+        total: totalRow.count,
     };
 }
 
@@ -503,9 +560,9 @@ async function enrichTransactions(transactions) {
     const classIds = new Set();
 
     for (const transaction of transactions) {
-        if (transaction.from_id != null) {
+        if (transaction.from_user_id != null) {
             if (transaction.from_type === "user" || transaction.from_type === "award") {
-                userIds.add(transaction.from_id);
+                userIds.add(transaction.from_user_id);
             } else if (transaction.from_type === "pool") {
                 poolIds.add(transaction.from_id);
             } else if (transaction.from_type === "class") {
@@ -513,9 +570,9 @@ async function enrichTransactions(transactions) {
             }
         }
 
-        if (transaction.to_id != null) {
+        if (transaction.to_user_id != null) {
             if (transaction.to_type === "user" || transaction.to_type === "award") {
-                userIds.add(transaction.to_id);
+                userIds.add(transaction.to_user_id);
             } else if (transaction.to_type === "pool") {
                 poolIds.add(transaction.to_id);
             } else if (transaction.to_type === "class") {
@@ -531,11 +588,11 @@ async function enrichTransactions(transactions) {
     ]);
 
     return transactions.map((transaction) => ({
-        amount: transaction.amount,
+        amount: JSON.parse(transaction.offer)[0],
         reason: transaction.reason,
         date: transaction.date,
-        from: buildTransactionParty(transaction.from_id, transaction.from_type, users, pools, classes),
-        to: buildTransactionParty(transaction.to_id, transaction.to_type, users, pools, classes),
+        from: buildTransactionParty(transaction.from_user_id, transaction.from_id, transaction.from_type, users, pools, classes),
+        to: buildTransactionParty(transaction.to_user_id, transaction.to_id, transaction.to_type, users, pools, classes),
     }));
 }
 
@@ -611,18 +668,21 @@ async function fetchClassesByIds(classIds) {
  * @param {Object} classes - classes.
  * @returns {Object|null}
  */
-function buildTransactionParty(id, type, users, pools, classes) {
+function buildTransactionParty(userId, typedId, type, users, pools, classes) {
     const normalizedType = type || "unknown";
     let username = null;
+    let id = null;
 
     if (normalizedType === "user" || normalizedType === "award") {
-        username = users.get(id)?.username || "Unknown User";
+        username = users.get(userId)?.username || "Unknown User";
+        id = userId;
     } else if (normalizedType === "pool") {
-        username = pools.get(id)?.username || "Unknown Pool";
+        username = pools.get(typedId)?.username || "Unknown Pool";
+        id = typedId;
     } else if (normalizedType === "class") {
-        username = classes.get(id)?.username || "Unknown Class";
+        username = classes.get(typedId)?.username || "Unknown Class";
+        id = typedId;
     }
-
     return {
         id,
         type: normalizedType,
@@ -681,7 +741,7 @@ function normalizeAwardRecipient(awardData) {
  * @returns {void}
  */
 function validateAwardRequest({ from, to, amount }) {
-    if (!from || Number.isNaN(amount)) {
+    if (!from || !Number.isFinite(amount)) {
         return "Missing required fields.";
     }
 
@@ -689,12 +749,26 @@ function validateAwardRequest({ from, to, amount }) {
         return "Invalid recipient type.";
     }
 
-    if (amount <= 0) {
+    if (to.type !== "class" && !to.id) {
+        return "Missing recipient identifier.";
+    }
+
+    return null;
+}
+
+/**
+ * Check whether a sender may use an award to revoke digipogs.
+ * @param {number} amount - Award amount.
+ * @param {number} senderPermissionLevel - Sender permission level.
+ * @returns {string|null}
+ */
+function validateAwardAmount(amount, senderPermissionLevel) {
+    if (amount === 0) {
         return "Amount must be greater than zero.";
     }
 
-    if (to.type !== "class" && !to.id) {
-        return "Missing recipient identifier.";
+    if (amount < 0 && senderPermissionLevel < TEACHER_PERMISSIONS) {
+        return "Only teachers and managers can revoke digipogs.";
     }
 
     return null;
@@ -978,20 +1052,25 @@ async function awardDigipogs(awardData, user) {
         }
         const senderPermissionLevel = getGlobalPermissionLevelForUser(fromUser);
 
+        const amountError = validateAwardAmount(amount, senderPermissionLevel);
+        if (amountError) {
+            return fail(amountError);
+        }
+
         const awardFailure = await applyAwardDigipogs({ from, to, amount, senderPermissionLevel, fail });
         if (awardFailure) {
             return awardFailure;
         }
 
         try {
-            await dbRun("INSERT INTO transactions (from_id, to_id, from_type, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+            await dbRun("INSERT INTO exchanges (from_user_id, from_type, offer, to_user_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, 'user', ?, ?, ?, '{}', ?, 'completed', ?, ?)", [
                 from,
+                JSON.stringify({ 0: amount }),
                 to.id,
-                "award",
                 to.type,
-                amount,
                 reason,
-                Date.now(),
+                new Date().toISOString(),
+                new Date().toISOString()
             ]);
         } catch (err) {
             return { success: true, message: "Award succeeded, but failed to log transaction." };
@@ -1013,6 +1092,13 @@ async function awardDigipogs(awardData, user) {
  * @returns {{taxedAmount: number, taxAmount: number}}
  */
 function calculateDigipogTransferTax(amount) {
+    if (amount < 0) {
+        return {
+            taxedAmount: amount,
+            taxAmount: 0,
+        };
+    }
+
     const taxedAmount = Math.floor(amount * 0.9) > 1 ? Math.floor(amount * 0.9) : 1;
     return {
         taxedAmount,
@@ -1081,10 +1167,26 @@ async function transferDigipogs(transferData, options = {}) {
         }
         if (!to.type) to.type = "user";
 
-        if (!from || from.id === undefined || !to || to.id === undefined || !amount || reason === undefined || (!pin && !pinVerified)) {
+        if (
+            !from ||
+            from.id === undefined ||
+            !to ||
+            to.id === undefined ||
+            amount === undefined ||
+            amount === null ||
+            Number.isNaN(amount) ||
+            reason === undefined ||
+            (!pin && !pinVerified)
+        ) {
             return { success: false, message: "Missing required fields." };
-        } else if (amount <= 0) {
+        } else if (amount === 0) {
             return { success: false, message: "Amount must be greater than zero." };
+        } else if (amount < 0) {
+            const sender = from.type === "user" ? await getComputedGlobalUser(from.id) : null;
+            const senderPermissionLevel = sender ? getGlobalPermissionLevelForUser(sender) : 0;
+            if (senderPermissionLevel < TEACHER_PERMISSIONS) {
+                return { success: false, message: "Amount must be greater than zero." };
+            }
         } else if (from.type === to.type && from.id === to.id) {
             return { success: false, message: "Cannot transfer to the same account." };
         } else if ((from.type !== "user" && from.type !== "pool") || (to.type !== "user" && to.type !== "pool")) {
@@ -1099,30 +1201,17 @@ async function transferDigipogs(transferData, options = {}) {
 
         let fromAccount;
         if (from.type === "user") {
-            fromAccount = await dbGet("SELECT id, digipogs, pin FROM users WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            fromAccount = await dbGet("SELECT id AS userId, digipogs, pin FROM users WHERE id = ?", [from.id]);
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender account not found." };
             }
         } else {
-            fromAccount = await dbGet("SELECT id, amount FROM digipog_pools WHERE id = ?", [from.id]);
-            if (!fromAccount) {
+            fromAccount = await dbGet("SELECT id, amount, pin FROM digipog_pools WHERE id = ?", [from.id]);
+            if (fromAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Sender pool not found." };
             }
-            const poolOwner = await dbGet(
-                `SELECT u.pin
-                 FROM digipog_pool_users dpu
-                 JOIN users u ON u.id = dpu.user_id
-                 WHERE dpu.pool_id = ? AND dpu.owner = 1
-                 LIMIT 1`,
-                [from.id]
-            );
-            if (!poolOwner) {
-                recordAttempt(accountId, false);
-                return { success: false, message: "Sender pool owner not found." };
-            }
-            fromAccount.pin = poolOwner.pin;
         }
 
         if (!pinVerified && !fromAccount.pin) {
@@ -1146,22 +1235,52 @@ async function transferDigipogs(transferData, options = {}) {
 
         let toAccount;
         if (to.type === "user") {
-            toAccount = await dbGet("SELECT id FROM users WHERE id = ?", [to.id]);
-            if (!toAccount) {
+            toAccount = await dbGet("SELECT id AS userId FROM users WHERE id = ?", [to.id]);
+
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient account not found." };
             }
         } else {
             toAccount = await dbGet("SELECT id FROM digipog_pools WHERE id = ?", [to.id]);
-            if (!toAccount) {
+
+            if (toAccount == null) {
                 recordAttempt(accountId, false);
                 return { success: false, message: "Recipient pool not found." };
+            }
+
+            // return founder if no share item
+            const row = await dbGet("SELECT share_item FROM digipog_pools WHERE id = ?", [toAccount.id]);
+            if (row.share_item == null) {
+                const { userId } = await dbGet("SELECT user_id AS userId FROM digipog_pool_users WHERE pool_id = ? AND owner = 1", [toAccount.id]);
+                toAccount.userId = userId;
+            } else {
+                const { userId } = await dbGet("SELECT user_id AS userId FROM inventory WHERE item_id = ? ORDER BY quantity DESC", [row.share_item]);
+                toAccount.userId = userId;
             }
         }
 
         try {
             await dbRun("BEGIN IMMEDIATE TRANSACTION");
-            if (from.type === "user") {
+            if (amount < 0) {
+                const requiredBalance = Math.abs(amount);
+                const recipientUpdated =
+                    to.type === "user"
+                        ? await dbRunChanges("UPDATE users SET digipogs = digipogs + ? WHERE id = ? AND digipogs >= ?", [
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ])
+                        : await dbRunChanges("UPDATE digipog_pools SET amount = amount + ? WHERE id = ? AND amount >= ?", [
+                            amount,
+                            to.id,
+                            requiredBalance,
+                        ]);
+
+                if (!recipientUpdated) {
+                    throw new Error("Insufficient funds.");
+                }
+            } else if (from.type === "user") {
                 const debited = await dbRunChanges("UPDATE users SET digipogs = digipogs - ? WHERE id = ? AND digipogs >= ?", [
                     amount,
                     from.id,
@@ -1180,12 +1299,14 @@ async function transferDigipogs(transferData, options = {}) {
                     throw new Error("Insufficient funds.");
                 }
             }
-            await creditDigipogTransferRecipient(amount, to.type, to.id);
+            if (amount >= 0) {
+                await creditDigipogTransferRecipient(amount, to.type, to.id);
+            }
             await dbRun("COMMIT");
         } catch (err) {
             try {
                 await dbRun("ROLLBACK");
-            } catch (rollbackErr) {}
+            } catch (rollbackErr) { }
             recordAttempt(accountId, false);
             if (err && err.message === "Insufficient funds.") {
                 return { success: false, message: "Insufficient funds." };
@@ -1194,23 +1315,31 @@ async function transferDigipogs(transferData, options = {}) {
         }
 
         try {
-            await dbRun("INSERT INTO transactions (from_id, from_type, to_id, to_type, amount, reason, date) VALUES (?, ?, ?, ?, ?, ?, ?)", [
-                from.id,
+            await dbRun("INSERT INTO exchanges (from_user_id, from_id, from_type, offer, to_user_id, to_id, to_type, request, reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                fromAccount.userId ?? from.userId,
+                fromAccount.id,
                 from.type,
-                to.id,
+                JSON.stringify({ 0: amount }),
+                toAccount.userId,
+                toAccount.id,
                 to.type,
-                amount,
-                reason,
-                Date.now(),
+                JSON.stringify({}),
+                transferData.reason,
+                "completed",
+                new Date().toISOString(),
+                new Date().toISOString()
             ]);
-        } catch (err) {}
+        } catch (err) {
+            throw err;
+        }
 
         recordAttempt(accountId, true);
         return {
             success: true,
-            message: `Transfer successful. ${deprecatedFormatUsed ? "Warning: Deprecated transfer format used. See documentation for updated usage." : ""}`,
+            message: `Transfer successful. This endpoint is deprecated. Check the docs for endpoints under the "Exchanges" category`,
         };
     } catch (err) {
+        console.log(err);
         return { success: false, message: "Database error." };
     }
 }
@@ -1230,13 +1359,12 @@ module.exports = {
     getPoolsForUserPaginated,
     getUsersForPool,
     getPoolById,
+    getTopHoldingPoolsForUser,
     isUserInPool,
-    isPoolOwnedByUser,
-    poolOwnerCheck,
-    addUserToPool,
+    isPoolUserTopHolder,
+    poolTopHolderCheck,
+    updatePoolPin,
+    verifyPoolPin,
     removeUserFromPool,
-    setUserOwnerFlag,
-    addMemberToPool,
-    removeMemberFromPool,
     payoutPool,
 };

@@ -10,6 +10,7 @@ const SCOPES = {
         DIGIPOGS: {
             AWARD: "global.digipogs.award",
             TRANSFER: "global.digipogs.transfer",
+            REVOKE: "global.digipogs.revoke"
         },
         POOLS: {
             MANAGE: "global.pools.manage",
@@ -19,6 +20,10 @@ const SCOPES = {
             MODERATE: "global.system.moderate",
             BLOCKED: "global.system.blocked",
         },
+        EXCHANGES: {
+            CREATE: 'global.exchanges.create',
+            ACCEPT: 'global.exchanges.accept',
+        }
     },
 
     CLASS: {

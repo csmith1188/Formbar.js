@@ -10,13 +10,25 @@ async function ensureFormbarDeveloperPool() {
         return;
     }
 
-    await dbRun("INSERT INTO digipog_pools (id, name, description, amount) VALUES (?, ?, ?, ?)", [
+    const itemId = await dbRun("INSERT INTO item_registry (name, description, stack_size) VALUES (?, ?, ?)", [
+        `Formbar Developer Pool Share`,
+        `Share of Formbar Developer Pool`,
+        100,
+    ]);
+
+    await dbRun("INSERT INTO digipog_pools (id, name, description, amount, share_item) VALUES (?, ?, ?, ?, ?)", [
         0,
         "Formbar Developer Pool",
         "Formbar Developer pog pool. Accumulates from the 10% tax on digipog transactions.",
         0,
+        itemId,
     ]);
-    await dbRun("INSERT INTO digipog_pool_users (pool_id, user_id, owner) VALUES (?, ?, ?)", [0, 1, 1]);
+
+    await dbRun("INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)", [
+        1,
+        itemId,
+        100
+    ]);
 }
 
 module.exports = {

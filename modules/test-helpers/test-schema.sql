@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "user_tokens" (
     "created_at" INTEGER NOT NULL,
     "expires_at" INTEGER NOT NULL,
     "used_at"    INTEGER,
+    "pool_id"    INTEGER,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 CREATE INDEX IF NOT EXISTS idx_user_tokens_user_purpose ON user_tokens (user_id, purpose);
@@ -109,10 +110,10 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_role_class ON user_roles (roleId, clas
 -- Seed built-in roles (with colors)
 INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Banned', 1, '["global.system.blocked","class.system.blocked"]', '#808080');
 INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Guest', 1, '["class.poll.read","class.links.read"]', '#95A5A6');
-INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Student', 1, '["global.pools.manage","global.digipogs.transfer","class.poll.read","class.poll.vote","class.break.request","class.timer.read","class.help.request","class.links.read"]', '#3498DB');
-INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Mod', 1, '["global.system.moderate","global.pools.manage","global.digipogs.transfer","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#2ECC71');
-INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Teacher', 1, '["global.class.create","global.class.delete","global.digipogs.award","global.pools.manage","global.digipogs.transfer","class.students.read","class.students.kick","class.students.ban","class.session.start","class.session.end","class.session.rename","class.session.settings","class.session.regenerate_code","class.timer.control","class.digipogs.award","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#F39C12');
-INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Manager', 1, '["global.system.admin","global.users.manage","global.class.create","global.class.delete","global.digipogs.award","global.pools.manage","global.digipogs.transfer","class.system.admin","class.students.read","class.students.kick","class.students.ban","class.session.start","class.session.end","class.session.rename","class.session.settings","class.session.regenerate_code","class.timer.control","class.digipogs.award","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#E74C3C');
+INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Student', 1, '["global.pools.manage", "global.exchanges.accept", "global.exchanges.create","global.digipogs.transfer","class.poll.read","class.poll.vote","class.break.request","class.timer.read","class.help.request","class.links.read"]', '#3498DB');
+INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Mod', 1, '["global.system.moderate", "global.exchanges.accept", "global.exchanges.create","global.pools.manage","global.digipogs.transfer","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#2ECC71');
+INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Teacher', 1, '["global.class.create", "global.exchanges.accept", "global.exchanges.create","global.class.delete","global.pools.manage","global.digipogs.transfer","class.students.read","global.digipogs.revoke","class.students.kick","class.students.ban","class.session.start","class.session.end","class.session.rename","class.session.settings","class.session.regenerate_code","class.timer.control","class.digipogs.award","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#F39C12');
+INSERT INTO "roles" ("name", "isDefault", "scopes", "color") VALUES ('Manager', 1, '["global.system.admin", "global.exchanges.accept", "global.exchanges.create","global.users.manage","global.class.create","global.class.delete","global.digipogs.award","global.digipogs.revoke","global.pools.manage","global.digipogs.transfer","class.system.admin","class.students.read","class.students.kick","class.students.ban","class.session.start","class.session.end","class.session.rename","class.session.settings","class.session.regenerate_code","class.timer.control","class.digipogs.award","class.poll.create","class.poll.end","class.poll.delete","class.poll.share","class.break.approve","class.help.approve","class.auxiliary.control","class.links.manage","class.poll.read","class.poll.vote","class.break.request","class.help.request","class.links.read"]', '#E74C3C');
 
 -- Custom polls (final state: includes allowVoteChanges and allowMultipleResponses)
 CREATE TABLE IF NOT EXISTS "custom_polls" (
@@ -220,6 +221,7 @@ CREATE TABLE IF NOT EXISTS "digipog_pools" (
     "description" TEXT    NOT NULL DEFAULT 'None',
     "amount"      INTEGER NOT NULL DEFAULT 0,
 	"share_item"  INTEGER DEFAULT NULL,
+    "pin"         TEXT    DEFAULT NULL,
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
 
@@ -246,6 +248,26 @@ CREATE TABLE IF NOT EXISTS "transactions" (
 CREATE INDEX IF NOT EXISTS idx_transactions_from_account_date ON transactions (from_type, from_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_to_account_date ON transactions (to_type, to_id, date DESC);
 
+-- Exchanges
+CREATE TABLE IF NOT EXISTS "exchanges"
+( 
+    "id"            INTEGER NOT NULL UNIQUE,
+    "from_user_id"  INTEGER,
+    "from_id"       INTEGER,
+    "from_type"     TEXT,
+    "offer"         TEXT,
+    "to_user_id"    INTEGER,
+    "to_id"         INTEGER,
+    "to_type"       TEXT,
+    "request"       TEXT,
+    "reason"        TEXT,
+    "status"        TEXT,
+    "failure_reason"    TEXT,
+    "created_at"    TEXT, -- iso-8601
+    "updated_at"    TEXT, -- iso-8601
+    PRIMARY KEY ("id" AUTOINCREMENT)
+);
+
 -- Notifications (migration 21)
 CREATE TABLE IF NOT EXISTS "notifications" (
     "id"         INTEGER NOT NULL,
@@ -262,7 +284,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications (user_id
 CREATE TABLE IF NOT EXISTS "inventory" (
     "id"       INTEGER NOT NULL,
     "user_id"  INTEGER NOT NULL,
-    "item_id"  INTEGER NOT NULL,
+    "item_id"  INTEGER,
     "quantity" INTEGER NOT NULL DEFAULT 1 CHECK ("quantity" > 0),
     PRIMARY KEY ("id" AUTOINCREMENT)
 );
@@ -283,7 +305,7 @@ CREATE TABLE IF NOT EXISTS "trades" (
     "from_user"          INTEGER NOT NULL,
     "to_user"            INTEGER NOT NULL,
     "from_source_type"   TEXT    NOT NULL DEFAULT 'inventory' CHECK (from_source_type IN ('inventory', 'pool')),
-    "from_pool_id"       INTEGER,
+    "from_id"       INTEGER,
     "to_source_type"     TEXT    NOT NULL DEFAULT 'inventory' CHECK (to_source_type IN ('inventory', 'pool')),
     "to_pool_id"         INTEGER,
     "offered_items"      TEXT,

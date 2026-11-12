@@ -12,7 +12,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/trades/{id}/cancel:
      *   post:
-     *     summary: Cancel a trade (requester only)
+     *     summary: Cancel a trade (requester only). This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Cancels a pending trade as the requester. The recipient receives a
      *       `trade_canceled` notification.

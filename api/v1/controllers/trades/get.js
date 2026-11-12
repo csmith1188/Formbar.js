@@ -13,7 +13,8 @@ module.exports = (router) => {
      * @swagger
      * /api/v1/trades/{id}:
      *   get:
-     *     summary: Get a trade by ID
+     *     summary: Get a trade by ID. This endpoint is deprecated. Use the endpoints under the Exchanges tag.
+     *     deprecated: true
      *     description: >
      *       Returns a single trade. Returns 404 if the trade does not exist or if
      *       the requesting user is not a participant, so that the existence of

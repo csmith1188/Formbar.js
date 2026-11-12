@@ -1,6 +1,6 @@
 import Bot from "./bot.js";
 process.stdin.setEncoding('utf8');
-export const FORMBAR_URL = 'https://formbarapi.yorktechapps.com';
+export const FORMBAR_URL = 'http://localhost:420';
 const bots = [];
 let tasks = [];
 let takenIds = [];

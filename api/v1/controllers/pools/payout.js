@@ -42,6 +42,7 @@ module.exports = (router) => {
      *             required:
      *               - amount
      *               - payoutType
+     *               - pin
      *             properties:
      *               amount:
      *                 type: integer
@@ -51,6 +52,10 @@ module.exports = (router) => {
      *                 type: string
      *                 description:  Can either be "percent" or "digipogs"
      *                 example: percent
+     *               pin:
+     *                 type: string
+     *                 description: Pool PIN (4-6 numeric digits)
+     *                 example: "1234"
      *     responses:
      *       200:
      *         description: Pool payout executed successfully
@@ -66,23 +71,17 @@ module.exports = (router) => {
      *                   type: object
      *                   description: Result data from the payout operation
      *       400:
-     *         description: Validation error (pool not found or payout failed)
+     *         description: Validation error (pool not found, payout failed, missing/invalid PIN)
      *         content:
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/ValidationError'
      *       401:
-     *         description: Unauthorized - user not authenticated
+     *         description: Unauthorized - PIN is incorrect
      *         content:
      *           application/json:
      *             schema:
      *               $ref: '#/components/schemas/UnauthorizedError'
-     *       403:
-     *         description: Forbidden - user is not the pool owner or a manager
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/ForbiddenError'
      *       500:
      *         description: Server error
      *         content:
@@ -94,21 +93,22 @@ module.exports = (router) => {
         "/pools/:id/payout",
         isAuthenticated,
         hasScope(SCOPES.GLOBAL.POOLS.MANAGE),
-        isOwnerOrHasScopes(digipogService.poolOwnerCheck, SCOPES.GLOBAL.SYSTEM.ADMIN, "You do not own this pool."),
         async (req, res) => {
             const poolId = Number(req.params.id);
             const amount = Number(req.body.amount);
             const payoutType = req.body.payoutType;
+            const pin = req.body.pin;
 
             requireQueryParam(poolId, "poolId");
             requireBodyParam(amount, "amount");
             requireBodyParam(payoutType, "payoutType");
+            requireBodyParam(pin, "pin");
 
             req.infoEvent("pool.payout.attempt", "Attempting to pay out a pool", {
                 poolId,
                 actingUserId: req.user.id,
-				amount,
-				payoutType,
+                amount,
+                payoutType
             });
 
             // Check if the pool exists
@@ -120,13 +120,14 @@ module.exports = (router) => {
             const result = await digipogService.payoutPool({
                 actingUserId: req.user.id,
                 poolId,
-				amount,
-				payoutType
+                amount,
+                payoutType,
+                pin
             });
 
             if (!result.success) {
                 throw new AppError(result.message, {
-                    statusCode: 400,
+                    statusCode: result.statusCode ?? 400,
                     event: "pool.payout.failed",
                     reason: "payout_error",
                 });
@@ -135,8 +136,8 @@ module.exports = (router) => {
             req.infoEvent("pool.payout.success", "Pool payout completed successfully", {
                 poolId,
                 actingUserId: req.user.id,
-				amount,
-				payoutType
+                amount,
+                payoutType
             });
 
             res.status(200).json({

@@ -12,6 +12,7 @@ module.exports = {
             await dbRun("BEGIN TRANSACTION", [], database);
             try {
                 // Create a new temporary table with the restructured format
+                // UPDATE 2026-09-24: "owner" now represents the "founder"
                 await dbRun(
                     `CREATE TABLE IF NOT EXISTS digipog_pool_users_temp (
                     "pool_id"   INTEGER NOT NULL,
